@@ -1026,6 +1026,111 @@ fn migrate_legacy_ironspec_to_cairn_explicitly() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.agent_receipt_validation_surface]
+    // r[verify cairn.supersede.agent_receipt_validation_surface.cli]
+    // r[verify cairn.supersede.agent_receipt_validation_surface.cli.schema]
+    // r[verify cairn.supersede.agent_receipt_validation_surface.docs]
+    // r[verify cairn.supersede.agent_receipt_validation_surface.fixtures]
+    let positive = assert_reproducible_receipt(
+        &[
+            "agent-receipt",
+            "validate",
+            "fixtures/agent-receipts/positive.json",
+        ],
+        &["agent_receipt_hash", "input_hash", "receipt_hash"],
+    )?;
+    assert_object_keys(
+        &positive,
+        &[
+            "agent_receipt_hash",
+            "command",
+            "input_hash",
+            "input_kind",
+            "issues",
+            "max_content_bytes",
+            "path",
+            "receipt_hash",
+            "stated_agent_receipt_hash",
+            "valid",
+            "verdict",
+        ],
+    )?;
+    assert_eq!(positive["valid"], true);
+    assert_eq!(positive["verdict"], "PASS");
+    assert_eq!(positive["issues"].as_array().ok_or("issues")?.len(), 0);
+
+    let negative = assert_reproducible_receipt(
+        &[
+            "agent-receipt",
+            "validate",
+            "fixtures/agent-receipts/missing-verification.json",
+        ],
+        &["agent_receipt_hash", "input_hash", "receipt_hash"],
+    )?;
+    assert_eq!(negative["valid"], false);
+    let issues = negative["issues"].as_array().ok_or("negative issues")?;
+    assert!(issues
+        .iter()
+        .any(|issue| issue["code"] == "verification.missing_evidence"));
+    Ok(())
+}
+
+#[test]
+fn mcp_agent_receipt_validation_is_read_only_and_bounded() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.agent_receipt_validation_surface.mcp]
+    // r[verify cairn.supersede.agent_receipt_validation_surface.mcp.read_only]
+    // r[verify cairn.supersede.agent_receipt_validation_surface.verification]
+    let catalog = run_json(&["mcp", "--describe"])?;
+    let tools = catalog["tools"].as_array().ok_or("tools")?;
+    assert!(tools
+        .iter()
+        .any(|tool| tool["name"] == "cairn_agent_receipt_validate"
+            && tool["annotations"]["readOnlyHint"] == true
+            && tool["annotations"]["destructiveHint"] == false));
+
+    let by_path = run_json(&[
+        "mcp",
+        "--call",
+        "cairn_agent_receipt_validate",
+        r#"{"root":".","path":"fixtures/agent-receipts/positive.json"}"#,
+    ])?;
+    let receipt = &by_path["structuredContent"];
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["mcp"]["read_only"], true);
+    assert_hash_field(receipt, "agent_receipt_hash")?;
+    assert_hash_field(receipt, "receipt_hash")?;
+
+    let inline_fixture =
+        fs::read_to_string(repo_root().join("fixtures/agent-receipts/positive.json"))?;
+    let inline_request = format!(r#"{{"receipt":{inline_fixture}}}"#);
+    let inline = run_json(&[
+        "mcp",
+        "--call",
+        "cairn_agent_receipt_validate",
+        &inline_request,
+    ])?;
+    assert_eq!(inline["structuredContent"]["input_kind"], "inline");
+    assert_eq!(inline["structuredContent"]["valid"], true);
+
+    let traversal = cairn()
+        .args([
+            "mcp",
+            "--call",
+            "cairn_agent_receipt_validate",
+            r#"{"root":".","path":"../secret.json"}"#,
+        ])
+        .output()?;
+    assert!(!traversal.status.success());
+    let stderr = String::from_utf8_lossy(&traversal.stderr);
+    assert!(
+        stderr.contains("selector escapes lifecycle bounds"),
+        "{stderr}"
+    );
+    Ok(())
+}
+
+#[test]
 fn mcp_describes_read_only_tools_without_mutations() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.mcp_server.verification.registration]
     // r[verify cairn.supersede.mcp_server.read_tools]

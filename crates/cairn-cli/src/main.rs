@@ -10,14 +10,14 @@ use cairn_core::{
     archive_dir, blake3_hex, build_archive_plan, build_change_detail, build_change_list,
     build_change_skeleton, build_doctor_report, build_ironspec_migration_plan,
     build_openspec_migration_plan, build_repo_status, build_spec_detail, build_spec_list,
-    build_sync_plan, canonical_json_hash, changes_dir, design_template, evaluate_gate_snapshot,
-    init_artifacts, init_artifacts_for, layout_name, layout_root, merge_delta_spec,
-    parse_policy_json, proposal_template, specs_dir, tasks_template, validate_changes,
-    validate_spec_sources, ArchivePlan, ChangeDetail, ChangeList, ChangeSource, ChangeStatus,
-    DoctorCheckStatus, DoctorReport, DoctorSnapshot, GateArtifact, GateReport, GateSnapshot,
-    GateStage, LifecycleArtifactKind, LifecycleLayout, MigrationInput, MigrationPlan, PlanAction,
-    PlanActionKind, Policy, RepoStatus, SpecDetail, SpecList, SpecSource, SpecSummary, SyncPlan,
-    TaskCounts,
+    build_sync_plan, canonical_json_hash, changes_dir, design_template,
+    evaluate_agent_run_completion, evaluate_gate_snapshot, init_artifacts, init_artifacts_for,
+    layout_name, layout_root, merge_delta_spec, parse_policy_json, proposal_template, specs_dir,
+    tasks_template, validate_changes, validate_spec_sources, AgentRunGateIssue, ArchivePlan,
+    ChangeDetail, ChangeList, ChangeSource, ChangeStatus, DoctorCheckStatus, DoctorReport,
+    DoctorSnapshot, GateArtifact, GateReport, GateSnapshot, GateStage, LifecycleArtifactKind,
+    LifecycleLayout, MigrationInput, MigrationPlan, PlanAction, PlanActionKind, Policy, RepoStatus,
+    SpecDetail, SpecList, SpecSource, SpecSummary, SyncPlan, TaskCounts,
 };
 use serde_json::{json, Value};
 
@@ -47,6 +47,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "status" => run_status(args.collect())?,
         "doctor" => run_doctor(args.collect())?,
         "validate" => run_validate(args.collect())?,
+        "agent-receipt" => run_agent_receipt(args.collect())?,
         "policy" => run_policy(args.collect())?,
         "migrate" => run_migrate(args.collect())?,
         "mcp" => run_mcp(args.collect())?,
@@ -459,6 +460,30 @@ fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
 const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
 const MCP_MAX_CONTENT_BYTES: usize = 64 * 1024;
+const AGENT_RECEIPT_MAX_BYTES: u64 = 64 * 1024;
+
+fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let mut iter = args.into_iter();
+    let Some(subcommand) = iter.next() else {
+        return Err("agent-receipt requires a subcommand: validate".into());
+    };
+    match subcommand.as_str() {
+        "validate" => {
+            let Some(path) = iter.next() else {
+                return Err("agent-receipt validate requires a JSON receipt path".into());
+            };
+            let path = PathBuf::from(path);
+            let receipt = read_agent_receipt_file(&path)?;
+            print_json(agent_receipt_validation_receipt(
+                "agent-receipt validate",
+                Some(path),
+                &receipt,
+                false,
+            ))
+        }
+        unknown => Err(format!("unknown agent-receipt subcommand: {unknown}").into()),
+    }
+}
 
 fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.mcp_server.read_tools]
@@ -537,6 +562,12 @@ fn mcp_tools(is_mutation_allowed: bool) -> Vec<Value> {
 }
 
 fn mcp_read_and_plan_tools() -> Vec<Value> {
+    let mut tools = mcp_read_tools();
+    tools.extend(mcp_plan_tools());
+    tools
+}
+
+fn mcp_read_tools() -> Vec<Value> {
     vec![
         mcp_tool(
             "cairn_status",
@@ -586,6 +617,17 @@ fn mcp_read_and_plan_tools() -> Vec<Value> {
             false,
             "Return bounded gate context for a change",
         ),
+        mcp_tool(
+            "cairn_agent_receipt_validate",
+            true,
+            false,
+            "Validate an agent-run receipt without mutation",
+        ),
+    ]
+}
+
+fn mcp_plan_tools() -> Vec<Value> {
+    vec![
         mcp_tool("cairn_sync_plan", true, false, "Plan sync without mutation"),
         mcp_tool(
             "cairn_archive_plan",
@@ -655,6 +697,7 @@ fn mcp_call_tool(
         "cairn_validate" => mcp_validate(input)?,
         "cairn_gate" => mcp_gate(input)?,
         "cairn_gate_context" => mcp_gate_context(input)?,
+        "cairn_agent_receipt_validate" => mcp_agent_receipt_validate(input)?,
         "cairn_sync_plan" => mcp_sync(input, false)?,
         "cairn_archive_plan" => mcp_archive(input, false)?,
         "cairn_migrate_plan" => mcp_migrate(input, false)?,
@@ -859,6 +902,27 @@ fn mcp_gate_context(input: &Value) -> Result<Value, Box<dyn Error>> {
     let selected = detect_layout(&root);
     let mut value = change_status_json(&find_change(root, selected.layout, change)?);
     value["mcp"] = json!({"read_only": true, "destructive": false});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_agent_receipt_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.supersede.agent_receipt_validation_surface.mcp]
+    // r[impl cairn.supersede.agent_receipt_validation_surface.mcp.read_only]
+    let (path, receipt) = if input.get("receipt").is_some() {
+        let receipt = input["receipt"].clone();
+        ensure_inline_receipt_is_bounded(&receipt)?;
+        (None, receipt)
+    } else {
+        let root = mcp_root(input);
+        let selector = mcp_required_string(input, "path")?;
+        reject_selector_escape(selector)?;
+        let path = root.join(selector);
+        let receipt = read_agent_receipt_file(&path)?;
+        (Some(path), receipt)
+    };
+    let mut value =
+        agent_receipt_validation_receipt("mcp cairn_agent_receipt_validate", path, &receipt, true);
+    value["mcp"] = json!({"read_only": true, "destructive": false, "max_content_bytes": AGENT_RECEIPT_MAX_BYTES});
     Ok(with_receipt_hash(value))
 }
 
@@ -1700,6 +1764,66 @@ fn plan_action_kind(kind: PlanActionKind) -> &'static str {
     }
 }
 
+fn read_agent_receipt_file(path: &Path) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.supersede.agent_receipt_validation_surface.cli]
+    let metadata = fs::metadata(path)?;
+    if metadata.len() > AGENT_RECEIPT_MAX_BYTES {
+        return Err(format!(
+            "agent receipt exceeds bounded read limit: {} bytes > {}",
+            metadata.len(),
+            AGENT_RECEIPT_MAX_BYTES
+        )
+        .into());
+    }
+    let bytes = fs::read(path)?;
+    Ok(serde_json::from_slice(&bytes)?)
+}
+
+fn ensure_inline_receipt_is_bounded(receipt: &Value) -> Result<(), Box<dyn Error>> {
+    let bytes = serde_json::to_vec(receipt)?;
+    if bytes.len() as u64 > AGENT_RECEIPT_MAX_BYTES {
+        return Err(format!(
+            "inline agent receipt exceeds bounded read limit: {} bytes > {}",
+            bytes.len(),
+            AGENT_RECEIPT_MAX_BYTES
+        )
+        .into());
+    }
+    Ok(())
+}
+
+fn agent_receipt_validation_receipt(
+    command: &str,
+    path: Option<PathBuf>,
+    receipt: &Value,
+    is_mcp: bool,
+) -> Value {
+    // r[impl cairn.supersede.agent_receipt_validation_surface.cli]
+    // r[impl cairn.supersede.agent_receipt_validation_surface.cli.schema]
+    let report = evaluate_agent_run_completion(receipt);
+    let input_kind = if is_mcp && path.is_none() {
+        "inline"
+    } else {
+        "path"
+    };
+    with_receipt_hash(json!({
+        "command": command,
+        "path": path.map(path_string),
+        "input_kind": input_kind,
+        "valid": report.valid,
+        "verdict": report.verdict,
+        "issues": report.issues.iter().map(agent_gate_issue_json).collect::<Vec<_>>(),
+        "agent_receipt_hash": report.receipt_hash,
+        "input_hash": canonical_json_hash(receipt),
+        "stated_agent_receipt_hash": receipt.get("receipt_hash").and_then(Value::as_str).unwrap_or_default(),
+        "max_content_bytes": AGENT_RECEIPT_MAX_BYTES,
+    }))
+}
+
+fn agent_gate_issue_json(issue: &AgentRunGateIssue) -> Value {
+    json!({"code": issue.code, "message": issue.message})
+}
+
 fn path_string(path: impl Into<PathBuf>) -> String {
     path.into().display().to_string()
 }
@@ -1732,7 +1856,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  agent-receipt validate <path>\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

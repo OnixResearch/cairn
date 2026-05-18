@@ -145,10 +145,7 @@ nix run path:$PWD#cairn -- archive ready --root /path/to/repo --execute
 canonical receipt with `schema_version`, `task_id`, `agent_identity`,
 `input_hash`, `plan_hash`, `tool_manifest`, `mutation_manifest`,
 `verification_manifest`, `nondeterminism_manifest`, `verdict`, and
-`receipt_hash`. Successful receipts must carry verification evidence; side-effect
-receipts must cite a pre-mutation plan hash; hidden or forbidden entropy fails
-the completion gate. See `docs/agent-run-receipts.md` for wrapper guidance and
-privacy rules. r[verify cairn.supersede.agent_run_receipts.schema]
+`receipt_hash`. The CLI can replay a stored receipt with `agent-receipt validate <path>` and emits deterministic validation JSON for positive and negative fixtures. See `docs/agent-run-receipts.md` for wrapper guidance, validation commands, and privacy rules. r[verify cairn.supersede.agent_run_receipts.schema]
 r[verify cairn.supersede.agent_run_receipts.completion_gate]
 
 ## MCP server

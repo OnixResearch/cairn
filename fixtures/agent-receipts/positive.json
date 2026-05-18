@@ -1,0 +1,45 @@
+{
+  "schema_version": "cairn.agent_run_receipt.v1",
+  "task_id": "fixture-agent-run-success",
+  "agent_identity": {
+    "wrapper": "cairn-fixture",
+    "model": "captured-model"
+  },
+  "input_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "tool_manifest": {
+    "tools": [
+      {
+        "name": "terminal",
+        "mode": "read"
+      }
+    ]
+  },
+  "mutation_manifest": {
+    "files": [
+      "docs/agent-run-receipts.md"
+    ]
+  },
+  "verification_manifest": {
+    "checks": [
+      {
+        "name": "cargo test",
+        "verdict": "PASS",
+        "evidence_hash": "3333333333333333333333333333333333333333333333333333333333333333"
+      }
+    ]
+  },
+  "nondeterminism_manifest": {
+    "captured": [
+      {
+        "class": "model_provider",
+        "metadata": {
+          "provider": "fixture"
+        }
+      }
+    ],
+    "forbidden_uncaptured": []
+  },
+  "verdict": "success",
+  "receipt_hash": "087293fed6a978740e62020b0d175d3121f2612c97cce51a1722874e8f641405"
+}

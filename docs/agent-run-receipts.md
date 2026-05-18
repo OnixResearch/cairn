@@ -44,6 +44,18 @@ Each captured entry needs bounded metadata or a content hash. Forbidden or uncap
 
 `cairn-core` exposes pure helpers for `agent_run_receipt_hash`, `agent_run_receipt_issues`, and `evaluate_agent_run_completion`. A wrapper should run the completion gate before claiming success and cite the resulting receipt hash in its final response. The gate checks required fields, receipt hash consistency, side-effect plan linkage, verification evidence for successful verdicts, and nondeterminism hygiene. r[verify cairn.supersede.agent_run_receipts.completion_gate]
 
+## CLI and MCP validation
+
+Use the read-only CLI validation surface to replay a stored receipt without linking to `cairn-core`:
+
+```sh
+nix run .#cairn -- agent-receipt validate fixtures/agent-receipts/positive.json
+```
+
+The command emits deterministic JSON with `valid`, `verdict`, `issues`, `agent_receipt_hash`, `stated_agent_receipt_hash`, `input_hash`, and a wrapper `receipt_hash`. It returns process success for both passing and failing receipts; malformed JSON, missing files, or oversized files are command errors. r[verify cairn.supersede.agent_receipt_validation_surface.cli] r[verify cairn.supersede.agent_receipt_validation_surface.docs]
+
+MCP clients can call `cairn_agent_receipt_validate` with either a bounded repository-relative `path` plus optional `root`, or an inline `receipt` object. The tool is listed in the default read-only catalog and returns the same structured validation payload under `structuredContent`. r[verify cairn.supersede.agent_receipt_validation_surface.mcp]
+
 ## Replay fixtures
 
 Maintained replay fixtures should pair captured inputs, tool manifests, plans, mutations, verification evidence, and nondeterminism manifests with expected receipts. Positive fixtures must generate byte-identical receipts across repeated construction. Negative fixtures should cover missing plan linkage, missing verification evidence, uncaptured nondeterminism, and mutation outside the approved plan. r[verify cairn.supersede.agent_run_receipts.replay]

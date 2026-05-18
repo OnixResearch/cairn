@@ -33,6 +33,7 @@ All default tools include MCP annotations equivalent to `readOnlyHint=true` and 
 - `cairn_validate`: run validation and return a structured receipt.
 - `cairn_gate`: run proposal/design/tasks gate evaluation.
 - `cairn_gate_context`: return bounded gate context for a change.
+- `cairn_agent_receipt_validate`: validate a bounded agent-run receipt from a repository-relative path or inline JSON object. r[verify cairn.supersede.agent_receipt_validation_surface.mcp]
 - `cairn_sync_plan`: return a dry-run sync plan.
 - `cairn_archive_plan`: return a dry-run archive plan.
 - `cairn_migrate_plan`: return a dry-run legacy migration plan.
@@ -45,7 +46,7 @@ With `--allow-mutations`, execution tools are listed with `readOnlyHint=false` a
 
 ## Boundaries
 
-MCP artifact selectors are lifecycle identifiers, not arbitrary paths. Selectors that are absolute, dot-prefixed, contain `..`, or use backslash traversal are rejected. Returned spec content is bounded to 64 KiB per call. Transport, filesystem access, path bounding, process IO, and JSON-RPC handling live in `cairn-cli`; `cairn-core` remains transport-independent.
+MCP artifact selectors are lifecycle identifiers, not arbitrary paths. Selectors that are absolute, dot-prefixed, contain `..`, or use backslash traversal are rejected. Returned spec content and agent receipt inputs are bounded to 64 KiB per call. Transport, filesystem access, path bounding, process IO, and JSON-RPC handling live in `cairn-cli`; `cairn-core` remains transport-independent.
 
 ## Response shape
 

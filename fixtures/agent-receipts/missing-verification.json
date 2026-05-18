@@ -1,0 +1,39 @@
+{
+  "schema_version": "cairn.agent_run_receipt.v1",
+  "task_id": "fixture-agent-run-missing-verification",
+  "agent_identity": {
+    "wrapper": "cairn-fixture",
+    "model": "captured-model"
+  },
+  "input_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "tool_manifest": {
+    "tools": [
+      {
+        "name": "terminal",
+        "mode": "read"
+      }
+    ]
+  },
+  "mutation_manifest": {
+    "files": [
+      "docs/agent-run-receipts.md"
+    ]
+  },
+  "verification_manifest": {
+    "checks": []
+  },
+  "nondeterminism_manifest": {
+    "captured": [
+      {
+        "class": "model_provider",
+        "metadata": {
+          "provider": "fixture"
+        }
+      }
+    ],
+    "forbidden_uncaptured": []
+  },
+  "verdict": "success",
+  "receipt_hash": "f3961462c9bc70886ec4d474802c02d281ca15daa78686ac6e6460c981ea0257"
+}
