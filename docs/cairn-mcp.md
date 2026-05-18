@@ -13,7 +13,10 @@ For inspection or tests without a long-running stdio session:
 ```sh
 nix run .#cairn -- mcp --describe
 nix run .#cairn -- mcp --call cairn_status '{"root":"fixtures/basic"}'
+nix run .#cairn -- agent-receipt smoke-mcp --root .
 ```
+
+The `agent-receipt smoke-mcp` command is the maintained operator smoke receipt for the MCP/agent-receipt seam. It proves that the default MCP catalog includes `cairn_agent_receipt_validate` with a strict schema, validates `fixtures/agent-receipts/positive.json` through the MCP tool, rejects a malformed `cairn_gate` call before dispatch, and denies a default mutation request with `mutated=false`. Its JSON output includes stable `checks`, `receipt_tool_schema_hash`, `agent_receipt_validation_hash`, `agent_receipt_hash`, and top-level `receipt_hash` fields. r[verify cairn.supersede.mcp_agent_smoke_receipts.docs]
 
 Mutation-capable startup is explicit:
 

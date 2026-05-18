@@ -1077,6 +1077,38 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
 }
 
 #[test]
+fn mcp_agent_smoke_receipt_proves_operator_flow() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.mcp_agent_smoke_receipts.flow]
+    // r[verify cairn.supersede.mcp_agent_smoke_receipts.evidence]
+    // r[verify cairn.supersede.mcp_agent_smoke_receipts.read_only]
+    // r[verify cairn.supersede.mcp_agent_smoke_receipts.docs]
+    // r[verify cairn.supersede.mcp_agent_smoke_receipts.verification]
+    let receipt = run_json(&["agent-receipt", "smoke-mcp", "--root", "."])?;
+    assert_eq!(receipt["command"], "agent-receipt smoke-mcp");
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "pass");
+    assert_eq!(receipt["fixture"], "fixtures/agent-receipts/positive.json");
+    assert_eq!(receipt["mcp"]["read_only"], true);
+    assert_eq!(receipt["mutation_denial"]["allowed"], false);
+    assert_eq!(receipt["mutation_denial"]["mutated"], false);
+    assert!(receipt["catalog_tool_count"].as_u64().unwrap_or_default() >= 9);
+    assert!(receipt["invalid_argument_error"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("invalid arguments for cairn_gate"));
+    assert_hash_field(&receipt, "receipt_hash")?;
+    assert_hash_field(&receipt, "receipt_tool_schema_hash")?;
+    assert_hash_field(&receipt, "agent_receipt_validation_hash")?;
+    assert_hash_field(&receipt, "agent_receipt_hash")?;
+    let checks = receipt["checks"].as_array().ok_or("checks")?;
+    assert_eq!(checks.len(), 5);
+    assert!(checks
+        .iter()
+        .all(|check| check["passed"].as_bool() == Some(true)));
+    Ok(())
+}
+
+#[test]
 fn mcp_agent_receipt_validation_is_read_only_and_bounded() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.agent_receipt_validation_surface.mcp]
     // r[verify cairn.supersede.agent_receipt_validation_surface.mcp.read_only]

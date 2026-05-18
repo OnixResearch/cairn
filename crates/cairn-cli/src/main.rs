@@ -481,6 +481,11 @@ fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 false,
             ))
         }
+        "smoke-mcp" => {
+            let rest = iter.collect::<Vec<_>>();
+            let root = read_option(rest, "--root", ".");
+            print_json(mcp_agent_smoke_receipt(root)?)
+        }
         unknown => Err(format!("unknown agent-receipt subcommand: {unknown}").into()),
     }
 }
@@ -551,6 +556,73 @@ fn run_mcp_json_rpc(is_mutation_allowed: bool) -> Result<(), Box<dyn Error>> {
 fn mcp_tool_catalog(is_allow_mutations: bool) -> Value {
     // r[impl cairn.supersede.mcp_server.boundary.core]
     json!({"protocol_version": MCP_PROTOCOL_VERSION, "allow_mutations": is_allow_mutations, "tools": mcp_tools(is_allow_mutations)})
+}
+
+fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.supersede.mcp_agent_smoke_receipts]
+    // r[impl cairn.supersede.mcp_agent_smoke_receipts.flow]
+    // r[impl cairn.supersede.mcp_agent_smoke_receipts.evidence]
+    // r[impl cairn.supersede.mcp_agent_smoke_receipts.read_only]
+    let fixture = "fixtures/agent-receipts/positive.json";
+    let root_string = path_string(root.clone());
+    let catalog = mcp_tool_catalog(false);
+    let tools = catalog["tools"]
+        .as_array()
+        .ok_or("MCP catalog missing tools")?;
+    let receipt_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "cairn_agent_receipt_validate")
+        .ok_or("MCP catalog missing cairn_agent_receipt_validate")?;
+    let receipt_schema = receipt_tool["inputSchema"].clone();
+    let receipt_call = mcp_call_tool(
+        "cairn_agent_receipt_validate",
+        &json!({"root": root_string, "path": fixture}),
+        false,
+    )?;
+    let validation = &receipt_call["structuredContent"];
+    let invalid_argument_error = match mcp_call_tool(
+        "cairn_gate",
+        &json!({"root": path_string(root.clone()), "change": "demo", "stage": "archive"}),
+        false,
+    ) {
+        Ok(_) => return Err("MCP smoke expected invalid cairn_gate arguments to fail".into()),
+        Err(error) => error.to_string(),
+    };
+    let mutation_denial = mcp_call_tool(
+        "cairn_sync_execute",
+        &json!({"root": path_string(root.clone()), "change": "demo"}),
+        false,
+    )?;
+    let mutation_receipt = &mutation_denial["structuredContent"];
+    let checks = vec![
+        json!({"name": "catalog_lists_receipt_tool", "passed": true}),
+        json!({"name": "receipt_tool_schema_is_strict", "passed": receipt_schema["additionalProperties"] == false && receipt_schema["anyOf"].is_array()}),
+        json!({"name": "receipt_validation_is_structured", "passed": validation["valid"] == true && validation["mcp"]["read_only"] == true && validation["receipt_hash"].is_string()}),
+        json!({"name": "invalid_arguments_rejected_before_dispatch", "passed": invalid_argument_error.contains("invalid arguments for cairn_gate")}),
+        json!({"name": "default_mutation_denied_without_mutation", "passed": mutation_receipt["allowed"] == false && mutation_receipt["mutated"] == false}),
+    ];
+    let is_valid = checks
+        .iter()
+        .all(|check| check["passed"].as_bool().unwrap_or(false));
+    Ok(with_receipt_hash(json!({
+        "command": "agent-receipt smoke-mcp",
+        "root": path_string(root),
+        "fixture": fixture,
+        "valid": is_valid,
+        "verdict": if is_valid { "pass" } else { "fail" },
+        "checks": checks,
+        "catalog_tool_count": tools.len(),
+        "receipt_tool_schema_hash": canonical_json_hash(&receipt_schema),
+        "agent_receipt_validation_hash": validation["receipt_hash"].as_str().unwrap_or_default(),
+        "agent_receipt_hash": validation["agent_receipt_hash"].as_str().unwrap_or_default(),
+        "invalid_argument_error": invalid_argument_error,
+        "mutation_denial": {
+            "allowed": mutation_receipt["allowed"].clone(),
+            "mutated": mutation_receipt["mutated"].clone(),
+            "error": mutation_receipt["error"].clone()
+        },
+        "mcp": {"read_only": true, "destructive": false}
+    })))
 }
 
 fn mcp_tools(is_mutation_allowed: bool) -> Vec<Value> {
@@ -2063,7 +2135,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  agent-receipt validate <path>\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  agent-receipt validate <path>\n  agent-receipt smoke-mcp [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {
