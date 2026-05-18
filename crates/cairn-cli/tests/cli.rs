@@ -1057,6 +1057,7 @@ fn mcp_calls_return_structured_receipts() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.mcp_server.read_tools.status]
     // r[verify cairn.supersede.mcp_server.read_tools.gates]
     // r[verify cairn.supersede.mcp_server.verification]
+    // r[verify cairn.supersede.mcp_server.verification.docs]
     let value = run_json(&[
         "mcp",
         "--call",

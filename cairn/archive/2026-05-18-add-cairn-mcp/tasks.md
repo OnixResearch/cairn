@@ -26,4 +26,5 @@
   - Evidence 2026-05-18T16:35:03Z: `mcp_rejects_traversal_and_default_mutation` covers traversal rejection and default mutation denial.
 - [x] [serial] Document the MCP tools, safety flags, response schemas, and example agent workflows. r[cairn.supersede.mcp_server.verification]
   - Evidence 2026-05-18T16:35:03Z: added `docs/cairn-mcp.md` and README MCP section.
-- [ ] [serial] Run formatting, workspace tests, Clippy, Slotcar, `cairn validate --root .`, and `nix flake check`. r[cairn.supersede.mcp_server.verification]
+- [x] [serial] Run formatting, workspace tests, Clippy, Slotcar, `cairn validate --root .`, and `nix flake check`. r[cairn.supersede.mcp_server.verification]
+  - Evidence 2026-05-18T16:35:03Z: pre-archive `python3 tools/export-policy.py --check`, `cargo fmt --check`, `cargo test --workspace`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo tigerstyle check --output-format json --artifact-dir artifacts/slotcar-run`, `cairn validate --root .`, and all gates passed; `nix flake check` was deferred until after sync/archive because accepted-spec traceability is only complete after promotion.

@@ -465,9 +465,9 @@ fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.mcp_server.plan_tools]
     // r[impl cairn.supersede.mcp_server.mutation_guard]
     // r[impl cairn.supersede.mcp_server.boundary]
-    let allow_mutations = has_flag(&args, "--allow-mutations");
+    let is_mutation_allowed = has_flag(&args, "--allow-mutations");
     if has_flag(&args, "--describe") {
-        return print_json(mcp_tool_catalog(allow_mutations));
+        return print_json(mcp_tool_catalog(is_mutation_allowed));
     }
     if let Some(index) = args.iter().position(|arg| arg == "--call") {
         let name = args
@@ -478,12 +478,12 @@ fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             .map(|text| serde_json::from_str(text))
             .transpose()?
             .unwrap_or_else(|| json!({}));
-        return print_json(mcp_call_tool(name, &input, allow_mutations)?);
+        return print_json(mcp_call_tool(name, &input, is_mutation_allowed)?);
     }
-    run_mcp_json_rpc(allow_mutations)
+    run_mcp_json_rpc(is_mutation_allowed)
 }
 
-fn run_mcp_json_rpc(allow_mutations: bool) -> Result<(), Box<dyn Error>> {
+fn run_mcp_json_rpc(is_mutation_allowed: bool) -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
     for line in stdin.lock().lines() {
@@ -500,13 +500,13 @@ fn run_mcp_json_rpc(allow_mutations: bool) -> Result<(), Box<dyn Error>> {
                 "result": {"protocolVersion": MCP_PROTOCOL_VERSION, "serverInfo": {"name": "cairn", "version": env!("CARGO_PKG_VERSION")}, "capabilities": {"tools": {}}}
             }),
             "tools/list" => {
-                json!({"jsonrpc": "2.0", "id": id, "result": {"tools": mcp_tools(allow_mutations)}})
+                json!({"jsonrpc": "2.0", "id": id, "result": {"tools": mcp_tools(is_mutation_allowed)}})
             }
             "tools/call" => {
                 let params = &request["params"];
                 let name = params["name"].as_str().unwrap_or_default();
                 let arguments = params.get("arguments").unwrap_or(&Value::Null);
-                match mcp_call_tool(name, arguments, allow_mutations) {
+                match mcp_call_tool(name, arguments, is_mutation_allowed) {
                     Ok(result) => json!({"jsonrpc": "2.0", "id": id, "result": result}),
                     Err(error) => {
                         json!({"jsonrpc": "2.0", "id": id, "error": {"code": -32000, "message": error.to_string()}})
@@ -523,12 +523,21 @@ fn run_mcp_json_rpc(allow_mutations: bool) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn mcp_tool_catalog(allow_mutations: bool) -> Value {
-    json!({"protocol_version": MCP_PROTOCOL_VERSION, "allow_mutations": allow_mutations, "tools": mcp_tools(allow_mutations)})
+fn mcp_tool_catalog(is_allow_mutations: bool) -> Value {
+    // r[impl cairn.supersede.mcp_server.boundary.core]
+    json!({"protocol_version": MCP_PROTOCOL_VERSION, "allow_mutations": is_allow_mutations, "tools": mcp_tools(is_allow_mutations)})
 }
 
-fn mcp_tools(allow_mutations: bool) -> Vec<Value> {
-    let mut tools = vec![
+fn mcp_tools(is_mutation_allowed: bool) -> Vec<Value> {
+    let mut tools = mcp_read_and_plan_tools();
+    if is_mutation_allowed {
+        tools.extend(mcp_mutation_tools());
+    }
+    tools
+}
+
+fn mcp_read_and_plan_tools() -> Vec<Value> {
+    vec![
         mcp_tool(
             "cairn_status",
             true,
@@ -590,42 +599,42 @@ fn mcp_tools(allow_mutations: bool) -> Vec<Value> {
             false,
             "Plan legacy migration without mutation",
         ),
-    ];
-    if allow_mutations {
-        tools.extend([
-            mcp_tool(
-                "cairn_init",
-                false,
-                true,
-                "Initialize Cairn lifecycle files",
-            ),
-            mcp_tool(
-                "cairn_change_create",
-                false,
-                true,
-                "Create a Cairn change skeleton",
-            ),
-            mcp_tool(
-                "cairn_sync_execute",
-                false,
-                true,
-                "Execute a gated sync plan",
-            ),
-            mcp_tool(
-                "cairn_archive_execute",
-                false,
-                true,
-                "Execute a gated archive plan",
-            ),
-            mcp_tool(
-                "cairn_migrate_execute",
-                false,
-                true,
-                "Execute a legacy migration plan",
-            ),
-        ]);
-    }
-    tools
+    ]
+}
+
+fn mcp_mutation_tools() -> Vec<Value> {
+    vec![
+        mcp_tool(
+            "cairn_init",
+            false,
+            true,
+            "Initialize Cairn lifecycle files",
+        ),
+        mcp_tool(
+            "cairn_change_create",
+            false,
+            true,
+            "Create a Cairn change skeleton",
+        ),
+        mcp_tool(
+            "cairn_sync_execute",
+            false,
+            true,
+            "Execute a gated sync plan",
+        ),
+        mcp_tool(
+            "cairn_archive_execute",
+            false,
+            true,
+            "Execute a gated archive plan",
+        ),
+        mcp_tool(
+            "cairn_migrate_execute",
+            false,
+            true,
+            "Execute a legacy migration plan",
+        ),
+    ]
 }
 
 fn mcp_tool(name: &str, read_only: bool, destructive: bool, description: &str) -> Value {
@@ -635,7 +644,7 @@ fn mcp_tool(name: &str, read_only: bool, destructive: bool, description: &str) -
 fn mcp_call_tool(
     name: &str,
     input: &Value,
-    allow_mutations: bool,
+    is_mutation_allowed: bool,
 ) -> Result<Value, Box<dyn Error>> {
     let receipt = match name {
         "cairn_status" => mcp_status(input)?,
@@ -654,7 +663,7 @@ fn mcp_call_tool(
         | "cairn_sync_execute"
         | "cairn_archive_execute"
         | "cairn_migrate_execute"
-            if !allow_mutations =>
+            if !is_mutation_allowed =>
         {
             mutation_denied(name)
         }
@@ -743,6 +752,7 @@ fn mcp_list_content(input: &Value) -> Result<Value, Box<dyn Error>> {
 }
 
 fn mcp_read_spec(input: &Value) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.supersede.mcp_server.read_tools.artifacts]
     let root = mcp_root(input);
     let spec = mcp_required_string(input, "spec")?;
     reject_selector_escape(spec)?;
@@ -853,6 +863,8 @@ fn mcp_gate_context(input: &Value) -> Result<Value, Box<dyn Error>> {
 }
 
 fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.supersede.mcp_server.plan_tools.lifecycle]
+    // r[impl cairn.supersede.mcp_server.mutation_guard.enabled]
     let root = mcp_root(input);
     let change = mcp_required_string(input, "change")?;
     reject_selector_escape(change)?;
@@ -931,6 +943,7 @@ fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
 }
 
 fn mcp_migrate(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.supersede.mcp_server.plan_tools.migration]
     let root = mcp_root(input);
     let source = mcp_required_string(input, "source")?;
     let policy = load_policy_file(mcp_policy(input))?;
