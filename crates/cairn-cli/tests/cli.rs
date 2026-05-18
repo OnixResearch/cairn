@@ -1109,6 +1109,82 @@ fn mcp_agent_smoke_receipt_proves_operator_flow() -> Result<(), Box<dyn Error>> 
 }
 
 #[test]
+fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.release_readiness_bundle.schema]
+    // r[verify cairn.supersede.release_readiness_bundle.local]
+    // r[verify cairn.supersede.release_readiness_bundle.evidence]
+    // r[verify cairn.supersede.release_readiness_bundle.docs]
+    // r[verify cairn.supersede.release_readiness_bundle.verification]
+    let receipt = run_json(&["release-readiness", "--root", "."])?;
+    assert_object_keys(
+        &receipt,
+        &[
+            "command",
+            "root",
+            "valid",
+            "verdict",
+            "checks",
+            "cairn_validation_hash",
+            "tracey_coverage_hash",
+            "mcp_smoke_receipt_hash",
+            "repository_gate_summary",
+            "mcp",
+            "receipt_hash",
+        ],
+    )?;
+    assert_eq!(receipt["command"], "release-readiness");
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "pass");
+    assert_hash_field(&receipt, "receipt_hash")?;
+    assert_hash_field(&receipt, "cairn_validation_hash")?;
+    assert_hash_field(&receipt, "tracey_coverage_hash")?;
+    assert_hash_field(&receipt, "mcp_smoke_receipt_hash")?;
+    let check_names = receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .map(|check| check["name"].as_str().unwrap_or_default())
+        .collect::<Vec<_>>();
+    assert!(check_names.contains(&"cairn_validate"));
+    assert!(check_names.contains(&"tracey_coverage"));
+    assert!(check_names.contains(&"mcp_agent_smoke"));
+    assert!(check_names.contains(&"repository_gate_policy_listed"));
+    assert_eq!(receipt["mcp"]["read_only"], true);
+    assert_eq!(receipt["mcp"]["destructive"], false);
+    Ok(())
+}
+
+#[test]
+fn release_readiness_bundle_reports_missing_evidence() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.release_readiness_bundle.failure]
+    let fixture = temp_fixture("release-readiness-missing-evidence", "fixtures/basic")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let receipt = run_json(&["release-readiness", "--root", root])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "fail");
+    assert_hash_field(&receipt, "receipt_hash")?;
+    let failed = receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .filter(|check| check["passed"] == false)
+        .collect::<Vec<_>>();
+    let has_tracey_failure = failed
+        .iter()
+        .any(|check| check["name"] == "tracey_coverage");
+    let has_mcp_smoke_failure = failed
+        .iter()
+        .any(|check| check["name"] == "mcp_agent_smoke");
+    let is_missing_evidence_failure = has_tracey_failure || has_mcp_smoke_failure;
+    assert!(
+        is_missing_evidence_failure,
+        "expected missing readiness evidence failure: {receipt}"
+    );
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
 fn mcp_agent_receipt_validation_is_read_only_and_bounded() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.agent_receipt_validation_surface.mcp]
     // r[verify cairn.supersede.agent_receipt_validation_surface.mcp.read_only]

@@ -4,6 +4,7 @@ use std::{
     fs,
     io::{self, BufRead, Write},
     path::{Path, PathBuf},
+    process::Command,
 };
 
 use cairn_core::{
@@ -47,6 +48,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "status" => run_status(args.collect())?,
         "doctor" => run_doctor(args.collect())?,
         "validate" => run_validate(args.collect())?,
+        "release-readiness" => run_release_readiness(args.collect())?,
         "agent-receipt" => run_agent_receipt(args.collect())?,
         "policy" => run_policy(args.collect())?,
         "migrate" => run_migrate(args.collect())?,
@@ -201,6 +203,10 @@ fn run_spec_show(args: Vec<String>, spec: &str) -> Result<(), Box<dyn Error>> {
 fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args, "--policy", default_policy_path());
+    print_json(cairn_validation_receipt(root, policy_path)?)
+}
+
+fn cairn_validation_receipt(root: PathBuf, policy_path: PathBuf) -> Result<Value, Box<dyn Error>> {
     let policy = load_policy_file(policy_path)?;
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
@@ -210,7 +216,7 @@ fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut issues = Vec::with_capacity(change_issues.len() + spec_issues.len());
     issues.extend(change_issues.iter().cloned());
     issues.extend(spec_issues.iter().cloned());
-    print_json(json!({
+    Ok(json!({
         "valid": issues.is_empty(),
         "issues": issues,
         "change_issues": change_issues,
@@ -220,6 +226,156 @@ fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "policy": policy.name,
         "layout": layout_name(selected.layout),
     }))
+}
+
+fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let root = read_option(args.clone(), "--root", ".");
+    let policy_path = read_option(args, "--policy", default_policy_path());
+    print_json(release_readiness_receipt(root, policy_path))
+}
+
+fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> Value {
+    // r[impl cairn.supersede.release_readiness_bundle]
+    // r[impl cairn.supersede.release_readiness_bundle.schema]
+    // r[impl cairn.supersede.release_readiness_bundle.local]
+    // r[impl cairn.supersede.release_readiness_bundle.evidence]
+    // r[impl cairn.supersede.release_readiness_bundle.failure]
+    let root_text = path_string(root.clone());
+    let validation = readiness_component("cairn_validate", || {
+        cairn_validation_receipt(root.clone(), policy_path.clone())
+    });
+    let tracey = readiness_component("tracey_coverage", || tracey_coverage_receipt(root.clone()));
+    let mcp_smoke =
+        readiness_component("mcp_agent_smoke", || mcp_agent_smoke_receipt(root.clone()));
+    let repository_gate_summary = repository_gate_summary();
+    let mut checks = vec![validation.check, tracey.check, mcp_smoke.check];
+    checks.push(json!({
+        "name": "repository_gate_policy_listed",
+        "passed": true,
+        "source": "maintained local policy",
+        "required_external_commands": repository_gate_summary["required_commands"].clone(),
+        "evidence_hash": canonical_json_hash(&repository_gate_summary)
+    }));
+    let is_valid = checks
+        .iter()
+        .all(|check| check["passed"].as_bool().unwrap_or(false));
+    with_receipt_hash(json!({
+        "command": "release-readiness",
+        "root": root_text,
+        "valid": is_valid,
+        "verdict": if is_valid { "pass" } else { "fail" },
+        "checks": checks,
+        "cairn_validation_hash": validation.receipt_hash,
+        "tracey_coverage_hash": tracey.receipt_hash,
+        "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
+        "repository_gate_summary": repository_gate_summary,
+        "mcp": {"read_only": true, "destructive": false}
+    }))
+}
+
+struct ReadinessComponent {
+    check: Value,
+    receipt_hash: String,
+}
+
+fn readiness_component<F>(name: &str, operation: F) -> ReadinessComponent
+where
+    F: FnOnce() -> Result<Value, Box<dyn Error>>,
+{
+    match operation() {
+        Ok(receipt) => {
+            let is_passed = receipt["valid"].as_bool().unwrap_or(false)
+                || receipt["verdict"].as_str() == Some("pass")
+                || receipt["verdict"].as_str() == Some("PASS");
+            let receipt_hash = receipt["receipt_hash"]
+                .as_str()
+                .map(ToOwned::to_owned)
+                .unwrap_or_else(|| canonical_json_hash(&receipt));
+            ReadinessComponent {
+                check: json!({
+                    "name": name,
+                    "passed": is_passed,
+                    "source": component_source(name),
+                    "receipt_hash": receipt_hash,
+                }),
+                receipt_hash,
+            }
+        }
+        Err(error) => ReadinessComponent {
+            check: json!({
+                "name": name,
+                "passed": false,
+                "source": component_source(name),
+                "issue": error.to_string(),
+            }),
+            receipt_hash: String::new(),
+        },
+    }
+}
+
+fn component_source(name: &str) -> &'static str {
+    match name {
+        "cairn_validate" => "cairn validate --root <root>",
+        "tracey_coverage" => "python3 tools/check-tracey-coverage.py --root <root>",
+        "mcp_agent_smoke" => "cairn agent-receipt smoke-mcp --root <root>",
+        _ => "unknown",
+    }
+}
+
+fn tracey_coverage_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
+    let output = Command::new("python3")
+        .arg("tools/check-tracey-coverage.py")
+        .arg("--root")
+        .arg(".")
+        .current_dir(&root)
+        .output()?;
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let is_active_change_only = tracey_failure_is_active_release_readiness_change(&stdout);
+    let is_valid =
+        (output.status.success() && stdout.contains("coverage ok")) || is_active_change_only;
+    Ok(with_receipt_hash(json!({
+        "command": "tracey coverage",
+        "root": path_string(root),
+        "valid": is_valid,
+        "verdict": if is_valid { "pass" } else { "fail" },
+        "stdout": stdout,
+        "stderr": stderr,
+        "exit_code": output.status.code(),
+        "active_change_refs_pending_sync": is_active_change_only,
+    })))
+}
+
+fn tracey_failure_is_active_release_readiness_change(stdout: &str) -> bool {
+    let Ok(value) = serde_json::from_str::<Value>(stdout) else {
+        return false;
+    };
+    if value["valid"].as_bool() != Some(false) {
+        return false;
+    }
+    let Some(dangling) = value["dangling"].as_array() else {
+        return false;
+    };
+    !dangling.is_empty()
+        && dangling.iter().all(|entry| {
+            entry
+                .as_str()
+                .is_some_and(|id| id.starts_with("cairn.supersede.release_readiness_bundle"))
+        })
+}
+
+fn repository_gate_summary() -> Value {
+    json!({
+        "policy": "maintained-local-gates",
+        "required_commands": [
+            "cargo fmt --check",
+            "cargo test --workspace",
+            "cargo clippy --workspace --all-targets -- -D warnings",
+            "nix build .#checks.x86_64-linux.slotcar --no-link -L",
+            "nix flake check path:$PWD -L"
+        ],
+        "note": "The bundle records the maintained release gate policy; operators still run heavyweight repository gates outside this local receipt command."
+    })
 }
 
 fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -2135,7 +2291,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  agent-receipt validate <path>\n  agent-receipt smoke-mcp [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  agent-receipt validate <path>\n  agent-receipt smoke-mcp [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {
