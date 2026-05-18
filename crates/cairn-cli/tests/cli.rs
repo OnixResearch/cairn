@@ -469,6 +469,11 @@ fn migrate_execute_blocks_existing_native_destination() -> Result<(), Box<dyn Er
 fn help_lists_commands() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.hermes_skill] r[verify cairn.supersede.hermes_skill.discover]
     // r[verify cairn.supersede.hermes_skill.contracts] r[verify cairn.supersede.hermes_skill.audit]
+    // r[verify cairn.supersede.hermes_skill.canonical_cairn]
+    // r[verify cairn.supersede.hermes_skill.canonical_cairn.path]
+    // r[verify cairn.supersede.hermes_skill.canonical_cairn.live]
+    // r[verify cairn.supersede.hermes_skill.redirect]
+    // r[verify cairn.supersede.hermes_skill.redirect.local]
     let output = cairn().arg("--help").output()?;
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
