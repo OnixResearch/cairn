@@ -1,0 +1,812 @@
+{
+  "buckets": {
+    "compatibility-alias": 28,
+    "historical-archive": 29,
+    "intentional-reference": 75,
+    "requirement-id-history": 1
+  },
+  "canonical": "cairn",
+  "legacy": "ironspec",
+  "occurrences": [
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "cairn/archive/2026-05-18-deterministic-policy-receipts/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "cairn/archive/2026-05-18-receipt-schema-stability/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "cairn/archive/2026-05-18-remove-legacy-fallback/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 0,
+      "path": "cairn/changes/rename-ironspec-to-cairn/design.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 0,
+      "path": "cairn/changes/rename-ironspec-to-cairn/proposal.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 0,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 6,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "r[cairn.supersede.native_layout] The system MUST use the canonical `cairn/` lifecycle layout for normal runtime commands after the rename and MUST NOT silently fall back to legacy `ironspec/` or `openspec/` lifecycle content."
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 17,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- GIVEN a repository containing both canonical `cairn/` lifecycle content and legacy `ironspec/` lifecycle content"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 24,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- GIVEN a repository containing only legacy `ironspec/` lifecycle content"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 30,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "r[cairn.supersede.migrate_openspec] The system MUST provide deterministic migration bridges from legacy `openspec/` and `ironspec/` layouts to canonical `cairn/` layout without using legacy content as an implicit runtime fallback."
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 32,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "#### Scenario: Dry-run legacy Ironspec migration plan"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 33,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "r[cairn.supersede.migrate_openspec.ironspec_dry_run]"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 34,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- GIVEN a repository with legacy `ironspec/` lifecycle content"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 35,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- WHEN the operator runs `cairn migrate ironspec --root <path>`"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 36,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- THEN the CLI emits a deterministic JSON migration plan from legacy `ironspec/` paths into canonical `cairn/` paths"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 39,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "#### Scenario: Execute legacy Ironspec migration copy"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 40,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "r[cairn.supersede.migrate_openspec.ironspec_execute]"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 41,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- GIVEN a repository with legacy `ironspec/` lifecycle content and no conflicting canonical destination files"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 42,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- WHEN the operator runs `cairn migrate ironspec --root <path> --execute`"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 47,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "r[cairn.supersede.rename_cairn] The system MUST expose `Cairn` / `cairn` as the canonical project, CLI, package, docs, and runtime lifecycle identity while preserving legacy `ironspec` only as explicit compatibility where needed."
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 54,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- AND they do not present `ironspec` as the canonical command"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 58,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- GIVEN the legacy `ironspec` command alias is installed during the migration window"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 61,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- AND the JSON receipt or human-facing warning identifies `ironspec` as a compatibility alias for `cairn`"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 68,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- AND any remaining `ironspec` surfaces are documented compatibility aliases or historical references"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 74,
+      "path": "cairn/changes/rename-ironspec-to-cairn/specs/ironspec-supersession/spec.md",
+      "text": "- THEN every remaining `ironspec` occurrence is classified as `needs-fix`, `compatibility-alias`, `historical-archive`, `requirement-id-history`, or `intentional-reference`"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 0,
+      "path": "cairn/changes/rename-ironspec-to-cairn/tasks.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 9,
+      "path": "cairn/changes/rename-ironspec-to-cairn/tasks.md",
+      "text": "- [x] [serial] Implement explicit legacy `ironspec` compatibility aliases and canonical-over-legacy lifecycle layout precedence. r[cairn.supersede.rename_cairn.legacy_alias] r[cairn.supersede.native_layout.prefer_cairn]"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 10,
+      "path": "cairn/changes/rename-ironspec-to-cairn/tasks.md",
+      "text": "- [x] [serial] Add deterministic migration support from legacy `ironspec/` lifecycle content to canonical `cairn/` content. r[cairn.supersede.migrate_openspec.ironspec_dry_run] r[cairn.supersede.migrate_openspec.ironspec_execute]"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 0,
+      "path": "cairn/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 13,
+      "path": "crates/cairn-cli/Cargo.toml",
+      "text": "name = \"ironspec\""
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 14,
+      "path": "crates/cairn-cli/Cargo.toml",
+      "text": "path = \"src/ironspec.rs\""
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 0,
+      "path": "crates/cairn-cli/src/ironspec.rs",
+      "text": "<path>"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 10,
+      "path": "crates/cairn-cli/src/main.rs",
+      "text": "build_change_skeleton, build_doctor_report, build_ironspec_migration_plan,"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 32,
+      "path": "crates/cairn-cli/src/main.rs",
+      "text": "if invoked_as.ends_with(\"ironspec\") {"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 33,
+      "path": "crates/cairn-cli/src/main.rs",
+      "text": "eprintln!(\"warning: `ironspec` is a compatibility alias; use canonical `cairn`\");"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 435,
+      "path": "crates/cairn-cli/src/main.rs",
+      "text": "return Err(\"migrate requires a source: openspec or ironspec\".into());"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 445,
+      "path": "crates/cairn-cli/src/main.rs",
+      "text": "\"ironspec\" => build_ironspec_migration_plan(inputs, is_execute),"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 863,
+      "path": "crates/cairn-cli/src/main.rs",
+      "text": "\"ironspec\" => Ok(LifecycleLayout::LegacyIronspec),"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 914,
+      "path": "crates/cairn-cli/src/main.rs",
+      "text": ".or_else(|_| env::var(\"IRONSPEC_ARCHIVE_DATE\"))"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 1178,
+      "path": "crates/cairn-cli/src/main.rs",
+      "text": "\"usage: cairn <command> [args]\\n\\ncommands:\\n  init [--root PATH]\\n  change create <name> [--root PATH]\\n  change list [--root PATH]\\n  change show <name> [--root PATH]\\n  spec list [--root PATH]\\n  spec show <id> [--root PATH]\\n  status [--root PATH]\\n  doctor [--root PATH] [--policy PATH]\\n  validate [--root PATH] [--policy PATH]\\n  policy [--policy PATH]\\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\\n  gate-context <change> [--root PATH]\\n  sync <change> [--root PATH] [--policy PATH] [--execute]\\n  archive <change> [--root PATH] [--policy PATH] [--execute]\""
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 21,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "fn ironspec_alias() -> Command {"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 22,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "let mut command = Command::new(env!(\"CARGO_BIN_EXE_ironspec\"));"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 513,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "stdout.contains(\"migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\"),"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 965,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "command.env(\"IRONSPEC_ARCHIVE_DATE\", \"2026-05-17\").args(["
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 1008,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "fn legacy_ironspec_alias_warns_and_runs_cairn_behavior() -> Result<(), Box<dyn Error>> {"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 1010,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "let mut command = ironspec_alias();"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 1025,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "fn migrate_legacy_ironspec_to_cairn_explicitly() -> Result<(), Box<dyn Error>> {"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 1026,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "// r[verify cairn.supersede.migrate_openspec.ironspec_dry_run]"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 1027,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "// r[verify cairn.supersede.migrate_openspec.ironspec_execute]"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 1029,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "let root = temp_fixture(\"migrate-ironspec\", \"fixtures/basic\")?;"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 1030,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "fs::rename(root.join(\"cairn\"), root.join(\"ironspec\"))?;"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 1038,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "let dry_run = run_json(&[\"migrate\", \"ironspec\", \"--root\", &root_text])?;"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 1039,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "assert_eq!(dry_run[\"command\"], \"migrate_ironspec\");"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 1040,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "assert_eq!(dry_run[\"source_layout\"], \"ironspec\");"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 1046,
+      "path": "crates/cairn-cli/tests/cli.rs",
+      "text": "let executed = run_json(&[\"migrate\", \"ironspec\", \"--root\", &root_text, \"--execute\"])?;"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 23,
+      "path": "crates/cairn-core/src/lib.rs",
+      "text": "archive_dir, build_change_skeleton, build_change_skeleton_for, build_ironspec_migration_plan,"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 22,
+      "path": "crates/cairn-core/src/verified/lifecycle.rs",
+      "text": "LegacyIronspec,"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 98,
+      "path": "crates/cairn-core/src/verified/lifecycle.rs",
+      "text": "LifecycleLayout::LegacyIronspec => \"ironspec\","
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 106,
+      "path": "crates/cairn-core/src/verified/lifecycle.rs",
+      "text": "LifecycleLayout::LegacyIronspec => \"ironspec\","
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 122,
+      "path": "crates/cairn-core/src/verified/lifecycle.rs",
+      "text": "LifecycleLayout::LegacyIronspec => \"ironspec/archive\","
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 133,
+      "path": "crates/cairn-core/src/verified/lifecycle.rs",
+      "text": "pub fn build_ironspec_migration_plan(inputs: Vec<MigrationInput>, execute: bool) -> MigrationPlan {"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 134,
+      "path": "crates/cairn-core/src/verified/lifecycle.rs",
+      "text": "// r[impl cairn.supersede.migrate_openspec.ironspec_dry_run]"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 135,
+      "path": "crates/cairn-core/src/verified/lifecycle.rs",
+      "text": "// r[impl cairn.supersede.migrate_openspec.ironspec_execute]"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 136,
+      "path": "crates/cairn-core/src/verified/lifecycle.rs",
+      "text": "build_migration_plan_from(LifecycleLayout::LegacyIronspec, inputs, execute)"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 0,
+      "path": "docs/hermes/ironspec-workflow-skill.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 21,
+      "path": "flake.nix",
+      "text": "ironspec = self.packages.${pkgs.stdenv.hostPlatform.system}.cairn;"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 31,
+      "path": "flake.nix",
+      "text": "ironspec = {"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 33,
+      "path": "flake.nix",
+      "text": "program = \"${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/ironspec\";"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 34,
+      "path": "flake.nix",
+      "text": "meta.description = \"Run the legacy ironspec compatibility alias for Cairn\";"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 156,
+      "path": "flake.nix",
+      "text": "legacy_ironspec=$(mktemp -d)"
+    },
+    {
+      "bucket": "compatibility-alias",
+      "line": 157,
+      "path": "flake.nix",
+      "text": "cp -R fixtures/basic/. \"$legacy_ironspec\"/"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 158,
+      "path": "flake.nix",
+      "text": "mv \"$legacy_ironspec/cairn\" \"$legacy_ironspec/ironspec\""
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 159,
+      "path": "flake.nix",
+      "text": "$cairn status --root \"$legacy_ironspec\" >/tmp/cairn-legacy-ironspec-status.json"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 160,
+      "path": "flake.nix",
+      "text": "python3 -c 'import json; data=json.load(open(\"/tmp/cairn-legacy-ironspec-status.json\")); assert data[\"layout\"] == \"cairn\", data; assert data[\"specs\"] == [], data; assert data[\"changes\"] == [], data'"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 161,
+      "path": "flake.nix",
+      "text": "$cairn migrate ironspec --root \"$legacy_ironspec\" >/tmp/cairn-migrate-ironspec-plan.json"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 162,
+      "path": "flake.nix",
+      "text": "python3 -c 'import json; data=json.load(open(\"/tmp/cairn-migrate-ironspec-plan.json\")); assert data[\"source_layout\"] == \"ironspec\", data; assert data[\"destination_layout\"] == \"cairn\", data; assert data[\"dry_run\"] is True, data; assert data[\"blocked\"] is False, data; assert data[\"mutated\"] is False, data; assert len(data[\"actions\"]) > 0, data'"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 163,
+      "path": "flake.nix",
+      "text": "$cairn migrate ironspec --root \"$legacy_ironspec\" --execute >/tmp/cairn-migrate-ironspec-execute.json"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 164,
+      "path": "flake.nix",
+      "text": "python3 -c 'import json; data=json.load(open(\"/tmp/cairn-migrate-ironspec-execute.json\")); assert data[\"dry_run\"] is False, data; assert data[\"blocked\"] is False, data; assert data[\"mutated\"] is True, data'"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-add-doctor-diagnostics/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-add-tracey-coverage-rail/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-align-gate-policy-with-agentkit/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-align-supersession-native-layout/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-create-ironspec-hermes-skill/design.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-create-ironspec-hermes-skill/proposal.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-create-ironspec-hermes-skill/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-create-ironspec-hermes-skill/tasks.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-ears-requirements/design.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-ears-requirements/proposal.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-ears-requirements/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-ears-requirements/tasks.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-native-lifecycle-migration/design.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-native-lifecycle-migration/proposal.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-native-lifecycle-migration/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-native-lifecycle-migration/tasks.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-read-parity/design.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-read-parity/proposal.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-read-parity/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-read-parity/tasks.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-supersedes-openspec/design.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-supersedes-openspec/proposal.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-supersedes-openspec/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-ironspec-supersedes-openspec/tasks.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-17-tighten-gate-policy-references/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "historical-archive",
+      "line": 0,
+      "path": "openspec/changes/archive/2026-05-18-remove-legacy-fallback/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "requirement-id-history",
+      "line": 0,
+      "path": "openspec/specs/ironspec-supersession/spec.md",
+      "text": "<path>"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 2,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"\"\"Classify remaining legacy `ironspec` name occurrences after the Cairn rename.\"\"\""
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 26,
+      "path": "tools/check-rename-classification.py",
+      "text": "LEGACY = \"ironspec\""
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 63,
+      "path": "tools/check-rename-classification.py",
+      "text": "if \"rename-ironspec-to-cairn\" in path_text or path_text == \"tools/check-rename-classification.py\":"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 65,
+      "path": "tools/check-rename-classification.py",
+      "text": "if \"ironspec\" in path_text and ("
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 68,
+      "path": "tools/check-rename-classification.py",
+      "text": "or \"src/ironspec.rs\" in path_text"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 69,
+      "path": "tools/check-rename-classification.py",
+      "text": "or \"ironspec-supersession\" in path_text"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 72,
+      "path": "tools/check-rename-classification.py",
+      "text": "if \"r[\" in text and \"ironspec.\" in text:"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 74,
+      "path": "tools/check-rename-classification.py",
+      "text": "if \"ironspec\" in text and \"cairn\" in text:"
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 81,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"migrate ironspec\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 82,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"migrate_ironspec\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 83,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"legacyironspec\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 84,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"build_ironspec_migration_plan\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 85,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"cargo_bin_exe_ironspec\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 86,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"ironspec_archive_date\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 87,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"name = \\\"ironspec\\\"\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 88,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"path = \\\"src/ironspec.rs\\\"\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 89,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"bin/ironspec\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 90,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"invoked_as.ends_with(\\\"ironspec\\\")\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 91,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"source_layout\\\"] == \\\"ironspec\\\"\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 92,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"dry_run[\\\"source_layout\\\"], \\\"ironspec\\\"\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 93,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"source_layout\\\", \\\"ironspec\\\"\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 94,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"migrate-ironspec\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 95,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"ironspec = {\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 96,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"\\\"ironspec\\\" =>\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 97,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"\\\"ironspec\\\",\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 98,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"openspec or ironspec\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 99,
+      "path": "tools/check-rename-classification.py",
+      "text": "\"<openspec|ironspec>\","
+    },
+    {
+      "bucket": "intentional-reference",
+      "line": 101,
+      "path": "tools/check-rename-classification.py",
+      "text": "if \"ironspec\" in text and any(token in text for token in compatibility_tokens):"
+    }
+  ],
+  "total": 133,
+  "valid": true
+}

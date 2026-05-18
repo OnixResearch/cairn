@@ -1,0 +1,23 @@
+{
+  "actions": [
+    {
+      "description": "merge delta spec into main specs: fixtures/basic/cairn/changes/demo/specs/demo/spec.md",
+      "kind": "sync_delta_spec",
+      "path": "fixtures/basic/cairn/changes/demo/specs/demo/spec.md"
+    }
+  ],
+  "blocked": false,
+  "change": "demo",
+  "delta_specs": [
+    "fixtures/basic/cairn/changes/demo/specs/demo/spec.md"
+  ],
+  "dry_run": true,
+  "input_hash": "837b2fc49a705eef3b06d7904d0bfd98fd3a45a369f4bcddd4a86d47a4cc5d5e",
+  "layout": "cairn",
+  "mutated": false,
+  "plan_hash": "d8b1920810e99b63934023aa9e2ca9ad3f44ab04c9b6819c349eb45ee12ca48c",
+  "policy": "cairn-default",
+  "policy_hash": "44a32b13a1e70b8e5953c74600c9ccabc865f9f1c6635c03023de3105c0f8ee0",
+  "reasons": [],
+  "receipt_hash": "9cdd6d230b84ecaa84d422395013d0ab9cfcb3fb501ff54eb63393a47fa9a9cd"
+}

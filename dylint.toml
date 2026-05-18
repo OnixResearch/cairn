@@ -1,0 +1,11 @@
+# Consumer-owned Slotcar lint configuration.
+#
+# Slotcar is wired from the sibling checkout through `flake.nix`:
+#
+#   nix develop -c cargo tigerstyle check
+#
+# Keep repo-specific thresholds, allowlists, and rollout controls here.
+
+[slotcar]
+
+[slotcar.lint_levels]

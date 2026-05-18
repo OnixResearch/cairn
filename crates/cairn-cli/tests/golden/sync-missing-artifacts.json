@@ -1,0 +1,20 @@
+{
+  "actions": [],
+  "blocked": true,
+  "change": "missing",
+  "delta_specs": [
+    "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
+  ],
+  "dry_run": true,
+  "input_hash": "e746018396426c1c364dded4d6b0de7842a97d277ec0ba2d8814ea8156aa93cd",
+  "layout": "cairn",
+  "mutated": false,
+  "plan_hash": "45dcfe3973973eb296d19ea2e2b2a51c6a984bf0621e4abf957dbcc79c7959f8",
+  "policy": "cairn-default",
+  "policy_hash": "44a32b13a1e70b8e5953c74600c9ccabc865f9f1c6635c03023de3105c0f8ee0",
+  "reasons": [
+    "missing: missing proposal.md",
+    "missing: missing tasks.md"
+  ],
+  "receipt_hash": "16d91dde5e7bf9d6082c3d3ca683b38f662aada29830a1b368903dbeb133760b"
+}

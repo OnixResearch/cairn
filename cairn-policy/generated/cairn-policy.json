@@ -1,0 +1,269 @@
+{
+  "exemption_marker_policy": {
+    "date_fields": [
+      "until"
+    ],
+    "optional_fields": [
+      "scope"
+    ],
+    "required_fields": [
+      "reason",
+      "owner",
+      "until"
+    ]
+  },
+  "exemptions": [],
+  "finding_defaults": {
+    "class": "omission",
+    "promoted": "no",
+    "route": "auto-fix",
+    "scope": "tasks",
+    "severity": "high"
+  },
+  "gate_policy": {
+    "finding": {
+      "class": "omission",
+      "promoted": "no",
+      "route": "auto-fix",
+      "scope": "tasks",
+      "severity": "high"
+    },
+    "ignore_archives": true,
+    "stages": [
+      "proposal",
+      "design",
+      "tasks"
+    ]
+  },
+  "lifecycle_stages": [
+    "proposal",
+    "design",
+    "tasks",
+    "implementation",
+    "archive"
+  ],
+  "mutation_policy": {
+    "archive": {
+      "require_passing_gate": true
+    },
+    "migrate": {
+      "require_manifest": true
+    },
+    "sync": {
+      "require_passing_gate": true
+    }
+  },
+  "name": "cairn-default",
+  "receipt_hash_policy": {
+    "algorithm": "BLAKE3",
+    "canonicalization": "serde_json_compact_sorted_keys",
+    "required": true
+  },
+  "receipt_schemas": [
+    {
+      "action_keys": [],
+      "command": "gate",
+      "hash_fields": [
+        "input_hash",
+        "policy_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [
+        "message",
+        "promoted",
+        "scope"
+      ],
+      "top_level_keys": [
+        "change",
+        "input_hash",
+        "issues",
+        "layout",
+        "policy",
+        "policy_hash",
+        "receipt_hash",
+        "stage",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [
+        "description",
+        "kind",
+        "path"
+      ],
+      "command": "sync",
+      "hash_fields": [
+        "input_hash",
+        "plan_hash",
+        "policy_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [],
+      "top_level_keys": [
+        "actions",
+        "blocked",
+        "change",
+        "delta_specs",
+        "dry_run",
+        "input_hash",
+        "layout",
+        "mutated",
+        "plan_hash",
+        "policy",
+        "policy_hash",
+        "reasons",
+        "receipt_hash"
+      ]
+    },
+    {
+      "action_keys": [
+        "description",
+        "kind",
+        "path"
+      ],
+      "command": "archive",
+      "hash_fields": [
+        "input_hash",
+        "plan_hash",
+        "policy_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [],
+      "top_level_keys": [
+        "actions",
+        "blocked",
+        "change",
+        "dry_run",
+        "input_hash",
+        "layout",
+        "mutated",
+        "plan_hash",
+        "policy",
+        "policy_hash",
+        "reasons",
+        "receipt_hash"
+      ]
+    },
+    {
+      "action_keys": [
+        "destination",
+        "destination_hash",
+        "source",
+        "source_hash"
+      ],
+      "command": "migrate",
+      "hash_fields": [
+        "destination_manifest_hash",
+        "manifest_hash",
+        "policy_hash",
+        "receipt_hash",
+        "source_manifest_hash"
+      ],
+      "issue_keys": [],
+      "top_level_keys": [
+        "actions",
+        "blocked",
+        "command",
+        "conflicts",
+        "destination_layout",
+        "destination_manifest_hash",
+        "dry_run",
+        "manifest_hash",
+        "mutated",
+        "policy",
+        "policy_hash",
+        "receipt_hash",
+        "root",
+        "source_layout",
+        "source_manifest_hash"
+      ]
+    }
+  ],
+  "report_contract": {
+    "sections": [
+      "Findings",
+      "Required Fixes",
+      "OpenSpec Check",
+      "Gaps",
+      "Next Steps"
+    ],
+    "tagged_findings_required_fields": [
+      "class",
+      "scope",
+      "route",
+      "promoted"
+    ],
+    "verdicts": [
+      "PASS",
+      "WARN",
+      "FAIL"
+    ]
+  },
+  "schemas": [
+    {
+      "artifacts": [
+        {
+          "generates": "proposal.md",
+          "id": "proposal",
+          "requires": []
+        },
+        {
+          "generates": "specs/**/*.md",
+          "id": "specs",
+          "requires": [
+            "proposal"
+          ]
+        },
+        {
+          "generates": "design.md",
+          "id": "design",
+          "requires": [
+            "proposal"
+          ]
+        },
+        {
+          "generates": "tasks.md",
+          "id": "tasks",
+          "requires": [
+            "specs",
+            "design"
+          ]
+        }
+      ],
+      "description": "OpenSpec proposal/spec/design/tasks lifecycle",
+      "id": "spec-driven"
+    }
+  ],
+  "sync_archive_policy": {
+    "archive_date_prefix": true,
+    "default_archive_dir": "cairn/archive",
+    "require_all_tasks_done": true
+  },
+  "task_marker_policy": {
+    "enabled": true,
+    "ignore_archives": true,
+    "markers": [
+      {
+        "id": "parallel",
+        "kind": "literal",
+        "token": "[parallel]"
+      },
+      {
+        "id": "serial",
+        "kind": "literal",
+        "token": "[serial]"
+      },
+      {
+        "id": "depends",
+        "kind": "depends-prefix",
+        "token": "[depends:<task-or-id>]"
+      }
+    ],
+    "stages": [
+      "tasks"
+    ],
+    "strictness": "strict"
+  },
+  "version": 1
+}

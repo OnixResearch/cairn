@@ -1,0 +1,20 @@
+[workspace]
+members = [
+  "crates/cairn-core",
+  "crates/cairn-cli",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/brittonr/cairn"
+version = "0.1.0"
+
+[workspace.dependencies]
+blake3 = "1.5"
+serde_json = "1.0"
+
+[workspace.metadata.slotcar]
+default_scope = ["--workspace"]
+cargo_check_args = ["--all-targets"]

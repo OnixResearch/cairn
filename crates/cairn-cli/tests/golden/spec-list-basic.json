@@ -1,0 +1,11 @@
+{
+  "layout": "cairn",
+  "root": "fixtures/basic",
+  "specs": [
+    {
+      "id": "demo",
+      "path": "fixtures/basic/cairn/specs/demo/spec.md",
+      "title": "demo Specification"
+    }
+  ]
+}

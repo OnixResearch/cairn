@@ -1,0 +1,18 @@
+[package]
+name = "cairn-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "cairn"
+path = "src/main.rs"
+
+[[bin]]
+name = "ironspec"
+path = "src/ironspec.rs"
+
+[dependencies]
+cairn-core = { path = "../cairn-core" }
+serde_json.workspace = true

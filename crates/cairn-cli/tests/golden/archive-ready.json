@@ -1,0 +1,20 @@
+{
+  "actions": [
+    {
+      "description": "move active change to archive: ready",
+      "kind": "archive_change",
+      "path": "fixtures/archive-ready/cairn/changes/ready"
+    }
+  ],
+  "blocked": false,
+  "change": "ready",
+  "dry_run": true,
+  "input_hash": "28a147baff062dd18dcd1033ebe42162c5b9b38d946f9220c7b092728da1f598",
+  "layout": "cairn",
+  "mutated": false,
+  "plan_hash": "670ab766d6f236e21954dd5031de653f70cf485291e4953b4192abdb1001f243",
+  "policy": "cairn-default",
+  "policy_hash": "44a32b13a1e70b8e5953c74600c9ccabc865f9f1c6635c03023de3105c0f8ee0",
+  "reasons": [],
+  "receipt_hash": "2c1c214c1c153c5f703407054387e48a38cd0d463d841a82a313be2b3feead54"
+}

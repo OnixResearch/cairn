@@ -1,0 +1,206 @@
+use crate::verified::repo::{ChangeStatus, TaskCounts};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SyncPlan {
+    pub change: String,
+    pub dry_run: bool,
+    pub mutated: bool,
+    pub actions: Vec<PlanAction>,
+    pub delta_specs: Vec<String>,
+    pub blocked: bool,
+    pub reasons: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArchivePlan {
+    pub change: String,
+    pub dry_run: bool,
+    pub mutated: bool,
+    pub actions: Vec<PlanAction>,
+    pub blocked: bool,
+    pub reasons: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PlanAction {
+    pub kind: PlanActionKind,
+    pub path: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlanActionKind {
+    SyncDeltaSpec,
+    ArchiveChange,
+}
+
+pub fn build_sync_plan(change: &ChangeStatus) -> SyncPlan {
+    // r[impl sync_archive.plan.sync] r[impl sync_archive.plan.sync.delta_specs]
+    // r[impl sync_archive.plan.purity] r[impl sync_archive.plan.purity.no_effects]
+    // r[impl sync_archive.execute.sync] r[impl sync_archive.execute.sync.applies]
+    // r[impl sync_archive.execute.sync.default_dry_run]
+    let reasons = sync_blockers(change);
+    let actions = if reasons.is_empty() {
+        change
+            .delta_specs
+            .iter()
+            .map(|path| PlanAction {
+                kind: PlanActionKind::SyncDeltaSpec,
+                path: path.clone(),
+                description: format!("merge delta spec into main specs: {path}"),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    SyncPlan {
+        change: change.name.clone(),
+        dry_run: true,
+        mutated: false,
+        actions,
+        delta_specs: change.delta_specs.clone(),
+        blocked: !reasons.is_empty(),
+        reasons,
+    }
+}
+
+pub fn build_archive_plan(change: &ChangeStatus) -> ArchivePlan {
+    // r[impl sync_archive.plan.archive] r[impl sync_archive.plan.archive.blockers]
+    // r[impl sync_archive.execute.archive] r[impl sync_archive.execute.archive.moves]
+    // r[impl sync_archive.execute.archive.blocked_noop] r[impl sync_archive.execute.boundary]
+    // r[impl sync_archive.execute.boundary.pure_core]
+    let reasons = archive_blockers(change);
+    let actions = if reasons.is_empty() {
+        vec![PlanAction {
+            kind: PlanActionKind::ArchiveChange,
+            path: change.path.clone(),
+            description: format!("move active change to archive: {}", change.name),
+        }]
+    } else {
+        Vec::new()
+    };
+
+    ArchivePlan {
+        change: change.name.clone(),
+        dry_run: true,
+        mutated: false,
+        actions,
+        blocked: !reasons.is_empty(),
+        reasons,
+    }
+}
+
+fn sync_blockers(change: &ChangeStatus) -> Vec<String> {
+    let mut reasons = required_artifact_blockers(change);
+    if change.delta_specs.is_empty() {
+        reasons.push(format!("{}: no delta specs to sync", change.name));
+    }
+    reasons
+}
+
+fn archive_blockers(change: &ChangeStatus) -> Vec<String> {
+    let mut reasons = sync_blockers(change);
+    if let Some(message) = incomplete_tasks_blocker(change.name.as_str(), change.task_counts) {
+        reasons.push(message);
+    }
+    reasons
+}
+
+fn required_artifact_blockers(change: &ChangeStatus) -> Vec<String> {
+    let mut reasons = Vec::with_capacity(2);
+    if !change.has_proposal {
+        reasons.push(format!("{}: missing proposal.md", change.name));
+    }
+    if !change.has_tasks {
+        reasons.push(format!("{}: missing tasks.md", change.name));
+    }
+    reasons
+}
+
+fn incomplete_tasks_blocker(change: &str, counts: Option<TaskCounts>) -> Option<String> {
+    let counts = counts?;
+    if counts.todo == 0 && counts.in_progress == 0 && counts.unmarked == 0 {
+        return None;
+    }
+    Some(format!(
+        "{change}: tasks not archive-ready (todo: {}, in_progress: {}, unmarked: {})",
+        counts.todo, counts.in_progress, counts.unmarked
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn complete_change() -> ChangeStatus {
+        ChangeStatus {
+            name: "demo".to_string(),
+            path: "openspec/changes/demo".to_string(),
+            has_proposal: true,
+            has_design: true,
+            has_tasks: true,
+            delta_specs: vec!["openspec/changes/demo/specs/demo/spec.md".to_string()],
+            task_counts: Some(TaskCounts {
+                total: 2,
+                done: 2,
+                in_progress: 0,
+                todo: 0,
+                unmarked: 0,
+            }),
+        }
+    }
+
+    #[test]
+    fn builds_sync_plan_for_delta_specs() {
+        let plan = build_sync_plan(&complete_change());
+        assert!(!plan.blocked);
+        assert!(!plan.mutated);
+        assert!(plan.dry_run);
+        assert_eq!(plan.actions.len(), 1);
+        assert_eq!(plan.actions[0].kind, PlanActionKind::SyncDeltaSpec);
+        assert_eq!(plan.delta_specs.len(), 1);
+    }
+
+    #[test]
+    fn blocks_sync_without_delta_specs() {
+        let mut change = complete_change();
+        change.delta_specs.clear();
+        let plan = build_sync_plan(&change);
+        assert!(plan.blocked);
+        assert!(plan.actions.is_empty());
+        assert_eq!(
+            plan.reasons,
+            vec!["demo: no delta specs to sync".to_string()]
+        );
+    }
+
+    #[test]
+    fn blocks_archive_until_tasks_are_complete_and_marked() {
+        let mut change = complete_change();
+        change.task_counts = Some(TaskCounts {
+            total: 2,
+            done: 1,
+            in_progress: 1,
+            todo: 0,
+            unmarked: 1,
+        });
+        let plan = build_archive_plan(&change);
+        assert!(plan.blocked);
+        assert!(plan.actions.is_empty());
+        assert_eq!(
+            plan.reasons,
+            vec![
+                "demo: tasks not archive-ready (todo: 0, in_progress: 1, unmarked: 1)".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn builds_archive_action_for_complete_change() {
+        let plan = build_archive_plan(&complete_change());
+        assert!(!plan.blocked);
+        assert_eq!(plan.actions.len(), 1);
+        assert_eq!(plan.actions[0].kind, PlanActionKind::ArchiveChange);
+    }
+}

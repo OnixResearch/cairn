@@ -1,0 +1,17 @@
+{
+  "actions": [],
+  "blocked": true,
+  "change": "no-delta",
+  "delta_specs": [],
+  "dry_run": true,
+  "input_hash": "28f9c20afbe49a979887ce0cae4955b6e394f6cf01001f18db850817911be373",
+  "layout": "cairn",
+  "mutated": false,
+  "plan_hash": "171d30773e08c5cbbbd6fc0e14cc1ab551532879d085797973e8c636e11f1450",
+  "policy": "cairn-default",
+  "policy_hash": "44a32b13a1e70b8e5953c74600c9ccabc865f9f1c6635c03023de3105c0f8ee0",
+  "reasons": [
+    "no-delta: no delta specs to sync"
+  ],
+  "receipt_hash": "3d4c383e9bdc8babf275d356325a8df052659cc42cd1b1f636c1da920aa756c0"
+}
