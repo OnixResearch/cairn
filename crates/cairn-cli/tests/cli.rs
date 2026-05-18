@@ -1155,6 +1155,25 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
 }
 
 #[test]
+fn release_readiness_bundle_is_reproducible() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.release_readiness_bundle.schema]
+    // r[verify cairn.supersede.release_readiness_bundle.evidence]
+    // r[verify cairn.supersede.release_readiness_bundle.verification]
+    let receipt = assert_reproducible_receipt(
+        &["release-readiness", "--root", "."],
+        &[
+            "receipt_hash",
+            "cairn_validation_hash",
+            "tracey_coverage_hash",
+            "mcp_smoke_receipt_hash",
+        ],
+    )?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "pass");
+    Ok(())
+}
+
+#[test]
 fn release_readiness_bundle_reports_missing_evidence() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.release_readiness_bundle.failure]
     let fixture = temp_fixture("release-readiness-missing-evidence", "fixtures/basic")?;
