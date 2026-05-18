@@ -1,0 +1,18 @@
+specs (
+  {
+    name cairn
+    include (cairn/specs/**/*.md)
+    impls (
+      {
+        name rust
+        include (crates/**/*.rs)
+        exclude (target/**)
+        test_include (crates/**/tests/**/*.rs)
+      }
+      {
+        name python-tools
+        include (tools/**/*.py)
+      }
+    )
+  }
+)

@@ -938,13 +938,10 @@ fn archive_execute_moves_temp_fixture_change() -> Result<(), Box<dyn Error>> {
     let fixture = temp_fixture("archive-execute", "fixtures/archive-ready")?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
     let mut command = cairn();
-    command.env("IRONSPEC_ARCHIVE_DATE", "2026-05-17").args([
-        "archive",
-        "ready",
-        "--root",
-        root,
-        "--execute",
-    ]);
+    command
+        .env_remove("CAIRN_ARCHIVE_DATE")
+        .env("IRONSPEC_ARCHIVE_DATE", "2026-05-17")
+        .args(["archive", "ready", "--root", root, "--execute"]);
     let value = run_json_command(&mut command)?;
     assert_eq!(value["change"], "ready");
     assert_eq!(value["dry_run"], false);
