@@ -52,6 +52,7 @@ pub struct AgentRunGateReport {
 
 // r[impl cairn.supersede.agent_run_receipts.schema]
 // r[impl cairn.supersede.agent_run_receipts.schema.required_fields]
+// r[impl cairn.supersede.agent_run_receipts.schema.bounded_content]
 pub fn agent_run_receipt_hash(receipt: &Value) -> String {
     let mut canonical = receipt.clone();
     if let Some(object) = canonical.as_object_mut() {
@@ -119,6 +120,8 @@ fn receipt_hash_issues(receipt: &Value, object: &Map<String, Value>) -> Vec<Agen
 
 fn plan_linkage_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue> {
     // r[impl cairn.supersede.agent_run_receipts.plan_link]
+    // r[impl cairn.supersede.agent_run_receipts.plan_link.side_effects]
+    // r[impl cairn.supersede.agent_run_receipts.plan_link.read_only]
     let has_side_effects = object
         .get("mutation_manifest")
         .and_then(Value::as_object)
@@ -185,6 +188,7 @@ fn verification_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue> {
 
 fn nondeterminism_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue> {
     // r[impl cairn.supersede.agent_run_receipts.nondeterminism]
+    // r[impl cairn.supersede.agent_run_receipts.nondeterminism.captured]
     // r[impl cairn.supersede.agent_run_receipts.nondeterminism.hidden]
     let Some(manifest) = object
         .get("nondeterminism_manifest")
@@ -245,6 +249,7 @@ fn issue(code: impl Into<String>, message: impl Into<String>) -> AgentRunGateIss
 
 pub fn positive_agent_run_fixture() -> Value {
     // r[verify cairn.supersede.agent_run_receipts.replay]
+    // r[verify cairn.supersede.agent_run_receipts.replay.positive]
     let mut receipt = json!({
         "schema_version": AGENT_RUN_RECEIPT_SCHEMA_VERSION,
         "task_id": "fixture-agent-run-success",
@@ -292,6 +297,7 @@ mod tests {
 
     #[test]
     fn completion_gate_fails_missing_verification() {
+        // r[verify cairn.supersede.agent_run_receipts.replay.negative]
         let mut receipt = positive_agent_run_fixture();
         receipt["verification_manifest"] = json!({"checks": []});
         let hash = agent_run_receipt_hash(&receipt);
