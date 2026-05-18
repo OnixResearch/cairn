@@ -205,7 +205,8 @@ fn malformed_exemption_issues(artifact: &GateArtifact, policy: &Policy) -> Vec<G
 }
 
 fn exemption_markers(line: &str) -> Vec<&str> {
-    let mut markers = Vec::new();
+    let marker_bound = line.matches("gate-exempt[").count();
+    let mut markers = Vec::with_capacity(marker_bound);
     let mut rest = line;
     while let Some(start) = rest.find("gate-exempt[") {
         let after = &rest[start + "gate-exempt[".len()..];

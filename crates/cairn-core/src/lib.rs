@@ -14,6 +14,11 @@
 
 pub mod verified;
 
+pub use verified::agent_receipt::{
+    agent_run_receipt_hash, agent_run_receipt_issues, evaluate_agent_run_completion,
+    positive_agent_run_fixture, AgentRunGateIssue, AgentRunGateReport,
+    AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
+};
 pub use verified::delta_merge::{merge_delta_spec, DeltaMerge};
 pub use verified::doctor::{
     build_doctor_report, DoctorCheck, DoctorCheckStatus, DoctorReport, DoctorSnapshot,

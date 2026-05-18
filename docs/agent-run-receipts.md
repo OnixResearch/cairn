@@ -1,0 +1,49 @@
+# Agent-run receipts
+
+Agent wrappers can use Cairn agent-run receipts to make completion claims deterministic and gateable instead of prose-only. r[verify cairn.supersede.agent_run_receipts.schema]
+
+## Canonical envelope
+
+A receipt is canonical JSON with these required fields:
+
+- `schema_version`: currently `cairn.agent_run_receipt.v1`
+- `task_id`: stable task/run identifier chosen by the wrapper
+- `agent_identity`: bounded model/provider/wrapper metadata
+- `input_hash`: BLAKE3 hash of the captured prompt/input manifest
+- `plan_hash`: BLAKE3 hash of the pre-mutation plan, or the explicit no-mutation plan constant for read-only runs
+- `tool_manifest`: bounded list of tools available or used by the wrapper
+- `mutation_manifest`: files, lifecycle actions, network writes, secret accesses, deploys, or other side effects
+- `verification_manifest`: checks and artifact evidence proving the verdict
+- `nondeterminism_manifest`: captured and forbidden entropy sources
+- `verdict`: wrapper verdict such as `success`
+- `receipt_hash`: BLAKE3 hash of the canonical receipt with `receipt_hash` excluded
+
+Receipts should store bounded summaries, manifests, and hashes rather than raw transcripts or full tool logs. Secret-bearing values should be redacted and represented by metadata or content hashes. r[verify cairn.supersede.agent_run_receipts.schema.bounded_content]
+
+## Plan before mutation
+
+Before a wrapper performs side effects, it should write or construct a canonical plan that states intended files, lifecycle mutations, external writes, deploys, secret access, verification commands, and rollback boundary. The final receipt must cite the plan with `plan_hash`, and the mutation manifest must stay inside that approved scope. r[verify cairn.supersede.agent_run_receipts.plan_link]
+
+Read-only runs may cite the explicit no-mutation plan constant, but any non-empty side-effect manifest with that constant fails the completion gate.
+
+## Nondeterminism manifest
+
+Wrappers should classify entropy sources as one of:
+
+- `clock`
+- `network`
+- `model_provider`
+- `environment`
+- `random`
+- `remote_api`
+- `external_artifact`
+
+Each captured entry needs bounded metadata or a content hash. Forbidden or uncaptured entropy belongs in `forbidden_uncaptured` and causes the completion gate to fail deterministically. r[verify cairn.supersede.agent_run_receipts.nondeterminism]
+
+## Completion gate
+
+`cairn-core` exposes pure helpers for `agent_run_receipt_hash`, `agent_run_receipt_issues`, and `evaluate_agent_run_completion`. A wrapper should run the completion gate before claiming success and cite the resulting receipt hash in its final response. The gate checks required fields, receipt hash consistency, side-effect plan linkage, verification evidence for successful verdicts, and nondeterminism hygiene. r[verify cairn.supersede.agent_run_receipts.completion_gate]
+
+## Replay fixtures
+
+Maintained replay fixtures should pair captured inputs, tool manifests, plans, mutations, verification evidence, and nondeterminism manifests with expected receipts. Positive fixtures must generate byte-identical receipts across repeated construction. Negative fixtures should cover missing plan linkage, missing verification evidence, uncaptured nondeterminism, and mutation outside the approved plan. r[verify cairn.supersede.agent_run_receipts.replay]

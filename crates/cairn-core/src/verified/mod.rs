@@ -1,3 +1,4 @@
+pub mod agent_receipt;
 pub mod delta_merge;
 pub mod doctor;
 pub mod evidence;

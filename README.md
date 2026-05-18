@@ -137,6 +137,20 @@ nix run path:$PWD#cairn -- sync ready --root /path/to/repo --execute
 nix run path:$PWD#cairn -- archive ready --root /path/to/repo --execute
 ```
 
+## Agent-run receipts
+
+`cairn-core` includes pure helpers for deterministic agent-run receipts:
+`agent_run_receipt_hash`, `agent_run_receipt_issues`, and
+`evaluate_agent_run_completion`. Agent wrappers can use these to produce a
+canonical receipt with `schema_version`, `task_id`, `agent_identity`,
+`input_hash`, `plan_hash`, `tool_manifest`, `mutation_manifest`,
+`verification_manifest`, `nondeterminism_manifest`, `verdict`, and
+`receipt_hash`. Successful receipts must carry verification evidence; side-effect
+receipts must cite a pre-mutation plan hash; hidden or forbidden entropy fails
+the completion gate. See `docs/agent-run-receipts.md` for wrapper guidance and
+privacy rules. r[verify cairn.supersede.agent_run_receipts.schema]
+r[verify cairn.supersede.agent_run_receipts.completion_gate]
+
 `migrate openspec` is also dry-run by default. It copies accepted specs, active
 changes, and archived changes from legacy `openspec/` into native `cairn/`
 layout only when `--execute` is passed. Existing native destination files are
