@@ -1137,23 +1137,41 @@ fn mcp_describes_read_only_tools_without_mutations() -> Result<(), Box<dyn Error
     let value = run_json(&["mcp", "--describe"])?;
     assert_eq!(value["allow_mutations"], false);
     let tools = value["tools"].as_array().ok_or("tools")?;
-    assert!(tools.iter().any(|tool| tool["name"] == "cairn_status"
-        && tool["annotations"]["readOnlyHint"] == true
-        && tool["annotations"]["destructiveHint"] == false));
-    assert!(tools.iter().any(
-        |tool| tool["name"] == "cairn_sync_plan" && tool["annotations"]["readOnlyHint"] == true
-    ));
+    let status_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "cairn_status")
+        .ok_or("status tool")?;
+    assert_eq!(status_tool["annotations"]["readOnlyHint"], true);
+    assert_eq!(status_tool["annotations"]["destructiveHint"], false);
+    assert_eq!(status_tool["inputSchema"]["additionalProperties"], false);
+    assert!(status_tool["inputSchema"]["properties"]["root"].is_object());
+
+    let sync_plan_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "cairn_sync_plan")
+        .ok_or("sync plan tool")?;
+    assert_eq!(sync_plan_tool["annotations"]["readOnlyHint"], true);
+    assert_eq!(sync_plan_tool["inputSchema"]["required"][0], "change");
+    assert_eq!(sync_plan_tool["inputSchema"]["additionalProperties"], false);
     assert!(!tools
         .iter()
         .any(|tool| tool["name"] == "cairn_sync_execute"));
+    let receipt_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "cairn_agent_receipt_validate")
+        .ok_or("receipt tool")?;
+    assert!(receipt_tool["inputSchema"]["anyOf"].is_array());
+
     let mutation_value = run_json(&["mcp", "--allow-mutations", "--describe"])?;
     assert_eq!(mutation_value["allow_mutations"], true);
-    assert!(mutation_value["tools"]
+    let mutation_tool = mutation_value["tools"]
         .as_array()
         .ok_or("mutation tools")?
         .iter()
-        .any(|tool| tool["name"] == "cairn_sync_execute"
-            && tool["annotations"]["destructiveHint"] == true));
+        .find(|tool| tool["name"] == "cairn_sync_execute")
+        .ok_or("sync execute")?;
+    assert_eq!(mutation_tool["annotations"]["destructiveHint"], true);
+    assert_eq!(mutation_tool["inputSchema"]["required"][0], "change");
     Ok(())
 }
 
@@ -1163,6 +1181,7 @@ fn mcp_calls_return_structured_receipts() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.mcp_server.read_tools.gates]
     // r[verify cairn.supersede.mcp_server.verification]
     // r[verify cairn.supersede.mcp_server.verification.docs]
+    // r[verify cairn.supersede.mcp_server.strict_schemas.docs]
     let value = run_json(&[
         "mcp",
         "--call",
@@ -1173,6 +1192,73 @@ fn mcp_calls_return_structured_receipts() -> Result<(), Box<dyn Error>> {
     assert_eq!(receipt["layout"], "cairn");
     assert_eq!(receipt["mcp"]["read_only"], true);
     assert_hash_field(receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn mcp_rejects_invalid_arguments_before_dispatch() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.mcp_server.strict_schemas.validation]
+    // r[verify cairn.supersede.mcp_server.strict_schemas.errors]
+    // r[verify cairn.supersede.mcp_server.strict_schemas.verification]
+    let missing = cairn()
+        .args([
+            "mcp",
+            "--call",
+            "cairn_read_spec",
+            r#"{"root":"fixtures/basic"}"#,
+        ])
+        .output()?;
+    assert!(!missing.status.success());
+    let stderr = String::from_utf8_lossy(&missing.stderr);
+    assert!(
+        stderr.contains("invalid arguments for cairn_read_spec: missing required argument spec"),
+        "{stderr}"
+    );
+
+    let unknown = cairn()
+        .args([
+            "mcp",
+            "--call",
+            "cairn_status",
+            r#"{"root":"fixtures/basic","surprise":"no"}"#,
+        ])
+        .output()?;
+    assert!(!unknown.status.success());
+    let stderr = String::from_utf8_lossy(&unknown.stderr);
+    assert!(
+        stderr.contains("invalid arguments for cairn_status: unknown argument surprise"),
+        "{stderr}"
+    );
+
+    let bad_stage = cairn()
+        .args([
+            "mcp",
+            "--call",
+            "cairn_gate",
+            r#"{"root":"fixtures/basic","change":"demo","stage":"archive"}"#,
+        ])
+        .output()?;
+    assert!(!bad_stage.status.success());
+    let stderr = String::from_utf8_lossy(&bad_stage.stderr);
+    assert!(
+        stderr.contains("invalid arguments for cairn_gate: argument stage must be one of proposal, design, tasks"),
+        "{stderr}"
+    );
+
+    let bad_source = cairn()
+        .args([
+            "mcp",
+            "--call",
+            "cairn_migrate_plan",
+            r#"{"root":"fixtures/basic","source":"cairn"}"#,
+        ])
+        .output()?;
+    assert!(!bad_source.status.success());
+    let stderr = String::from_utf8_lossy(&bad_source.stderr);
+    assert!(
+        stderr.contains("invalid arguments for cairn_migrate_plan: argument source must be one of openspec, ironspec"),
+        "{stderr}"
+    );
     Ok(())
 }
 
@@ -1223,6 +1309,10 @@ fn mcp_json_rpc_lists_and_calls_tools() -> Result<(), Box<dyn Error>> {
             stdin,
             r#"{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"cairn_validate","arguments":{{"root":"fixtures/basic"}}}}}}"#
         )?;
+        writeln!(
+            stdin,
+            r#"{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"cairn_gate","arguments":{{"root":"fixtures/basic","change":"demo","stage":"archive"}}}}}}"#
+        )?;
     }
     let output = child.wait_with_output()?;
     assert!(output.status.success());
@@ -1231,13 +1321,17 @@ fn mcp_json_rpc_lists_and_calls_tools() -> Result<(), Box<dyn Error>> {
         .lines()
         .map(serde_json::from_str::<Value>)
         .collect::<Result<Vec<_>, _>>()?;
-    assert_eq!(responses.len(), 2);
+    assert_eq!(responses.len(), 3);
     assert!(responses[0]["result"]["tools"]
         .as_array()
         .ok_or("tools")?
         .iter()
         .any(|tool| tool["name"] == "cairn_validate"));
     assert_eq!(responses[1]["result"]["structuredContent"]["valid"], true);
+    assert!(responses[2]["error"]["message"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("invalid arguments for cairn_gate"));
     Ok(())
 }
 

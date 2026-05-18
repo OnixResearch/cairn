@@ -23,26 +23,26 @@ nix run .#cairn -- mcp --allow-mutations
 
 ## Default read-only and planning tools
 
-All default tools include MCP annotations equivalent to `readOnlyHint=true` and `destructiveHint=false`.
+All default tools include MCP annotations equivalent to `readOnlyHint=true` and `destructiveHint=false`. Each tool advertises a strict object `inputSchema` with explicit properties, required arguments, and `additionalProperties=false` unless noted. Invalid arguments are rejected before lifecycle files are read or lifecycle plans are built. r[verify cairn.supersede.mcp_server.strict_schemas.docs]
 
-- `cairn_status`: list selected lifecycle state for a root.
-- `cairn_list_content`: list accepted specs, active changes, and archived changes.
-- `cairn_read_spec`: read a bounded accepted spec by spec id.
-- `cairn_change_show`: read bounded active-change metadata by change id.
-- `cairn_doctor`: run diagnostics and return a structured receipt.
-- `cairn_validate`: run validation and return a structured receipt.
-- `cairn_gate`: run proposal/design/tasks gate evaluation.
-- `cairn_gate_context`: return bounded gate context for a change.
-- `cairn_agent_receipt_validate`: validate a bounded agent-run receipt from a repository-relative path or inline JSON object. r[verify cairn.supersede.agent_receipt_validation_surface.mcp]
-- `cairn_sync_plan`: return a dry-run sync plan.
-- `cairn_archive_plan`: return a dry-run archive plan.
-- `cairn_migrate_plan`: return a dry-run legacy migration plan.
+- `cairn_status`: optional `root`; list selected lifecycle state for a root.
+- `cairn_list_content`: optional `root`; list accepted specs, active changes, and archived changes.
+- `cairn_read_spec`: required `spec`, optional `root`; read a bounded accepted spec by spec id.
+- `cairn_change_show`: required `change`, optional `root`; read bounded active-change metadata by change id.
+- `cairn_doctor`: optional `root`, `policy`; run diagnostics and return a structured receipt.
+- `cairn_validate`: optional `root`, `policy`; run validation and return a structured receipt.
+- `cairn_gate`: required `change` and `stage`, optional `root`, `policy`; `stage` must be `proposal`, `design`, or `tasks`.
+- `cairn_gate_context`: required `change`, optional `root`; return bounded gate context for a change.
+- `cairn_agent_receipt_validate`: either `path` plus optional `root`, or inline `receipt`; validate a bounded agent-run receipt. r[verify cairn.supersede.agent_receipt_validation_surface.mcp]
+- `cairn_sync_plan`: required `change`, optional `root`, `policy`; return a dry-run sync plan.
+- `cairn_archive_plan`: required `change`, optional `root`, `policy`; return a dry-run archive plan.
+- `cairn_migrate_plan`: required `source`, optional `root`, `policy`; `source` must be `openspec` or `ironspec`.
 
 ## Mutation guard
 
-Without `--allow-mutations`, calls to `cairn_init`, `cairn_change_create`, `cairn_sync_execute`, `cairn_archive_execute`, and `cairn_migrate_execute` return a structured capability error with `mutated=false`.
+Without `--allow-mutations`, calls to `cairn_init`, `cairn_change_create`, `cairn_sync_execute`, `cairn_archive_execute`, and `cairn_migrate_execute` return a structured capability error with `mutated=false`; this default denial does not depend on otherwise-valid tool arguments.
 
-With `--allow-mutations`, execution tools are listed with `readOnlyHint=false` and `destructiveHint=true`. Mutation-enabled calls use the same Cairn receipt fields as the CLI execution paths.
+With `--allow-mutations`, execution tools are listed with `readOnlyHint=false`, `destructiveHint=true`, and strict schemas: `cairn_init` accepts optional `root`/`policy`, `cairn_change_create` requires `change`, sync/archive execute require `change` plus optional `root`/`policy`, and migrate execute requires `source` (`openspec` or `ironspec`) plus optional `root`/`policy`. Mutation-enabled calls use the same Cairn receipt fields as the CLI execution paths.
 
 ## Boundaries
 

@@ -95,6 +95,7 @@ def classify(path: str, line: str) -> str:
         "ironspec = {",
         "\"ironspec\" =>",
         "\"ironspec\",",
+        "[\"openspec\", \"ironspec\"]",
         "openspec or ironspec",
         "<openspec|ironspec>",
     ]
