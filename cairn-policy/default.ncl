@@ -63,19 +63,19 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "sync",
-      top_level_keys = ["actions", "blocked", "change", "delta_specs", "dry_run", "input_hash", "layout", "mutated", "plan_hash", "policy", "policy_hash", "reasons", "receipt_hash"],
+      top_level_keys = ["actions", "blocked", "change", "delta_specs", "dry_run", "input_hash", "layout", "mutated", "mutation_manifest", "plan_hash", "policy", "policy_hash", "reasons", "receipt_hash"],
       action_keys = ["description", "kind", "path"],
       hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"],
     },
     {
       command = "archive",
-      top_level_keys = ["actions", "blocked", "change", "dry_run", "input_hash", "layout", "mutated", "plan_hash", "policy", "policy_hash", "reasons", "receipt_hash"],
+      top_level_keys = ["actions", "blocked", "change", "dry_run", "input_hash", "layout", "mutated", "mutation_manifest", "plan_hash", "policy", "policy_hash", "reasons", "receipt_hash"],
       action_keys = ["description", "kind", "path"],
       hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"],
     },
     {
       command = "migrate",
-      top_level_keys = ["actions", "blocked", "command", "conflicts", "destination_layout", "destination_manifest_hash", "dry_run", "manifest_hash", "mutated", "policy", "policy_hash", "receipt_hash", "root", "source_layout", "source_manifest_hash"],
+      top_level_keys = ["actions", "blocked", "command", "conflicts", "destination_layout", "destination_manifest_hash", "dry_run", "manifest_hash", "mutated", "mutation_manifest", "policy", "policy_hash", "receipt_hash", "root", "source_layout", "source_manifest_hash"],
       action_keys = ["destination", "destination_hash", "source", "source_hash"],
       hash_fields = ["destination_manifest_hash", "manifest_hash", "policy_hash", "receipt_hash", "source_manifest_hash"],
     },

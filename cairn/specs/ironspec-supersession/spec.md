@@ -250,35 +250,6 @@ r[cairn.supersede.nickel_contracts.boundary]
 - THEN Nickel data MUST define the allowed policy shape
 - AND Rust core logic MUST evaluate shell-supplied repository snapshots against that policy without invoking Nickel at runtime
 
-### Requirement: BLAKE3 evidence identifiers
-r[cairn.supersede.blake3_receipts] The system MUST use BLAKE3 hashes to identify canonical policy, input snapshots, plans, and receipts for Cairn decisions that claim validation, gate, sync, archive, migration, or traceability evidence.
-
-#### Scenario: Gate receipt includes stable hashes
-r[cairn.supersede.blake3_receipts.gate]
-- GIVEN an Cairn gate evaluation with canonical policy data and a canonical change snapshot
-- WHEN the operator runs `cairn gate <stage> <change> --root <path>`
-- THEN the JSON receipt MUST include BLAKE3 hashes for the policy, gate input snapshot, and emitted receipt content
-- AND repeated evaluation of unchanged inputs MUST produce the same hashes
-
-#### Scenario: Sync and archive plans include stable hashes
-r[cairn.supersede.blake3_receipts.lifecycle_plans]
-- GIVEN a sync or archive dry-run plan
-- WHEN the operator runs `cairn sync <change>` or `cairn archive <change>`
-- THEN the JSON receipt MUST include BLAKE3 hashes for the canonical plan input and plan output
-- AND the plan hash MUST change when planned lifecycle actions change
-
-#### Scenario: Migration manifest includes source and destination hashes
-r[cairn.supersede.blake3_receipts.migration]
-- GIVEN an explicit `migrate openspec` plan or execution receipt
-- WHEN legacy OpenSpec files are mapped into native Cairn paths
-- THEN the migration receipt MUST include BLAKE3 hashes for canonical source manifests, destination manifests, and emitted receipt content
-
-#### Scenario: Hashing remains canonical and bounded
-r[cairn.supersede.blake3_receipts.canonical]
-- GIVEN Cairn computes evidence hashes
-- WHEN hashes are generated
-- THEN the hashed material MUST exclude nondeterministic process noise, ambient absolute paths unless explicitly part of the contract, and wall-clock timestamps unless supplied as explicit inputs
-
 ### Requirement: Deterministic mandatory gates
 r[cairn.supersede.deterministic_gates] The system MUST provide deterministic mandatory gates for proposal, design, tasks, pre-sync, pre-archive, migration, policy freshness, and accepted-spec traceability decisions.
 
@@ -448,23 +419,6 @@ r[cairn.supersede.agent_run_receipts.plan_link.read_only]
 - WHEN the agent-run receipt is validated
 - THEN the receipt may cite a canonical no-mutation plan
 - AND the mutation manifest reports no mutated files, lifecycle state, network writes, deploys, or secret-value exposures
-
-### Requirement: Agent-run nondeterminism manifest
-r[cairn.supersede.agent_run_receipts.nondeterminism] The system MUST record and classify nondeterministic inputs that can affect agent-run replay.
-
-#### Scenario: Known entropy sources are captured
-r[cairn.supersede.agent_run_receipts.nondeterminism.captured]
-- GIVEN an agent run reads wall-clock time, network content, model/provider identity, environment variables, random values, remote API responses, or externally supplied artifacts
-- WHEN the agent-run receipt is emitted
-- THEN each source is represented in the nondeterminism manifest with a classification, bounded metadata, and content hash where content is available
-- AND the manifest distinguishes allowed captured entropy from forbidden or uncaptured entropy
-
-#### Scenario: Hidden entropy fails validation
-r[cairn.supersede.agent_run_receipts.nondeterminism.hidden]
-- GIVEN validation detects an input source that is required by policy but absent from the nondeterminism manifest
-- WHEN the receipt is gated
-- THEN the gate fails with a deterministic issue identifying the missing entropy class
-- AND the receipt is not accepted as replayable evidence
 
 ### Requirement: Agent-run completion gate
 r[cairn.supersede.agent_run_receipts.completion_gate] The system MUST provide a completion gate that validates agent-run receipts before a task is claimed complete.
@@ -810,3 +764,114 @@ r[cairn.supersede.hermes_skill.redirect.local]
 - WHEN the skill body is read
 - THEN it directs the agent to use `cairn-workflow` for Cairn repository work
 - AND it does not present OpenSpec or Ironspec as the primary Cairn identity
+
+### Requirement: Portable receipt hash inputs
+r[cairn.supersede.portable_receipts] The system MUST distinguish operator-facing display fields from canonical hash inputs so semantically identical repository evidence can remain portable across checkout roots.
+
+#### Scenario: Cross-root receipts preserve semantic hashes
+r[cairn.supersede.portable_receipts.cross_root]
+- GIVEN two filesystem roots containing byte-identical Cairn lifecycle content at different absolute paths
+- WHEN the operator runs a deterministic read, gate, sync dry-run, archive dry-run, migration dry-run, release-readiness, or agent-receipt validation command against each root
+- THEN canonical policy, input, plan, manifest, and receipt hashes that describe repository semantics MUST match across the two roots
+- AND any operator-facing absolute path fields MUST be excluded from portable hash material unless the command declares them as explicit inputs
+
+#### Scenario: Display paths remain actionable
+r[cairn.supersede.portable_receipts.display_paths]
+- GIVEN a receipt includes a path for an operator to inspect or mutate
+- WHEN the CLI renders JSON for a local command
+- THEN the receipt MAY include display path fields
+- AND the receipt MUST identify which canonical root-relative path or hash input was used for deterministic evidence
+
+#### Scenario: Absolute external inputs are explicit
+r[cairn.supersede.portable_receipts.explicit_absolute_inputs]
+- GIVEN a command depends on an absolute path outside the selected repository root
+- WHEN the command includes that path in deterministic evidence
+- THEN the receipt MUST declare the absolute path as an explicit external input or represent it by bounded metadata and content hash
+- AND hidden ambient absolute paths MUST NOT affect evidence hashes
+
+### Requirement: Determinism replay oracle
+r[cairn.supersede.determinism_replay] The system MUST provide a maintained replay oracle for commands whose receipts claim deterministic evidence.
+
+#### Scenario: Repeated command receipts are stable
+r[cairn.supersede.determinism_replay.repeated]
+- GIVEN an unchanged repository fixture and unchanged explicit command inputs
+- WHEN the replay oracle runs the same Cairn command multiple times
+- THEN normalized JSON output and declared evidence hash fields MUST match for every run
+
+#### Scenario: Cross-root command receipts are stable
+r[cairn.supersede.determinism_replay.cross_root]
+- GIVEN the replay oracle copies the same fixture into two distinct root paths
+- WHEN it runs the same deterministic Cairn command against both roots
+- THEN normalized JSON output and declared portable hash fields MUST match
+- AND differences limited to documented display-only path fields MUST NOT fail the replay check
+
+#### Scenario: Hidden nondeterminism is rejected
+r[cairn.supersede.determinism_replay.hidden_entropy]
+- GIVEN a command fixture whose output or evidence hash would depend on an uncaptured clock, environment variable, random value, filesystem ordering, external command probe, or ambient absolute path
+- WHEN the replay oracle or receipt gate evaluates the command
+- THEN it MUST fail with a deterministic issue code naming the nondeterminism class
+
+### Requirement: MCP reproducibility surface
+r[cairn.supersede.mcp_reproducibility] The system MUST treat MCP descriptions and tool-call receipts as deterministic agent-facing Cairn use surfaces.
+
+#### Scenario: MCP describe output is stable
+r[cairn.supersede.mcp_reproducibility.describe]
+- GIVEN the Cairn MCP server is invoked with `--describe`
+- WHEN the maintained regression suite runs the description command repeatedly
+- THEN the emitted tool names, schemas, mutability flags, and descriptions MUST be byte-stable or normalized-stable
+
+#### Scenario: MCP tool calls match CLI semantics
+r[cairn.supersede.mcp_reproducibility.call]
+- GIVEN an MCP tool call wraps a Cairn read, validate, gate, sync dry-run, archive dry-run, migration dry-run, release-readiness, or agent-receipt validation operation
+- WHEN the maintained regression suite compares the MCP receipt with the corresponding CLI receipt
+- THEN both surfaces MUST agree on verdict, validity, issue codes, policy hash, input hash, plan/hash fields, and mutation state
+
+### Requirement: BLAKE3 evidence identifiers
+r[cairn.supersede.blake3_receipts] The system MUST use BLAKE3 hashes to identify canonical policy, input snapshots, plans, manifests, and receipts for Cairn decisions that claim validation, gate, sync, archive, migration, release-readiness, MCP, traceability, or agent-run evidence.
+
+#### Scenario: Gate hashes identify policy and input evidence
+r[cairn.supersede.blake3_receipts.gate]
+- GIVEN Cairn emits a gate receipt
+- WHEN the receipt reports policy, input, and receipt hashes
+- THEN each hash MUST be a BLAKE3 identifier of canonical deterministic evidence
+
+#### Scenario: Lifecycle plan hashes identify sync and archive evidence
+r[cairn.supersede.blake3_receipts.lifecycle_plans]
+- GIVEN Cairn emits a sync or archive plan receipt
+- WHEN the plan reports policy, input, plan, and receipt hashes
+- THEN each hash MUST be a BLAKE3 identifier of canonical deterministic evidence
+
+#### Scenario: Migration hashes identify source and destination manifests
+r[cairn.supersede.blake3_receipts.migration]
+- GIVEN Cairn emits a migration receipt
+- WHEN the receipt reports source, destination, manifest, policy, and receipt hashes
+- THEN each hash MUST be a BLAKE3 identifier of canonical deterministic evidence
+
+#### Scenario: Hashing remains canonical and bounded
+r[cairn.supersede.blake3_receipts.canonical]
+- GIVEN Cairn computes evidence hashes
+- WHEN hashes are generated
+- THEN the hashed material MUST exclude nondeterministic process noise, display-only absolute paths, filesystem traversal order, and wall-clock timestamps unless supplied as explicit bounded inputs
+- AND portable repository artifact paths MUST be normalized relative to the selected lifecycle root before entering canonical hash material
+
+### Requirement: Agent-run nondeterminism manifest
+r[cairn.supersede.agent_run_receipts.nondeterminism] The system MUST record and classify nondeterministic inputs that can affect agent-run or Cairn-command replay.
+
+#### Scenario: Captured nondeterminism is explicit
+r[cairn.supersede.agent_run_receipts.nondeterminism.captured]
+- GIVEN an agent-run receipt includes a nondeterminism manifest
+- WHEN replay-relevant nondeterministic inputs are known and permitted
+- THEN the manifest MUST name each input class with bounded deterministic metadata
+
+#### Scenario: Hidden nondeterminism fails validation
+r[cairn.supersede.agent_run_receipts.nondeterminism.hidden]
+- GIVEN an agent-run receipt omits replay-relevant nondeterministic input evidence
+- WHEN the completion gate evaluates the receipt
+- THEN validation MUST fail with a deterministic nondeterminism issue code
+
+#### Scenario: Environment and path entropy are captured
+r[cairn.supersede.agent_run_receipts.nondeterminism.environment]
+- GIVEN a receipt-producing run reads environment variables, archive date inputs, external command availability, absolute paths outside the repository root, or machine-specific metadata
+- WHEN the run emits or validates a Cairn receipt
+- THEN each replay-relevant source MUST be represented in the nondeterminism manifest with a class, bounded metadata, and content hash where content is available
+- AND policy-forbidden uncaptured sources MUST fail validation deterministically

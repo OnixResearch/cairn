@@ -168,6 +168,117 @@ fn assert_reproducible_receipt(
     Ok(first)
 }
 
+fn run_json_strings(args: &[String]) -> Result<Value, Box<dyn Error>> {
+    let mut command = cairn();
+    command.args(args);
+    run_json_command(&mut command)
+}
+
+fn assert_hash_fields_equal(
+    first: &Value,
+    second: &Value,
+    fields: &[&str],
+) -> Result<(), Box<dyn Error>> {
+    for field in fields {
+        assert_hash_field(first, field)?;
+        assert_hash_field(second, field)?;
+        assert_eq!(
+            first[field], second[field],
+            "portable hash field {field} changed across roots"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn portable_receipt_hashes_survive_distinct_roots() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.blake3_receipts.lifecycle_plans]
+    // r[verify cairn.supersede.portable_receipts] r[verify cairn.supersede.portable_receipts.cross_root]
+    // r[verify cairn.supersede.portable_receipts.display_paths] r[verify cairn.supersede.portable_receipts.explicit_absolute_inputs]
+    // r[verify cairn.supersede.determinism_replay] r[verify cairn.supersede.determinism_replay.cross_root]
+    // r[verify cairn.supersede.determinism_replay.repeated]
+    let first_root = temp_fixture("portable-a", "fixtures/basic")?;
+    let second_root = temp_fixture("portable-b", "fixtures/basic")?;
+    let first = first_root.display().to_string();
+    let second = second_root.display().to_string();
+
+    let gate_a = run_json_strings(&[
+        "gate".into(),
+        "tasks".into(),
+        "demo".into(),
+        "--root".into(),
+        first.clone(),
+    ])?;
+    let gate_b = run_json_strings(&[
+        "gate".into(),
+        "tasks".into(),
+        "demo".into(),
+        "--root".into(),
+        second.clone(),
+    ])?;
+    assert_hash_fields_equal(&gate_a, &gate_b, &["input_hash", "receipt_hash"])?;
+
+    let sync_a = run_json_strings(&["sync".into(), "demo".into(), "--root".into(), first.clone()])?;
+    let sync_b = run_json_strings(&[
+        "sync".into(),
+        "demo".into(),
+        "--root".into(),
+        second.clone(),
+    ])?;
+    assert_hash_fields_equal(
+        &sync_a,
+        &sync_b,
+        &["input_hash", "plan_hash", "receipt_hash"],
+    )?;
+
+    let migrate_a =
+        run_json_strings(&["migrate".into(), "openspec".into(), "--root".into(), first])?;
+    let migrate_b =
+        run_json_strings(&["migrate".into(), "openspec".into(), "--root".into(), second])?;
+    assert_hash_fields_equal(
+        &migrate_a,
+        &migrate_b,
+        &[
+            "source_manifest_hash",
+            "destination_manifest_hash",
+            "manifest_hash",
+            "receipt_hash",
+        ],
+    )
+}
+
+#[test]
+fn executed_mutations_emit_before_after_manifest() -> Result<(), Box<dyn Error>> {
+    // r[verify sync_archive.execute.sync] r[verify sync_archive.execute.archive]
+    // r[verify sync_archive.execute.mutation_manifest] r[verify sync_archive.execute.mutation_manifest.sync]
+    // r[verify sync_archive.execute.mutation_manifest.archive] r[verify sync_archive.execute.mutation_manifest.migration]
+    let sync_root = temp_fixture("mutation-sync", "fixtures/archive-ready")?;
+    let sync = run_json_strings(&[
+        "sync".into(),
+        "ready".into(),
+        "--root".into(),
+        sync_root.display().to_string(),
+        "--execute".into(),
+    ])?;
+    assert_eq!(sync["mutated"], true);
+    assert_eq!(sync["mutation_manifest"]["kind"], "sync");
+    assert_hash_field(&sync["mutation_manifest"], "manifest_hash")?;
+    assert!(sync["mutation_manifest"]["before"]["entries"].is_array());
+    assert!(sync["mutation_manifest"]["after"]["entries"].is_array());
+
+    let archive_root = temp_fixture("mutation-archive", "fixtures/archive-ready")?;
+    let archive = run_json_strings(&[
+        "archive".into(),
+        "ready".into(),
+        "--root".into(),
+        archive_root.display().to_string(),
+        "--execute".into(),
+    ])?;
+    assert_eq!(archive["mutated"], true);
+    assert_eq!(archive["mutation_manifest"]["kind"], "archive");
+    assert_hash_field(&archive["mutation_manifest"], "manifest_hash")
+}
+
 #[test]
 fn status_matches_canonical_golden() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.rename_cairn] r[verify cairn.supersede.rename_cairn.packaging]
@@ -960,6 +1071,27 @@ fn archive_execute_moves_temp_fixture_change() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn archive_rejects_malformed_archive_date_without_mutation() -> Result<(), Box<dyn Error>> {
+    // r[verify sync_archive.execute.archive]
+    // r[verify cairn.supersede.agent_run_receipts.nondeterminism.environment]
+    // r[verify cairn.supersede.determinism_replay.hidden_entropy]
+    let fixture = temp_fixture("archive-bad-date", "fixtures/archive-ready")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let output = cairn()
+        .env("CAIRN_ARCHIVE_DATE", "today")
+        .args(["archive", "ready", "--root", root, "--execute"])
+        .output()?;
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("invalid archive date: expected YYYY-MM-DD"),
+        "{stderr}"
+    );
+    assert!(fixture.join("cairn/changes/ready").exists());
+    Ok(())
+}
+
+#[test]
 fn execute_blocked_plan_does_not_mutate_temp_fixture() -> Result<(), Box<dyn Error>> {
     let fixture = temp_fixture("blocked-execute", "fixtures/missing-artifacts")?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
@@ -1266,7 +1398,9 @@ fn mcp_agent_receipt_validation_is_read_only_and_bounded() -> Result<(), Box<dyn
 fn mcp_describes_read_only_tools_without_mutations() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.mcp_server.verification.registration]
     // r[verify cairn.supersede.mcp_server.read_tools]
+    // r[verify cairn.supersede.mcp_reproducibility] r[verify cairn.supersede.mcp_reproducibility.describe]
     let value = run_json(&["mcp", "--describe"])?;
+    assert_eq!(value, run_json(&["mcp", "--describe"])?);
     assert_eq!(value["allow_mutations"], false);
     let tools = value["tools"].as_array().ok_or("tools")?;
     let status_tool = tools
@@ -1312,6 +1446,7 @@ fn mcp_calls_return_structured_receipts() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.mcp_server.read_tools.status]
     // r[verify cairn.supersede.mcp_server.read_tools.gates]
     // r[verify cairn.supersede.mcp_server.verification]
+    // r[verify cairn.supersede.mcp_reproducibility.call]
     // r[verify cairn.supersede.mcp_server.verification.docs]
     // r[verify cairn.supersede.mcp_server.strict_schemas.docs]
     let value = run_json(&[
@@ -1320,6 +1455,15 @@ fn mcp_calls_return_structured_receipts() -> Result<(), Box<dyn Error>> {
         "cairn_status",
         r#"{"root":"fixtures/basic"}"#,
     ])?;
+    assert_eq!(
+        value,
+        run_json(&[
+            "mcp",
+            "--call",
+            "cairn_status",
+            r#"{"root":"fixtures/basic"}"#,
+        ])?
+    );
     let receipt = &value["structuredContent"];
     assert_eq!(receipt["layout"], "cairn");
     assert_eq!(receipt["mcp"]["read_only"], true);

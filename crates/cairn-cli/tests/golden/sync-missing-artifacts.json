@@ -6,15 +6,16 @@
     "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "e746018396426c1c364dded4d6b0de7842a97d277ec0ba2d8814ea8156aa93cd",
+  "input_hash": "535a2c640c625c6cb7eae638b20a65957f22a1ef44c18b822d11e7e408ce139b",
   "layout": "cairn",
   "mutated": false,
-  "plan_hash": "45dcfe3973973eb296d19ea2e2b2a51c6a984bf0621e4abf957dbcc79c7959f8",
+  "mutation_manifest": null,
+  "plan_hash": "8cab517f84a63884f5a309c0b8127932bf98829646faf6817a003b0e79b73c5e",
   "policy": "cairn-default",
-  "policy_hash": "44a32b13a1e70b8e5953c74600c9ccabc865f9f1c6635c03023de3105c0f8ee0",
+  "policy_hash": "5630d704ad50c226b24099b0965d97a3a5e0b08d9ea266fd4b6ef0651dbbfbb3",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "16d91dde5e7bf9d6082c3d3ca683b38f662aada29830a1b368903dbeb133760b"
+  "receipt_hash": "829c3e8774987d576d188ea632d69c53d38d8dc49a8695054ea269076cf4e9bf"
 }

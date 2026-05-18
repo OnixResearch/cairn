@@ -259,18 +259,21 @@ fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> Value {
     let is_valid = checks
         .iter()
         .all(|check| check["passed"].as_bool().unwrap_or(false));
-    with_receipt_hash(json!({
-        "command": "release-readiness",
-        "root": root_text,
-        "valid": is_valid,
-        "verdict": if is_valid { "pass" } else { "fail" },
-        "checks": checks,
-        "cairn_validation_hash": validation.receipt_hash,
-        "tracey_coverage_hash": tracey.receipt_hash,
-        "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
-        "repository_gate_summary": repository_gate_summary,
-        "mcp": {"read_only": true, "destructive": false}
-    }))
+    with_portable_receipt_hash(
+        &root,
+        json!({
+            "command": "release-readiness",
+            "root": root_text,
+            "valid": is_valid,
+            "verdict": if is_valid { "pass" } else { "fail" },
+            "checks": checks,
+            "cairn_validation_hash": validation.receipt_hash,
+            "tracey_coverage_hash": tracey.receipt_hash,
+            "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
+            "repository_gate_summary": repository_gate_summary,
+            "mcp": {"read_only": true, "destructive": false}
+        }),
+    )
 }
 
 struct ReadinessComponent {
@@ -401,14 +404,14 @@ fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let change_status = find_change(root.clone(), selected.layout, &change)?;
     let snapshot = read_gate_snapshot(&root, selected.layout, change_status)?;
     let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
-    let input_hash =
-        canonical_json_hash(&gate_input_json(selected.layout, stage, &policy, &snapshot));
-    print_json(with_receipt_hash(gate_report_json(
-        selected.layout,
-        &policy,
-        &report,
-        &input_hash,
-    )))
+    let input_hash = portable_json_hash(
+        &root,
+        &gate_input_json(selected.layout, stage, &policy, &snapshot),
+    );
+    print_json(with_portable_receipt_hash(
+        &root,
+        gate_report_json(selected.layout, &policy, &report, &input_hash),
+    ))
 }
 
 fn parse_gate_stage(stage: &str) -> Result<GateStage, Box<dyn Error>> {
@@ -434,8 +437,11 @@ fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
     let policy = load_policy_file(policy_path)?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = canonical_json_hash(&change_status_json(&change_status));
+    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
     let mut plan = build_sync_plan(&change_status);
+    let sync_paths = sync_mutation_paths(&root, selected.layout, change, &plan);
+    let before_manifest = file_content_manifest(&root, &sync_paths);
+    let mut mutation_manifest = Value::Null;
     if policy.sync_require_gate && !plan.blocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
@@ -456,14 +462,21 @@ fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
         if !plan.blocked {
             execute_sync_plan(&root, selected.layout, change, &plan)?;
             plan.mutated = true;
+            mutation_manifest =
+                sync_mutation_manifest(&root, selected.layout, change, &plan, &before_manifest);
         }
     }
-    print_json(with_receipt_hash(sync_plan_json(
-        selected.layout,
-        &policy,
-        &plan,
-        &input_hash,
-    )))
+    print_json(with_portable_receipt_hash(
+        &root,
+        sync_plan_json(
+            &root,
+            selected.layout,
+            &policy,
+            &plan,
+            &input_hash,
+            mutation_manifest,
+        ),
+    ))
 }
 
 fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
@@ -473,8 +486,13 @@ fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
     let policy = load_policy_file(policy_path)?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = canonical_json_hash(&change_status_json(&change_status));
+    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
     let mut plan = build_archive_plan(&change_status);
+    let archive_source = PathBuf::from(&change_status.path);
+    let before_paths =
+        tree_content_paths(&root, &archive_source).unwrap_or_else(|_| vec![archive_source.clone()]);
+    let before_manifest = file_content_manifest(&root, &before_paths);
+    let mut mutation_manifest = Value::Null;
     if policy.archive_require_gate && !plan.blocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
@@ -495,6 +513,8 @@ fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
         if !plan.blocked {
             let archive_path =
                 execute_archive_plan(&root, selected.layout, change, &change_status.path)?;
+            mutation_manifest =
+                archive_mutation_manifest(&root, &archive_source, &archive_path, &before_manifest);
             plan.actions = vec![PlanAction {
                 kind: PlanActionKind::ArchiveChange,
                 path: path_string(archive_path),
@@ -503,12 +523,17 @@ fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
             plan.mutated = true;
         }
     }
-    print_json(with_receipt_hash(archive_plan_json(
-        selected.layout,
-        &policy,
-        &plan,
-        &input_hash,
-    )))
+    print_json(with_portable_receipt_hash(
+        &root,
+        archive_plan_json(
+            &root,
+            selected.layout,
+            &policy,
+            &plan,
+            &input_hash,
+            mutation_manifest,
+        ),
+    ))
 }
 
 fn run_init(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -605,13 +630,18 @@ fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         LifecycleLayout::LegacyIronspec => build_ironspec_migration_plan(inputs, is_execute),
         LifecycleLayout::Native => return Err("cannot migrate from canonical cairn layout".into()),
     };
+    let mutation_paths = migration_mutation_paths(&plan);
+    let before_manifest = file_content_manifest(&root, &mutation_paths);
+    let mut mutation_manifest = Value::Null;
     if is_execute && !plan.blocked {
         execute_migration_plan(&root, &plan)?;
         plan.mutated = !plan.actions.is_empty();
+        mutation_manifest = migration_mutation_manifest(&root, &plan, &before_manifest);
     }
-    print_json(with_receipt_hash(migration_plan_json(
-        &root, &policy, &plan,
-    )))
+    print_json(with_portable_receipt_hash(
+        &root,
+        migration_plan_json(&root, &policy, &plan, mutation_manifest),
+    ))
 }
 
 const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
@@ -1202,9 +1232,9 @@ fn reject_selector_escape(selector: &str) -> Result<(), Box<dyn Error>> {
 fn mcp_status(input: &Value) -> Result<Value, Box<dyn Error>> {
     let root = mcp_root(input);
     let selected = detect_layout(&root);
-    let mut value = repo_status_json(&scan_repo(root, selected.layout)?, selected.layout);
+    let mut value = repo_status_json(&scan_repo(root.clone(), selected.layout)?, selected.layout);
     value["mcp"] = json!({"read_only": true, "destructive": false});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_list_content(input: &Value) -> Result<Value, Box<dyn Error>> {
@@ -1236,13 +1266,13 @@ fn mcp_read_spec(input: &Value) -> Result<Value, Box<dyn Error>> {
     reject_selector_escape(spec)?;
     let selected = detect_layout(&root);
     let detail = build_spec_detail(find_spec_source(&root, selected.layout, spec)?);
-    let mut value = spec_detail_json(&path_string(root), selected.layout, &detail);
+    let mut value = spec_detail_json(&path_string(&root), selected.layout, &detail);
     let markdown = value["spec"]["markdown"].as_str().unwrap_or_default();
     if markdown.len() > MCP_MAX_CONTENT_BYTES {
         return Err("spec content exceeds MCP bounded read limit".into());
     }
     value["mcp"] = json!({"read_only": true, "destructive": false, "max_content_bytes": MCP_MAX_CONTENT_BYTES});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_change_show(input: &Value) -> Result<Value, Box<dyn Error>> {
@@ -1251,9 +1281,9 @@ fn mcp_change_show(input: &Value) -> Result<Value, Box<dyn Error>> {
     reject_selector_escape(change)?;
     let selected = detect_layout(&root);
     let detail = build_change_detail(find_change(root.clone(), selected.layout, change)?);
-    let mut value = change_detail_json(&path_string(root), selected.layout, &detail);
+    let mut value = change_detail_json(&path_string(&root), selected.layout, &detail);
     value["mcp"] = json!({"read_only": true, "destructive": false});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_doctor(input: &Value) -> Result<Value, Box<dyn Error>> {
@@ -1291,7 +1321,7 @@ fn mcp_doctor(input: &Value) -> Result<Value, Box<dyn Error>> {
     });
     let mut value = doctor_report_json(&report);
     value["mcp"] = json!({"read_only": true, "destructive": false});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
@@ -1323,11 +1353,13 @@ fn mcp_gate(input: &Value) -> Result<Value, Box<dyn Error>> {
         find_change(root.clone(), selected.layout, change)?,
     )?;
     let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
-    let input_hash =
-        canonical_json_hash(&gate_input_json(selected.layout, stage, &policy, &snapshot));
+    let input_hash = portable_json_hash(
+        &root,
+        &gate_input_json(selected.layout, stage, &policy, &snapshot),
+    );
     let mut value = gate_report_json(selected.layout, &policy, &report, &input_hash);
     value["mcp"] = json!({"read_only": true, "destructive": false});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_gate_context(input: &Value) -> Result<Value, Box<dyn Error>> {
@@ -1335,20 +1367,20 @@ fn mcp_gate_context(input: &Value) -> Result<Value, Box<dyn Error>> {
     let change = mcp_required_string(input, "change")?;
     reject_selector_escape(change)?;
     let selected = detect_layout(&root);
-    let mut value = change_status_json(&find_change(root, selected.layout, change)?);
+    let mut value = change_status_json(&find_change(root.clone(), selected.layout, change)?);
     value["mcp"] = json!({"read_only": true, "destructive": false});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_agent_receipt_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.agent_receipt_validation_surface.mcp]
     // r[impl cairn.supersede.agent_receipt_validation_surface.mcp.read_only]
+    let root = mcp_root(input);
     let (path, receipt) = if input.get("receipt").is_some() {
         let receipt = input["receipt"].clone();
         ensure_inline_receipt_is_bounded(&receipt)?;
         (None, receipt)
     } else {
-        let root = mcp_root(input);
         let selector = mcp_required_string(input, "path")?;
         reject_selector_escape(selector)?;
         let path = root.join(selector);
@@ -1358,7 +1390,7 @@ fn mcp_agent_receipt_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
     let mut value =
         agent_receipt_validation_receipt("mcp cairn_agent_receipt_validate", path, &receipt, true);
     value["mcp"] = json!({"read_only": true, "destructive": false, "max_content_bytes": AGENT_RECEIPT_MAX_BYTES});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
@@ -1370,7 +1402,7 @@ fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
     let policy = load_policy_file(mcp_policy(input))?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = canonical_json_hash(&change_status_json(&change_status));
+    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
     let mut plan = build_sync_plan(&change_status);
     if policy.sync_require_gate && !plan.blocked {
         plan.reasons.extend(mutation_gate_blockers(
@@ -1394,9 +1426,16 @@ fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
             plan.mutated = true;
         }
     }
-    let mut value = sync_plan_json(selected.layout, &policy, &plan, &input_hash);
+    let mut value = sync_plan_json(
+        &root,
+        selected.layout,
+        &policy,
+        &plan,
+        &input_hash,
+        Value::Null,
+    );
     value["mcp"] = json!({"read_only": !execute, "destructive": execute});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
@@ -1406,7 +1445,7 @@ fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
     let policy = load_policy_file(mcp_policy(input))?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = canonical_json_hash(&change_status_json(&change_status));
+    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
     let mut plan = build_archive_plan(&change_status);
     if policy.archive_require_gate && !plan.blocked {
         plan.reasons.extend(mutation_gate_blockers(
@@ -1436,9 +1475,16 @@ fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
             plan.mutated = true;
         }
     }
-    let mut value = archive_plan_json(selected.layout, &policy, &plan, &input_hash);
+    let mut value = archive_plan_json(
+        &root,
+        selected.layout,
+        &policy,
+        &plan,
+        &input_hash,
+        Value::Null,
+    );
     value["mcp"] = json!({"read_only": !execute, "destructive": execute});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_migrate(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
@@ -1457,9 +1503,9 @@ fn mcp_migrate(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
         execute_migration_plan(&root, &plan)?;
         plan.mutated = !plan.actions.is_empty();
     }
-    let mut value = migration_plan_json(&root, &policy, &plan);
+    let mut value = migration_plan_json(&root, &policy, &plan, Value::Null);
     value["mcp"] = json!({"read_only": !execute, "destructive": execute});
-    Ok(with_receipt_hash(value))
+    Ok(with_portable_receipt_hash(&root, value))
 }
 
 fn mcp_init(input: &Value) -> Result<Value, Box<dyn Error>> {
@@ -1848,9 +1894,10 @@ fn execute_archive_plan(
     change_path: &str,
 ) -> Result<PathBuf, Box<dyn Error>> {
     let source = PathBuf::from(change_path);
+    let archive_date = archive_date()?;
     let destination = root
         .join(archive_dir(layout))
-        .join(format!("{}-{change}", archive_date()));
+        .join(format!("{archive_date}-{change}"));
     if destination.exists() {
         return Err(format!(
             "archive destination already exists: {}",
@@ -1965,10 +2012,29 @@ fn execute_migration_plan(root: &Path, plan: &MigrationPlan) -> Result<(), Box<d
     Ok(())
 }
 
-fn archive_date() -> String {
-    env::var("CAIRN_ARCHIVE_DATE")
+fn archive_date() -> Result<String, Box<dyn Error>> {
+    let date = env::var("CAIRN_ARCHIVE_DATE")
         .or_else(|_| env::var("IRONSPEC_ARCHIVE_DATE"))
-        .unwrap_or_else(|_| "1970-01-01".to_string())
+        .unwrap_or_else(|_| "1970-01-01".to_string());
+    if is_archive_date(&date) {
+        Ok(date)
+    } else {
+        Err(format!(
+            "invalid archive date: expected YYYY-MM-DD in CAIRN_ARCHIVE_DATE or IRONSPEC_ARCHIVE_DATE, got {date:?}"
+        )
+        .into())
+    }
+}
+
+fn is_archive_date(date: &str) -> bool {
+    let bytes = date.as_bytes();
+    bytes.len() == 10
+        && bytes[4] == b'-'
+        && bytes[7] == b'-'
+        && bytes
+            .iter()
+            .enumerate()
+            .all(|(index, byte)| index == 4 || index == 7 || byte.is_ascii_digit())
 }
 
 fn repo_status_json(status: &RepoStatus, layout: LifecycleLayout) -> Value {
@@ -2073,7 +2139,12 @@ fn task_counts_json(counts: TaskCounts) -> Value {
     })
 }
 
-fn migration_plan_json(root: &Path, policy: &Policy, plan: &MigrationPlan) -> Value {
+fn migration_plan_json(
+    root: &Path,
+    policy: &Policy,
+    plan: &MigrationPlan,
+    mutation_manifest: Value,
+) -> Value {
     let mut value = json!({
         "command": format!("migrate_{}", layout_name(plan.source_layout)),
         "root": path_string(root),
@@ -2093,30 +2164,39 @@ fn migration_plan_json(root: &Path, policy: &Policy, plan: &MigrationPlan) -> Va
         "conflicts": plan.conflicts,
         "policy": policy.name,
         "policy_hash": canonical_json_hash(&policy.raw),
+        "mutation_manifest": mutation_manifest,
     });
-    value["source_manifest_hash"] = json!(canonical_json_hash(&json!({
-        "source_layout": layout_name(plan.source_layout),
-        "sources": plan.actions.iter().map(|action| json!({
-            "source": action.source,
-            "source_hash": action.source_hash,
-        })).collect::<Vec<_>>(),
-    })));
-    value["destination_manifest_hash"] = json!(canonical_json_hash(&json!({
-        "destination_layout": layout_name(plan.destination_layout),
-        "destinations": plan.actions.iter().map(|action| json!({
-            "destination": action.destination,
-            "destination_hash": action.destination_hash,
-        })).collect::<Vec<_>>(),
-    })));
-    value["manifest_hash"] = json!(canonical_json_hash(&value));
+    value["source_manifest_hash"] = json!(portable_json_hash(
+        root,
+        &json!({
+            "source_layout": layout_name(plan.source_layout),
+            "sources": plan.actions.iter().map(|action| json!({
+                "source": action.source,
+                "source_hash": action.source_hash,
+            })).collect::<Vec<_>>(),
+        })
+    ));
+    value["destination_manifest_hash"] = json!(portable_json_hash(
+        root,
+        &json!({
+            "destination_layout": layout_name(plan.destination_layout),
+            "destinations": plan.actions.iter().map(|action| json!({
+                "destination": action.destination,
+                "destination_hash": action.destination_hash,
+            })).collect::<Vec<_>>(),
+        })
+    ));
+    value["manifest_hash"] = json!(portable_json_hash(root, &value));
     value
 }
 
 fn sync_plan_json(
+    root: &Path,
     layout: LifecycleLayout,
     policy: &Policy,
     plan: &SyncPlan,
     input_hash: &str,
+    mutation_manifest: Value,
 ) -> Value {
     let mut value = json!({
         "change": plan.change,
@@ -2130,17 +2210,20 @@ fn sync_plan_json(
         "policy": policy.name,
         "policy_hash": canonical_json_hash(&policy.raw),
         "input_hash": input_hash,
+        "mutation_manifest": mutation_manifest,
     });
-    let plan_hash = canonical_json_hash(&value);
+    let plan_hash = portable_json_hash(root, &value);
     value["plan_hash"] = json!(plan_hash);
     value
 }
 
 fn archive_plan_json(
+    root: &Path,
     layout: LifecycleLayout,
     policy: &Policy,
     plan: &ArchivePlan,
     input_hash: &str,
+    mutation_manifest: Value,
 ) -> Value {
     let mut value = json!({
         "change": plan.change,
@@ -2153,8 +2236,9 @@ fn archive_plan_json(
         "policy": policy.name,
         "policy_hash": canonical_json_hash(&policy.raw),
         "input_hash": input_hash,
+        "mutation_manifest": mutation_manifest,
     });
-    let plan_hash = canonical_json_hash(&value);
+    let plan_hash = portable_json_hash(root, &value);
     value["plan_hash"] = json!(plan_hash);
     value
 }
@@ -2259,6 +2343,160 @@ fn agent_gate_issue_json(issue: &AgentRunGateIssue) -> Value {
     json!({"code": issue.code, "message": issue.message})
 }
 
+fn portable_json_hash(root: &Path, value: &Value) -> String {
+    canonical_json_hash(&portable_json(root, value))
+}
+
+fn portable_json(root: &Path, value: &Value) -> Value {
+    match value {
+        Value::Array(items) => {
+            Value::Array(items.iter().map(|item| portable_json(root, item)).collect())
+        }
+        Value::Object(object) => Value::Object(
+            object
+                .iter()
+                .map(|(key, value)| (key.clone(), portable_json(root, value)))
+                .collect(),
+        ),
+        Value::String(text) => Value::String(portable_text(root, text)),
+        other => other.clone(),
+    }
+}
+
+fn portable_text(root: &Path, text: &str) -> String {
+    let mut normalized = text.to_string();
+    let root_text = path_string(root);
+    if !root_text.is_empty() && root_text != "." {
+        normalized = normalized.replace(&root_text, ".");
+    }
+    if let Ok(canonical_root) = root.canonicalize() {
+        let canonical_text = path_string(canonical_root);
+        if !canonical_text.is_empty() && canonical_text != "." {
+            normalized = normalized.replace(&canonical_text, ".");
+        }
+    }
+    normalized
+}
+
+fn file_content_manifest(root: &Path, paths: &[PathBuf]) -> Value {
+    let mut unique = paths.to_vec();
+    unique.sort();
+    unique.dedup();
+    let entries = unique
+        .iter()
+        .map(|path| {
+            let exists = path.exists();
+            let content_hash = if exists {
+                fs::read(path).ok().map(|bytes| blake3_hex(&bytes))
+            } else {
+                None
+            };
+            json!({
+                "path": portable_text(root, &path_string(path)),
+                "exists": exists,
+                "content_hash": content_hash,
+            })
+        })
+        .collect::<Vec<_>>();
+    let manifest = json!({"entries": entries});
+    json!({
+        "entries": manifest["entries"].clone(),
+        "manifest_hash": portable_json_hash(root, &manifest),
+    })
+}
+
+fn tree_content_paths(root: &Path, dir: &Path) -> std::io::Result<Vec<PathBuf>> {
+    if !dir.exists() {
+        return Ok(vec![dir.to_path_buf()]);
+    }
+    let mut files = collect_files(dir)?;
+    if files.is_empty() {
+        files.push(dir.to_path_buf());
+    }
+    Ok(files
+        .into_iter()
+        .map(|path| root.join(path.strip_prefix(root).unwrap_or(&path)))
+        .collect())
+}
+
+fn sync_mutation_paths(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    plan: &SyncPlan,
+) -> Vec<PathBuf> {
+    let delta_root = root.join(changes_dir(layout)).join(change).join("specs");
+    let specs_root = root.join(specs_dir(layout));
+    plan.actions
+        .iter()
+        .filter_map(|action| {
+            let source = PathBuf::from(&action.path);
+            source
+                .strip_prefix(&delta_root)
+                .ok()
+                .map(|relative| specs_root.join(relative))
+        })
+        .collect()
+}
+
+fn sync_mutation_manifest(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    plan: &SyncPlan,
+    before: &Value,
+) -> Value {
+    let paths = sync_mutation_paths(root, layout, change, plan);
+    let after = file_content_manifest(root, &paths);
+    json!({
+        "kind": "sync",
+        "before": before,
+        "after": after,
+        "manifest_hash": portable_json_hash(root, &json!({"before": before, "after": after})),
+    })
+}
+
+fn archive_mutation_manifest(
+    root: &Path,
+    source: &Path,
+    destination: &Path,
+    before: &Value,
+) -> Value {
+    let mut after_paths =
+        tree_content_paths(root, destination).unwrap_or_else(|_| vec![destination.to_path_buf()]);
+    after_paths.push(source.to_path_buf());
+    let after = file_content_manifest(root, &after_paths);
+    json!({
+        "kind": "archive",
+        "before": before,
+        "after": after,
+        "manifest_hash": portable_json_hash(root, &json!({"before": before, "after": after})),
+    })
+}
+
+fn migration_mutation_paths(plan: &MigrationPlan) -> Vec<PathBuf> {
+    plan.actions
+        .iter()
+        .flat_map(|action| {
+            [
+                PathBuf::from(&action.source),
+                PathBuf::from(&action.destination),
+            ]
+        })
+        .collect()
+}
+
+fn migration_mutation_manifest(root: &Path, plan: &MigrationPlan, before: &Value) -> Value {
+    let paths = migration_mutation_paths(plan);
+    let after = file_content_manifest(root, &paths);
+    json!({
+        "kind": "migration",
+        "before": before,
+        "after": after,
+        "manifest_hash": portable_json_hash(root, &json!({"before": before, "after": after})),
+    })
+}
+
 fn path_string(path: impl Into<PathBuf>) -> String {
     path.into().display().to_string()
 }
@@ -2280,6 +2518,12 @@ fn print_json(value: Value) -> Result<(), Box<dyn Error>> {
 
 fn with_receipt_hash(mut value: Value) -> Value {
     let receipt_hash = canonical_json_hash(&value);
+    value["receipt_hash"] = json!(receipt_hash);
+    value
+}
+
+fn with_portable_receipt_hash(root: &Path, mut value: Value) -> Value {
+    let receipt_hash = portable_json_hash(root, &value);
     value["receipt_hash"] = json!(receipt_hash);
     value
 }

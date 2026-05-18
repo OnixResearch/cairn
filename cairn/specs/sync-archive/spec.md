@@ -33,7 +33,6 @@ r[sync_archive.plan.purity.no_effects]
 - WHEN the core plan builder runs
 - THEN it does not read files, inspect environment variables, spawn processes, or render JSON
 
-
 ### Requirement: Sync plan execution
 
 r[sync_archive.execute.sync] The system MUST execute a sync plan only when the caller explicitly requests non-dry-run execution, the computed plan is unblocked, and delta specs are merged into accepted specs without replacing accepted-spec wrapper content.
@@ -96,3 +95,27 @@ r[sync_archive.execute.boundary.pure_core]
 - GIVEN sync/archive execution support is implemented
 - WHEN Slotcar verifies the pure core boundary
 - THEN no filesystem, environment, process, stdout/stderr, or JSON presentation effects are present under `crates/cairn-core/src/verified/`
+
+### Requirement: Lifecycle mutation manifests
+r[sync_archive.execute.mutation_manifest] The system MUST emit deterministic before/after mutation manifests for explicit lifecycle executions that mutate repository files.
+
+#### Scenario: Sync execution reports touched file hashes
+r[sync_archive.execute.mutation_manifest.sync]
+- GIVEN a sync plan is executed with the explicit execution flag
+- WHEN the system merges delta specs into accepted specs
+- THEN the JSON receipt MUST include a before/after manifest for every planned touched file using root-relative paths and BLAKE3 content hashes
+- AND the manifest hash MUST be stable for identical pre-state, delta content, and execution result across checkout roots
+
+#### Scenario: Archive execution reports moved tree hashes
+r[sync_archive.execute.mutation_manifest.archive]
+- GIVEN an archive plan is executed with the explicit execution flag
+- WHEN the system moves a completed change into the archive tree
+- THEN the JSON receipt MUST include a before/after manifest for the active change tree and archive destination tree using root-relative paths and BLAKE3 content hashes
+- AND the receipt MUST report `mutated=false` if no filesystem move occurred
+
+#### Scenario: Migration execution reports copied file hashes
+r[sync_archive.execute.mutation_manifest.migration]
+- GIVEN a migration plan is executed with the explicit execution flag
+- WHEN legacy lifecycle files are copied into the native Cairn layout
+- THEN the JSON receipt MUST include source and destination before/after manifests using root-relative paths where possible and explicit external-input metadata otherwise
+- AND any conflict or partial failure MUST be reflected in deterministic blocker or issue fields

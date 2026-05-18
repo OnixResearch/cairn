@@ -4,14 +4,15 @@
   "change": "no-delta",
   "delta_specs": [],
   "dry_run": true,
-  "input_hash": "28f9c20afbe49a979887ce0cae4955b6e394f6cf01001f18db850817911be373",
+  "input_hash": "581acbfb751bf422166d48da596ef90c0a16d5d2e55916335c52bd5c2f436a12",
   "layout": "cairn",
   "mutated": false,
-  "plan_hash": "171d30773e08c5cbbbd6fc0e14cc1ab551532879d085797973e8c636e11f1450",
+  "mutation_manifest": null,
+  "plan_hash": "99b698a9a9e9f20cec567eaf8e59826e750ff79c067990639f717d2fc1daf8ba",
   "policy": "cairn-default",
-  "policy_hash": "44a32b13a1e70b8e5953c74600c9ccabc865f9f1c6635c03023de3105c0f8ee0",
+  "policy_hash": "5630d704ad50c226b24099b0965d97a3a5e0b08d9ea266fd4b6ef0651dbbfbb3",
   "reasons": [
     "no-delta: no delta specs to sync"
   ],
-  "receipt_hash": "3d4c383e9bdc8babf275d356325a8df052659cc42cd1b1f636c1da920aa756c0"
+  "receipt_hash": "3c0205a62ffeebb75a7ebeea09769db56e4690958d9e5917217788ce8ec6bab1"
 }

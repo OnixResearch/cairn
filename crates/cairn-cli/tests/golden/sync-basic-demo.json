@@ -12,12 +12,13 @@
     "fixtures/basic/cairn/changes/demo/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "837b2fc49a705eef3b06d7904d0bfd98fd3a45a369f4bcddd4a86d47a4cc5d5e",
+  "input_hash": "3f89226a195b0839b9eb3c1273049d10467e023d969ae9e969623ecb0077cf11",
   "layout": "cairn",
   "mutated": false,
-  "plan_hash": "d8b1920810e99b63934023aa9e2ca9ad3f44ab04c9b6819c349eb45ee12ca48c",
+  "mutation_manifest": null,
+  "plan_hash": "f09d507a8c5b4dc92b7e3a8c6882bc536773668d620d586d14b4394246722c0c",
   "policy": "cairn-default",
-  "policy_hash": "44a32b13a1e70b8e5953c74600c9ccabc865f9f1c6635c03023de3105c0f8ee0",
+  "policy_hash": "5630d704ad50c226b24099b0965d97a3a5e0b08d9ea266fd4b6ef0651dbbfbb3",
   "reasons": [],
-  "receipt_hash": "9cdd6d230b84ecaa84d422395013d0ab9cfcb3fb501ff54eb63393a47fa9a9cd"
+  "receipt_hash": "4669fc8fc87ead509f24dc16171dd0f2729a2e69f6888f0047fc472c1239872e"
 }

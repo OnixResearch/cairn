@@ -123,9 +123,15 @@ match the generated exemption marker contract (`reason=`, `owner=`, and ISO-like
 `sync` and `archive` are dry-run by default. Use `--execute` only when you want
 local filesystem mutation after reviewing the plan. Stable public lifecycle
 receipt fields are `actions`, `blocked`, `change`, `dry_run`, `input_hash`,
-`layout`, `mutated`, `plan_hash`, `policy`, `policy_hash`, `reasons`, and
-`receipt_hash`; sync receipts also include `delta_specs`. Lifecycle action
-entries expose stable `kind`, `path`, and `description` fields. Sync/archive
+`layout`, `mutated`, `mutation_manifest`, `plan_hash`, `policy`, `policy_hash`,
+`reasons`, and `receipt_hash`; sync receipts also include `delta_specs`.
+Lifecycle action entries expose stable `kind`, `path`, and `description` fields.
+`input_hash`, `plan_hash`, and `receipt_hash` are computed from root-portable
+JSON: checkout/temp-directory prefixes are normalized before hashing while
+operator-facing `path` and `root` fields remain display paths. Executed
+`sync`, `archive`, and `migrate` receipts include a `mutation_manifest` with
+before/after BLAKE3 content hashes and a manifest hash; dry-run receipts set it
+to `null`. Sync/archive
 execution first enforces the configured deterministic gate when the base plan is
 otherwise unblocked. Executed sync merges delta
 requirement sections into accepted specs; it preserves accepted spec title,
@@ -165,10 +171,10 @@ changes, and archived changes from legacy `openspec/` into native `cairn/`
 layout only when `--execute` is passed. Existing native destination files are
 reported as blockers and are never overwritten. Stable public migration receipt
 fields are `command`, `root`, `source_layout`, `destination_layout`, `actions`,
-`conflicts`, `blocked`, `dry_run`, `mutated`, `policy`, `policy_hash`,
-`source_manifest_hash`, `destination_manifest_hash`, `manifest_hash`, and
-`receipt_hash`. Migration action entries expose stable `source`, `destination`,
-`source_hash`, and `destination_hash` fields.
+`conflicts`, `blocked`, `dry_run`, `mutated`, `mutation_manifest`, `policy`,
+`policy_hash`, `source_manifest_hash`, `destination_manifest_hash`,
+`manifest_hash`, and `receipt_hash`. Migration action entries expose stable
+`source`, `destination`, `source_hash`, and `destination_hash` fields.
 
 ## Hermes skill source
 
