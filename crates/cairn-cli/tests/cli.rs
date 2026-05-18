@@ -248,6 +248,99 @@ fn portable_receipt_hashes_survive_distinct_roots() -> Result<(), Box<dyn Error>
 }
 
 #[test]
+fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.determinism_replay.workspace_oracle]
+    // r[verify cairn.supersede.determinism_replay.normalization]
+    // r[verify cairn.supersede.determinism_replay.repeated]
+    // r[verify cairn.supersede.determinism_replay.cross_root]
+    // r[verify cairn.supersede.determinism_replay.receipt]
+    // r[verify cairn.supersede.determinism_replay.mcp_cases]
+    // r[verify cairn.supersede.determinism_replay.mismatch_diagnostics]
+    let first = run_json(&["determinism", "replay", "--root", "fixtures/basic"])?;
+    let second = run_json(&["determinism", "replay", "--root", "fixtures/basic"])?;
+    assert_eq!(first["valid"], true);
+    assert_eq!(first["verdict"], "pass");
+    assert_eq!(first["mismatches"].as_array().unwrap().len(), 0);
+    assert_eq!(
+        first["nondeterminism_failures"].as_array().unwrap().len(),
+        0
+    );
+    assert_eq!(first["receipt_hash"], second["receipt_hash"]);
+    assert_hash_field(&first, "receipt_hash")?;
+    let case_ids = first["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|case| case["id"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        case_ids,
+        vec!["mcp_describe", "mcp_status", "status", "validate"]
+    );
+    assert!(first["cases"].as_array().unwrap().iter().all(|case| {
+        case["runs"].as_array().unwrap().len() == 3
+            && case["expected_mutability"] == "read_only_or_dry_run"
+    }));
+    assert!(first["mutability_observations"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|observation| observation["mutated"] == false));
+    Ok(())
+}
+
+#[test]
+fn determinism_replay_rejects_mutation_flags() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.determinism_replay.no_mutation]
+    let value = run_json(&[
+        "determinism",
+        "replay",
+        "--root",
+        "fixtures/basic",
+        "--execute",
+    ])?;
+    assert_eq!(value["valid"], false);
+    assert_eq!(value["verdict"], "fail");
+    assert_eq!(value["mismatches"][0]["code"], "replay.mutation_denied");
+    assert_hash_field(&value, "receipt_hash")
+}
+
+#[test]
+fn determinism_replay_rejects_hidden_environment_entropy() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.determinism_replay.hidden_entropy]
+    let mut command = cairn();
+    command
+        .args(["determinism", "replay", "--root", "fixtures/basic"])
+        .env("CAIRN_ARCHIVE_DATE", "2026-05-18");
+    let value = run_json_command(&mut command)?;
+    assert_eq!(value["valid"], false);
+    assert_eq!(value["verdict"], "fail");
+    assert_eq!(
+        value["nondeterminism_failures"][0]["code"],
+        "replay.hidden_entropy.environment"
+    );
+    assert_eq!(
+        value["nondeterminism_failures"][0]["source"],
+        "CAIRN_ARCHIVE_DATE"
+    );
+    assert_hash_field(&value, "receipt_hash")
+}
+
+#[test]
+fn release_readiness_lists_replay_oracle_preflight() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.release_readiness]
+    // r[verify cairn.supersede.release_readiness.determinism_replay]
+    let value = run_json(&["release-readiness", "--root", "."])?;
+    assert_eq!(value["determinism_replay"]["required"], true);
+    assert_eq!(value["determinism_replay"]["included"], false);
+    assert_eq!(
+        value["determinism_replay"]["command"],
+        "determinism replay --root <root>"
+    );
+    Ok(())
+}
+
+#[test]
 fn executed_mutations_emit_before_after_manifest() -> Result<(), Box<dyn Error>> {
     // r[verify sync_archive.execute.sync] r[verify sync_archive.execute.archive]
     // r[verify sync_archive.execute.mutation_manifest] r[verify sync_archive.execute.mutation_manifest.sync]
@@ -428,16 +521,26 @@ fn assert_migration_receipt_schema() -> Result<(), Box<dyn Error>> {
     assert_first_action_matches_schema(&migration, &schema)
 }
 
+fn assert_replay_receipt_schema() -> Result<(), Box<dyn Error>> {
+    let replay = run_json(&["determinism", "replay", "--root", "fixtures/basic"])?;
+    let schema = receipt_schema("determinism replay")?;
+    assert_schema_keys(&replay, &schema, "top_level_keys")?;
+    assert_schema_keys(&replay["cases"][0], &schema, "case_keys")?;
+    assert_hash_field(&replay, "receipt_hash")
+}
+
 #[test]
 fn public_receipt_schemas_are_stable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.receipt_schema]
     // r[verify cairn.supersede.receipt_schema.gate]
     // r[verify cairn.supersede.receipt_schema.lifecycle]
     // r[verify cairn.supersede.receipt_schema.migration]
+    // r[verify cairn.supersede.determinism_replay.receipt.schema]
     assert_gate_receipt_schema()?;
     assert_sync_receipt_schema()?;
     assert_archive_receipt_schema()?;
-    assert_migration_receipt_schema()
+    assert_migration_receipt_schema()?;
+    assert_replay_receipt_schema()
 }
 
 #[test]
@@ -463,6 +566,15 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
     );
     assert!(
         readme.contains("`source_hash`, and `destination_hash` fields"),
+        "{readme}"
+    );
+    assert!(
+        readme.contains("Stable public determinism replay fields"),
+        "{readme}"
+    );
+    assert!(
+        readme
+            .contains("Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`"),
         "{readme}"
     );
     Ok(())
@@ -1265,6 +1377,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "tracey_coverage_hash",
             "mcp_smoke_receipt_hash",
             "repository_gate_summary",
+            "determinism_replay",
             "mcp",
             "receipt_hash",
         ],

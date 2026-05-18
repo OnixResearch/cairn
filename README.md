@@ -143,6 +143,21 @@ nix run path:$PWD#cairn -- sync ready --root /path/to/repo --execute
 nix run path:$PWD#cairn -- archive ready --root /path/to/repo --execute
 ```
 
+## Agent/CI determinism replay
+
+`cairn determinism replay --root <fixture-or-repo>` is a read-only workspace
+preflight for agents and CI. It copies the selected root into two distinct temp
+roots, runs the maintained replay cases repeatedly and across roots, and emits a
+single deterministic receipt. Stable public determinism replay fields are
+`command`, `root`, `valid`, `verdict`, `cases`, `skipped`, `mismatches`,
+`nondeterminism_failures`, `mutability_observations`, `normalization_rules`, and
+`receipt_hash`. Case entries expose stable `id`, `command_kind`, `args`,
+`expected_mutability`, `comparison_modes`, `normalization_rules`,
+`display_only_paths`, `hash_fields`, `runs`, and `portable_evidence_hash` fields.
+Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`,
+`expected`, and `actual` fields. The default oracle rejects mutation flags and
+records mutation observations as deterministic failures.
+
 ## Agent-run receipts
 
 `cairn-core` includes pure helpers for deterministic agent-run receipts:

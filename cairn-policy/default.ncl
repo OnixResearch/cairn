@@ -79,6 +79,13 @@ let Contracts = import "contracts.ncl" in
       action_keys = ["destination", "destination_hash", "source", "source_hash"],
       hash_fields = ["destination_manifest_hash", "manifest_hash", "policy_hash", "receipt_hash", "source_manifest_hash"],
     },
+    {
+      command = "determinism replay",
+      top_level_keys = ["cases", "command", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "skipped", "valid", "verdict"],
+      case_keys = ["args", "command_kind", "comparison_modes", "display_only_paths", "expected_mutability", "hash_fields", "id", "normalization_rules", "portable_evidence_hash", "runs"],
+      mismatch_keys = ["actual", "case", "class", "comparison", "expected", "field_path"],
+      hash_fields = ["receipt_hash"],
+    },
   ],
 
   exemption_marker_policy = {

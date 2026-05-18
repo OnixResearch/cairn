@@ -62,6 +62,7 @@
   "receipt_schemas": [
     {
       "action_keys": [],
+      "case_keys": [],
       "command": "gate",
       "hash_fields": [
         "input_hash",
@@ -73,6 +74,7 @@
         "promoted",
         "scope"
       ],
+      "mismatch_keys": [],
       "top_level_keys": [
         "change",
         "input_hash",
@@ -92,6 +94,7 @@
         "kind",
         "path"
       ],
+      "case_keys": [],
       "command": "sync",
       "hash_fields": [
         "input_hash",
@@ -100,6 +103,7 @@
         "receipt_hash"
       ],
       "issue_keys": [],
+      "mismatch_keys": [],
       "top_level_keys": [
         "actions",
         "blocked",
@@ -123,6 +127,7 @@
         "kind",
         "path"
       ],
+      "case_keys": [],
       "command": "archive",
       "hash_fields": [
         "input_hash",
@@ -131,6 +136,7 @@
         "receipt_hash"
       ],
       "issue_keys": [],
+      "mismatch_keys": [],
       "top_level_keys": [
         "actions",
         "blocked",
@@ -154,6 +160,7 @@
         "source",
         "source_hash"
       ],
+      "case_keys": [],
       "command": "migrate",
       "hash_fields": [
         "destination_manifest_hash",
@@ -163,6 +170,7 @@
         "source_manifest_hash"
       ],
       "issue_keys": [],
+      "mismatch_keys": [],
       "top_level_keys": [
         "actions",
         "blocked",
@@ -180,6 +188,47 @@
         "root",
         "source_layout",
         "source_manifest_hash"
+      ]
+    },
+    {
+      "action_keys": [],
+      "case_keys": [
+        "args",
+        "command_kind",
+        "comparison_modes",
+        "display_only_paths",
+        "expected_mutability",
+        "hash_fields",
+        "id",
+        "normalization_rules",
+        "portable_evidence_hash",
+        "runs"
+      ],
+      "command": "determinism replay",
+      "hash_fields": [
+        "receipt_hash"
+      ],
+      "issue_keys": [],
+      "mismatch_keys": [
+        "actual",
+        "case",
+        "class",
+        "comparison",
+        "expected",
+        "field_path"
+      ],
+      "top_level_keys": [
+        "cases",
+        "command",
+        "mismatches",
+        "mutability_observations",
+        "nondeterminism_failures",
+        "normalization_rules",
+        "receipt_hash",
+        "root",
+        "skipped",
+        "valid",
+        "verdict"
       ]
     }
   ],
