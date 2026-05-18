@@ -2,6 +2,7 @@ use std::{
     env,
     error::Error,
     fs,
+    io::{self, BufRead, Write},
     path::{Path, PathBuf},
 };
 
@@ -48,6 +49,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "validate" => run_validate(args.collect())?,
         "policy" => run_policy(args.collect())?,
         "migrate" => run_migrate(args.collect())?,
+        "mcp" => run_mcp(args.collect())?,
         "gate" => run_gate(args.collect())?,
         "gate-context" => {
             let Some(change) = args.next() else {
@@ -453,6 +455,547 @@ fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     print_json(with_receipt_hash(migration_plan_json(
         &root, &policy, &plan,
     )))
+}
+
+const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
+const MCP_MAX_CONTENT_BYTES: usize = 64 * 1024;
+
+fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.supersede.mcp_server.read_tools]
+    // r[impl cairn.supersede.mcp_server.plan_tools]
+    // r[impl cairn.supersede.mcp_server.mutation_guard]
+    // r[impl cairn.supersede.mcp_server.boundary]
+    let allow_mutations = has_flag(&args, "--allow-mutations");
+    if has_flag(&args, "--describe") {
+        return print_json(mcp_tool_catalog(allow_mutations));
+    }
+    if let Some(index) = args.iter().position(|arg| arg == "--call") {
+        let name = args
+            .get(index + 1)
+            .ok_or("mcp --call requires a tool name")?;
+        let input = args
+            .get(index + 2)
+            .map(|text| serde_json::from_str(text))
+            .transpose()?
+            .unwrap_or_else(|| json!({}));
+        return print_json(mcp_call_tool(name, &input, allow_mutations)?);
+    }
+    run_mcp_json_rpc(allow_mutations)
+}
+
+fn run_mcp_json_rpc(allow_mutations: bool) -> Result<(), Box<dyn Error>> {
+    let stdin = io::stdin();
+    let mut stdout = io::stdout();
+    for line in stdin.lock().lines() {
+        let line = line?;
+        if line.trim().is_empty() {
+            continue;
+        }
+        let request: Value = serde_json::from_str(&line)?;
+        let id = request.get("id").cloned().unwrap_or(Value::Null);
+        let method = request["method"].as_str().unwrap_or_default();
+        let response = match method {
+            "initialize" => json!({
+                "jsonrpc": "2.0", "id": id,
+                "result": {"protocolVersion": MCP_PROTOCOL_VERSION, "serverInfo": {"name": "cairn", "version": env!("CARGO_PKG_VERSION")}, "capabilities": {"tools": {}}}
+            }),
+            "tools/list" => {
+                json!({"jsonrpc": "2.0", "id": id, "result": {"tools": mcp_tools(allow_mutations)}})
+            }
+            "tools/call" => {
+                let params = &request["params"];
+                let name = params["name"].as_str().unwrap_or_default();
+                let arguments = params.get("arguments").unwrap_or(&Value::Null);
+                match mcp_call_tool(name, arguments, allow_mutations) {
+                    Ok(result) => json!({"jsonrpc": "2.0", "id": id, "result": result}),
+                    Err(error) => {
+                        json!({"jsonrpc": "2.0", "id": id, "error": {"code": -32000, "message": error.to_string()}})
+                    }
+                }
+            }
+            _ => {
+                json!({"jsonrpc": "2.0", "id": id, "error": {"code": -32601, "message": format!("unknown method: {method}")}})
+            }
+        };
+        writeln!(stdout, "{}", serde_json::to_string(&response)?)?;
+        stdout.flush()?;
+    }
+    Ok(())
+}
+
+fn mcp_tool_catalog(allow_mutations: bool) -> Value {
+    json!({"protocol_version": MCP_PROTOCOL_VERSION, "allow_mutations": allow_mutations, "tools": mcp_tools(allow_mutations)})
+}
+
+fn mcp_tools(allow_mutations: bool) -> Vec<Value> {
+    let mut tools = vec![
+        mcp_tool(
+            "cairn_status",
+            true,
+            false,
+            "List Cairn lifecycle state for a bounded root",
+        ),
+        mcp_tool(
+            "cairn_list_content",
+            true,
+            false,
+            "List accepted specs, active changes, and archived changes",
+        ),
+        mcp_tool(
+            "cairn_read_spec",
+            true,
+            false,
+            "Read a bounded accepted spec by id",
+        ),
+        mcp_tool(
+            "cairn_change_show",
+            true,
+            false,
+            "Read bounded active change metadata by id",
+        ),
+        mcp_tool(
+            "cairn_doctor",
+            true,
+            false,
+            "Run Cairn diagnostics and return a structured receipt",
+        ),
+        mcp_tool(
+            "cairn_validate",
+            true,
+            false,
+            "Run Cairn validation and return a structured receipt",
+        ),
+        mcp_tool(
+            "cairn_gate",
+            true,
+            false,
+            "Evaluate a Cairn gate for proposal, design, or tasks",
+        ),
+        mcp_tool(
+            "cairn_gate_context",
+            true,
+            false,
+            "Return bounded gate context for a change",
+        ),
+        mcp_tool("cairn_sync_plan", true, false, "Plan sync without mutation"),
+        mcp_tool(
+            "cairn_archive_plan",
+            true,
+            false,
+            "Plan archive without mutation",
+        ),
+        mcp_tool(
+            "cairn_migrate_plan",
+            true,
+            false,
+            "Plan legacy migration without mutation",
+        ),
+    ];
+    if allow_mutations {
+        tools.extend([
+            mcp_tool(
+                "cairn_init",
+                false,
+                true,
+                "Initialize Cairn lifecycle files",
+            ),
+            mcp_tool(
+                "cairn_change_create",
+                false,
+                true,
+                "Create a Cairn change skeleton",
+            ),
+            mcp_tool(
+                "cairn_sync_execute",
+                false,
+                true,
+                "Execute a gated sync plan",
+            ),
+            mcp_tool(
+                "cairn_archive_execute",
+                false,
+                true,
+                "Execute a gated archive plan",
+            ),
+            mcp_tool(
+                "cairn_migrate_execute",
+                false,
+                true,
+                "Execute a legacy migration plan",
+            ),
+        ]);
+    }
+    tools
+}
+
+fn mcp_tool(name: &str, read_only: bool, destructive: bool, description: &str) -> Value {
+    json!({"name": name, "description": description, "inputSchema": {"type": "object", "additionalProperties": true}, "annotations": {"readOnlyHint": read_only, "destructiveHint": destructive}})
+}
+
+fn mcp_call_tool(
+    name: &str,
+    input: &Value,
+    allow_mutations: bool,
+) -> Result<Value, Box<dyn Error>> {
+    let receipt = match name {
+        "cairn_status" => mcp_status(input)?,
+        "cairn_list_content" => mcp_list_content(input)?,
+        "cairn_read_spec" => mcp_read_spec(input)?,
+        "cairn_change_show" => mcp_change_show(input)?,
+        "cairn_doctor" => mcp_doctor(input)?,
+        "cairn_validate" => mcp_validate(input)?,
+        "cairn_gate" => mcp_gate(input)?,
+        "cairn_gate_context" => mcp_gate_context(input)?,
+        "cairn_sync_plan" => mcp_sync(input, false)?,
+        "cairn_archive_plan" => mcp_archive(input, false)?,
+        "cairn_migrate_plan" => mcp_migrate(input, false)?,
+        "cairn_init"
+        | "cairn_change_create"
+        | "cairn_sync_execute"
+        | "cairn_archive_execute"
+        | "cairn_migrate_execute"
+            if !allow_mutations =>
+        {
+            mutation_denied(name)
+        }
+        "cairn_sync_execute" => mcp_sync(input, true)?,
+        "cairn_archive_execute" => mcp_archive(input, true)?,
+        "cairn_migrate_execute" => mcp_migrate(input, true)?,
+        "cairn_init" => mcp_init(input)?,
+        "cairn_change_create" => mcp_change_create(input)?,
+        unknown => return Err(format!("unknown MCP tool: {unknown}").into()),
+    };
+    Ok(
+        json!({"content": [{"type": "text", "text": mcp_summary(name, &receipt)}], "structuredContent": receipt, "isError": false}),
+    )
+}
+
+fn mutation_denied(name: &str) -> Value {
+    json!({"tool": name, "allowed": false, "error": "mutation capability required", "mutated": false})
+}
+
+fn mcp_summary(name: &str, receipt: &Value) -> String {
+    format!(
+        "{name}: {}",
+        serde_json::to_string(receipt).unwrap_or_else(|_| "{}".to_string())
+    )
+}
+
+fn mcp_root(input: &Value) -> PathBuf {
+    input["root"]
+        .as_str()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."))
+}
+
+fn mcp_policy(input: &Value) -> PathBuf {
+    input["policy"]
+        .as_str()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(default_policy_path()))
+}
+
+fn mcp_required_string<'a>(input: &'a Value, key: &str) -> Result<&'a str, Box<dyn Error>> {
+    input[key]
+        .as_str()
+        .ok_or_else(|| format!("missing string argument: {key}").into())
+}
+
+fn reject_selector_escape(selector: &str) -> Result<(), Box<dyn Error>> {
+    if selector.starts_with('/')
+        || selector.contains("..")
+        || selector.contains('\\')
+        || selector.starts_with('.')
+    {
+        return Err(format!("selector escapes lifecycle bounds: {selector}").into());
+    }
+    Ok(())
+}
+
+fn mcp_status(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let selected = detect_layout(&root);
+    let mut value = repo_status_json(&scan_repo(root, selected.layout)?, selected.layout);
+    value["mcp"] = json!({"read_only": true, "destructive": false});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_list_content(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let selected = detect_layout(&root);
+    let status = scan_repo(root.clone(), selected.layout)?;
+    let archive_root = root.join(archive_dir(selected.layout));
+    let archived_changes = if archive_root.exists() {
+        let mut changes = fs::read_dir(archive_root)?
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .filter(|entry| entry.file_type().map(|kind| kind.is_dir()).unwrap_or(false))
+            .map(|entry| entry.file_name().to_string_lossy().to_string())
+            .collect::<Vec<_>>();
+        changes.sort();
+        changes
+    } else {
+        Vec::new()
+    };
+    Ok(with_receipt_hash(
+        json!({"root": path_string(root), "layout": layout_name(selected.layout), "accepted_specs": status.specs, "active_changes": status.changes.iter().map(change_status_json).collect::<Vec<_>>(), "archived_changes": archived_changes, "mcp": {"read_only": true, "destructive": false}}),
+    ))
+}
+
+fn mcp_read_spec(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let spec = mcp_required_string(input, "spec")?;
+    reject_selector_escape(spec)?;
+    let selected = detect_layout(&root);
+    let detail = build_spec_detail(find_spec_source(&root, selected.layout, spec)?);
+    let mut value = spec_detail_json(&path_string(root), selected.layout, &detail);
+    let markdown = value["spec"]["markdown"].as_str().unwrap_or_default();
+    if markdown.len() > MCP_MAX_CONTENT_BYTES {
+        return Err("spec content exceeds MCP bounded read limit".into());
+    }
+    value["mcp"] = json!({"read_only": true, "destructive": false, "max_content_bytes": MCP_MAX_CONTENT_BYTES});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_change_show(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let change = mcp_required_string(input, "change")?;
+    reject_selector_escape(change)?;
+    let selected = detect_layout(&root);
+    let detail = build_change_detail(find_change(root.clone(), selected.layout, change)?);
+    let mut value = change_detail_json(&path_string(root), selected.layout, &detail);
+    value["mcp"] = json!({"read_only": true, "destructive": false});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_doctor(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let policy_path = mcp_policy(input);
+    let selected = detect_layout(&root);
+    let status = scan_repo(root.clone(), selected.layout)?;
+    let spec_issues =
+        validate_spec_sources(&collect_validation_spec_sources(&root, selected.layout)?);
+    let policy_result = load_policy_file(policy_path.clone());
+    let (policy_name, policy_error, change_issue_count) = match policy_result {
+        Ok(policy) => (
+            Some(policy.name.clone()),
+            None,
+            validate_changes(&status.changes, &policy).len(),
+        ),
+        Err(error) => (None, Some(error.to_string()), 0),
+    };
+    let report = build_doctor_report(DoctorSnapshot {
+        root: path_string(&root),
+        selected_layout: selected.layout,
+        native_layout_present: root.join(layout_root(LifecycleLayout::Native)).exists(),
+        legacy_layout_present: root
+            .join(layout_root(LifecycleLayout::LegacyOpenSpec))
+            .exists(),
+        specs_dir_present: root.join(specs_dir(selected.layout)).exists(),
+        changes_dir_present: root.join(changes_dir(selected.layout)).exists(),
+        archive_dir_present: root.join(archive_dir(selected.layout)).exists(),
+        policy_path: path_string(policy_path),
+        policy_name,
+        policy_error,
+        spec_count: status.specs.len(),
+        change_count: status.changes.len(),
+        validation_issue_count: spec_issues.len() + change_issue_count,
+    });
+    let mut value = doctor_report_json(&report);
+    value["mcp"] = json!({"read_only": true, "destructive": false});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let policy = load_policy_file(mcp_policy(input))?;
+    let selected = detect_layout(&root);
+    let status = scan_repo(root.clone(), selected.layout)?;
+    let change_issues = validate_changes(&status.changes, &policy);
+    let spec_sources = collect_validation_spec_sources(&root, selected.layout)?;
+    let spec_issues = validate_spec_sources(&spec_sources);
+    let mut issues = Vec::with_capacity(change_issues.len() + spec_issues.len());
+    issues.extend(change_issues.iter().cloned());
+    issues.extend(spec_issues.iter().cloned());
+    Ok(with_receipt_hash(
+        json!({"valid": issues.is_empty(), "issues": issues, "change_issues": change_issues, "spec_issues": spec_issues, "changes": status.changes.len(), "specs_validated": spec_sources.len(), "policy": policy.name, "layout": layout_name(selected.layout), "mcp": {"read_only": true, "destructive": false}}),
+    ))
+}
+
+fn mcp_gate(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let change = mcp_required_string(input, "change")?;
+    reject_selector_escape(change)?;
+    let stage = parse_gate_stage(mcp_required_string(input, "stage")?)?;
+    let policy = load_policy_file(mcp_policy(input))?;
+    let selected = detect_layout(&root);
+    let snapshot = read_gate_snapshot(
+        &root,
+        selected.layout,
+        find_change(root.clone(), selected.layout, change)?,
+    )?;
+    let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
+    let input_hash =
+        canonical_json_hash(&gate_input_json(selected.layout, stage, &policy, &snapshot));
+    let mut value = gate_report_json(selected.layout, &policy, &report, &input_hash);
+    value["mcp"] = json!({"read_only": true, "destructive": false});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_gate_context(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let change = mcp_required_string(input, "change")?;
+    reject_selector_escape(change)?;
+    let selected = detect_layout(&root);
+    let mut value = change_status_json(&find_change(root, selected.layout, change)?);
+    value["mcp"] = json!({"read_only": true, "destructive": false});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let change = mcp_required_string(input, "change")?;
+    reject_selector_escape(change)?;
+    let policy = load_policy_file(mcp_policy(input))?;
+    let selected = detect_layout(&root);
+    let change_status = find_change(root.clone(), selected.layout, change)?;
+    let input_hash = canonical_json_hash(&change_status_json(&change_status));
+    let mut plan = build_sync_plan(&change_status);
+    if policy.sync_require_gate && !plan.blocked {
+        plan.reasons.extend(mutation_gate_blockers(
+            &root,
+            selected.layout,
+            &change_status,
+            GateStage::Tasks,
+            &policy,
+        )?);
+        plan.reasons.sort();
+        plan.reasons.dedup();
+        plan.blocked = !plan.reasons.is_empty();
+        if plan.blocked {
+            plan.actions.clear();
+        }
+    }
+    if execute {
+        plan.dry_run = false;
+        if !plan.blocked {
+            execute_sync_plan(&root, selected.layout, change, &plan)?;
+            plan.mutated = true;
+        }
+    }
+    let mut value = sync_plan_json(selected.layout, &policy, &plan, &input_hash);
+    value["mcp"] = json!({"read_only": !execute, "destructive": execute});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let change = mcp_required_string(input, "change")?;
+    reject_selector_escape(change)?;
+    let policy = load_policy_file(mcp_policy(input))?;
+    let selected = detect_layout(&root);
+    let change_status = find_change(root.clone(), selected.layout, change)?;
+    let input_hash = canonical_json_hash(&change_status_json(&change_status));
+    let mut plan = build_archive_plan(&change_status);
+    if policy.archive_require_gate && !plan.blocked {
+        plan.reasons.extend(mutation_gate_blockers(
+            &root,
+            selected.layout,
+            &change_status,
+            GateStage::Tasks,
+            &policy,
+        )?);
+        plan.reasons.sort();
+        plan.reasons.dedup();
+        plan.blocked = !plan.reasons.is_empty();
+        if plan.blocked {
+            plan.actions.clear();
+        }
+    }
+    if execute {
+        plan.dry_run = false;
+        if !plan.blocked {
+            let archive_path =
+                execute_archive_plan(&root, selected.layout, change, &change_status.path)?;
+            plan.actions = vec![PlanAction {
+                kind: PlanActionKind::ArchiveChange,
+                path: path_string(archive_path),
+                description: format!("move active change to archive: {change}"),
+            }];
+            plan.mutated = true;
+        }
+    }
+    let mut value = archive_plan_json(selected.layout, &policy, &plan, &input_hash);
+    value["mcp"] = json!({"read_only": !execute, "destructive": execute});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_migrate(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let source = mcp_required_string(input, "source")?;
+    let policy = load_policy_file(mcp_policy(input))?;
+    let source_layout = migration_source_layout(source)?;
+    let inputs = collect_layout_migration_inputs(&root, source_layout)?;
+    let mut plan = match source_layout {
+        LifecycleLayout::LegacyOpenSpec => build_openspec_migration_plan(inputs, execute),
+        LifecycleLayout::LegacyIronspec => build_ironspec_migration_plan(inputs, execute),
+        LifecycleLayout::Native => return Err("cannot migrate from canonical cairn layout".into()),
+    };
+    if execute && !plan.blocked {
+        execute_migration_plan(&root, &plan)?;
+        plan.mutated = !plan.actions.is_empty();
+    }
+    let mut value = migration_plan_json(&root, &policy, &plan);
+    value["mcp"] = json!({"read_only": !execute, "destructive": execute});
+    Ok(with_receipt_hash(value))
+}
+
+fn mcp_init(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let artifacts = init_artifacts();
+    let mut created = Vec::with_capacity(artifacts.len());
+    let mut existing = Vec::with_capacity(artifacts.len());
+    for artifact in artifacts {
+        let path = root.join(&artifact.path);
+        if path.exists() {
+            existing.push(artifact.path);
+        } else {
+            match artifact.kind {
+                LifecycleArtifactKind::Directory => fs::create_dir_all(&path)?,
+                LifecycleArtifactKind::File => write_new_file(&path, "")?,
+            }
+            created.push(artifact.path);
+        }
+    }
+    Ok(with_receipt_hash(
+        json!({"command": "init", "root": path_string(root), "mutated": !created.is_empty(), "layout": layout_name(LifecycleLayout::Native), "created": created, "existing": existing, "mcp": {"read_only": false, "destructive": true}}),
+    ))
+}
+
+fn mcp_change_create(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let change = mcp_required_string(input, "change")?;
+    reject_selector_escape(change)?;
+    let skeleton = build_change_skeleton(change)?;
+    let mut created = Vec::with_capacity(skeleton.artifacts.len());
+    let mut existing = Vec::with_capacity(skeleton.artifacts.len());
+    for artifact in skeleton.artifacts {
+        let path = root.join(&artifact.path);
+        if path.exists() {
+            existing.push(artifact.path);
+            continue;
+        }
+        match artifact.kind {
+            LifecycleArtifactKind::Directory => fs::create_dir_all(&path)?,
+            LifecycleArtifactKind::File => {
+                write_new_file(&path, &change_template(change, &artifact.path))?
+            }
+        }
+        created.push(artifact.path);
+    }
+    Ok(with_receipt_hash(
+        json!({"command": "change_create", "root": path_string(root), "change": change, "mutated": !created.is_empty(), "layout": layout_name(LifecycleLayout::Native), "created": created, "existing": existing, "mcp": {"read_only": false, "destructive": true}}),
+    ))
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1176,7 +1719,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

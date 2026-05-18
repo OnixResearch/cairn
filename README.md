@@ -25,7 +25,7 @@ Boundaries:
 ```text
 cairn-policy/        Nickel contracts, defaults, fixtures, generated JSON
 crates/cairn-core/   Pure Rust models, policy parsing, repo/status/read/gate/doctor/EARS-style validation
-crates/cairn-cli/    CLI shell for init/change/spec/status/doctor/validate/policy/migrate/gate plus safe sync/archive planning/execution
+crates/cairn-cli/    CLI/MCP shell for init/change/spec/status/doctor/validate/policy/migrate/gate plus safe sync/archive planning/execution
 fixtures/               Fixture legacy and native lifecycle repositories
 docs/hermes/            Copyable Hermes skill source for cairn workflow
 tools/                  Export/check helpers
@@ -150,6 +150,18 @@ receipts must cite a pre-mutation plan hash; hidden or forbidden entropy fails
 the completion gate. See `docs/agent-run-receipts.md` for wrapper guidance and
 privacy rules. r[verify cairn.supersede.agent_run_receipts.schema]
 r[verify cairn.supersede.agent_run_receipts.completion_gate]
+
+## MCP server
+
+`cairn mcp` exposes Cairn lifecycle receipts through a bounded MCP-style
+JSON-RPC tool surface. The default server lists read-only inspection tools and
+dry-run planning tools only; mutation tools are omitted unless the server starts
+with `--allow-mutations`. Tool responses include short text plus
+`structuredContent` receipts with Cairn hashes and an `mcp` read/destructive
+annotation object. See `docs/cairn-mcp.md`. r[verify
+cairn.supersede.mcp_server.verification.docs]
+
+## Migrate legacy OpenSpec content
 
 `migrate openspec` is also dry-run by default. It copies accepted specs, active
 changes, and archived changes from legacy `openspec/` into native `cairn/`

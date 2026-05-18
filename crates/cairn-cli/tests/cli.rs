@@ -2,6 +2,7 @@ use std::{
     env,
     error::Error,
     fs,
+    io::Write,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -1021,6 +1022,116 @@ fn migrate_legacy_ironspec_to_cairn_explicitly() -> Result<(), Box<dyn Error>> {
     let migrated = run_json(&["status", "--root", &root_text])?;
     assert_eq!(migrated["layout"], "cairn");
     assert_eq!(migrated["specs"].as_array().ok_or("specs")?.len(), 1);
+    Ok(())
+}
+
+#[test]
+fn mcp_describes_read_only_tools_without_mutations() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.mcp_server.verification.registration]
+    // r[verify cairn.supersede.mcp_server.read_tools]
+    let value = run_json(&["mcp", "--describe"])?;
+    assert_eq!(value["allow_mutations"], false);
+    let tools = value["tools"].as_array().ok_or("tools")?;
+    assert!(tools.iter().any(|tool| tool["name"] == "cairn_status"
+        && tool["annotations"]["readOnlyHint"] == true
+        && tool["annotations"]["destructiveHint"] == false));
+    assert!(tools.iter().any(
+        |tool| tool["name"] == "cairn_sync_plan" && tool["annotations"]["readOnlyHint"] == true
+    ));
+    assert!(!tools
+        .iter()
+        .any(|tool| tool["name"] == "cairn_sync_execute"));
+    let mutation_value = run_json(&["mcp", "--allow-mutations", "--describe"])?;
+    assert_eq!(mutation_value["allow_mutations"], true);
+    assert!(mutation_value["tools"]
+        .as_array()
+        .ok_or("mutation tools")?
+        .iter()
+        .any(|tool| tool["name"] == "cairn_sync_execute"
+            && tool["annotations"]["destructiveHint"] == true));
+    Ok(())
+}
+
+#[test]
+fn mcp_calls_return_structured_receipts() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.mcp_server.read_tools.status]
+    // r[verify cairn.supersede.mcp_server.read_tools.gates]
+    // r[verify cairn.supersede.mcp_server.verification]
+    let value = run_json(&[
+        "mcp",
+        "--call",
+        "cairn_status",
+        r#"{"root":"fixtures/basic"}"#,
+    ])?;
+    let receipt = &value["structuredContent"];
+    assert_eq!(receipt["layout"], "cairn");
+    assert_eq!(receipt["mcp"]["read_only"], true);
+    assert_hash_field(receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn mcp_rejects_traversal_and_default_mutation() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.mcp_server.boundary.shell]
+    // r[verify cairn.supersede.mcp_server.mutation_guard.default_deny]
+    // r[verify cairn.supersede.mcp_server.verification.negative]
+    let traversal = cairn()
+        .args([
+            "mcp",
+            "--call",
+            "cairn_read_spec",
+            r#"{"spec":"../secret","root":"fixtures/basic"}"#,
+        ])
+        .output()?;
+    assert!(!traversal.status.success());
+    let stderr = String::from_utf8_lossy(&traversal.stderr);
+    assert!(
+        stderr.contains("selector escapes lifecycle bounds"),
+        "{stderr}"
+    );
+
+    let denied = run_json(&[
+        "mcp",
+        "--call",
+        "cairn_sync_execute",
+        r#"{"change":"demo","root":"fixtures/basic"}"#,
+    ])?;
+    let receipt = &denied["structuredContent"];
+    assert_eq!(receipt["allowed"], false);
+    assert_eq!(receipt["mutated"], false);
+    Ok(())
+}
+
+#[test]
+fn mcp_json_rpc_lists_and_calls_tools() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.mcp_server.verification.registration]
+    let mut child = cairn()
+        .arg("mcp")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()?;
+    {
+        let stdin = child.stdin.as_mut().ok_or("stdin")?;
+        writeln!(stdin, r#"{{"jsonrpc":"2.0","id":1,"method":"tools/list"}}"#)?;
+        writeln!(
+            stdin,
+            r#"{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"cairn_validate","arguments":{{"root":"fixtures/basic"}}}}}}"#
+        )?;
+    }
+    let output = child.wait_with_output()?;
+    assert!(output.status.success());
+    let lines = String::from_utf8(output.stdout)?;
+    let responses = lines
+        .lines()
+        .map(serde_json::from_str::<Value>)
+        .collect::<Result<Vec<_>, _>>()?;
+    assert_eq!(responses.len(), 2);
+    assert!(responses[0]["result"]["tools"]
+        .as_array()
+        .ok_or("tools")?
+        .iter()
+        .any(|tool| tool["name"] == "cairn_validate"));
+    assert_eq!(responses[1]["result"]["structuredContent"]["valid"], true);
     Ok(())
 }
 
