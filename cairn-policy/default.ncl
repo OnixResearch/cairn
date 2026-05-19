@@ -106,6 +106,12 @@ let Contracts = import "contracts.ncl" in
       hash_fields = ["agent_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash"],
     },
     {
+      command = "evidence-manifest generate",
+      top_level_keys = ["command", "issues", "manifest_hash", "output", "receipt_hash", "root", "valid", "verdict"],
+      issue_keys = ["actual", "code", "expected", "field_path"],
+      hash_fields = ["manifest_hash", "receipt_hash"],
+    },
+    {
       command = "evidence-manifest verify",
       top_level_keys = ["anchor_metadata_hash", "artifacts", "command", "issues", "manifest_hash", "receipt_hash", "root", "signer_metadata_hash", "valid", "verdict"],
       artifact_keys = ["hash", "role", "schema", "valid"],

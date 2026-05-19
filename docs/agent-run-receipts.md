@@ -88,9 +88,18 @@ checks the policy-owned `agent` replay group, links the environment attestation
 hash through agent replay evidence, and emits a single deterministic pass/fail
 receipt.
 
-The outer publication artifact should be an evidence manifest, verified with:
+The outer publication artifact should be an evidence manifest. Generate it from
+saved artifacts and then verify the generated manifest before publication:
 
 ```sh
+nix run .#cairn -- evidence-manifest generate \
+  --bundle target/bundle.json \
+  --agent-receipt target/agent-receipt.json \
+  --replay target/replay.json \
+  --replay-verification target/replay-verify.json \
+  --release-readiness target/release-readiness.json \
+  --out target/manifest.json \
+  --root .
 nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
 ```
 
@@ -102,7 +111,9 @@ checks declared hashes before emitting one deterministic manifest verification
 receipt. Optional `signer` and `anchor` objects are treated as public metadata
 and hashed into the receipt, but Cairn does not validate private keys, remote
 anchors, timestamp authorities, or cryptographic signature claims in this
-slice. r[verify cairn.supersede.signed_evidence_manifest.docs]
+slice. Generation writes canonical role ordering and artifact hashes so wrappers
+avoid custom JSON/hashing glue. r[verify cairn.supersede.signed_evidence_manifest.docs]
+r[verify cairn.supersede.evidence_manifest_generate.docs]
 r[verify cairn.supersede.agent_evidence_bundle_verification.docs]
 r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]

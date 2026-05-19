@@ -787,6 +787,14 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     // r[verify cairn.supersede.signed_evidence_manifest.docs]
     // r[verify cairn.supersede.signed_evidence_manifest.gates]
     // r[verify cairn.supersede.signed_evidence_manifest.archive]
+    // r[verify cairn.supersede.evidence_manifest_generate.cli]
+    // r[verify cairn.supersede.evidence_manifest_generate.canonical]
+    // r[verify cairn.supersede.evidence_manifest_generate.metadata]
+    // r[verify cairn.supersede.evidence_manifest_generate.failures]
+    // r[verify cairn.supersede.evidence_manifest_generate.docs]
+    // r[verify cairn.supersede.evidence_manifest_generate.tests]
+    // r[verify cairn.supersede.evidence_manifest_generate.gates]
+    // r[verify cairn.supersede.evidence_manifest_generate.archive]
     let dir = temp_project("signed-evidence-manifest")?;
     let replay_path = dir.join("agent-replay.json");
     let replay_verify_path = dir.join("agent-replay-verify.json");
@@ -923,6 +931,117 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     assert_hash_field(&verified, "signer_metadata_hash")?;
     assert_hash_field(&verified, "anchor_metadata_hash")?;
     assert_hash_field(&verified, "receipt_hash")?;
+
+    let generated_manifest_path = dir.join("generated-manifest.json");
+    let signer_path = dir.join("signer.json");
+    let anchor_path = dir.join("anchor.json");
+    fs::write(&signer_path, "{\"id\":\"onix-ci\",\"kind\":\"ci\"}\n")?;
+    fs::write(
+        &anchor_path,
+        "{\"id\":\"run-123\",\"kind\":\"local-artifact-index\"}\n",
+    )?;
+    let generated = run_json_strings(&[
+        "evidence-manifest".into(),
+        "generate".into(),
+        "--bundle".into(),
+        bundle_path.display().to_string(),
+        "--agent-receipt".into(),
+        agent_path.display().to_string(),
+        "--replay".into(),
+        replay_path.display().to_string(),
+        "--replay-verification".into(),
+        replay_verify_path.display().to_string(),
+        "--release-readiness".into(),
+        release_path.display().to_string(),
+        "--signer-metadata".into(),
+        signer_path.display().to_string(),
+        "--anchor-metadata".into(),
+        anchor_path.display().to_string(),
+        "--out".into(),
+        generated_manifest_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(generated["valid"], true);
+    assert_hash_field(&generated, "manifest_hash")?;
+    let generated_manifest: Value =
+        serde_json::from_str(&fs::read_to_string(&generated_manifest_path)?)?;
+    let generated_roles = generated_manifest["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|entry| entry["role"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        generated_roles,
+        vec![
+            "agent_evidence_bundle",
+            "agent_receipt",
+            "replay_receipt",
+            "replay_verification",
+            "release_readiness"
+        ]
+    );
+    assert_eq!(generated_manifest["signer"]["kind"], "ci");
+    let generated_verified = run_json_strings(&[
+        "evidence-manifest".into(),
+        "verify".into(),
+        generated_manifest_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(generated_verified["valid"], true);
+    assert_eq!(
+        generated_verified["manifest_hash"],
+        generated["manifest_hash"]
+    );
+
+    let missing_generation = run_json_failure_strings(&[
+        "evidence-manifest".into(),
+        "generate".into(),
+        "--bundle".into(),
+        dir.join("/tmp/SECRET-missing-bundle.json")
+            .display()
+            .to_string(),
+        "--out".into(),
+        "-".into(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(missing_generation["valid"], false);
+    let generation_text = serde_json::to_string(&missing_generation)?;
+    assert!(
+        !generation_text.contains(&dir.display().to_string()),
+        "{generation_text}"
+    );
+    assert!(!generation_text.contains("SECRET"), "{generation_text}");
+
+    fs::write(&signer_path, "[\"not-object\"]\n")?;
+    let invalid_metadata = run_json_failure_strings(&[
+        "evidence-manifest".into(),
+        "generate".into(),
+        "--bundle".into(),
+        bundle_path.display().to_string(),
+        "--agent-receipt".into(),
+        agent_path.display().to_string(),
+        "--replay".into(),
+        replay_path.display().to_string(),
+        "--replay-verification".into(),
+        replay_verify_path.display().to_string(),
+        "--signer-metadata".into(),
+        signer_path.display().to_string(),
+        "--out".into(),
+        "-".into(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    let invalid_codes = invalid_metadata["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(invalid_codes.contains(&"generate.metadata_not_object"));
 
     let mut tampered = manifest.clone();
     tampered["artifacts"][0]["hash"] =

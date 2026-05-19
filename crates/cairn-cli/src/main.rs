@@ -2701,9 +2701,216 @@ fn run_evidence_manifest(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         return Err("evidence-manifest requires a subcommand: verify".into());
     };
     match subcommand.as_str() {
+        "generate" => run_evidence_manifest_generate(iter.collect()),
         "verify" => run_evidence_manifest_verify(iter.collect()),
         unknown => Err(format!("unknown evidence-manifest subcommand: {unknown}").into()),
     }
+}
+
+#[derive(Default)]
+struct EvidenceManifestGenerateOptions {
+    root: PathBuf,
+    bundle: Option<PathBuf>,
+    agent_receipt: Option<PathBuf>,
+    replay: Option<PathBuf>,
+    replay_verification: Option<PathBuf>,
+    release_readiness: Option<PathBuf>,
+    signer_metadata: Option<PathBuf>,
+    anchor_metadata: Option<PathBuf>,
+    out: Option<String>,
+}
+
+fn run_evidence_manifest_generate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.supersede.evidence_manifest_generate.cli]
+    // r[impl cairn.supersede.evidence_manifest_generate.canonical]
+    // r[impl cairn.supersede.evidence_manifest_generate.metadata]
+    // r[impl cairn.supersede.evidence_manifest_generate.failures]
+    let options = evidence_manifest_generate_options(&args);
+    let (manifest, issues) = evidence_manifest_generate_manifest(&options);
+    let valid = issues.is_empty();
+    if !valid {
+        print_json(evidence_manifest_generate_receipt(
+            &options.root,
+            Value::Null,
+            false,
+            Value::Null,
+            issues,
+        ))?;
+        std::process::exit(1);
+    }
+    let manifest = manifest.expect("manifest exists when generation issues are empty");
+    let manifest_hash = Value::String(portable_json_hash(&options.root, &manifest));
+    match options.out.as_deref() {
+        Some("-") | None => print_json(manifest)?,
+        Some(out) => {
+            let path = Path::new(out);
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::write(
+                path,
+                format!("{}\n", serde_json::to_string_pretty(&manifest)?),
+            )?;
+            print_json(evidence_manifest_generate_receipt(
+                &options.root,
+                manifest_hash,
+                true,
+                Value::String("written".to_string()),
+                Vec::new(),
+            ))?;
+        }
+    }
+    Ok(())
+}
+
+fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenerateOptions {
+    let mut options = EvidenceManifestGenerateOptions {
+        root: PathBuf::from(read_option(args.to_vec(), "--root", ".")),
+        ..EvidenceManifestGenerateOptions::default()
+    };
+    let mut iter = args.iter();
+    while let Some(arg) = iter.next() {
+        let value = match arg.as_str() {
+            "--bundle"
+            | "--agent-receipt"
+            | "--replay"
+            | "--replay-verification"
+            | "--release-readiness"
+            | "--signer-metadata"
+            | "--anchor-metadata"
+            | "--out"
+            | "--root" => iter.next(),
+            _ => None,
+        };
+        match (arg.as_str(), value) {
+            ("--bundle", Some(value)) => options.bundle = Some(PathBuf::from(value)),
+            ("--agent-receipt", Some(value)) => options.agent_receipt = Some(PathBuf::from(value)),
+            ("--replay", Some(value)) => options.replay = Some(PathBuf::from(value)),
+            ("--replay-verification", Some(value)) => {
+                options.replay_verification = Some(PathBuf::from(value));
+            }
+            ("--release-readiness", Some(value)) => {
+                options.release_readiness = Some(PathBuf::from(value));
+            }
+            ("--signer-metadata", Some(value)) => {
+                options.signer_metadata = Some(PathBuf::from(value));
+            }
+            ("--anchor-metadata", Some(value)) => {
+                options.anchor_metadata = Some(PathBuf::from(value));
+            }
+            ("--out", Some(value)) => options.out = Some(value.to_string()),
+            ("--root", Some(_)) => {}
+            _ => {}
+        }
+    }
+    options
+}
+
+fn evidence_manifest_generate_manifest(
+    options: &EvidenceManifestGenerateOptions,
+) -> (Option<Value>, Vec<Value>) {
+    let mut issues = Vec::new();
+    let mut artifacts = Vec::new();
+    for (role, path) in [
+        ("agent_evidence_bundle", options.bundle.as_deref()),
+        ("agent_receipt", options.agent_receipt.as_deref()),
+        ("replay_receipt", options.replay.as_deref()),
+        (
+            "replay_verification",
+            options.replay_verification.as_deref(),
+        ),
+        ("release_readiness", options.release_readiness.as_deref()),
+    ] {
+        if let Some(path) = path {
+            match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
+                Ok(value) => artifacts.push(json!({
+                    "role": role,
+                    "path": path_string(path),
+                    "hash": receipt_stated_or_computed_hash(&options.root, &value),
+                })),
+                Err(_) => issues.push(evidence_manifest_issue(
+                    "generate.artifact_read_failed",
+                    role,
+                    "readable JSON artifact",
+                    "unreadable",
+                )),
+            }
+        } else if role != "release_readiness" {
+            issues.push(evidence_manifest_issue(
+                "generate.required_artifact_missing",
+                role,
+                "artifact path flag",
+                "missing",
+            ));
+        }
+    }
+    let signer =
+        read_optional_manifest_metadata(options.signer_metadata.as_deref(), "signer", &mut issues);
+    let anchor =
+        read_optional_manifest_metadata(options.anchor_metadata.as_deref(), "anchor", &mut issues);
+    issues.sort_by_key(canonical_json_hash);
+    if !issues.is_empty() {
+        return (None, issues);
+    }
+    let mut object = serde_json::Map::new();
+    object.insert("artifacts".to_string(), Value::Array(artifacts));
+    if let Some(value) = signer {
+        object.insert("signer".to_string(), value);
+    }
+    if let Some(value) = anchor {
+        object.insert("anchor".to_string(), value);
+    }
+    (Some(Value::Object(object)), issues)
+}
+
+fn read_optional_manifest_metadata(
+    path: Option<&Path>,
+    field: &str,
+    issues: &mut Vec<Value>,
+) -> Option<Value> {
+    let path = path?;
+    match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
+        Ok(value) if value.is_object() => Some(value),
+        Ok(_) => {
+            issues.push(evidence_manifest_issue(
+                "generate.metadata_not_object",
+                field,
+                "JSON object",
+                "non-object",
+            ));
+            None
+        }
+        Err(_) => {
+            issues.push(evidence_manifest_issue(
+                "generate.metadata_read_failed",
+                field,
+                "readable JSON object",
+                "unreadable",
+            ));
+            None
+        }
+    }
+}
+
+fn evidence_manifest_generate_receipt(
+    root: &Path,
+    manifest_hash: Value,
+    valid: bool,
+    output: Value,
+    issues: Vec<Value>,
+) -> Value {
+    with_portable_receipt_hash(
+        root,
+        json!({
+            "command": "evidence-manifest generate",
+            "root": path_string(root),
+            "valid": valid,
+            "verdict": if valid { "pass" } else { "fail" },
+            "issues": issues,
+            "manifest_hash": manifest_hash,
+            "output": output,
+        }),
+    )
 }
 
 fn run_evidence_manifest_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -5091,7 +5298,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {
