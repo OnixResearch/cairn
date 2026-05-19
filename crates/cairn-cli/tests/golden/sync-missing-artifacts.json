@@ -10,12 +10,12 @@
   "layout": "cairn",
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "7168c7da4f5ea293286db0d4db9d315f1e7635f61f618f729e4da8367807fa2c",
+  "plan_hash": "827cfcaa2bebc8dfc90be9e6b91425ff12f023a9e1bce724bdba4b17f79c35dd",
   "policy": "cairn-default",
-  "policy_hash": "c04c1d97a3021f2d038a2a80a8109e8ce3025998fde74544b25f2b125530a0b4",
+  "policy_hash": "b0ccc3cd542f597ed382d43758d23ad790c5740c1fa482e9d08fec4fdc26ed6a",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "09c9390f80f0b288669b0578fb4c301e3f8d499b66004ded945cde061b5fa049"
+  "receipt_hash": "cca5af4c8af331d0087ce5bd906411b23a650365febaded29d38386b7231e878"
 }

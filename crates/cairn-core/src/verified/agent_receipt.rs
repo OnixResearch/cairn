@@ -15,6 +15,7 @@ const REQUIRED_RECEIPT_FIELDS: &[&str] = &[
     "mutation_manifest",
     "verification_manifest",
     "nondeterminism_manifest",
+    "replay_evidence",
     "verdict",
     "receipt_hash",
 ];
@@ -87,6 +88,7 @@ pub fn agent_run_receipt_issues(receipt: &Value) -> Vec<AgentRunGateIssue> {
     issues.extend(plan_linkage_issues(object));
     issues.extend(verification_issues(object));
     issues.extend(nondeterminism_issues(object));
+    issues.extend(replay_evidence_issues(object));
     issues
 }
 
@@ -236,6 +238,57 @@ fn captured_entropy_is_valid(entry: &Value) -> bool {
         && (entry.get("metadata").is_some() || entry.get("content_hash").is_some())
 }
 
+fn replay_evidence_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue> {
+    // r[impl cairn.supersede.agent_receipt_replay_evidence.schema]
+    let Some(evidence) = object.get("replay_evidence").and_then(Value::as_object) else {
+        return Vec::new();
+    };
+    let mut issues = Vec::new();
+    let replay_hash = evidence
+        .get("replay_receipt_hash")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if !is_blake3_hex(replay_hash) {
+        issues.push(issue(
+            "replay_evidence.invalid_hash",
+            "replay_evidence.replay_receipt_hash must be a BLAKE3 hex hash",
+        ));
+    }
+    let policy_hash = evidence
+        .get("replay_policy_hash")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if !is_blake3_hex(policy_hash) {
+        issues.push(issue(
+            "replay_evidence.invalid_policy_hash",
+            "replay_evidence.replay_policy_hash must be a BLAKE3 hex hash",
+        ));
+    }
+    if evidence
+        .get("replay_verdict")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        != "pass"
+    {
+        issues.push(issue(
+            "replay_evidence.verdict_not_pass",
+            "replay_evidence.replay_verdict must be pass",
+        ));
+    }
+    let has_cases = evidence
+        .get("replay_selected_cases")
+        .and_then(Value::as_array)
+        .map(|cases| !cases.is_empty() && cases.iter().all(Value::is_string))
+        .unwrap_or(false);
+    if !has_cases {
+        issues.push(issue(
+            "replay_evidence.missing_cases",
+            "replay_evidence.replay_selected_cases must list replay case ids",
+        ));
+    }
+    issues
+}
+
 fn is_blake3_hex(candidate: &str) -> bool {
     candidate.len() == 64 && candidate.as_bytes().iter().all(u8::is_ascii_hexdigit)
 }
@@ -260,6 +313,13 @@ pub fn positive_agent_run_fixture() -> Value {
         "mutation_manifest": {"files": ["docs/agent-run-receipts.md"]},
         "verification_manifest": {"checks": [{"name": "cargo test", "verdict": "PASS", "evidence_hash": "3333333333333333333333333333333333333333333333333333333333333333"}]},
         "nondeterminism_manifest": {"captured": [{"class": "model_provider", "metadata": {"provider": "fixture"}}], "forbidden_uncaptured": []},
+        "replay_evidence": {
+            "replay_receipt_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+            "replay_policy_hash": "b0ccc3cd542f597ed382d43758d23ad790c5740c1fa482e9d08fec4fdc26ed6a",
+            "replay_selected_cases": ["agent_receipt_validate", "mcp_describe", "status", "validate"],
+            "replay_verdict": "pass",
+            "replay_artifact_path": "/tmp/cairn-replay.json"
+        },
         "verdict": "success",
         "receipt_hash": ""
     });

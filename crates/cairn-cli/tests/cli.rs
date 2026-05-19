@@ -7,7 +7,7 @@ use std::{
     process::Command,
 };
 
-use serde_json::Value;
+use serde_json::{json, Value};
 
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -648,6 +648,18 @@ fn assert_migration_receipt_schema() -> Result<(), Box<dyn Error>> {
     assert_first_action_matches_schema(&migration, &schema)
 }
 
+fn assert_agent_receipt_validation_schema() -> Result<(), Box<dyn Error>> {
+    let receipt = run_json(&[
+        "agent-receipt",
+        "validate",
+        "fixtures/agent-receipts/positive.json",
+    ])?;
+    let schema = receipt_schema("agent-receipt validate")?;
+    assert_schema_keys(&receipt, &schema, "top_level_keys")?;
+    assert_schema_keys(&receipt["replay_evidence"], &schema, "replay_evidence_keys")?;
+    assert_hash_field(&receipt, "receipt_hash")
+}
+
 fn assert_replay_receipt_schema() -> Result<(), Box<dyn Error>> {
     let replay = run_json(&["determinism", "replay", "--root", "."])?;
     let schema = receipt_schema("determinism replay")?;
@@ -662,17 +674,20 @@ fn public_receipt_schemas_are_stable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.receipt_schema.gate]
     // r[verify cairn.supersede.receipt_schema.lifecycle]
     // r[verify cairn.supersede.receipt_schema.migration]
+    // r[verify cairn.supersede.agent_receipt_replay_evidence.schema]
     // r[verify cairn.supersede.determinism_replay.receipt.schema]
     assert_gate_receipt_schema()?;
     assert_sync_receipt_schema()?;
     assert_archive_receipt_schema()?;
     assert_migration_receipt_schema()?;
+    assert_agent_receipt_validation_schema()?;
     assert_replay_receipt_schema()
 }
 
 #[test]
 fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.receipt_schema.docs]
+    // r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
     let readme = fs::read_to_string(repo_root().join("README.md"))?;
     assert!(readme.contains("Stable public gate fields"), "{readme}");
     assert!(
@@ -702,6 +717,14 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
     assert!(
         readme
             .contains("Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`"),
+        "{readme}"
+    );
+    assert!(
+        readme.contains("Stable public agent receipt validation fields"),
+        "{readme}"
+    );
+    assert!(
+        readme.contains("`current_replay_policy_hash`, `required_replay_cases`, `replay_evidence`"),
         "{readme}"
     );
     Ok(())
@@ -1408,6 +1431,10 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
     // r[verify cairn.supersede.agent_receipt_validation_surface.cli.schema]
     // r[verify cairn.supersede.agent_receipt_validation_surface.docs]
     // r[verify cairn.supersede.agent_receipt_validation_surface.fixtures]
+    // r[verify cairn.supersede.agent_receipt_replay_evidence.schema]
+    // r[verify cairn.supersede.agent_receipt_replay_evidence.validation]
+    // r[verify cairn.supersede.agent_receipt_replay_evidence.failures]
+    // r[verify cairn.supersede.agent_receipt_replay_evidence.replay]
     let positive = assert_reproducible_receipt(
         &[
             "agent-receipt",
@@ -1421,12 +1448,15 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
         &[
             "agent_receipt_hash",
             "command",
+            "current_replay_policy_hash",
             "input_hash",
             "input_kind",
             "issues",
             "max_content_bytes",
             "path",
             "receipt_hash",
+            "replay_evidence",
+            "required_replay_cases",
             "stated_agent_receipt_hash",
             "valid",
             "verdict",
@@ -1435,6 +1465,19 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
     assert_eq!(positive["valid"], true);
     assert_eq!(positive["verdict"], "PASS");
     assert_eq!(positive["issues"].as_array().ok_or("issues")?.len(), 0);
+    assert_hash_field(&positive, "current_replay_policy_hash")?;
+    assert_hash_field(&positive["replay_evidence"], "replay_receipt_hash")?;
+    assert_hash_field(&positive["replay_evidence"], "replay_policy_hash")?;
+    assert_eq!(
+        positive["required_replay_cases"],
+        json!([
+            "agent_receipt_validate",
+            "mcp_describe",
+            "status",
+            "validate"
+        ])
+    );
+    assert_eq!(positive["replay_evidence"]["replay_verdict"], "pass");
 
     let negative = assert_reproducible_receipt(
         &[
@@ -1449,6 +1492,69 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
     assert!(issues
         .iter()
         .any(|issue| issue["code"] == "verification.missing_evidence"));
+    Ok(())
+}
+
+#[test]
+fn agent_receipt_replay_evidence_failures_are_deterministic() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.agent_receipt_replay_evidence.failures]
+    let base_text = fs::read_to_string(repo_root().join("fixtures/agent-receipts/positive.json"))?;
+    let base: Value = serde_json::from_str(&base_text)?;
+    let cases = [
+        (
+            "missing",
+            {
+                let mut value = base.clone();
+                value.as_object_mut().unwrap().remove("replay_evidence");
+                value
+            },
+            "replay_evidence.missing",
+        ),
+        (
+            "stale-policy",
+            {
+                let mut value = base.clone();
+                value["replay_evidence"]["replay_policy_hash"] = Value::String(
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string(),
+                );
+                value
+            },
+            "replay_evidence.policy_hash_stale",
+        ),
+        (
+            "insufficient",
+            {
+                let mut value = base.clone();
+                value["replay_evidence"]["replay_selected_cases"] = json!(["status"]);
+                value
+            },
+            "replay_evidence.insufficient_coverage",
+        ),
+    ];
+    for (name, value, expected_code) in cases {
+        let path = temp_project(&format!("agent-replay-{name}"))?.join("receipt.json");
+        fs::write(&path, serde_json::to_string_pretty(&value)? + "\n")?;
+        let first = run_json(&[
+            "agent-receipt",
+            "validate",
+            path.to_str().ok_or("utf8 receipt path")?,
+        ])?;
+        let second = run_json(&[
+            "agent-receipt",
+            "validate",
+            path.to_str().ok_or("utf8 receipt path")?,
+        ])?;
+        assert_eq!(first["receipt_hash"], second["receipt_hash"]);
+        assert_eq!(first["valid"], false);
+        assert!(
+            first["issues"]
+                .as_array()
+                .ok_or("issues")?
+                .iter()
+                .any(|issue| issue["code"] == expected_code),
+            "{first:#?}"
+        );
+    }
     Ok(())
 }
 

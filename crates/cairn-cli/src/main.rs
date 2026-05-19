@@ -739,11 +739,13 @@ fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, Box<dyn Erro
             };
             let receipt_path = replay_fixture_path(root, path);
             let receipt = read_agent_receipt_file(&receipt_path)?;
+            let policy = load_policy_file(default_policy_path().into())?;
             let mut value = agent_receipt_validation_receipt(
                 "agent-receipt validate",
                 Some(receipt_path),
                 &receipt,
                 false,
+                &policy,
             );
             value
                 .as_object_mut()
@@ -1461,6 +1463,12 @@ fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
 const MCP_MAX_CONTENT_BYTES: usize = 64 * 1024;
 const AGENT_RECEIPT_MAX_BYTES: u64 = 64 * 1024;
+const REQUIRED_AGENT_REPLAY_CASES: &[&str] = &[
+    "agent_receipt_validate",
+    "mcp_describe",
+    "status",
+    "validate",
+];
 
 fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
@@ -1474,11 +1482,13 @@ fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             };
             let path = PathBuf::from(path);
             let receipt = read_agent_receipt_file(&path)?;
+            let policy = load_policy_file(default_policy_path().into())?;
             print_json(agent_receipt_validation_receipt(
                 "agent-receipt validate",
                 Some(path),
                 &receipt,
                 false,
+                &policy,
             ))
         }
         "smoke-mcp" => {
@@ -2201,8 +2211,14 @@ fn mcp_agent_receipt_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
         let receipt = read_agent_receipt_file(&path)?;
         (Some(path), receipt)
     };
-    let mut value =
-        agent_receipt_validation_receipt("mcp cairn_agent_receipt_validate", path, &receipt, true);
+    let policy = load_policy_file(mcp_policy(input))?;
+    let mut value = agent_receipt_validation_receipt(
+        "mcp cairn_agent_receipt_validate",
+        path,
+        &receipt,
+        true,
+        &policy,
+    );
     value["mcp"] = json!({"read_only": true, "destructive": false, "max_content_bytes": AGENT_RECEIPT_MAX_BYTES});
     Ok(with_portable_receipt_hash(&root, value))
 }
@@ -3130,10 +3146,23 @@ fn agent_receipt_validation_receipt(
     path: Option<PathBuf>,
     receipt: &Value,
     is_mcp: bool,
+    policy: &Policy,
 ) -> Value {
     // r[impl cairn.supersede.agent_receipt_validation_surface.cli]
     // r[impl cairn.supersede.agent_receipt_validation_surface.cli.schema]
+    // r[impl cairn.supersede.agent_receipt_replay_evidence.validation]
+    // r[impl cairn.supersede.agent_receipt_replay_evidence.failures]
     let report = evaluate_agent_run_completion(receipt);
+    let current_replay_policy_hash = canonical_json_hash(&policy.raw);
+    let replay_issues = agent_receipt_replay_evidence_issues(receipt, &current_replay_policy_hash);
+    let mut issues = report
+        .issues
+        .iter()
+        .map(agent_gate_issue_json)
+        .collect::<Vec<_>>();
+    issues.extend(replay_issues.iter().map(agent_gate_issue_json));
+    issues.sort_by_key(canonical_json_hash);
+    let is_valid = report.valid && replay_issues.is_empty();
     let input_kind = if is_mcp && path.is_none() {
         "inline"
     } else {
@@ -3143,14 +3172,93 @@ fn agent_receipt_validation_receipt(
         "command": command,
         "path": path.map(path_string),
         "input_kind": input_kind,
-        "valid": report.valid,
-        "verdict": report.verdict,
-        "issues": report.issues.iter().map(agent_gate_issue_json).collect::<Vec<_>>(),
+        "valid": is_valid,
+        "verdict": if is_valid { "PASS" } else { "FAIL" },
+        "issues": issues,
         "agent_receipt_hash": report.receipt_hash,
         "input_hash": canonical_json_hash(receipt),
         "stated_agent_receipt_hash": receipt.get("receipt_hash").and_then(Value::as_str).unwrap_or_default(),
+        "current_replay_policy_hash": current_replay_policy_hash,
+        "required_replay_cases": REQUIRED_AGENT_REPLAY_CASES,
+        "replay_evidence": agent_replay_evidence_summary(receipt),
         "max_content_bytes": AGENT_RECEIPT_MAX_BYTES,
     }))
+}
+
+fn agent_receipt_replay_evidence_issues(
+    receipt: &Value,
+    current_policy_hash: &str,
+) -> Vec<AgentRunGateIssue> {
+    let Some(evidence) = receipt.get("replay_evidence").and_then(Value::as_object) else {
+        return vec![AgentRunGateIssue {
+            code: "replay_evidence.missing".to_string(),
+            message: "agent-run receipts require replay_evidence from a passing determinism replay receipt".to_string(),
+        }];
+    };
+    let mut issues = Vec::new();
+    let replay_hash = evidence
+        .get("replay_receipt_hash")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if !is_blake3_hex_text(replay_hash) {
+        issues.push(AgentRunGateIssue {
+            code: "replay_evidence.invalid_hash".to_string(),
+            message: "replay_evidence.replay_receipt_hash must be a BLAKE3 hex hash".to_string(),
+        });
+    }
+    let replay_verdict = evidence
+        .get("replay_verdict")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if replay_verdict != "pass" {
+        issues.push(AgentRunGateIssue {
+            code: "replay_evidence.verdict_not_pass".to_string(),
+            message: "replay_evidence.replay_verdict must be pass".to_string(),
+        });
+    }
+    let replay_policy_hash = evidence
+        .get("replay_policy_hash")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if replay_policy_hash != current_policy_hash {
+        issues.push(AgentRunGateIssue {
+            code: "replay_evidence.policy_hash_stale".to_string(),
+            message:
+                "replay_evidence.replay_policy_hash must match the current generated policy hash"
+                    .to_string(),
+        });
+    }
+    let selected_cases = evidence
+        .get("replay_selected_cases")
+        .and_then(Value::as_array)
+        .map(|cases| cases.iter().filter_map(Value::as_str).collect::<Vec<_>>())
+        .unwrap_or_default();
+    for required in REQUIRED_AGENT_REPLAY_CASES {
+        if !selected_cases.contains(required) {
+            issues.push(AgentRunGateIssue {
+                code: "replay_evidence.insufficient_coverage".to_string(),
+                message: format!("replay evidence missing required case: {required}"),
+            });
+        }
+    }
+    issues
+}
+
+fn agent_replay_evidence_summary(receipt: &Value) -> Value {
+    let Some(evidence) = receipt.get("replay_evidence") else {
+        return Value::Null;
+    };
+    json!({
+        "replay_receipt_hash": evidence.get("replay_receipt_hash").cloned().unwrap_or(Value::Null),
+        "replay_policy_hash": evidence.get("replay_policy_hash").cloned().unwrap_or(Value::Null),
+        "replay_selected_cases": evidence.get("replay_selected_cases").cloned().unwrap_or(Value::Null),
+        "replay_verdict": evidence.get("replay_verdict").cloned().unwrap_or(Value::Null),
+        "replay_artifact_path": evidence.get("replay_artifact_path").cloned().unwrap_or(Value::Null),
+    })
+}
+
+fn is_blake3_hex_text(candidate: &str) -> bool {
+    candidate.len() == 64 && candidate.as_bytes().iter().all(u8::is_ascii_hexdigit)
 }
 
 fn agent_gate_issue_json(issue: &AgentRunGateIssue) -> Value {

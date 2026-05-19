@@ -385,6 +385,46 @@
     {
       "action_keys": [],
       "case_keys": [],
+      "command": "agent-receipt validate",
+      "hash_fields": [
+        "agent_receipt_hash",
+        "current_replay_policy_hash",
+        "input_hash",
+        "receipt_hash",
+        "stated_agent_receipt_hash"
+      ],
+      "issue_keys": [
+        "code",
+        "message"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [
+        "replay_artifact_path",
+        "replay_policy_hash",
+        "replay_receipt_hash",
+        "replay_selected_cases",
+        "replay_verdict"
+      ],
+      "top_level_keys": [
+        "agent_receipt_hash",
+        "command",
+        "current_replay_policy_hash",
+        "input_hash",
+        "input_kind",
+        "issues",
+        "max_content_bytes",
+        "path",
+        "receipt_hash",
+        "replay_evidence",
+        "required_replay_cases",
+        "stated_agent_receipt_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "case_keys": [],
       "command": "gate",
       "hash_fields": [
         "input_hash",
@@ -397,6 +437,7 @@
         "scope"
       ],
       "mismatch_keys": [],
+      "replay_evidence_keys": [],
       "top_level_keys": [
         "change",
         "input_hash",
@@ -426,6 +467,7 @@
       ],
       "issue_keys": [],
       "mismatch_keys": [],
+      "replay_evidence_keys": [],
       "top_level_keys": [
         "actions",
         "blocked",
@@ -459,6 +501,7 @@
       ],
       "issue_keys": [],
       "mismatch_keys": [],
+      "replay_evidence_keys": [],
       "top_level_keys": [
         "actions",
         "blocked",
@@ -493,6 +536,7 @@
       ],
       "issue_keys": [],
       "mismatch_keys": [],
+      "replay_evidence_keys": [],
       "top_level_keys": [
         "actions",
         "blocked",
@@ -541,6 +585,7 @@
         "field_path",
         "reproduce"
       ],
+      "replay_evidence_keys": [],
       "top_level_keys": [
         "available_cases",
         "cases",

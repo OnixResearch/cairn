@@ -34,6 +34,18 @@
     ],
     "forbidden_uncaptured": []
   },
+  "replay_evidence": {
+    "replay_receipt_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+    "replay_policy_hash": "b0ccc3cd542f597ed382d43758d23ad790c5740c1fa482e9d08fec4fdc26ed6a",
+    "replay_selected_cases": [
+      "agent_receipt_validate",
+      "mcp_describe",
+      "status",
+      "validate"
+    ],
+    "replay_verdict": "pass",
+    "replay_artifact_path": "/tmp/cairn-replay.json"
+  },
   "verdict": "success",
-  "receipt_hash": "f3961462c9bc70886ec4d474802c02d281ca15daa78686ac6e6460c981ea0257"
+  "receipt_hash": "b9475899c0eb83e3949be81008c730209391f7e6333cdb53164256859e6535f3"
 }

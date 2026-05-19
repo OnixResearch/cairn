@@ -114,6 +114,7 @@ let Promoted = std.contract.from_predicate (fun value =>
     issue_keys | Array NonEmptyString | default = [],
     case_keys | Array NonEmptyString | default = [],
     mismatch_keys | Array NonEmptyString | default = [],
+    replay_evidence_keys | Array NonEmptyString | default = [],
     hash_fields | Array NonEmptyString | default = [],
   },
 

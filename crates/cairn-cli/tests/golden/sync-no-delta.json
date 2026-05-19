@@ -8,11 +8,11 @@
   "layout": "cairn",
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "3c7707188f969e42409873215491a71fbc575ff7ad44285cedbb458375869ab9",
+  "plan_hash": "4d3feef5fd8c967e8a7e89c1a2da2ec61798c1c70d7211b385210782151fba90",
   "policy": "cairn-default",
-  "policy_hash": "c04c1d97a3021f2d038a2a80a8109e8ce3025998fde74544b25f2b125530a0b4",
+  "policy_hash": "b0ccc3cd542f597ed382d43758d23ad790c5740c1fa482e9d08fec4fdc26ed6a",
   "reasons": [
     "no-delta: no delta specs to sync"
   ],
-  "receipt_hash": "bd6bf6668345768757a57ecb21208ae983d53cb7eacb49875499f70286230cd9"
+  "receipt_hash": "9da39edaeb1e3f72522555872f870d7803fc0a52444f0c6ae9953a6a969676f9"
 }
