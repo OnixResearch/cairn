@@ -541,6 +541,7 @@
   "receipt_schemas": [
     {
       "action_keys": [],
+      "artifact_keys": [],
       "case_keys": [],
       "command": "agent-receipt validate",
       "hash_fields": [
@@ -584,6 +585,7 @@
     },
     {
       "action_keys": [],
+      "artifact_keys": [],
       "case_keys": [],
       "command": "gate",
       "hash_fields": [
@@ -617,6 +619,7 @@
         "kind",
         "path"
       ],
+      "artifact_keys": [],
       "case_keys": [],
       "command": "sync",
       "hash_fields": [
@@ -651,6 +654,7 @@
         "kind",
         "path"
       ],
+      "artifact_keys": [],
       "case_keys": [],
       "command": "archive",
       "hash_fields": [
@@ -685,6 +689,7 @@
         "source",
         "source_hash"
       ],
+      "artifact_keys": [],
       "case_keys": [],
       "command": "migrate",
       "hash_fields": [
@@ -718,6 +723,7 @@
     },
     {
       "action_keys": [],
+      "artifact_keys": [],
       "case_keys": [
         "args",
         "command_kind",
@@ -771,6 +777,7 @@
     },
     {
       "action_keys": [],
+      "artifact_keys": [],
       "case_keys": [],
       "command": "determinism verify-receipt",
       "hash_fields": [
@@ -808,6 +815,7 @@
     },
     {
       "action_keys": [],
+      "artifact_keys": [],
       "case_keys": [],
       "command": "agent-receipt verify-bundle",
       "hash_fields": [
@@ -839,6 +847,43 @@
         "replay_verification_receipt_hash",
         "required_replay_group",
         "root",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
+        "hash",
+        "role",
+        "schema",
+        "valid"
+      ],
+      "case_keys": [],
+      "command": "evidence-manifest verify",
+      "hash_fields": [
+        "anchor_metadata_hash",
+        "manifest_hash",
+        "receipt_hash",
+        "signer_metadata_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "anchor_metadata_hash",
+        "artifacts",
+        "command",
+        "issues",
+        "manifest_hash",
+        "receipt_hash",
+        "root",
+        "signer_metadata_hash",
         "valid",
         "verdict"
       ]

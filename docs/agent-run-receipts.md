@@ -86,7 +86,24 @@ pin expected hashes with `agent_receipt_hash`, `replay_receipt_hash`,
 bundle verifier composes agent receipt validation and saved replay verification,
 checks the policy-owned `agent` replay group, links the environment attestation
 hash through agent replay evidence, and emits a single deterministic pass/fail
-receipt. r[verify cairn.supersede.agent_evidence_bundle_verification.docs]
+receipt.
+
+The outer publication artifact should be an evidence manifest, verified with:
+
+```sh
+nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
+```
+
+A manifest contains an `artifacts` array of objects with `role`, `path`, `hash`,
+and optional `schema` fields. Supported roles include `agent_evidence_bundle`,
+`agent_receipt`, `replay_receipt`, `replay_verification`, and
+`release_readiness`. The verifier composes the existing role validators and
+checks declared hashes before emitting one deterministic manifest verification
+receipt. Optional `signer` and `anchor` objects are treated as public metadata
+and hashed into the receipt, but Cairn does not validate private keys, remote
+anchors, timestamp authorities, or cryptographic signature claims in this
+slice. r[verify cairn.supersede.signed_evidence_manifest.docs]
+r[verify cairn.supersede.agent_evidence_bundle_verification.docs]
 r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
 r[verify cairn.supersede.determinism_replay.groups.docs]

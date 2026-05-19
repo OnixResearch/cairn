@@ -239,12 +239,19 @@ are `command`, `root`, `valid`, `verdict`, `issues`,
 `current_replay_policy_hash`, `required_replay_group`, `agent_receipt_hash`,
 `replay_receipt_hash`, `replay_verification_receipt_hash`,
 `environment_attestation_hash`, `release_readiness_receipt_hash`, and
-`receipt_hash`. See `docs/agent-run-receipts.md` for wrapper guidance,
+`receipt_hash`. The outer publication/index layer is
+`cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
+list stable roles such as `agent_evidence_bundle`, `agent_receipt`,
+`replay_receipt`, `replay_verification`, and optional `release_readiness` with
+expected hashes, schema labels, and optional public signer/anchor metadata.
+Verification is read-only, composes existing validators, and does not claim
+cryptographic signature or remote anchor validity. Stable public evidence manifest verification fields are `command`, `root`, `valid`, `verdict`, `issues`, `manifest_hash`, `artifacts`, `signer_metadata_hash`, `anchor_metadata_hash`, and `receipt_hash`. See `docs/agent-run-receipts.md` for wrapper guidance,
 validation commands, and privacy rules. r[verify
 cairn.supersede.agent_run_receipts.schema]
 r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
 r[verify cairn.supersede.agent_evidence_bundle_verification.docs]
+r[verify cairn.supersede.signed_evidence_manifest.docs]
 r[verify cairn.supersede.agent_run_receipts.completion_gate]
 
 ## MCP server

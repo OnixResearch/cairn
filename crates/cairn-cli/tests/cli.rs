@@ -778,6 +778,187 @@ fn agent_evidence_bundle_verification_links_agent_replay_and_release_evidence(
 }
 
 #[test]
+fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.signed_evidence_manifest.verify]
+    // r[verify cairn.supersede.signed_evidence_manifest.chain]
+    // r[verify cairn.supersede.signed_evidence_manifest.metadata]
+    // r[verify cairn.supersede.signed_evidence_manifest.schema]
+    // r[verify cairn.supersede.signed_evidence_manifest.tests]
+    // r[verify cairn.supersede.signed_evidence_manifest.docs]
+    // r[verify cairn.supersede.signed_evidence_manifest.gates]
+    // r[verify cairn.supersede.signed_evidence_manifest.archive]
+    let dir = temp_project("signed-evidence-manifest")?;
+    let replay_path = dir.join("agent-replay.json");
+    let replay_verify_path = dir.join("agent-replay-verify.json");
+    let release_path = dir.join("release-readiness.json");
+    let agent_path = dir.join("agent-receipt.json");
+    let bundle_path = dir.join("bundle.json");
+    let manifest_path = dir.join("manifest.json");
+
+    let mut replay = cairn();
+    replay.args([
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--group",
+        "agent",
+        "--format",
+        "summary",
+        "--out",
+        replay_path.to_str().unwrap(),
+    ]);
+    let output = replay.output()?;
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let replay_verify = run_json_strings(&[
+        "determinism".into(),
+        "verify-receipt".into(),
+        replay_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    fs::write(
+        &replay_verify_path,
+        serde_json::to_string_pretty(&replay_verify)? + "\n",
+    )?;
+    fs::write(
+        &release_path,
+        serde_json::to_string_pretty(&json!({
+            "valid": true,
+            "receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }))? + "\n",
+    )?;
+
+    let mut agent_receipt: Value = serde_json::from_str(&fs::read_to_string(
+        repo_root().join("fixtures/agent-receipts/positive.json"),
+    )?)?;
+    agent_receipt["replay_evidence"]["replay_receipt_hash"] =
+        replay_verify["replay_receipt_hash"].clone();
+    agent_receipt["replay_evidence"]["replay_policy_hash"] =
+        replay_verify["replay_policy_hash"].clone();
+    agent_receipt["replay_evidence"]["replay_environment_attestation_hash"] =
+        replay_verify["environment_attestation_hash"].clone();
+    agent_receipt
+        .as_object_mut()
+        .unwrap()
+        .remove("receipt_hash");
+    fs::write(
+        &agent_path,
+        serde_json::to_string_pretty(&agent_receipt)? + "\n",
+    )?;
+    let initial_agent_validation = run_json_strings(&[
+        "agent-receipt".into(),
+        "validate".into(),
+        agent_path.display().to_string(),
+    ])?;
+    agent_receipt["receipt_hash"] = initial_agent_validation["agent_receipt_hash"].clone();
+    fs::write(
+        &agent_path,
+        serde_json::to_string_pretty(&agent_receipt)? + "\n",
+    )?;
+    let agent_validation = run_json_strings(&[
+        "agent-receipt".into(),
+        "validate".into(),
+        agent_path.display().to_string(),
+    ])?;
+    assert_eq!(agent_validation["valid"], true);
+
+    let bundle = json!({
+        "agent_receipt_path": agent_path,
+        "replay_receipt_path": replay_path,
+        "replay_verification_path": replay_verify_path,
+        "release_readiness_path": release_path,
+        "agent_receipt_hash": agent_validation["agent_receipt_hash"],
+        "replay_receipt_hash": replay_verify["replay_receipt_hash"],
+        "replay_verification_receipt_hash": replay_verify["receipt_hash"],
+        "release_readiness_receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    });
+    fs::write(&bundle_path, serde_json::to_string_pretty(&bundle)? + "\n")?;
+    let bundle_verify = run_json_strings(&[
+        "agent-receipt".into(),
+        "verify-bundle".into(),
+        bundle_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(bundle_verify["valid"], true);
+    let mut bundle_with_hash = bundle.clone();
+    bundle_with_hash["receipt_hash"] = bundle_verify["receipt_hash"].clone();
+    fs::write(
+        &bundle_path,
+        serde_json::to_string_pretty(&bundle_with_hash)? + "\n",
+    )?;
+
+    let manifest = json!({
+        "artifacts": [
+            {"role": "agent_evidence_bundle", "path": bundle_path, "hash": bundle_verify["receipt_hash"], "schema": "bundle-v1"},
+            {"role": "agent_receipt", "path": agent_path, "hash": agent_validation["agent_receipt_hash"], "schema": "agent-receipt-v1"},
+            {"role": "replay_receipt", "path": replay_path, "hash": replay_verify["replay_receipt_hash"], "schema": "determinism-replay-v1"},
+            {"role": "replay_verification", "path": replay_verify_path, "hash": replay_verify["receipt_hash"], "schema": "determinism-verify-receipt-v1"},
+            {"role": "release_readiness", "path": release_path, "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "schema": "release-readiness-v1"}
+        ],
+        "signer": {"kind": "ci", "id": "onix-ci"},
+        "anchor": {"kind": "local-artifact-index", "id": "run-123"}
+    });
+    fs::write(
+        &manifest_path,
+        serde_json::to_string_pretty(&manifest)? + "\n",
+    )?;
+    let verified = run_json_strings(&[
+        "evidence-manifest".into(),
+        "verify".into(),
+        manifest_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(verified["valid"], true);
+    assert_eq!(verified["verdict"], "pass");
+    assert_eq!(verified["artifacts"].as_array().unwrap().len(), 5);
+    assert_hash_field(&verified, "manifest_hash")?;
+    assert_hash_field(&verified, "signer_metadata_hash")?;
+    assert_hash_field(&verified, "anchor_metadata_hash")?;
+    assert_hash_field(&verified, "receipt_hash")?;
+
+    let mut tampered = manifest.clone();
+    tampered["artifacts"][0]["hash"] =
+        json!("0000000000000000000000000000000000000000000000000000000000000000");
+    tampered["signer"] = json!("SECRET=/tmp/private-token");
+    let tampered_path = dir.join("tampered-manifest.json");
+    fs::write(
+        &tampered_path,
+        serde_json::to_string_pretty(&tampered)? + "\n",
+    )?;
+    let failure = run_json_failure_strings(&[
+        "evidence-manifest".into(),
+        "verify".into(),
+        tampered_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(failure["valid"], false);
+    let issue_codes = failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(issue_codes.contains(&"artifact.hash_mismatch"));
+    assert!(issue_codes.contains(&"manifest.metadata_invalid"));
+    let failure_text = serde_json::to_string(&failure)?;
+    assert!(
+        !failure_text.contains(&dir.display().to_string()),
+        "{failure_text}"
+    );
+    assert!(!failure_text.contains("SECRET"), "{failure_text}");
+    Ok(())
+}
+
+#[test]
 fn determinism_replay_unknown_case_is_machine_readable_failure() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.determinism_replay.ci_case_selection]
     // r[verify cairn.supersede.determinism_replay.ci_failure_ergonomics]
