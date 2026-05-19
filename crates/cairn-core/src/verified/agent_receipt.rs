@@ -275,6 +275,14 @@ fn replay_evidence_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue>
             "replay_evidence.replay_verdict must be pass",
         ));
     }
+    if let Some(attestation_hash) = evidence.get("replay_environment_attestation_hash") {
+        if !attestation_hash.as_str().is_some_and(is_blake3_hex) {
+            issues.push(issue(
+                "replay_evidence.invalid_environment_attestation_hash",
+                "replay_evidence.replay_environment_attestation_hash must be a BLAKE3 hex hash",
+            ));
+        }
+    }
     let has_cases = evidence
         .get("replay_selected_cases")
         .and_then(Value::as_array)
@@ -325,11 +333,12 @@ pub fn positive_agent_run_fixture() -> Value {
         "verification_manifest": {"checks": [{"name": "cargo test", "verdict": "PASS", "evidence_hash": "3333333333333333333333333333333333333333333333333333333333333333"}]},
         "nondeterminism_manifest": {"captured": [{"class": "model_provider", "metadata": {"provider": "fixture"}}], "forbidden_uncaptured": []},
         "replay_evidence": {
-            "replay_receipt_hash": "4444444444444444444444444444444444444444444444444444444444444444",
-            "replay_policy_hash": "b85416c0ba95ad53648fd61a408fd537b0f8df5868b660e3071c63ae8b31ea33",
+            "replay_receipt_hash": "02c0c31bcdf99b1645860c9173142cd405fd2d67d1e1bb1994d664b1080276f6",
+            "replay_policy_hash": "94ed98cb944b060cf5569cd0fb0e931e09ba0375d59b239a70e7c8c6dd68f094",
             "replay_selected_cases": ["agent_receipt_validate", "mcp_describe", "status", "validate"],
             "replay_selected_groups": ["agent"],
             "replay_verdict": "pass",
+            "replay_environment_attestation_hash": "dc9c5008e82623f2702cab0624792a8a8fdd3daa1e4d82bac1e8bcaaafc66b53",
             "replay_artifact_path": "/tmp/cairn-replay.json"
         },
         "verdict": "success",

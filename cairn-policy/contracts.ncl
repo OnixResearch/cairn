@@ -145,10 +145,20 @@ let Promoted = std.contract.from_predicate (fun value =>
     description | NonEmptyString,
   },
 
+  EnvironmentAttestationFact = {
+    id | NonEmptyString,
+    class | NonEmptyString,
+    source | NonEmptyString,
+    handling | NonEmptyString,
+    receipt_field | NonEmptyString,
+    description | NonEmptyString,
+  },
+
   DeterminismReplayPolicy = {
     cases | NonEmptyArray | Array ReplayCase,
     groups | NonEmptyArray | Array ReplayGroup,
     entropy_inventory | NonEmptyArray | Array EntropyInventoryEntry,
+    environment_attestation | NonEmptyArray | Array EnvironmentAttestationFact,
   },
 
   ExemptionMarkerPolicy = {

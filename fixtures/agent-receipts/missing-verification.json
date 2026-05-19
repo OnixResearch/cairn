@@ -1,27 +1,13 @@
 {
-  "schema_version": "cairn.agent_run_receipt.v1",
-  "task_id": "fixture-agent-run-missing-verification",
   "agent_identity": {
-    "wrapper": "cairn-fixture",
-    "model": "captured-model"
+    "model": "captured-model",
+    "wrapper": "cairn-fixture"
   },
   "input_hash": "1111111111111111111111111111111111111111111111111111111111111111",
-  "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
-  "tool_manifest": {
-    "tools": [
-      {
-        "name": "terminal",
-        "mode": "read"
-      }
-    ]
-  },
   "mutation_manifest": {
     "files": [
       "docs/agent-run-receipts.md"
     ]
-  },
-  "verification_manifest": {
-    "checks": []
   },
   "nondeterminism_manifest": {
     "captured": [
@@ -34,21 +20,36 @@
     ],
     "forbidden_uncaptured": []
   },
+  "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "receipt_hash": "081e2243043c1ec29b3f556b80a659e36924c70001c7cec4cd9e6fbbf2e08c23",
   "replay_evidence": {
-    "replay_receipt_hash": "4444444444444444444444444444444444444444444444444444444444444444",
-    "replay_policy_hash": "b85416c0ba95ad53648fd61a408fd537b0f8df5868b660e3071c63ae8b31ea33",
+    "replay_artifact_path": "/tmp/cairn-replay.json",
+    "replay_environment_attestation_hash": "dc9c5008e82623f2702cab0624792a8a8fdd3daa1e4d82bac1e8bcaaafc66b53",
+    "replay_policy_hash": "94ed98cb944b060cf5569cd0fb0e931e09ba0375d59b239a70e7c8c6dd68f094",
+    "replay_receipt_hash": "02c0c31bcdf99b1645860c9173142cd405fd2d67d1e1bb1994d664b1080276f6",
     "replay_selected_cases": [
       "agent_receipt_validate",
       "mcp_describe",
       "status",
       "validate"
     ],
-    "replay_verdict": "pass",
-    "replay_artifact_path": "/tmp/cairn-replay.json",
     "replay_selected_groups": [
       "agent"
+    ],
+    "replay_verdict": "pass"
+  },
+  "schema_version": "cairn.agent_run_receipt.v1",
+  "task_id": "fixture-agent-run-missing-verification",
+  "tool_manifest": {
+    "tools": [
+      {
+        "mode": "read",
+        "name": "terminal"
+      }
     ]
   },
   "verdict": "success",
-  "receipt_hash": "9fd9483337dfd2004a3ab009853b2cbb7ce581f20cb475df8791ddfdf53eb3df"
+  "verification_manifest": {
+    "checks": []
+  }
 }

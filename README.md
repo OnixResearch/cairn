@@ -169,9 +169,10 @@ Replay groups are policy-owned named suites (`smoke`, `agent`, `release`, and
 evidence is invalid, including unknown case IDs, unknown group IDs, selector
 conflicts, hidden entropy, mutation-denied preflights, or mismatches. Stable public determinism replay fields are `command`, `root`, `valid`, `verdict`,
 `available_cases`, `available_groups`, `selected_cases`, `selected_groups`,
-`entropy_inventory`, `entropy_assumptions`, `entropy_policy_hash`, `summary`,
-`cases`, `skipped`, `mismatches`, `nondeterminism_failures`,
-`mutability_observations`, `normalization_rules`, and `receipt_hash`; the group
+`entropy_inventory`, `entropy_assumptions`, `entropy_policy_hash`,
+`environment_attestation`, `summary`, `cases`, `skipped`, `mismatches`,
+`nondeterminism_failures`, `mutability_observations`, `normalization_rules`,
+and `receipt_hash`; the group
 selector fields are `available_groups`, `selected_groups`. Case entries expose stable `id`,
 `command_kind`, `args`, `fixture_root`, `expected_mutability`,
 `comparison_modes`, `normalization_rules`, `display_only_paths`, `hash_fields`,
@@ -183,6 +184,11 @@ inventory coverage includes clock/date defaults, locale/timezone formatting,
 cwd/root path normalization, rejected archive-date env vars, filesystem
 order/metadata, external command versions, and Nix/build context. Rejected
 entropy failures disclose source names and handling but never environment values.
+`environment_attestation` is policy-owned and binds the replay to stable Cairn
+package/version identity, generated policy hash, entropy policy hash, selected
+cases/groups, replay scope, reviewed environment facts, and
+`attestation_hash`. It intentionally omits raw environment values, usernames,
+absolute checkout roots, and machine-specific temporary or store paths.
 Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`,
 `expected`, `actual`, and `reproduce` fields. The default oracle rejects mutation flags and records
 mutation observations as deterministic failures.
@@ -198,7 +204,8 @@ canonical receipt with `schema_version`, `task_id`, `agent_identity`,
 `verdict`, and `receipt_hash`. The `replay_evidence` object binds the agent
 run to deterministic replay preflight evidence with stable
 `replay_receipt_hash`, `replay_policy_hash`, `replay_selected_cases`,
-`replay_selected_groups`, and `replay_verdict` fields, plus optional
+`replay_selected_groups`, `replay_verdict`, and optional
+`replay_environment_attestation_hash` fields, plus optional
 display-only `replay_artifact_path`. Agent wrappers should run
 `cairn determinism replay --group agent` and record the resulting `agent` group
 and expanded case list. `agent-receipt validate <path>` checks that replay

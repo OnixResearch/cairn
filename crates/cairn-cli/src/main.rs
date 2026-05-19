@@ -283,6 +283,7 @@ fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             Vec::new(),
             Vec::new(),
             canonical_json_hash(&json!([])),
+            Value::Null,
         );
         receipt["verdict"] = json!("fail");
         receipt["valid"] = json!(false);
@@ -358,6 +359,16 @@ struct ReplayEntropyEntry {
     description: String,
 }
 
+#[derive(Clone)]
+struct ReplayEnvironmentFact {
+    id: String,
+    class: String,
+    source: String,
+    handling: String,
+    receipt_field: String,
+    description: String,
+}
+
 struct ReplaySelection {
     cases: Vec<ReplayCase>,
     selected_groups: Vec<String>,
@@ -399,6 +410,7 @@ fn determinism_replay_receipt(
     let all_cases = replay_cases_from_policy(&policy)?;
     let groups = replay_groups_from_policy(&policy)?;
     let entropy_inventory = replay_entropy_inventory_from_policy(&policy)?;
+    let environment_facts = replay_environment_facts_from_policy(&policy)?;
     validate_replay_groups(&all_cases, &groups)?;
     let available_cases = all_cases
         .iter()
@@ -409,6 +421,7 @@ fn determinism_replay_receipt(
         .map(|group| group.id.clone())
         .collect::<Vec<_>>();
     let selection = select_replay_cases(&all_cases, &groups, selected_case, selected_group)?;
+    let selected_groups = selection.selected_groups.clone();
     let cases = selection.cases;
     let mut case_receipts = Vec::new();
     let mut mismatches = Vec::new();
@@ -578,6 +591,17 @@ fn determinism_replay_receipt(
     mismatches.sort_by_key(canonical_json_hash);
     mutability_observations.sort_by_key(canonical_json_hash);
     skipped.sort_by_key(canonical_json_hash);
+    let selected_cases = cases.iter().map(|case| case.id.clone()).collect::<Vec<_>>();
+    let entropy_policy_hash = replay_entropy_policy_hash(&entropy_inventory);
+    let environment_attestation = replay_environment_attestation(
+        &policy,
+        &environment_facts,
+        &entropy_policy_hash,
+        &selected_cases,
+        &selected_groups,
+        selected_case,
+        selected_group,
+    );
     let receipt = replay_receipt(
         root.clone(),
         case_receipts,
@@ -587,11 +611,12 @@ fn determinism_replay_receipt(
         nondeterminism_failures,
         available_cases,
         available_groups,
-        cases.iter().map(|case| case.id.clone()).collect::<Vec<_>>(),
-        selection.selected_groups,
+        selected_cases,
+        selected_groups,
         replay_entropy_inventory_json(&entropy_inventory),
         replay_entropy_assumptions(&entropy_inventory),
-        replay_entropy_policy_hash(&entropy_inventory),
+        entropy_policy_hash,
+        environment_attestation,
     );
     Ok(with_portable_receipt_hash(&root, receipt))
 }
@@ -654,6 +679,102 @@ fn replay_entropy_entry_from_policy_value(
         receipt_field: required_string(value, "receipt_field")?.to_owned(),
         description: required_string(value, "description")?.to_owned(),
     })
+}
+
+fn replay_environment_facts_from_policy(
+    policy: &Policy,
+) -> Result<Vec<ReplayEnvironmentFact>, Box<dyn Error>> {
+    let entries = policy
+        .raw
+        .get("determinism_replay_policy")
+        .and_then(|value| value.get("environment_attestation"))
+        .and_then(Value::as_array)
+        .ok_or("policy missing determinism_replay_policy.environment_attestation")?;
+    let mut parsed = entries
+        .iter()
+        .map(replay_environment_fact_from_policy_value)
+        .collect::<Result<Vec<_>, _>>()?;
+    parsed.sort_by_key(|entry| entry.id.clone());
+    Ok(parsed)
+}
+
+fn replay_environment_fact_from_policy_value(
+    value: &Value,
+) -> Result<ReplayEnvironmentFact, Box<dyn Error>> {
+    Ok(ReplayEnvironmentFact {
+        id: required_string(value, "id")?.to_owned(),
+        class: required_string(value, "class")?.to_owned(),
+        source: required_string(value, "source")?.to_owned(),
+        handling: required_string(value, "handling")?.to_owned(),
+        receipt_field: required_string(value, "receipt_field")?.to_owned(),
+        description: required_string(value, "description")?.to_owned(),
+    })
+}
+
+fn replay_environment_facts_json(entries: &[ReplayEnvironmentFact]) -> Vec<Value> {
+    entries
+        .iter()
+        .map(|entry| {
+            json!({
+                "id": &entry.id,
+                "class": &entry.class,
+                "source": &entry.source,
+                "handling": &entry.handling,
+                "receipt_field": &entry.receipt_field,
+                "description": &entry.description,
+            })
+        })
+        .collect()
+}
+
+fn replay_attestation_policy_hash(entries: &[ReplayEnvironmentFact]) -> String {
+    canonical_json_hash(&json!(replay_environment_facts_json(entries)))
+}
+
+fn replay_environment_attestation(
+    policy: &Policy,
+    entries: &[ReplayEnvironmentFact],
+    entropy_policy_hash: &str,
+    selected_cases: &[String],
+    selected_groups: &[String],
+    selected_case: Option<&str>,
+    selected_group: Option<&str>,
+) -> Value {
+    // r[impl cairn.supersede.replay_environment_attestation.policy]
+    // r[impl cairn.supersede.replay_environment_attestation.receipt]
+    let policy_facts = replay_environment_facts_json(entries);
+    let attestation_policy_hash = replay_attestation_policy_hash(entries);
+    let mut scope = json!({
+        "selector": "default",
+        "selected_case": Value::Null,
+        "selected_group": Value::Null,
+    });
+    if let Some(case_id) = selected_case {
+        scope["selector"] = Value::String("case".to_string());
+        scope["selected_case"] = Value::String(case_id.to_string());
+    }
+    if let Some(group_id) = selected_group {
+        scope["selector"] = Value::String("group".to_string());
+        scope["selected_group"] = Value::String(group_id.to_string());
+    }
+    if selected_case.is_some() && selected_group.is_some() {
+        scope["selector"] = Value::String("conflict".to_string());
+    }
+    let mut attestation = json!({
+        "cairn_package": "cairn",
+        "cairn_version": env!("CARGO_PKG_VERSION"),
+        "generated_policy_hash": canonical_json_hash(&policy.raw),
+        "entropy_policy_hash": entropy_policy_hash,
+        "attestation_policy_hash": attestation_policy_hash,
+        "selected_cases": selected_cases,
+        "selected_groups": selected_groups,
+        "replay_scope": scope,
+        "policy_facts": policy_facts,
+        "normalization_rules": ["canonical_json", "no_host_paths", "no_raw_environment_values"],
+    });
+    let attestation_hash = canonical_json_hash(&attestation);
+    attestation["attestation_hash"] = Value::String(attestation_hash);
+    attestation
 }
 
 fn replay_entropy_inventory_json(entries: &[ReplayEntropyEntry]) -> Vec<Value> {
@@ -894,6 +1015,7 @@ fn replay_receipt(
     entropy_inventory: Vec<Value>,
     entropy_assumptions: Vec<Value>,
     entropy_policy_hash: String,
+    environment_attestation: Value,
 ) -> Value {
     let valid = mismatches.is_empty() && nondeterminism_failures.is_empty();
     let failed_cases = replay_failed_cases(&mismatches, &nondeterminism_failures);
@@ -917,6 +1039,7 @@ fn replay_receipt(
         "entropy_inventory": entropy_inventory,
         "entropy_assumptions": entropy_assumptions,
         "entropy_policy_hash": entropy_policy_hash,
+        "environment_attestation": environment_attestation,
         "summary": summary,
         "cases": cases,
         "skipped": skipped,
@@ -3530,6 +3653,16 @@ fn agent_receipt_replay_evidence_issues(
             ),
         });
     }
+    if let Some(attestation_hash) = evidence.get("replay_environment_attestation_hash") {
+        if !attestation_hash.as_str().is_some_and(is_blake3_hex_text) {
+            issues.push(AgentRunGateIssue {
+                code: "replay_evidence.invalid_environment_attestation_hash".to_string(),
+                message:
+                    "replay_evidence.replay_environment_attestation_hash must be a BLAKE3 hex hash"
+                        .to_string(),
+            });
+        }
+    }
     let selected_cases = evidence
         .get("replay_selected_cases")
         .and_then(Value::as_array)
@@ -3556,6 +3689,7 @@ fn agent_replay_evidence_summary(receipt: &Value) -> Value {
         "replay_selected_cases": evidence.get("replay_selected_cases").cloned().unwrap_or(Value::Null),
         "replay_selected_groups": evidence.get("replay_selected_groups").cloned().unwrap_or(Value::Null),
         "replay_verdict": evidence.get("replay_verdict").cloned().unwrap_or(Value::Null),
+        "replay_environment_attestation_hash": evidence.get("replay_environment_attestation_hash").cloned().unwrap_or(Value::Null),
         "replay_artifact_path": evidence.get("replay_artifact_path").cloned().unwrap_or(Value::Null),
     })
 }

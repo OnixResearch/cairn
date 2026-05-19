@@ -306,6 +306,9 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.determinism_entropy_inventory.policy]
     // r[verify cairn.supersede.determinism_entropy_inventory.receipt]
     // r[verify cairn.supersede.determinism_entropy_inventory.tests]
+    // r[verify cairn.supersede.replay_environment_attestation.policy]
+    // r[verify cairn.supersede.replay_environment_attestation.receipt]
+    // r[verify cairn.supersede.replay_environment_attestation.secret_safe]
     let first = run_json(&["determinism", "replay", "--root", "."])?;
     let second = run_json(&["determinism", "replay", "--root", "."])?;
     assert_eq!(first["valid"], true);
@@ -347,6 +350,45 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         .unwrap()
         .iter()
         .all(|entry| entry["handling"] != "reject"));
+    let environment_attestation = &first["environment_attestation"];
+    assert_eq!(environment_attestation["cairn_package"], "cairn");
+    assert_eq!(
+        environment_attestation["cairn_version"],
+        env!("CARGO_PKG_VERSION")
+    );
+    assert_hash_field(environment_attestation, "generated_policy_hash")?;
+    assert_hash_field(environment_attestation, "entropy_policy_hash")?;
+    assert_hash_field(environment_attestation, "attestation_policy_hash")?;
+    assert_hash_field(environment_attestation, "attestation_hash")?;
+    assert_eq!(
+        environment_attestation["entropy_policy_hash"],
+        first["entropy_policy_hash"]
+    );
+    assert_eq!(
+        environment_attestation["selected_cases"],
+        first["selected_cases"]
+    );
+    assert_eq!(
+        environment_attestation["selected_groups"],
+        first["selected_groups"]
+    );
+    assert_eq!(
+        environment_attestation["replay_scope"]["selector"],
+        "default"
+    );
+    let mut expected_environment_facts = policy["determinism_replay_policy"]
+        ["environment_attestation"]
+        .as_array()
+        .unwrap()
+        .clone();
+    expected_environment_facts.sort_by_key(|entry| entry["id"].as_str().unwrap().to_owned());
+    assert_eq!(
+        environment_attestation["policy_facts"].as_array().unwrap(),
+        &expected_environment_facts
+    );
+    let attestation_text = environment_attestation.to_string();
+    assert!(!attestation_text.contains(&repo_root().display().to_string()));
+    assert!(!attestation_text.contains("SECRET"));
     let case_ids = first["cases"]
         .as_array()
         .unwrap()
@@ -792,6 +834,9 @@ fn public_receipt_schemas_are_stable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.determinism_replay.receipt.schema]
     // r[verify cairn.supersede.determinism_replay.groups.receipt]
     // r[verify cairn.supersede.determinism_entropy_inventory.schema]
+    // r[verify cairn.supersede.replay_environment_attestation.policy]
+    // r[verify cairn.supersede.replay_environment_attestation.receipt]
+    // r[verify cairn.supersede.replay_environment_attestation.agent]
     assert_gate_receipt_schema()?;
     assert_sync_receipt_schema()?;
     assert_archive_receipt_schema()?;
@@ -807,6 +852,7 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
     // r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
     // r[verify cairn.supersede.determinism_replay.groups.docs]
     // r[verify cairn.supersede.determinism_entropy_inventory.docs]
+    // r[verify cairn.supersede.replay_environment_attestation.docs]
     let readme = fs::read_to_string(repo_root().join("README.md"))?;
     assert!(readme.contains("Stable public gate fields"), "{readme}");
     assert!(
@@ -848,6 +894,12 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
     );
     assert!(
         readme.contains("`entropy_inventory`, `entropy_assumptions`, `entropy_policy_hash`"),
+        "{readme}"
+    );
+    assert!(readme.contains("`environment_attestation`"), "{readme}");
+    assert!(readme.contains("`attestation_hash`"), "{readme}");
+    assert!(
+        readme.contains("raw environment values, usernames"),
         "{readme}"
     );
     assert!(readme.contains("Rejected\nentropy failures disclose source names and handling but never environment values"), "{readme}");
@@ -1639,6 +1691,7 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
 fn agent_receipt_replay_evidence_failures_are_deterministic() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.agent_receipt_replay_evidence.failures]
     // r[verify cairn.supersede.agent_receipt_replay_group_coverage.failures]
+    // r[verify cairn.supersede.replay_environment_attestation.agent]
     let base_text = fs::read_to_string(repo_root().join("fixtures/agent-receipts/positive.json"))?;
     let base: Value = serde_json::from_str(&base_text)?;
     let cases = [
@@ -1679,6 +1732,16 @@ fn agent_receipt_replay_evidence_failures_are_deterministic() -> Result<(), Box<
                 value
             },
             "replay_evidence.missing_group_coverage",
+        ),
+        (
+            "bad-attestation-hash",
+            {
+                let mut value = base.clone();
+                value["replay_evidence"]["replay_environment_attestation_hash"] =
+                    json!("not-a-blake3-hash");
+                value
+            },
+            "replay_evidence.invalid_environment_attestation_hash",
         ),
     ];
     for (name, value, expected_code) in cases {
@@ -1749,6 +1812,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     // r[verify cairn.supersede.release_readiness_bundle.verification]
     // r[verify cairn.supersede.determinism_entropy_inventory.verification]
     // r[verify cairn.supersede.determinism_entropy_inventory.archive]
+    // r[verify cairn.supersede.replay_environment_attestation.verification]
+    // r[verify cairn.supersede.replay_environment_attestation.archive]
     let receipt = run_json(&["release-readiness", "--root", "."])?;
     assert_object_keys(
         &receipt,

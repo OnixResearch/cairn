@@ -51,6 +51,7 @@ Agent receipts must bind completion claims to replay-checked Cairn surfaces. The
 - `replay_selected_cases`: replay case ids covered by the evidence
 - `replay_selected_groups`: replay group ids covered by the evidence; wrappers should include `agent`
 - `replay_verdict`: must be `pass`
+- `replay_environment_attestation_hash`: optional BLAKE3 hash from the replay receipt's `environment_attestation.attestation_hash`
 - `replay_artifact_path`: optional display-only path for local operators
 
 `agent-receipt validate` compares `replay_policy_hash` with the current generated
@@ -63,6 +64,7 @@ replay evidence produces deterministic issue codes such as
 `replay_evidence.insufficient_coverage`. r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
 r[verify cairn.supersede.determinism_replay.groups.docs]
+r[verify cairn.supersede.replay_environment_attestation.docs]
 
 ## Completion gate
 

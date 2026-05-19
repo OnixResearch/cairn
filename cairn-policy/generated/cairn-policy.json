@@ -378,6 +378,56 @@
         "source": "Nix flake/devshell context"
       }
     ],
+    "environment_attestation": [
+      {
+        "class": "binary_identity",
+        "description": "Replay discloses the Cairn package name and version compiled into the binary, not the host binary path.",
+        "handling": "disclose",
+        "id": "cairn_package_version",
+        "receipt_field": "environment_attestation.cairn_version",
+        "source": "CARGO_PKG_VERSION"
+      },
+      {
+        "class": "policy_identity",
+        "description": "Replay binds the generated policy content by BLAKE3 hash.",
+        "handling": "hash",
+        "id": "generated_policy_hash",
+        "receipt_field": "environment_attestation.generated_policy_hash",
+        "source": "cairn-policy/generated/cairn-policy.json"
+      },
+      {
+        "class": "entropy_policy_identity",
+        "description": "Replay binds the reviewed entropy inventory by BLAKE3 hash.",
+        "handling": "hash",
+        "id": "entropy_policy_hash",
+        "receipt_field": "environment_attestation.entropy_policy_hash",
+        "source": "determinism_replay_policy.entropy_inventory"
+      },
+      {
+        "class": "selection_identity",
+        "description": "Replay discloses the selected case and group ids used to produce evidence.",
+        "handling": "disclose",
+        "id": "replay_selection",
+        "receipt_field": "environment_attestation.selected_cases,environment_attestation.selected_groups",
+        "source": "--case/--group/default replay selection"
+      },
+      {
+        "class": "attestation_policy_identity",
+        "description": "Replay binds this reviewed environment attestation policy by BLAKE3 hash.",
+        "handling": "hash",
+        "id": "attestation_policy",
+        "receipt_field": "environment_attestation.attestation_policy_hash",
+        "source": "determinism_replay_policy.environment_attestation"
+      },
+      {
+        "class": "build_context",
+        "description": "Replay discloses reviewed build/toolchain context as policy facts and avoids machine-specific store paths.",
+        "handling": "disclose",
+        "id": "toolchain_build_context",
+        "receipt_field": "environment_attestation.policy_facts",
+        "source": "Nix/devshell/toolchain context"
+      }
+    ],
     "groups": [
       {
         "cases": [
@@ -507,6 +557,7 @@
       "mismatch_keys": [],
       "replay_evidence_keys": [
         "replay_artifact_path",
+        "replay_environment_attestation_hash",
         "replay_policy_hash",
         "replay_receipt_hash",
         "replay_selected_cases",
@@ -703,6 +754,7 @@
         "entropy_assumptions",
         "entropy_inventory",
         "entropy_policy_hash",
+        "environment_attestation",
         "mismatches",
         "mutability_observations",
         "nondeterminism_failures",

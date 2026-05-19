@@ -59,7 +59,7 @@ let Contracts = import "contracts.ncl" in
       command = "agent-receipt validate",
       top_level_keys = ["agent_receipt_hash", "command", "current_replay_policy_hash", "input_hash", "input_kind", "issues", "max_content_bytes", "path", "receipt_hash", "replay_evidence", "required_replay_cases", "required_replay_group", "stated_agent_receipt_hash", "valid", "verdict"],
       issue_keys = ["code", "message"],
-      replay_evidence_keys = ["replay_artifact_path", "replay_policy_hash", "replay_receipt_hash", "replay_selected_cases", "replay_selected_groups", "replay_verdict"],
+      replay_evidence_keys = ["replay_artifact_path", "replay_environment_attestation_hash", "replay_policy_hash", "replay_receipt_hash", "replay_selected_cases", "replay_selected_groups", "replay_verdict"],
       hash_fields = ["agent_receipt_hash", "current_replay_policy_hash", "input_hash", "receipt_hash", "stated_agent_receipt_hash"],
     },
     {
@@ -88,7 +88,7 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "determinism replay",
-      top_level_keys = ["available_cases", "available_groups", "cases", "command", "entropy_assumptions", "entropy_inventory", "entropy_policy_hash", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "selected_cases", "selected_groups", "skipped", "summary", "valid", "verdict"],
+      top_level_keys = ["available_cases", "available_groups", "cases", "command", "entropy_assumptions", "entropy_inventory", "entropy_policy_hash", "environment_attestation", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "selected_cases", "selected_groups", "skipped", "summary", "valid", "verdict"],
       case_keys = ["args", "command_kind", "comparison_modes", "display_only_paths", "expected_mutability", "fixture_root", "hash_fields", "id", "normalization_rules", "portable_evidence_hash", "runs"],
       mismatch_keys = ["actual", "case", "class", "comparison", "expected", "field_path", "reproduce"],
       hash_fields = ["receipt_hash"],
@@ -124,6 +124,14 @@ let Contracts = import "contracts.ncl" in
       { id = "filesystem_order", class = "filesystem_metadata", source = "directory iteration order and file metadata", handling = "normalize", receipt_field = "mutability_observations", description = "Replay manifests sort root-relative paths and hash file contents; volatile host metadata is not part of portable evidence." },
       { id = "external_command_versions", class = "toolchain", source = "cairn binary, Nix/devshell, and external checker versions", handling = "disclose", receipt_field = "entropy_assumptions", description = "Replay discloses that toolchain identity is represented by policy and receipt hashes rather than raw host paths." },
       { id = "nix_build_context", class = "build_context", source = "Nix flake/devshell context", handling = "disclose", receipt_field = "entropy_assumptions", description = "Replay assumes a reviewed Nix-built Cairn surface and does not capture machine-specific store paths in portable evidence." },
+    ],
+    environment_attestation = [
+      { id = "cairn_package_version", class = "binary_identity", source = "CARGO_PKG_VERSION", handling = "disclose", receipt_field = "environment_attestation.cairn_version", description = "Replay discloses the Cairn package name and version compiled into the binary, not the host binary path." },
+      { id = "generated_policy_hash", class = "policy_identity", source = "cairn-policy/generated/cairn-policy.json", handling = "hash", receipt_field = "environment_attestation.generated_policy_hash", description = "Replay binds the generated policy content by BLAKE3 hash." },
+      { id = "entropy_policy_hash", class = "entropy_policy_identity", source = "determinism_replay_policy.entropy_inventory", handling = "hash", receipt_field = "environment_attestation.entropy_policy_hash", description = "Replay binds the reviewed entropy inventory by BLAKE3 hash." },
+      { id = "replay_selection", class = "selection_identity", source = "--case/--group/default replay selection", handling = "disclose", receipt_field = "environment_attestation.selected_cases,environment_attestation.selected_groups", description = "Replay discloses the selected case and group ids used to produce evidence." },
+      { id = "attestation_policy", class = "attestation_policy_identity", source = "determinism_replay_policy.environment_attestation", handling = "hash", receipt_field = "environment_attestation.attestation_policy_hash", description = "Replay binds this reviewed environment attestation policy by BLAKE3 hash." },
+      { id = "toolchain_build_context", class = "build_context", source = "Nix/devshell/toolchain context", handling = "disclose", receipt_field = "environment_attestation.policy_facts", description = "Replay discloses reviewed build/toolchain context as policy facts and avoids machine-specific store paths." },
     ],
   },
 
