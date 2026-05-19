@@ -1541,6 +1541,26 @@
       ]
     }
   ],
+  "registry_label_policy": {
+    "channels": [
+      "dev",
+      "nightly",
+      "release",
+      "stable"
+    ],
+    "compatibility_classes": [
+      "current",
+      "experimental",
+      "legacy"
+    ],
+    "platforms": [
+      "aarch64-darwin",
+      "aarch64-linux",
+      "x86_64-darwin",
+      "x86_64-linux"
+    ],
+    "release_format": "YYYY-MM-DD"
+  },
   "report_contract": {
     "sections": [
       "Findings",

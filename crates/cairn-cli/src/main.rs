@@ -3627,6 +3627,7 @@ struct EvidenceRegistryOptions {
     root: PathBuf,
     indexes: Vec<PathBuf>,
     out: Option<PathBuf>,
+    labels: EvidenceRegistryLabels,
 }
 
 #[derive(Default)]
@@ -3636,9 +3637,21 @@ struct EvidenceRegistryVerifyOptions {
 }
 
 #[derive(Default, Clone)]
+struct EvidenceRegistryLabels {
+    channel: Option<String>,
+    release: Option<String>,
+    platform: Option<String>,
+    compatibility_class: Option<String>,
+}
+
+#[derive(Default, Clone)]
 struct EvidenceRegistryConsumeSelectors {
     bundle_kind: Option<String>,
     policy_hash: Option<String>,
+    channel: Option<String>,
+    release: Option<String>,
+    platform: Option<String>,
+    compatibility_class: Option<String>,
     index_receipt_hash: Option<String>,
     index_verification_receipt_hash: Option<String>,
     bundle_receipt_hash: Option<String>,
@@ -4199,13 +4212,19 @@ fn evidence_registry_options(args: &[String]) -> Result<EvidenceRegistryOptions,
     let root = read_option(args.to_vec(), "--root", ".");
     let indexes = read_repeated_path_options(args, "--index");
     let out = read_string_option(args, "--out").map(PathBuf::from);
+    let labels = evidence_registry_labels_from_args(args);
     if indexes.is_empty() {
         return Err("evidence registry build requires at least one --index <file>".into());
     }
     if out.is_none() {
         return Err("evidence registry build requires --out <file>".into());
     }
-    Ok(EvidenceRegistryOptions { root, indexes, out })
+    Ok(EvidenceRegistryOptions {
+        root,
+        indexes,
+        out,
+        labels,
+    })
 }
 
 fn evidence_registry_verify_options(
@@ -4263,6 +4282,10 @@ fn evidence_registry_consume_selectors(args: &[String]) -> EvidenceRegistryConsu
     EvidenceRegistryConsumeSelectors {
         bundle_kind: read_string_option(args, "--bundle-kind"),
         policy_hash: read_string_option(args, "--policy-hash"),
+        channel: read_string_option(args, "--channel"),
+        release: read_string_option(args, "--release"),
+        platform: read_string_option(args, "--platform"),
+        compatibility_class: read_string_option(args, "--compatibility-class"),
         index_receipt_hash: read_string_option(args, "--index-receipt-hash"),
         index_verification_receipt_hash: read_string_option(
             args,
@@ -4277,6 +4300,224 @@ fn evidence_registry_consume_selectors(args: &[String]) -> EvidenceRegistryConsu
             "--release-readiness-receipt-hash",
         ),
     }
+}
+
+fn evidence_registry_labels_from_args(args: &[String]) -> EvidenceRegistryLabels {
+    EvidenceRegistryLabels {
+        channel: read_string_option(args, "--channel"),
+        release: read_string_option(args, "--release"),
+        platform: read_string_option(args, "--platform"),
+        compatibility_class: read_string_option(args, "--compatibility-class"),
+    }
+}
+
+fn evidence_registry_labels_json(labels: &EvidenceRegistryLabels) -> Value {
+    json!({
+        "channel": labels.channel.clone().unwrap_or_else(|| "unspecified".to_string()),
+        "release": labels.release.clone().unwrap_or_else(|| "unspecified".to_string()),
+        "platform": labels.platform.clone().unwrap_or_else(|| "unspecified".to_string()),
+        "compatibility_class": labels
+            .compatibility_class
+            .clone()
+            .unwrap_or_else(|| "unspecified".to_string()),
+    })
+}
+
+fn evidence_registry_validate_labels(
+    root: &Path,
+    labels: &EvidenceRegistryLabels,
+    prefix: &'static str,
+    issues: &mut Vec<Value>,
+) {
+    let Ok(policy) = load_policy_file(default_policy_path().into()) else {
+        issues.push(evidence_registry_issue(
+            &format!("{prefix}.label_policy_unreadable"),
+            "registry_label_policy",
+            "readable generated policy",
+            "unreadable",
+        ));
+        return;
+    };
+    let policy_hash = canonical_json_hash(&policy.raw);
+    if policy_hash.is_empty() || root.as_os_str().is_empty() {
+        issues.push(evidence_registry_issue(
+            &format!("{prefix}.label_policy_hash_invalid"),
+            "registry_label_policy",
+            "BLAKE3 policy hash",
+            "invalid",
+        ));
+    }
+    for (field, value, policy_key) in [
+        ("channel", labels.channel.as_deref(), "channels"),
+        ("platform", labels.platform.as_deref(), "platforms"),
+        (
+            "compatibility_class",
+            labels.compatibility_class.as_deref(),
+            "compatibility_classes",
+        ),
+    ] {
+        if let Some(value) = value {
+            if evidence_registry_label_value_unsafe(value) {
+                issues.push(evidence_registry_issue(
+                    &format!("{prefix}.label_unsafe"),
+                    field,
+                    "stable non-path label value",
+                    "unsafe",
+                ));
+                continue;
+            }
+            let allowed = registry_label_policy_values(&policy.raw, policy_key);
+            if !allowed.iter().any(|allowed| allowed == value) {
+                issues.push(evidence_registry_issue(
+                    &format!("{prefix}.label_not_allowed"),
+                    field,
+                    "policy-owned allowed label",
+                    value,
+                ));
+            }
+        }
+    }
+    if let Some(release) = labels.release.as_deref() {
+        if evidence_registry_label_value_unsafe(release) {
+            issues.push(evidence_registry_issue(
+                &format!("{prefix}.label_unsafe"),
+                "release",
+                "stable non-path label value",
+                "unsafe",
+            ));
+        } else if !evidence_registry_release_label_valid(release) {
+            issues.push(evidence_registry_issue(
+                &format!("{prefix}.release_label_invalid"),
+                "release",
+                "YYYY-MM-DD release label",
+                release,
+            ));
+        }
+    }
+    let label_count = [
+        labels.channel.as_ref(),
+        labels.release.as_ref(),
+        labels.platform.as_ref(),
+        labels.compatibility_class.as_ref(),
+    ]
+    .iter()
+    .flatten()
+    .count();
+    if label_count > 0 && labels.channel.is_none() {
+        issues.push(evidence_registry_issue(
+            &format!("{prefix}.channel_required_for_labeled_registry"),
+            "channel",
+            "channel label when registry labels are present",
+            "missing",
+        ));
+    }
+    // r[impl cairn.supersede.registry_channel_metadata.policy]
+}
+
+fn registry_label_policy_values(policy: &Value, key: &str) -> Vec<String> {
+    policy
+        .get("registry_label_policy")
+        .and_then(|policy| policy.get(key))
+        .and_then(Value::as_array)
+        .map(|values| {
+            values
+                .iter()
+                .filter_map(Value::as_str)
+                .map(str::to_string)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default()
+}
+
+fn evidence_registry_label_value_unsafe(value: &str) -> bool {
+    value.is_empty()
+        || value.starts_with('/')
+        || value.contains("..")
+        || value.contains('\\')
+        || value.contains(':')
+        || value.chars().any(char::is_whitespace)
+}
+
+fn evidence_registry_release_label_valid(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    bytes.len() == 10
+        && bytes[4] == b'-'
+        && bytes[7] == b'-'
+        && bytes
+            .iter()
+            .enumerate()
+            .all(|(idx, byte)| idx == 4 || idx == 7 || byte.is_ascii_digit())
+}
+
+fn entry_labels_from_registry_entry(entry: &Value) -> Option<EvidenceRegistryLabels> {
+    let labels = entry.get("labels")?;
+    Some(EvidenceRegistryLabels {
+        channel: registry_entry_label(labels, "channel"),
+        release: registry_entry_label(labels, "release"),
+        platform: registry_entry_label(labels, "platform"),
+        compatibility_class: registry_entry_label(labels, "compatibility_class"),
+    })
+}
+
+fn registry_entry_label(labels: &Value, key: &str) -> Option<String> {
+    labels
+        .get(key)
+        .and_then(Value::as_str)
+        .filter(|value| *value != "unspecified")
+        .map(str::to_string)
+}
+
+fn evidence_registry_label_key(entry: &Value) -> Option<String> {
+    let labels = entry.get("labels")?;
+    let channel = labels
+        .get("channel")
+        .and_then(Value::as_str)
+        .unwrap_or("unspecified");
+    if channel == "unspecified" {
+        return None;
+    }
+    let release = labels
+        .get("release")
+        .and_then(Value::as_str)
+        .unwrap_or("unspecified");
+    let platform = labels
+        .get("platform")
+        .and_then(Value::as_str)
+        .unwrap_or("unspecified");
+    let compatibility = labels
+        .get("compatibility_class")
+        .and_then(Value::as_str)
+        .unwrap_or("unspecified");
+    Some(format!("{channel}|{release}|{platform}|{compatibility}"))
+}
+
+fn evidence_registry_reject_label_conflicts(
+    entries: &[Value],
+    prefix: &'static str,
+    issues: &mut Vec<Value>,
+) {
+    let mut seen = std::collections::BTreeMap::<String, String>::new();
+    for entry in entries {
+        let Some(key) = evidence_registry_label_key(entry) else {
+            continue;
+        };
+        let hash = entry
+            .get("index_receipt_hash")
+            .and_then(Value::as_str)
+            .unwrap_or("<missing>")
+            .to_string();
+        if let Some(previous) = seen.insert(key, hash.clone()) {
+            if previous != hash {
+                issues.push(evidence_registry_issue(
+                    &format!("{prefix}.label_conflict"),
+                    "labels",
+                    "unique label tuple per index hash",
+                    "conflict",
+                ));
+            }
+        }
+    }
+    // r[impl cairn.supersede.registry_channel_metadata.build]
 }
 
 fn read_repeated_path_options(args: &[String], flag: &str) -> Vec<PathBuf> {
@@ -4300,6 +4541,7 @@ fn evidence_registry_receipt(options: &EvidenceRegistryOptions) -> Value {
     let mut issues = Vec::new();
     let mut entries = Vec::new();
     let mut hashes = std::collections::BTreeSet::new();
+    evidence_registry_validate_labels(&root, &options.labels, "evidence_registry", &mut issues);
     for (position, index_path) in options.indexes.iter().enumerate() {
         if let Some(entry) = evidence_registry_entry_from_index(
             &root,
@@ -4307,6 +4549,7 @@ fn evidence_registry_receipt(options: &EvidenceRegistryOptions) -> Value {
             out.parent().unwrap_or_else(|| Path::new(".")),
             position,
             "evidence_registry",
+            Some(&options.labels),
             &mut issues,
         ) {
             if let Some(hash) = entry.get("index_receipt_hash").and_then(Value::as_str) {
@@ -4323,6 +4566,7 @@ fn evidence_registry_receipt(options: &EvidenceRegistryOptions) -> Value {
         }
     }
     entries.sort_by_key(canonical_json_hash);
+    evidence_registry_reject_label_conflicts(&entries, "evidence_registry", &mut issues);
     let mut receipt = evidence_registry_final_receipt(
         &root,
         "evidence registry build",
@@ -4440,12 +4684,22 @@ fn evidence_registry_verify_receipt(options: &EvidenceRegistryVerifyOptions) -> 
             ));
             continue;
         };
+        let entry_labels = entry_labels_from_registry_entry(entry);
+        if let Some(labels) = entry_labels.as_ref() {
+            evidence_registry_validate_labels(
+                &root,
+                labels,
+                "evidence_registry_verify",
+                &mut issues,
+            );
+        }
         if let Some(current) = evidence_registry_entry_from_index(
             &root,
             &index_path,
             base,
             position,
             "evidence_registry_verify",
+            entry_labels.as_ref(),
             &mut issues,
         ) {
             if !evidence_registry_entries_equal(entry, &current) {
@@ -4460,6 +4714,7 @@ fn evidence_registry_verify_receipt(options: &EvidenceRegistryVerifyOptions) -> 
         }
     }
     entries.sort_by_key(canonical_json_hash);
+    evidence_registry_reject_label_conflicts(&entries, "evidence_registry_verify", &mut issues);
     evidence_registry_verify_final_receipt(&root, issues, stated_hash, entries)
 }
 
@@ -4469,6 +4724,7 @@ fn evidence_registry_entry_from_index(
     base: &Path,
     position: usize,
     prefix: &'static str,
+    labels: Option<&EvidenceRegistryLabels>,
     issues: &mut Vec<Value>,
 ) -> Option<Value> {
     let index = match read_json_artifact(index_path, AGENT_RECEIPT_MAX_BYTES) {
@@ -4505,11 +4761,15 @@ fn evidence_registry_entry_from_index(
         ));
     }
     let index_relative = evidence_registry_index_relative(base, index_path);
+    let labels = labels
+        .map(evidence_registry_labels_json)
+        .unwrap_or_else(|| evidence_registry_labels_json(&EvidenceRegistryLabels::default()));
     Some(json!({
         "index": format!("<index:{position}>"),
         "index_relative": index_relative,
         "index_receipt_hash": index.get("receipt_hash").cloned().unwrap_or(Value::Null),
         "index_verification_receipt_hash": verify.get("receipt_hash").cloned().unwrap_or(Value::Null),
+        "labels": labels,
         "bundle_kind": index.get("bundle_kind").cloned().unwrap_or(Value::Null),
         "bundle_receipt_hash": index.get("bundle_receipt_hash").cloned().unwrap_or(Value::Null),
         "receipt_chain": index.get("receipt_chain").cloned().unwrap_or_else(|| json!({})),
@@ -4521,6 +4781,7 @@ fn evidence_registry_entry_from_index(
 fn evidence_registry_entries_equal(expected: &Value, current: &Value) -> bool {
     for key in [
         "index_receipt_hash",
+        "labels",
         "bundle_kind",
         "bundle_receipt_hash",
         "receipt_chain",
@@ -4833,6 +5094,22 @@ fn evidence_registry_entry_matches(
     if !evidence_registry_match_string(entry, "policy_hash", selectors.policy_hash.as_deref()) {
         return false;
     }
+    if !evidence_registry_match_label(entry, "channel", selectors.channel.as_deref()) {
+        return false;
+    }
+    if !evidence_registry_match_label(entry, "release", selectors.release.as_deref()) {
+        return false;
+    }
+    if !evidence_registry_match_label(entry, "platform", selectors.platform.as_deref()) {
+        return false;
+    }
+    if !evidence_registry_match_label(
+        entry,
+        "compatibility_class",
+        selectors.compatibility_class.as_deref(),
+    ) {
+        return false;
+    }
     if !evidence_registry_match_string(
         entry,
         "index_receipt_hash",
@@ -4881,6 +5158,19 @@ fn evidence_registry_match_string(entry: &Value, key: &str, selector: Option<&st
     }
 }
 
+fn evidence_registry_match_label(entry: &Value, key: &str, selector: Option<&str>) -> bool {
+    match selector {
+        Some(expected) => {
+            entry
+                .get("labels")
+                .and_then(|labels| labels.get(key))
+                .and_then(Value::as_str)
+                == Some(expected)
+        }
+        None => true,
+    }
+}
+
 fn evidence_registry_match_receipt_chain(entry: &Value, key: &str, selector: Option<&str>) -> bool {
     match selector {
         Some(expected) => {
@@ -4921,6 +5211,10 @@ fn evidence_registry_selector_issue(selectors: &EvidenceRegistryConsumeSelectors
     let selector_values = [
         selectors.bundle_kind.as_deref(),
         selectors.policy_hash.as_deref(),
+        selectors.channel.as_deref(),
+        selectors.release.as_deref(),
+        selectors.platform.as_deref(),
+        selectors.compatibility_class.as_deref(),
         selectors.index_receipt_hash.as_deref(),
         selectors.index_verification_receipt_hash.as_deref(),
         selectors.bundle_receipt_hash.as_deref(),
@@ -4949,6 +5243,18 @@ fn evidence_registry_selectors_json(selectors: &EvidenceRegistryConsumeSelectors
     }
     if let Some(value) = selectors.policy_hash.as_ref() {
         object.insert("policy_hash".to_string(), json!(value));
+    }
+    if let Some(value) = selectors.channel.as_ref() {
+        object.insert("channel".to_string(), json!(value));
+    }
+    if let Some(value) = selectors.release.as_ref() {
+        object.insert("release".to_string(), json!(value));
+    }
+    if let Some(value) = selectors.platform.as_ref() {
+        object.insert("platform".to_string(), json!(value));
+    }
+    if let Some(value) = selectors.compatibility_class.as_ref() {
+        object.insert("compatibility_class".to_string(), json!(value));
     }
     if let Some(value) = selectors.index_receipt_hash.as_ref() {
         object.insert("index_receipt_hash".to_string(), json!(value));
@@ -9119,7 +9425,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH] [--strict]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE\n  evidence registry verify --root PATH --registry FILE\n  evidence registry select --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--index-receipt-hash HASH]\n  evidence registry fetch-plan --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  policy export [--source PATH] [--output PATH] [--check]\n  tracey coverage [--root PATH] [--json]\n  rename-classification [--output PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH] [--strict]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence registry verify --root PATH --registry FILE\n  evidence registry select --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS] [--index-receipt-hash HASH]\n  evidence registry fetch-plan --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  policy export [--source PATH] [--output PATH] [--check]\n  tracey coverage [--root PATH] [--json]\n  rename-classification [--output PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

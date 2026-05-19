@@ -54,6 +54,13 @@ let Contracts = import "contracts.ncl" in
     tagged_findings_required_fields = ["class", "scope", "route", "promoted"],
   },
 
+  registry_label_policy = {
+    channels = ["dev", "nightly", "release", "stable"],
+    platforms = ["aarch64-darwin", "aarch64-linux", "x86_64-darwin", "x86_64-linux"],
+    compatibility_classes = ["current", "experimental", "legacy"],
+    release_format = "YYYY-MM-DD",
+  },
+
   receipt_schemas = [
     {
       command = "agent-receipt validate",

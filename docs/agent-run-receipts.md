@@ -122,31 +122,43 @@ release/channel registry with:
 ```sh
 nix run .#cairn -- evidence registry build --root . \
   --index target/cairn-evidence-index.json \
-  --out target/cairn-evidence-registry.json
+  --out target/cairn-evidence-registry.json \
+  --channel stable \
+  --release 2026-05-19 \
+  --platform x86_64-linux \
+  --compatibility-class current
 nix run .#cairn -- evidence registry verify --root . --registry target/cairn-evidence-registry.json
 ```
 
 Registry build verifies each index, sorts entries by stable content, records
-index receipt hashes, bundle kinds, bundle receipt hashes, receipt chains, policy
-hashes, artifact roles/paths/hashes, and writes a portable registry receipt.
-Registry verification recomputes referenced indexes and rejects missing,
-duplicate, stale, tampered, or unsafe entries with deterministic issue codes.
+policy-validated stable labels (`channel`, `release`, `platform`, and
+`compatibility_class`), index receipt hashes, bundle kinds, bundle receipt
+hashes, receipt chains, policy hashes, artifact roles/paths/hashes, and writes a
+portable registry receipt. Registry verification recomputes referenced indexes
+and rejects missing, duplicate, stale, tampered, unsafe, label-invalid, or
+label-conflicting entries with deterministic issue codes.
 Consumers can then choose one entry or produce a metadata-only download plan:
 
 ```sh
 nix run .#cairn -- evidence registry select --root . \
   --registry target/cairn-evidence-registry.json \
+  --channel stable \
+  --release 2026-05-19 \
+  --platform x86_64-linux \
   --bundle-kind republished \
   --out target/selected-cairn-evidence-index.json
 nix run .#cairn -- evidence registry fetch-plan --root . \
   --registry target/cairn-evidence-registry.json \
+  --channel stable \
+  --platform x86_64-linux \
   --out target/cairn-evidence-fetch-plan.json
 ```
 
 Selection verifies the registry first and fails on zero or multiple matches
 instead of guessing. Selectors are stable metadata such as bundle kind, policy
-hash, index receipt hash, bundle receipt hash, artifact role/hash, and
-coverage/release receipt hashes. Fetch plans also verify the registry first and
+hash, index receipt hash, bundle receipt hash, artifact role/hash,
+coverage/release receipt hashes, and stable labels (`channel`, `release`,
+`platform`, `compatibility_class`). Fetch plans also verify the registry first and
 emit sorted safe `index_relative` refs plus artifact roles/paths/hashes and
 receipt-chain hashes without doing network I/O or exposing raw paths, env values,
 credentials, or secrets.

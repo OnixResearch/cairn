@@ -107,6 +107,13 @@ let Promoted = std.contract.from_predicate (fun value =>
     tagged_findings_required_fields | NonEmptyArray | Array NonEmptyString,
   },
 
+  RegistryLabelPolicy = {
+    channels | NonEmptyArray | Array NonEmptyString,
+    platforms | NonEmptyArray | Array NonEmptyString,
+    compatibility_classes | NonEmptyArray | Array NonEmptyString,
+    release_format | NonEmptyString,
+  },
+
   ReceiptSchema = {
     command | NonEmptyString,
     top_level_keys | NonEmptyArray | Array NonEmptyString,
@@ -220,6 +227,7 @@ let Promoted = std.contract.from_predicate (fun value =>
     gate_policy | GatePolicy,
     finding_defaults | FindingPolicy,
     report_contract | ReportContract,
+    registry_label_policy | RegistryLabelPolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
     determinism_replay_policy | DeterminismReplayPolicy,
     determinism_surface_inventory | NonEmptyArray | Array DeterminismSurface,

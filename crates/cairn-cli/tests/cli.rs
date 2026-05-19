@@ -1318,6 +1318,11 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.evidence_registry_consume.policy]
     // r[verify cairn.supersede.evidence_registry_consume.docs]
     // r[verify cairn.supersede.evidence_registry_consume.verify]
+    // r[verify cairn.supersede.registry_channel_metadata.labels]
+    // r[verify cairn.supersede.registry_channel_metadata.policy]
+    // r[verify cairn.supersede.registry_channel_metadata.build]
+    // r[verify cairn.supersede.registry_channel_metadata.consume]
+    // r[verify cairn.supersede.registry_channel_metadata.verify]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -1550,6 +1555,14 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         index_path.display().to_string(),
         "--out".into(),
         registry_path.display().to_string(),
+        "--channel".into(),
+        "stable".into(),
+        "--release".into(),
+        "2026-05-19".into(),
+        "--platform".into(),
+        "x86_64-linux".into(),
+        "--compatibility-class".into(),
+        "current".into(),
     ])?;
     assert_eq!(registry["valid"], true);
     assert_eq!(registry["verdict"], "pass");
@@ -1559,6 +1572,10 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     let registry_entry = &registry["entries"][0];
     assert_eq!(registry_entry["index_receipt_hash"], index["receipt_hash"]);
     assert_eq!(registry_entry["bundle_kind"], "republished");
+    assert_eq!(registry_entry["labels"]["channel"], "stable");
+    assert_eq!(registry_entry["labels"]["release"], "2026-05-19");
+    assert_eq!(registry_entry["labels"]["platform"], "x86_64-linux");
+    assert_eq!(registry_entry["labels"]["compatibility_class"], "current");
     assert_eq!(
         registry_entry["bundle_receipt_hash"],
         republish["receipt_hash"]
@@ -1595,6 +1612,14 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         registry_path.display().to_string(),
         "--bundle-kind".into(),
         "republished".into(),
+        "--channel".into(),
+        "stable".into(),
+        "--release".into(),
+        "2026-05-19".into(),
+        "--platform".into(),
+        "x86_64-linux".into(),
+        "--compatibility-class".into(),
+        "current".into(),
         "--out".into(),
         selected_index_path.display().to_string(),
     ])?;
@@ -1608,6 +1633,10 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         registry_verify["receipt_hash"]
     );
     assert_eq!(selection["selectors"]["bundle_kind"], "republished");
+    assert_eq!(selection["selectors"]["channel"], "stable");
+    assert_eq!(selection["selectors"]["release"], "2026-05-19");
+    assert_eq!(selection["selectors"]["platform"], "x86_64-linux");
+    assert_eq!(selection["selectors"]["compatibility_class"], "current");
     assert_eq!(
         selection["selected_entry"]["index_receipt_hash"],
         index["receipt_hash"]
@@ -1630,6 +1659,10 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         ".".into(),
         "--registry".into(),
         registry_path.display().to_string(),
+        "--channel".into(),
+        "stable".into(),
+        "--platform".into(),
+        "x86_64-linux".into(),
         "--out".into(),
         fetch_plan_path.display().to_string(),
     ])?;
@@ -1642,6 +1675,8 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         registry["receipt_hash"]
     );
     assert_eq!(fetch_plan["entry_count"], 1);
+    assert_eq!(fetch_plan["selectors"]["channel"], "stable");
+    assert_eq!(fetch_plan["selectors"]["platform"], "x86_64-linux");
     assert_eq!(
         fetch_plan["entries"][0]["index_receipt_hash"],
         index["receipt_hash"]
@@ -1701,6 +1736,31 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         .map(|issue| issue["code"].as_str().unwrap())
         .collect::<Vec<_>>();
     assert!(duplicate_registry_codes.contains(&"evidence_registry.duplicate_index_hash"));
+
+    let invalid_label_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "build".into(),
+        "--root".into(),
+        ".".into(),
+        "--index".into(),
+        index_path.display().to_string(),
+        "--out".into(),
+        republish_dir
+            .join("invalid-label-registry.json")
+            .display()
+            .to_string(),
+        "--channel".into(),
+        "../../stable".into(),
+    ])?;
+    assert_eq!(invalid_label_failure["valid"], false);
+    let invalid_label_codes = invalid_label_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(invalid_label_codes.contains(&"evidence_registry.label_unsafe"));
     let registry_text = serde_json::to_string(&registry)?;
     assert!(
         !registry_text.contains(&dir.display().to_string()),
