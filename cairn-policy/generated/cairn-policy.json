@@ -631,6 +631,34 @@
       "surface_kind": "cli"
     },
     {
+      "command": "evidence registry select --root <root> --registry <registry> --bundle-kind <kind> --out <out>",
+      "determinism_claim": "evidence_registry_selection_stability",
+      "id": "evidence_registry_select",
+      "receipt_command": "evidence registry select",
+      "required_replay_cases": [
+        "validate"
+      ],
+      "required_replay_groups": [
+        "smoke",
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "evidence registry fetch-plan --root <root> --registry <registry> --out <out>",
+      "determinism_claim": "evidence_registry_fetch_plan_stability",
+      "id": "evidence_registry_fetch_plan",
+      "receipt_command": "evidence registry fetch-plan",
+      "required_replay_cases": [
+        "validate"
+      ],
+      "required_replay_groups": [
+        "smoke",
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
       "command": "status --root <root>",
       "determinism_claim": "status_receipt_stability",
       "id": "status",
@@ -1433,6 +1461,81 @@
         "registry",
         "registry_hash",
         "root",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
+        "hash",
+        "path",
+        "role"
+      ],
+      "case_keys": [],
+      "command": "evidence registry select",
+      "hash_fields": [
+        "receipt_hash",
+        "registry_receipt_hash",
+        "registry_verification_receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "issues",
+        "out",
+        "receipt_hash",
+        "registry",
+        "registry_receipt_hash",
+        "registry_verification_receipt_hash",
+        "root",
+        "selected_entry",
+        "selectors",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
+        "hash",
+        "path",
+        "role"
+      ],
+      "case_keys": [],
+      "command": "evidence registry fetch-plan",
+      "hash_fields": [
+        "receipt_hash",
+        "registry_receipt_hash",
+        "registry_verification_receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "entries",
+        "entry_count",
+        "issues",
+        "out",
+        "receipt_hash",
+        "registry",
+        "registry_receipt_hash",
+        "registry_verification_receipt_hash",
+        "root",
+        "selectors",
         "valid",
         "verdict"
       ]

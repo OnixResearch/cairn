@@ -550,6 +550,8 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
             "agent_receipt_validate",
             "archive_dry_run",
             "evidence_registry_build",
+            "evidence_registry_fetch_plan",
+            "evidence_registry_select",
             "evidence_registry_verify",
             "gate_design",
             "gate_proposal",
@@ -1311,6 +1313,11 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.evidence_registry_rail.failures]
     // r[verify cairn.supersede.evidence_registry_rail.gates]
     // r[verify cairn.supersede.evidence_registry_rail.archive]
+    // r[verify cairn.supersede.evidence_registry_consume.select]
+    // r[verify cairn.supersede.evidence_registry_consume.fetch_plan]
+    // r[verify cairn.supersede.evidence_registry_consume.policy]
+    // r[verify cairn.supersede.evidence_registry_consume.docs]
+    // r[verify cairn.supersede.evidence_registry_consume.verify]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -1576,6 +1583,100 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     assert_eq!(registry_verify["registry_hash"], registry["receipt_hash"]);
     assert_eq!(registry_verify["entry_count"], 1);
     assert_hash_field(&registry_verify, "receipt_hash")?;
+
+    let selected_index_path = dir.join("selected-cairn-evidence-index.json");
+    let selection = run_json_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "select".into(),
+        "--root".into(),
+        ".".into(),
+        "--registry".into(),
+        registry_path.display().to_string(),
+        "--bundle-kind".into(),
+        "republished".into(),
+        "--out".into(),
+        selected_index_path.display().to_string(),
+    ])?;
+    assert_eq!(selection["valid"], true);
+    assert_eq!(selection["verdict"], "pass");
+    assert_eq!(selection["registry"], "<registry>");
+    assert_eq!(selection["out"], "<out>");
+    assert_eq!(selection["registry_receipt_hash"], registry["receipt_hash"]);
+    assert_eq!(
+        selection["registry_verification_receipt_hash"],
+        registry_verify["receipt_hash"]
+    );
+    assert_eq!(selection["selectors"]["bundle_kind"], "republished");
+    assert_eq!(
+        selection["selected_entry"]["index_receipt_hash"],
+        index["receipt_hash"]
+    );
+    assert_hash_field(&selection, "receipt_hash")?;
+    let selected_index: Value = serde_json::from_slice(&fs::read(&selected_index_path)?)?;
+    assert_eq!(selected_index["receipt_hash"], index["receipt_hash"]);
+    let selection_text = serde_json::to_string(&selection)?;
+    assert!(
+        !selection_text.contains(&dir.display().to_string()),
+        "{selection_text}"
+    );
+
+    let fetch_plan_path = dir.join("cairn-evidence-fetch-plan.json");
+    let fetch_plan = run_json_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "fetch-plan".into(),
+        "--root".into(),
+        ".".into(),
+        "--registry".into(),
+        registry_path.display().to_string(),
+        "--out".into(),
+        fetch_plan_path.display().to_string(),
+    ])?;
+    assert_eq!(fetch_plan["valid"], true);
+    assert_eq!(fetch_plan["verdict"], "pass");
+    assert_eq!(fetch_plan["registry"], "<registry>");
+    assert_eq!(fetch_plan["out"], "<out>");
+    assert_eq!(
+        fetch_plan["registry_receipt_hash"],
+        registry["receipt_hash"]
+    );
+    assert_eq!(fetch_plan["entry_count"], 1);
+    assert_eq!(
+        fetch_plan["entries"][0]["index_receipt_hash"],
+        index["receipt_hash"]
+    );
+    assert_hash_field(&fetch_plan, "receipt_hash")?;
+    let saved_fetch_plan: Value = serde_json::from_slice(&fs::read(&fetch_plan_path)?)?;
+    assert_eq!(saved_fetch_plan["receipt_hash"], fetch_plan["receipt_hash"]);
+    let fetch_plan_text = serde_json::to_string(&fetch_plan)?;
+    assert!(
+        !fetch_plan_text.contains(&dir.display().to_string()),
+        "{fetch_plan_text}"
+    );
+
+    let no_match_selection = run_json_failure_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "select".into(),
+        "--root".into(),
+        ".".into(),
+        "--registry".into(),
+        registry_path.display().to_string(),
+        "--bundle-kind".into(),
+        "exported".into(),
+        "--out".into(),
+        dir.join("no-match-index.json").display().to_string(),
+    ])?;
+    assert_eq!(no_match_selection["valid"], false);
+    let no_match_codes = no_match_selection["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(no_match_codes.contains(&"evidence_registry_select.no_match"));
+
     let duplicate_registry_failure = run_json_failure_strings(&[
         "evidence".into(),
         "registry".into(),

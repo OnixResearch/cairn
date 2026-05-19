@@ -280,7 +280,16 @@ The registry sorts entries deterministically, records index hashes, bundle kinds
 bundle receipt hashes, receipt chains, artifact hashes, and policy hashes, and
 emits stable fields `command`, `root`, `out` or `registry`, `valid`, `verdict`,
 `issues`, `entry_count`, `entries`, `registry_hash`, and `receipt_hash` without
-raw host paths. The outer publication/index layer can also be generated with
+raw host paths. Downstream agents can consume a registry with
+`cairn evidence registry select --root . --registry target/cairn-evidence-registry.json --bundle-kind republished --out target/selected-cairn-evidence-index.json`
+or produce a metadata-only plan with
+`cairn evidence registry fetch-plan --root . --registry target/cairn-evidence-registry.json --out target/cairn-evidence-fetch-plan.json`.
+Selection verifies the registry first, requires exactly one matching entry, and
+binds selectors, registry receipt hash, registry verification receipt hash, and
+selected entry metadata into a portable receipt. Fetch plans verify the registry
+first, sort plan entries deterministically, and list safe index refs, receipt
+chains, artifact roles/paths/hashes, and policy hashes without fetching network
+content, credentials, raw host paths, or environment values. The outer publication/index layer can also be generated with
 `cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
 list stable roles such as `agent_evidence_bundle`, `agent_receipt`,

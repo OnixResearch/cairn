@@ -131,6 +131,30 @@ index receipt hashes, bundle kinds, bundle receipt hashes, receipt chains, polic
 hashes, artifact roles/paths/hashes, and writes a portable registry receipt.
 Registry verification recomputes referenced indexes and rejects missing,
 duplicate, stale, tampered, or unsafe entries with deterministic issue codes.
+Consumers can then choose one entry or produce a metadata-only download plan:
+
+```sh
+nix run .#cairn -- evidence registry select --root . \
+  --registry target/cairn-evidence-registry.json \
+  --bundle-kind republished \
+  --out target/selected-cairn-evidence-index.json
+nix run .#cairn -- evidence registry fetch-plan --root . \
+  --registry target/cairn-evidence-registry.json \
+  --out target/cairn-evidence-fetch-plan.json
+```
+
+Selection verifies the registry first and fails on zero or multiple matches
+instead of guessing. Selectors are stable metadata such as bundle kind, policy
+hash, index receipt hash, bundle receipt hash, artifact role/hash, and
+coverage/release receipt hashes. Fetch plans also verify the registry first and
+emit sorted safe `index_relative` refs plus artifact roles/paths/hashes and
+receipt-chain hashes without doing network I/O or exposing raw paths, env values,
+credentials, or secrets.
+r[verify cairn.supersede.evidence_registry_consume.select]
+r[verify cairn.supersede.evidence_registry_consume.fetch_plan]
+r[verify cairn.supersede.evidence_registry_consume.policy]
+r[verify cairn.supersede.evidence_registry_consume.docs]
+r[verify cairn.supersede.evidence_registry_consume.verify]
 r[verify cairn.supersede.evidence_registry_rail.build]
 r[verify cairn.supersede.evidence_registry_rail.verify]
 r[verify cairn.supersede.evidence_registry_rail.failures]

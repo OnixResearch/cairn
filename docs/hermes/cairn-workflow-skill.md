@@ -128,6 +128,7 @@ Expected result: no matches.
   - `cairn evidence-manifest verify <manifest.json> --root .` validates the outer persisted evidence artifact index, declared hashes, supported roles, and optional public signer/anchor metadata without claiming cryptographic signature or remote-anchor validity.
   - `cairn evidence export|verify|import|republish|index` builds the deterministic evidence chain from bundle materialization through publishable single-bundle indexes.
   - `cairn evidence registry build --root . --index <index.json> --out <registry.json>` and `cairn evidence registry verify --root . --registry <registry.json>` aggregate and verify deterministic multi-index release/channel catalogs.
+  - `cairn evidence registry select --root . --registry <registry.json> --bundle-kind <kind> --out <selected-index.json>` copies exactly one selected index after registry verification; `cairn evidence registry fetch-plan --root . --registry <registry.json> --out <fetch-plan.json>` emits metadata-only fetch/verify plans.
   - `cairn agent-receipt smoke-mcp --root .` proves the MCP catalog, receipt validation path, strict invalid-argument behavior, and default mutation denial compose.
 - Release readiness:
   - `cairn release-readiness --root .` emits a deterministic local operator bundle over Cairn validation, Tracey coverage, MCP smoke, repository gate summary, and receipt hashes.
