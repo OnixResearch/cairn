@@ -138,6 +138,13 @@ let Contracts = import "contracts.ncl" in
       issue_keys = ["actual", "code", "expected", "field_path"],
       hash_fields = ["export_receipt_hash", "manifest_hash", "manifest_verification_receipt_hash", "receipt_hash"],
     },
+    {
+      command = "evidence import",
+      top_level_keys = ["artifacts", "bundle", "command", "into", "issues", "receipt_hash", "root", "valid", "verification_receipt_hash", "verdict"],
+      artifact_keys = ["hash", "path", "role"],
+      issue_keys = ["actual", "code", "expected", "field_path"],
+      hash_fields = ["receipt_hash", "verification_receipt_hash"],
+    },
   ],
 
   determinism_replay_policy = {

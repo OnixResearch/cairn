@@ -251,7 +251,13 @@ received export with `cairn evidence verify --root . --bundle target/cairn-evide
 which rehashes exported artifacts, composes the nested verifiers, and emits
 stable fields `command`, `root`, `bundle`, `valid`, `verdict`, `issues`,
 `artifacts`, `export_receipt_hash`, `manifest_hash`,
-`manifest_verification_receipt_hash`, and `receipt_hash`. The outer publication/index layer can also be generated with
+`manifest_verification_receipt_hash`, and `receipt_hash`. Consumers can then
+materialize a bounded local copy with
+`cairn evidence import --root . --bundle target/cairn-evidence/ --into target/cairn-imported-evidence/`,
+which verifies first, copies only declared export artifacts, rejects undeclared
+bundle files, and emits stable fields `command`, `root`, `bundle`, `into`,
+`valid`, `verdict`, `issues`, `artifacts`, `verification_receipt_hash`, and
+`receipt_hash`. The outer publication/index layer can also be generated with
 `cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
 list stable roles such as `agent_evidence_bundle`, `agent_receipt`,

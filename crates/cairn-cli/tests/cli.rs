@@ -1289,6 +1289,11 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.evidence_bundle_verify_command.gates]
     // r[verify cairn.supersede.evidence_bundle_verify_command.docs]
     // r[verify cairn.supersede.evidence_bundle_verify_command.archive]
+    // r[verify cairn.supersede.evidence_import_consume_rail.command]
+    // r[verify cairn.supersede.evidence_import_consume_rail.artifacts]
+    // r[verify cairn.supersede.evidence_import_consume_rail.failures]
+    // r[verify cairn.supersede.evidence_import_consume_rail.gates]
+    // r[verify cairn.supersede.evidence_import_consume_rail.archive]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -1382,6 +1387,70 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         !verification_text.contains(&dir.display().to_string()),
         "{verification_text}"
     );
+
+    let import_dir = dir.join("imported");
+    let import = run_json_strings(&[
+        "evidence".into(),
+        "import".into(),
+        "--root".into(),
+        ".".into(),
+        "--bundle".into(),
+        export_dir.display().to_string(),
+        "--into".into(),
+        import_dir.display().to_string(),
+    ])?;
+    assert_eq!(import["valid"], true);
+    assert_eq!(import["verdict"], "pass");
+    assert_eq!(import["bundle"], "<bundle>");
+    assert_eq!(import["into"], "<into>");
+    assert_eq!(
+        import["verification_receipt_hash"],
+        verification["receipt_hash"]
+    );
+    assert_eq!(import["artifacts"].as_array().unwrap().len(), roles.len());
+    assert_hash_field(&import, "receipt_hash")?;
+    let saved_import: Value =
+        serde_json::from_slice(&fs::read(import_dir.join("evidence-import-receipt.json"))?)?;
+    assert_eq!(saved_import["receipt_hash"], import["receipt_hash"]);
+    for artifact in import["artifacts"].as_array().unwrap() {
+        assert_hash_field(artifact, "hash")?;
+        let path = artifact["path"].as_str().unwrap();
+        assert!(
+            import_dir.join(path).exists(),
+            "missing imported artifact: {path}"
+        );
+        assert_eq!(
+            fs::read(import_dir.join(path))?,
+            fs::read(export_dir.join(path))?,
+            "imported artifact bytes must match export for {path}"
+        );
+    }
+    let import_text = serde_json::to_string(&import)?;
+    assert!(
+        !import_text.contains(&dir.display().to_string()),
+        "{import_text}"
+    );
+
+    fs::write(export_dir.join("undeclared-extra.json"), "{}\n")?;
+    let import_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "import".into(),
+        "--root".into(),
+        ".".into(),
+        "--bundle".into(),
+        export_dir.display().to_string(),
+        "--into".into(),
+        dir.join("bad-import").display().to_string(),
+    ])?;
+    assert_eq!(import_failure["valid"], false);
+    let import_issue_codes = import_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(import_issue_codes.contains(&"evidence_import.undeclared_bundle_file"));
+    fs::remove_file(export_dir.join("undeclared-extra.json"))?;
 
     fs::write(export_dir.join("coverage-audit.json"), "{}\n")?;
     let verify_failure = run_json_failure_strings(&[

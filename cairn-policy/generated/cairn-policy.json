@@ -1196,6 +1196,40 @@
         "valid",
         "verdict"
       ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
+        "hash",
+        "path",
+        "role"
+      ],
+      "case_keys": [],
+      "command": "evidence import",
+      "hash_fields": [
+        "receipt_hash",
+        "verification_receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "artifacts",
+        "bundle",
+        "command",
+        "into",
+        "issues",
+        "receipt_hash",
+        "root",
+        "valid",
+        "verification_receipt_hash",
+        "verdict"
+      ]
     }
   ],
   "report_contract": {
