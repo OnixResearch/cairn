@@ -117,6 +117,22 @@ let Promoted = std.contract.from_predicate (fun value =>
     hash_fields | Array NonEmptyString | default = [],
   },
 
+  ReplayCase = {
+    id | NonEmptyString,
+    command_kind | NonEmptyString,
+    args | NonEmptyArray | Array NonEmptyString,
+    fixture_root | NonEmptyString,
+    expected_mutability | NonEmptyString,
+    comparison_modes | NonEmptyArray | Array NonEmptyString,
+    display_only_paths | Array NonEmptyString | default = [],
+    hash_fields | Array NonEmptyString | default = [],
+    normalization_rules | NonEmptyArray | Array NonEmptyString,
+  },
+
+  DeterminismReplayPolicy = {
+    cases | NonEmptyArray | Array ReplayCase,
+  },
+
   ExemptionMarkerPolicy = {
     required_fields | NonEmptyArray | Array NonEmptyString,
     date_fields | NonEmptyArray | Array NonEmptyString,
@@ -166,6 +182,7 @@ let Promoted = std.contract.from_predicate (fun value =>
     finding_defaults | FindingPolicy,
     report_contract | ReportContract,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
+    determinism_replay_policy | DeterminismReplayPolicy,
     sync_archive_policy | SyncArchivePolicy,
     mutation_policy | MutationPolicy,
     receipt_hash_policy | ReceiptHashPolicy,

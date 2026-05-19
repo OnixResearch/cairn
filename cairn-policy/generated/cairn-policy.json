@@ -1,4 +1,326 @@
 {
+  "determinism_replay_policy": {
+    "cases": [
+      {
+        "args": [
+          "agent-receipt",
+          "validate",
+          "fixtures/agent-receipts/positive.json"
+        ],
+        "command_kind": "agent_receipt_validate",
+        "comparison_modes": [
+          "repeated"
+        ],
+        "display_only_paths": [
+          "path"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "<root>",
+        "hash_fields": [
+          "agent_receipt_hash"
+        ],
+        "id": "agent_receipt_validate",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "archive",
+          "ready",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "archive_dry_run",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "actions.path",
+          "delta_specs"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/archive-ready",
+        "hash_fields": [
+          "input_hash",
+          "plan_hash",
+          "policy_hash",
+          "receipt_hash"
+        ],
+        "id": "archive_dry_run",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "gate",
+          "design",
+          "demo",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "gate",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/basic",
+        "hash_fields": [
+          "input_hash",
+          "policy_hash",
+          "receipt_hash"
+        ],
+        "id": "gate_design",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "gate",
+          "proposal",
+          "demo",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "gate",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/basic",
+        "hash_fields": [
+          "input_hash",
+          "policy_hash",
+          "receipt_hash"
+        ],
+        "id": "gate_proposal",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "gate",
+          "tasks",
+          "demo",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "gate",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/basic",
+        "hash_fields": [
+          "input_hash",
+          "policy_hash",
+          "receipt_hash"
+        ],
+        "id": "gate_tasks",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "mcp",
+          "--describe"
+        ],
+        "command_kind": "mcp_describe",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "<root>",
+        "hash_fields": [],
+        "id": "mcp_describe",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "mcp",
+          "--call",
+          "cairn_status",
+          "{root:<root>}"
+        ],
+        "command_kind": "mcp_call",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "content.root"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "<root>",
+        "hash_fields": [],
+        "id": "mcp_status",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "migrate",
+          "openspec",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "migrate_dry_run",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "actions.source",
+          "actions.destination",
+          "root"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/basic",
+        "hash_fields": [
+          "source_manifest_hash",
+          "destination_manifest_hash",
+          "manifest_hash",
+          "policy_hash",
+          "receipt_hash"
+        ],
+        "id": "migrate_dry_run",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "release-readiness",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "release_readiness",
+        "comparison_modes": [
+          "repeated"
+        ],
+        "display_only_paths": [
+          "root"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": ".",
+        "hash_fields": [
+          "receipt_hash",
+          "cairn_validation_hash",
+          "tracey_coverage_hash",
+          "mcp_smoke_receipt_hash"
+        ],
+        "id": "release_readiness",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "status",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "status",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "root",
+          "specs",
+          "changes"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "<root>",
+        "hash_fields": [],
+        "id": "status",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "sync",
+          "demo",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "sync_dry_run",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "actions.path",
+          "delta_specs"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/basic",
+        "hash_fields": [
+          "input_hash",
+          "plan_hash",
+          "policy_hash",
+          "receipt_hash"
+        ],
+        "id": "sync_dry_run",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "validate",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "validate",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "root"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "<root>",
+        "hash_fields": [
+          "receipt_hash"
+        ],
+        "id": "validate",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      }
+    ]
+  },
   "exemption_marker_policy": {
     "date_fields": [
       "until"
@@ -198,6 +520,7 @@
         "comparison_modes",
         "display_only_paths",
         "expected_mutability",
+        "fixture_root",
         "hash_fields",
         "id",
         "normalization_rules",

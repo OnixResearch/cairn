@@ -82,11 +82,28 @@ let Contracts = import "contracts.ncl" in
     {
       command = "determinism replay",
       top_level_keys = ["cases", "command", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "skipped", "valid", "verdict"],
-      case_keys = ["args", "command_kind", "comparison_modes", "display_only_paths", "expected_mutability", "hash_fields", "id", "normalization_rules", "portable_evidence_hash", "runs"],
+      case_keys = ["args", "command_kind", "comparison_modes", "display_only_paths", "expected_mutability", "fixture_root", "hash_fields", "id", "normalization_rules", "portable_evidence_hash", "runs"],
       mismatch_keys = ["actual", "case", "class", "comparison", "expected", "field_path"],
       hash_fields = ["receipt_hash"],
     },
   ],
+
+  determinism_replay_policy = {
+    cases = [
+      { id = "agent_receipt_validate", command_kind = "agent_receipt_validate", args = ["agent-receipt", "validate", "fixtures/agent-receipts/positive.json"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["path"], hash_fields = ["agent_receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "archive_dry_run", command_kind = "archive_dry_run", args = ["archive", "ready", "--root", "<root>"], fixture_root = "fixtures/archive-ready", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.path", "delta_specs"], hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "gate_design", command_kind = "gate", args = ["gate", "design", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = [], hash_fields = ["input_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "gate_proposal", command_kind = "gate", args = ["gate", "proposal", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = [], hash_fields = ["input_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "gate_tasks", command_kind = "gate", args = ["gate", "tasks", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = [], hash_fields = ["input_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "mcp_describe", command_kind = "mcp_describe", args = ["mcp", "--describe"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = [], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "mcp_status", command_kind = "mcp_call", args = ["mcp", "--call", "cairn_status", "{root:<root>}"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["content.root"], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "migrate_dry_run", command_kind = "migrate_dry_run", args = ["migrate", "openspec", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.source", "actions.destination", "root"], hash_fields = ["source_manifest_hash", "destination_manifest_hash", "manifest_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "release_readiness", command_kind = "release_readiness", args = ["release-readiness", "--root", "<root>"], fixture_root = ".", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["root"], hash_fields = ["receipt_hash", "cairn_validation_hash", "tracey_coverage_hash", "mcp_smoke_receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "status", command_kind = "status", args = ["status", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root", "specs", "changes"], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "sync_dry_run", command_kind = "sync_dry_run", args = ["sync", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.path", "delta_specs"], hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "validate", command_kind = "validate", args = ["validate", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root"], hash_fields = ["receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+    ],
+  },
 
   exemption_marker_policy = {
     required_fields = ["reason", "owner", "until"],

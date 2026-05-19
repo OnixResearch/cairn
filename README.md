@@ -146,13 +146,19 @@ nix run path:$PWD#cairn -- archive ready --root /path/to/repo --execute
 ## Agent/CI determinism replay
 
 `cairn determinism replay --root <fixture-or-repo>` is a read-only workspace
-preflight for agents and CI. It copies the selected root into two distinct temp
-roots, runs the maintained replay cases repeatedly and across roots, and emits a
-single deterministic receipt. Stable public determinism replay fields are
+preflight for agents and CI. Its default case list is exported from
+`cairn-policy/generated/cairn-policy.json` under `determinism_replay_policy`, so
+case ids, command kinds, fixture roots, comparison modes, display-only fields,
+hash fields, and normalization rules are reviewed as policy instead of hidden CLI
+literals. Cases currently cover status, validate, proposal/design/tasks gates,
+sync/archive/migration dry-runs, agent-receipt validation, release-readiness, MCP
+describe, and selected MCP read-only calls. Replay copies fixture roots when
+cross-root comparison is requested, runs cases repeatedly, and emits a single
+deterministic receipt. Stable public determinism replay fields are
 `command`, `root`, `valid`, `verdict`, `cases`, `skipped`, `mismatches`,
 `nondeterminism_failures`, `mutability_observations`, `normalization_rules`, and
 `receipt_hash`. Case entries expose stable `id`, `command_kind`, `args`,
-`expected_mutability`, `comparison_modes`, `normalization_rules`,
+`fixture_root`, `expected_mutability`, `comparison_modes`, `normalization_rules`,
 `display_only_paths`, `hash_fields`, `runs`, and `portable_evidence_hash` fields.
 Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`,
 `expected`, and `actual` fields. The default oracle rejects mutation flags and

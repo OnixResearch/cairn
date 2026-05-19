@@ -256,8 +256,12 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.determinism_replay.receipt]
     // r[verify cairn.supersede.determinism_replay.mcp_cases]
     // r[verify cairn.supersede.determinism_replay.mismatch_diagnostics]
-    let first = run_json(&["determinism", "replay", "--root", "fixtures/basic"])?;
-    let second = run_json(&["determinism", "replay", "--root", "fixtures/basic"])?;
+    // r[verify cairn.supersede.determinism_replay.policy_plan]
+    // r[verify cairn.supersede.determinism_replay.policy_schema]
+    // r[verify cairn.supersede.determinism_replay.expanded_surfaces]
+    // r[verify cairn.supersede.determinism_replay.policy_diagnostics]
+    let first = run_json(&["determinism", "replay", "--root", "."])?;
+    let second = run_json(&["determinism", "replay", "--root", "."])?;
     assert_eq!(first["valid"], true);
     assert_eq!(first["verdict"], "pass");
     assert_eq!(first["mismatches"].as_array().unwrap().len(), 0);
@@ -275,11 +279,31 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         .collect::<Vec<_>>();
     assert_eq!(
         case_ids,
-        vec!["mcp_describe", "mcp_status", "status", "validate"]
+        vec![
+            "agent_receipt_validate",
+            "archive_dry_run",
+            "gate_design",
+            "gate_proposal",
+            "gate_tasks",
+            "mcp_describe",
+            "mcp_status",
+            "migrate_dry_run",
+            "release_readiness",
+            "status",
+            "sync_dry_run",
+            "validate"
+        ]
     );
+    let policy = policy_json()?;
+    let policy_case_count = policy["determinism_replay_policy"]["cases"]
+        .as_array()
+        .unwrap()
+        .len();
+    assert_eq!(first["cases"].as_array().unwrap().len(), policy_case_count);
     assert!(first["cases"].as_array().unwrap().iter().all(|case| {
-        case["runs"].as_array().unwrap().len() == 3
+        case["runs"].as_array().unwrap().len() >= 2
             && case["expected_mutability"] == "read_only_or_dry_run"
+            && case["fixture_root"].is_string()
     }));
     assert!(first["mutability_observations"]
         .as_array()
@@ -522,7 +546,7 @@ fn assert_migration_receipt_schema() -> Result<(), Box<dyn Error>> {
 }
 
 fn assert_replay_receipt_schema() -> Result<(), Box<dyn Error>> {
-    let replay = run_json(&["determinism", "replay", "--root", "fixtures/basic"])?;
+    let replay = run_json(&["determinism", "replay", "--root", "."])?;
     let schema = receipt_schema("determinism replay")?;
     assert_schema_keys(&replay, &schema, "top_level_keys")?;
     assert_schema_keys(&replay["cases"][0], &schema, "case_keys")?;

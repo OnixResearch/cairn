@@ -268,21 +268,31 @@ fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     print_json(receipt)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 enum ReplayCaseKind {
-    Status,
-    Validate,
+    AgentReceiptValidate,
+    ArchiveDryRun,
+    Gate { stage: GateStage, change: String },
+    MigrateDryRun,
     McpDescribe,
     McpStatus,
+    ReleaseReadiness,
+    Status,
+    SyncDryRun,
+    Validate,
 }
 
+#[derive(Clone)]
 struct ReplayCase {
-    id: &'static str,
-    command_kind: &'static str,
+    id: String,
+    command_kind: String,
     args: Vec<String>,
+    fixture_root: String,
+    comparison_modes: Vec<String>,
     kind: ReplayCaseKind,
-    hash_fields: Vec<&'static str>,
-    display_only_paths: Vec<&'static str>,
+    hash_fields: Vec<String>,
+    display_only_paths: Vec<String>,
+    normalization_rules: Vec<String>,
 }
 
 fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
@@ -292,24 +302,43 @@ fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.determinism_replay.receipt]
     // r[impl cairn.supersede.determinism_replay.mcp_cases]
     // r[impl cairn.supersede.determinism_replay.no_mutation]
-    let root = root;
-    let cases = replay_cases();
-    let copy_a = replay_temp_root(&root, "a")?;
-    let copy_b = replay_temp_root(&root, "b")?;
-    let before_a = file_content_manifest(&copy_a, &collect_files(&copy_a)?);
-    let before_b = file_content_manifest(&copy_b, &collect_files(&copy_b)?);
+    // r[impl cairn.supersede.determinism_replay.policy_plan]
+    // r[impl cairn.supersede.determinism_replay.expanded_surfaces]
+    let policy = load_policy_file(default_policy_path().into())?;
+    let cases = replay_cases_from_policy(&policy)?;
     let mut case_receipts = Vec::new();
     let mut mismatches = Vec::new();
     let nondeterminism_failures = replay_nondeterminism_failures();
     let mut mutability_observations = Vec::new();
+    let mut skipped = Vec::new();
 
     for case in &cases {
-        let first = run_replay_case(case, &copy_a)?;
-        let second = run_replay_case(case, &copy_a)?;
-        let other = run_replay_case(case, &copy_b)?;
+        let source_root = replay_case_source_root(&root, case)?;
+        let repeated_a = replay_case_root(&source_root, case, "a")?;
+        let repeated_b = if case
+            .comparison_modes
+            .iter()
+            .any(|mode| mode == "cross_root")
+        {
+            Some(replay_case_root(&source_root, case, "b")?)
+        } else {
+            None
+        };
+        let before_a = replay_manifest_for_case(&repeated_a, case)?;
+        let before_b = match &repeated_b {
+            Some(path) => Some(replay_manifest_for_case(path, case)?),
+            None => None,
+        };
+
+        let first = run_replay_case(case, &repeated_a)?;
+        let second = run_replay_case(case, &repeated_a)?;
+        let other = match &repeated_b {
+            Some(path) => Some(run_replay_case(case, path)?),
+            None => None,
+        };
         if replay_output_mutated(&first)
             || replay_output_mutated(&second)
-            || replay_output_mutated(&other)
+            || other.as_ref().is_some_and(replay_output_mutated)
         {
             mismatches.push(replay_mismatch(
                 case,
@@ -324,8 +353,8 @@ fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
             mutability_observations.push(json!({"case": case.id, "mutated": false}));
         }
 
-        let repeated_first = portable_json_hash(&copy_a, &first);
-        let repeated_second = portable_json_hash(&copy_a, &second);
+        let repeated_first = portable_json_hash(&repeated_a, &first);
+        let repeated_second = portable_json_hash(&repeated_a, &second);
         if repeated_first != repeated_second {
             mismatches.push(replay_mismatch(
                 case,
@@ -336,74 +365,210 @@ fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
                 "normalized_output_hash",
             ));
         }
-        let cross_first = portable_json_hash(&copy_a, &first);
-        let cross_other = portable_json_hash(&copy_b, &other);
-        if cross_first != cross_other {
-            mismatches.push(replay_mismatch(
-                case,
-                "cross_root",
-                "$",
-                &cross_first,
-                &cross_other,
-                "portable_output_hash",
-            ));
-        }
-        for field in &case.hash_fields {
-            let left = first
-                .get(*field)
-                .and_then(Value::as_str)
-                .unwrap_or_default();
-            let right = other
-                .get(*field)
-                .and_then(Value::as_str)
-                .unwrap_or_default();
-            if left != right {
+        let cross_other = match (&repeated_b, &other) {
+            (Some(path), Some(value)) => Some(portable_json_hash(path, value)),
+            _ => None,
+        };
+        if let (Some(path), Some(value), Some(cross_hash)) = (&repeated_b, &other, &cross_other) {
+            let cross_first = portable_json_hash(&repeated_a, &first);
+            if cross_first != *cross_hash {
                 mismatches.push(replay_mismatch(
                     case,
                     "cross_root",
-                    field,
-                    left,
-                    right,
-                    "portable_hash_field",
+                    "$",
+                    &cross_first,
+                    cross_hash,
+                    "portable_output_hash",
                 ));
             }
+            for field in &case.hash_fields {
+                let left = first.get(field).and_then(Value::as_str).unwrap_or_default();
+                let right = value.get(field).and_then(Value::as_str).unwrap_or_default();
+                if left != right {
+                    mismatches.push(replay_mismatch(
+                        case,
+                        "cross_root",
+                        field,
+                        left,
+                        right,
+                        "portable_hash_field",
+                    ));
+                }
+            }
+            let after_b = replay_manifest_for_case(path, case)?;
+            if let Some(before) = before_b {
+                if before["manifest_hash"] != after_b["manifest_hash"] {
+                    mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_b", "class": "mutation_observed", "expected": before["manifest_hash"], "actual": after_b["manifest_hash"]}));
+                }
+            }
+        } else {
+            skipped.push(json!({"case": case.id, "comparison": "cross_root", "reason": "not requested by policy"}));
+        }
+
+        let after_a = replay_manifest_for_case(&repeated_a, case)?;
+        if before_a["manifest_hash"] != after_a["manifest_hash"] {
+            mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_a", "class": "mutation_observed", "expected": before_a["manifest_hash"], "actual": after_a["manifest_hash"]}));
+        }
+
+        let mut runs = vec![
+            json!({"root": "a", "iteration": 1, "output_hash": repeated_first, "normalized_output_hash": repeated_first}),
+            json!({"root": "a", "iteration": 2, "output_hash": repeated_second, "normalized_output_hash": repeated_second}),
+        ];
+        if let Some(cross_hash) = &cross_other {
+            runs.push(json!({"root": "b", "iteration": 1, "output_hash": cross_hash, "normalized_output_hash": cross_hash}));
         }
         case_receipts.push(json!({
             "id": case.id,
             "command_kind": case.command_kind,
             "args": case.args,
+            "fixture_root": case.fixture_root,
             "expected_mutability": "read_only_or_dry_run",
-            "comparison_modes": ["repeated", "cross_root"],
-            "normalization_rules": ["portable_root_paths", "canonical_json"],
+            "comparison_modes": case.comparison_modes,
+            "normalization_rules": case.normalization_rules,
             "display_only_paths": case.display_only_paths,
             "hash_fields": case.hash_fields,
-            "runs": [
-                {"root": "a", "iteration": 1, "output_hash": repeated_first, "normalized_output_hash": repeated_first},
-                {"root": "a", "iteration": 2, "output_hash": repeated_second, "normalized_output_hash": repeated_second},
-                {"root": "b", "iteration": 1, "output_hash": cross_other, "normalized_output_hash": cross_other},
-            ],
-            "portable_evidence_hash": portable_json_hash(&copy_a, &json!({"first": first, "second": second, "other": portable_json(&copy_b, &other)})),
+            "runs": runs,
+            "portable_evidence_hash": canonical_json_hash(&json!({"case": case.id, "runs": runs})),
         }));
     }
 
-    let after_a = file_content_manifest(&copy_a, &collect_files(&copy_a)?);
-    let after_b = file_content_manifest(&copy_b, &collect_files(&copy_b)?);
-    if before_a["manifest_hash"] != after_a["manifest_hash"] {
-        mismatches.push(json!({"case": "workspace", "comparison": "mutation", "field_path": "root_a", "class": "mutation_observed", "expected": before_a["manifest_hash"], "actual": after_a["manifest_hash"]}));
-    }
-    if before_b["manifest_hash"] != after_b["manifest_hash"] {
-        mismatches.push(json!({"case": "workspace", "comparison": "mutation", "field_path": "root_b", "class": "mutation_observed", "expected": before_b["manifest_hash"], "actual": after_b["manifest_hash"]}));
-    }
-    mismatches.sort_by_key(|value| canonical_json_hash(value));
+    case_receipts.sort_by_key(|value| value["id"].as_str().unwrap_or_default().to_string());
+    mismatches.sort_by_key(canonical_json_hash);
+    mutability_observations.sort_by_key(canonical_json_hash);
+    skipped.sort_by_key(canonical_json_hash);
     let receipt = replay_receipt(
         root.clone(),
         case_receipts,
         mismatches,
         mutability_observations,
-        Vec::new(),
+        skipped,
         nondeterminism_failures,
     );
     Ok(with_portable_receipt_hash(&root, receipt))
+}
+
+fn replay_cases_from_policy(policy: &Policy) -> Result<Vec<ReplayCase>, Box<dyn Error>> {
+    let cases = policy
+        .raw
+        .get("determinism_replay_policy")
+        .and_then(|value| value.get("cases"))
+        .and_then(Value::as_array)
+        .ok_or("policy missing determinism_replay_policy.cases")?;
+    let mut parsed = cases
+        .iter()
+        .map(replay_case_from_policy_value)
+        .collect::<Result<Vec<_>, _>>()?;
+    parsed.sort_by_key(|case| case.id.clone());
+    Ok(parsed)
+}
+
+fn replay_case_from_policy_value(value: &Value) -> Result<ReplayCase, Box<dyn Error>> {
+    let id = required_string(value, "id")?.to_owned();
+    let command_kind = required_string(value, "command_kind")?.to_owned();
+    let args = required_string_array(value, "args")?;
+    let fixture_root = required_string(value, "fixture_root")?.to_owned();
+    let comparison_modes = required_string_array(value, "comparison_modes")?;
+    let hash_fields = required_string_array(value, "hash_fields")?;
+    let display_only_paths = required_string_array(value, "display_only_paths")?;
+    let normalization_rules = required_string_array(value, "normalization_rules")?;
+    let kind = replay_case_kind(&command_kind, &args)?;
+    Ok(ReplayCase {
+        id,
+        command_kind,
+        args,
+        fixture_root,
+        comparison_modes,
+        kind,
+        hash_fields,
+        display_only_paths,
+        normalization_rules,
+    })
+}
+
+fn required_string<'a>(value: &'a Value, field: &str) -> Result<&'a str, Box<dyn Error>> {
+    value
+        .get(field)
+        .and_then(Value::as_str)
+        .ok_or_else(|| format!("policy replay case missing string field {field}").into())
+}
+
+fn required_string_array(value: &Value, field: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    Ok(value
+        .get(field)
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("policy replay case missing array field {field}"))?
+        .iter()
+        .map(|item| {
+            item.as_str()
+                .map(ToOwned::to_owned)
+                .ok_or_else(|| format!("policy replay case field {field} contains non-string"))
+        })
+        .collect::<Result<Vec<_>, _>>()?)
+}
+
+fn replay_case_kind(command_kind: &str, args: &[String]) -> Result<ReplayCaseKind, Box<dyn Error>> {
+    match command_kind {
+        "agent_receipt_validate" => Ok(ReplayCaseKind::AgentReceiptValidate),
+        "archive_dry_run" => Ok(ReplayCaseKind::ArchiveDryRun),
+        "gate" => {
+            let stage = args
+                .get(1)
+                .ok_or("policy gate replay case missing stage argument")?;
+            let change = args
+                .get(2)
+                .ok_or("policy gate replay case missing change argument")?
+                .clone();
+            Ok(ReplayCaseKind::Gate {
+                stage: parse_gate_stage(stage)?,
+                change,
+            })
+        }
+        "mcp_describe" => Ok(ReplayCaseKind::McpDescribe),
+        "mcp_call" => Ok(ReplayCaseKind::McpStatus),
+        "migrate_dry_run" => Ok(ReplayCaseKind::MigrateDryRun),
+        "release_readiness" => Ok(ReplayCaseKind::ReleaseReadiness),
+        "status" => Ok(ReplayCaseKind::Status),
+        "sync_dry_run" => Ok(ReplayCaseKind::SyncDryRun),
+        "validate" => Ok(ReplayCaseKind::Validate),
+        unknown => Err(format!("unknown replay command kind in policy: {unknown}").into()),
+    }
+}
+
+fn replay_case_source_root(root: &Path, case: &ReplayCase) -> Result<PathBuf, Box<dyn Error>> {
+    if case.fixture_root == "<root>" || case.fixture_root == "." {
+        return Ok(root.to_path_buf());
+    }
+    let candidate = root.join(&case.fixture_root);
+    if candidate.exists() {
+        return Ok(candidate);
+    }
+    let candidate = PathBuf::from(&case.fixture_root);
+    if candidate.exists() {
+        return Ok(candidate);
+    }
+    Err(format!(
+        "replay case {} fixture root does not exist: {}",
+        case.id, case.fixture_root
+    )
+    .into())
+}
+
+fn replay_case_root(
+    source: &Path,
+    case: &ReplayCase,
+    label: &str,
+) -> Result<PathBuf, Box<dyn Error>> {
+    if case.fixture_root == "." {
+        return Ok(source.to_path_buf());
+    }
+    replay_temp_root(source, &format!("{}-{label}", case.id))
+}
+
+fn replay_manifest_for_case(root: &Path, case: &ReplayCase) -> Result<Value, Box<dyn Error>> {
+    if case.fixture_root == "." {
+        return Ok(json!({"manifest_hash": "not-collected-policy-root", "paths": []}));
+    }
+    Ok(file_content_manifest(root, &collect_files(root)?))
 }
 
 fn replay_receipt(
@@ -445,68 +610,154 @@ fn replay_nondeterminism_failures() -> Vec<Value> {
             })
         })
         .collect::<Vec<_>>();
-    failures.sort_by_key(|value| canonical_json_hash(value));
+    failures.sort_by_key(canonical_json_hash);
     failures
 }
 
-fn replay_cases() -> Vec<ReplayCase> {
-    let mut cases = vec![
-        ReplayCase {
-            id: "status",
-            command_kind: "status",
-            args: vec!["status".into(), "--root".into(), "<root>".into()],
-            kind: ReplayCaseKind::Status,
-            hash_fields: vec![],
-            display_only_paths: vec!["root", "specs", "changes"],
-        },
-        ReplayCase {
-            id: "validate",
-            command_kind: "validate",
-            args: vec!["validate".into(), "--root".into(), "<root>".into()],
-            kind: ReplayCaseKind::Validate,
-            hash_fields: vec!["receipt_hash"],
-            display_only_paths: vec!["root"],
-        },
-        ReplayCase {
-            id: "mcp_describe",
-            command_kind: "mcp_describe",
-            args: vec!["mcp".into(), "--describe".into()],
-            kind: ReplayCaseKind::McpDescribe,
-            hash_fields: vec![],
-            display_only_paths: vec![],
-        },
-        ReplayCase {
-            id: "mcp_status",
-            command_kind: "mcp_call",
-            args: vec![
-                "mcp".into(),
-                "--call".into(),
-                "cairn_status".into(),
-                "{root:<root>}".into(),
-            ],
-            kind: ReplayCaseKind::McpStatus,
-            hash_fields: vec![],
-            display_only_paths: vec!["content.root"],
-        },
-    ];
-    cases.sort_by_key(|case| case.id);
-    cases
-}
-
 fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, Box<dyn Error>> {
-    match case.kind {
-        ReplayCaseKind::Status => {
-            let selected = detect_layout(root);
-            let status = scan_repo(root.to_path_buf(), selected.layout)?;
-            Ok(repo_status_json(&status, selected.layout))
+    match &case.kind {
+        ReplayCaseKind::AgentReceiptValidate => {
+            let Some(path) = case.args.get(2) else {
+                return Err("agent receipt replay case missing fixture path".into());
+            };
+            let receipt_path = replay_fixture_path(root, path);
+            let receipt = read_agent_receipt_file(&receipt_path)?;
+            let mut value = agent_receipt_validation_receipt(
+                "agent-receipt validate",
+                Some(receipt_path),
+                &receipt,
+                false,
+            );
+            value
+                .as_object_mut()
+                .map(|object| object.remove("receipt_hash"));
+            Ok(with_portable_receipt_hash(root, value))
         }
-        ReplayCaseKind::Validate => {
-            cairn_validation_receipt(root.to_path_buf(), default_policy_path().into())
+        ReplayCaseKind::ArchiveDryRun => {
+            let selected = detect_layout(root);
+            let change = replay_change_arg(case, "archive")?;
+            let policy = load_policy_file(default_policy_path().into())?;
+            let change_status = find_change(root.to_path_buf(), selected.layout, change)?;
+            let input_hash = portable_json_hash(root, &change_status_json(&change_status));
+            let mut plan = build_archive_plan(&change_status);
+            if policy.archive_require_gate && !plan.blocked {
+                plan.reasons.extend(mutation_gate_blockers(
+                    root,
+                    selected.layout,
+                    &change_status,
+                    GateStage::Tasks,
+                    &policy,
+                )?);
+                plan.reasons.sort();
+                plan.reasons.dedup();
+                plan.blocked = !plan.reasons.is_empty();
+                if plan.blocked {
+                    plan.actions.clear();
+                }
+            }
+            Ok(with_portable_receipt_hash(
+                root,
+                archive_plan_json(
+                    root,
+                    selected.layout,
+                    &policy,
+                    &plan,
+                    &input_hash,
+                    Value::Null,
+                ),
+            ))
+        }
+        ReplayCaseKind::Gate { stage, change } => {
+            let policy = load_policy_file(default_policy_path().into())?;
+            let selected = detect_layout(root);
+            let change_status = find_change(root.to_path_buf(), selected.layout, change)?;
+            let snapshot = read_gate_snapshot(root, selected.layout, change_status)?;
+            let report = evaluate_gate_snapshot(&snapshot, *stage, &policy);
+            let input_hash = portable_json_hash(
+                root,
+                &gate_input_json(selected.layout, *stage, &policy, &snapshot),
+            );
+            Ok(with_portable_receipt_hash(
+                root,
+                gate_report_json(selected.layout, &policy, &report, &input_hash),
+            ))
+        }
+        ReplayCaseKind::MigrateDryRun => {
+            let policy = load_policy_file(default_policy_path().into())?;
+            let source_layout = LifecycleLayout::LegacyOpenSpec;
+            let inputs = collect_layout_migration_inputs(root, source_layout)?;
+            let plan = build_openspec_migration_plan(inputs, false);
+            Ok(with_portable_receipt_hash(
+                root,
+                migration_plan_json(root, &policy, &plan, Value::Null),
+            ))
         }
         ReplayCaseKind::McpDescribe => Ok(mcp_tool_catalog(false)),
         ReplayCaseKind::McpStatus => {
             mcp_call_tool("cairn_status", &json!({"root": path_string(root)}), false)
         }
+        ReplayCaseKind::ReleaseReadiness => Ok(release_readiness_receipt(
+            root.to_path_buf(),
+            default_policy_path().into(),
+        )),
+        ReplayCaseKind::Status => {
+            let selected = detect_layout(root);
+            let status = scan_repo(root.to_path_buf(), selected.layout)?;
+            Ok(repo_status_json(&status, selected.layout))
+        }
+        ReplayCaseKind::SyncDryRun => {
+            let selected = detect_layout(root);
+            let change = replay_change_arg(case, "sync")?;
+            let policy = load_policy_file(default_policy_path().into())?;
+            let change_status = find_change(root.to_path_buf(), selected.layout, change)?;
+            let input_hash = portable_json_hash(root, &change_status_json(&change_status));
+            let mut plan = build_sync_plan(&change_status);
+            if policy.sync_require_gate && !plan.blocked {
+                plan.reasons.extend(mutation_gate_blockers(
+                    root,
+                    selected.layout,
+                    &change_status,
+                    GateStage::Tasks,
+                    &policy,
+                )?);
+                plan.reasons.sort();
+                plan.reasons.dedup();
+                plan.blocked = !plan.reasons.is_empty();
+                if plan.blocked {
+                    plan.actions.clear();
+                }
+            }
+            Ok(with_portable_receipt_hash(
+                root,
+                sync_plan_json(
+                    root,
+                    selected.layout,
+                    &policy,
+                    &plan,
+                    &input_hash,
+                    Value::Null,
+                ),
+            ))
+        }
+        ReplayCaseKind::Validate => {
+            cairn_validation_receipt(root.to_path_buf(), default_policy_path().into())
+        }
+    }
+}
+
+fn replay_change_arg<'a>(case: &'a ReplayCase, command: &str) -> Result<&'a str, Box<dyn Error>> {
+    case.args
+        .get(1)
+        .map(String::as_str)
+        .ok_or_else(|| format!("{command} replay case missing change argument").into())
+}
+
+fn replay_fixture_path(root: &Path, path: &str) -> PathBuf {
+    let rooted = root.join(path);
+    if rooted.exists() {
+        rooted
+    } else {
+        PathBuf::from(path)
     }
 }
 
@@ -704,9 +955,11 @@ fn tracey_failure_is_active_release_readiness_change(stdout: &str) -> bool {
     };
     !dangling.is_empty()
         && dangling.iter().all(|entry| {
-            entry
-                .as_str()
-                .is_some_and(|id| id.starts_with("cairn.supersede.release_readiness_bundle"))
+            entry.as_str().is_some_and(|id| {
+                id.starts_with("cairn.supersede.release_readiness_bundle")
+                    || id.starts_with("cairn.supersede.determinism_replay.policy_")
+                    || id == "cairn.supersede.determinism_replay.expanded_surfaces"
+            })
         })
 }
 
