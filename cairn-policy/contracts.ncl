@@ -162,6 +162,16 @@ let Promoted = std.contract.from_predicate (fun value =>
     environment_attestation | NonEmptyArray | Array EnvironmentAttestationFact,
   },
 
+  DeterminismSurface = {
+    id | NonEmptyString,
+    command | NonEmptyString,
+    surface_kind | NonEmptyString,
+    receipt_command | NonEmptyString,
+    required_replay_cases | NonEmptyArray | Array NonEmptyString,
+    required_replay_groups | NonEmptyArray | Array NonEmptyString,
+    determinism_claim | NonEmptyString,
+  },
+
   ExemptionMarkerPolicy = {
     required_fields | NonEmptyArray | Array NonEmptyString,
     date_fields | NonEmptyArray | Array NonEmptyString,
@@ -212,6 +222,7 @@ let Promoted = std.contract.from_predicate (fun value =>
     report_contract | ReportContract,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
     determinism_replay_policy | DeterminismReplayPolicy,
+    determinism_surface_inventory | NonEmptyArray | Array DeterminismSurface,
     sync_archive_policy | SyncArchivePolicy,
     mutation_policy | MutationPolicy,
     receipt_hash_policy | ReceiptHashPolicy,

@@ -87,6 +87,12 @@ let Contracts = import "contracts.ncl" in
       hash_fields = ["destination_manifest_hash", "manifest_hash", "policy_hash", "receipt_hash", "source_manifest_hash"],
     },
     {
+      command = "determinism coverage-audit",
+      top_level_keys = ["command", "covered_surfaces", "current_replay_policy_hash", "issues", "missing_surfaces", "receipt_hash", "root", "surface_count", "surface_inventory_hash", "valid", "verdict"],
+      issue_keys = ["actual", "code", "expected", "field_path", "surface_id"],
+      hash_fields = ["current_replay_policy_hash", "receipt_hash", "surface_inventory_hash"],
+    },
+    {
       command = "determinism replay",
       top_level_keys = ["available_cases", "available_groups", "cases", "command", "entropy_assumptions", "entropy_inventory", "entropy_policy_hash", "environment_attestation", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "selected_cases", "selected_groups", "skipped", "summary", "valid", "verdict"],
       case_keys = ["args", "command_kind", "comparison_modes", "display_only_paths", "expected_mutability", "fixture_root", "hash_fields", "id", "normalization_rules", "portable_evidence_hash", "runs"],
@@ -159,6 +165,21 @@ let Contracts = import "contracts.ncl" in
       { id = "toolchain_build_context", class = "build_context", source = "Nix/devshell/toolchain context", handling = "disclose", receipt_field = "environment_attestation.policy_facts", description = "Replay discloses reviewed build/toolchain context as policy facts and avoids machine-specific store paths." },
     ],
   },
+
+  determinism_surface_inventory = [
+    { id = "agent_receipt_validate", command = "agent-receipt validate fixtures/agent-receipts/positive.json", surface_kind = "cli", receipt_command = "agent-receipt validate", required_replay_cases = ["agent_receipt_validate"], required_replay_groups = ["agent", "full", "release"], determinism_claim = "agent_receipt_stability" },
+    { id = "archive_dry_run", command = "archive ready --root <root>", surface_kind = "cli", receipt_command = "archive", required_replay_cases = ["archive_dry_run"], required_replay_groups = ["full"], determinism_claim = "lifecycle_dry_run_stability" },
+    { id = "gate_design", command = "gate design demo --root <root>", surface_kind = "cli", receipt_command = "gate", required_replay_cases = ["gate_design"], required_replay_groups = ["full"], determinism_claim = "gate_receipt_stability" },
+    { id = "gate_proposal", command = "gate proposal demo --root <root>", surface_kind = "cli", receipt_command = "gate", required_replay_cases = ["gate_proposal"], required_replay_groups = ["full"], determinism_claim = "gate_receipt_stability" },
+    { id = "gate_tasks", command = "gate tasks demo --root <root>", surface_kind = "cli", receipt_command = "gate", required_replay_cases = ["gate_tasks"], required_replay_groups = ["full"], determinism_claim = "gate_receipt_stability" },
+    { id = "mcp_describe", command = "mcp --describe", surface_kind = "mcp", receipt_command = "mcp describe", required_replay_cases = ["mcp_describe"], required_replay_groups = ["agent", "full", "release"], determinism_claim = "mcp_catalog_stability" },
+    { id = "mcp_status", command = "mcp --call cairn_status", surface_kind = "mcp", receipt_command = "cairn_status", required_replay_cases = ["mcp_status"], required_replay_groups = ["full"], determinism_claim = "mcp_receipt_stability" },
+    { id = "migrate_dry_run", command = "migrate openspec --root <root>", surface_kind = "cli", receipt_command = "migrate", required_replay_cases = ["migrate_dry_run"], required_replay_groups = ["full"], determinism_claim = "migration_dry_run_stability" },
+    { id = "release_readiness", command = "release-readiness --root <root>", surface_kind = "cli", receipt_command = "release-readiness", required_replay_cases = ["release_readiness"], required_replay_groups = ["full", "release"], determinism_claim = "release_receipt_stability" },
+    { id = "status", command = "status --root <root>", surface_kind = "cli", receipt_command = "status", required_replay_cases = ["status"], required_replay_groups = ["agent", "full", "release", "smoke"], determinism_claim = "status_receipt_stability" },
+    { id = "sync_dry_run", command = "sync demo --root <root>", surface_kind = "cli", receipt_command = "sync", required_replay_cases = ["sync_dry_run"], required_replay_groups = ["full"], determinism_claim = "lifecycle_dry_run_stability" },
+    { id = "validate", command = "validate --root <root>", surface_kind = "cli", receipt_command = "validate", required_replay_cases = ["validate"], required_replay_groups = ["agent", "full", "release", "smoke"], determinism_claim = "validation_receipt_stability" },
+  ],
 
   exemption_marker_policy = {
     required_fields = ["reason", "owner", "until"],

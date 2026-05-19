@@ -106,6 +106,32 @@ def check_policy_semantics(policy: dict, source: Path) -> None:
             source,
         )
     check_artifact_dependencies(policy, source)
+    check_determinism_surface_inventory(policy, source)
+
+
+def check_determinism_surface_inventory(policy: dict, source: Path) -> None:
+    replay_policy = policy.get("determinism_replay_policy", {})
+    cases = {case.get("id") for case in replay_policy.get("cases", [])}
+    groups = {group.get("id"): set(group.get("cases", [])) for group in replay_policy.get("groups", [])}
+    surfaces = policy.get("determinism_surface_inventory", [])
+    require(bool(surfaces), "determinism_surface_inventory must be non-empty", source)
+    require_unique([surface.get("id") for surface in surfaces], "determinism surface ids", source)
+    for surface in surfaces:
+        surface_id = surface.get("id")
+        required_cases = surface.get("required_replay_cases", [])
+        required_groups = surface.get("required_replay_groups", [])
+        require(bool(required_cases), f"determinism surface {surface_id} requires at least one replay case", source)
+        require(bool(required_groups), f"determinism surface {surface_id} requires at least one replay group", source)
+        for case_id in required_cases:
+            require(case_id in cases, f"determinism surface {surface_id} references unknown replay case {case_id}", source)
+        for group_id in required_groups:
+            require(group_id in groups, f"determinism surface {surface_id} references unknown replay group {group_id}", source)
+            missing = sorted(case_id for case_id in required_cases if case_id not in groups[group_id])
+            require(
+                not missing,
+                f"determinism surface {surface_id} group {group_id} missing cases: {', '.join(missing)}",
+                source,
+            )
 
 
 def check_invalid_fixtures() -> None:

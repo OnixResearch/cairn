@@ -478,6 +478,175 @@
       }
     ]
   },
+  "determinism_surface_inventory": [
+    {
+      "command": "agent-receipt validate fixtures/agent-receipts/positive.json",
+      "determinism_claim": "agent_receipt_stability",
+      "id": "agent_receipt_validate",
+      "receipt_command": "agent-receipt validate",
+      "required_replay_cases": [
+        "agent_receipt_validate"
+      ],
+      "required_replay_groups": [
+        "agent",
+        "full",
+        "release"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "archive ready --root <root>",
+      "determinism_claim": "lifecycle_dry_run_stability",
+      "id": "archive_dry_run",
+      "receipt_command": "archive",
+      "required_replay_cases": [
+        "archive_dry_run"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "gate design demo --root <root>",
+      "determinism_claim": "gate_receipt_stability",
+      "id": "gate_design",
+      "receipt_command": "gate",
+      "required_replay_cases": [
+        "gate_design"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "gate proposal demo --root <root>",
+      "determinism_claim": "gate_receipt_stability",
+      "id": "gate_proposal",
+      "receipt_command": "gate",
+      "required_replay_cases": [
+        "gate_proposal"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "gate tasks demo --root <root>",
+      "determinism_claim": "gate_receipt_stability",
+      "id": "gate_tasks",
+      "receipt_command": "gate",
+      "required_replay_cases": [
+        "gate_tasks"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "mcp --describe",
+      "determinism_claim": "mcp_catalog_stability",
+      "id": "mcp_describe",
+      "receipt_command": "mcp describe",
+      "required_replay_cases": [
+        "mcp_describe"
+      ],
+      "required_replay_groups": [
+        "agent",
+        "full",
+        "release"
+      ],
+      "surface_kind": "mcp"
+    },
+    {
+      "command": "mcp --call cairn_status",
+      "determinism_claim": "mcp_receipt_stability",
+      "id": "mcp_status",
+      "receipt_command": "cairn_status",
+      "required_replay_cases": [
+        "mcp_status"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "mcp"
+    },
+    {
+      "command": "migrate openspec --root <root>",
+      "determinism_claim": "migration_dry_run_stability",
+      "id": "migrate_dry_run",
+      "receipt_command": "migrate",
+      "required_replay_cases": [
+        "migrate_dry_run"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "release-readiness --root <root>",
+      "determinism_claim": "release_receipt_stability",
+      "id": "release_readiness",
+      "receipt_command": "release-readiness",
+      "required_replay_cases": [
+        "release_readiness"
+      ],
+      "required_replay_groups": [
+        "full",
+        "release"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "status --root <root>",
+      "determinism_claim": "status_receipt_stability",
+      "id": "status",
+      "receipt_command": "status",
+      "required_replay_cases": [
+        "status"
+      ],
+      "required_replay_groups": [
+        "agent",
+        "full",
+        "release",
+        "smoke"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "sync demo --root <root>",
+      "determinism_claim": "lifecycle_dry_run_stability",
+      "id": "sync_dry_run",
+      "receipt_command": "sync",
+      "required_replay_cases": [
+        "sync_dry_run"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "validate --root <root>",
+      "determinism_claim": "validation_receipt_stability",
+      "id": "validate",
+      "receipt_command": "validate",
+      "required_replay_cases": [
+        "validate"
+      ],
+      "required_replay_groups": [
+        "agent",
+        "full",
+        "release",
+        "smoke"
+      ],
+      "surface_kind": "cli"
+    }
+  ],
   "exemption_marker_policy": {
     "date_fields": [
       "until"
@@ -719,6 +888,39 @@
         "root",
         "source_layout",
         "source_manifest_hash"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "determinism coverage-audit",
+      "hash_fields": [
+        "current_replay_policy_hash",
+        "receipt_hash",
+        "surface_inventory_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path",
+        "surface_id"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "covered_surfaces",
+        "current_replay_policy_hash",
+        "issues",
+        "missing_surfaces",
+        "receipt_hash",
+        "root",
+        "surface_count",
+        "surface_inventory_hash",
+        "valid",
+        "verdict"
       ]
     },
     {

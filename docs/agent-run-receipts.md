@@ -65,9 +65,19 @@ replay evidence produces deterministic issue codes such as
 and verify it before copying hashes into agent evidence:
 
 ```sh
+nix run .#cairn -- determinism coverage-audit --root .
 nix run .#cairn -- determinism replay --root . --group agent --format summary --out target/replay.json
 nix run .#cairn -- determinism verify-receipt target/replay.json --root .
 ```
+
+`determinism coverage-audit` checks the policy-owned `determinism_surface_inventory`
+against replay cases and groups before operators trust replay evidence. Each
+surface names the public command, receipt command, required replay cases, required
+replay groups, and determinism claim. The audit emits `covered_surfaces`,
+`missing_surfaces`, `surface_inventory_hash`, `current_replay_policy_hash`, and
+stable issue records with `surface_id`, `field_path`, `expected`, and `actual`;
+missing cases or group coverage make the command fail deterministically.
+r[verify cairn.supersede.determinism_surface_coverage_audit.docs]
 
 Replay receipt verification recomputes `replay_receipt_hash`, compares the
 current generated policy hash, validates `environment_attestation.attestation_hash`,
