@@ -14,11 +14,12 @@ use cairn_core::{
     build_sync_plan, canonical_json_hash, changes_dir, design_template,
     evaluate_agent_run_completion, evaluate_gate_snapshot, init_artifacts, init_artifacts_for,
     layout_name, layout_root, merge_delta_spec, parse_policy_json, proposal_template, specs_dir,
-    tasks_template, validate_changes, validate_spec_sources, AgentRunGateIssue, ArchivePlan,
-    ChangeDetail, ChangeList, ChangeSource, ChangeStatus, DoctorCheckStatus, DoctorReport,
-    DoctorSnapshot, GateArtifact, GateReport, GateSnapshot, GateStage, LifecycleArtifactKind,
-    LifecycleLayout, MigrationInput, MigrationPlan, PlanAction, PlanActionKind, Policy, RepoStatus,
-    SpecDetail, SpecList, SpecSource, SpecSummary, SyncPlan, TaskCounts,
+    tasks_template, validate_changes, validate_policy_json, validate_spec_sources,
+    AgentRunGateIssue, ArchivePlan, ChangeDetail, ChangeList, ChangeSource, ChangeStatus,
+    DoctorCheckStatus, DoctorReport, DoctorSnapshot, GateArtifact, GateReport, GateSnapshot,
+    GateStage, LifecycleArtifactKind, LifecycleLayout, MigrationInput, MigrationPlan, PlanAction,
+    PlanActionKind, Policy, RepoStatus, SpecDetail, SpecList, SpecSource, SpecSummary, SyncPlan,
+    TaskCounts,
 };
 use serde_json::{json, Value};
 
@@ -54,6 +55,8 @@ fn run() -> Result<(), Box<dyn Error>> {
         "evidence" => run_evidence(args.collect())?,
         "evidence-manifest" => run_evidence_manifest(args.collect())?,
         "policy" => run_policy(args.collect())?,
+        "tracey" => run_tracey(args.collect())?,
+        "rename-classification" => run_rename_classification(args.collect())?,
         "migrate" => run_migrate(args.collect())?,
         "mcp" => run_mcp(args.collect())?,
         "gate" => run_gate(args.collect())?,
@@ -204,9 +207,16 @@ fn run_spec_show(args: Vec<String>, spec: &str) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.supersede.rust_nickel_only_gates.gates]
     let root = read_option(args.clone(), "--root", ".");
-    let policy_path = read_option(args, "--policy", default_policy_path());
-    print_json(cairn_validation_receipt(root, policy_path)?)
+    let policy_path = read_option(args.clone(), "--policy", default_policy_path());
+    let is_strict = has_flag(&args, "--strict");
+    let receipt = cairn_validation_receipt(root, policy_path)?;
+    print_json(receipt.clone())?;
+    if is_strict && receipt["valid"].as_bool() != Some(true) {
+        return Err("validation failed".into());
+    }
+    Ok(())
 }
 
 fn cairn_validation_receipt(root: PathBuf, policy_path: PathBuf) -> Result<Value, Box<dyn Error>> {
@@ -2071,7 +2081,7 @@ where
 fn component_source(name: &str) -> &'static str {
     match name {
         "cairn_validate" => "cairn validate --root <root>",
-        "tracey_coverage" => "python3 tools/check-tracey-coverage.py --root <root>",
+        "tracey_coverage" => "cairn tracey coverage --root <root>",
         "mcp_agent_smoke" => "cairn agent-receipt smoke-mcp --root <root>",
         "determinism_coverage_audit" => "cairn determinism coverage-audit --root <root>",
         _ => "unknown",
@@ -2079,25 +2089,26 @@ fn component_source(name: &str) -> &'static str {
 }
 
 fn tracey_coverage_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
-    let output = Command::new("python3")
-        .arg("tools/check-tracey-coverage.py")
-        .arg("--root")
-        .arg(".")
-        .current_dir(&root)
-        .output()?;
-    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let report = tracey_coverage_report(&root)?;
+    let stdout = if report["valid"].as_bool() == Some(true) {
+        format!(
+            "tracey bootstrap coverage ok: {}/{} referenced",
+            report["referenced"].as_u64().unwrap_or(0),
+            report["requirements"].as_u64().unwrap_or(0)
+        )
+    } else {
+        serde_json::to_string_pretty(&report)?
+    };
     let is_active_change_only = tracey_failure_is_active_release_readiness_change(&stdout);
-    let is_valid =
-        (output.status.success() && stdout.contains("coverage ok")) || is_active_change_only;
+    let is_valid = report["valid"].as_bool() == Some(true) || is_active_change_only;
     Ok(with_receipt_hash(json!({
         "command": "tracey coverage",
         "root": path_string(root),
         "valid": is_valid,
         "verdict": if is_valid { "pass" } else { "fail" },
         "stdout": stdout,
-        "stderr": stderr,
-        "exit_code": output.status.code(),
+        "stderr": "",
+        "exit_code": if report["valid"].as_bool() == Some(true) { 0 } else { 1 },
         "active_change_refs_pending_sync": is_active_change_only,
     })))
 }
@@ -2138,9 +2149,649 @@ fn repository_gate_summary() -> Value {
 }
 
 fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    if args.first().map(String::as_str) == Some("export") {
+        return run_policy_export(args.into_iter().skip(1).collect());
+    }
     let policy_path = read_option(args, "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;
     print_json(policy.raw)
+}
+
+fn run_policy_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.supersede.rust_nickel_only_gates.policy_export]
+    let is_check = has_flag(&args, "--check");
+    let default_source = default_policy_source_path();
+    let source = read_option(
+        args.clone(),
+        "--source",
+        default_source
+            .to_str()
+            .unwrap_or("cairn-policy/default.ncl"),
+    );
+    let output = read_option(args, "--output", default_policy_path());
+    let rendered = export_policy_from_nickel(&source)?;
+    check_invalid_policy_fixtures(source.parent().unwrap_or(Path::new(".")).join("fixtures"))?;
+    if is_check {
+        let existing = fs::read_to_string(&output).unwrap_or_default();
+        if existing != rendered {
+            return Err(format!("generated policy is stale: {}", output.display()).into());
+        }
+        println!("policy fresh: {}", output.display());
+        return Ok(());
+    }
+    if let Some(parent) = output.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(&output, rendered)?;
+    println!("wrote {}", output.display());
+    Ok(())
+}
+
+fn default_policy_source_path() -> PathBuf {
+    PathBuf::from("cairn-policy/default.ncl")
+}
+
+fn export_policy_from_nickel(source: &Path) -> Result<String, Box<dyn Error>> {
+    // r[verify cairn.supersede.rust_nickel_only_gates.no_python_scripts]
+    let output = Command::new("nickel")
+        .arg("export")
+        .arg("--format")
+        .arg("json")
+        .arg(source)
+        .output()?;
+    if !output.status.success() {
+        return Err(format!(
+            "nickel export failed for {}: {}{}",
+            source.display(),
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into());
+    }
+    let value: Value = serde_json::from_slice(&output.stdout)?;
+    validate_exported_policy(&value)?;
+    Ok(serde_json::to_string_pretty(&value)?
+        + "
+")
+}
+
+fn validate_exported_policy(value: &Value) -> Result<(), Box<dyn Error>> {
+    let policy = validate_policy_json(value.clone())?;
+    require_policy_condition(
+        value["receipt_hash_policy"]["algorithm"].as_str() == Some("BLAKE3"),
+        "receipt hash algorithm must be BLAKE3",
+    )?;
+    require_policy_condition(
+        value["receipt_hash_policy"]["canonicalization"].as_str()
+            == Some("serde_json_compact_sorted_keys"),
+        "receipt hash canonicalization must be serde_json_compact_sorted_keys",
+    )?;
+    for field in ["schemas", "lifecycle_stages", "receipt_schemas"] {
+        require_policy_condition(
+            value[field]
+                .as_array()
+                .is_some_and(|items| !items.is_empty()),
+            &format!("{field} must be non-empty"),
+        )?;
+    }
+    require_unique_policy_strings(
+        json_string_array(&value["lifecycle_stages"]),
+        "lifecycle stages",
+    )?;
+    let marker_policy = &value["task_marker_policy"];
+    require_unique_policy_strings(
+        json_string_array(&marker_policy["stages"]),
+        "task marker stages",
+    )?;
+    let markers = marker_policy["markers"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    require_unique_policy_strings(
+        markers
+            .iter()
+            .filter_map(|v| v["id"].as_str().map(ToOwned::to_owned))
+            .collect(),
+        "marker ids",
+    )?;
+    require_unique_policy_strings(
+        markers
+            .iter()
+            .filter_map(|v| v["token"].as_str().map(ToOwned::to_owned))
+            .collect(),
+        "marker tokens",
+    )?;
+    for schema in &policy.receipt_schemas {
+        require_unique_policy_strings(
+            schema.top_level_keys.clone(),
+            &format!("{} top-level receipt keys", schema.command),
+        )?;
+        require_unique_policy_strings(
+            schema.action_keys.clone(),
+            &format!("{} action keys", schema.command),
+        )?;
+        require_unique_policy_strings(
+            schema.issue_keys.clone(),
+            &format!("{} issue keys", schema.command),
+        )?;
+        for hash_field in &schema.hash_fields {
+            require_policy_condition(
+                schema.top_level_keys.iter().any(|key| key == hash_field),
+                &format!(
+                    "{} hash field {hash_field} is not a top-level key",
+                    schema.command
+                ),
+            )?;
+        }
+    }
+    validate_artifact_dependencies(value)?;
+    validate_determinism_surface_inventory(&policy)?;
+    Ok(())
+}
+
+fn check_invalid_policy_fixtures(fixtures: PathBuf) -> Result<(), Box<dyn Error>> {
+    if !fixtures.exists() {
+        return Ok(());
+    }
+    for entry in fs::read_dir(fixtures)?.collect::<Result<Vec<_>, _>>()? {
+        let path = entry.path();
+        let Some(name) = path.file_name().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        if !name.starts_with("invalid-")
+            || path.extension().and_then(|value| value.to_str()) != Some("ncl")
+        {
+            continue;
+        }
+        let output = Command::new("nickel")
+            .arg("export")
+            .arg("--format")
+            .arg("json")
+            .arg(&path)
+            .output()?;
+        if !output.status.success() {
+            continue;
+        }
+        let Ok(value) = serde_json::from_slice::<Value>(&output.stdout) else {
+            continue;
+        };
+        if validate_exported_policy(&value).is_ok() {
+            return Err(format!(
+                "expected invalid policy fixture to fail: {}",
+                path.display()
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+
+fn require_policy_condition(condition: bool, message: &str) -> Result<(), Box<dyn Error>> {
+    if condition {
+        Ok(())
+    } else {
+        Err(format!("policy semantic check failed: {message}").into())
+    }
+}
+
+fn require_unique_policy_strings(values: Vec<String>, label: &str) -> Result<(), Box<dyn Error>> {
+    let mut seen = std::collections::BTreeSet::new();
+    let mut duplicates = std::collections::BTreeSet::new();
+    for value in values {
+        if !seen.insert(value.clone()) {
+            duplicates.insert(value);
+        }
+    }
+    require_policy_condition(
+        duplicates.is_empty(),
+        &format!(
+            "duplicate {label}: {}",
+            duplicates.into_iter().collect::<Vec<_>>().join(", ")
+        ),
+    )
+}
+
+fn json_string_array(value: &Value) -> Vec<String> {
+    value
+        .as_array()
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|v| v.as_str().map(ToOwned::to_owned))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn validate_artifact_dependencies(value: &Value) -> Result<(), Box<dyn Error>> {
+    for schema in value["schemas"].as_array().cloned().unwrap_or_default() {
+        let artifacts = schema["artifacts"].as_array().cloned().unwrap_or_default();
+        let artifact_ids = artifacts
+            .iter()
+            .filter_map(|artifact| artifact["id"].as_str().map(ToOwned::to_owned))
+            .collect::<Vec<_>>();
+        require_unique_policy_strings(
+            artifact_ids.clone(),
+            &format!(
+                "artifact ids in schema {}",
+                schema["id"].as_str().unwrap_or("<unknown>")
+            ),
+        )?;
+        let known = artifact_ids
+            .into_iter()
+            .collect::<std::collections::BTreeSet<_>>();
+        for artifact in artifacts {
+            for required in json_string_array(&artifact["requires"]) {
+                require_policy_condition(
+                    known.contains(&required),
+                    &format!(
+                        "artifact {} requires unknown artifact {required}",
+                        artifact["id"].as_str().unwrap_or("<unknown>")
+                    ),
+                )?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_determinism_surface_inventory(policy: &Policy) -> Result<(), Box<dyn Error>> {
+    let cases = replay_cases_from_policy(policy)?
+        .into_iter()
+        .map(|case| case.id)
+        .collect::<std::collections::BTreeSet<_>>();
+    let groups = replay_groups_from_policy(policy)?
+        .into_iter()
+        .map(|group| {
+            (
+                group.id,
+                group
+                    .cases
+                    .into_iter()
+                    .collect::<std::collections::BTreeSet<_>>(),
+            )
+        })
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let surfaces = determinism_surfaces_from_policy(policy)?;
+    require_policy_condition(
+        !surfaces.is_empty(),
+        "determinism_surface_inventory must be non-empty",
+    )?;
+    require_unique_policy_strings(
+        surfaces.iter().map(|surface| surface.id.clone()).collect(),
+        "determinism surface ids",
+    )?;
+    for surface in surfaces {
+        require_policy_condition(
+            !surface.required_replay_cases.is_empty(),
+            &format!(
+                "determinism surface {} requires at least one replay case",
+                surface.id
+            ),
+        )?;
+        require_policy_condition(
+            !surface.required_replay_groups.is_empty(),
+            &format!(
+                "determinism surface {} requires at least one replay group",
+                surface.id
+            ),
+        )?;
+        for case_id in &surface.required_replay_cases {
+            require_policy_condition(
+                cases.contains(case_id),
+                &format!(
+                    "determinism surface {} references unknown replay case {case_id}",
+                    surface.id
+                ),
+            )?;
+        }
+        for group_id in &surface.required_replay_groups {
+            let Some(group_cases) = groups.get(group_id) else {
+                return Err(format!("policy semantic check failed: determinism surface {} references unknown replay group {group_id}", surface.id).into());
+            };
+            let missing = surface
+                .required_replay_cases
+                .iter()
+                .filter(|case_id| !group_cases.contains(*case_id))
+                .cloned()
+                .collect::<Vec<_>>();
+            require_policy_condition(
+                missing.is_empty(),
+                &format!(
+                    "determinism surface {} group {group_id} missing cases: {}",
+                    surface.id,
+                    missing.join(", ")
+                ),
+            )?;
+        }
+    }
+    Ok(())
+}
+
+fn run_tracey(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.supersede.rust_nickel_only_gates.tracey_coverage]
+    let Some(command) = args.first().map(String::as_str) else {
+        return Err("tracey requires a command: coverage".into());
+    };
+    if command != "coverage" {
+        return Err(format!("unknown tracey command: {command}").into());
+    }
+    let rest = args.into_iter().skip(1).collect::<Vec<_>>();
+    let root = read_option(rest.clone(), "--root", ".");
+    let is_json = has_flag(&rest, "--json");
+    let report = tracey_coverage_report(&root)?;
+    if is_json || report["valid"].as_bool() != Some(true) {
+        print_json(report.clone())?;
+    } else {
+        println!(
+            "tracey bootstrap coverage ok: {}/{} referenced",
+            report["referenced"].as_u64().unwrap_or(0),
+            report["requirements"].as_u64().unwrap_or(0)
+        );
+    }
+    if report["valid"].as_bool() == Some(true) {
+        Ok(())
+    } else {
+        Err("tracey coverage failed".into())
+    }
+}
+
+fn tracey_coverage_report(root: &Path) -> Result<Value, Box<dyn Error>> {
+    let requirements = collect_tracey_requirements(root)?;
+    let references = collect_tracey_references(root)?;
+    let missing = requirements
+        .keys()
+        .filter(|req_id| !references.contains_key(*req_id))
+        .cloned()
+        .collect::<Vec<_>>();
+    let dangling = references
+        .keys()
+        .filter(|req_id| !requirements.contains_key(*req_id))
+        .cloned()
+        .collect::<Vec<_>>();
+    Ok(json!({
+        "requirements": requirements.len(),
+        "referenced": requirements.keys().filter(|req_id| references.contains_key(*req_id)).count(),
+        "missing": missing,
+        "dangling": dangling,
+        "valid": missing.is_empty() && dangling.is_empty(),
+    }))
+}
+
+fn collect_tracey_requirements(
+    root: &Path,
+) -> Result<std::collections::BTreeMap<String, Vec<String>>, Box<dyn Error>> {
+    let mut requirements = std::collections::BTreeMap::new();
+    for path in collect_files(root)? {
+        let relative = safe_relative_path(root, &path);
+        if !(relative.starts_with("openspec/specs/") || relative.starts_with("cairn/specs/"))
+            || !relative.ends_with(".md")
+        {
+            continue;
+        }
+        let text = fs::read_to_string(&path)?;
+        for (line_index, line) in text.lines().enumerate() {
+            if let Some(req_id) = tracey_spec_marker(line.trim()) {
+                requirements
+                    .entry(req_id)
+                    .or_insert_with(Vec::new)
+                    .push(format!("{relative}:{}", line_index + 1));
+            }
+        }
+    }
+    Ok(requirements)
+}
+
+fn collect_tracey_references(
+    root: &Path,
+) -> Result<std::collections::BTreeMap<String, Vec<Value>>, Box<dyn Error>> {
+    let mut references = std::collections::BTreeMap::new();
+    for path in collect_files(root)? {
+        let relative = safe_relative_path(root, &path);
+        if !(relative.starts_with("crates/") || relative.starts_with("tools/"))
+            || !(relative.ends_with(".rs") || relative.ends_with(".ncl"))
+        {
+            continue;
+        }
+        let text = fs::read_to_string(&path)?;
+        for (line_index, line) in text.lines().enumerate() {
+            for (verb, req_id) in tracey_ref_markers(line) {
+                if req_id == "..." {
+                    continue;
+                }
+                references
+                    .entry(req_id)
+                    .or_insert_with(Vec::new)
+                    .push(json!({
+                        "verb": verb,
+                        "path": relative,
+                        "line": (line_index + 1).to_string(),
+                    }));
+            }
+        }
+    }
+    Ok(references)
+}
+
+fn tracey_spec_marker(line: &str) -> Option<String> {
+    let rest = line.strip_prefix("r[")?;
+    let end = rest.find(']')?;
+    let marker = &rest[..end];
+    let id = marker.split('+').next().unwrap_or(marker);
+    if is_tracey_id(id) {
+        Some(id.to_string())
+    } else {
+        None
+    }
+}
+
+fn tracey_ref_markers(line: &str) -> Vec<(String, String)> {
+    let mut markers = Vec::new();
+    let mut start = 0usize;
+    while let Some(offset) = line[start..].find("r[") {
+        let marker_start = start + offset + 2;
+        let Some(end_offset) = line[marker_start..].find(']') else {
+            break;
+        };
+        let marker = &line[marker_start..marker_start + end_offset];
+        let mut parts = marker.split_whitespace();
+        let verb = parts.next().unwrap_or_default();
+        let raw_id = parts.next().unwrap_or_default();
+        let req_id = raw_id.split('+').next().unwrap_or(raw_id);
+        if matches!(verb, "impl" | "verify" | "depends" | "related") && is_tracey_id(req_id) {
+            markers.push((verb.to_string(), req_id.to_string()));
+        }
+        start = marker_start + end_offset + 1;
+    }
+    markers
+}
+
+fn is_tracey_id(value: &str) -> bool {
+    !value.is_empty()
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.' | b'-'))
+}
+
+fn run_rename_classification(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.rename_cairn.classification]
+    // r[impl cairn.supersede.rust_nickel_only_gates.rename_classification]
+    let output = read_string_option(&args, "--output").map(PathBuf::from);
+    let root = PathBuf::from(".");
+    let occurrences = rename_classification_occurrences(&root)?;
+    let mut buckets = std::collections::BTreeMap::<String, usize>::new();
+    for occurrence in &occurrences {
+        if let Some(bucket) = occurrence["bucket"].as_str() {
+            *buckets.entry(bucket.to_string()).or_insert(0) += 1;
+        }
+    }
+    let report = json!({
+        "legacy": "ironspec",
+        "canonical": "cairn",
+        "total": occurrences.len(),
+        "buckets": buckets,
+        "occurrences": occurrences,
+        "valid": buckets.get("needs-fix").copied().unwrap_or(0) == 0,
+    });
+    let rendered = serde_json::to_string_pretty(&report)? + "\n";
+    if let Some(path) = output {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(path, &rendered)?;
+    }
+    print!("{rendered}");
+    if report["valid"].as_bool() == Some(true) {
+        Ok(())
+    } else {
+        Err("rename classification found needs-fix occurrences".into())
+    }
+}
+
+fn rename_classification_occurrences(root: &Path) -> Result<Vec<Value>, Box<dyn Error>> {
+    let mut occurrences = Vec::new();
+    for path in collect_files(root)? {
+        let relative = safe_relative_path(root, &path);
+        if !rename_classification_is_text_file(&relative)
+            || rename_classification_is_skipped(&relative)
+        {
+            continue;
+        }
+        let Ok(text) = fs::read_to_string(&path) else {
+            continue;
+        };
+        let mut in_rename_classifier_impl = false;
+        for (line_index, line) in text.lines().enumerate() {
+            if relative == "crates/cairn-cli/src/main.rs"
+                && line.starts_with("fn run_rename_classification")
+            {
+                in_rename_classifier_impl = true;
+            }
+            if relative == "crates/cairn-cli/src/main.rs"
+                && line.starts_with("fn safe_relative_path")
+            {
+                in_rename_classifier_impl = false;
+            }
+            if in_rename_classifier_impl {
+                continue;
+            }
+            if line.to_ascii_lowercase().contains("ironspec") {
+                let bucket = rename_classification_bucket(&relative, line);
+                occurrences.push(json!({
+                    "path": relative,
+                    "line": line_index + 1,
+                    "bucket": bucket,
+                    "text": line.trim(),
+                }));
+            }
+        }
+        if relative.to_ascii_lowercase().contains("ironspec") {
+            let bucket = rename_classification_bucket(&relative, &relative);
+            occurrences.push(json!({
+                "path": relative,
+                "line": 0,
+                "bucket": bucket,
+                "text": "<path>",
+            }));
+        }
+    }
+    occurrences.sort_by_key(|value| {
+        format!(
+            "{}:{:09}:{}:{}",
+            value["path"].as_str().unwrap_or_default(),
+            value["line"].as_u64().unwrap_or(0),
+            value["bucket"].as_str().unwrap_or_default(),
+            value["text"].as_str().unwrap_or_default()
+        )
+    });
+    Ok(occurrences)
+}
+
+fn rename_classification_is_skipped(relative: &str) -> bool {
+    relative
+        .split('/')
+        .any(|part| matches!(part, ".git" | "target" | "artifacts" | ".direnv"))
+        || relative.ends_with("evidence/rename-classification.json")
+}
+
+fn rename_classification_is_text_file(relative: &str) -> bool {
+    let suffixes = [
+        ".md", ".rs", ".toml", ".nix", ".json", ".ncl", ".lock", ".txt", ".styx",
+    ];
+    relative == "Cargo.lock"
+        || relative == "README.md"
+        || suffixes.iter().any(|suffix| relative.ends_with(suffix))
+}
+
+fn rename_classification_bucket(path: &str, line: &str) -> &'static str {
+    let text = line.to_ascii_lowercase();
+    let path_text = path.to_ascii_lowercase();
+    if path_text.contains("/archive/") || path_text.contains("openspec/changes/archive/") {
+        return "historical-archive";
+    }
+    if path_text.starts_with("openspec/specs/") {
+        return "requirement-id-history";
+    }
+    if path_text.contains("rename-ironspec-to-cairn")
+        || path_text == "tools/check-rename-classification.rs"
+    {
+        return "intentional-reference";
+    }
+    if path_text.contains("ironspec")
+        && (path_text.contains("docs/hermes")
+            || path_text.contains("tool")
+            || path_text.contains("src/ironspec.rs")
+            || path_text.contains("ironspec-supersession"))
+    {
+        return "intentional-reference";
+    }
+    if text.contains("r[") && text.contains("ironspec.") {
+        return "requirement-id-history";
+    }
+    if text.contains("ironspec") && text.contains("cairn") {
+        return "intentional-reference";
+    }
+    let compatibility_tokens = [
+        "legacy",
+        "alias",
+        "compat",
+        "migration source",
+        "migrate ironspec",
+        "migrate_ironspec",
+        "legacyironspec",
+        "build_ironspec_migration_plan",
+        "cargo_bin_exe_ironspec",
+        "ironspec_archive_date",
+        "name = \"ironspec\"",
+        "path = \"src/ironspec.rs\"",
+        "bin/ironspec",
+        "invoked_as.ends_with(\"ironspec\")",
+        "source_layout\"] == \"ironspec\"",
+        "dry_run[\"source_layout\"], \"ironspec\"",
+        "source_layout\", \"ironspec\"",
+        "migrate-ironspec",
+        "ironspec = {",
+        "\"ironspec\" =>",
+        "\"ironspec\",",
+        "[\"openspec\", \"ironspec\"]",
+        "openspec or ironspec",
+        "<openspec|ironspec>",
+    ];
+    if text.contains("ironspec")
+        && compatibility_tokens
+            .iter()
+            .any(|token| text.contains(token))
+    {
+        return "compatibility-alias";
+    }
+    "needs-fix"
+}
+
+fn safe_relative_path(root: &Path, path: &Path) -> String {
+    path.strip_prefix(root)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .replace('\\', "/")
 }
 
 fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -7959,7 +8610,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE\n  evidence registry verify --root PATH --registry FILE\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH] [--strict]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE\n  evidence registry verify --root PATH --registry FILE\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  policy export [--source PATH] [--output PATH] [--check]\n  tracey coverage [--root PATH] [--json]\n  rename-classification [--output PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

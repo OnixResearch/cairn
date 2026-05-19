@@ -47,7 +47,7 @@ create` create native layout artifacts.
 ## Local checks
 
 ```bash
-python3 tools/export-policy.py --check
+cairn policy export --check
 cargo fmt --check
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
@@ -61,7 +61,9 @@ nix run path:$PWD#cairn -- status --root fixtures/basic
 `nix flake check` includes policy freshness, Rust formatting, workspace tests,
 Cairn validation, traceability coverage, Clippy, the Slotcar consumer check,
 and a self-dogfood check that runs the built `cairn` CLI against this
-repository plus the fixture repos. `cairn validate` checks change/task policy
+repository plus the fixture repos. Maintained gates use Rust CLI surfaces and
+Nickel policy evaluation; Cairn does not keep checked-in Python or shell helper
+scripts for these checks. `cairn validate` checks change/task policy
 plus EARS-style requirement strength and GIVEN/WHEN/THEN scenario structure for
 accepted specs and active change delta specs. Slotcar artifacts should be written
 under `artifacts/`, which is ignored by git.
@@ -69,13 +71,13 @@ under `artifacts/`, which is ignored by git.
 ## Traceability
 
 Tracey configuration lives at `.config/tracey/config.styx` and scans accepted
-specs plus Rust/Python implementation references:
+specs plus Rust/Nickel implementation references:
 
 ```bash
 tracey query status
 tracey query uncovered
 tracey query untested
-python3 tools/check-tracey-coverage.py --root .
+cairn tracey coverage --root .
 ```
 
 The Nix `tracey-coverage` check runs the deterministic helper so every accepted

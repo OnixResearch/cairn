@@ -144,9 +144,12 @@ Expected result: no matches.
 Run the full gate after substantive changes:
 
 ```bash
-nix develop -c bash -c 'python3 tools/export-policy.py --check && cargo fmt --check && cargo test --workspace && cargo clippy --workspace --all-targets -- -D warnings'
+nix develop -c cairn policy export --check
+nix develop -c cargo fmt --check
+nix develop -c cargo test --workspace
+nix develop -c cargo clippy --workspace --all-targets -- -D warnings
 nix run path:$PWD#cairn -- validate --root .
-python3 tools/check-tracey-coverage.py --root .
+cairn tracey coverage --root .
 nix flake check "path:$PWD" -L
 ```
 
@@ -167,7 +170,7 @@ Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix c
 - Tracey config lives at `.config/tracey/config.styx`.
 - Requirement markers in accepted specs use `r[...]`; implementation and test comments should use `r[impl ...]` and `r[verify ...]`.
 - Run `tracey query status`, `tracey query uncovered`, and `tracey query untested` from the repo root when curating coverage.
-- `tools/check-tracey-coverage.py --root .` is the deterministic bootstrap rail used by `nix flake check`; it ensures every accepted requirement has at least one source-controlled implementation or verification reference without making Tracey a runtime dependency.
+- `cairn tracey coverage --root .` is the deterministic bootstrap rail used by `nix flake check`; it ensures every accepted requirement has at least one source-controlled implementation or verification reference without making Tracey a runtime dependency.
 
 ## Known pitfalls
 

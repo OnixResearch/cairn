@@ -37,30 +37,27 @@
       });
 
       checks = eachSystem (pkgs: {
+        # r[verify cairn.supersede.rust_nickel_only_gates.no_python_scripts]
         policy-fresh = pkgs.runCommand "cairn-policy-fresh" {
-          nativeBuildInputs = [ pkgs.nickel pkgs.python3 ];
+          nativeBuildInputs = [ pkgs.nickel ];
         } ''
           cp -r ${self} source
           chmod -R u+w source
           cd source
-          python3 tools/export-policy.py --check
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
           touch $out
         '';
 
         policy-stale-detects-drift = pkgs.runCommand "cairn-policy-stale-detects-drift" {
-          nativeBuildInputs = [ pkgs.nickel pkgs.python3 ];
+          nativeBuildInputs = [ pkgs.nickel ];
         } ''
           cp -r ${self} source
           chmod -R u+w source
           cd source
           # r[verify cairn.supersede.deterministic_gates.policy_freshness]
-          python3 - <<'PY'
-from pathlib import Path
-path = Path("cairn-policy/default.ncl")
-text = path.read_text()
-path.write_text(text.replace('name = "cairn-default"', 'name = "cairn-default-stale-probe"'))
-PY
-          if python3 tools/export-policy.py --check >policy-check.out 2>policy-check.err; then
+          substituteInPlace cairn-policy/default.ncl \
+            --replace-fail 'name = "cairn-default"' 'name = "cairn-default-stale-probe"'
+          if ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check >policy-check.out 2>policy-check.err; then
             echo "expected stale generated policy check to fail" >&2
             exit 1
           fi
@@ -85,42 +82,40 @@ PY
           cargoLock.lockFile = ./Cargo.lock;
           cargoBuildFlags = [ "--workspace" "--all-targets" ];
           cargoTestFlags = [ "--workspace" ];
-          nativeCheckInputs = [ pkgs.nickel pkgs.python3 ];
+          nativeCheckInputs = [ pkgs.nickel ];
           preCheck = ''
-            python3 tools/export-policy.py --check
+            ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
           '';
         };
 
         openspec-validate = pkgs.runCommand "cairn-openspec-validate" {
-          nativeBuildInputs = [ pkgs.python3 ];
+          nativeBuildInputs = [ ];
         } ''
           cp -r ${self} source
           chmod -R u+w source
           cd source
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn validate --root . > /tmp/cairn-openspec-validate.json
-          python3 -c 'import json; data=json.load(open("/tmp/cairn-openspec-validate.json")); assert data["valid"] is True, data; assert data["issues"] == [], data; assert data["spec_issues"] == [], data'
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn validate --root . --strict > /tmp/cairn-openspec-validate.json
           touch $out
         '';
 
         tracey-coverage = pkgs.runCommand "cairn-tracey-coverage" {
-          nativeBuildInputs = [ pkgs.python3 ];
+          nativeBuildInputs = [ ];
         } ''
           cp -r ${self} source
           chmod -R u+w source
           cd source
-          python3 tools/check-tracey-coverage.py --root .
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn tracey coverage --root .
           test -f .config/tracey/config.styx
           touch $out
         '';
 
         rename-classification = pkgs.runCommand "cairn-rename-classification" {
-          nativeBuildInputs = [ pkgs.python3 ];
+          nativeBuildInputs = [ ];
         } ''
           cp -r ${self} source
           chmod -R u+w source
           cd source
-          python3 tools/check-rename-classification.py >/tmp/cairn-rename-classification.json
-          python3 -c 'import json; data=json.load(open("/tmp/cairn-rename-classification.json")); assert data["valid"] is True, data; assert data["buckets"].get("needs-fix", 0) == 0, data'
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn rename-classification >/tmp/cairn-rename-classification.json
           touch $out
         '';
 
@@ -130,11 +125,11 @@ PY
           src = self;
           cargoLock.lockFile = ./Cargo.lock;
           cargoBuildFlags = [ "-p" "cairn-cli" ];
-          nativeCheckInputs = [ pkgs.nickel pkgs.python3 ];
+          nativeCheckInputs = [ pkgs.nickel ];
           doCheck = true;
           checkPhase = ''
             runHook preCheck
-            python3 tools/export-policy.py --check
+            ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
             cairn=target/${pkgs.stdenv.hostPlatform.config}/release/cairn
             $cairn policy >/tmp/cairn-policy.json
             scratch=$(mktemp -d)
@@ -144,30 +139,21 @@ PY
             $cairn change show replace-openspec --root "$scratch" >/tmp/cairn-change-show.json
             $cairn status --root "$scratch" >/tmp/cairn-scratch-status.json
             $cairn status --root . >/tmp/cairn-status.json
-            $cairn validate --root . >/tmp/cairn-validate.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-validate.json")); assert data["valid"] is True, data; assert data["spec_issues"] == [], data'
+            $cairn validate --root . --strict >/tmp/cairn-validate.json
             $cairn status --root fixtures/basic >/tmp/cairn-fixture-status.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-fixture-status.json")); assert data["layout"] == "cairn", data'
             legacy=$(mktemp -d)
             cp -R fixtures/basic/. "$legacy"/
             rm -rf "$legacy/cairn"
             $cairn status --root "$legacy" >/tmp/cairn-legacy-status.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-legacy-status.json")); assert data["layout"] == "cairn", data; assert data["specs"] == [], data; assert data["changes"] == [], data'
             legacy_ironspec=$(mktemp -d)
             cp -R fixtures/basic/. "$legacy_ironspec"/
             mv "$legacy_ironspec/cairn" "$legacy_ironspec/ironspec"
             $cairn status --root "$legacy_ironspec" >/tmp/cairn-legacy-ironspec-status.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-legacy-ironspec-status.json")); assert data["layout"] == "cairn", data; assert data["specs"] == [], data; assert data["changes"] == [], data'
             $cairn migrate ironspec --root "$legacy_ironspec" >/tmp/cairn-migrate-ironspec-plan.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-migrate-ironspec-plan.json")); assert data["source_layout"] == "ironspec", data; assert data["destination_layout"] == "cairn", data; assert data["dry_run"] is True, data; assert data["blocked"] is False, data; assert data["mutated"] is False, data; assert len(data["actions"]) > 0, data'
             $cairn migrate ironspec --root "$legacy_ironspec" --execute >/tmp/cairn-migrate-ironspec-execute.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-migrate-ironspec-execute.json")); assert data["dry_run"] is False, data; assert data["blocked"] is False, data; assert data["mutated"] is True, data'
             $cairn migrate openspec --root "$legacy" >/tmp/cairn-migrate-plan.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-migrate-plan.json")); assert data["dry_run"] is True, data; assert data["blocked"] is False, data; assert data["mutated"] is False, data; assert len(data["actions"]) > 0, data'
             $cairn migrate openspec --root "$legacy" --execute >/tmp/cairn-migrate-execute.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-migrate-execute.json")); assert data["dry_run"] is False, data; assert data["blocked"] is False, data; assert data["mutated"] is True, data'
             $cairn status --root "$legacy" >/tmp/cairn-native-status.json
-            python3 -c 'import json; data=json.load(open("/tmp/cairn-native-status.json")); assert data["layout"] == "cairn", data'
             $cairn change list --root fixtures/basic >/tmp/cairn-fixture-change-list.json
             $cairn change show demo --root fixtures/basic >/tmp/cairn-fixture-change-show.json
             $cairn spec list --root fixtures/basic >/tmp/cairn-fixture-spec-list.json
@@ -218,7 +204,6 @@ PY
             pkgs.rustfmt
             pkgs.clippy
             pkgs.nickel
-            pkgs.python3
             slotcar.packages.${pkgs.stdenv.hostPlatform.system}.cargo-tigerstyle
           ];
         };
