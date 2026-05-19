@@ -240,7 +240,13 @@ are `command`, `root`, `valid`, `verdict`, `issues`,
 `replay_receipt_hash`, `replay_verification_receipt_hash`,
 `environment_attestation_hash`, `release_readiness_receipt_hash`,
 `coverage_audit_receipt_hash`, and
-`receipt_hash`. The outer publication/index layer can be generated with
+`receipt_hash`. The first-class publication path is
+`cairn evidence export --root . --out target/cairn-evidence/`, which materializes
+coverage audit, replay, replay verification, release-readiness, agent bundle,
+bundle verification, evidence manifest, and manifest verification artifacts in a
+portable directory. Stable public evidence export fields are `command`, `root`,
+`output`, `valid`, `verdict`, `issues`, `artifacts`, `manifest_hash`,
+`manifest_verification_receipt_hash`, and `receipt_hash`. The outer publication/index layer can also be generated with
 `cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
 list stable roles such as `agent_evidence_bundle`, `agent_receipt`,

@@ -54,6 +54,26 @@ Agent receipts must bind completion claims to replay-checked Cairn surfaces. The
 - `replay_environment_attestation_hash`: optional BLAKE3 hash from the replay receipt's `environment_attestation.attestation_hash`
 - `replay_artifact_path`: optional display-only path for local operators
 
+## First-class evidence export
+
+Agents and CI that only need the canonical local evidence directory should prefer
+`cairn evidence export` over hand-assembling every artifact:
+
+```sh
+nix run .#cairn -- evidence export --root . --out target/cairn-evidence/
+```
+
+The export command materializes `coverage-audit.json`, `replay-agent.json`,
+`replay-verification.json`, `release-readiness.json`, `agent-receipt.json`,
+`agent-evidence-bundle.json`, `agent-evidence-bundle-verification.json`,
+`evidence-manifest.json`, `evidence-manifest-verification.json`, and
+`evidence-export-receipt.json`. The export receipt uses relative artifact paths,
+BLAKE3 file hashes, the manifest hash, the manifest-verification receipt hash,
+and deterministic issue codes for failed nested evidence. r[verify cairn.supersede.evidence_export_bundle.docs]
+r[verify cairn.supersede.evidence_export_bundle.archive]
+
+## Manual replay and publication flow
+
 `agent-receipt validate` compares `replay_policy_hash` with the current generated
 policy hash and derives required cases from the policy-owned `agent` replay
 group. Operators should collect the evidence with `cairn determinism replay --group agent`; validation checks both `replay_selected_groups` and the expanded

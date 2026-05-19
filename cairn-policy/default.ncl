@@ -124,6 +124,13 @@ let Contracts = import "contracts.ncl" in
       issue_keys = ["actual", "code", "expected", "field_path"],
       hash_fields = ["anchor_metadata_hash", "coverage_audit_receipt_hash", "manifest_hash", "receipt_hash", "signer_metadata_hash"],
     },
+    {
+      command = "evidence export",
+      top_level_keys = ["artifacts", "command", "issues", "manifest_hash", "manifest_verification_receipt_hash", "output", "receipt_hash", "root", "valid", "verdict"],
+      artifact_keys = ["hash", "path", "required", "role"],
+      issue_keys = ["actual", "code", "expected", "field_path"],
+      hash_fields = ["manifest_hash", "manifest_verification_receipt_hash", "receipt_hash"],
+    },
   ],
 
   determinism_replay_policy = {

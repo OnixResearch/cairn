@@ -1276,6 +1276,121 @@ fn determinism_replay_rejects_hidden_environment_entropy() -> Result<(), Box<dyn
 }
 
 #[test]
+fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.evidence_export_bundle.command]
+    // r[verify cairn.supersede.evidence_export_bundle.artifacts]
+    // r[verify cairn.supersede.evidence_export_bundle.failures]
+    // r[verify cairn.supersede.evidence_export_bundle.gates]
+    // r[verify cairn.supersede.evidence_export_bundle.docs]
+    // r[verify cairn.supersede.evidence_export_bundle.archive]
+    let dir = temp_project("evidence-export-bundle")?;
+    let export_dir = dir.join("export");
+    let receipt = run_json_strings(&[
+        "evidence".into(),
+        "export".into(),
+        "--root".into(),
+        ".".into(),
+        "--out".into(),
+        export_dir.display().to_string(),
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "pass");
+    assert_eq!(receipt["issues"].as_array().unwrap().len(), 0);
+    assert_hash_field(&receipt, "manifest_hash")?;
+    assert_hash_field(&receipt, "manifest_verification_receipt_hash")?;
+    assert_hash_field(&receipt, "receipt_hash")?;
+    let roles = receipt["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|artifact| artifact["role"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        roles,
+        vec![
+            "agent_evidence_bundle",
+            "agent_evidence_bundle_verification",
+            "agent_receipt",
+            "coverage_audit",
+            "evidence_manifest",
+            "evidence_manifest_verification",
+            "release_readiness",
+            "replay_receipt",
+            "replay_verification",
+        ]
+    );
+    for artifact in receipt["artifacts"].as_array().unwrap() {
+        assert_hash_field(artifact, "hash")?;
+        assert_eq!(artifact["required"], true);
+        let path = artifact["path"].as_str().unwrap();
+        assert!(!path.contains(&dir.display().to_string()), "{path}");
+        assert!(
+            export_dir.join(path).exists(),
+            "missing exported artifact: {path}"
+        );
+    }
+    let saved_receipt: Value =
+        serde_json::from_slice(&fs::read(export_dir.join("evidence-export-receipt.json"))?)?;
+    assert_eq!(saved_receipt["receipt_hash"], receipt["receipt_hash"]);
+    let bundle_verification: Value = serde_json::from_slice(&fs::read(
+        export_dir.join("agent-evidence-bundle-verification.json"),
+    )?)?;
+    assert_eq!(bundle_verification["valid"], true);
+    let manifest_verification: Value = serde_json::from_slice(&fs::read(
+        export_dir.join("evidence-manifest-verification.json"),
+    )?)?;
+    assert_eq!(manifest_verification["valid"], true);
+    assert_eq!(
+        manifest_verification["receipt_hash"],
+        receipt["manifest_verification_receipt_hash"]
+    );
+    assert_eq!(
+        manifest_verification["manifest_hash"],
+        receipt["manifest_hash"]
+    );
+    let text = serde_json::to_string(&receipt)?;
+    assert!(!text.contains(&dir.display().to_string()), "{text}");
+    assert!(!text.contains("SECRET"), "{text}");
+
+    let bad_agent = dir.join("bad-agent.json");
+    let mut stale_agent: Value = serde_json::from_str(&fs::read_to_string(
+        repo_root().join("fixtures/agent-receipts/positive.json"),
+    )?)?;
+    stale_agent["replay_evidence"]["replay_receipt_hash"] =
+        json!("0000000000000000000000000000000000000000000000000000000000000000");
+    fs::write(
+        &bad_agent,
+        serde_json::to_string_pretty(&stale_agent)? + "\n",
+    )?;
+    let bad_export = dir.join("bad-export");
+    let failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "export".into(),
+        "--root".into(),
+        ".".into(),
+        "--out".into(),
+        bad_export.display().to_string(),
+        "--agent-receipt".into(),
+        bad_agent.display().to_string(),
+    ])?;
+    assert_eq!(failure["valid"], false);
+    let issue_codes = failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(issue_codes.contains(&"export.bundle_verification_failed"));
+    assert!(issue_codes.contains(&"export.manifest_verification_failed"));
+    let failure_text = serde_json::to_string(&failure)?;
+    assert!(
+        !failure_text.contains(&dir.display().to_string()),
+        "{failure_text}"
+    );
+    Ok(())
+}
+
+#[test]
 fn release_readiness_lists_replay_oracle_preflight() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.release_readiness]
     // r[verify cairn.supersede.release_readiness.determinism_replay]
