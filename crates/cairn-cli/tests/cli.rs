@@ -857,10 +857,15 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     // r[verify cairn.supersede.evidence_manifest_generate.tests]
     // r[verify cairn.supersede.evidence_manifest_generate.gates]
     // r[verify cairn.supersede.evidence_manifest_generate.archive]
+    // r[verify cairn.supersede.determinism_coverage_release_evidence.bundle_manifest]
+    // r[verify cairn.supersede.determinism_coverage_release_evidence.failures]
+    // r[verify cairn.supersede.determinism_coverage_release_evidence.docs]
+    // r[verify cairn.supersede.determinism_coverage_release_evidence.archive]
     let dir = temp_project("signed-evidence-manifest")?;
     let replay_path = dir.join("agent-replay.json");
     let replay_verify_path = dir.join("agent-replay-verify.json");
     let release_path = dir.join("release-readiness.json");
+    let coverage_path = dir.join("coverage-audit.json");
     let agent_path = dir.join("agent-receipt.json");
     let bundle_path = dir.join("bundle.json");
     let manifest_path = dir.join("manifest.json");
@@ -903,6 +908,16 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
             "receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         }))? + "\n",
     )?;
+    let coverage = run_json_strings(&[
+        "determinism".into(),
+        "coverage-audit".into(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    fs::write(
+        &coverage_path,
+        serde_json::to_string_pretty(&coverage)? + "\n",
+    )?;
 
     let mut agent_receipt: Value = serde_json::from_str(&fs::read_to_string(
         repo_root().join("fixtures/agent-receipts/positive.json"),
@@ -943,10 +958,12 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
         "replay_receipt_path": replay_path,
         "replay_verification_path": replay_verify_path,
         "release_readiness_path": release_path,
+        "coverage_audit_path": coverage_path,
         "agent_receipt_hash": agent_validation["agent_receipt_hash"],
         "replay_receipt_hash": replay_verify["replay_receipt_hash"],
         "replay_verification_receipt_hash": replay_verify["receipt_hash"],
         "release_readiness_receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "coverage_audit_receipt_hash": coverage["receipt_hash"],
     });
     fs::write(&bundle_path, serde_json::to_string_pretty(&bundle)? + "\n")?;
     let bundle_verify = run_json_strings(&[
@@ -957,6 +974,10 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
         ".".into(),
     ])?;
     assert_eq!(bundle_verify["valid"], true);
+    assert_eq!(
+        bundle_verify["coverage_audit_receipt_hash"],
+        coverage["receipt_hash"]
+    );
     let mut bundle_with_hash = bundle.clone();
     bundle_with_hash["receipt_hash"] = bundle_verify["receipt_hash"].clone();
     fs::write(
@@ -970,7 +991,8 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
             {"role": "agent_receipt", "path": agent_path, "hash": agent_validation["agent_receipt_hash"], "schema": "agent-receipt-v1"},
             {"role": "replay_receipt", "path": replay_path, "hash": replay_verify["replay_receipt_hash"], "schema": "determinism-replay-v1"},
             {"role": "replay_verification", "path": replay_verify_path, "hash": replay_verify["receipt_hash"], "schema": "determinism-verify-receipt-v1"},
-            {"role": "release_readiness", "path": release_path, "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "schema": "release-readiness-v1"}
+            {"role": "release_readiness", "path": release_path, "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "schema": "release-readiness-v1"},
+            {"role": "coverage_audit", "path": coverage_path, "hash": coverage["receipt_hash"], "schema": "determinism-coverage-audit-v1"}
         ],
         "signer": {"kind": "ci", "id": "onix-ci"},
         "anchor": {"kind": "local-artifact-index", "id": "run-123"}
@@ -988,7 +1010,11 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     ])?;
     assert_eq!(verified["valid"], true);
     assert_eq!(verified["verdict"], "pass");
-    assert_eq!(verified["artifacts"].as_array().unwrap().len(), 5);
+    assert_eq!(verified["artifacts"].as_array().unwrap().len(), 6);
+    assert_eq!(
+        verified["coverage_audit_receipt_hash"],
+        coverage["receipt_hash"]
+    );
     assert_hash_field(&verified, "manifest_hash")?;
     assert_hash_field(&verified, "signer_metadata_hash")?;
     assert_hash_field(&verified, "anchor_metadata_hash")?;
@@ -1015,6 +1041,8 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
         replay_verify_path.display().to_string(),
         "--release-readiness".into(),
         release_path.display().to_string(),
+        "--coverage-audit".into(),
+        coverage_path.display().to_string(),
         "--signer-metadata".into(),
         signer_path.display().to_string(),
         "--anchor-metadata".into(),
@@ -1041,7 +1069,8 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
             "agent_receipt",
             "replay_receipt",
             "replay_verification",
-            "release_readiness"
+            "release_readiness",
+            "coverage_audit"
         ]
     );
     assert_eq!(generated_manifest["signer"]["kind"], "ci");
@@ -1053,6 +1082,10 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
         ".".into(),
     ])?;
     assert_eq!(generated_verified["valid"], true);
+    assert_eq!(
+        generated_verified["coverage_audit_receipt_hash"],
+        coverage["receipt_hash"]
+    );
     assert_eq!(
         generated_verified["manifest_hash"],
         generated["manifest_hash"]
@@ -1246,8 +1279,12 @@ fn determinism_replay_rejects_hidden_environment_entropy() -> Result<(), Box<dyn
 fn release_readiness_lists_replay_oracle_preflight() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.release_readiness]
     // r[verify cairn.supersede.release_readiness.determinism_replay]
+    // r[verify cairn.supersede.determinism_coverage_release_evidence.release]
+    // r[verify cairn.supersede.determinism_coverage_release_evidence.gates]
     let value = run_json(&["release-readiness", "--root", "."])?;
     assert_eq!(value["determinism_replay"]["required"], true);
+    assert_eq!(value["coverage_audit_valid"], true);
+    assert_hash_field(&value, "coverage_audit_receipt_hash")?;
     assert_eq!(value["determinism_replay"]["included"], false);
     assert_eq!(
         value["determinism_replay"]["command"],
@@ -2585,6 +2622,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "cairn_validation_hash",
             "tracey_coverage_hash",
             "mcp_smoke_receipt_hash",
+            "coverage_audit_valid",
+            "coverage_audit_receipt_hash",
             "repository_gate_summary",
             "determinism_replay",
             "mcp",
@@ -2598,6 +2637,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_hash_field(&receipt, "cairn_validation_hash")?;
     assert_hash_field(&receipt, "tracey_coverage_hash")?;
     assert_hash_field(&receipt, "mcp_smoke_receipt_hash")?;
+    assert_hash_field(&receipt, "coverage_audit_receipt_hash")?;
+    assert_eq!(receipt["coverage_audit_valid"], true);
     let check_names = receipt["checks"]
         .as_array()
         .ok_or("checks array")?
@@ -2607,6 +2648,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert!(check_names.contains(&"cairn_validate"));
     assert!(check_names.contains(&"tracey_coverage"));
     assert!(check_names.contains(&"mcp_agent_smoke"));
+    assert!(check_names.contains(&"determinism_coverage_audit"));
     assert!(check_names.contains(&"repository_gate_policy_listed"));
     assert_eq!(receipt["mcp"]["read_only"], true);
     assert_eq!(receipt["mcp"]["destructive"], false);
@@ -2625,6 +2667,7 @@ fn release_readiness_bundle_is_reproducible() -> Result<(), Box<dyn Error>> {
             "cairn_validation_hash",
             "tracey_coverage_hash",
             "mcp_smoke_receipt_hash",
+            "coverage_audit_receipt_hash",
         ],
     )?;
     assert_eq!(receipt["valid"], true);

@@ -107,9 +107,9 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "agent-receipt verify-bundle",
-      top_level_keys = ["agent_receipt_hash", "command", "current_replay_policy_hash", "environment_attestation_hash", "issues", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash", "required_replay_group", "root", "valid", "verdict"],
+      top_level_keys = ["agent_receipt_hash", "command", "coverage_audit_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "issues", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash", "required_replay_group", "root", "valid", "verdict"],
       issue_keys = ["actual", "code", "expected", "field_path"],
-      hash_fields = ["agent_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash"],
+      hash_fields = ["agent_receipt_hash", "coverage_audit_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash"],
     },
     {
       command = "evidence-manifest generate",
@@ -119,10 +119,10 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "evidence-manifest verify",
-      top_level_keys = ["anchor_metadata_hash", "artifacts", "command", "issues", "manifest_hash", "receipt_hash", "root", "signer_metadata_hash", "valid", "verdict"],
+      top_level_keys = ["anchor_metadata_hash", "artifacts", "command", "coverage_audit_receipt_hash", "issues", "manifest_hash", "receipt_hash", "root", "signer_metadata_hash", "valid", "verdict"],
       artifact_keys = ["hash", "role", "schema", "valid"],
       issue_keys = ["actual", "code", "expected", "field_path"],
-      hash_fields = ["anchor_metadata_hash", "manifest_hash", "receipt_hash", "signer_metadata_hash"],
+      hash_fields = ["anchor_metadata_hash", "coverage_audit_receipt_hash", "manifest_hash", "receipt_hash", "signer_metadata_hash"],
     },
   ],
 
@@ -136,7 +136,7 @@ let Contracts = import "contracts.ncl" in
       { id = "mcp_describe", command_kind = "mcp_describe", args = ["mcp", "--describe"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = [], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "mcp_status", command_kind = "mcp_call", args = ["mcp", "--call", "cairn_status", "{root:<root>}"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["content.root"], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "migrate_dry_run", command_kind = "migrate_dry_run", args = ["migrate", "openspec", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.source", "actions.destination", "root"], hash_fields = ["source_manifest_hash", "destination_manifest_hash", "manifest_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
-      { id = "release_readiness", command_kind = "release_readiness", args = ["release-readiness", "--root", "<root>"], fixture_root = ".", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["root"], hash_fields = ["receipt_hash", "cairn_validation_hash", "tracey_coverage_hash", "mcp_smoke_receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "release_readiness", command_kind = "release_readiness", args = ["release-readiness", "--root", "<root>"], fixture_root = ".", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["root"], hash_fields = ["receipt_hash", "cairn_validation_hash", "tracey_coverage_hash", "mcp_smoke_receipt_hash", "coverage_audit_receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "status", command_kind = "status", args = ["status", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root", "specs", "changes"], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "sync_dry_run", command_kind = "sync_dry_run", args = ["sync", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.path", "delta_specs"], hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "validate", command_kind = "validate", args = ["validate", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root"], hash_fields = ["receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },

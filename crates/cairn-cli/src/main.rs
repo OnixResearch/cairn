@@ -1979,6 +1979,10 @@ fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> Value {
     let tracey = readiness_component("tracey_coverage", || tracey_coverage_receipt(root.clone()));
     let mcp_smoke =
         readiness_component("mcp_agent_smoke", || mcp_agent_smoke_receipt(root.clone()));
+    let coverage_audit = readiness_component("determinism_coverage_audit", || {
+        let policy = load_policy_file(policy_path.clone())?;
+        Ok(determinism_coverage_audit_receipt(&root, &policy))
+    });
     let repository_gate_summary = repository_gate_summary();
     let replay_preflight = json!({
         "command": "determinism replay --root <root>",
@@ -1986,7 +1990,13 @@ fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> Value {
         "required": true,
         "reason": "workspace replay may copy fixtures and is an explicit operator/CI preflight",
     });
-    let mut checks = vec![validation.check, tracey.check, mcp_smoke.check];
+    let coverage_audit_valid = coverage_audit.check["passed"].clone();
+    let mut checks = vec![
+        validation.check,
+        tracey.check,
+        mcp_smoke.check,
+        coverage_audit.check,
+    ];
     checks.push(json!({
         "name": "repository_gate_policy_listed",
         "passed": true,
@@ -2008,6 +2018,8 @@ fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> Value {
             "cairn_validation_hash": validation.receipt_hash,
             "tracey_coverage_hash": tracey.receipt_hash,
             "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
+            "coverage_audit_valid": coverage_audit_valid,
+            "coverage_audit_receipt_hash": coverage_audit.receipt_hash,
             "repository_gate_summary": repository_gate_summary,
             "determinism_replay": replay_preflight,
             "mcp": {"read_only": true, "destructive": false}
@@ -2060,6 +2072,7 @@ fn component_source(name: &str) -> &'static str {
         "cairn_validate" => "cairn validate --root <root>",
         "tracey_coverage" => "python3 tools/check-tracey-coverage.py --root <root>",
         "mcp_agent_smoke" => "cairn agent-receipt smoke-mcp --root <root>",
+        "determinism_coverage_audit" => "cairn determinism coverage-audit --root <root>",
         _ => "unknown",
     }
 }
@@ -2104,6 +2117,7 @@ fn tracey_failure_is_active_release_readiness_change(stdout: &str) -> bool {
                 id.starts_with("cairn.supersede.release_readiness_bundle")
                     || id.starts_with("cairn.supersede.determinism_replay.policy_")
                     || id == "cairn.supersede.determinism_replay.expanded_surfaces"
+                    || id.starts_with("cairn.supersede.determinism_coverage_release_evidence")
             })
         })
 }
@@ -2476,6 +2490,7 @@ fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_path: &Path) -
                 Value::Null,
                 Value::Null,
                 Value::Null,
+                Value::Null,
             )
         }
     };
@@ -2492,6 +2507,7 @@ fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_path: &Path) -
                     "unreadable",
                 )],
                 current_policy_hash,
+                Value::Null,
                 Value::Null,
                 Value::Null,
                 Value::Null,
@@ -2521,12 +2537,15 @@ fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_path: &Path) -
     );
     let release_path =
         optional_bundle_artifact_path(&bundle, bundle_base, "release_readiness_path", &mut issues);
+    let coverage_audit_path =
+        optional_bundle_artifact_path(&bundle, bundle_base, "coverage_audit_path", &mut issues);
 
     let mut agent_receipt_hash = Value::Null;
     let mut replay_receipt_hash = Value::Null;
     let mut replay_verification_receipt_hash = Value::Null;
     let mut environment_attestation_hash = Value::Null;
     let mut release_readiness_receipt_hash = Value::Null;
+    let mut coverage_audit_receipt_hash = Value::Null;
 
     let mut agent_receipt = Value::Null;
     if let Some(path) = agent_path.as_deref() {
@@ -2710,6 +2729,34 @@ fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_path: &Path) -
         );
     }
 
+    if let Some(path) = coverage_audit_path.as_deref() {
+        match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
+            Ok(value) => {
+                coverage_audit_receipt_hash = receipt_stated_or_computed_hash(root, &value);
+                if value["valid"].as_bool() != Some(true) {
+                    issues.push(agent_bundle_issue(
+                        "coverage_audit.invalid",
+                        "coverage_audit",
+                        "valid coverage-audit receipt",
+                        "invalid",
+                    ));
+                }
+            }
+            Err(_) => issues.push(agent_bundle_issue(
+                "coverage_audit.read_failed",
+                "coverage_audit_path",
+                "readable coverage-audit receipt",
+                "unreadable",
+            )),
+        }
+        verify_optional_bundle_hash(
+            &mut issues,
+            &bundle,
+            "coverage_audit_receipt_hash",
+            &coverage_audit_receipt_hash,
+        );
+    }
+
     issues.sort_by_key(canonical_json_hash);
     agent_bundle_receipt(
         root,
@@ -2720,6 +2767,7 @@ fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_path: &Path) -
         replay_verification_receipt_hash,
         environment_attestation_hash,
         release_readiness_receipt_hash,
+        coverage_audit_receipt_hash,
     )
 }
 
@@ -2854,6 +2902,7 @@ fn agent_bundle_receipt(
     replay_verification_receipt_hash: Value,
     environment_attestation_hash: Value,
     release_readiness_receipt_hash: Value,
+    coverage_audit_receipt_hash: Value,
 ) -> Value {
     let valid = issues.is_empty();
     with_portable_receipt_hash(
@@ -2871,6 +2920,7 @@ fn agent_bundle_receipt(
             "replay_verification_receipt_hash": replay_verification_receipt_hash,
             "environment_attestation_hash": environment_attestation_hash,
             "release_readiness_receipt_hash": release_readiness_receipt_hash,
+            "coverage_audit_receipt_hash": coverage_audit_receipt_hash,
         }),
     )
 }
@@ -2900,6 +2950,7 @@ struct EvidenceManifestGenerateOptions {
     replay: Option<PathBuf>,
     replay_verification: Option<PathBuf>,
     release_readiness: Option<PathBuf>,
+    coverage_audit: Option<PathBuf>,
     signer_metadata: Option<PathBuf>,
     anchor_metadata: Option<PathBuf>,
     out: Option<String>,
@@ -2961,6 +3012,7 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             | "--replay"
             | "--replay-verification"
             | "--release-readiness"
+            | "--coverage-audit"
             | "--signer-metadata"
             | "--anchor-metadata"
             | "--out"
@@ -2976,6 +3028,9 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             }
             ("--release-readiness", Some(value)) => {
                 options.release_readiness = Some(PathBuf::from(value));
+            }
+            ("--coverage-audit", Some(value)) => {
+                options.coverage_audit = Some(PathBuf::from(value));
             }
             ("--signer-metadata", Some(value)) => {
                 options.signer_metadata = Some(PathBuf::from(value));
@@ -3005,6 +3060,7 @@ fn evidence_manifest_generate_manifest(
             options.replay_verification.as_deref(),
         ),
         ("release_readiness", options.release_readiness.as_deref()),
+        ("coverage_audit", options.coverage_audit.as_deref()),
     ] {
         if let Some(path) = path {
             match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
@@ -3020,7 +3076,7 @@ fn evidence_manifest_generate_manifest(
                     "unreadable",
                 )),
             }
-        } else if role != "release_readiness" {
+        } else if role != "release_readiness" && role != "coverage_audit" {
             issues.push(evidence_manifest_issue(
                 "generate.required_artifact_missing",
                 role,
@@ -3137,6 +3193,7 @@ fn evidence_manifest_verification_receipt(root: &Path, manifest_path: &Path) -> 
                 Vec::new(),
                 Value::Null,
                 Value::Null,
+                Value::Null,
                 vec![evidence_manifest_issue(
                     "manifest.read_failed",
                     "manifest",
@@ -3178,6 +3235,12 @@ fn evidence_manifest_verification_receipt(root: &Path, manifest_path: &Path) -> 
             "missing",
         )),
     }
+    let coverage_audit_receipt_hash = artifacts
+        .iter()
+        .find(|artifact| artifact.get("role").and_then(Value::as_str) == Some("coverage_audit"))
+        .and_then(|artifact| artifact.get("hash"))
+        .cloned()
+        .unwrap_or(Value::Null);
     let has_bundle = artifacts.iter().any(|artifact| {
         artifact.get("role").and_then(Value::as_str) == Some("agent_evidence_bundle")
     });
@@ -3196,6 +3259,7 @@ fn evidence_manifest_verification_receipt(root: &Path, manifest_path: &Path) -> 
         artifacts,
         signer_metadata_hash,
         anchor_metadata_hash,
+        coverage_audit_receipt_hash,
         issues,
     )
 }
@@ -3371,6 +3435,13 @@ fn validate_manifest_artifact_role(
             "artifact.release_readiness_invalid",
             "valid release-readiness receipt",
         ),
+        "coverage_audit" => receipt_valid_or_issue(
+            value,
+            issues,
+            role,
+            "artifact.coverage_audit_invalid",
+            "valid coverage-audit receipt",
+        ),
         _ => {
             issues.push(evidence_manifest_issue(
                 "artifact.unknown_role",
@@ -3429,6 +3500,7 @@ fn evidence_manifest_receipt(
     artifacts: Vec<Value>,
     signer_metadata_hash: Value,
     anchor_metadata_hash: Value,
+    coverage_audit_receipt_hash: Value,
     issues: Vec<Value>,
 ) -> Value {
     // r[impl cairn.supersede.signed_evidence_manifest.schema]
@@ -3445,6 +3517,7 @@ fn evidence_manifest_receipt(
             "artifacts": artifacts,
             "signer_metadata_hash": signer_metadata_hash,
             "anchor_metadata_hash": anchor_metadata_hash,
+            "coverage_audit_receipt_hash": coverage_audit_receipt_hash,
         }),
     )
 }
@@ -5483,7 +5556,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

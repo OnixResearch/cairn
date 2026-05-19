@@ -231,7 +231,8 @@
           "receipt_hash",
           "cairn_validation_hash",
           "tracey_coverage_hash",
-          "mcp_smoke_receipt_hash"
+          "mcp_smoke_receipt_hash",
+          "coverage_audit_receipt_hash"
         ],
         "id": "release_readiness",
         "normalization_rules": [
@@ -1022,6 +1023,7 @@
       "command": "agent-receipt verify-bundle",
       "hash_fields": [
         "agent_receipt_hash",
+        "coverage_audit_receipt_hash",
         "current_replay_policy_hash",
         "environment_attestation_hash",
         "receipt_hash",
@@ -1040,6 +1042,7 @@
       "top_level_keys": [
         "agent_receipt_hash",
         "command",
+        "coverage_audit_receipt_hash",
         "current_replay_policy_hash",
         "environment_attestation_hash",
         "issues",
@@ -1093,6 +1096,7 @@
       "command": "evidence-manifest verify",
       "hash_fields": [
         "anchor_metadata_hash",
+        "coverage_audit_receipt_hash",
         "manifest_hash",
         "receipt_hash",
         "signer_metadata_hash"
@@ -1109,6 +1113,7 @@
         "anchor_metadata_hash",
         "artifacts",
         "command",
+        "coverage_audit_receipt_hash",
         "issues",
         "manifest_hash",
         "receipt_hash",

@@ -65,7 +65,7 @@ replay evidence produces deterministic issue codes such as
 and verify it before copying hashes into agent evidence:
 
 ```sh
-nix run .#cairn -- determinism coverage-audit --root .
+nix run .#cairn -- determinism coverage-audit --root . > target/coverage-audit.json
 nix run .#cairn -- determinism replay --root . --group agent --format summary --out target/replay.json
 nix run .#cairn -- determinism verify-receipt target/replay.json --root .
 ```
@@ -90,9 +90,11 @@ nix run .#cairn -- agent-receipt verify-bundle target/bundle.json --root .
 ```
 
 The bundle JSON names `agent_receipt_path`, `replay_receipt_path`,
-`replay_verification_path`, and optional `release_readiness_path`; it may also
+`replay_verification_path`, optional `release_readiness_path`, and optional
+`coverage_audit_path`; it may also
 pin expected hashes with `agent_receipt_hash`, `replay_receipt_hash`,
-`replay_verification_receipt_hash`, and `release_readiness_receipt_hash`. The
+`replay_verification_receipt_hash`, `release_readiness_receipt_hash`, and
+`coverage_audit_receipt_hash`. The
 bundle verifier composes agent receipt validation and saved replay verification,
 checks the policy-owned `agent` replay group, links the environment attestation
 hash through agent replay evidence, and emits a single deterministic pass/fail
@@ -108,6 +110,7 @@ nix run .#cairn -- evidence-manifest generate \
   --replay target/replay.json \
   --replay-verification target/replay-verify.json \
   --release-readiness target/release-readiness.json \
+  --coverage-audit target/coverage-audit.json \
   --out target/manifest.json \
   --root .
 nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
@@ -115,8 +118,8 @@ nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
 
 A manifest contains an `artifacts` array of objects with `role`, `path`, `hash`,
 and optional `schema` fields. Supported roles include `agent_evidence_bundle`,
-`agent_receipt`, `replay_receipt`, `replay_verification`, and
-`release_readiness`. The verifier composes the existing role validators and
+`agent_receipt`, `replay_receipt`, `replay_verification`, `release_readiness`,
+and `coverage_audit`. The verifier composes the existing role validators and
 checks declared hashes before emitting one deterministic manifest verification
 receipt. Optional `signer` and `anchor` objects are treated as public metadata
 and hashed into the receipt, but Cairn does not validate private keys, remote
@@ -128,6 +131,8 @@ r[verify cairn.supersede.agent_evidence_bundle_verification.docs]
 r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
 r[verify cairn.supersede.determinism_replay.groups.docs]
+r[verify cairn.supersede.determinism_coverage_release_evidence.docs]
+r[verify cairn.supersede.determinism_coverage_release_evidence.archive]
 r[verify cairn.supersede.replay_environment_attestation.docs]
 r[verify cairn.supersede.replay_receipt_verification.docs]
 
