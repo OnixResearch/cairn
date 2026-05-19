@@ -156,19 +156,22 @@ describe, and selected MCP read-only calls. Replay copies fixture roots when
 cross-root comparison is requested, runs cases repeatedly, and emits a single
 deterministic receipt.
 
-For CI triage, select one case with `--case <id>`, render compact logs with
-`--format summary` or `--format jsonl`, and write the full artifact with
-`--out <path>`:
+For CI triage, select one case with `--case <id>` or one policy group with
+`--group <id>`, render compact logs with `--format summary` or `--format jsonl`,
+and write the full artifact with `--out <path>`:
 
 ```bash
-cairn determinism replay --root . --case status --format summary --out target/replay.json
+cairn determinism replay --root . --group smoke --format summary --out target/replay.json
 ```
 
-Replay exits nonzero when evidence is invalid, including unknown case IDs,
-hidden entropy, mutation-denied preflights, or mismatches. Stable public determinism replay fields are `command`, `root`, `valid`, `verdict`,
-`available_cases`, `selected_cases`, `summary`, `cases`, `skipped`,
-`mismatches`, `nondeterminism_failures`, `mutability_observations`,
-`normalization_rules`, and `receipt_hash`. Case entries expose stable `id`,
+Replay groups are policy-owned named suites (`smoke`, `agent`, `release`, and
+`full`) whose membership lives in generated policy. Replay exits nonzero when
+evidence is invalid, including unknown case IDs, unknown group IDs, selector
+conflicts, hidden entropy, mutation-denied preflights, or mismatches. Stable public determinism replay fields are `command`, `root`, `valid`, `verdict`,
+`available_cases`, `available_groups`, `selected_cases`, `selected_groups`,
+`summary`, `cases`, `skipped`, `mismatches`, `nondeterminism_failures`,
+`mutability_observations`, `normalization_rules`, and `receipt_hash`; the group
+selector fields are `available_groups`, `selected_groups`. Case entries expose stable `id`,
 `command_kind`, `args`, `fixture_root`, `expected_mutability`,
 `comparison_modes`, `normalization_rules`, `display_only_paths`, `hash_fields`,
 `runs`, and `portable_evidence_hash` fields. Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`,

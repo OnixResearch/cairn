@@ -864,6 +864,48 @@ r[cairn.supersede.release_readiness.determinism_replay]
 - THEN it MUST either include the replay oracle receipt hash or explicitly list the replay oracle as a required external operator preflight
 - AND the release-readiness receipt MUST make the distinction machine-readable
 
+### Requirement: Agent-run receipts
+
+Cairn SHALL validate deterministic agent-run receipts that bind agent completion evidence to replay-checked Cairn surfaces.
+
+#### Scenario: Replay evidence schema
+
+- **GIVEN** an agent wrapper records completion evidence for a Cairn task
+- **WHEN** an agent-run receipt is produced
+- **THEN** it SHALL include a `replay_evidence` object containing `replay_receipt_hash`, `replay_policy_hash`, `replay_selected_cases`, and `replay_verdict`
+- **AND** the receipt MAY include a display-only `replay_artifact_path`
+- **AND** the agent receipt hash SHALL remain the canonical BLAKE3 hash of receipt content excluding only `receipt_hash`
+r[cairn.supersede.agent_receipt_replay_evidence.schema]
+
+#### Scenario: Replay evidence validation
+
+- **GIVEN** an agent-run receipt cites deterministic replay evidence
+- **WHEN** `agent-receipt validate` or the MCP validation tool validates an agent-run receipt
+- **THEN** Cairn SHALL verify that replay evidence cites a passing replay verdict, a BLAKE3-shaped replay receipt hash, the current generated policy hash, and the required replay case coverage
+- **AND** the validation receipt SHALL expose the current replay policy hash and required replay cases used for that decision
+r[cairn.supersede.agent_receipt_replay_evidence.validation]
+
+#### Scenario: Deterministic replay evidence failures
+
+- **GIVEN** an agent-run receipt has absent, stale, failed, or incomplete replay evidence
+- **WHEN** Cairn validates the receipt
+- **THEN** agent receipt validation SHALL fail deterministically with stable issue codes and messages
+r[cairn.supersede.agent_receipt_replay_evidence.failures]
+
+#### Scenario: Replay oracle covers receipt validation
+
+- **GIVEN** the policy-owned replay plan includes agent receipt validation
+- **WHEN** `cairn determinism replay` runs the policy-owned replay plan
+- **THEN** the replay oracle SHALL continue to cover `agent-receipt validate` using a replay-evidence-positive receipt fixture
+r[cairn.supersede.agent_receipt_replay_evidence.replay]
+
+#### Scenario: Operator documentation and schema
+
+- **GIVEN** operators inspect Cairn public docs or generated policy schemas
+- **WHEN** they review agent receipt validation requirements
+- **THEN** the stable replay-evidence fields and validation failure semantics SHALL be documented and tested
+r[cairn.supersede.agent_receipt_replay_evidence.docs]
+
 ### Requirement: Determinism replay oracle
 
 r[cairn.supersede.determinism_replay] The system MUST provide a maintained policy-driven replay oracle for commands whose receipts claim deterministic evidence, and that oracle MUST be invocable by agents/CI as an operator-facing workspace preflight.
@@ -994,6 +1036,38 @@ r[cairn.supersede.determinism_replay.ci_tests_docs]
 - WHEN Cairn changes replay selection, output modes, artifact behavior, or failure receipts
 - THEN tests, public schema checks, and operator documentation MUST cover those stable public replay surfaces
 
+#### Scenario: Policy-owned replay groups
+r[cairn.supersede.determinism_replay.groups.policy]
+- GIVEN the generated replay policy defines named replay groups
+- WHEN operators inspect the policy or run replay group selection
+- THEN group membership SHALL be policy-owned and SHALL refer only to known replay case IDs
+
+#### Scenario: Replay group CLI selection
+r[cairn.supersede.determinism_replay.groups.cli]
+- GIVEN an operator wants a named replay suite
+- WHEN they run `cairn determinism replay --group <id>`
+- THEN Cairn SHALL replay the policy-defined cases for that group while preserving the existing default full-suite behavior
+- AND `--case` and `--group` used together SHALL be rejected before replay
+
+#### Scenario: Replay group failure receipts
+r[cairn.supersede.determinism_replay.groups.failures]
+- GIVEN an operator selects an unknown replay group or combines incompatible replay selectors
+- WHEN replay handles the selection failure
+- THEN Cairn SHALL emit a deterministic machine-readable failure receipt with stable mismatch class, expected values, actual selector, and reproduction command
+- AND replay SHALL exit nonzero after rendering the receipt
+
+#### Scenario: Replay group receipt fields
+r[cairn.supersede.determinism_replay.groups.receipt]
+- GIVEN replay is run with default, case, or group selection
+- WHEN the replay receipt is emitted
+- THEN it SHALL expose sorted `available_groups` and `selected_groups` fields while preserving existing `available_cases` and `selected_cases` semantics
+
+#### Scenario: Replay group docs and tests
+r[cairn.supersede.determinism_replay.groups.docs]
+- GIVEN replay groups become a public CI/agent interface
+- WHEN Cairn changes group policy, selection, receipts, or failure semantics
+- THEN tests, public schema checks, and operator docs SHALL cover the stable group behavior
+
 ### Requirement: Agent-run receipts
 
 Cairn SHALL validate deterministic agent-run receipts that bind agent completion evidence to replay-checked Cairn surfaces.
@@ -1035,3 +1109,43 @@ r[cairn.supersede.agent_receipt_replay_evidence.replay]
 - **WHEN** they review agent receipt validation requirements
 - **THEN** the stable replay-evidence fields and validation failure semantics SHALL be documented and tested
 r[cairn.supersede.agent_receipt_replay_evidence.docs]
+
+### Requirement: Determinism replay oracle
+
+Cairn SHALL provide a deterministic replay oracle for policy-owned read-only and dry-run surfaces.
+
+#### Scenario: Policy-owned replay groups
+
+- **GIVEN** the generated replay policy defines named replay groups
+- **WHEN** operators inspect the policy or run replay group selection
+- **THEN** group membership SHALL be policy-owned and SHALL refer only to known replay case IDs
+r[cairn.supersede.determinism_replay.groups.policy]
+
+#### Scenario: Replay group CLI selection
+
+- **GIVEN** an operator wants a named replay suite
+- **WHEN** they run `cairn determinism replay --group <id>`
+- **THEN** Cairn SHALL replay the policy-defined cases for that group while preserving the existing default full-suite behavior
+- **AND** `--case` and `--group` used together SHALL be rejected before replay
+r[cairn.supersede.determinism_replay.groups.cli]
+
+#### Scenario: Replay group failure receipts
+
+- **GIVEN** an operator selects an unknown replay group or combines incompatible replay selectors
+- **WHEN** replay handles the selection failure
+- **THEN** Cairn SHALL emit a deterministic machine-readable failure receipt with stable mismatch class, expected values, actual selector, and reproduction command
+r[cairn.supersede.determinism_replay.groups.failures]
+
+#### Scenario: Replay group receipt schema
+
+- **GIVEN** replay receipts are consumed by agents and CI
+- **WHEN** replay emits a receipt
+- **THEN** the stable public receipt fields SHALL include `available_groups` and `selected_groups` alongside existing case selection fields
+r[cairn.supersede.determinism_replay.groups.receipt]
+
+#### Scenario: Replay group documentation and tests
+
+- **GIVEN** replay groups are public CLI and policy behavior
+- **WHEN** Cairn changes replay groups or selection behavior
+- **THEN** documentation, tests, stable schema checks, and Tracey coverage SHALL describe and verify the behavior
+r[cairn.supersede.determinism_replay.groups.docs]

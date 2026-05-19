@@ -54,10 +54,13 @@ Agent receipts must bind completion claims to replay-checked Cairn surfaces. The
 
 `agent-receipt validate` compares `replay_policy_hash` with the current generated
 policy hash and requires the `agent_receipt_validate`, `mcp_describe`, `status`,
-and `validate` replay cases. Missing, stale, failed, or insufficient replay
-evidence produces deterministic issue codes such as `replay_evidence.missing`,
+and `validate` replay cases. Operators can collect those cases through the
+policy-owned `agent` replay group with `cairn determinism replay --group agent`.
+Missing, stale, failed, or insufficient replay evidence produces deterministic
+issue codes such as `replay_evidence.missing`,
 `replay_evidence.policy_hash_stale`, and
 `replay_evidence.insufficient_coverage`. r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
+r[verify cairn.supersede.determinism_replay.groups.docs]
 
 ## Completion gate
 

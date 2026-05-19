@@ -88,7 +88,7 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "determinism replay",
-      top_level_keys = ["available_cases", "cases", "command", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "selected_cases", "skipped", "summary", "valid", "verdict"],
+      top_level_keys = ["available_cases", "available_groups", "cases", "command", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "selected_cases", "selected_groups", "skipped", "summary", "valid", "verdict"],
       case_keys = ["args", "command_kind", "comparison_modes", "display_only_paths", "expected_mutability", "fixture_root", "hash_fields", "id", "normalization_rules", "portable_evidence_hash", "runs"],
       mismatch_keys = ["actual", "case", "class", "comparison", "expected", "field_path", "reproduce"],
       hash_fields = ["receipt_hash"],
@@ -109,6 +109,12 @@ let Contracts = import "contracts.ncl" in
       { id = "status", command_kind = "status", args = ["status", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root", "specs", "changes"], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "sync_dry_run", command_kind = "sync_dry_run", args = ["sync", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.path", "delta_specs"], hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "validate", command_kind = "validate", args = ["validate", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root"], hash_fields = ["receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+    ],
+    groups = [
+      { id = "agent", description = "Agent receipt replay evidence preflight", cases = ["agent_receipt_validate", "mcp_describe", "status", "validate"], },
+      { id = "full", description = "All policy-owned replay cases", cases = ["agent_receipt_validate", "archive_dry_run", "gate_design", "gate_proposal", "gate_tasks", "mcp_describe", "mcp_status", "migrate_dry_run", "release_readiness", "status", "sync_dry_run", "validate"], },
+      { id = "release", description = "Release-readiness replay preflight", cases = ["agent_receipt_validate", "mcp_describe", "release_readiness", "status", "validate"], },
+      { id = "smoke", description = "Cheap status and validation replay preflight", cases = ["status", "validate"], },
     ],
   },
 

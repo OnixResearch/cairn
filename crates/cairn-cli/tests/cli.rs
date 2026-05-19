@@ -279,6 +279,8 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.determinism_replay.policy_diagnostics]
     // r[verify cairn.supersede.determinism_replay.ci_case_selection]
     // r[verify cairn.supersede.determinism_replay.ci_failure_ergonomics]
+    // r[verify cairn.supersede.determinism_replay.groups.policy]
+    // r[verify cairn.supersede.determinism_replay.groups.receipt]
     let first = run_json(&["determinism", "replay", "--root", "."])?;
     let second = run_json(&["determinism", "replay", "--root", "."])?;
     assert_eq!(first["valid"], true);
@@ -292,6 +294,11 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     assert_eq!(first["summary"]["total_cases"], 12);
     assert_eq!(first["summary"]["mismatch_count"], 0);
     assert_eq!(first["available_cases"], first["selected_cases"]);
+    assert_eq!(
+        first["available_groups"],
+        serde_json::json!(["agent", "full", "release", "smoke"])
+    );
+    assert_eq!(first["selected_groups"], serde_json::json!([]));
     assert_hash_field(&first, "receipt_hash")?;
     let case_ids = first["cases"]
         .as_array()
@@ -322,6 +329,12 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         .unwrap()
         .len();
     assert_eq!(first["cases"].as_array().unwrap().len(), policy_case_count);
+    let policy_groups = policy["determinism_replay_policy"]["groups"]
+        .as_array()
+        .unwrap();
+    assert_eq!(policy_groups.len(), 4);
+    assert!(policy_groups.iter().any(|group| group["id"] == "agent"));
+    assert!(policy_groups.iter().any(|group| group["id"] == "full"));
     assert!(first["cases"].as_array().unwrap().iter().all(|case| {
         case["runs"].as_array().unwrap().len() >= 2
             && case["expected_mutability"] == "read_only_or_dry_run"
@@ -340,9 +353,13 @@ fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<()
     // r[verify cairn.supersede.determinism_replay.ci_case_selection]
     // r[verify cairn.supersede.determinism_replay.ci_output_modes]
     // r[verify cairn.supersede.determinism_replay.ci_tests_docs]
+    // r[verify cairn.supersede.determinism_replay.groups.cli]
+    // r[verify cairn.supersede.determinism_replay.groups.receipt]
+    // r[verify cairn.supersede.determinism_replay.groups.docs]
     let selected = run_json(&["determinism", "replay", "--root", ".", "--case", "status"])?;
     assert_eq!(selected["valid"], true);
     assert_eq!(selected["selected_cases"], serde_json::json!(["status"]));
+    assert_eq!(selected["selected_groups"], serde_json::json!([]));
     assert_eq!(selected["summary"]["total_cases"], 1);
     assert_eq!(selected["cases"].as_array().unwrap().len(), 1);
     assert_eq!(selected["cases"][0]["id"], "status");
@@ -391,6 +408,12 @@ fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<()
     assert!(events
         .iter()
         .any(|event| event["event"] == "case" && event["id"] == "status"));
+
+    let group = run_json(&["determinism", "replay", "--root", ".", "--group", "smoke"])?;
+    assert_eq!(group["valid"], true);
+    assert_eq!(group["selected_groups"], json!(["smoke"]));
+    assert_eq!(group["selected_cases"], json!(["status", "validate"]));
+    assert_eq!(group["summary"]["total_cases"], 2);
     Ok(())
 }
 
@@ -398,6 +421,7 @@ fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<()
 fn determinism_replay_unknown_case_is_machine_readable_failure() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.determinism_replay.ci_case_selection]
     // r[verify cairn.supersede.determinism_replay.ci_failure_ergonomics]
+    // r[verify cairn.supersede.determinism_replay.groups.failures]
     let value = run_json_failure(&[
         "determinism",
         "replay",
@@ -413,7 +437,38 @@ fn determinism_replay_unknown_case_is_machine_readable_failure() -> Result<(), B
         .as_str()
         .unwrap()
         .contains("--case not_a_case"));
-    assert_hash_field(&value, "receipt_hash")
+    assert_hash_field(&value, "receipt_hash")?;
+
+    let group = run_json_failure(&[
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--group",
+        "not_a_group",
+    ])?;
+    assert_eq!(group["valid"], false);
+    assert_eq!(group["mismatches"][0]["class"], "unknown_group");
+    assert_eq!(group["mismatches"][0]["actual"], "not_a_group");
+    assert!(group["mismatches"][0]["reproduce"]
+        .as_str()
+        .unwrap()
+        .contains("--group not_a_group"));
+
+    let conflict = run_json_failure(&[
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--case",
+        "status",
+        "--group",
+        "smoke",
+    ])?;
+    assert_eq!(conflict["valid"], false);
+    assert_eq!(conflict["mismatches"][0]["class"], "selector_conflict");
+    assert_eq!(conflict["mismatches"][0]["field_path"], "--case/--group");
+    assert_hash_field(&conflict, "receipt_hash")
 }
 
 #[test]
@@ -676,6 +731,7 @@ fn public_receipt_schemas_are_stable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.receipt_schema.migration]
     // r[verify cairn.supersede.agent_receipt_replay_evidence.schema]
     // r[verify cairn.supersede.determinism_replay.receipt.schema]
+    // r[verify cairn.supersede.determinism_replay.groups.receipt]
     assert_gate_receipt_schema()?;
     assert_sync_receipt_schema()?;
     assert_archive_receipt_schema()?;
@@ -688,6 +744,7 @@ fn public_receipt_schemas_are_stable() -> Result<(), Box<dyn Error>> {
 fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.receipt_schema.docs]
     // r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
+    // r[verify cairn.supersede.determinism_replay.groups.docs]
     let readme = fs::read_to_string(repo_root().join("README.md"))?;
     assert!(readme.contains("Stable public gate fields"), "{readme}");
     assert!(
@@ -717,6 +774,14 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
     assert!(
         readme
             .contains("Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`"),
+        "{readme}"
+    );
+    assert!(
+        readme.contains("Replay groups are policy-owned named suites"),
+        "{readme}"
+    );
+    assert!(
+        readme.contains("`available_groups`, `selected_groups`"),
         "{readme}"
     );
     assert!(

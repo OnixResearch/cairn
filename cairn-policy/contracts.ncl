@@ -130,8 +130,15 @@ let Promoted = std.contract.from_predicate (fun value =>
     normalization_rules | NonEmptyArray | Array NonEmptyString,
   },
 
+  ReplayGroup = {
+    id | NonEmptyString,
+    description | NonEmptyString,
+    cases | NonEmptyArray | Array NonEmptyString,
+  },
+
   DeterminismReplayPolicy = {
     cases | NonEmptyArray | Array ReplayCase,
+    groups | NonEmptyArray | Array ReplayGroup,
   },
 
   ExemptionMarkerPolicy = {

@@ -250,6 +250,7 @@ enum ReplayOutputFormat {
 struct ReplayOptions {
     root: PathBuf,
     selected_case: Option<String>,
+    selected_group: Option<String>,
     format: ReplayOutputFormat,
     out: Option<PathBuf>,
 }
@@ -266,12 +267,14 @@ fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             "field_path": "args",
             "expected": "read-only/dry-run replay",
             "actual": "mutation flag requested",
-            "reproduce": replay_reproduce_command(&root, None),
+            "reproduce": replay_reproduce_command(&root, None, None),
         });
         let mut receipt = replay_receipt(
             root.clone(),
             Vec::new(),
             vec![issue],
+            Vec::new(),
+            Vec::new(),
             Vec::new(),
             Vec::new(),
             Vec::new(),
@@ -284,7 +287,11 @@ fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         render_replay_receipt(&receipt, options.format, options.out.as_deref())?;
         std::process::exit(1);
     }
-    let receipt = determinism_replay_receipt(root.clone(), options.selected_case.as_deref())?;
+    let receipt = determinism_replay_receipt(
+        root.clone(),
+        options.selected_case.as_deref(),
+        options.selected_group.as_deref(),
+    )?;
     let valid = receipt
         .get("valid")
         .and_then(Value::as_bool)
@@ -299,6 +306,7 @@ fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 fn replay_options(args: &[String]) -> Result<ReplayOptions, Box<dyn Error>> {
     let root = read_option(args.to_vec(), "--root", "fixtures/basic");
     let selected_case = read_string_option(args, "--case");
+    let selected_group = read_string_option(args, "--group");
     let format = match read_string_option(args, "--format")
         .as_deref()
         .unwrap_or("json")
@@ -311,6 +319,7 @@ fn replay_options(args: &[String]) -> Result<ReplayOptions, Box<dyn Error>> {
     Ok(ReplayOptions {
         root,
         selected_case,
+        selected_group,
         format,
         out: read_string_option(args, "--out").map(PathBuf::from),
     })
@@ -331,6 +340,17 @@ enum ReplayCaseKind {
 }
 
 #[derive(Clone)]
+struct ReplayGroup {
+    id: String,
+    cases: Vec<String>,
+}
+
+struct ReplaySelection {
+    cases: Vec<ReplayCase>,
+    selected_groups: Vec<String>,
+}
+
+#[derive(Clone)]
 struct ReplayCase {
     id: String,
     command_kind: String,
@@ -346,6 +366,7 @@ struct ReplayCase {
 fn determinism_replay_receipt(
     root: PathBuf,
     selected_case: Option<&str>,
+    selected_group: Option<&str>,
 ) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.determinism_replay.workspace_oracle]
     // r[impl cairn.supersede.determinism_replay.repeated]
@@ -357,19 +378,45 @@ fn determinism_replay_receipt(
     // r[impl cairn.supersede.determinism_replay.expanded_surfaces]
     // r[impl cairn.supersede.determinism_replay.ci_case_selection]
     // r[impl cairn.supersede.determinism_replay.ci_failure_ergonomics]
+    // r[impl cairn.supersede.determinism_replay.groups.policy]
+    // r[impl cairn.supersede.determinism_replay.groups.cli]
+    // r[impl cairn.supersede.determinism_replay.groups.failures]
+    // r[impl cairn.supersede.determinism_replay.groups.receipt]
     let policy = load_policy_file(default_policy_path().into())?;
     let all_cases = replay_cases_from_policy(&policy)?;
+    let groups = replay_groups_from_policy(&policy)?;
+    validate_replay_groups(&all_cases, &groups)?;
     let available_cases = all_cases
         .iter()
         .map(|case| case.id.clone())
         .collect::<Vec<_>>();
-    let cases = select_replay_cases(&all_cases, selected_case)?;
+    let available_groups = groups
+        .iter()
+        .map(|group| group.id.clone())
+        .collect::<Vec<_>>();
+    let selection = select_replay_cases(&all_cases, &groups, selected_case, selected_group)?;
+    let cases = selection.cases;
     let mut case_receipts = Vec::new();
     let mut mismatches = Vec::new();
     let nondeterminism_failures = replay_nondeterminism_failures();
     let mut mutability_observations = Vec::new();
     let mut skipped = Vec::new();
-    if cases.is_empty() {
+    if selected_case.is_some() && selected_group.is_some() {
+        let actual = format!(
+            "--case {} --group {}",
+            selected_case.unwrap_or_default(),
+            selected_group.unwrap_or_default()
+        );
+        mismatches.push(json!({
+            "case": "selection",
+            "comparison": "selection",
+            "field_path": "--case/--group",
+            "class": "selector_conflict",
+            "expected": "one replay selector",
+            "actual": actual,
+            "reproduce": replay_reproduce_command(&root, selected_case, selected_group),
+        }));
+    } else if cases.is_empty() {
         if let Some(case_id) = selected_case {
             mismatches.push(json!({
                 "case": case_id,
@@ -378,7 +425,17 @@ fn determinism_replay_receipt(
                 "class": "unknown_case",
                 "expected": available_cases,
                 "actual": case_id,
-                "reproduce": replay_reproduce_command(&root, Some(case_id)),
+                "reproduce": replay_reproduce_command(&root, Some(case_id), None),
+            }));
+        } else if let Some(group_id) = selected_group {
+            mismatches.push(json!({
+                "case": group_id,
+                "comparison": "selection",
+                "field_path": "--group",
+                "class": "unknown_group",
+                "expected": available_groups,
+                "actual": group_id,
+                "reproduce": replay_reproduce_command(&root, None, Some(group_id)),
             }));
         }
     }
@@ -469,7 +526,7 @@ fn determinism_replay_receipt(
             let after_b = replay_manifest_for_case(path, case)?;
             if let Some(before) = before_b {
                 if before["manifest_hash"] != after_b["manifest_hash"] {
-                    mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_b", "class": "mutation_observed", "expected": before["manifest_hash"], "actual": after_b["manifest_hash"], "reproduce": replay_reproduce_command(&root, Some(&case.id))}));
+                    mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_b", "class": "mutation_observed", "expected": before["manifest_hash"], "actual": after_b["manifest_hash"], "reproduce": replay_reproduce_command(&root, Some(&case.id), None)}));
                 }
             }
         } else {
@@ -478,7 +535,7 @@ fn determinism_replay_receipt(
 
         let after_a = replay_manifest_for_case(&repeated_a, case)?;
         if before_a["manifest_hash"] != after_a["manifest_hash"] {
-            mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_a", "class": "mutation_observed", "expected": before_a["manifest_hash"], "actual": after_a["manifest_hash"], "reproduce": replay_reproduce_command(&root, Some(&case.id))}));
+            mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_a", "class": "mutation_observed", "expected": before_a["manifest_hash"], "actual": after_a["manifest_hash"], "reproduce": replay_reproduce_command(&root, Some(&case.id), None)}));
         }
 
         let mut runs = vec![
@@ -515,7 +572,9 @@ fn determinism_replay_receipt(
         skipped,
         nondeterminism_failures,
         available_cases,
+        available_groups,
         cases.iter().map(|case| case.id.clone()).collect::<Vec<_>>(),
+        selection.selected_groups,
     );
     Ok(with_portable_receipt_hash(&root, receipt))
 }
@@ -535,18 +594,98 @@ fn replay_cases_from_policy(policy: &Policy) -> Result<Vec<ReplayCase>, Box<dyn 
     Ok(parsed)
 }
 
+fn replay_groups_from_policy(policy: &Policy) -> Result<Vec<ReplayGroup>, Box<dyn Error>> {
+    let groups = policy
+        .raw
+        .get("determinism_replay_policy")
+        .and_then(|value| value.get("groups"))
+        .and_then(Value::as_array)
+        .ok_or("policy missing determinism_replay_policy.groups")?;
+    let mut parsed = groups
+        .iter()
+        .map(replay_group_from_policy_value)
+        .collect::<Result<Vec<_>, _>>()?;
+    parsed.sort_by_key(|group| group.id.clone());
+    Ok(parsed)
+}
+
+fn replay_group_from_policy_value(value: &Value) -> Result<ReplayGroup, Box<dyn Error>> {
+    let _description = required_string(value, "description")?;
+    Ok(ReplayGroup {
+        id: required_string(value, "id")?.to_owned(),
+        cases: required_string_array(value, "cases")?,
+    })
+}
+
+fn validate_replay_groups(
+    cases: &[ReplayCase],
+    groups: &[ReplayGroup],
+) -> Result<(), Box<dyn Error>> {
+    let case_ids = cases
+        .iter()
+        .map(|case| case.id.as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    for group in groups {
+        for case_id in &group.cases {
+            if !case_ids.contains(case_id.as_str()) {
+                return Err(format!(
+                    "policy replay group {} references unknown case {}",
+                    group.id, case_id
+                )
+                .into());
+            }
+        }
+    }
+    Ok(())
+}
+
 fn select_replay_cases(
     cases: &[ReplayCase],
+    groups: &[ReplayGroup],
     selected_case: Option<&str>,
-) -> Result<Vec<ReplayCase>, Box<dyn Error>> {
-    let Some(selected) = selected_case else {
-        return Ok(cases.to_vec());
-    };
-    Ok(cases
-        .iter()
-        .filter(|case| case.id == selected)
-        .cloned()
-        .collect())
+    selected_group: Option<&str>,
+) -> Result<ReplaySelection, Box<dyn Error>> {
+    if selected_case.is_some() && selected_group.is_some() {
+        return Ok(ReplaySelection {
+            cases: Vec::new(),
+            selected_groups: Vec::new(),
+        });
+    }
+    if let Some(selected) = selected_case {
+        return Ok(ReplaySelection {
+            cases: cases
+                .iter()
+                .filter(|case| case.id == selected)
+                .cloned()
+                .collect(),
+            selected_groups: Vec::new(),
+        });
+    }
+    if let Some(selected) = selected_group {
+        let Some(group) = groups.iter().find(|group| group.id == selected) else {
+            return Ok(ReplaySelection {
+                cases: Vec::new(),
+                selected_groups: Vec::new(),
+            });
+        };
+        let selected_ids = group
+            .cases
+            .iter()
+            .map(String::as_str)
+            .collect::<std::collections::BTreeSet<_>>();
+        return Ok(ReplaySelection {
+            cases: cases
+                .iter()
+                .filter(|case| selected_ids.contains(case.id.as_str()))
+                .cloned()
+                .collect(),
+            selected_groups: vec![group.id.clone()],
+        });
+    }
+    Ok(ReplaySelection {
+        cases: cases.to_vec(),
+        selected_groups: Vec::new(),
+    })
 }
 
 fn replay_case_from_policy_value(value: &Value) -> Result<ReplayCase, Box<dyn Error>> {
@@ -666,7 +805,9 @@ fn replay_receipt(
     skipped: Vec<Value>,
     nondeterminism_failures: Vec<Value>,
     available_cases: Vec<String>,
+    available_groups: Vec<String>,
     selected_cases: Vec<String>,
+    selected_groups: Vec<String>,
 ) -> Value {
     let valid = mismatches.is_empty() && nondeterminism_failures.is_empty();
     let failed_cases = replay_failed_cases(&mismatches, &nondeterminism_failures);
@@ -684,7 +825,9 @@ fn replay_receipt(
         "valid": valid,
         "verdict": if valid { "pass" } else { "fail" },
         "available_cases": available_cases,
+        "available_groups": available_groups,
         "selected_cases": selected_cases,
+        "selected_groups": selected_groups,
         "summary": summary,
         "cases": cases,
         "skipped": skipped,
@@ -902,7 +1045,7 @@ fn replay_mismatch(
         "class": class,
         "expected": expected,
         "actual": actual,
-        "reproduce": replay_reproduce_command(Path::new(&case.fixture_root), Some(&case.id)),
+        "reproduce": replay_reproduce_command(Path::new(&case.fixture_root), Some(&case.id), None),
     })
 }
 
@@ -998,10 +1141,13 @@ fn print_replay_summary(receipt: &Value, out: Option<&Path>) -> Result<(), Box<d
     Ok(())
 }
 
-fn replay_reproduce_command(root: &Path, case: Option<&str>) -> String {
+fn replay_reproduce_command(root: &Path, case: Option<&str>, group: Option<&str>) -> String {
     let mut command = format!("cairn determinism replay --root {}", path_string(root));
     if let Some(case) = case {
         command.push_str(&format!(" --case {case}"));
+    }
+    if let Some(group) = group {
+        command.push_str(&format!(" --group {group}"));
     }
     command
 }
@@ -3462,7 +3608,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism replay [--root PATH] [--case ID] [--format json|jsonl|summary] [--out PATH]\n  agent-receipt validate <path>\n  agent-receipt smoke-mcp [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  agent-receipt validate <path>\n  agent-receipt smoke-mcp [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {
