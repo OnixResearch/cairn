@@ -1194,3 +1194,57 @@ r[cairn.supersede.agent_receipt_replay_group_coverage.replay]
 - WHEN `cairn determinism replay --group agent` runs
 - THEN it exercises the group-backed agent receipt validation path
 - AND the replay receipt remains deterministic across repeated runs
+
+### Requirement: Determinism replay entropy inventory
+
+The system MUST disclose, normalize, or reject replay-relevant entropy through a policy-owned inventory that agents and CI can verify without seeing secret values.
+
+#### Scenario: Policy-owned entropy inventory
+r[cairn.supersede.determinism_entropy_inventory.policy]
+- GIVEN generated policy with replay cases and groups
+- WHEN replay policy is exported
+- THEN the policy MUST include a stable inventory of replay-relevant entropy sources including clock/date, locale/timezone, cwd/root paths, environment variables, filesystem metadata/order, external commands, and Nix/build context
+
+#### Scenario: Entropy inventory receipt disclosure
+r[cairn.supersede.determinism_entropy_inventory.receipt]
+- GIVEN `cairn determinism replay` emits a receipt
+- WHEN agents or CI inspect replay evidence
+- THEN the receipt MUST expose stable `entropy_inventory`, `entropy_assumptions`, and `entropy_policy_hash` fields derived from policy
+- AND the receipt hash MUST bind those fields without including secret environment values
+
+#### Scenario: Entropy inventory schema
+r[cairn.supersede.determinism_entropy_inventory.schema]
+- GIVEN public replay receipt schemas
+- WHEN policy is exported and schema tests run
+- THEN replay receipt stable fields MUST include `entropy_inventory`, `entropy_assumptions`, and `entropy_policy_hash`
+
+#### Scenario: Rejected entropy failures
+r[cairn.supersede.determinism_entropy_inventory.failures]
+- GIVEN a replay-relevant rejected entropy source is present in the environment
+- WHEN `cairn determinism replay` runs
+- THEN replay MUST emit a deterministic nonzero failure receipt naming the source id, class, and handling
+- AND the receipt MUST NOT expose the source value
+
+#### Scenario: Entropy inventory documentation
+r[cairn.supersede.determinism_entropy_inventory.docs]
+- GIVEN agent and CI operators inspect Cairn determinism docs
+- WHEN they read replay guidance
+- THEN entropy handling and secret-safe disclosure rules MUST be documented
+
+#### Scenario: Entropy inventory tests
+r[cairn.supersede.determinism_entropy_inventory.tests]
+- GIVEN replay emits entropy inventory evidence and rejects configured environment entropy
+- WHEN focused replay tests run
+- THEN positive receipt disclosure and negative rejected-entropy behavior MUST be covered
+
+#### Scenario: Entropy inventory verification
+r[cairn.supersede.determinism_entropy_inventory.verification]
+- GIVEN the entropy inventory behavior changes public replay evidence
+- WHEN Cairn is prepared for archive
+- THEN policy export, formatting, focused/full tests, validation, Tracey coverage, release-readiness, and replay smokes MUST pass
+
+#### Scenario: Entropy inventory archive
+r[cairn.supersede.determinism_entropy_inventory.archive]
+- GIVEN verification passes
+- WHEN the change is archived
+- THEN the accepted spec and archive artifacts MUST preserve the entropy inventory requirements and evidence

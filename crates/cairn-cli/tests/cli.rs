@@ -303,6 +303,9 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.determinism_replay.ci_failure_ergonomics]
     // r[verify cairn.supersede.determinism_replay.groups.policy]
     // r[verify cairn.supersede.determinism_replay.groups.receipt]
+    // r[verify cairn.supersede.determinism_entropy_inventory.policy]
+    // r[verify cairn.supersede.determinism_entropy_inventory.receipt]
+    // r[verify cairn.supersede.determinism_entropy_inventory.tests]
     let first = run_json(&["determinism", "replay", "--root", "."])?;
     let second = run_json(&["determinism", "replay", "--root", "."])?;
     assert_eq!(first["valid"], true);
@@ -322,6 +325,28 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     );
     assert_eq!(first["selected_groups"], serde_json::json!([]));
     assert_hash_field(&first, "receipt_hash")?;
+    assert_hash_field(&first, "entropy_policy_hash")?;
+    let policy = policy_json()?;
+    let entropy_inventory = first["entropy_inventory"].as_array().unwrap();
+    let mut expected_entropy_inventory = policy["determinism_replay_policy"]["entropy_inventory"]
+        .as_array()
+        .unwrap()
+        .clone();
+    expected_entropy_inventory.sort_by_key(|entry| entry["id"].as_str().unwrap().to_owned());
+    assert_eq!(entropy_inventory, &expected_entropy_inventory);
+    assert!(entropy_inventory
+        .iter()
+        .any(|entry| entry["id"] == "archive_date_env" && entry["handling"] == "reject"));
+    assert!(first["entropy_assumptions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|entry| entry["id"] == "cwd_root_paths"));
+    assert!(first["entropy_assumptions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|entry| entry["handling"] != "reject"));
     let case_ids = first["cases"]
         .as_array()
         .unwrap()
@@ -345,7 +370,6 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
             "validate"
         ]
     );
-    let policy = policy_json()?;
     let policy_case_count = policy["determinism_replay_policy"]["cases"]
         .as_array()
         .unwrap()
@@ -512,6 +536,8 @@ fn determinism_replay_rejects_mutation_flags() -> Result<(), Box<dyn Error>> {
 #[test]
 fn determinism_replay_rejects_hidden_environment_entropy() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.determinism_replay.hidden_entropy]
+    // r[verify cairn.supersede.determinism_entropy_inventory.failures]
+    // r[verify cairn.supersede.determinism_entropy_inventory.tests]
     let mut command = cairn();
     command
         .args(["determinism", "replay", "--root", "fixtures/basic"])
@@ -527,6 +553,16 @@ fn determinism_replay_rejects_hidden_environment_entropy() -> Result<(), Box<dyn
         value["nondeterminism_failures"][0]["source"],
         "CAIRN_ARCHIVE_DATE"
     );
+    assert_eq!(
+        value["nondeterminism_failures"][0]["inventory_id"],
+        "archive_date_env"
+    );
+    assert_eq!(value["nondeterminism_failures"][0]["handling"], "reject");
+    assert!(
+        !serde_json::to_string(&value["nondeterminism_failures"])?.contains("2026-05-18"),
+        "replay failure must not disclose rejected environment values"
+    );
+    assert_hash_field(&value, "entropy_policy_hash")?;
     assert_hash_field(&value, "receipt_hash")
 }
 
@@ -755,6 +791,7 @@ fn public_receipt_schemas_are_stable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.agent_receipt_replay_group_coverage.schema]
     // r[verify cairn.supersede.determinism_replay.receipt.schema]
     // r[verify cairn.supersede.determinism_replay.groups.receipt]
+    // r[verify cairn.supersede.determinism_entropy_inventory.schema]
     assert_gate_receipt_schema()?;
     assert_sync_receipt_schema()?;
     assert_archive_receipt_schema()?;
@@ -769,6 +806,7 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
     // r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
     // r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
     // r[verify cairn.supersede.determinism_replay.groups.docs]
+    // r[verify cairn.supersede.determinism_entropy_inventory.docs]
     let readme = fs::read_to_string(repo_root().join("README.md"))?;
     assert!(readme.contains("Stable public gate fields"), "{readme}");
     assert!(
@@ -808,6 +846,11 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
         readme.contains("`available_groups`, `selected_groups`"),
         "{readme}"
     );
+    assert!(
+        readme.contains("`entropy_inventory`, `entropy_assumptions`, `entropy_policy_hash`"),
+        "{readme}"
+    );
+    assert!(readme.contains("Rejected\nentropy failures disclose source names and handling but never environment values"), "{readme}");
     assert!(
         readme.contains("Stable public agent receipt validation fields"),
         "{readme}"
@@ -1704,6 +1747,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     // r[verify cairn.supersede.release_readiness_bundle.evidence]
     // r[verify cairn.supersede.release_readiness_bundle.docs]
     // r[verify cairn.supersede.release_readiness_bundle.verification]
+    // r[verify cairn.supersede.determinism_entropy_inventory.verification]
+    // r[verify cairn.supersede.determinism_entropy_inventory.archive]
     let receipt = run_json(&["release-readiness", "--root", "."])?;
     assert_object_keys(
         &receipt,

@@ -169,12 +169,21 @@ Replay groups are policy-owned named suites (`smoke`, `agent`, `release`, and
 evidence is invalid, including unknown case IDs, unknown group IDs, selector
 conflicts, hidden entropy, mutation-denied preflights, or mismatches. Stable public determinism replay fields are `command`, `root`, `valid`, `verdict`,
 `available_cases`, `available_groups`, `selected_cases`, `selected_groups`,
-`summary`, `cases`, `skipped`, `mismatches`, `nondeterminism_failures`,
+`entropy_inventory`, `entropy_assumptions`, `entropy_policy_hash`, `summary`,
+`cases`, `skipped`, `mismatches`, `nondeterminism_failures`,
 `mutability_observations`, `normalization_rules`, and `receipt_hash`; the group
 selector fields are `available_groups`, `selected_groups`. Case entries expose stable `id`,
 `command_kind`, `args`, `fixture_root`, `expected_mutability`,
 `comparison_modes`, `normalization_rules`, `display_only_paths`, `hash_fields`,
-`runs`, and `portable_evidence_hash` fields. Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`,
+`runs`, and `portable_evidence_hash` fields. `entropy_inventory` is policy-owned
+and declares each source `id`, class, source name, handling mode, receipt field,
+and description; `entropy_assumptions` is the compact non-rejected subset and
+`entropy_policy_hash` is a BLAKE3 hash of the reviewed inventory. Current
+inventory coverage includes clock/date defaults, locale/timezone formatting,
+cwd/root path normalization, rejected archive-date env vars, filesystem
+order/metadata, external command versions, and Nix/build context. Rejected
+entropy failures disclose source names and handling but never environment values.
+Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`,
 `expected`, `actual`, and `reproduce` fields. The default oracle rejects mutation flags and records
 mutation observations as deterministic failures.
 

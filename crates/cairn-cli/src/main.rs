@@ -280,6 +280,9 @@ fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             Vec::new(),
             Vec::new(),
             Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            canonical_json_hash(&json!([])),
         );
         receipt["verdict"] = json!("fail");
         receipt["valid"] = json!(false);
@@ -345,6 +348,16 @@ struct ReplayGroup {
     cases: Vec<String>,
 }
 
+#[derive(Clone)]
+struct ReplayEntropyEntry {
+    id: String,
+    class: String,
+    source: String,
+    handling: String,
+    receipt_field: String,
+    description: String,
+}
+
 struct ReplaySelection {
     cases: Vec<ReplayCase>,
     selected_groups: Vec<String>,
@@ -385,6 +398,7 @@ fn determinism_replay_receipt(
     let policy = load_policy_file(default_policy_path().into())?;
     let all_cases = replay_cases_from_policy(&policy)?;
     let groups = replay_groups_from_policy(&policy)?;
+    let entropy_inventory = replay_entropy_inventory_from_policy(&policy)?;
     validate_replay_groups(&all_cases, &groups)?;
     let available_cases = all_cases
         .iter()
@@ -398,7 +412,7 @@ fn determinism_replay_receipt(
     let cases = selection.cases;
     let mut case_receipts = Vec::new();
     let mut mismatches = Vec::new();
-    let nondeterminism_failures = replay_nondeterminism_failures();
+    let nondeterminism_failures = replay_nondeterminism_failures(&entropy_inventory);
     let mut mutability_observations = Vec::new();
     let mut skipped = Vec::new();
     if selected_case.is_some() && selected_group.is_some() {
@@ -575,6 +589,9 @@ fn determinism_replay_receipt(
         available_groups,
         cases.iter().map(|case| case.id.clone()).collect::<Vec<_>>(),
         selection.selected_groups,
+        replay_entropy_inventory_json(&entropy_inventory),
+        replay_entropy_assumptions(&entropy_inventory),
+        replay_entropy_policy_hash(&entropy_inventory),
     );
     Ok(with_portable_receipt_hash(&root, receipt))
 }
@@ -607,6 +624,72 @@ fn replay_groups_from_policy(policy: &Policy) -> Result<Vec<ReplayGroup>, Box<dy
         .collect::<Result<Vec<_>, _>>()?;
     parsed.sort_by_key(|group| group.id.clone());
     Ok(parsed)
+}
+
+fn replay_entropy_inventory_from_policy(
+    policy: &Policy,
+) -> Result<Vec<ReplayEntropyEntry>, Box<dyn Error>> {
+    let entries = policy
+        .raw
+        .get("determinism_replay_policy")
+        .and_then(|value| value.get("entropy_inventory"))
+        .and_then(Value::as_array)
+        .ok_or("policy missing determinism_replay_policy.entropy_inventory")?;
+    let mut parsed = entries
+        .iter()
+        .map(replay_entropy_entry_from_policy_value)
+        .collect::<Result<Vec<_>, _>>()?;
+    parsed.sort_by_key(|entry| entry.id.clone());
+    Ok(parsed)
+}
+
+fn replay_entropy_entry_from_policy_value(
+    value: &Value,
+) -> Result<ReplayEntropyEntry, Box<dyn Error>> {
+    Ok(ReplayEntropyEntry {
+        id: required_string(value, "id")?.to_owned(),
+        class: required_string(value, "class")?.to_owned(),
+        source: required_string(value, "source")?.to_owned(),
+        handling: required_string(value, "handling")?.to_owned(),
+        receipt_field: required_string(value, "receipt_field")?.to_owned(),
+        description: required_string(value, "description")?.to_owned(),
+    })
+}
+
+fn replay_entropy_inventory_json(entries: &[ReplayEntropyEntry]) -> Vec<Value> {
+    entries
+        .iter()
+        .map(|entry| {
+            json!({
+                "id": &entry.id,
+                "class": &entry.class,
+                "source": &entry.source,
+                "handling": &entry.handling,
+                "receipt_field": &entry.receipt_field,
+                "description": &entry.description,
+            })
+        })
+        .collect()
+}
+
+fn replay_entropy_assumptions(entries: &[ReplayEntropyEntry]) -> Vec<Value> {
+    entries
+        .iter()
+        .filter(|entry| entry.handling != "reject")
+        .map(|entry| {
+            json!({
+                "id": &entry.id,
+                "class": &entry.class,
+                "source": &entry.source,
+                "handling": &entry.handling,
+                "receipt_field": &entry.receipt_field,
+            })
+        })
+        .collect()
+}
+
+fn replay_entropy_policy_hash(entries: &[ReplayEntropyEntry]) -> String {
+    canonical_json_hash(&json!(replay_entropy_inventory_json(entries)))
 }
 
 fn replay_group_from_policy_value(value: &Value) -> Result<ReplayGroup, Box<dyn Error>> {
@@ -808,6 +891,9 @@ fn replay_receipt(
     available_groups: Vec<String>,
     selected_cases: Vec<String>,
     selected_groups: Vec<String>,
+    entropy_inventory: Vec<Value>,
+    entropy_assumptions: Vec<Value>,
+    entropy_policy_hash: String,
 ) -> Value {
     let valid = mismatches.is_empty() && nondeterminism_failures.is_empty();
     let failed_cases = replay_failed_cases(&mismatches, &nondeterminism_failures);
@@ -828,6 +914,9 @@ fn replay_receipt(
         "available_groups": available_groups,
         "selected_cases": selected_cases,
         "selected_groups": selected_groups,
+        "entropy_inventory": entropy_inventory,
+        "entropy_assumptions": entropy_assumptions,
+        "entropy_policy_hash": entropy_policy_hash,
         "summary": summary,
         "cases": cases,
         "skipped": skipped,
@@ -854,20 +943,32 @@ fn replay_failed_cases(mismatches: &[Value], nondeterminism_failures: &[Value]) 
     cases
 }
 
-fn replay_nondeterminism_failures() -> Vec<Value> {
+fn replay_nondeterminism_failures(entropy_inventory: &[ReplayEntropyEntry]) -> Vec<Value> {
     // r[impl cairn.supersede.determinism_replay.hidden_entropy]
-    let mut failures = ["CAIRN_ARCHIVE_DATE", "IRONSPEC_ARCHIVE_DATE"]
+    // r[impl cairn.supersede.determinism_entropy_inventory.failures]
+    let mut failures = entropy_inventory
         .iter()
-        .filter_map(|name| {
-            env::var(name).ok().map(|_| {
-                json!({
-                    "case": "workspace",
-                    "class": "environment",
-                    "code": "replay.hidden_entropy.environment",
-                    "source": name,
-                    "message": format!("{name} is replay-relevant entropy; unset it or declare a policy fixture before replay"),
+        .filter(|entry| entry.handling == "reject" && entry.class == "environment")
+        .flat_map(|entry| {
+            entry
+                .source
+                .split(',')
+                .map(str::trim)
+                .filter(|name| !name.is_empty())
+                .filter_map(|name| {
+                    env::var(name).ok().map(|_| {
+                        json!({
+                            "case": "workspace",
+                            "class": &entry.class,
+                            "code": "replay.hidden_entropy.environment",
+                            "inventory_id": &entry.id,
+                            "source": name,
+                            "handling": &entry.handling,
+                            "message": format!("{name} is replay-relevant entropy; unset it or declare a policy fixture before replay"),
+                        })
+                    })
                 })
-            })
+                .collect::<Vec<_>>()
         })
         .collect::<Vec<_>>();
     failures.sort_by_key(canonical_json_hash);

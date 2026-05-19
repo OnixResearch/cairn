@@ -326,7 +326,7 @@ pub fn positive_agent_run_fixture() -> Value {
         "nondeterminism_manifest": {"captured": [{"class": "model_provider", "metadata": {"provider": "fixture"}}], "forbidden_uncaptured": []},
         "replay_evidence": {
             "replay_receipt_hash": "4444444444444444444444444444444444444444444444444444444444444444",
-            "replay_policy_hash": "c6b0062a99e0295ff8a6a3725490adc7322f5d2dd1fc703c02e090d0c6eb93e3",
+            "replay_policy_hash": "b85416c0ba95ad53648fd61a408fd537b0f8df5868b660e3071c63ae8b31ea33",
             "replay_selected_cases": ["agent_receipt_validate", "mcp_describe", "status", "validate"],
             "replay_selected_groups": ["agent"],
             "replay_verdict": "pass",

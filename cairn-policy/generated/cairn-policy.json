@@ -320,6 +320,64 @@
         ]
       }
     ],
+    "entropy_inventory": [
+      {
+        "class": "environment",
+        "description": "Archive date environment overrides are replay-relevant clock/date entropy and are rejected during replay when present; values are never disclosed.",
+        "handling": "reject",
+        "id": "archive_date_env",
+        "receipt_field": "nondeterminism_failures",
+        "source": "CAIRN_ARCHIVE_DATE,IRONSPEC_ARCHIVE_DATE"
+      },
+      {
+        "class": "clock_date",
+        "description": "Archive dry-run replay assumes the deterministic default archive date unless an explicit rejected override is present.",
+        "handling": "normalize",
+        "id": "clock_date_default",
+        "receipt_field": "entropy_assumptions",
+        "source": "archive default date"
+      },
+      {
+        "class": "locale_timezone",
+        "description": "Replay receipts use canonical JSON, sorted keys, and policy-owned string data rather than locale-sensitive formatting.",
+        "handling": "normalize",
+        "id": "locale_timezone",
+        "receipt_field": "entropy_assumptions",
+        "source": "process locale and timezone"
+      },
+      {
+        "class": "filesystem_path",
+        "description": "Root-specific checkout and temporary prefixes are normalized before portable hash computation; display paths remain operator-facing.",
+        "handling": "normalize",
+        "id": "cwd_root_paths",
+        "receipt_field": "root,normalization_rules",
+        "source": "current working directory and replay root"
+      },
+      {
+        "class": "filesystem_metadata",
+        "description": "Replay manifests sort root-relative paths and hash file contents; volatile host metadata is not part of portable evidence.",
+        "handling": "normalize",
+        "id": "filesystem_order",
+        "receipt_field": "mutability_observations",
+        "source": "directory iteration order and file metadata"
+      },
+      {
+        "class": "toolchain",
+        "description": "Replay discloses that toolchain identity is represented by policy and receipt hashes rather than raw host paths.",
+        "handling": "disclose",
+        "id": "external_command_versions",
+        "receipt_field": "entropy_assumptions",
+        "source": "cairn binary, Nix/devshell, and external checker versions"
+      },
+      {
+        "class": "build_context",
+        "description": "Replay assumes a reviewed Nix-built Cairn surface and does not capture machine-specific store paths in portable evidence.",
+        "handling": "disclose",
+        "id": "nix_build_context",
+        "receipt_field": "entropy_assumptions",
+        "source": "Nix flake/devshell context"
+      }
+    ],
     "groups": [
       {
         "cases": [
@@ -642,6 +700,9 @@
         "available_groups",
         "cases",
         "command",
+        "entropy_assumptions",
+        "entropy_inventory",
+        "entropy_policy_hash",
         "mismatches",
         "mutability_observations",
         "nondeterminism_failures",

@@ -88,7 +88,7 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "determinism replay",
-      top_level_keys = ["available_cases", "available_groups", "cases", "command", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "selected_cases", "selected_groups", "skipped", "summary", "valid", "verdict"],
+      top_level_keys = ["available_cases", "available_groups", "cases", "command", "entropy_assumptions", "entropy_inventory", "entropy_policy_hash", "mismatches", "mutability_observations", "nondeterminism_failures", "normalization_rules", "receipt_hash", "root", "selected_cases", "selected_groups", "skipped", "summary", "valid", "verdict"],
       case_keys = ["args", "command_kind", "comparison_modes", "display_only_paths", "expected_mutability", "fixture_root", "hash_fields", "id", "normalization_rules", "portable_evidence_hash", "runs"],
       mismatch_keys = ["actual", "case", "class", "comparison", "expected", "field_path", "reproduce"],
       hash_fields = ["receipt_hash"],
@@ -115,6 +115,15 @@ let Contracts = import "contracts.ncl" in
       { id = "full", description = "All policy-owned replay cases", cases = ["agent_receipt_validate", "archive_dry_run", "gate_design", "gate_proposal", "gate_tasks", "mcp_describe", "mcp_status", "migrate_dry_run", "release_readiness", "status", "sync_dry_run", "validate"], },
       { id = "release", description = "Release-readiness replay preflight", cases = ["agent_receipt_validate", "mcp_describe", "release_readiness", "status", "validate"], },
       { id = "smoke", description = "Cheap status and validation replay preflight", cases = ["status", "validate"], },
+    ],
+    entropy_inventory = [
+      { id = "archive_date_env", class = "environment", source = "CAIRN_ARCHIVE_DATE,IRONSPEC_ARCHIVE_DATE", handling = "reject", receipt_field = "nondeterminism_failures", description = "Archive date environment overrides are replay-relevant clock/date entropy and are rejected during replay when present; values are never disclosed." },
+      { id = "clock_date_default", class = "clock_date", source = "archive default date", handling = "normalize", receipt_field = "entropy_assumptions", description = "Archive dry-run replay assumes the deterministic default archive date unless an explicit rejected override is present." },
+      { id = "locale_timezone", class = "locale_timezone", source = "process locale and timezone", handling = "normalize", receipt_field = "entropy_assumptions", description = "Replay receipts use canonical JSON, sorted keys, and policy-owned string data rather than locale-sensitive formatting." },
+      { id = "cwd_root_paths", class = "filesystem_path", source = "current working directory and replay root", handling = "normalize", receipt_field = "root,normalization_rules", description = "Root-specific checkout and temporary prefixes are normalized before portable hash computation; display paths remain operator-facing." },
+      { id = "filesystem_order", class = "filesystem_metadata", source = "directory iteration order and file metadata", handling = "normalize", receipt_field = "mutability_observations", description = "Replay manifests sort root-relative paths and hash file contents; volatile host metadata is not part of portable evidence." },
+      { id = "external_command_versions", class = "toolchain", source = "cairn binary, Nix/devshell, and external checker versions", handling = "disclose", receipt_field = "entropy_assumptions", description = "Replay discloses that toolchain identity is represented by policy and receipt hashes rather than raw host paths." },
+      { id = "nix_build_context", class = "build_context", source = "Nix flake/devshell context", handling = "disclose", receipt_field = "entropy_assumptions", description = "Replay assumes a reviewed Nix-built Cairn surface and does not capture machine-specific store paths in portable evidence." },
     ],
   },
 
