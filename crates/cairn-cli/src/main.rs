@@ -240,8 +240,23 @@ fn run_determinism(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ReplayOutputFormat {
+    Json,
+    Jsonl,
+    Summary,
+}
+
+struct ReplayOptions {
+    root: PathBuf,
+    selected_case: Option<String>,
+    format: ReplayOutputFormat,
+    out: Option<PathBuf>,
+}
+
 fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let root = read_option(args.clone(), "--root", "fixtures/basic");
+    let options = replay_options(&args)?;
+    let root = options.root.clone();
     if has_flag(&args, "--execute") || has_flag(&args, "--allow-mutations") {
         let issue = json!({
             "case": "plan",
@@ -250,7 +265,8 @@ fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             "comparison": "preflight",
             "field_path": "args",
             "expected": "read-only/dry-run replay",
-            "actual": "mutation flag requested"
+            "actual": "mutation flag requested",
+            "reproduce": replay_reproduce_command(&root, None),
         });
         let mut receipt = replay_receipt(
             root.clone(),
@@ -259,13 +275,45 @@ fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             Vec::new(),
             Vec::new(),
             Vec::new(),
+            Vec::new(),
+            Vec::new(),
         );
         receipt["verdict"] = json!("fail");
         receipt["valid"] = json!(false);
-        return print_json(with_portable_receipt_hash(&root, receipt));
+        let receipt = with_portable_receipt_hash(&root, receipt);
+        render_replay_receipt(&receipt, options.format, options.out.as_deref())?;
+        std::process::exit(1);
     }
-    let receipt = determinism_replay_receipt(root)?;
-    print_json(receipt)
+    let receipt = determinism_replay_receipt(root.clone(), options.selected_case.as_deref())?;
+    let valid = receipt
+        .get("valid")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    render_replay_receipt(&receipt, options.format, options.out.as_deref())?;
+    if !valid {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+fn replay_options(args: &[String]) -> Result<ReplayOptions, Box<dyn Error>> {
+    let root = read_option(args.to_vec(), "--root", "fixtures/basic");
+    let selected_case = read_string_option(args, "--case");
+    let format = match read_string_option(args, "--format")
+        .as_deref()
+        .unwrap_or("json")
+    {
+        "json" => ReplayOutputFormat::Json,
+        "jsonl" => ReplayOutputFormat::Jsonl,
+        "summary" => ReplayOutputFormat::Summary,
+        other => return Err(format!("unknown replay format: {other}").into()),
+    };
+    Ok(ReplayOptions {
+        root,
+        selected_case,
+        format,
+        out: read_string_option(args, "--out").map(PathBuf::from),
+    })
 }
 
 #[derive(Clone)]
@@ -295,7 +343,10 @@ struct ReplayCase {
     normalization_rules: Vec<String>,
 }
 
-fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
+fn determinism_replay_receipt(
+    root: PathBuf,
+    selected_case: Option<&str>,
+) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.determinism_replay.workspace_oracle]
     // r[impl cairn.supersede.determinism_replay.repeated]
     // r[impl cairn.supersede.determinism_replay.cross_root]
@@ -304,13 +355,33 @@ fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.determinism_replay.no_mutation]
     // r[impl cairn.supersede.determinism_replay.policy_plan]
     // r[impl cairn.supersede.determinism_replay.expanded_surfaces]
+    // r[impl cairn.supersede.determinism_replay.ci_case_selection]
+    // r[impl cairn.supersede.determinism_replay.ci_failure_ergonomics]
     let policy = load_policy_file(default_policy_path().into())?;
-    let cases = replay_cases_from_policy(&policy)?;
+    let all_cases = replay_cases_from_policy(&policy)?;
+    let available_cases = all_cases
+        .iter()
+        .map(|case| case.id.clone())
+        .collect::<Vec<_>>();
+    let cases = select_replay_cases(&all_cases, selected_case)?;
     let mut case_receipts = Vec::new();
     let mut mismatches = Vec::new();
     let nondeterminism_failures = replay_nondeterminism_failures();
     let mut mutability_observations = Vec::new();
     let mut skipped = Vec::new();
+    if cases.is_empty() {
+        if let Some(case_id) = selected_case {
+            mismatches.push(json!({
+                "case": case_id,
+                "comparison": "selection",
+                "field_path": "--case",
+                "class": "unknown_case",
+                "expected": available_cases,
+                "actual": case_id,
+                "reproduce": replay_reproduce_command(&root, Some(case_id)),
+            }));
+        }
+    }
 
     for case in &cases {
         let source_root = replay_case_source_root(&root, case)?;
@@ -398,7 +469,7 @@ fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
             let after_b = replay_manifest_for_case(path, case)?;
             if let Some(before) = before_b {
                 if before["manifest_hash"] != after_b["manifest_hash"] {
-                    mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_b", "class": "mutation_observed", "expected": before["manifest_hash"], "actual": after_b["manifest_hash"]}));
+                    mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_b", "class": "mutation_observed", "expected": before["manifest_hash"], "actual": after_b["manifest_hash"], "reproduce": replay_reproduce_command(&root, Some(&case.id))}));
                 }
             }
         } else {
@@ -407,7 +478,7 @@ fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
 
         let after_a = replay_manifest_for_case(&repeated_a, case)?;
         if before_a["manifest_hash"] != after_a["manifest_hash"] {
-            mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_a", "class": "mutation_observed", "expected": before_a["manifest_hash"], "actual": after_a["manifest_hash"]}));
+            mismatches.push(json!({"case": case.id, "comparison": "mutation", "field_path": "root_a", "class": "mutation_observed", "expected": before_a["manifest_hash"], "actual": after_a["manifest_hash"], "reproduce": replay_reproduce_command(&root, Some(&case.id))}));
         }
 
         let mut runs = vec![
@@ -443,6 +514,8 @@ fn determinism_replay_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
         mutability_observations,
         skipped,
         nondeterminism_failures,
+        available_cases,
+        cases.iter().map(|case| case.id.clone()).collect::<Vec<_>>(),
     );
     Ok(with_portable_receipt_hash(&root, receipt))
 }
@@ -460,6 +533,20 @@ fn replay_cases_from_policy(policy: &Policy) -> Result<Vec<ReplayCase>, Box<dyn 
         .collect::<Result<Vec<_>, _>>()?;
     parsed.sort_by_key(|case| case.id.clone());
     Ok(parsed)
+}
+
+fn select_replay_cases(
+    cases: &[ReplayCase],
+    selected_case: Option<&str>,
+) -> Result<Vec<ReplayCase>, Box<dyn Error>> {
+    let Some(selected) = selected_case else {
+        return Ok(cases.to_vec());
+    };
+    Ok(cases
+        .iter()
+        .filter(|case| case.id == selected)
+        .cloned()
+        .collect())
 }
 
 fn replay_case_from_policy_value(value: &Value) -> Result<ReplayCase, Box<dyn Error>> {
@@ -578,13 +665,27 @@ fn replay_receipt(
     mutability_observations: Vec<Value>,
     skipped: Vec<Value>,
     nondeterminism_failures: Vec<Value>,
+    available_cases: Vec<String>,
+    selected_cases: Vec<String>,
 ) -> Value {
     let valid = mismatches.is_empty() && nondeterminism_failures.is_empty();
+    let failed_cases = replay_failed_cases(&mismatches, &nondeterminism_failures);
+    let summary = json!({
+        "total_cases": cases.len(),
+        "passed_cases": cases.len().saturating_sub(failed_cases.len()),
+        "failed_cases": failed_cases,
+        "skipped": skipped.len(),
+        "mismatch_count": mismatches.len(),
+        "nondeterminism_failure_count": nondeterminism_failures.len(),
+    });
     json!({
         "command": "determinism replay",
         "root": path_string(root),
         "valid": valid,
         "verdict": if valid { "pass" } else { "fail" },
+        "available_cases": available_cases,
+        "selected_cases": selected_cases,
+        "summary": summary,
         "cases": cases,
         "skipped": skipped,
         "mismatches": mismatches,
@@ -592,6 +693,22 @@ fn replay_receipt(
         "mutability_observations": mutability_observations,
         "normalization_rules": ["portable_root_paths", "canonical_json"],
     })
+}
+
+fn replay_failed_cases(mismatches: &[Value], nondeterminism_failures: &[Value]) -> Vec<String> {
+    let mut cases = mismatches
+        .iter()
+        .chain(nondeterminism_failures.iter())
+        .filter_map(|value| {
+            value
+                .get("case")
+                .and_then(Value::as_str)
+                .map(ToOwned::to_owned)
+        })
+        .collect::<Vec<_>>();
+    cases.sort();
+    cases.dedup();
+    cases
 }
 
 fn replay_nondeterminism_failures() -> Vec<Value> {
@@ -783,7 +900,108 @@ fn replay_mismatch(
         "class": class,
         "expected": expected,
         "actual": actual,
+        "reproduce": replay_reproduce_command(Path::new(&case.fixture_root), Some(&case.id)),
     })
+}
+
+fn render_replay_receipt(
+    receipt: &Value,
+    format: ReplayOutputFormat,
+    out: Option<&Path>,
+) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.supersede.determinism_replay.ci_output_modes]
+    if let Some(path) = out {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(
+            path,
+            format!(
+                "{}
+",
+                serde_json::to_string_pretty(receipt)?
+            ),
+        )?;
+    }
+    match format {
+        ReplayOutputFormat::Json => print_json(receipt.clone()),
+        ReplayOutputFormat::Jsonl => print_replay_jsonl(receipt, out),
+        ReplayOutputFormat::Summary => print_replay_summary(receipt, out),
+    }
+}
+
+fn print_replay_jsonl(receipt: &Value, out: Option<&Path>) -> Result<(), Box<dyn Error>> {
+    println!(
+        "{}",
+        serde_json::to_string(&json!({
+            "event": "summary",
+            "valid": receipt["valid"],
+            "verdict": receipt["verdict"],
+            "summary": receipt["summary"],
+            "receipt_hash": receipt["receipt_hash"],
+        }))?
+    );
+    if let Some(path) = out {
+        println!(
+            "{}",
+            serde_json::to_string(&json!({
+                "event": "artifact",
+                "path": path_string(path),
+                "receipt_hash": receipt["receipt_hash"],
+            }))?
+        );
+    }
+    for case in receipt["selected_cases"].as_array().into_iter().flatten() {
+        println!(
+            "{}",
+            serde_json::to_string(&json!({"event": "case", "id": case}))?
+        );
+    }
+    for mismatch in receipt["mismatches"].as_array().into_iter().flatten() {
+        println!(
+            "{}",
+            serde_json::to_string(&json!({"event": "mismatch", "mismatch": mismatch}))?
+        );
+    }
+    for failure in receipt["nondeterminism_failures"]
+        .as_array()
+        .into_iter()
+        .flatten()
+    {
+        println!(
+            "{}",
+            serde_json::to_string(&json!({"event": "nondeterminism_failure", "failure": failure}))?
+        );
+    }
+    Ok(())
+}
+
+fn print_replay_summary(receipt: &Value, out: Option<&Path>) -> Result<(), Box<dyn Error>> {
+    let summary = &receipt["summary"];
+    println!(
+        "determinism replay: verdict={} total={} failed={} mismatches={} entropy_failures={} receipt_hash={}",
+        receipt["verdict"].as_str().unwrap_or("unknown"),
+        summary["total_cases"].as_u64().unwrap_or(0),
+        summary["failed_cases"].as_array().map(|items| items.len()).unwrap_or(0),
+        summary["mismatch_count"].as_u64().unwrap_or(0),
+        summary["nondeterminism_failure_count"].as_u64().unwrap_or(0),
+        receipt["receipt_hash"].as_str().unwrap_or(""),
+    );
+    if let Some(path) = out {
+        println!("artifact={}", path_string(path));
+    }
+    for case in summary["failed_cases"].as_array().into_iter().flatten() {
+        println!("failed_case={}", case.as_str().unwrap_or(""));
+    }
+    Ok(())
+}
+
+fn replay_reproduce_command(root: &Path, case: Option<&str>) -> String {
+    let mut command = format!("cairn determinism replay --root {}", path_string(root));
+    if let Some(case) = case {
+        command.push_str(&format!(" --case {case}"));
+    }
+    command
 }
 
 fn replay_temp_root(source: &Path, label: &str) -> Result<PathBuf, Box<dyn Error>> {
@@ -3097,6 +3315,11 @@ fn path_string(path: impl Into<PathBuf>) -> String {
     path.into().display().to_string()
 }
 
+fn read_string_option(args: &[String], name: &str) -> Option<String> {
+    args.windows(2)
+        .find_map(|pair| (pair[0] == name).then(|| pair[1].clone()))
+}
+
 fn read_option(args: Vec<String>, name: &str, default: &str) -> PathBuf {
     args.windows(2)
         .find_map(|pair| (pair[0] == name).then(|| PathBuf::from(&pair[1])))
@@ -3131,7 +3354,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism replay [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt smoke-mcp [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism replay [--root PATH] [--case ID] [--format json|jsonl|summary] [--out PATH]\n  agent-receipt validate <path>\n  agent-receipt smoke-mcp [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

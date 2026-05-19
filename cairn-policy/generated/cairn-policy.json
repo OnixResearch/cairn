@@ -538,9 +538,11 @@
         "class",
         "comparison",
         "expected",
-        "field_path"
+        "field_path",
+        "reproduce"
       ],
       "top_level_keys": [
+        "available_cases",
         "cases",
         "command",
         "mismatches",
@@ -549,7 +551,9 @@
         "normalization_rules",
         "receipt_hash",
         "root",
+        "selected_cases",
         "skipped",
+        "summary",
         "valid",
         "verdict"
       ]

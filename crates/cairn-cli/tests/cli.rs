@@ -43,6 +43,23 @@ fn run_json_command(command: &mut Command) -> Result<Value, Box<dyn Error>> {
     Ok(serde_json::from_slice(&output.stdout)?)
 }
 
+fn run_json_failure(args: &[&str]) -> Result<Value, Box<dyn Error>> {
+    let mut command = cairn();
+    command.args(args);
+    run_json_failure_command(&mut command)
+}
+
+fn run_json_failure_command(command: &mut Command) -> Result<Value, Box<dyn Error>> {
+    let output = command.output()?;
+    assert!(
+        !output.status.success(),
+        "expected failure\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    Ok(serde_json::from_slice(&output.stdout)?)
+}
+
 fn copy_dir(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
     fs::create_dir_all(destination)?;
     let mut dirs = vec![(source.to_path_buf(), destination.to_path_buf())];
@@ -260,6 +277,8 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.determinism_replay.policy_schema]
     // r[verify cairn.supersede.determinism_replay.expanded_surfaces]
     // r[verify cairn.supersede.determinism_replay.policy_diagnostics]
+    // r[verify cairn.supersede.determinism_replay.ci_case_selection]
+    // r[verify cairn.supersede.determinism_replay.ci_failure_ergonomics]
     let first = run_json(&["determinism", "replay", "--root", "."])?;
     let second = run_json(&["determinism", "replay", "--root", "."])?;
     assert_eq!(first["valid"], true);
@@ -270,6 +289,9 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         0
     );
     assert_eq!(first["receipt_hash"], second["receipt_hash"]);
+    assert_eq!(first["summary"]["total_cases"], 12);
+    assert_eq!(first["summary"]["mismatch_count"], 0);
+    assert_eq!(first["available_cases"], first["selected_cases"]);
     assert_hash_field(&first, "receipt_hash")?;
     let case_ids = first["cases"]
         .as_array()
@@ -314,9 +336,90 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
 }
 
 #[test]
+fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.determinism_replay.ci_case_selection]
+    // r[verify cairn.supersede.determinism_replay.ci_output_modes]
+    // r[verify cairn.supersede.determinism_replay.ci_tests_docs]
+    let selected = run_json(&["determinism", "replay", "--root", ".", "--case", "status"])?;
+    assert_eq!(selected["valid"], true);
+    assert_eq!(selected["selected_cases"], serde_json::json!(["status"]));
+    assert_eq!(selected["summary"]["total_cases"], 1);
+    assert_eq!(selected["cases"].as_array().unwrap().len(), 1);
+    assert_eq!(selected["cases"][0]["id"], "status");
+
+    let artifact = temp_project("replay-artifact")?.join("receipt.json");
+    let mut summary = cairn();
+    summary.args([
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--case",
+        "status",
+        "--format",
+        "summary",
+        "--out",
+        artifact.to_str().unwrap(),
+    ]);
+    let output = summary.output()?;
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout)?;
+    assert!(stdout.contains("determinism replay: verdict=pass total=1"));
+    assert!(stdout.contains("artifact="));
+    let artifact_receipt: Value = serde_json::from_slice(&fs::read(&artifact)?)?;
+    assert_eq!(artifact_receipt["receipt_hash"], selected["receipt_hash"]);
+
+    let mut jsonl = cairn();
+    jsonl.args([
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--case",
+        "status",
+        "--format",
+        "jsonl",
+    ]);
+    let output = jsonl.output()?;
+    assert!(output.status.success());
+    let lines = String::from_utf8(output.stdout)?;
+    let events = lines
+        .lines()
+        .map(serde_json::from_str::<Value>)
+        .collect::<Result<Vec<_>, _>>()?;
+    assert_eq!(events[0]["event"], "summary");
+    assert!(events
+        .iter()
+        .any(|event| event["event"] == "case" && event["id"] == "status"));
+    Ok(())
+}
+
+#[test]
+fn determinism_replay_unknown_case_is_machine_readable_failure() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.determinism_replay.ci_case_selection]
+    // r[verify cairn.supersede.determinism_replay.ci_failure_ergonomics]
+    let value = run_json_failure(&[
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--case",
+        "not_a_case",
+    ])?;
+    assert_eq!(value["valid"], false);
+    assert_eq!(value["mismatches"][0]["class"], "unknown_case");
+    assert_eq!(value["mismatches"][0]["actual"], "not_a_case");
+    assert!(value["mismatches"][0]["reproduce"]
+        .as_str()
+        .unwrap()
+        .contains("--case not_a_case"));
+    assert_hash_field(&value, "receipt_hash")
+}
+
+#[test]
 fn determinism_replay_rejects_mutation_flags() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.determinism_replay.no_mutation]
-    let value = run_json(&[
+    let value = run_json_failure(&[
         "determinism",
         "replay",
         "--root",
@@ -336,7 +439,7 @@ fn determinism_replay_rejects_hidden_environment_entropy() -> Result<(), Box<dyn
     command
         .args(["determinism", "replay", "--root", "fixtures/basic"])
         .env("CAIRN_ARCHIVE_DATE", "2026-05-18");
-    let value = run_json_command(&mut command)?;
+    let value = run_json_failure_command(&mut command)?;
     assert_eq!(value["valid"], false);
     assert_eq!(value["verdict"], "fail");
     assert_eq!(
