@@ -269,7 +269,16 @@ The index rehashes declared bundle artifacts, records the bundle kind, canonical
 bundle receipt, receipt chain, artifact roles/paths/hashes, and emits stable
 fields `command`, `root`, `bundle`, `out`, `valid`, `verdict`, `issues`,
 `bundle_kind`, `bundle_receipt_hash`, `receipt_chain`, `policy_hash`,
-`artifacts`, and `receipt_hash` without raw host paths. The outer publication/index layer can also be generated with
+`artifacts`, and `receipt_hash` without raw host paths. Multiple published
+indexes can be aggregated with
+`cairn evidence registry build --root . --index target/cairn-evidence-index.json --out target/cairn-evidence-registry.json`
+and checked with
+`cairn evidence registry verify --root . --registry target/cairn-evidence-registry.json`.
+The registry sorts entries deterministically, records index hashes, bundle kinds,
+bundle receipt hashes, receipt chains, artifact hashes, and policy hashes, and
+emits stable fields `command`, `root`, `out` or `registry`, `valid`, `verdict`,
+`issues`, `entry_count`, `entries`, `registry_hash`, and `receipt_hash` without
+raw host paths. The outer publication/index layer can also be generated with
 `cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
 list stable roles such as `agent_evidence_bundle`, `agent_receipt`,

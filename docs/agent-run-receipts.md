@@ -116,7 +116,27 @@ rehashes declared artifacts, records bundle kind, receipt-chain hashes, policy
 hash when available, and artifact roles/relative paths/hashes, then emits stable
 `bundle = "<bundle>"`, `out = "<out>"`, deterministic issue codes, and its own
 `receipt_hash`. Index verification recomputes the catalog from the referenced
-bundle without leaking raw host paths. r[verify cairn.supersede.evidence_export_bundle.docs]
+bundle without leaking raw host paths. Aggregate one or more index files into a
+release/channel registry with:
+
+```sh
+nix run .#cairn -- evidence registry build --root . \
+  --index target/cairn-evidence-index.json \
+  --out target/cairn-evidence-registry.json
+nix run .#cairn -- evidence registry verify --root . --registry target/cairn-evidence-registry.json
+```
+
+Registry build verifies each index, sorts entries by stable content, records
+index receipt hashes, bundle kinds, bundle receipt hashes, receipt chains, policy
+hashes, artifact roles/paths/hashes, and writes a portable registry receipt.
+Registry verification recomputes referenced indexes and rejects missing,
+duplicate, stale, tampered, or unsafe entries with deterministic issue codes.
+r[verify cairn.supersede.evidence_registry_rail.build]
+r[verify cairn.supersede.evidence_registry_rail.verify]
+r[verify cairn.supersede.evidence_registry_rail.failures]
+r[verify cairn.supersede.evidence_registry_rail.gates]
+r[verify cairn.supersede.evidence_registry_rail.archive]
+r[verify cairn.supersede.evidence_export_bundle.docs]
 r[verify cairn.supersede.evidence_bundle_verify_command.docs]
 r[verify cairn.supersede.evidence_export_bundle.archive]
 

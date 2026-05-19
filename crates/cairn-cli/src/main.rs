@@ -2971,6 +2971,19 @@ struct EvidenceIndexVerifyOptions {
     index: Option<PathBuf>,
 }
 
+#[derive(Default)]
+struct EvidenceRegistryOptions {
+    root: PathBuf,
+    indexes: Vec<PathBuf>,
+    out: Option<PathBuf>,
+}
+
+#[derive(Default)]
+struct EvidenceRegistryVerifyOptions {
+    root: PathBuf,
+    registry: Option<PathBuf>,
+}
+
 fn run_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
     let Some(subcommand) = iter.next() else {
@@ -2982,6 +2995,7 @@ fn run_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "import" => run_evidence_import(iter.collect()),
         "republish" => run_evidence_republish(iter.collect()),
         "index" => run_evidence_index(iter.collect()),
+        "registry" => run_evidence_registry(iter.collect()),
         unknown => Err(format!("unknown evidence subcommand: {unknown}").into()),
     }
 }
@@ -3462,6 +3476,395 @@ fn evidence_index_verify_final_receipt(
             "bundle_receipt_hash": summary.get("bundle_receipt_hash").cloned().unwrap_or(Value::Null),
             "receipt_chain": summary.get("receipt_chain").cloned().unwrap_or_else(|| json!({})),
             "artifacts": summary.get("artifacts").cloned().unwrap_or_else(|| json!([])),
+        }),
+    )
+}
+
+fn run_evidence_registry(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let mut iter = args.into_iter();
+    let Some(subcommand) = iter.next() else {
+        return Err("evidence registry requires build or verify".into());
+    };
+    let receipt = match subcommand.as_str() {
+        "build" => {
+            let options = evidence_registry_options(&iter.collect::<Vec<_>>())?;
+            evidence_registry_receipt(&options)
+        }
+        "verify" => {
+            let options = evidence_registry_verify_options(&iter.collect::<Vec<_>>())?;
+            evidence_registry_verify_receipt(&options)
+        }
+        unknown => return Err(format!("unknown evidence registry subcommand: {unknown}").into()),
+    };
+    let valid = receipt
+        .get("valid")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    print_json(receipt)?;
+    if !valid {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+fn evidence_registry_options(args: &[String]) -> Result<EvidenceRegistryOptions, Box<dyn Error>> {
+    let root = read_option(args.to_vec(), "--root", ".");
+    let indexes = read_repeated_path_options(args, "--index");
+    let out = read_string_option(args, "--out").map(PathBuf::from);
+    if indexes.is_empty() {
+        return Err("evidence registry build requires at least one --index <file>".into());
+    }
+    if out.is_none() {
+        return Err("evidence registry build requires --out <file>".into());
+    }
+    Ok(EvidenceRegistryOptions { root, indexes, out })
+}
+
+fn evidence_registry_verify_options(
+    args: &[String],
+) -> Result<EvidenceRegistryVerifyOptions, Box<dyn Error>> {
+    let root = read_option(args.to_vec(), "--root", ".");
+    let registry = read_string_option(args, "--registry").map(PathBuf::from);
+    if registry.is_none() {
+        return Err("evidence registry verify requires --registry <file>".into());
+    }
+    Ok(EvidenceRegistryVerifyOptions { root, registry })
+}
+
+fn read_repeated_path_options(args: &[String], flag: &str) -> Vec<PathBuf> {
+    let mut values = Vec::new();
+    let mut iter = args.iter();
+    while let Some(arg) = iter.next() {
+        if arg == flag {
+            if let Some(value) = iter.next() {
+                values.push(PathBuf::from(value));
+            }
+        }
+    }
+    values
+}
+
+fn evidence_registry_receipt(options: &EvidenceRegistryOptions) -> Value {
+    // r[impl cairn.supersede.evidence_registry_rail.build]
+    // r[impl cairn.supersede.evidence_registry_rail.failures]
+    let root = options.root.clone();
+    let out = options.out.clone().unwrap_or_else(|| PathBuf::from("."));
+    let mut issues = Vec::new();
+    let mut entries = Vec::new();
+    let mut hashes = std::collections::BTreeSet::new();
+    for (position, index_path) in options.indexes.iter().enumerate() {
+        if let Some(entry) = evidence_registry_entry_from_index(
+            &root,
+            index_path,
+            out.parent().unwrap_or_else(|| Path::new(".")),
+            position,
+            "evidence_registry",
+            &mut issues,
+        ) {
+            if let Some(hash) = entry.get("index_receipt_hash").and_then(Value::as_str) {
+                if !hashes.insert(hash.to_string()) {
+                    issues.push(evidence_registry_issue(
+                        "evidence_registry.duplicate_index_hash",
+                        "indexes",
+                        "unique index receipt hashes",
+                        "duplicate",
+                    ));
+                }
+            }
+            entries.push(entry);
+        }
+    }
+    entries.sort_by_key(canonical_json_hash);
+    let mut receipt = evidence_registry_final_receipt(
+        &root,
+        "evidence registry build",
+        issues,
+        entries,
+        "<out>",
+        Value::Null,
+    );
+    if receipt.get("valid").and_then(Value::as_bool) == Some(true) {
+        if let Some(parent) = out.parent() {
+            if fs::create_dir_all(parent).is_err() {
+                receipt = evidence_registry_final_receipt(
+                    &root,
+                    "evidence registry build",
+                    vec![evidence_registry_issue(
+                        "evidence_registry.output_create_failed",
+                        "out",
+                        "writable output parent",
+                        "failed",
+                    )],
+                    Vec::new(),
+                    "<out>",
+                    Value::Null,
+                );
+            }
+        }
+        if receipt.get("valid").and_then(Value::as_bool) == Some(true)
+            && fs::write(
+                &out,
+                serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
+            )
+            .is_err()
+        {
+            receipt = evidence_registry_final_receipt(
+                &root,
+                "evidence registry build",
+                vec![evidence_registry_issue(
+                    "evidence_registry.receipt_write_failed",
+                    "out",
+                    "writable registry receipt",
+                    "failed",
+                )],
+                Vec::new(),
+                "<out>",
+                Value::Null,
+            );
+        }
+    }
+    receipt
+}
+
+fn evidence_registry_verify_receipt(options: &EvidenceRegistryVerifyOptions) -> Value {
+    // r[impl cairn.supersede.evidence_registry_rail.verify]
+    // r[impl cairn.supersede.evidence_registry_rail.failures]
+    let root = options.root.clone();
+    let registry_path = options
+        .registry
+        .clone()
+        .unwrap_or_else(|| PathBuf::from("."));
+    let registry = match read_json_artifact(&registry_path, AGENT_RECEIPT_MAX_BYTES) {
+        Ok(value) => value,
+        Err(_) => {
+            return evidence_registry_verify_final_receipt(
+                &root,
+                vec![evidence_registry_issue(
+                    "evidence_registry_verify.registry_unreadable",
+                    "registry",
+                    "readable registry",
+                    "unreadable",
+                )],
+                Value::Null,
+                Vec::new(),
+            )
+        }
+    };
+    let mut issues = Vec::new();
+    let stated_hash = registry.get("receipt_hash").cloned().unwrap_or(Value::Null);
+    if let Some(hash) = stated_hash.as_str() {
+        let mut hash_input = registry.clone();
+        if let Some(object) = hash_input.as_object_mut() {
+            object.remove("receipt_hash");
+        }
+        if portable_json_hash(&root, &hash_input) != hash {
+            issues.push(evidence_registry_issue(
+                "evidence_registry_verify.registry_hash_mismatch",
+                "receipt_hash",
+                "portable receipt hash",
+                "mismatch",
+            ));
+        }
+    } else {
+        issues.push(evidence_registry_issue(
+            "evidence_registry_verify.registry_hash_missing",
+            "receipt_hash",
+            "BLAKE3 hex",
+            "missing",
+        ));
+    }
+    let mut entries = Vec::new();
+    let base = registry_path.parent().unwrap_or_else(|| Path::new("."));
+    for (position, entry) in registry
+        .get("entries")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default()
+        .iter()
+        .enumerate()
+    {
+        let Some(index_path) = evidence_registry_resolve_index_path(base, entry) else {
+            issues.push(evidence_registry_issue(
+                "evidence_registry_verify.index_path_unsafe",
+                "entries.index_relative",
+                "safe relative index path",
+                "unsafe",
+            ));
+            continue;
+        };
+        if let Some(current) = evidence_registry_entry_from_index(
+            &root,
+            &index_path,
+            base,
+            position,
+            "evidence_registry_verify",
+            &mut issues,
+        ) {
+            if !evidence_registry_entries_equal(entry, &current) {
+                issues.push(evidence_registry_issue(
+                    "evidence_registry_verify.entry_mismatch",
+                    "entries",
+                    "current index entry",
+                    "mismatch",
+                ));
+            }
+            entries.push(current);
+        }
+    }
+    entries.sort_by_key(canonical_json_hash);
+    evidence_registry_verify_final_receipt(&root, issues, stated_hash, entries)
+}
+
+fn evidence_registry_entry_from_index(
+    root: &Path,
+    index_path: &Path,
+    base: &Path,
+    position: usize,
+    prefix: &'static str,
+    issues: &mut Vec<Value>,
+) -> Option<Value> {
+    let index = match read_json_artifact(index_path, AGENT_RECEIPT_MAX_BYTES) {
+        Ok(value) => value,
+        Err(_) => {
+            issues.push(evidence_registry_issue(
+                &format!("{prefix}.index_unreadable"),
+                "index",
+                "readable evidence index",
+                "unreadable",
+            ));
+            return None;
+        }
+    };
+    if index.get("valid").and_then(Value::as_bool) != Some(true) {
+        issues.push(evidence_registry_issue(
+            &format!("{prefix}.index_invalid"),
+            "index",
+            "valid evidence index",
+            "invalid",
+        ));
+    }
+    let verify_options = EvidenceIndexVerifyOptions {
+        root: root.to_path_buf(),
+        index: Some(index_path.to_path_buf()),
+    };
+    let verify = evidence_index_verify_receipt(&verify_options);
+    if verify.get("valid").and_then(Value::as_bool) != Some(true) {
+        issues.push(evidence_registry_issue(
+            &format!("{prefix}.index_verify_failed"),
+            "index",
+            "valid index verification",
+            "invalid",
+        ));
+    }
+    let index_relative = evidence_registry_index_relative(base, index_path);
+    Some(json!({
+        "index": format!("<index:{position}>"),
+        "index_relative": index_relative,
+        "index_receipt_hash": index.get("receipt_hash").cloned().unwrap_or(Value::Null),
+        "index_verification_receipt_hash": verify.get("receipt_hash").cloned().unwrap_or(Value::Null),
+        "bundle_kind": index.get("bundle_kind").cloned().unwrap_or(Value::Null),
+        "bundle_receipt_hash": index.get("bundle_receipt_hash").cloned().unwrap_or(Value::Null),
+        "receipt_chain": index.get("receipt_chain").cloned().unwrap_or_else(|| json!({})),
+        "policy_hash": index.get("policy_hash").cloned().unwrap_or(Value::Null),
+        "artifacts": index.get("artifacts").cloned().unwrap_or_else(|| json!([])),
+    }))
+}
+
+fn evidence_registry_entries_equal(expected: &Value, current: &Value) -> bool {
+    for key in [
+        "index_receipt_hash",
+        "bundle_kind",
+        "bundle_receipt_hash",
+        "receipt_chain",
+        "policy_hash",
+        "artifacts",
+    ] {
+        if expected.get(key) != current.get(key) {
+            return false;
+        }
+    }
+    true
+}
+
+fn evidence_registry_index_relative(base: &Path, index_path: &Path) -> Value {
+    if let Ok(relative) = index_path.strip_prefix(base) {
+        if let Some(text) = relative.to_str() {
+            if !text.is_empty() && !text.starts_with('/') && !text.contains("..") {
+                return json!(text);
+            }
+        }
+    }
+    if let (Some(parent), Some(name)) = (index_path.parent(), index_path.file_name()) {
+        if parent == base {
+            return json!(name.to_string_lossy().to_string());
+        }
+    }
+    Value::Null
+}
+
+fn evidence_registry_resolve_index_path(base: &Path, entry: &Value) -> Option<PathBuf> {
+    let relative = entry.get("index_relative").and_then(Value::as_str)?;
+    if relative.is_empty() || relative.starts_with('/') || relative.contains("..") {
+        return None;
+    }
+    Some(base.join(relative))
+}
+
+fn evidence_registry_issue(code: &str, field_path: &str, expected: &str, actual: &str) -> Value {
+    json!({
+        "code": code,
+        "field_path": field_path,
+        "expected": expected,
+        "actual": actual,
+    })
+}
+
+fn evidence_registry_final_receipt(
+    root: &Path,
+    command: &str,
+    mut issues: Vec<Value>,
+    entries: Vec<Value>,
+    out: &str,
+    registry_hash: Value,
+) -> Value {
+    issues.sort_by_key(canonical_json_hash);
+    let valid = issues.is_empty();
+    with_portable_receipt_hash(
+        root,
+        json!({
+            "command": command,
+            "root": path_string(root),
+            "out": out,
+            "valid": valid,
+            "verdict": if valid { "pass" } else { "fail" },
+            "issues": issues,
+            "entry_count": entries.len(),
+            "entries": entries,
+            "registry_hash": registry_hash,
+        }),
+    )
+}
+
+fn evidence_registry_verify_final_receipt(
+    root: &Path,
+    mut issues: Vec<Value>,
+    registry_hash: Value,
+    entries: Vec<Value>,
+) -> Value {
+    issues.sort_by_key(canonical_json_hash);
+    let valid = issues.is_empty();
+    with_portable_receipt_hash(
+        root,
+        json!({
+            "command": "evidence registry verify",
+            "root": path_string(root),
+            "registry": "<registry>",
+            "valid": valid,
+            "verdict": if valid { "pass" } else { "fail" },
+            "issues": issues,
+            "registry_hash": registry_hash,
+            "entry_count": entries.len(),
+            "entries": entries,
         }),
     )
 }
@@ -7556,7 +7959,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE\n  evidence registry verify --root PATH --registry FILE\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

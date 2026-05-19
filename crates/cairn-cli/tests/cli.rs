@@ -549,6 +549,8 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
         vec![
             "agent_receipt_validate",
             "archive_dry_run",
+            "evidence_registry_build",
+            "evidence_registry_verify",
             "gate_design",
             "gate_proposal",
             "gate_tasks",
@@ -1304,6 +1306,11 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.evidence_publish_index_rail.failures]
     // r[verify cairn.supersede.evidence_publish_index_rail.gates]
     // r[verify cairn.supersede.evidence_publish_index_rail.archive]
+    // r[verify cairn.supersede.evidence_registry_rail.build]
+    // r[verify cairn.supersede.evidence_registry_rail.verify]
+    // r[verify cairn.supersede.evidence_registry_rail.failures]
+    // r[verify cairn.supersede.evidence_registry_rail.gates]
+    // r[verify cairn.supersede.evidence_registry_rail.archive]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -1524,6 +1531,80 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     assert_eq!(index_verify["index_receipt_hash"], index["receipt_hash"]);
     assert_eq!(index_verify["bundle_kind"], "republished");
     assert_hash_field(&index_verify, "receipt_hash")?;
+
+    let registry_path = republish_dir.join("evidence-registry-receipt.json");
+    let registry = run_json_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "build".into(),
+        "--root".into(),
+        ".".into(),
+        "--index".into(),
+        index_path.display().to_string(),
+        "--out".into(),
+        registry_path.display().to_string(),
+    ])?;
+    assert_eq!(registry["valid"], true);
+    assert_eq!(registry["verdict"], "pass");
+    assert_eq!(registry["out"], "<out>");
+    assert_eq!(registry["entry_count"], 1);
+    assert_hash_field(&registry, "receipt_hash")?;
+    let registry_entry = &registry["entries"][0];
+    assert_eq!(registry_entry["index_receipt_hash"], index["receipt_hash"]);
+    assert_eq!(registry_entry["bundle_kind"], "republished");
+    assert_eq!(
+        registry_entry["bundle_receipt_hash"],
+        republish["receipt_hash"]
+    );
+    assert_eq!(
+        registry_entry["index_relative"],
+        "evidence-index-receipt.json"
+    );
+    let saved_registry: Value = serde_json::from_slice(&fs::read(&registry_path)?)?;
+    assert_eq!(saved_registry["receipt_hash"], registry["receipt_hash"]);
+    let registry_verify = run_json_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--registry".into(),
+        registry_path.display().to_string(),
+    ])?;
+    assert_eq!(registry_verify["valid"], true);
+    assert_eq!(registry_verify["verdict"], "pass");
+    assert_eq!(registry_verify["registry_hash"], registry["receipt_hash"]);
+    assert_eq!(registry_verify["entry_count"], 1);
+    assert_hash_field(&registry_verify, "receipt_hash")?;
+    let duplicate_registry_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "build".into(),
+        "--root".into(),
+        ".".into(),
+        "--index".into(),
+        index_path.display().to_string(),
+        "--index".into(),
+        index_path.display().to_string(),
+        "--out".into(),
+        republish_dir
+            .join("duplicate-registry.json")
+            .display()
+            .to_string(),
+    ])?;
+    assert_eq!(duplicate_registry_failure["valid"], false);
+    let duplicate_registry_codes = duplicate_registry_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(duplicate_registry_codes.contains(&"evidence_registry.duplicate_index_hash"));
+    let registry_text = serde_json::to_string(&registry)?;
+    assert!(
+        !registry_text.contains(&dir.display().to_string()),
+        "{registry_text}"
+    );
     let index_text = serde_json::to_string(&index)?;
     assert!(
         !index_text.contains(&dir.display().to_string()),
@@ -1554,6 +1635,23 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         index_verify_issue_codes.contains(&"evidence_index_verify.artifact_hash_mismatch")
             || index_verify_issue_codes.contains(&"evidence_index_verify.index_bundle_mismatch")
     );
+    let registry_verify_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--registry".into(),
+        registry_path.display().to_string(),
+    ])?;
+    assert_eq!(registry_verify_failure["valid"], false);
+    let registry_verify_codes = registry_verify_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(registry_verify_codes.contains(&"evidence_registry_verify.index_verify_failed"));
 
     fs::write(import_dir.join("undeclared-imported-extra.json"), "{}\n")?;
     let republish_failure = run_json_failure_strings(&[

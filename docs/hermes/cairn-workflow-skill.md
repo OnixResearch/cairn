@@ -126,6 +126,8 @@ Expected result: no matches.
   - `cairn agent-receipt verify-bundle <bundle.json> --root .` validates a persisted agent/CI evidence chain across an agent receipt, saved replay receipt, saved replay verification receipt, and optional release-readiness receipt.
   - `cairn evidence-manifest generate --bundle <bundle.json> --agent-receipt <agent.json> --replay <replay.json> --replay-verification <verify.json> --out <manifest.json> --root .` generates canonical outer manifest JSON with stable roles and artifact hashes.
   - `cairn evidence-manifest verify <manifest.json> --root .` validates the outer persisted evidence artifact index, declared hashes, supported roles, and optional public signer/anchor metadata without claiming cryptographic signature or remote-anchor validity.
+  - `cairn evidence export|verify|import|republish|index` builds the deterministic evidence chain from bundle materialization through publishable single-bundle indexes.
+  - `cairn evidence registry build --root . --index <index.json> --out <registry.json>` and `cairn evidence registry verify --root . --registry <registry.json>` aggregate and verify deterministic multi-index release/channel catalogs.
   - `cairn agent-receipt smoke-mcp --root .` proves the MCP catalog, receipt validation path, strict invalid-argument behavior, and default mutation denial compose.
 - Release readiness:
   - `cairn release-readiness --root .` emits a deterministic local operator bundle over Cairn validation, Tracey coverage, MCP smoke, repository gate summary, and receipt hashes.
