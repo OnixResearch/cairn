@@ -286,6 +286,17 @@ fn replay_evidence_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue>
             "replay_evidence.replay_selected_cases must list replay case ids",
         ));
     }
+    let has_groups = evidence
+        .get("replay_selected_groups")
+        .and_then(Value::as_array)
+        .map(|groups| !groups.is_empty() && groups.iter().all(Value::is_string))
+        .unwrap_or(false);
+    if !has_groups {
+        issues.push(issue(
+            "replay_evidence.missing_groups",
+            "replay_evidence.replay_selected_groups must list replay group ids",
+        ));
+    }
     issues
 }
 
@@ -315,8 +326,9 @@ pub fn positive_agent_run_fixture() -> Value {
         "nondeterminism_manifest": {"captured": [{"class": "model_provider", "metadata": {"provider": "fixture"}}], "forbidden_uncaptured": []},
         "replay_evidence": {
             "replay_receipt_hash": "4444444444444444444444444444444444444444444444444444444444444444",
-            "replay_policy_hash": "b0ccc3cd542f597ed382d43758d23ad790c5740c1fa482e9d08fec4fdc26ed6a",
+            "replay_policy_hash": "c6b0062a99e0295ff8a6a3725490adc7322f5d2dd1fc703c02e090d0c6eb93e3",
             "replay_selected_cases": ["agent_receipt_validate", "mcp_describe", "status", "validate"],
+            "replay_selected_groups": ["agent"],
             "replay_verdict": "pass",
             "replay_artifact_path": "/tmp/cairn-replay.json"
         },

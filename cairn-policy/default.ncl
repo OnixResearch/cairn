@@ -57,9 +57,9 @@ let Contracts = import "contracts.ncl" in
   receipt_schemas = [
     {
       command = "agent-receipt validate",
-      top_level_keys = ["agent_receipt_hash", "command", "current_replay_policy_hash", "input_hash", "input_kind", "issues", "max_content_bytes", "path", "receipt_hash", "replay_evidence", "required_replay_cases", "stated_agent_receipt_hash", "valid", "verdict"],
+      top_level_keys = ["agent_receipt_hash", "command", "current_replay_policy_hash", "input_hash", "input_kind", "issues", "max_content_bytes", "path", "receipt_hash", "replay_evidence", "required_replay_cases", "required_replay_group", "stated_agent_receipt_hash", "valid", "verdict"],
       issue_keys = ["code", "message"],
-      replay_evidence_keys = ["replay_artifact_path", "replay_policy_hash", "replay_receipt_hash", "replay_selected_cases", "replay_verdict"],
+      replay_evidence_keys = ["replay_artifact_path", "replay_policy_hash", "replay_receipt_hash", "replay_selected_cases", "replay_selected_groups", "replay_verdict"],
       hash_fields = ["agent_receipt_hash", "current_replay_policy_hash", "input_hash", "receipt_hash", "stated_agent_receipt_hash"],
     },
     {

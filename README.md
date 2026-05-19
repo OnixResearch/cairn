@@ -188,23 +188,27 @@ canonical receipt with `schema_version`, `task_id`, `agent_identity`,
 `verification_manifest`, `nondeterminism_manifest`, `replay_evidence`,
 `verdict`, and `receipt_hash`. The `replay_evidence` object binds the agent
 run to deterministic replay preflight evidence with stable
-`replay_receipt_hash`, `replay_policy_hash`, `replay_selected_cases`, and
-`replay_verdict` fields, plus optional display-only `replay_artifact_path`.
-`agent-receipt validate <path>` checks that replay evidence cites a passing
-replay verdict, the current generated policy hash, and required replay cases
-(`agent_receipt_validate`, `mcp_describe`, `status`, and `validate`). Missing,
-stale, failed, or insufficient replay evidence emits deterministic issue codes
-such as `replay_evidence.missing`, `replay_evidence.policy_hash_stale`, and
+`replay_receipt_hash`, `replay_policy_hash`, `replay_selected_cases`,
+`replay_selected_groups`, and `replay_verdict` fields, plus optional
+display-only `replay_artifact_path`. Agent wrappers should run
+`cairn determinism replay --group agent` and record the resulting `agent` group
+and expanded case list. `agent-receipt validate <path>` checks that replay
+evidence cites a passing replay verdict, the current generated policy hash, the
+policy-owned `agent` replay group, and every case expanded from that group.
+Missing, stale, failed, or insufficient replay evidence emits deterministic issue
+codes such as `replay_evidence.missing`, `replay_evidence.policy_hash_stale`,
+`replay_evidence.missing_group_coverage`, and
 `replay_evidence.insufficient_coverage`. The CLI can replay a stored receipt
 with `agent-receipt validate <path>` and emits deterministic validation JSON for
 positive and negative fixtures. Stable public agent receipt validation fields
 are `command`, `path`, `input_kind`, `valid`, `verdict`, `issues`,
 `agent_receipt_hash`, `input_hash`, `stated_agent_receipt_hash`,
-`current_replay_policy_hash`, `required_replay_cases`, `replay_evidence`,
+`current_replay_policy_hash`, `required_replay_group`, `required_replay_cases`, `replay_evidence`,
 `max_content_bytes`, and `receipt_hash`. See `docs/agent-run-receipts.md` for
 wrapper guidance, validation commands, and privacy rules. r[verify
 cairn.supersede.agent_run_receipts.schema]
 r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
+r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
 r[verify cairn.supersede.agent_run_receipts.completion_gate]
 
 ## MCP server

@@ -452,6 +452,7 @@
         "replay_policy_hash",
         "replay_receipt_hash",
         "replay_selected_cases",
+        "replay_selected_groups",
         "replay_verdict"
       ],
       "top_level_keys": [
@@ -466,6 +467,7 @@
         "receipt_hash",
         "replay_evidence",
         "required_replay_cases",
+        "required_replay_group",
         "stated_agent_receipt_hash",
         "valid",
         "verdict"

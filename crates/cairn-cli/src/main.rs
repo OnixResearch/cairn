@@ -1609,12 +1609,7 @@ fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
 const MCP_MAX_CONTENT_BYTES: usize = 64 * 1024;
 const AGENT_RECEIPT_MAX_BYTES: u64 = 64 * 1024;
-const REQUIRED_AGENT_REPLAY_CASES: &[&str] = &[
-    "agent_receipt_validate",
-    "mcp_describe",
-    "status",
-    "validate",
-];
+const REQUIRED_AGENT_REPLAY_GROUP: &str = "agent";
 
 fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
@@ -3299,8 +3294,15 @@ fn agent_receipt_validation_receipt(
     // r[impl cairn.supersede.agent_receipt_replay_evidence.validation]
     // r[impl cairn.supersede.agent_receipt_replay_evidence.failures]
     let report = evaluate_agent_run_completion(receipt);
+    // r[impl cairn.supersede.agent_receipt_replay_group_coverage.validation]
     let current_replay_policy_hash = canonical_json_hash(&policy.raw);
-    let replay_issues = agent_receipt_replay_evidence_issues(receipt, &current_replay_policy_hash);
+    let (required_replay_cases, required_group_issue) = agent_required_replay_cases(policy);
+    let replay_issues = agent_receipt_replay_evidence_issues(
+        receipt,
+        &current_replay_policy_hash,
+        &required_replay_cases,
+        required_group_issue,
+    );
     let mut issues = report
         .issues
         .iter()
@@ -3325,15 +3327,52 @@ fn agent_receipt_validation_receipt(
         "input_hash": canonical_json_hash(receipt),
         "stated_agent_receipt_hash": receipt.get("receipt_hash").and_then(Value::as_str).unwrap_or_default(),
         "current_replay_policy_hash": current_replay_policy_hash,
-        "required_replay_cases": REQUIRED_AGENT_REPLAY_CASES,
+        "required_replay_group": REQUIRED_AGENT_REPLAY_GROUP,
+        "required_replay_cases": required_replay_cases,
         "replay_evidence": agent_replay_evidence_summary(receipt),
         "max_content_bytes": AGENT_RECEIPT_MAX_BYTES,
     }))
 }
 
+fn agent_required_replay_cases(policy: &Policy) -> (Vec<String>, Option<AgentRunGateIssue>) {
+    match replay_groups_from_policy(policy) {
+        Ok(groups) => {
+            let Some(group) = groups
+                .iter()
+                .find(|group| group.id == REQUIRED_AGENT_REPLAY_GROUP)
+            else {
+                return (
+                    Vec::new(),
+                    Some(AgentRunGateIssue {
+                        code: "replay_evidence.required_group_missing".to_string(),
+                        message: format!(
+                            "generated replay policy must define required agent replay group: {REQUIRED_AGENT_REPLAY_GROUP}"
+                        ),
+                    }),
+                );
+            };
+            let mut cases = group.cases.clone();
+            cases.sort();
+            cases.dedup();
+            (cases, None)
+        }
+        Err(error) => (
+            Vec::new(),
+            Some(AgentRunGateIssue {
+                code: "replay_evidence.required_group_missing".to_string(),
+                message: format!(
+                    "generated replay policy missing usable agent replay group metadata: {error}"
+                ),
+            }),
+        ),
+    }
+}
+
 fn agent_receipt_replay_evidence_issues(
     receipt: &Value,
     current_policy_hash: &str,
+    required_replay_cases: &[String],
+    required_group_issue: Option<AgentRunGateIssue>,
 ) -> Vec<AgentRunGateIssue> {
     let Some(evidence) = receipt.get("replay_evidence").and_then(Value::as_object) else {
         return vec![AgentRunGateIssue {
@@ -3342,6 +3381,9 @@ fn agent_receipt_replay_evidence_issues(
         }];
     };
     let mut issues = Vec::new();
+    if let Some(issue) = required_group_issue {
+        issues.push(issue);
+    }
     let replay_hash = evidence
         .get("replay_receipt_hash")
         .and_then(Value::as_str)
@@ -3374,13 +3416,26 @@ fn agent_receipt_replay_evidence_issues(
                     .to_string(),
         });
     }
+    let selected_groups = evidence
+        .get("replay_selected_groups")
+        .and_then(Value::as_array)
+        .map(|groups| groups.iter().filter_map(Value::as_str).collect::<Vec<_>>())
+        .unwrap_or_default();
+    if !selected_groups.contains(&REQUIRED_AGENT_REPLAY_GROUP) {
+        issues.push(AgentRunGateIssue {
+            code: "replay_evidence.missing_group_coverage".to_string(),
+            message: format!(
+                "replay evidence must include required selected group: {REQUIRED_AGENT_REPLAY_GROUP}"
+            ),
+        });
+    }
     let selected_cases = evidence
         .get("replay_selected_cases")
         .and_then(Value::as_array)
         .map(|cases| cases.iter().filter_map(Value::as_str).collect::<Vec<_>>())
         .unwrap_or_default();
-    for required in REQUIRED_AGENT_REPLAY_CASES {
-        if !selected_cases.contains(required) {
+    for required in required_replay_cases {
+        if !selected_cases.contains(&required.as_str()) {
             issues.push(AgentRunGateIssue {
                 code: "replay_evidence.insufficient_coverage".to_string(),
                 message: format!("replay evidence missing required case: {required}"),
@@ -3398,6 +3453,7 @@ fn agent_replay_evidence_summary(receipt: &Value) -> Value {
         "replay_receipt_hash": evidence.get("replay_receipt_hash").cloned().unwrap_or(Value::Null),
         "replay_policy_hash": evidence.get("replay_policy_hash").cloned().unwrap_or(Value::Null),
         "replay_selected_cases": evidence.get("replay_selected_cases").cloned().unwrap_or(Value::Null),
+        "replay_selected_groups": evidence.get("replay_selected_groups").cloned().unwrap_or(Value::Null),
         "replay_verdict": evidence.get("replay_verdict").cloned().unwrap_or(Value::Null),
         "replay_artifact_path": evidence.get("replay_artifact_path").cloned().unwrap_or(Value::Null),
     })
