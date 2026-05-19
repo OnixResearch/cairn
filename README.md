@@ -262,7 +262,14 @@ bundle files, and emits stable fields `command`, `root`, `bundle`, `into`,
 which verifies the import receipt, rehashes declared imported artifacts, rejects
 extra or unsafe imported files, and emits stable fields `command`, `root`,
 `imported`, `out`, `valid`, `verdict`, `issues`, `artifacts`,
-`import_receipt_hash`, and `receipt_hash`. The outer publication/index layer can also be generated with
+`import_receipt_hash`, and `receipt_hash`. Published bundles can be cataloged
+with `cairn evidence index --root . --bundle target/cairn-republished-evidence/ --out target/cairn-evidence-index.json`
+and checked with `cairn evidence index verify --root . --index target/cairn-evidence-index.json`.
+The index rehashes declared bundle artifacts, records the bundle kind, canonical
+bundle receipt, receipt chain, artifact roles/paths/hashes, and emits stable
+fields `command`, `root`, `bundle`, `out`, `valid`, `verdict`, `issues`,
+`bundle_kind`, `bundle_receipt_hash`, `receipt_chain`, `policy_hash`,
+`artifacts`, and `receipt_hash` without raw host paths. The outer publication/index layer can also be generated with
 `cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
 list stable roles such as `agent_evidence_bundle`, `agent_receipt`,

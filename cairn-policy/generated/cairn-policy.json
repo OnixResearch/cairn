@@ -1264,6 +1264,82 @@
         "valid",
         "verdict"
       ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
+        "hash",
+        "path",
+        "role"
+      ],
+      "case_keys": [],
+      "command": "evidence index",
+      "hash_fields": [
+        "bundle_receipt_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "artifacts",
+        "bundle",
+        "bundle_kind",
+        "bundle_receipt",
+        "bundle_receipt_hash",
+        "bundle_relative",
+        "command",
+        "issues",
+        "out",
+        "policy_hash",
+        "receipt_chain",
+        "receipt_hash",
+        "root",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
+        "hash",
+        "path",
+        "role"
+      ],
+      "case_keys": [],
+      "command": "evidence index verify",
+      "hash_fields": [
+        "bundle_receipt_hash",
+        "index_receipt_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "artifacts",
+        "bundle_kind",
+        "bundle_receipt_hash",
+        "command",
+        "index",
+        "index_receipt_hash",
+        "issues",
+        "receipt_chain",
+        "receipt_hash",
+        "root",
+        "valid",
+        "verdict"
+      ]
     }
   ],
   "report_contract": {

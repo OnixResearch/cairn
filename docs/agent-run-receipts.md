@@ -103,7 +103,20 @@ The republish command verifies `evidence-import-receipt.json`, rehashes declared
 imported artifacts, copies only those artifacts into the output directory, writes
 `evidence-republish-receipt.json`, preserves roles and relative paths, and emits
 stable `imported = "<imported>"`, `out = "<out>"`, `import_receipt_hash`,
-artifact hashes, deterministic issue codes, and its own `receipt_hash`. r[verify cairn.supersede.evidence_export_bundle.docs]
+artifact hashes, deterministic issue codes, and its own `receipt_hash`. Publish a
+small deterministic catalog before downstream artifact transfer with:
+
+```sh
+nix run .#cairn -- evidence index --root . --bundle target/cairn-republished-evidence/ --out target/cairn-evidence-index.json
+nix run .#cairn -- evidence index verify --root . --index target/cairn-evidence-index.json
+```
+
+The index command detects exported, imported, or republished bundle receipts,
+rehashes declared artifacts, records bundle kind, receipt-chain hashes, policy
+hash when available, and artifact roles/relative paths/hashes, then emits stable
+`bundle = "<bundle>"`, `out = "<out>"`, deterministic issue codes, and its own
+`receipt_hash`. Index verification recomputes the catalog from the referenced
+bundle without leaking raw host paths. r[verify cairn.supersede.evidence_export_bundle.docs]
 r[verify cairn.supersede.evidence_bundle_verify_command.docs]
 r[verify cairn.supersede.evidence_export_bundle.archive]
 

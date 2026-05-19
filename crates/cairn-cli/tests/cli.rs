@@ -1299,6 +1299,11 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.evidence_import_republish_rail.failures]
     // r[verify cairn.supersede.evidence_import_republish_rail.gates]
     // r[verify cairn.supersede.evidence_import_republish_rail.archive]
+    // r[verify cairn.supersede.evidence_publish_index_rail.command]
+    // r[verify cairn.supersede.evidence_publish_index_rail.verify]
+    // r[verify cairn.supersede.evidence_publish_index_rail.failures]
+    // r[verify cairn.supersede.evidence_publish_index_rail.gates]
+    // r[verify cairn.supersede.evidence_publish_index_rail.archive]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -1479,6 +1484,75 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     assert!(
         !republish_text.contains(&dir.display().to_string()),
         "{republish_text}"
+    );
+
+    let index_path = republish_dir.join("evidence-index-receipt.json");
+    let index = run_json_strings(&[
+        "evidence".into(),
+        "index".into(),
+        "--root".into(),
+        ".".into(),
+        "--bundle".into(),
+        republish_dir.display().to_string(),
+        "--out".into(),
+        index_path.display().to_string(),
+    ])?;
+    assert_eq!(index["valid"], true);
+    assert_eq!(index["verdict"], "pass");
+    assert_eq!(index["bundle"], "<bundle>");
+    assert_eq!(index["out"], "<out>");
+    assert_eq!(index["bundle_kind"], "republished");
+    assert_eq!(index["bundle_receipt_hash"], republish["receipt_hash"]);
+    assert_eq!(
+        index["artifacts"].as_array().unwrap().len(),
+        republish["artifacts"].as_array().unwrap().len()
+    );
+    assert_hash_field(&index, "receipt_hash")?;
+    let saved_index: Value = serde_json::from_slice(&fs::read(&index_path)?)?;
+    assert_eq!(saved_index["receipt_hash"], index["receipt_hash"]);
+    let index_verify = run_json_strings(&[
+        "evidence".into(),
+        "index".into(),
+        "verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--index".into(),
+        index_path.display().to_string(),
+    ])?;
+    assert_eq!(index_verify["valid"], true);
+    assert_eq!(index_verify["verdict"], "pass");
+    assert_eq!(index_verify["index_receipt_hash"], index["receipt_hash"]);
+    assert_eq!(index_verify["bundle_kind"], "republished");
+    assert_hash_field(&index_verify, "receipt_hash")?;
+    let index_text = serde_json::to_string(&index)?;
+    assert!(
+        !index_text.contains(&dir.display().to_string()),
+        "{index_text}"
+    );
+
+    fs::write(
+        republish_dir.join(index["artifacts"][0]["path"].as_str().unwrap()),
+        "tampered\n",
+    )?;
+    let index_verify_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "index".into(),
+        "verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--index".into(),
+        index_path.display().to_string(),
+    ])?;
+    assert_eq!(index_verify_failure["valid"], false);
+    let index_verify_issue_codes = index_verify_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(
+        index_verify_issue_codes.contains(&"evidence_index_verify.artifact_hash_mismatch")
+            || index_verify_issue_codes.contains(&"evidence_index_verify.index_bundle_mismatch")
     );
 
     fs::write(import_dir.join("undeclared-imported-extra.json"), "{}\n")?;
