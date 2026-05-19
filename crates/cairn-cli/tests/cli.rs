@@ -1283,6 +1283,12 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.evidence_export_bundle.gates]
     // r[verify cairn.supersede.evidence_export_bundle.docs]
     // r[verify cairn.supersede.evidence_export_bundle.archive]
+    // r[verify cairn.supersede.evidence_bundle_verify_command.command]
+    // r[verify cairn.supersede.evidence_bundle_verify_command.artifacts]
+    // r[verify cairn.supersede.evidence_bundle_verify_command.failures]
+    // r[verify cairn.supersede.evidence_bundle_verify_command.gates]
+    // r[verify cairn.supersede.evidence_bundle_verify_command.docs]
+    // r[verify cairn.supersede.evidence_bundle_verify_command.archive]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -1351,6 +1357,55 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     let text = serde_json::to_string(&receipt)?;
     assert!(!text.contains(&dir.display().to_string()), "{text}");
     assert!(!text.contains("SECRET"), "{text}");
+
+    let verification = run_json_strings(&[
+        "evidence".into(),
+        "verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--bundle".into(),
+        export_dir.display().to_string(),
+    ])?;
+    assert_eq!(verification["valid"], true);
+    assert_eq!(verification["verdict"], "pass");
+    assert_eq!(verification["issues"].as_array().unwrap().len(), 0);
+    assert_eq!(verification["bundle"], "<bundle>");
+    assert_eq!(verification["export_receipt_hash"], receipt["receipt_hash"]);
+    assert_eq!(verification["manifest_hash"], receipt["manifest_hash"]);
+    assert_eq!(
+        verification["manifest_verification_receipt_hash"],
+        receipt["manifest_verification_receipt_hash"]
+    );
+    assert_hash_field(&verification, "receipt_hash")?;
+    let verification_text = serde_json::to_string(&verification)?;
+    assert!(
+        !verification_text.contains(&dir.display().to_string()),
+        "{verification_text}"
+    );
+
+    fs::write(export_dir.join("coverage-audit.json"), "{}\n")?;
+    let verify_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--bundle".into(),
+        export_dir.display().to_string(),
+    ])?;
+    assert_eq!(verify_failure["valid"], false);
+    let verify_issue_codes = verify_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(verify_issue_codes.contains(&"evidence_verify.artifact_hash_mismatch"));
+    assert!(verify_issue_codes.contains(&"evidence_verify.coverage_audit_invalid"));
+    let verify_failure_text = serde_json::to_string(&verify_failure)?;
+    assert!(
+        !verify_failure_text.contains(&dir.display().to_string()),
+        "{verify_failure_text}"
+    );
 
     let bad_agent = dir.join("bad-agent.json");
     let mut stale_agent: Value = serde_json::from_str(&fs::read_to_string(

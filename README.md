@@ -246,6 +246,11 @@ coverage audit, replay, replay verification, release-readiness, agent bundle,
 bundle verification, evidence manifest, and manifest verification artifacts in a
 portable directory. Stable public evidence export fields are `command`, `root`,
 `output`, `valid`, `verdict`, `issues`, `artifacts`, `manifest_hash`,
+`manifest_verification_receipt_hash`, and `receipt_hash`. Consumers can verify a
+received export with `cairn evidence verify --root . --bundle target/cairn-evidence/`,
+which rehashes exported artifacts, composes the nested verifiers, and emits
+stable fields `command`, `root`, `bundle`, `valid`, `verdict`, `issues`,
+`artifacts`, `export_receipt_hash`, `manifest_hash`,
 `manifest_verification_receipt_hash`, and `receipt_hash`. The outer publication/index layer can also be generated with
 `cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts

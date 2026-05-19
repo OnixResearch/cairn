@@ -69,7 +69,20 @@ The export command materializes `coverage-audit.json`, `replay-agent.json`,
 `evidence-manifest.json`, `evidence-manifest-verification.json`, and
 `evidence-export-receipt.json`. The export receipt uses relative artifact paths,
 BLAKE3 file hashes, the manifest hash, the manifest-verification receipt hash,
-and deterministic issue codes for failed nested evidence. r[verify cairn.supersede.evidence_export_bundle.docs]
+and deterministic issue codes for failed nested evidence. Consumers can verify a
+received export without reconstructing the chain by hand:
+
+```sh
+nix run .#cairn -- evidence verify --root . --bundle target/cairn-evidence/
+```
+
+The verify command locates `evidence-export-receipt.json`, rehashes declared
+relative artifact paths, rejects unsafe or missing paths, checks canonical roles,
+re-runs the replay, bundle, and manifest receipt validators, and emits a
+path-safe receipt with `export_receipt_hash`, `manifest_hash`,
+`manifest_verification_receipt_hash`, per-artifact hashes, deterministic issue
+codes, and its own `receipt_hash`. r[verify cairn.supersede.evidence_export_bundle.docs]
+r[verify cairn.supersede.evidence_bundle_verify_command.docs]
 r[verify cairn.supersede.evidence_export_bundle.archive]
 
 ## Manual replay and publication flow
