@@ -1,0 +1,50 @@
+$ nix run path:$PWD#cairn -- validate --root .
+{
+  "change_issues": [],
+  "changes": 2,
+  "issues": [],
+  "layout": "cairn",
+  "policy": "cairn-default",
+  "spec_issues": [],
+  "specs_validated": 4,
+  "valid": true
+}
+$ nix run path:$PWD#cairn -- gate proposal octet-evidence-format-contracts --root .
+{
+  "change": "octet-evidence-format-contracts",
+  "input_hash": "6a6a2c5d751f3edc9545b0d4052207c989e045e4cb526c728ae7ffa5a4bef230",
+  "issues": [],
+  "layout": "cairn",
+  "policy": "cairn-default",
+  "policy_hash": "f010c698b3cf188ddc090581896887d78d66bfb7c7e99cf12df02a3fcf326df7",
+  "receipt_hash": "2c0fee8a73a56e89d6b7965ade3d01c84d6594fb13ca95838d3506d393ba4992",
+  "stage": "proposal",
+  "valid": true,
+  "verdict": "PASS"
+}
+$ nix run path:$PWD#cairn -- gate design octet-evidence-format-contracts --root .
+{
+  "change": "octet-evidence-format-contracts",
+  "input_hash": "c40fc4c2690d0d58d20e9cc347f8ed2a45cd97dd6edd6fa57ead2e1f1ac79b01",
+  "issues": [],
+  "layout": "cairn",
+  "policy": "cairn-default",
+  "policy_hash": "f010c698b3cf188ddc090581896887d78d66bfb7c7e99cf12df02a3fcf326df7",
+  "receipt_hash": "366e9d09542f1c85e1047bbb6a3aa7c5bffb0502e44031b146e56d0b4a31a893",
+  "stage": "design",
+  "valid": true,
+  "verdict": "PASS"
+}
+$ nix run path:$PWD#cairn -- gate tasks octet-evidence-format-contracts --root .
+{
+  "change": "octet-evidence-format-contracts",
+  "input_hash": "3721ffd3d808b0542347a7b062511a80608fa08c76371ebd5579824f5aa0753a",
+  "issues": [],
+  "layout": "cairn",
+  "policy": "cairn-default",
+  "policy_hash": "f010c698b3cf188ddc090581896887d78d66bfb7c7e99cf12df02a3fcf326df7",
+  "receipt_hash": "e44ca81e5364e6fc3cda1e483d7e9a3ef91d2bd957d54c64eb0c72ea8ec66d87",
+  "stage": "tasks",
+  "valid": true,
+  "verdict": "PASS"
+}
