@@ -230,11 +230,21 @@ positive and negative fixtures. Stable public agent receipt validation fields
 are `command`, `path`, `input_kind`, `valid`, `verdict`, `issues`,
 `agent_receipt_hash`, `input_hash`, `stated_agent_receipt_hash`,
 `current_replay_policy_hash`, `required_replay_group`, `required_replay_cases`, `replay_evidence`,
-`max_content_bytes`, and `receipt_hash`. See `docs/agent-run-receipts.md` for
-wrapper guidance, validation commands, and privacy rules. r[verify
+`max_content_bytes`, and `receipt_hash`. Wrappers that publish multiple artifacts
+can verify the whole chain with
+`cairn agent-receipt verify-bundle <bundle.json> --root .`; the bundle references
+an agent receipt, saved replay receipt, saved replay verification receipt, and
+optional release-readiness receipt. Stable public agent evidence bundle verification fields
+are `command`, `root`, `valid`, `verdict`, `issues`,
+`current_replay_policy_hash`, `required_replay_group`, `agent_receipt_hash`,
+`replay_receipt_hash`, `replay_verification_receipt_hash`,
+`environment_attestation_hash`, `release_readiness_receipt_hash`, and
+`receipt_hash`. See `docs/agent-run-receipts.md` for wrapper guidance,
+validation commands, and privacy rules. r[verify
 cairn.supersede.agent_run_receipts.schema]
 r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
+r[verify cairn.supersede.agent_evidence_bundle_verification.docs]
 r[verify cairn.supersede.agent_run_receipts.completion_gate]
 
 ## MCP server

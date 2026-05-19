@@ -73,7 +73,21 @@ Replay receipt verification recomputes `replay_receipt_hash`, compares the
 current generated policy hash, validates `environment_attestation.attestation_hash`,
 and checks selected cases/groups against policy. It emits deterministic issue
 codes for malformed, stale, or tampered evidence without storing raw environment
-values. r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
+values. Wrappers that persist a full evidence chain should then verify a bundle:
+
+```sh
+nix run .#cairn -- agent-receipt verify-bundle target/bundle.json --root .
+```
+
+The bundle JSON names `agent_receipt_path`, `replay_receipt_path`,
+`replay_verification_path`, and optional `release_readiness_path`; it may also
+pin expected hashes with `agent_receipt_hash`, `replay_receipt_hash`,
+`replay_verification_receipt_hash`, and `release_readiness_receipt_hash`. The
+bundle verifier composes agent receipt validation and saved replay verification,
+checks the policy-owned `agent` replay group, links the environment attestation
+hash through agent replay evidence, and emits a single deterministic pass/fail
+receipt. r[verify cairn.supersede.agent_evidence_bundle_verification.docs]
+r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
 r[verify cairn.supersede.determinism_replay.groups.docs]
 r[verify cairn.supersede.replay_environment_attestation.docs]

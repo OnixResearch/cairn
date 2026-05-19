@@ -805,6 +805,43 @@
         "valid",
         "verdict"
       ]
+    },
+    {
+      "action_keys": [],
+      "case_keys": [],
+      "command": "agent-receipt verify-bundle",
+      "hash_fields": [
+        "agent_receipt_hash",
+        "current_replay_policy_hash",
+        "environment_attestation_hash",
+        "receipt_hash",
+        "release_readiness_receipt_hash",
+        "replay_receipt_hash",
+        "replay_verification_receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "agent_receipt_hash",
+        "command",
+        "current_replay_policy_hash",
+        "environment_attestation_hash",
+        "issues",
+        "receipt_hash",
+        "release_readiness_receipt_hash",
+        "replay_receipt_hash",
+        "replay_verification_receipt_hash",
+        "required_replay_group",
+        "root",
+        "valid",
+        "verdict"
+      ]
     }
   ],
   "report_contract": {

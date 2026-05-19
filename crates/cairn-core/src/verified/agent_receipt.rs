@@ -333,12 +333,12 @@ pub fn positive_agent_run_fixture() -> Value {
         "verification_manifest": {"checks": [{"name": "cargo test", "verdict": "PASS", "evidence_hash": "3333333333333333333333333333333333333333333333333333333333333333"}]},
         "nondeterminism_manifest": {"captured": [{"class": "model_provider", "metadata": {"provider": "fixture"}}], "forbidden_uncaptured": []},
         "replay_evidence": {
-            "replay_receipt_hash": "6753ae9342fe0de258a62a6697f892ab36782f8bfb858557f0962668d5ab789a",
-            "replay_policy_hash": "996f492613ab6ef708576365aa38f70d9c4d599e291bd1e9d312184d46a56bea",
+            "replay_receipt_hash": "9e9f804ad430a560972f1b3eac0b277418871d564b5afa27e6c2b128eed07d51",
+            "replay_policy_hash": "13a4c3606b61e9406352fdb605e628d0e5adacf095ceb96a165cb7a9bb0ed05b",
             "replay_selected_cases": ["agent_receipt_validate", "mcp_describe", "status", "validate"],
             "replay_selected_groups": ["agent"],
             "replay_verdict": "pass",
-            "replay_environment_attestation_hash": "78cae97d8380d1860465d9387db0cc0e14025970ef9475ded4c761e25611c6be",
+            "replay_environment_attestation_hash": "3a82ef84b1771b4ab182e40ec81a5165c98c002057f91576bdc925b6442f39a0",
             "replay_artifact_path": "/tmp/cairn-replay.json"
         },
         "verdict": "success",

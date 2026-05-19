@@ -99,6 +99,12 @@ let Contracts = import "contracts.ncl" in
       issue_keys = ["actual", "code", "expected", "field_path"],
       hash_fields = ["current_replay_policy_hash", "environment_attestation_hash", "receipt_hash", "replay_policy_hash", "replay_receipt_hash", "stated_replay_receipt_hash"],
     },
+    {
+      command = "agent-receipt verify-bundle",
+      top_level_keys = ["agent_receipt_hash", "command", "current_replay_policy_hash", "environment_attestation_hash", "issues", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash", "required_replay_group", "root", "valid", "verdict"],
+      issue_keys = ["actual", "code", "expected", "field_path"],
+      hash_fields = ["agent_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash"],
+    },
   ],
 
   determinism_replay_policy = {

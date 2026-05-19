@@ -123,6 +123,7 @@ Expected result: no matches.
   - MCP tool schemas are strict object schemas with `additionalProperties=false`.
   - Default mutation denial is checked before argument validation for mutation-capable tools.
   - `cairn agent-receipt validate <path>` validates deterministic agent-run receipt fixtures.
+  - `cairn agent-receipt verify-bundle <bundle.json> --root .` validates a persisted agent/CI evidence chain across an agent receipt, saved replay receipt, saved replay verification receipt, and optional release-readiness receipt.
   - `cairn agent-receipt smoke-mcp --root .` proves the MCP catalog, receipt validation path, strict invalid-argument behavior, and default mutation denial compose.
 - Release readiness:
   - `cairn release-readiness --root .` emits a deterministic local operator bundle over Cairn validation, Tracey coverage, MCP smoke, repository gate summary, and receipt hashes.
