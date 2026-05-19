@@ -1294,6 +1294,11 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.evidence_import_consume_rail.failures]
     // r[verify cairn.supersede.evidence_import_consume_rail.gates]
     // r[verify cairn.supersede.evidence_import_consume_rail.archive]
+    // r[verify cairn.supersede.evidence_import_republish_rail.command]
+    // r[verify cairn.supersede.evidence_import_republish_rail.artifacts]
+    // r[verify cairn.supersede.evidence_import_republish_rail.failures]
+    // r[verify cairn.supersede.evidence_import_republish_rail.gates]
+    // r[verify cairn.supersede.evidence_import_republish_rail.archive]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -1430,6 +1435,77 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         !import_text.contains(&dir.display().to_string()),
         "{import_text}"
     );
+
+    let republish_dir = dir.join("republished");
+    let republish = run_json_strings(&[
+        "evidence".into(),
+        "republish".into(),
+        "--root".into(),
+        ".".into(),
+        "--imported".into(),
+        import_dir.display().to_string(),
+        "--out".into(),
+        republish_dir.display().to_string(),
+    ])?;
+    assert_eq!(republish["valid"], true);
+    assert_eq!(republish["verdict"], "pass");
+    assert_eq!(republish["imported"], "<imported>");
+    assert_eq!(republish["out"], "<out>");
+    assert_eq!(republish["import_receipt_hash"], import["receipt_hash"]);
+    assert_eq!(
+        republish["artifacts"].as_array().unwrap().len(),
+        roles.len()
+    );
+    assert_hash_field(&republish, "receipt_hash")?;
+    let saved_republish: Value = serde_json::from_slice(&fs::read(
+        republish_dir.join("evidence-republish-receipt.json"),
+    )?)?;
+    assert_eq!(saved_republish["receipt_hash"], republish["receipt_hash"]);
+    assert!(republish_dir.join("evidence-import-receipt.json").exists());
+    for artifact in republish["artifacts"].as_array().unwrap() {
+        assert_hash_field(artifact, "hash")?;
+        let path = artifact["path"].as_str().unwrap();
+        assert!(
+            republish_dir.join(path).exists(),
+            "missing republished artifact: {path}"
+        );
+        assert_eq!(
+            fs::read(republish_dir.join(path))?,
+            fs::read(import_dir.join(path))?,
+            "republished artifact bytes must match import for {path}"
+        );
+    }
+    let republish_text = serde_json::to_string(&republish)?;
+    assert!(
+        !republish_text.contains(&dir.display().to_string()),
+        "{republish_text}"
+    );
+
+    fs::write(import_dir.join("undeclared-imported-extra.json"), "{}\n")?;
+    let republish_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "republish".into(),
+        "--root".into(),
+        ".".into(),
+        "--imported".into(),
+        import_dir.display().to_string(),
+        "--out".into(),
+        dir.join("bad-republish").display().to_string(),
+    ])?;
+    assert_eq!(republish_failure["valid"], false);
+    let republish_issue_codes = republish_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(republish_issue_codes.contains(&"evidence_republish.undeclared_imported_file"));
+    let republish_failure_text = serde_json::to_string(&republish_failure)?;
+    assert!(
+        !republish_failure_text.contains(&dir.display().to_string()),
+        "{republish_failure_text}"
+    );
+    fs::remove_file(import_dir.join("undeclared-imported-extra.json"))?;
 
     fs::write(export_dir.join("undeclared-extra.json"), "{}\n")?;
     let import_failure = run_json_failure_strings(&[

@@ -92,7 +92,18 @@ The import command fails before trusting the bundle if verification fails, rejec
 undeclared bundle files and unsafe paths, preserves declared relative artifact
 paths, writes `evidence-import-receipt.json`, and emits stable `bundle =
 "<bundle>"`, `into = "<into>"`, `verification_receipt_hash`, artifact hashes,
-deterministic issue codes, and its own `receipt_hash`. r[verify cairn.supersede.evidence_export_bundle.docs]
+deterministic issue codes, and its own `receipt_hash`. Imported evidence can be
+republished for downstream caches without regenerating local replay evidence:
+
+```sh
+nix run .#cairn -- evidence republish --root . --imported target/cairn-imported-evidence/ --out target/cairn-republished-evidence/
+```
+
+The republish command verifies `evidence-import-receipt.json`, rehashes declared
+imported artifacts, copies only those artifacts into the output directory, writes
+`evidence-republish-receipt.json`, preserves roles and relative paths, and emits
+stable `imported = "<imported>"`, `out = "<out>"`, `import_receipt_hash`,
+artifact hashes, deterministic issue codes, and its own `receipt_hash`. r[verify cairn.supersede.evidence_export_bundle.docs]
 r[verify cairn.supersede.evidence_bundle_verify_command.docs]
 r[verify cairn.supersede.evidence_export_bundle.archive]
 

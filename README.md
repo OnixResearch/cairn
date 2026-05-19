@@ -257,7 +257,12 @@ materialize a bounded local copy with
 which verifies first, copies only declared export artifacts, rejects undeclared
 bundle files, and emits stable fields `command`, `root`, `bundle`, `into`,
 `valid`, `verdict`, `issues`, `artifacts`, `verification_receipt_hash`, and
-`receipt_hash`. The outer publication/index layer can also be generated with
+`receipt_hash`. Imported evidence can be republished with
+`cairn evidence republish --root . --imported target/cairn-imported-evidence/ --out target/cairn-republished-evidence/`,
+which verifies the import receipt, rehashes declared imported artifacts, rejects
+extra or unsafe imported files, and emits stable fields `command`, `root`,
+`imported`, `out`, `valid`, `verdict`, `issues`, `artifacts`,
+`import_receipt_hash`, and `receipt_hash`. The outer publication/index layer can also be generated with
 `cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
 list stable roles such as `agent_evidence_bundle`, `agent_receipt`,
