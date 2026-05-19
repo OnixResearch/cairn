@@ -189,6 +189,16 @@ package/version identity, generated policy hash, entropy policy hash, selected
 cases/groups, replay scope, reviewed environment facts, and
 `attestation_hash`. It intentionally omits raw environment values, usernames,
 absolute checkout roots, and machine-specific temporary or store paths.
+Saved replay receipts can be rechecked with
+`cairn determinism verify-receipt <receipt.json> --root .`; verification is
+read-only and recomputes the replay receipt hash, compares current generated
+policy and attestation hashes, validates selected cases/groups, and emits
+nonzero deterministic failure receipts for malformed, stale, or tampered replay
+evidence. Stable public replay verification fields are `command`, `root`,
+`path`, `valid`, `verdict`, `issues`, `current_replay_policy_hash`,
+`replay_policy_hash`, `replay_receipt_hash`, `stated_replay_receipt_hash`,
+`selected_cases`, `selected_groups`, `environment_attestation_hash`, and
+`receipt_hash`. r[verify cairn.supersede.replay_receipt_verification.docs]
 Mismatch entries expose stable `case`, `comparison`, `field_path`, `class`,
 `expected`, `actual`, and `reproduce` fields. The default oracle rejects mutation flags and records
 mutation observations as deterministic failures.

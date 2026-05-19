@@ -213,6 +213,12 @@ fn run_json_strings(args: &[String]) -> Result<Value, Box<dyn Error>> {
     run_json_command(&mut command)
 }
 
+fn run_json_failure_strings(args: &[String]) -> Result<Value, Box<dyn Error>> {
+    let mut command = cairn();
+    command.args(args);
+    run_json_failure_command(&mut command)
+}
+
 fn assert_hash_fields_equal(
     first: &Value,
     second: &Value,
@@ -502,6 +508,102 @@ fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<()
     assert_eq!(group["selected_groups"], json!(["smoke"]));
     assert_eq!(group["selected_cases"], json!(["status", "validate"]));
     assert_eq!(group["summary"]["total_cases"], 2);
+    Ok(())
+}
+
+#[test]
+fn determinism_verify_receipt_validates_saved_replay_evidence() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.replay_receipt_verification.contract]
+    // r[verify cairn.supersede.replay_receipt_verification.cli]
+    // r[verify cairn.supersede.replay_receipt_verification.validation]
+    // r[verify cairn.supersede.replay_receipt_verification.receipt]
+    // r[verify cairn.supersede.replay_receipt_verification.failures]
+    // r[verify cairn.supersede.replay_receipt_verification.secret_safe]
+    let artifact = temp_project("verify-replay-receipt")?.join("receipt.json");
+    let mut replay = cairn();
+    replay.args([
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--group",
+        "smoke",
+        "--format",
+        "summary",
+        "--out",
+        artifact.to_str().unwrap(),
+    ]);
+    let output = replay.output()?;
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let verified = run_json_strings(&[
+        "determinism".into(),
+        "verify-receipt".into(),
+        artifact.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    let replay_receipt: Value = serde_json::from_slice(&fs::read(&artifact)?)?;
+    assert_eq!(verified["valid"], true);
+    assert_eq!(verified["verdict"], "pass");
+    assert_eq!(verified["issues"].as_array().unwrap().len(), 0);
+    assert_eq!(
+        verified["replay_receipt_hash"],
+        replay_receipt["receipt_hash"]
+    );
+    assert_eq!(
+        verified["replay_policy_hash"],
+        replay_receipt["environment_attestation"]["generated_policy_hash"]
+    );
+    assert_eq!(verified["selected_cases"], json!(["status", "validate"]));
+    assert_eq!(verified["selected_groups"], json!(["smoke"]));
+    assert_eq!(
+        verified["environment_attestation_hash"],
+        replay_receipt["environment_attestation"]["attestation_hash"]
+    );
+    assert_hash_field(&verified, "receipt_hash")?;
+
+    let mut tampered = replay_receipt.clone();
+    tampered["selected_cases"] = json!(["status", "unknown_case"]);
+    let tampered_path = artifact.with_file_name("tampered.json");
+    fs::write(
+        &tampered_path,
+        serde_json::to_string_pretty(&tampered)? + "\n",
+    )?;
+    let failure = run_json_failure_strings(&[
+        "determinism".into(),
+        "verify-receipt".into(),
+        tampered_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(failure["valid"], false);
+    let issue_codes = failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(issue_codes.contains(&"selected_cases.invalid"));
+    assert!(issue_codes.contains(&"receipt_hash.mismatch"));
+    assert!(!serde_json::to_string(&failure)?.contains("SECRET"));
+
+    let malformed_path = artifact.with_file_name("malformed.json");
+    fs::write(&malformed_path, "{not json\n")?;
+    let malformed = run_json_failure_strings(&[
+        "determinism".into(),
+        "verify-receipt".into(),
+        malformed_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(malformed["valid"], false);
+    assert_eq!(malformed["issues"][0]["code"], "receipt.malformed_json");
     Ok(())
 }
 
@@ -823,6 +925,34 @@ fn assert_replay_receipt_schema() -> Result<(), Box<dyn Error>> {
     assert_hash_field(&replay, "receipt_hash")
 }
 
+fn assert_replay_verify_receipt_schema() -> Result<(), Box<dyn Error>> {
+    let artifact = temp_project("verify-replay-schema")?.join("receipt.json");
+    let mut replay = cairn();
+    replay.args([
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--case",
+        "status",
+        "--format",
+        "summary",
+        "--out",
+        artifact.to_str().unwrap(),
+    ]);
+    assert!(replay.output()?.status.success());
+    let verify = run_json_strings(&[
+        "determinism".into(),
+        "verify-receipt".into(),
+        artifact.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    let schema = receipt_schema("determinism verify-receipt")?;
+    assert_schema_keys(&verify, &schema, "top_level_keys")?;
+    assert_hash_field(&verify, "receipt_hash")
+}
+
 #[test]
 fn public_receipt_schemas_are_stable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.receipt_schema]
@@ -837,12 +967,14 @@ fn public_receipt_schemas_are_stable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.replay_environment_attestation.policy]
     // r[verify cairn.supersede.replay_environment_attestation.receipt]
     // r[verify cairn.supersede.replay_environment_attestation.agent]
+    // r[verify cairn.supersede.replay_receipt_verification.schema]
     assert_gate_receipt_schema()?;
     assert_sync_receipt_schema()?;
     assert_archive_receipt_schema()?;
     assert_migration_receipt_schema()?;
     assert_agent_receipt_validation_schema()?;
-    assert_replay_receipt_schema()
+    assert_replay_receipt_schema()?;
+    assert_replay_verify_receipt_schema()
 }
 
 #[test]
@@ -853,6 +985,7 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
     // r[verify cairn.supersede.determinism_replay.groups.docs]
     // r[verify cairn.supersede.determinism_entropy_inventory.docs]
     // r[verify cairn.supersede.replay_environment_attestation.docs]
+    // r[verify cairn.supersede.replay_receipt_verification.docs]
     let readme = fs::read_to_string(repo_root().join("README.md"))?;
     assert!(readme.contains("Stable public gate fields"), "{readme}");
     assert!(
@@ -898,6 +1031,14 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
     );
     assert!(readme.contains("`environment_attestation`"), "{readme}");
     assert!(readme.contains("`attestation_hash`"), "{readme}");
+    assert!(
+        readme.contains("Stable public replay verification fields"),
+        "{readme}"
+    );
+    assert!(
+        readme.contains("`cairn determinism verify-receipt <receipt.json> --root .`"),
+        "{readme}"
+    );
     assert!(
         readme.contains("raw environment values, usernames"),
         "{readme}"
@@ -1814,6 +1955,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     // r[verify cairn.supersede.determinism_entropy_inventory.archive]
     // r[verify cairn.supersede.replay_environment_attestation.verification]
     // r[verify cairn.supersede.replay_environment_attestation.archive]
+    // r[verify cairn.supersede.replay_receipt_verification.verification]
+    // r[verify cairn.supersede.replay_receipt_verification.archive]
     let receipt = run_json(&["release-readiness", "--root", "."])?;
     assert_object_keys(
         &receipt,

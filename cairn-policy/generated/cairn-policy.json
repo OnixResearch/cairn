@@ -768,6 +768,43 @@
         "valid",
         "verdict"
       ]
+    },
+    {
+      "action_keys": [],
+      "case_keys": [],
+      "command": "determinism verify-receipt",
+      "hash_fields": [
+        "current_replay_policy_hash",
+        "environment_attestation_hash",
+        "receipt_hash",
+        "replay_policy_hash",
+        "replay_receipt_hash",
+        "stated_replay_receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "current_replay_policy_hash",
+        "environment_attestation_hash",
+        "issues",
+        "path",
+        "receipt_hash",
+        "replay_policy_hash",
+        "replay_receipt_hash",
+        "root",
+        "selected_cases",
+        "selected_groups",
+        "stated_replay_receipt_hash",
+        "valid",
+        "verdict"
+      ]
     }
   ],
   "report_contract": {

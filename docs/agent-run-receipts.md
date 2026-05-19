@@ -61,10 +61,23 @@ group. Operators should collect the evidence with `cairn determinism replay --gr
 replay evidence produces deterministic issue codes such as
 `replay_evidence.missing`, `replay_evidence.policy_hash_stale`,
 `replay_evidence.missing_group_coverage`, and
-`replay_evidence.insufficient_coverage`. r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
+`replay_evidence.insufficient_coverage`. Wrappers should save the replay artifact
+and verify it before copying hashes into agent evidence:
+
+```sh
+nix run .#cairn -- determinism replay --root . --group agent --format summary --out target/replay.json
+nix run .#cairn -- determinism verify-receipt target/replay.json --root .
+```
+
+Replay receipt verification recomputes `replay_receipt_hash`, compares the
+current generated policy hash, validates `environment_attestation.attestation_hash`,
+and checks selected cases/groups against policy. It emits deterministic issue
+codes for malformed, stale, or tampered evidence without storing raw environment
+values. r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
 r[verify cairn.supersede.determinism_replay.groups.docs]
 r[verify cairn.supersede.replay_environment_attestation.docs]
+r[verify cairn.supersede.replay_receipt_verification.docs]
 
 ## Completion gate
 

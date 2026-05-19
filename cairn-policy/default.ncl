@@ -93,6 +93,12 @@ let Contracts = import "contracts.ncl" in
       mismatch_keys = ["actual", "case", "class", "comparison", "expected", "field_path", "reproduce"],
       hash_fields = ["receipt_hash"],
     },
+    {
+      command = "determinism verify-receipt",
+      top_level_keys = ["command", "current_replay_policy_hash", "environment_attestation_hash", "issues", "path", "receipt_hash", "replay_policy_hash", "replay_receipt_hash", "root", "selected_cases", "selected_groups", "stated_replay_receipt_hash", "valid", "verdict"],
+      issue_keys = ["actual", "code", "expected", "field_path"],
+      hash_fields = ["current_replay_policy_hash", "environment_attestation_hash", "receipt_hash", "replay_policy_hash", "replay_receipt_hash", "stated_replay_receipt_hash"],
+    },
   ],
 
   determinism_replay_policy = {

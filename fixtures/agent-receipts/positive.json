@@ -3,6 +3,7 @@
     "model": "captured-model",
     "wrapper": "cairn-fixture"
   },
+  "agent_run_receipt_hash": "501ba02cf5b19d0762546efc59d0364be8bda09ef96a161c5f7fee3233112721",
   "input_hash": "1111111111111111111111111111111111111111111111111111111111111111",
   "mutation_manifest": {
     "files": [
@@ -21,12 +22,12 @@
     "forbidden_uncaptured": []
   },
   "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
-  "receipt_hash": "0d535d6d4c7961a657e3bc3533d8dfd90690570409027b32a596cb5604c43091",
+  "receipt_hash": "d1ca1bf0ed98e1f33b5a440e02c8faa61814f37236081d78125dadabca35ac65",
   "replay_evidence": {
     "replay_artifact_path": "/tmp/cairn-replay.json",
-    "replay_environment_attestation_hash": "dc9c5008e82623f2702cab0624792a8a8fdd3daa1e4d82bac1e8bcaaafc66b53",
-    "replay_policy_hash": "94ed98cb944b060cf5569cd0fb0e931e09ba0375d59b239a70e7c8c6dd68f094",
-    "replay_receipt_hash": "02c0c31bcdf99b1645860c9173142cd405fd2d67d1e1bb1994d664b1080276f6",
+    "replay_environment_attestation_hash": "78cae97d8380d1860465d9387db0cc0e14025970ef9475ded4c761e25611c6be",
+    "replay_policy_hash": "996f492613ab6ef708576365aa38f70d9c4d599e291bd1e9d312184d46a56bea",
+    "replay_receipt_hash": "6753ae9342fe0de258a62a6697f892ab36782f8bfb858557f0962668d5ab789a",
     "replay_selected_cases": [
       "agent_receipt_validate",
       "mcp_describe",
