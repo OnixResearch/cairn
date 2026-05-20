@@ -47,6 +47,8 @@ const ENTROPY_KEY_FRAGMENTS: &[&str] = &[
     "hostname",
     "username",
 ];
+const FUNCTION_OBJECT_ISSUE_CAPACITY: usize = 16;
+const HASH_TRAVERSAL_STACK_CAPACITY: usize = 32;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionObjectIssue {
@@ -99,7 +101,18 @@ fn function_object_issues(receipt: &Value, computed_object_hash: &str) -> Vec<Fu
         )];
     };
 
-    let mut issues = Vec::new();
+    let mut issues = Vec::with_capacity(FUNCTION_OBJECT_ISSUE_CAPACITY);
+    issues.extend(required_top_level_issues(object));
+    issues.extend(hash_issues(object, computed_object_hash));
+    issues.extend(required_nested_object_issues(object));
+    issues.extend(normalization_issues(object));
+    issues.extend(caveat_issues(object));
+    issues.extend(entropy_issues("$", &function_object_hash_material(receipt)));
+    issues
+}
+
+fn required_top_level_issues(object: &Map<String, Value>) -> Vec<FunctionObjectIssue> {
+    let mut issues = Vec::with_capacity(REQUIRED_TOP_LEVEL_FIELDS.len() + 1);
     for field in REQUIRED_TOP_LEVEL_FIELDS {
         if !object.contains_key(*field) {
             issues.push(issue(
@@ -108,14 +121,20 @@ fn function_object_issues(receipt: &Value, computed_object_hash: &str) -> Vec<Fu
             ));
         }
     }
-
     if object.get("schema").and_then(Value::as_str) != Some(FUNCTION_OBJECT_SCHEMA_V1) {
         issues.push(issue(
             "function_object.unsupported_schema",
             "schema must be octet.function-object.v1",
         ));
     }
+    issues
+}
 
+fn hash_issues(
+    object: &Map<String, Value>,
+    computed_object_hash: &str,
+) -> Vec<FunctionObjectIssue> {
+    let mut issues = Vec::with_capacity(3);
     let stated_hash = object
         .get("object_hash")
         .and_then(Value::as_str)
@@ -138,7 +157,15 @@ fn function_object_issues(receipt: &Value, computed_object_hash: &str) -> Vec<Fu
             ));
         }
     }
+    issues
+}
 
+fn required_nested_object_issues(object: &Map<String, Value>) -> Vec<FunctionObjectIssue> {
+    let mut issues = Vec::with_capacity(
+        REQUIRED_NORMALIZATION_FIELDS.len()
+            + REQUIRED_TOOLCHAIN_FIELDS.len()
+            + REQUIRED_CAVEAT_FIELDS.len(),
+    );
     issues.extend(required_object_issues(
         object.get("normalization"),
         "normalization",
@@ -154,56 +181,72 @@ fn function_object_issues(receipt: &Value, computed_object_hash: &str) -> Vec<Fu
         "caveats",
         REQUIRED_CAVEAT_FIELDS,
     ));
+    issues
+}
 
-    if object
+fn normalization_issues(object: &Map<String, Value>) -> Vec<FunctionObjectIssue> {
+    let has_source_token_kind = object
         .get("normalization")
         .and_then(|value| value.get("content_kind"))
         .and_then(Value::as_str)
-        != Some(SOURCE_TOKEN_CONTENT_KIND)
-    {
+        == Some(SOURCE_TOKEN_CONTENT_KIND);
+    if has_source_token_kind {
+        return Vec::new();
+    }
+    vec![issue(
+        "function_object.normalization_not_source_token",
+        "normalization.content_kind must declare source-token identity",
+    )]
+}
+
+fn caveat_issues(object: &Map<String, Value>) -> Vec<FunctionObjectIssue> {
+    let Some(caveats) = object.get("caveats").and_then(Value::as_object) else {
+        return Vec::new();
+    };
+    let mut issues = Vec::with_capacity(5);
+    issues.extend(caveat_identity_issues(caveats));
+    issues.extend(caveat_status_issues(caveats));
+    issues
+}
+
+fn caveat_identity_issues(caveats: &Map<String, Value>) -> Vec<FunctionObjectIssue> {
+    let mut issues = Vec::with_capacity(2);
+    if caveats.get("identity").and_then(Value::as_str) != Some(SOURCE_TOKEN_IDENTITY) {
         issues.push(issue(
-            "function_object.normalization_not_source_token",
-            "normalization.content_kind must declare source-token identity",
+            "function_object.identity_overclaim",
+            "caveats.identity must be source-token, not semantic compiler identity",
         ));
     }
-
-    if let Some(caveats) = object.get("caveats").and_then(Value::as_object) {
-        if caveats.get("identity").and_then(Value::as_str) != Some(SOURCE_TOKEN_IDENTITY) {
-            issues.push(issue(
-                "function_object.identity_overclaim",
-                "caveats.identity must be source-token, not semantic compiler identity",
-            ));
-        }
-        if caveats.get("correctness_claim").and_then(Value::as_str) != Some(NO_CORRECTNESS_CLAIM) {
-            issues.push(issue(
-                "function_object.correctness_overclaim",
-                "function-object hash agreement is provenance/review evidence, not a correctness proof",
-            ));
-        }
-        if caveats.get("dependency_status").and_then(Value::as_str)
-            != Some(SOURCE_SCANNER_DEPENDENCIES)
-        {
-            issues.push(issue(
-                "function_object.dependency_status_overclaim",
-                "source-token function objects must use source-scanner-token-set dependency status",
-            ));
-        }
-        if !known_value(caveats, "macro_status", KNOWN_MACRO_STATUSES) {
-            issues.push(issue(
-                "function_object.unknown_macro_status",
-                "macro_status must use the closed function-object caveat vocabulary",
-            ));
-        }
-        if !known_value(caveats, "effect_status", KNOWN_EFFECT_STATUSES) {
-            issues.push(issue(
-                "function_object.unknown_effect_status",
-                "effect_status must use the closed function-object caveat vocabulary",
-            ));
-        }
+    if caveats.get("correctness_claim").and_then(Value::as_str) != Some(NO_CORRECTNESS_CLAIM) {
+        issues.push(issue(
+            "function_object.correctness_overclaim",
+            "function-object hash agreement is provenance/review evidence, not a correctness proof",
+        ));
     }
+    issues
+}
 
-    let hash_material = function_object_hash_material(receipt);
-    entropy_issues("$", &hash_material, &mut issues);
+fn caveat_status_issues(caveats: &Map<String, Value>) -> Vec<FunctionObjectIssue> {
+    let mut issues = Vec::with_capacity(3);
+    if caveats.get("dependency_status").and_then(Value::as_str) != Some(SOURCE_SCANNER_DEPENDENCIES)
+    {
+        issues.push(issue(
+            "function_object.dependency_status_overclaim",
+            "source-token function objects must use source-scanner-token-set dependency status",
+        ));
+    }
+    if !known_value(caveats, "macro_status", KNOWN_MACRO_STATUSES) {
+        issues.push(issue(
+            "function_object.unknown_macro_status",
+            "macro_status must use the closed function-object caveat vocabulary",
+        ));
+    }
+    if !known_value(caveats, "effect_status", KNOWN_EFFECT_STATUSES) {
+        issues.push(issue(
+            "function_object.unknown_effect_status",
+            "effect_status must use the closed function-object caveat vocabulary",
+        ));
+    }
     issues
 }
 
@@ -238,58 +281,83 @@ fn known_value(object: &Map<String, Value>, field: &str, known: &[&str]) -> bool
 }
 
 fn strip_non_hash_fields(value: &mut Value) {
-    match value {
-        Value::Object(object) => {
-            object.remove("object_hash");
-            object.remove("display_root");
-            object.remove("display_path");
-            object.remove("display_only");
-            for child in object.values_mut() {
-                strip_non_hash_fields(child);
+    let mut stack = Vec::with_capacity(HASH_TRAVERSAL_STACK_CAPACITY);
+    stack.push(value);
+    while let Some(current) = stack.pop() {
+        match current {
+            Value::Object(object) => {
+                object.remove("object_hash");
+                object.remove("display_root");
+                object.remove("display_path");
+                object.remove("display_only");
+                for child in object.values_mut() {
+                    stack.push(child);
+                }
             }
-        }
-        Value::Array(entries) => {
-            for child in entries {
-                strip_non_hash_fields(child);
+            Value::Array(entries) => {
+                for child in entries {
+                    stack.push(child);
+                }
             }
+            _ => {}
         }
-        _ => {}
     }
 }
 
-fn entropy_issues(path: &str, value: &Value, issues: &mut Vec<FunctionObjectIssue>) {
-    match value {
-        Value::Object(object) => {
-            for (key, child) in object {
-                let child_path = format!("{path}.{key}");
-                let lowered = key.to_ascii_lowercase();
-                if ENTROPY_KEY_FRAGMENTS
-                    .iter()
-                    .any(|fragment| lowered.contains(fragment))
-                {
-                    issues.push(issue(
-                        "function_object.ambient_entropy_in_hash_material",
-                        format!(
-                            "ambient entropy field is not allowed in hash material: {child_path}"
-                        ),
-                    ));
+fn entropy_issues(root_path: &str, root: &Value) -> Vec<FunctionObjectIssue> {
+    let mut issues = Vec::with_capacity(FUNCTION_OBJECT_ISSUE_CAPACITY);
+    let mut stack = Vec::with_capacity(HASH_TRAVERSAL_STACK_CAPACITY);
+    stack.push((root_path.to_string(), root));
+    while let Some((path, value)) = stack.pop() {
+        match value {
+            Value::Object(object) => {
+                for (key, child) in object {
+                    let child_path = format!("{path}.{key}");
+                    if is_entropy_key(key) {
+                        issues.push(entropy_key_issue(&child_path));
+                    }
+                    stack.push((child_path, child));
                 }
-                entropy_issues(&child_path, child, issues);
             }
-        }
-        Value::Array(entries) => {
-            for (index, child) in entries.iter().enumerate() {
-                entropy_issues(&format!("{path}[{index}]"), child, issues);
+            Value::Array(entries) => {
+                for (index, child) in entries.iter().enumerate() {
+                    stack.push((format!("{path}[{index}]"), child));
+                }
             }
+            Value::String(text) => {
+                if is_temporary_path(text) {
+                    issues.push(entropy_temporary_path_issue(&path));
+                }
+            }
+            _ => {}
         }
-        Value::String(text) if text.starts_with("/tmp/") || text.starts_with("/var/tmp/") => {
-            issues.push(issue(
-                "function_object.ambient_entropy_in_hash_material",
-                format!("temporary absolute path is not allowed in hash material: {path}"),
-            ));
-        }
-        _ => {}
     }
+    issues
+}
+
+fn is_entropy_key(key: &str) -> bool {
+    let lowered = key.to_ascii_lowercase();
+    ENTROPY_KEY_FRAGMENTS
+        .iter()
+        .any(|fragment| lowered.contains(fragment))
+}
+
+fn is_temporary_path(text: &str) -> bool {
+    text.starts_with("/tmp/") || text.starts_with("/var/tmp/")
+}
+
+fn entropy_key_issue(path: &str) -> FunctionObjectIssue {
+    issue(
+        "function_object.ambient_entropy_in_hash_material",
+        format!("ambient entropy field is not allowed in hash material: {path}"),
+    )
+}
+
+fn entropy_temporary_path_issue(path: &str) -> FunctionObjectIssue {
+    issue(
+        "function_object.ambient_entropy_in_hash_material",
+        format!("temporary absolute path is not allowed in hash material: {path}"),
+    )
 }
 
 fn issue(code: impl Into<String>, message: impl Into<String>) -> FunctionObjectIssue {
