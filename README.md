@@ -293,11 +293,13 @@ first, sort plan entries deterministically, and list safe index refs, label
 metadata, receipt chains, artifact roles/paths/hashes, and policy hashes without
 fetching network
 content, credentials, raw host paths, or environment values. The outer publication/index layer can also be generated with
-`cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --out manifest.json --root .`
+`cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --registry registry.json --registry-verification registry-verify.json --registry-selection registry-selection.json --registry-fetch-plan registry-fetch-plan.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
 list stable roles such as `agent_evidence_bundle`, `agent_receipt`,
 `replay_receipt`, `replay_verification`, optional `release_readiness`, and
-optional `coverage_audit` with
+optional `coverage_audit`, optional `evidence_registry`, optional
+`evidence_registry_verification`, optional `evidence_registry_selection`, and
+optional `evidence_registry_fetch_plan` with
 expected hashes, schema labels, and optional public signer/anchor metadata.
 Generation produces canonical role ordering and artifact hashes so wrappers do
 not need custom JSON or hashing glue. Verification is read-only, composes

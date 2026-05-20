@@ -1323,6 +1323,10 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.registry_channel_metadata.build]
     // r[verify cairn.supersede.registry_channel_metadata.consume]
     // r[verify cairn.supersede.registry_channel_metadata.verify]
+    // r[verify cairn.supersede.registry_manifest_binding.roles]
+    // r[verify cairn.supersede.registry_manifest_binding.generate]
+    // r[verify cairn.supersede.registry_manifest_binding.verify]
+    // r[verify cairn.supersede.registry_manifest_binding.failure]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -1595,6 +1599,11 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         "--registry".into(),
         registry_path.display().to_string(),
     ])?;
+    let registry_verify_path = republish_dir.join("evidence-registry-verify-receipt.json");
+    fs::write(
+        &registry_verify_path,
+        serde_json::to_string_pretty(&registry_verify)? + "\n",
+    )?;
     assert_eq!(registry_verify["valid"], true);
     assert_eq!(registry_verify["verdict"], "pass");
     assert_eq!(registry_verify["registry_hash"], registry["receipt_hash"]);
@@ -1642,6 +1651,11 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         index["receipt_hash"]
     );
     assert_hash_field(&selection, "receipt_hash")?;
+    let selection_receipt_path = dir.join("evidence-registry-selection-receipt.json");
+    fs::write(
+        &selection_receipt_path,
+        serde_json::to_string_pretty(&selection)? + "\n",
+    )?;
     let selected_index: Value = serde_json::from_slice(&fs::read(&selected_index_path)?)?;
     assert_eq!(selected_index["receipt_hash"], index["receipt_hash"]);
     let selection_text = serde_json::to_string(&selection)?;
@@ -1684,6 +1698,74 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     assert_hash_field(&fetch_plan, "receipt_hash")?;
     let saved_fetch_plan: Value = serde_json::from_slice(&fs::read(&fetch_plan_path)?)?;
     assert_eq!(saved_fetch_plan["receipt_hash"], fetch_plan["receipt_hash"]);
+
+    let registry_manifest_path = dir.join("registry-bound-manifest.json");
+    let registry_manifest = run_json_strings(&[
+        "evidence-manifest".into(),
+        "generate".into(),
+        "--bundle".into(),
+        export_dir
+            .join("agent-evidence-bundle.json")
+            .display()
+            .to_string(),
+        "--agent-receipt".into(),
+        export_dir.join("agent-receipt.json").display().to_string(),
+        "--replay".into(),
+        export_dir.join("replay-agent.json").display().to_string(),
+        "--replay-verification".into(),
+        export_dir
+            .join("replay-verification.json")
+            .display()
+            .to_string(),
+        "--registry".into(),
+        registry_path.display().to_string(),
+        "--registry-verification".into(),
+        registry_verify_path.display().to_string(),
+        "--registry-selection".into(),
+        selection_receipt_path.display().to_string(),
+        "--registry-fetch-plan".into(),
+        fetch_plan_path.display().to_string(),
+        "--out".into(),
+        registry_manifest_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(registry_manifest["valid"], true);
+    let registry_manifest_value: Value =
+        serde_json::from_str(&fs::read_to_string(&registry_manifest_path)?)?;
+    let registry_manifest_roles = registry_manifest_value["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|entry| entry["role"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(registry_manifest_roles.contains(&"evidence_registry"));
+    assert!(registry_manifest_roles.contains(&"evidence_registry_verification"));
+    assert!(registry_manifest_roles.contains(&"evidence_registry_selection"));
+    assert!(registry_manifest_roles.contains(&"evidence_registry_fetch_plan"));
+    let registry_manifest_verified = run_json_strings(&[
+        "evidence-manifest".into(),
+        "verify".into(),
+        registry_manifest_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert_eq!(registry_manifest_verified["valid"], true);
+    assert_eq!(
+        registry_manifest_verified["manifest_hash"],
+        registry_manifest["manifest_hash"]
+    );
+    let verified_registry_roles = registry_manifest_verified["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|entry| entry["role"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(verified_registry_roles.contains(&"evidence_registry"));
+    assert!(verified_registry_roles.contains(&"evidence_registry_verification"));
+    assert!(verified_registry_roles.contains(&"evidence_registry_selection"));
+    assert!(verified_registry_roles.contains(&"evidence_registry_fetch_plan"));
+
     let fetch_plan_text = serde_json::to_string(&fetch_plan)?;
     assert!(
         !fetch_plan_text.contains(&dir.display().to_string()),

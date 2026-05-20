@@ -6528,6 +6528,10 @@ fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value {
         replay_verification: Some(replay_verification_path.clone()),
         release_readiness: Some(release_path.clone()),
         coverage_audit: Some(coverage_path.clone()),
+        registry: None,
+        registry_verification: None,
+        registry_selection: None,
+        registry_fetch_plan: None,
         signer_metadata: None,
         anchor_metadata: None,
         out: None,
@@ -6820,6 +6824,10 @@ struct EvidenceManifestGenerateOptions {
     replay_verification: Option<PathBuf>,
     release_readiness: Option<PathBuf>,
     coverage_audit: Option<PathBuf>,
+    registry: Option<PathBuf>,
+    registry_verification: Option<PathBuf>,
+    registry_selection: Option<PathBuf>,
+    registry_fetch_plan: Option<PathBuf>,
     signer_metadata: Option<PathBuf>,
     anchor_metadata: Option<PathBuf>,
     out: Option<String>,
@@ -6830,6 +6838,9 @@ fn run_evidence_manifest_generate(args: Vec<String>) -> Result<(), Box<dyn Error
     // r[impl cairn.supersede.evidence_manifest_generate.canonical]
     // r[impl cairn.supersede.evidence_manifest_generate.metadata]
     // r[impl cairn.supersede.evidence_manifest_generate.failures]
+    // r[impl cairn.supersede.registry_manifest_binding.generate]
+    // r[impl cairn.supersede.registry_manifest_binding.failure]
+    // r[impl cairn.supersede.registry_manifest_binding.policy]
     let options = evidence_manifest_generate_options(&args);
     let (manifest, issues) = evidence_manifest_generate_manifest(&options);
     let valid = issues.is_empty();
@@ -6882,6 +6893,10 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             | "--replay-verification"
             | "--release-readiness"
             | "--coverage-audit"
+            | "--registry"
+            | "--registry-verification"
+            | "--registry-selection"
+            | "--registry-fetch-plan"
             | "--signer-metadata"
             | "--anchor-metadata"
             | "--out"
@@ -6900,6 +6915,18 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             }
             ("--coverage-audit", Some(value)) => {
                 options.coverage_audit = Some(PathBuf::from(value));
+            }
+            ("--registry", Some(value)) => {
+                options.registry = Some(PathBuf::from(value));
+            }
+            ("--registry-verification", Some(value)) => {
+                options.registry_verification = Some(PathBuf::from(value));
+            }
+            ("--registry-selection", Some(value)) => {
+                options.registry_selection = Some(PathBuf::from(value));
+            }
+            ("--registry-fetch-plan", Some(value)) => {
+                options.registry_fetch_plan = Some(PathBuf::from(value));
             }
             ("--signer-metadata", Some(value)) => {
                 options.signer_metadata = Some(PathBuf::from(value));
@@ -6930,6 +6957,19 @@ fn evidence_manifest_generate_manifest(
         ),
         ("release_readiness", options.release_readiness.as_deref()),
         ("coverage_audit", options.coverage_audit.as_deref()),
+        ("evidence_registry", options.registry.as_deref()),
+        (
+            "evidence_registry_verification",
+            options.registry_verification.as_deref(),
+        ),
+        (
+            "evidence_registry_selection",
+            options.registry_selection.as_deref(),
+        ),
+        (
+            "evidence_registry_fetch_plan",
+            options.registry_fetch_plan.as_deref(),
+        ),
     ] {
         if let Some(path) = path {
             match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
@@ -6945,7 +6985,16 @@ fn evidence_manifest_generate_manifest(
                     "unreadable",
                 )),
             }
-        } else if role != "release_readiness" && role != "coverage_audit" {
+        } else if ![
+            "release_readiness",
+            "coverage_audit",
+            "evidence_registry",
+            "evidence_registry_verification",
+            "evidence_registry_selection",
+            "evidence_registry_fetch_plan",
+        ]
+        .contains(&role)
+        {
             issues.push(evidence_manifest_issue(
                 "generate.required_artifact_missing",
                 role,
@@ -7230,6 +7279,8 @@ fn validate_manifest_artifact_role(
     value: &Value,
     issues: &mut Vec<Value>,
 ) -> bool {
+    // r[impl cairn.supersede.registry_manifest_binding.roles]
+    // r[impl cairn.supersede.registry_manifest_binding.verify]
     match role {
         "agent_evidence_bundle" => {
             let receipt = agent_evidence_bundle_verification_receipt(root, path);
@@ -7310,6 +7361,44 @@ fn validate_manifest_artifact_role(
             role,
             "artifact.coverage_audit_invalid",
             "valid coverage-audit receipt",
+        ),
+        "evidence_registry" => {
+            let receipt = evidence_registry_verify_receipt(&EvidenceRegistryVerifyOptions {
+                root: root.to_path_buf(),
+                registry: Some(path.to_path_buf()),
+            });
+            if receipt["valid"].as_bool() == Some(true) {
+                true
+            } else {
+                issues.push(evidence_manifest_issue(
+                    "artifact.registry_invalid",
+                    role,
+                    "valid evidence registry",
+                    "invalid",
+                ));
+                false
+            }
+        }
+        "evidence_registry_verification" => receipt_valid_or_issue(
+            value,
+            issues,
+            role,
+            "artifact.registry_verification_invalid",
+            "valid evidence registry verification receipt",
+        ),
+        "evidence_registry_selection" => receipt_valid_or_issue(
+            value,
+            issues,
+            role,
+            "artifact.registry_selection_invalid",
+            "valid evidence registry selection receipt",
+        ),
+        "evidence_registry_fetch_plan" => receipt_valid_or_issue(
+            value,
+            issues,
+            role,
+            "artifact.registry_fetch_plan_invalid",
+            "valid evidence registry fetch-plan receipt",
         ),
         _ => {
             issues.push(evidence_manifest_issue(
@@ -9425,7 +9514,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH] [--strict]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence registry verify --root PATH --registry FILE\n  evidence registry select --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS] [--index-receipt-hash HASH]\n  evidence registry fetch-plan --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  policy export [--source PATH] [--output PATH] [--check]\n  tracey coverage [--root PATH] [--json]\n  rename-classification [--output PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH] [--strict]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence registry verify --root PATH --registry FILE\n  evidence registry select --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS] [--index-receipt-hash HASH]\n  evidence registry fetch-plan --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--registry PATH] [--registry-verification PATH] [--registry-selection PATH] [--registry-fetch-plan PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  policy export [--source PATH] [--output PATH] [--check]\n  tracey coverage [--root PATH] [--json]\n  rename-classification [--output PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

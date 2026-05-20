@@ -235,6 +235,10 @@ nix run .#cairn -- evidence-manifest generate \
   --replay-verification target/replay-verify.json \
   --release-readiness target/release-readiness.json \
   --coverage-audit target/coverage-audit.json \
+  --registry target/cairn-evidence-registry.json \
+  --registry-verification target/cairn-evidence-registry-verify.json \
+  --registry-selection target/cairn-evidence-registry-selection.json \
+  --registry-fetch-plan target/cairn-evidence-fetch-plan.json \
   --out target/manifest.json \
   --root .
 nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
@@ -243,7 +247,8 @@ nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
 A manifest contains an `artifacts` array of objects with `role`, `path`, `hash`,
 and optional `schema` fields. Supported roles include `agent_evidence_bundle`,
 `agent_receipt`, `replay_receipt`, `replay_verification`, `release_readiness`,
-and `coverage_audit`. The verifier composes the existing role validators and
+`coverage_audit`, `evidence_registry`, `evidence_registry_verification`,
+`evidence_registry_selection`, and `evidence_registry_fetch_plan`. The verifier composes the existing role validators and
 checks declared hashes before emitting one deterministic manifest verification
 receipt. Optional `signer` and `anchor` objects are treated as public metadata
 and hashed into the receipt, but Cairn does not validate private keys, remote
@@ -252,6 +257,7 @@ slice. Generation writes canonical role ordering and artifact hashes so wrappers
 avoid custom JSON/hashing glue. r[verify cairn.supersede.signed_evidence_manifest.docs]
 r[verify cairn.supersede.evidence_manifest_generate.docs]
 r[verify cairn.supersede.agent_evidence_bundle_verification.docs]
+r[verify cairn.supersede.registry_manifest_binding.policy]
 r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]
 r[verify cairn.supersede.determinism_replay.groups.docs]
