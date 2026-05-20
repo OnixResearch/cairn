@@ -157,6 +157,71 @@ fn function_object_evidence_validator_rejects_ambient_entropy_fixture() -> Resul
     Ok(())
 }
 
+#[test]
+fn name_pointer_evidence_validator_accepts_pointer_move_fixture() -> Result<(), Box<dyn Error>> {
+    // Active Cairn refs: content_addressed_rust_evidence.name_pointer.move,
+    // content_addressed_rust_evidence.export_bundle.mutation_manifest.
+    let fixture = repo_root()
+        .join("fixtures/content-addressed-rust-evidence/pointers-and-caveats/pointer-move.json");
+    let receipt = run_json(&[
+        "evidence",
+        "name-pointer",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "PASS");
+    assert_eq!(receipt["issues"].as_array().map(Vec::len), Some(0));
+    assert_hash_field(&receipt, "computed_pointer_hash")?;
+    assert_hash_field(&receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn name_pointer_evidence_validator_rejects_drift_fixture() -> Result<(), Box<dyn Error>> {
+    // Active Cairn ref: content_addressed_rust_evidence.name_pointer.drift.
+    let fixture = repo_root()
+        .join("fixtures/content-addressed-rust-evidence/pointers-and-caveats/pointer-drift.json");
+    let receipt = run_json_failure(&[
+        "evidence",
+        "name-pointer",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert!(receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| { issue["code"] == "name_pointer.drift_detected" }));
+    Ok(())
+}
+
+#[test]
+fn name_pointer_evidence_validator_rejects_unknown_effect_pure_cache_fixture(
+) -> Result<(), Box<dyn Error>> {
+    // Active Cairn refs: content_addressed_rust_evidence.caveats.dependency_status,
+    // content_addressed_rust_evidence.caveats.effects_fail_closed.
+    let fixture = repo_root().join(
+        "fixtures/content-addressed-rust-evidence/pointers-and-caveats/unknown-effect-pure-cache.json",
+    );
+    let receipt = run_json_failure(&[
+        "evidence",
+        "name-pointer",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert!(receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| { issue["code"] == "name_pointer.pure_cache_overclaim" }));
+    Ok(())
+}
+
 fn assert_object_keys(value: &Value, expected: &[&str]) -> Result<(), Box<dyn Error>> {
     let object = value.as_object().ok_or("json object")?;
     let mut actual = object.keys().map(String::as_str).collect::<Vec<_>>();
