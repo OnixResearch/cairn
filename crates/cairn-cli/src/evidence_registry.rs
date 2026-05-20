@@ -6,10 +6,11 @@ use std::{
 
 use serde_json::{json, Value};
 
+use crate::evidence::{evidence_index_verify_receipt, EvidenceIndexVerifyOptions};
 use crate::{
-    default_policy_path, evidence_index_verify_receipt, load_policy_file, path_string,
-    portable_json_hash, print_json, read_json_artifact, read_option, read_string_option,
-    with_portable_receipt_hash, EvidenceIndexVerifyOptions, AGENT_RECEIPT_MAX_BYTES,
+    default_policy_path, load_policy_file, path_string, portable_json_hash, print_json,
+    read_json_artifact, read_option, read_string_option, with_portable_receipt_hash,
+    AGENT_RECEIPT_MAX_BYTES,
 };
 use cairn_core::canonical_json_hash;
 
