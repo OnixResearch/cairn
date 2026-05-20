@@ -288,6 +288,89 @@ fn export_bundle_evidence_validator_rejects_unknown_pointer_object() -> Result<(
     Ok(())
 }
 
+#[test]
+fn downstream_pilot_evidence_validator_accepts_crunch_fixture() -> Result<(), Box<dyn Error>> {
+    // Active Cairn ref: content_addressed_rust_evidence.downstream_pilots.crunch.
+    let fixture = repo_root().join(
+        "fixtures/content-addressed-rust-evidence/downstream-pilots/crunch-mantle-positive.json",
+    );
+    let receipt = run_json(&[
+        "evidence",
+        "downstream-pilot",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "PASS");
+    assert_eq!(receipt["issues"].as_array().map(Vec::len), Some(0));
+    assert_hash_field(&receipt, "computed_pilot_hash")?;
+    assert_hash_field(&receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn downstream_pilot_evidence_validator_accepts_aspen_fixture() -> Result<(), Box<dyn Error>> {
+    // Active Cairn ref: content_addressed_rust_evidence.downstream_pilots.aspen.
+    let fixture = repo_root()
+        .join("fixtures/content-addressed-rust-evidence/downstream-pilots/aspen-ci-positive.json");
+    let receipt = run_json(&[
+        "evidence",
+        "downstream-pilot",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "PASS");
+    assert_eq!(receipt["issues"].as_array().map(Vec::len), Some(0));
+    assert_hash_field(&receipt, "computed_pilot_hash")?;
+    assert_hash_field(&receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn downstream_pilot_evidence_validator_rejects_crunch_overclaim() -> Result<(), Box<dyn Error>> {
+    // Active Cairn ref: content_addressed_rust_evidence.downstream_pilots.crunch.
+    let fixture = repo_root().join(
+        "fixtures/content-addressed-rust-evidence/downstream-pilots/crunch-correctness-overclaim.json",
+    );
+    let receipt = run_json_failure(&[
+        "evidence",
+        "downstream-pilot",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert!(receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| { issue["code"] == "downstream_pilot.build_correctness_overclaim" }));
+    Ok(())
+}
+
+#[test]
+fn downstream_pilot_evidence_validator_rejects_aspen_overclaim() -> Result<(), Box<dyn Error>> {
+    // Active Cairn ref: content_addressed_rust_evidence.downstream_pilots.aspen.
+    let fixture = repo_root().join(
+        "fixtures/content-addressed-rust-evidence/downstream-pilots/aspen-distributed-overclaim.json",
+    );
+    let receipt = run_json_failure(&[
+        "evidence",
+        "downstream-pilot",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert!(receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| { issue["code"] == "downstream_pilot.distributed_correctness_overclaim" }));
+    Ok(())
+}
+
 fn assert_object_keys(value: &Value, expected: &[&str]) -> Result<(), Box<dyn Error>> {
     let object = value.as_object().ok_or("json object")?;
     let mut actual = object.keys().map(String::as_str).collect::<Vec<_>>();
