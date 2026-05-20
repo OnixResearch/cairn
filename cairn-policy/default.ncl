@@ -203,6 +203,53 @@ let Contracts = import "contracts.ncl" in
     },
   ],
 
+  receipt_contracts = [
+    {
+      family = "function-object",
+      schema = "octet.function-object.v1",
+      command = "evidence function-object validate",
+      ownership = "rust-dto-derived",
+      compatibility_class = "cairn-consumed-octet-receipt",
+      encoding = "deterministic-json-v1",
+      hash_field = "object_hash",
+      hash_material = "canonical-json-excluding-object_hash-display_root-and-host-entropy",
+      non_claims = ["no_correctness", "no_semantic_equivalence"],
+    },
+    {
+      family = "name-pointer",
+      schema = "octet.name-pointer.v1",
+      command = "evidence name-pointer validate",
+      ownership = "rust-dto-derived",
+      compatibility_class = "cairn-consumed-octet-receipt",
+      encoding = "deterministic-json-v1",
+      hash_field = "pointer_hash",
+      hash_material = "canonical-json-excluding-pointer_hash-object_hash-display_root-and-host-entropy",
+      non_claims = ["no_correctness", "no_semantic_equivalence"],
+    },
+    {
+      family = "export-bundle",
+      schema = "octet.export-bundle.v1",
+      command = "evidence export-bundle validate",
+      ownership = "rust-dto-derived",
+      compatibility_class = "cairn-consumed-octet-receipt",
+      encoding = "deterministic-json-v1",
+      hash_field = "bundle_hash",
+      hash_material = "canonical-json-excluding-bundle_hash-display_root-and-host-entropy",
+      non_claims = ["no_correctness", "no_semantic_equivalence"],
+    },
+    {
+      family = "downstream-pilot",
+      schema = "octet.downstream-pilot.v1",
+      command = "evidence downstream-pilot validate",
+      ownership = "rust-dto-derived",
+      compatibility_class = "cairn-consumed-octet-receipt",
+      encoding = "deterministic-json-v1",
+      hash_field = "pilot_hash",
+      hash_material = "canonical-json-excluding-pilot_hash-display_root-and-host-entropy",
+      non_claims = ["no_correctness", "no_semantic_equivalence", "no_distributed_correctness"],
+    },
+  ],
+
   determinism_replay_policy = {
     cases = [
       { id = "agent_receipt_validate", command_kind = "agent_receipt_validate", args = ["agent-receipt", "validate", "fixtures/agent-receipts/positive.json"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["path"], hash_fields = ["agent_receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },

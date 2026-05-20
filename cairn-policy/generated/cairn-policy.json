@@ -773,6 +773,65 @@
     }
   },
   "name": "cairn-default",
+  "receipt_contracts": [
+    {
+      "command": "evidence function-object validate",
+      "compatibility_class": "cairn-consumed-octet-receipt",
+      "encoding": "deterministic-json-v1",
+      "family": "function-object",
+      "hash_field": "object_hash",
+      "hash_material": "canonical-json-excluding-object_hash-display_root-and-host-entropy",
+      "non_claims": [
+        "no_correctness",
+        "no_semantic_equivalence"
+      ],
+      "ownership": "rust-dto-derived",
+      "schema": "octet.function-object.v1"
+    },
+    {
+      "command": "evidence name-pointer validate",
+      "compatibility_class": "cairn-consumed-octet-receipt",
+      "encoding": "deterministic-json-v1",
+      "family": "name-pointer",
+      "hash_field": "pointer_hash",
+      "hash_material": "canonical-json-excluding-pointer_hash-object_hash-display_root-and-host-entropy",
+      "non_claims": [
+        "no_correctness",
+        "no_semantic_equivalence"
+      ],
+      "ownership": "rust-dto-derived",
+      "schema": "octet.name-pointer.v1"
+    },
+    {
+      "command": "evidence export-bundle validate",
+      "compatibility_class": "cairn-consumed-octet-receipt",
+      "encoding": "deterministic-json-v1",
+      "family": "export-bundle",
+      "hash_field": "bundle_hash",
+      "hash_material": "canonical-json-excluding-bundle_hash-display_root-and-host-entropy",
+      "non_claims": [
+        "no_correctness",
+        "no_semantic_equivalence"
+      ],
+      "ownership": "rust-dto-derived",
+      "schema": "octet.export-bundle.v1"
+    },
+    {
+      "command": "evidence downstream-pilot validate",
+      "compatibility_class": "cairn-consumed-octet-receipt",
+      "encoding": "deterministic-json-v1",
+      "family": "downstream-pilot",
+      "hash_field": "pilot_hash",
+      "hash_material": "canonical-json-excluding-pilot_hash-display_root-and-host-entropy",
+      "non_claims": [
+        "no_correctness",
+        "no_semantic_equivalence",
+        "no_distributed_correctness"
+      ],
+      "ownership": "rust-dto-derived",
+      "schema": "octet.downstream-pilot.v1"
+    }
+  ],
   "receipt_hash_policy": {
     "algorithm": "BLAKE3",
     "canonicalization": "serde_json_compact_sorted_keys",

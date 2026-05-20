@@ -126,6 +126,18 @@ let Promoted = std.contract.from_predicate (fun value =>
     hash_fields | Array NonEmptyString | default = [],
   },
 
+  ReceiptContract = {
+    family | NonEmptyString,
+    schema | NonEmptyString,
+    command | NonEmptyString,
+    ownership | NonEmptyString,
+    compatibility_class | NonEmptyString,
+    encoding | NonEmptyString,
+    hash_field | NonEmptyString,
+    hash_material | NonEmptyString,
+    non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
   ReplayCase = {
     id | NonEmptyString,
     command_kind | NonEmptyString,
@@ -229,6 +241,7 @@ let Promoted = std.contract.from_predicate (fun value =>
     report_contract | ReportContract,
     registry_label_policy | RegistryLabelPolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
+    receipt_contracts | Array ReceiptContract | default = [],
     determinism_replay_policy | DeterminismReplayPolicy,
     determinism_surface_inventory | NonEmptyArray | Array DeterminismSurface,
     sync_archive_policy | SyncArchivePolicy,
