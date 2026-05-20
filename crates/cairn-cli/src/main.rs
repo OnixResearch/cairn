@@ -12,6 +12,7 @@ mod determinism;
 mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
+mod lifecycle;
 
 mod content_addressed_evidence;
 use agent_receipt::{
@@ -24,6 +25,7 @@ use determinism::{
 };
 use evidence::run_evidence;
 use evidence_manifest::run_evidence_manifest;
+use lifecycle::parse_gate_stage;
 
 use cairn_core::{
     archive_dir, blake3_hex, build_archive_plan, build_change_detail, build_change_list,
@@ -76,24 +78,24 @@ fn run() -> Result<(), Box<dyn Error>> {
         "rename-classification" => run_rename_classification(args.collect())?,
         "migrate" => run_migrate(args.collect())?,
         "mcp" => run_mcp(args.collect())?,
-        "gate" => run_gate(args.collect())?,
+        "gate" => lifecycle::run_gate(args.collect())?,
         "gate-context" => {
             let Some(change) = args.next() else {
                 return Err("gate-context requires a change name".into());
             };
-            run_change_context(args.collect(), &change)?;
+            lifecycle::run_change_context(args.collect(), &change)?;
         }
         "sync" => {
             let Some(change) = args.next() else {
                 return Err("sync requires a change name".into());
             };
-            run_sync(args.collect(), &change)?;
+            lifecycle::run_sync(args.collect(), &change)?;
         }
         "archive" => {
             let Some(change) = args.next() else {
                 return Err("archive requires a change name".into());
             };
-            run_archive(args.collect(), &change)?;
+            lifecycle::run_archive(args.collect(), &change)?;
         }
         unknown => return Err(format!("unknown command: {unknown}\n\n{}", usage_text()).into()),
     }
@@ -1079,155 +1081,6 @@ fn safe_relative_path(root: &Path, path: &Path) -> String {
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/")
-}
-
-fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let mut iter = args.into_iter();
-    let Some(stage_text) = iter.next() else {
-        return Err("gate requires a stage: proposal, design, or tasks".into());
-    };
-    let stage = parse_gate_stage(&stage_text)?;
-    let Some(change) = iter.next() else {
-        return Err("gate requires a change name".into());
-    };
-    let rest = iter.collect::<Vec<_>>();
-    let root = read_option(rest.clone(), "--root", ".");
-    let policy_path = read_option(rest, "--policy", default_policy_path());
-    let policy = load_policy_file(policy_path)?;
-    let selected = detect_layout(&root);
-    let change_status = find_change(root.clone(), selected.layout, &change)?;
-    let snapshot = read_gate_snapshot(&root, selected.layout, change_status)?;
-    let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
-    let input_hash = portable_json_hash(
-        &root,
-        &gate_input_json(selected.layout, stage, &policy, &snapshot),
-    );
-    print_json(with_portable_receipt_hash(
-        &root,
-        gate_report_json(selected.layout, &policy, &report, &input_hash),
-    ))
-}
-
-fn parse_gate_stage(stage: &str) -> Result<GateStage, Box<dyn Error>> {
-    match stage {
-        "proposal" => Ok(GateStage::Proposal),
-        "design" => Ok(GateStage::Design),
-        "tasks" => Ok(GateStage::Tasks),
-        unknown => Err(format!("unknown gate stage: {unknown}").into()),
-    }
-}
-
-fn run_change_context(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
-    let root = read_option(args, "--root", ".");
-    let selected = detect_layout(&root);
-    let change_status = find_change(root, selected.layout, change)?;
-    print_json(change_status_json(&change_status))
-}
-
-fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
-    let root = read_option(args.clone(), "--root", ".");
-    let is_execute = has_flag(&args, "--execute");
-    let policy_path = read_option(args.clone(), "--policy", default_policy_path());
-    let policy = load_policy_file(policy_path)?;
-    let selected = detect_layout(&root);
-    let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
-    let mut plan = build_sync_plan(&change_status);
-    let sync_paths = sync_mutation_paths(&root, selected.layout, change, &plan);
-    let before_manifest = file_content_manifest(&root, &sync_paths);
-    let mut mutation_manifest = Value::Null;
-    if policy.sync_require_gate && !plan.blocked {
-        plan.reasons.extend(mutation_gate_blockers(
-            &root,
-            selected.layout,
-            &change_status,
-            GateStage::Tasks,
-            &policy,
-        )?);
-        plan.reasons.sort();
-        plan.reasons.dedup();
-        plan.blocked = !plan.reasons.is_empty();
-        if plan.blocked {
-            plan.actions.clear();
-        }
-    }
-    if is_execute {
-        plan.dry_run = false;
-        if !plan.blocked {
-            execute_sync_plan(&root, selected.layout, change, &plan)?;
-            plan.mutated = true;
-            mutation_manifest =
-                sync_mutation_manifest(&root, selected.layout, change, &plan, &before_manifest);
-        }
-    }
-    print_json(with_portable_receipt_hash(
-        &root,
-        sync_plan_json(
-            &root,
-            selected.layout,
-            &policy,
-            &plan,
-            &input_hash,
-            mutation_manifest,
-        ),
-    ))
-}
-
-fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
-    let root = read_option(args.clone(), "--root", ".");
-    let is_execute = has_flag(&args, "--execute");
-    let policy_path = read_option(args.clone(), "--policy", default_policy_path());
-    let policy = load_policy_file(policy_path)?;
-    let selected = detect_layout(&root);
-    let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
-    let mut plan = build_archive_plan(&change_status);
-    let archive_source = PathBuf::from(&change_status.path);
-    let before_paths =
-        tree_content_paths(&root, &archive_source).unwrap_or_else(|_| vec![archive_source.clone()]);
-    let before_manifest = file_content_manifest(&root, &before_paths);
-    let mut mutation_manifest = Value::Null;
-    if policy.archive_require_gate && !plan.blocked {
-        plan.reasons.extend(mutation_gate_blockers(
-            &root,
-            selected.layout,
-            &change_status,
-            GateStage::Tasks,
-            &policy,
-        )?);
-        plan.reasons.sort();
-        plan.reasons.dedup();
-        plan.blocked = !plan.reasons.is_empty();
-        if plan.blocked {
-            plan.actions.clear();
-        }
-    }
-    if is_execute {
-        plan.dry_run = false;
-        if !plan.blocked {
-            let archive_path =
-                execute_archive_plan(&root, selected.layout, change, &change_status.path)?;
-            mutation_manifest =
-                archive_mutation_manifest(&root, &archive_source, &archive_path, &before_manifest);
-            plan.actions = vec![PlanAction {
-                kind: PlanActionKind::ArchiveChange,
-                path: path_string(archive_path),
-                description: format!("move active change to archive: {change}"),
-            }];
-            plan.mutated = true;
-        }
-    }
-    print_json(with_portable_receipt_hash(
-        &root,
-        archive_plan_json(
-            &root,
-            selected.layout,
-            &policy,
-            &plan,
-            &input_hash,
-            mutation_manifest,
-        ),
-    ))
 }
 
 fn run_init(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -2391,7 +2244,7 @@ fn is_hidden_or_archive_change(name: &str) -> bool {
     name == "archive" || name == "_done" || name.starts_with('.')
 }
 
-fn find_change(
+pub(crate) fn find_change(
     root: PathBuf,
     layout: LifecycleLayout,
     change: &str,
@@ -2407,7 +2260,7 @@ fn find_change(
     Ok(change_status)
 }
 
-fn read_gate_snapshot(
+pub(crate) fn read_gate_snapshot(
     root: &Path,
     layout: LifecycleLayout,
     change: ChangeStatus,
@@ -2444,7 +2297,7 @@ fn read_gate_artifact(path: PathBuf) -> Result<Option<GateArtifact>, Box<dyn Err
     }))
 }
 
-fn mutation_gate_blockers(
+pub(crate) fn mutation_gate_blockers(
     // r[impl cairn.supersede.deterministic_gates] r[impl cairn.supersede.deterministic_gates.pre_sync]
     // r[impl cairn.supersede.deterministic_gates.pre_archive] r[impl cairn.supersede.deterministic_gates.stage]
     // r[impl cairn.supersede.deterministic_gates.traceability]
@@ -2480,7 +2333,7 @@ fn mutation_gate_blockers(
     Ok(blockers)
 }
 
-fn gate_input_json(
+pub(crate) fn gate_input_json(
     layout: LifecycleLayout,
     stage: GateStage,
     policy: &Policy,
@@ -2505,7 +2358,7 @@ fn gate_artifact_json(artifact: &GateArtifact) -> Value {
     })
 }
 
-fn execute_sync_plan(
+pub(crate) fn execute_sync_plan(
     root: &Path,
     layout: LifecycleLayout,
     change: &str,
@@ -2558,7 +2411,7 @@ fn execute_sync_plan(
     Ok(())
 }
 
-fn execute_archive_plan(
+pub(crate) fn execute_archive_plan(
     root: &Path,
     layout: LifecycleLayout,
     change: &str,
@@ -2788,7 +2641,7 @@ fn spec_summary_json(summary: &SpecSummary) -> Value {
     })
 }
 
-fn change_status_json(change: &ChangeStatus) -> Value {
+pub(crate) fn change_status_json(change: &ChangeStatus) -> Value {
     json!({
         "name": change.name,
         "path": change.path,
@@ -2861,7 +2714,7 @@ fn migration_plan_json(
     value
 }
 
-fn sync_plan_json(
+pub(crate) fn sync_plan_json(
     root: &Path,
     layout: LifecycleLayout,
     policy: &Policy,
@@ -2888,7 +2741,7 @@ fn sync_plan_json(
     value
 }
 
-fn archive_plan_json(
+pub(crate) fn archive_plan_json(
     root: &Path,
     layout: LifecycleLayout,
     policy: &Policy,
@@ -2914,7 +2767,7 @@ fn archive_plan_json(
     value
 }
 
-fn gate_report_json(
+pub(crate) fn gate_report_json(
     layout: LifecycleLayout,
     policy: &Policy,
     report: &GateReport,
@@ -2989,7 +2842,7 @@ fn portable_text(root: &Path, text: &str) -> String {
     normalized
 }
 
-fn file_content_manifest(root: &Path, paths: &[PathBuf]) -> Value {
+pub(crate) fn file_content_manifest(root: &Path, paths: &[PathBuf]) -> Value {
     let mut unique = paths.to_vec();
     unique.sort();
     unique.dedup();
@@ -3016,7 +2869,7 @@ fn file_content_manifest(root: &Path, paths: &[PathBuf]) -> Value {
     })
 }
 
-fn tree_content_paths(root: &Path, dir: &Path) -> std::io::Result<Vec<PathBuf>> {
+pub(crate) fn tree_content_paths(root: &Path, dir: &Path) -> std::io::Result<Vec<PathBuf>> {
     if !dir.exists() {
         return Ok(vec![dir.to_path_buf()]);
     }
@@ -3030,7 +2883,7 @@ fn tree_content_paths(root: &Path, dir: &Path) -> std::io::Result<Vec<PathBuf>> 
         .collect())
 }
 
-fn sync_mutation_paths(
+pub(crate) fn sync_mutation_paths(
     root: &Path,
     layout: LifecycleLayout,
     change: &str,
@@ -3050,7 +2903,7 @@ fn sync_mutation_paths(
         .collect()
 }
 
-fn sync_mutation_manifest(
+pub(crate) fn sync_mutation_manifest(
     root: &Path,
     layout: LifecycleLayout,
     change: &str,
@@ -3067,7 +2920,7 @@ fn sync_mutation_manifest(
     })
 }
 
-fn archive_mutation_manifest(
+pub(crate) fn archive_mutation_manifest(
     root: &Path,
     source: &Path,
     destination: &Path,
@@ -3123,7 +2976,7 @@ pub(crate) fn read_option(args: Vec<String>, name: &str, default: &str) -> PathB
         .unwrap_or_else(|| PathBuf::from(default))
 }
 
-fn has_flag(args: &[String], name: &str) -> bool {
+pub(crate) fn has_flag(args: &[String], name: &str) -> bool {
     args.iter().any(|arg| arg == name)
 }
 

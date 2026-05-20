@@ -14,13 +14,14 @@ use serde_json::{json, Value};
 use crate::agent_receipt::{
     agent_receipt_validation_receipt, is_blake3_hex_text, read_agent_receipt_file,
 };
+use crate::lifecycle::parse_gate_stage;
 use crate::{
     archive_plan_json, cairn_validation_receipt, change_status_json, collect_files,
     collect_layout_migration_inputs, default_policy_path, detect_layout, file_content_manifest,
     find_change, gate_input_json, gate_report_json, has_flag, load_policy_file, mcp_call_tool,
-    mcp_tool_catalog, migration_plan_json, mutation_gate_blockers, parse_gate_stage, path_string,
-    portable_json_hash, portable_text, print_json, read_gate_snapshot, read_option,
-    read_string_option, release_readiness_receipt, repo_status_json, scan_repo, sync_plan_json,
+    mcp_tool_catalog, migration_plan_json, mutation_gate_blockers, path_string, portable_json_hash,
+    portable_text, print_json, read_gate_snapshot, read_option, read_string_option,
+    release_readiness_receipt, repo_status_json, scan_repo, sync_plan_json,
     with_portable_receipt_hash,
 };
 
