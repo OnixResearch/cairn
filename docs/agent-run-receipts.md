@@ -160,6 +160,10 @@ nix run .#cairn -- evidence registry fetch-plan --root . \
   --channel stable \
   --platform x86_64-linux \
   --out target/cairn-evidence-fetch-plan.json
+nix run .#cairn -- evidence registry fetch-execute --root . \
+  --plan target/cairn-evidence-fetch-plan.json \
+  --source target/cairn-republished-evidence/ \
+  --out target/cairn-fetch-cache/
 ```
 
 Selection verifies the registry first and fails on zero or multiple matches
@@ -169,7 +173,14 @@ coverage/release receipt hashes, and stable labels (`channel`, `release`,
 `platform`, `compatibility_class`). Fetch plans also verify the registry first and
 emit sorted safe `index_relative` refs plus artifact roles/paths/hashes and
 receipt-chain hashes without doing network I/O or exposing raw paths, env values,
-credentials, or secrets.
+credentials, or secrets. Fetch execution consumes a verified fetch-plan receipt,
+materializes artifacts from a local/offline source directory into an output cache,
+rejects unsafe relative paths and unverified plans, checks each artifact's BLAKE3
+hash before and after copying, and emits deterministic success/failure receipts
+with linked fetch-plan and registry receipt hashes. It does not perform network
+transport, credential handling, or remote trust validation.
+r[cairn.supersede.fetch_execute_policy_docs.docs.flow]
+r[cairn.supersede.fetch_execute_policy_docs.docs.non_claims]
 r[verify cairn.supersede.evidence_registry_consume.select]
 r[verify cairn.supersede.evidence_registry_consume.fetch_plan]
 r[verify cairn.supersede.evidence_registry_consume.policy]

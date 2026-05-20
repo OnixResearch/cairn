@@ -352,6 +352,7 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
             "agent_receipt_validate",
             "archive_dry_run",
             "evidence_registry_build",
+            "evidence_registry_fetch_execute",
             "evidence_registry_fetch_plan",
             "evidence_registry_mirror_verify",
             "evidence_registry_select",

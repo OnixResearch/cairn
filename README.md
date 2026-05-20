@@ -294,7 +294,17 @@ selected entry metadata into a portable receipt. Fetch plans verify the registry
 first, sort plan entries deterministically, and list safe index refs, label
 metadata, receipt chains, artifact roles/paths/hashes, and policy hashes without
 fetching network
-content, credentials, raw host paths, or environment values. The outer publication/index layer can also be generated with
+content, credentials, raw host paths, or environment values. A verified plan can
+then be locally materialized from an offline mirror/source directory with
+`cairn evidence registry fetch-execute --root . --plan target/cairn-evidence-fetch-plan.json --source target/cairn-republished-evidence/ --out target/cairn-fetch-cache/`.
+Fetch execution rejects unverified plans and unsafe relative paths, verifies each
+artifact's BLAKE3 hash before and after copying, emits deterministic failure
+receipts for missing or tampered artifacts, and records stable fields such as
+`fetch_plan_receipt_hash`, `registry_receipt_hash`,
+`registry_verification_receipt_hash`, `materialized_count`, `materialized`, and
+`receipt_hash`; it still performs no network transport, credential handling, or
+remote trust validation. r[cairn.supersede.fetch_execute_policy_docs.docs.flow]
+r[cairn.supersede.fetch_execute_policy_docs.docs.non_claims] The outer publication/index layer can also be generated with
 `cairn evidence-manifest generate --bundle bundle.json --agent-receipt agent.json --replay replay.json --replay-verification replay-verify.json --registry registry.json --registry-verification registry-verify.json --registry-selection registry-selection.json --registry-fetch-plan registry-fetch-plan.json --out manifest.json --root .`
 and verified with `cairn evidence-manifest verify <manifest.json> --root .`; manifest artifacts
 list stable roles such as `agent_evidence_bundle`, `agent_receipt`,

@@ -201,6 +201,13 @@ let Contracts = import "contracts.ncl" in
       issue_keys = ["actual", "code", "expected", "field_path"],
       hash_fields = ["receipt_hash", "registry_receipt_hash", "registry_verification_receipt_hash"],
     },
+    {
+      command = "evidence registry fetch-execute",
+      top_level_keys = ["command", "fetch_plan_receipt_hash", "issues", "materialized", "materialized_count", "out", "plan", "receipt_hash", "registry_receipt_hash", "registry_verification_receipt_hash", "root", "source", "valid", "verdict"],
+      artifact_keys = ["destination", "entry_index", "artifact_index", "expected_hash", "observed_hash", "path", "role"],
+      issue_keys = ["actual", "code", "expected", "field_path"],
+      hash_fields = ["fetch_plan_receipt_hash", "receipt_hash", "registry_receipt_hash", "registry_verification_receipt_hash"],
+    },
   ],
 
   receipt_contracts = [
@@ -305,6 +312,7 @@ let Contracts = import "contracts.ncl" in
     { id = "evidence_registry_mirror_verify", command = "evidence registry mirror-verify --root <root> --registry <registry> --mirror <mirror>", surface_kind = "cli", receipt_command = "evidence registry mirror-verify", required_replay_cases = ["validate"], required_replay_groups = ["smoke", "full"], determinism_claim = "evidence_registry_mirror_verification_stability" },
     { id = "evidence_registry_select", command = "evidence registry select --root <root> --registry <registry> --bundle-kind <kind> --out <out>", surface_kind = "cli", receipt_command = "evidence registry select", required_replay_cases = ["validate"], required_replay_groups = ["smoke", "full"], determinism_claim = "evidence_registry_selection_stability" },
     { id = "evidence_registry_fetch_plan", command = "evidence registry fetch-plan --root <root> --registry <registry> --out <out>", surface_kind = "cli", receipt_command = "evidence registry fetch-plan", required_replay_cases = ["validate"], required_replay_groups = ["smoke", "full"], determinism_claim = "evidence_registry_fetch_plan_stability" },
+    { id = "evidence_registry_fetch_execute", command = "evidence registry fetch-execute --root <root> --plan <plan> --source <source> --out <out>", surface_kind = "cli", receipt_command = "evidence registry fetch-execute", required_replay_cases = ["validate"], required_replay_groups = ["smoke", "full"], determinism_claim = "evidence_registry_fetch_execution_stability" },
     { id = "status", command = "status --root <root>", surface_kind = "cli", receipt_command = "status", required_replay_cases = ["status"], required_replay_groups = ["agent", "full", "release", "smoke"], determinism_claim = "status_receipt_stability" },
     { id = "sync_dry_run", command = "sync demo --root <root>", surface_kind = "cli", receipt_command = "sync", required_replay_cases = ["sync_dry_run"], required_replay_groups = ["full"], determinism_claim = "lifecycle_dry_run_stability" },
     { id = "validate", command = "validate --root <root>", surface_kind = "cli", receipt_command = "validate", required_replay_cases = ["validate"], required_replay_groups = ["agent", "full", "release", "smoke"], determinism_claim = "validation_receipt_stability" },

@@ -1342,6 +1342,10 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
         assert!(fetch_execute_dir.join(path).exists());
     }
     assert_hash_field(&fetch_execute, "receipt_hash")?;
+    let fetch_execute_schema = receipt_schema("evidence registry fetch-execute")?;
+    assert_schema_keys(&fetch_execute, &fetch_execute_schema, "top_level_keys")?;
+    // r[cairn.supersede.fetch_execute_policy_docs.policy.schema]
+    // r[cairn.supersede.fetch_execute_policy_docs.policy.inventory]
     let fetch_execute_text = serde_json::to_string(&fetch_execute)?;
     assert!(
         !fetch_execute_text.contains(&dir.display().to_string()),
