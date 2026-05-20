@@ -7,12 +7,13 @@ use std::{
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
+use crate::determinism::determinism_verify_replay_receipt;
 use crate::evidence_registry::{evidence_registry_verify_receipt, EvidenceRegistryVerifyOptions};
 use crate::{
     agent_evidence_bundle_verification_receipt, agent_receipt_validation_receipt,
-    default_policy_path, determinism_verify_replay_receipt, load_policy_file, path_string,
-    portable_json_hash, print_json, read_json_artifact, read_option,
-    receipt_stated_or_computed_hash, with_portable_receipt_hash, AGENT_RECEIPT_MAX_BYTES,
+    default_policy_path, load_policy_file, path_string, portable_json_hash, print_json,
+    read_json_artifact, read_option, receipt_stated_or_computed_hash, with_portable_receipt_hash,
+    AGENT_RECEIPT_MAX_BYTES,
 };
 
 pub(crate) fn run_evidence_manifest(args: Vec<String>) -> Result<(), Box<dyn Error>> {
