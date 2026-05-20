@@ -222,6 +222,72 @@ fn name_pointer_evidence_validator_rejects_unknown_effect_pure_cache_fixture(
     Ok(())
 }
 
+#[test]
+fn export_bundle_evidence_validator_accepts_positive_fixture() -> Result<(), Box<dyn Error>> {
+    // Active Cairn refs: content_addressed_rust_evidence.export_bundle.replay,
+    // content_addressed_rust_evidence.compiler_ir.hir_dependencies.
+    let fixture = repo_root().join(
+        "fixtures/content-addressed-rust-evidence/ir-and-bundles/export-bundle-positive.json",
+    );
+    let receipt = run_json(&[
+        "evidence",
+        "export-bundle",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "PASS");
+    assert_eq!(receipt["issues"].as_array().map(Vec::len), Some(0));
+    assert_hash_field(&receipt, "computed_bundle_hash")?;
+    assert_hash_field(&receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn export_bundle_evidence_validator_rejects_unsorted_objects() -> Result<(), Box<dyn Error>> {
+    // Active Cairn ref: content_addressed_rust_evidence.export_bundle.replay.
+    let fixture = repo_root().join(
+        "fixtures/content-addressed-rust-evidence/ir-and-bundles/export-bundle-unsorted-objects.json",
+    );
+    let receipt = run_json_failure(&[
+        "evidence",
+        "export-bundle",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert!(receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| { issue["code"] == "export_bundle.unsorted_objects" }));
+    Ok(())
+}
+
+#[test]
+fn export_bundle_evidence_validator_rejects_unknown_pointer_object() -> Result<(), Box<dyn Error>> {
+    // Active Cairn refs: content_addressed_rust_evidence.export_bundle.replay,
+    // content_addressed_rust_evidence.export_bundle.mutation_manifest.
+    let fixture = repo_root().join(
+        "fixtures/content-addressed-rust-evidence/ir-and-bundles/export-bundle-unknown-pointer.json",
+    );
+    let receipt = run_json_failure(&[
+        "evidence",
+        "export-bundle",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert!(receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| { issue["code"] == "export_bundle.unknown_pointer_object" }));
+    Ok(())
+}
+
 fn assert_object_keys(value: &Value, expected: &[&str]) -> Result<(), Box<dyn Error>> {
     let object = value.as_object().ok_or("json object")?;
     let mut actual = object.keys().map(String::as_str).collect::<Vec<_>>();

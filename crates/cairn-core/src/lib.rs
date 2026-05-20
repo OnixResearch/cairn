@@ -20,9 +20,11 @@ pub use verified::agent_receipt::{
     AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
 };
 pub use verified::content_addressed::{
-    function_object_hash, function_object_hash_material, name_pointer_hash,
-    name_pointer_hash_material, validate_function_object_receipt, validate_name_pointer_receipt,
-    FunctionObjectIssue, FunctionObjectReport, NamePointerIssue, NamePointerReport,
+    export_bundle_hash, export_bundle_hash_material, function_object_hash,
+    function_object_hash_material, name_pointer_hash, name_pointer_hash_material,
+    validate_export_bundle_receipt, validate_function_object_receipt,
+    validate_name_pointer_receipt, ExportBundleIssue, ExportBundleReport, FunctionObjectIssue,
+    FunctionObjectReport, NamePointerIssue, NamePointerReport, EXPORT_BUNDLE_SCHEMA_V1,
     FUNCTION_OBJECT_SCHEMA_V1, NAME_POINTER_SCHEMA_V1,
 };
 pub use verified::delta_merge::{merge_delta_spec, DeltaMerge};
