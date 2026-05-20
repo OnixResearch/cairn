@@ -14,12 +14,12 @@ use cairn_core::{
     build_sync_plan, canonical_json_hash, changes_dir, design_template,
     evaluate_agent_run_completion, evaluate_gate_snapshot, init_artifacts, init_artifacts_for,
     layout_name, layout_root, merge_delta_spec, parse_policy_json, proposal_template, specs_dir,
-    tasks_template, validate_changes, validate_policy_json, validate_spec_sources,
-    AgentRunGateIssue, ArchivePlan, ChangeDetail, ChangeList, ChangeSource, ChangeStatus,
-    DoctorCheckStatus, DoctorReport, DoctorSnapshot, GateArtifact, GateReport, GateSnapshot,
-    GateStage, LifecycleArtifactKind, LifecycleLayout, MigrationInput, MigrationPlan, PlanAction,
-    PlanActionKind, Policy, RepoStatus, SpecDetail, SpecList, SpecSource, SpecSummary, SyncPlan,
-    TaskCounts,
+    tasks_template, validate_changes, validate_function_object_receipt, validate_policy_json,
+    validate_spec_sources, AgentRunGateIssue, ArchivePlan, ChangeDetail, ChangeList, ChangeSource,
+    ChangeStatus, DoctorCheckStatus, DoctorReport, DoctorSnapshot, GateArtifact, GateReport,
+    GateSnapshot, GateStage, LifecycleArtifactKind, LifecycleLayout, MigrationInput, MigrationPlan,
+    PlanAction, PlanActionKind, Policy, RepoStatus, SpecDetail, SpecList, SpecSource, SpecSummary,
+    SyncPlan, TaskCounts,
 };
 use serde_json::{json, Value};
 
@@ -3696,7 +3696,56 @@ fn run_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "republish" => run_evidence_republish(iter.collect()),
         "index" => run_evidence_index(iter.collect()),
         "registry" => run_evidence_registry(iter.collect()),
+        "function-object" => run_evidence_function_object(iter.collect()),
         unknown => Err(format!("unknown evidence subcommand: {unknown}").into()),
+    }
+}
+
+const FUNCTION_OBJECT_MAX_BYTES: u64 = 64 * 1024;
+
+fn run_evidence_function_object(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let mut iter = args.into_iter();
+    let Some(subcommand) = iter.next() else {
+        return Err("evidence function-object requires a subcommand: validate".into());
+    };
+    match subcommand.as_str() {
+        "validate" => {
+            let Some(path) = iter.next() else {
+                return Err(
+                    "evidence function-object validate requires a JSON receipt path".into(),
+                );
+            };
+            let receipt = read_json_artifact(Path::new(&path), FUNCTION_OBJECT_MAX_BYTES)?;
+            let report = validate_function_object_receipt(&receipt);
+            let issues = report
+                .issues
+                .into_iter()
+                .map(|issue| json!({"code": issue.code, "message": issue.message}))
+                .collect::<Vec<_>>();
+            let receipt_hash = canonical_json_hash(&json!({
+                "schema": receipt.get("schema"),
+                "computed_object_hash": report.computed_object_hash.clone(),
+                "valid": report.valid,
+                "issues": issues.clone(),
+            }));
+            let output = json!({
+                "command": "evidence function-object validate",
+                "path": path,
+                "schema": receipt.get("schema").and_then(Value::as_str).unwrap_or(""),
+                "valid": report.valid,
+                "verdict": report.verdict,
+                "issues": issues,
+                "computed_object_hash": report.computed_object_hash.clone(),
+                "receipt_hash": receipt_hash,
+            });
+            let valid = output["valid"].as_bool().unwrap_or(false);
+            print_json(output)?;
+            if !valid {
+                std::process::exit(1);
+            }
+            Ok(())
+        }
+        unknown => Err(format!("unknown evidence function-object subcommand: {unknown}").into()),
     }
 }
 

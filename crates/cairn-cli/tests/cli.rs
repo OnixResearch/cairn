@@ -115,6 +115,48 @@ fn assert_hash_field(value: &Value, field: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[test]
+fn function_object_evidence_validator_accepts_positive_fixture() -> Result<(), Box<dyn Error>> {
+    // Active Cairn refs: content_addressed_rust_evidence.function_object.source_token,
+    // content_addressed_rust_evidence.canonical_hash.portable.
+    let fixture = repo_root()
+        .join("fixtures/content-addressed-rust-evidence/function-object-v1/positive.json");
+    let receipt = run_json(&[
+        "evidence",
+        "function-object",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "PASS");
+    assert_eq!(receipt["issues"].as_array().map(Vec::len), Some(0));
+    assert_hash_field(&receipt, "computed_object_hash")?;
+    assert_hash_field(&receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn function_object_evidence_validator_rejects_ambient_entropy_fixture() -> Result<(), Box<dyn Error>>
+{
+    // Active Cairn ref: content_addressed_rust_evidence.canonical_hash.no_entropy.
+    let fixture = repo_root()
+        .join("fixtures/content-addressed-rust-evidence/function-object-v1/ambient-entropy.json");
+    let receipt = run_json_failure(&[
+        "evidence",
+        "function-object",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert!(receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| { issue["code"] == "function_object.ambient_entropy_in_hash_material" }));
+    Ok(())
+}
+
 fn assert_object_keys(value: &Value, expected: &[&str]) -> Result<(), Box<dyn Error>> {
     let object = value.as_object().ok_or("json object")?;
     let mut actual = object.keys().map(String::as_str).collect::<Vec<_>>();

@@ -1,13 +1,13 @@
 ## Phase 1: Contract package
 
 - [x] [serial] I1 Define the native Cairn proposal/design/spec package for content-addressed Rust evidence. r[content_addressed_rust_evidence.function_object] r[content_addressed_rust_evidence.canonical_hash]
-- [ ] [serial] V1 Run Cairn validation and proposal/design/tasks gates for this change package. r[content_addressed_rust_evidence.function_object.source_token]
+- [x] [serial] V1 Run Cairn validation and proposal/design/tasks gates for this change package. r[content_addressed_rust_evidence.function_object.source_token]
 
 ## Phase 2: Function object receipt implementation
 
-- [ ] [serial] I2 Add Cairn receipt model support for Octet function-object v1 validation, including canonical hash material, normalization metadata, and required non-correctness claims. r[content_addressed_rust_evidence.function_object] r[content_addressed_rust_evidence.canonical_hash]
-- [ ] [parallel] H1 Add deterministic fixture objects for portable canonical hashing and ambient-entropy rejection. command=`nix run path:$PWD#cairn -- validate --root .`; input=`fixtures/content-addressed-rust-evidence/function-object-v1/`; asserts=`portable object hashes match and entropy-bearing hash material fails closed`; evidence=`target/content-addressed-rust-evidence/function-object-v1-validation.json` r[content_addressed_rust_evidence.canonical_hash.portable] r[content_addressed_rust_evidence.canonical_hash.no_entropy]
-- [ ] [serial] V2 Verify function-object receipt validation with positive and negative fixtures. r[content_addressed_rust_evidence.function_object.no_correctness_claim]
+- [x] [serial] I2 Add Cairn receipt model support for Octet function-object v1 validation, including canonical hash material, normalization metadata, and required non-correctness claims. r[content_addressed_rust_evidence.function_object] r[content_addressed_rust_evidence.canonical_hash]
+- [x] [parallel] H1 Add deterministic fixture objects for portable canonical hashing and ambient-entropy rejection. command=`nix run path:$PWD#cairn -- validate --root .`; input=`fixtures/content-addressed-rust-evidence/function-object-v1/`; asserts=`portable object hashes match and entropy-bearing hash material fails closed`; evidence=`target/content-addressed-rust-evidence/function-object-v1-validation.json` r[content_addressed_rust_evidence.canonical_hash.portable] r[content_addressed_rust_evidence.canonical_hash.no_entropy]
+- [x] [serial] V2 Verify function-object receipt validation with positive and negative fixtures. r[content_addressed_rust_evidence.function_object.no_correctness_claim]
 
 ## Phase 3: Pointer and caveat contracts
 

@@ -19,6 +19,10 @@ pub use verified::agent_receipt::{
     positive_agent_run_fixture, AgentRunGateIssue, AgentRunGateReport,
     AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
 };
+pub use verified::content_addressed::{
+    function_object_hash, function_object_hash_material, validate_function_object_receipt,
+    FunctionObjectIssue, FunctionObjectReport, FUNCTION_OBJECT_SCHEMA_V1,
+};
 pub use verified::delta_merge::{merge_delta_spec, DeltaMerge};
 pub use verified::doctor::{
     build_doctor_report, DoctorCheck, DoctorCheckStatus, DoctorReport, DoctorSnapshot,
