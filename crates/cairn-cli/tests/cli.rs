@@ -551,6 +551,7 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
             "archive_dry_run",
             "evidence_registry_build",
             "evidence_registry_fetch_plan",
+            "evidence_registry_mirror_verify",
             "evidence_registry_select",
             "evidence_registry_verify",
             "gate_design",
@@ -1609,6 +1610,97 @@ fn evidence_export_materializes_complete_portable_chain() -> Result<(), Box<dyn 
     assert_eq!(registry_verify["registry_hash"], registry["receipt_hash"]);
     assert_eq!(registry_verify["entry_count"], 1);
     assert_hash_field(&registry_verify, "receipt_hash")?;
+
+    let mirror_verify = run_json_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "mirror-verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--registry".into(),
+        registry_path.display().to_string(),
+        "--mirror".into(),
+        republish_dir.display().to_string(),
+    ])?;
+    assert_eq!(mirror_verify["valid"], true);
+    assert_eq!(mirror_verify["verdict"], "pass");
+    assert_eq!(mirror_verify["registry"], "<registry>");
+    assert_eq!(mirror_verify["mirror"], "<mirror>");
+    assert_eq!(mirror_verify["registry_hash"], registry["receipt_hash"]);
+    assert_eq!(
+        mirror_verify["registry_verification_receipt_hash"],
+        registry_verify["receipt_hash"]
+    );
+    assert_eq!(mirror_verify["entry_count"], 1);
+    assert_eq!(
+        mirror_verify["entries"][0]["index_receipt_hash"],
+        index["receipt_hash"]
+    );
+    assert_hash_field(&mirror_verify, "receipt_hash")?;
+    let mirror_text = serde_json::to_string(&mirror_verify)?;
+    assert!(
+        !mirror_text.contains(&dir.display().to_string()),
+        "{mirror_text}"
+    );
+
+    let missing_mirror = dir.join("missing-index-mirror");
+    fs::create_dir_all(&missing_mirror)?;
+    fs::copy(
+        &registry_path,
+        missing_mirror.join("evidence-registry-receipt.json"),
+    )?;
+    let missing_mirror_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "mirror-verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--registry".into(),
+        registry_path.display().to_string(),
+        "--mirror".into(),
+        missing_mirror.display().to_string(),
+    ])?;
+    assert_eq!(missing_mirror_failure["valid"], false);
+    let missing_mirror_codes = missing_mirror_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(missing_mirror_codes.contains(&"evidence_registry_mirror_verify.index_missing"));
+
+    let tampered_mirror = dir.join("tampered-index-mirror");
+    fs::create_dir_all(&tampered_mirror)?;
+    let tampered_registry_path = tampered_mirror.join("evidence-registry-receipt.json");
+    let tampered_index_path = tampered_mirror.join("evidence-index-receipt.json");
+    fs::copy(&registry_path, &tampered_registry_path)?;
+    fs::copy(&index_path, &tampered_index_path)?;
+    let mut tampered_index: Value = serde_json::from_slice(&fs::read(&tampered_index_path)?)?;
+    tampered_index["receipt_hash"] =
+        Value::String("0000000000000000000000000000000000000000000000000000000000000000".into());
+    fs::write(
+        &tampered_index_path,
+        serde_json::to_string_pretty(&tampered_index)? + "\n",
+    )?;
+    let tampered_mirror_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "registry".into(),
+        "mirror-verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--registry".into(),
+        tampered_registry_path.display().to_string(),
+        "--mirror".into(),
+        tampered_mirror.display().to_string(),
+    ])?;
+    assert_eq!(tampered_mirror_failure["valid"], false);
+    let tampered_mirror_codes = tampered_mirror_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(tampered_mirror_codes.contains(&"evidence_registry_mirror_verify.index_hash_mismatch"));
 
     let selected_index_path = dir.join("selected-cairn-evidence-index.json");
     let selection = run_json_strings(&[

@@ -631,6 +631,20 @@
       "surface_kind": "cli"
     },
     {
+      "command": "evidence registry mirror-verify --root <root> --registry <registry> --mirror <mirror>",
+      "determinism_claim": "evidence_registry_mirror_verification_stability",
+      "id": "evidence_registry_mirror_verify",
+      "receipt_command": "evidence registry mirror-verify",
+      "required_replay_cases": [
+        "validate"
+      ],
+      "required_replay_groups": [
+        "smoke",
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
       "command": "evidence registry select --root <root> --registry <registry> --bundle-kind <kind> --out <out>",
       "determinism_claim": "evidence_registry_selection_stability",
       "id": "evidence_registry_select",

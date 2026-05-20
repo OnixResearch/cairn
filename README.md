@@ -276,10 +276,12 @@ indexes can be aggregated with
 `cairn evidence registry build --root . --index target/cairn-evidence-index.json --out target/cairn-evidence-registry.json --channel stable --release 2026-05-19 --platform x86_64-linux --compatibility-class current`
 and checked with
 `cairn evidence registry verify --root . --registry target/cairn-evidence-registry.json`.
-The registry sorts entries deterministically, records policy-validated stable
-labels (`channel`, `release`, `platform`, `compatibility_class`), index hashes,
-bundle kinds, bundle receipt hashes, receipt chains, artifact hashes, and policy
-hashes, and emits stable fields `command`, `root`, `out` or `registry`, `valid`,
+Mirrored or offline copies can be checked before consumption with
+`cairn evidence registry mirror-verify --root . --registry target/cairn-evidence-registry.json --mirror target`.
+The mirror verifier reuses the registry's safe `index_relative` entries, rehashes
+mirrored indexes, preserves labels (`channel`, `release`, `platform`,
+`compatibility_class`), index hashes, bundle kinds, bundle receipt hashes,
+receipt chains, artifact hashes, and policy hashes, and emits stable fields `command`, `root`, `out` or `registry`, `valid`,
 `verdict`, `issues`, `entry_count`, `entries`, `registry_hash`, and
 `receipt_hash` without raw host paths. Downstream agents can consume a registry
 with

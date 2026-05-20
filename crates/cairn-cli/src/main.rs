@@ -3636,6 +3636,13 @@ struct EvidenceRegistryVerifyOptions {
     registry: Option<PathBuf>,
 }
 
+#[derive(Default)]
+struct EvidenceRegistryMirrorVerifyOptions {
+    root: PathBuf,
+    registry: Option<PathBuf>,
+    mirror: Option<PathBuf>,
+}
+
 #[derive(Default, Clone)]
 struct EvidenceRegistryLabels {
     channel: Option<String>,
@@ -4195,6 +4202,10 @@ fn run_evidence_registry(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             let options = evidence_registry_fetch_plan_options(&iter.collect::<Vec<_>>())?;
             evidence_registry_fetch_plan_receipt(&options)
         }
+        "mirror-verify" => {
+            let options = evidence_registry_mirror_verify_options(&iter.collect::<Vec<_>>())?;
+            evidence_registry_mirror_verify_receipt(&options)
+        }
         unknown => return Err(format!("unknown evidence registry subcommand: {unknown}").into()),
     };
     let valid = receipt
@@ -4236,6 +4247,25 @@ fn evidence_registry_verify_options(
         return Err("evidence registry verify requires --registry <file>".into());
     }
     Ok(EvidenceRegistryVerifyOptions { root, registry })
+}
+
+fn evidence_registry_mirror_verify_options(
+    args: &[String],
+) -> Result<EvidenceRegistryMirrorVerifyOptions, Box<dyn Error>> {
+    let root = read_option(args.to_vec(), "--root", ".");
+    let registry = read_string_option(args, "--registry").map(PathBuf::from);
+    let mirror = read_string_option(args, "--mirror").map(PathBuf::from);
+    if registry.is_none() {
+        return Err("evidence registry mirror-verify requires --registry <file>".into());
+    }
+    if mirror.is_none() {
+        return Err("evidence registry mirror-verify requires --mirror <dir>".into());
+    }
+    Ok(EvidenceRegistryMirrorVerifyOptions {
+        root,
+        registry,
+        mirror,
+    })
 }
 
 fn evidence_registry_select_options(
@@ -4716,6 +4746,176 @@ fn evidence_registry_verify_receipt(options: &EvidenceRegistryVerifyOptions) -> 
     entries.sort_by_key(canonical_json_hash);
     evidence_registry_reject_label_conflicts(&entries, "evidence_registry_verify", &mut issues);
     evidence_registry_verify_final_receipt(&root, issues, stated_hash, entries)
+}
+
+fn evidence_registry_mirror_verify_receipt(options: &EvidenceRegistryMirrorVerifyOptions) -> Value {
+    // r[impl cairn.supersede.registry_mirror_verification.command]
+    // r[impl cairn.supersede.registry_mirror_verification.receipt]
+    // r[impl cairn.supersede.registry_mirror_verification.failures]
+    let root = options.root.clone();
+    let registry_path = options
+        .registry
+        .clone()
+        .unwrap_or_else(|| PathBuf::from("."));
+    let mirror = options.mirror.clone().unwrap_or_else(|| PathBuf::from("."));
+    let registry = match read_json_artifact(&registry_path, AGENT_RECEIPT_MAX_BYTES) {
+        Ok(value) => value,
+        Err(_) => {
+            return evidence_registry_mirror_verify_final_receipt(
+                &root,
+                vec![evidence_registry_issue(
+                    "evidence_registry_mirror_verify.registry_unreadable",
+                    "registry",
+                    "readable registry",
+                    "unreadable",
+                )],
+                Value::Null,
+                Value::Null,
+                Vec::new(),
+            )
+        }
+    };
+    let mut issues = Vec::new();
+    let registry_hash = registry.get("receipt_hash").cloned().unwrap_or(Value::Null);
+    if let Some(hash) = registry_hash.as_str() {
+        let mut hash_input = registry.clone();
+        if let Some(object) = hash_input.as_object_mut() {
+            object.remove("receipt_hash");
+        }
+        if portable_json_hash(&root, &hash_input) != hash {
+            issues.push(evidence_registry_issue(
+                "evidence_registry_mirror_verify.registry_hash_mismatch",
+                "receipt_hash",
+                "portable receipt hash",
+                "mismatch",
+            ));
+        }
+    } else {
+        issues.push(evidence_registry_issue(
+            "evidence_registry_mirror_verify.registry_hash_missing",
+            "receipt_hash",
+            "BLAKE3 hex",
+            "missing",
+        ));
+    }
+    let registry_verification = evidence_registry_verify_receipt(&EvidenceRegistryVerifyOptions {
+        root: root.clone(),
+        registry: Some(registry_path.clone()),
+    });
+    if registry_verification.get("valid").and_then(Value::as_bool) != Some(true) {
+        issues.push(evidence_registry_issue(
+            "evidence_registry_mirror_verify.registry_verify_failed",
+            "registry",
+            "valid registry verification",
+            "invalid",
+        ));
+    }
+    let mut entries = Vec::new();
+    for (position, entry) in registry
+        .get("entries")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default()
+        .iter()
+        .enumerate()
+    {
+        let Some(index_path) = evidence_registry_resolve_index_path(&mirror, entry) else {
+            issues.push(evidence_registry_issue(
+                "evidence_registry_mirror_verify.index_path_unsafe",
+                "entries.index_relative",
+                "safe relative index path",
+                "unsafe",
+            ));
+            continue;
+        };
+        if !index_path.exists() {
+            issues.push(evidence_registry_issue(
+                "evidence_registry_mirror_verify.index_missing",
+                "entries.index_relative",
+                "mirrored index file",
+                "missing",
+            ));
+            continue;
+        }
+        let entry_labels = entry_labels_from_registry_entry(entry);
+        if let Some(labels) = entry_labels.as_ref() {
+            evidence_registry_validate_labels(
+                &root,
+                labels,
+                "evidence_registry_mirror_verify",
+                &mut issues,
+            );
+        }
+        if let Some(current) = evidence_registry_entry_from_index(
+            &root,
+            &index_path,
+            &mirror,
+            position,
+            "evidence_registry_mirror_verify",
+            entry_labels.as_ref(),
+            &mut issues,
+        ) {
+            if entry.get("index_receipt_hash") != current.get("index_receipt_hash") {
+                issues.push(evidence_registry_issue(
+                    "evidence_registry_mirror_verify.index_hash_mismatch",
+                    "entries.index_receipt_hash",
+                    "declared registry index hash",
+                    "mismatch",
+                ));
+            } else if !evidence_registry_entries_equal(entry, &current) {
+                issues.push(evidence_registry_issue(
+                    "evidence_registry_mirror_verify.entry_mismatch",
+                    "entries",
+                    "current mirrored index entry",
+                    "mismatch",
+                ));
+            }
+            entries.push(current);
+        }
+    }
+    entries.sort_by_key(canonical_json_hash);
+    evidence_registry_reject_label_conflicts(
+        &entries,
+        "evidence_registry_mirror_verify",
+        &mut issues,
+    );
+    evidence_registry_mirror_verify_final_receipt(
+        &root,
+        issues,
+        registry_hash,
+        registry_verification
+            .get("receipt_hash")
+            .cloned()
+            .unwrap_or(Value::Null),
+        entries,
+    )
+}
+
+fn evidence_registry_mirror_verify_final_receipt(
+    root: &Path,
+    mut issues: Vec<Value>,
+    registry_hash: Value,
+    registry_verification_receipt_hash: Value,
+    entries: Vec<Value>,
+) -> Value {
+    issues.sort_by_key(canonical_json_hash);
+    let valid = issues.is_empty();
+    with_portable_receipt_hash(
+        root,
+        json!({
+            "command": "evidence registry mirror-verify",
+            "root": path_string(root),
+            "registry": "<registry>",
+            "mirror": "<mirror>",
+            "valid": valid,
+            "verdict": if valid { "pass" } else { "fail" },
+            "issues": issues,
+            "registry_hash": registry_hash,
+            "registry_verification_receipt_hash": registry_verification_receipt_hash,
+            "entry_count": entries.len(),
+            "entries": entries,
+        }),
+    )
 }
 
 fn evidence_registry_entry_from_index(
@@ -9514,7 +9714,7 @@ fn default_policy_path() -> &'static str {
 fn usage_text() -> &'static str {
     // r[impl cairn.supersede.hermes_skill] r[impl cairn.supersede.hermes_skill.discover]
     // r[impl cairn.supersede.hermes_skill.contracts] r[impl cairn.supersede.hermes_skill.audit]
-    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH] [--strict]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence registry verify --root PATH --registry FILE\n  evidence registry select --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS] [--index-receipt-hash HASH]\n  evidence registry fetch-plan --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--registry PATH] [--registry-verification PATH] [--registry-selection PATH] [--registry-fetch-plan PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  policy export [--source PATH] [--output PATH] [--check]\n  tracey coverage [--root PATH] [--json]\n  rename-classification [--output PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
+    "usage: cairn <command> [args]\n\ncommands:\n  init [--root PATH]\n  change create <name> [--root PATH]\n  change list [--root PATH]\n  change show <name> [--root PATH]\n  spec list [--root PATH]\n  spec show <id> [--root PATH]\n  status [--root PATH]\n  doctor [--root PATH] [--policy PATH]\n  validate [--root PATH] [--policy PATH] [--strict]\n  release-readiness [--root PATH] [--policy PATH]\n  determinism coverage-audit [--root PATH]\n  determinism replay [--root PATH] [--case ID] [--group ID] [--format json|jsonl|summary] [--out PATH]\n  determinism verify-receipt <receipt.json> [--root PATH]\n  agent-receipt validate <path>\n  agent-receipt verify-bundle <bundle.json> [--root PATH]\n  agent-receipt smoke-mcp [--root PATH]\n  evidence export --root PATH --out DIR [--agent-receipt PATH]\n  evidence verify --root PATH --bundle DIR\n  evidence import --root PATH --bundle DIR --into DIR\n  evidence republish --root PATH --imported DIR --out DIR\n  evidence index --root PATH --bundle DIR --out FILE\n  evidence index verify --root PATH --index FILE\n  evidence registry build --root PATH --index FILE [--index FILE ...] --out FILE [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence registry verify --root PATH --registry FILE\n  evidence registry mirror-verify --root PATH --registry FILE --mirror DIR\n  evidence registry select --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS] [--index-receipt-hash HASH]\n  evidence registry fetch-plan --root PATH --registry FILE --out FILE [--bundle-kind KIND] [--policy-hash HASH] [--channel CHANNEL] [--release YYYY-MM-DD] [--platform PLATFORM] [--compatibility-class CLASS]\n  evidence-manifest generate --bundle PATH --agent-receipt PATH --replay PATH --replay-verification PATH [--release-readiness PATH] [--coverage-audit PATH] [--registry PATH] [--registry-verification PATH] [--registry-selection PATH] [--registry-fetch-plan PATH] [--signer-metadata PATH] [--anchor-metadata PATH] [--out PATH|-] [--root PATH]\n  evidence-manifest verify <manifest.json> [--root PATH]\n  policy [--policy PATH]\n  policy export [--source PATH] [--output PATH] [--check]\n  tracey coverage [--root PATH] [--json]\n  rename-classification [--output PATH]\n  migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]\n  mcp [--describe] [--call TOOL JSON] [--allow-mutations]\n  gate <proposal|design|tasks> <change> [--root PATH] [--policy PATH]\n  gate-context <change> [--root PATH]\n  sync <change> [--root PATH] [--policy PATH] [--execute]\n  archive <change> [--root PATH] [--policy PATH] [--execute]"
 }
 
 fn print_usage() {

@@ -128,6 +128,9 @@ nix run .#cairn -- evidence registry build --root . \
   --platform x86_64-linux \
   --compatibility-class current
 nix run .#cairn -- evidence registry verify --root . --registry target/cairn-evidence-registry.json
+nix run .#cairn -- evidence registry mirror-verify --root . \
+  --registry target/cairn-evidence-registry.json \
+  --mirror target
 ```
 
 Registry build verifies each index, sorts entries by stable content, records
@@ -136,7 +139,12 @@ policy-validated stable labels (`channel`, `release`, `platform`, and
 hashes, receipt chains, policy hashes, artifact roles/paths/hashes, and writes a
 portable registry receipt. Registry verification recomputes referenced indexes
 and rejects missing, duplicate, stale, tampered, unsafe, label-invalid, or
-label-conflicting entries with deterministic issue codes.
+label-conflicting entries with deterministic issue codes. Mirror verification
+checks an offline/mirrored directory using the registry's safe `index_relative`
+refs, recomputes the mirrored indexes, preserves registry labels and receipt
+chains, and emits a portable receipt with `registry`, `mirror`, `registry_hash`,
+`registry_verification_receipt_hash`, `entry_count`, `entries`, `issues`, and
+`receipt_hash` without copying files or performing network I/O.
 Consumers can then choose one entry or produce a metadata-only download plan:
 
 ```sh
@@ -169,6 +177,10 @@ r[verify cairn.supersede.evidence_registry_consume.docs]
 r[verify cairn.supersede.evidence_registry_consume.verify]
 r[verify cairn.supersede.evidence_registry_rail.build]
 r[verify cairn.supersede.evidence_registry_rail.verify]
+r[verify cairn.supersede.registry_mirror_verification.command]
+r[verify cairn.supersede.registry_mirror_verification.receipt]
+r[verify cairn.supersede.registry_mirror_verification.failures]
+r[verify cairn.supersede.registry_mirror_verification.docs]
 r[verify cairn.supersede.evidence_registry_rail.failures]
 r[verify cairn.supersede.evidence_registry_rail.gates]
 r[verify cairn.supersede.evidence_registry_rail.archive]
