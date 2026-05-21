@@ -41,7 +41,7 @@ pub(crate) fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>>
         "smoke-mcp" => {
             let rest = iter.collect::<Vec<_>>();
             let root = read_option(rest, "--root", ".");
-            print_json(crate::mcp_agent_smoke_receipt(root)?)
+            print_json(crate::mcp::mcp_agent_smoke_receipt(root)?)
         }
         unknown => Err(format!("unknown agent-receipt subcommand: {unknown}").into()),
     }
