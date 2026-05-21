@@ -1,0 +1,4 @@
+{
+  "groups": ["current", "feature:cli-tests"],
+  "status": "current"
+}
