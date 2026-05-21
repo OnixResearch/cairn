@@ -14,10 +14,15 @@
 // r[impl test_harness.flake_triage.rerun] r[impl test_harness.flake_triage.rerun.bounded]
 // r[impl test_harness.flake_triage.rerun.not_greenwash] r[impl test_harness.flake_triage.promotion]
 // r[impl test_harness.flake_triage.promotion.evidence] r[impl test_harness.flake_triage.promotion.fixture]
+// r[impl test_harness.real_rails.receipts] r[impl test_harness.real_rails.receipts.validate]
+// r[impl test_harness.real_rails.receipts.tracey] r[impl test_harness.real_rails.receipts.release_readiness]
+// r[impl test_harness.real_rails.classification] r[impl test_harness.real_rails.classification.product]
+// r[impl test_harness.real_rails.classification.environment] r[impl test_harness.real_rails.selection]
+// r[impl test_harness.real_rails.selection.known] r[impl test_harness.real_rails.selection.unknown]
 use crate::{read_option, read_string_option, safe_relative_path, with_portable_receipt_hash};
 use cairn_core::blake3_hex;
 use serde_json::{json, Value};
-use std::{error::Error, fs, path::Path};
+use std::{error::Error, fs, path::Path, process::Command};
 const ARTIFACT_SCHEMA: &str = "cairn.test-harness.artifact.v1";
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Outcome {
@@ -62,6 +67,9 @@ struct Report {
 }
 pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let root = read_option(args.clone(), "--root", ".");
+    if let Some(rail) = read_string_option(&args, "--rail") {
+        return run_real_rail(&root, &rail, read_string_option(&args, "--out"));
+    }
     let case = read_string_option(&args, "--case").unwrap_or_else(|| "pass".into());
     let seed = read_string_option(&args, "--seed").unwrap_or_else(|| "0".into());
     let max = read_string_option(&args, "--max-reruns")
@@ -93,6 +101,125 @@ pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> 
         Err(format!("test harness case failed: {}", report.code).into())
     }
 }
+fn run_real_rail(root: &Path, rail: &str, out: Option<String>) -> Result<(), Box<dyn Error>> {
+    let report = real_rail_report(root, rail);
+    let receipt = with_portable_receipt_hash(
+        root,
+        json!({
+            "schema":"cairn.test-harness.rail-receipt.v1",
+            "command":"test-harness",
+            "rail_id":rail,
+            "root":".",
+            "outcome":report.outcome.s(),
+            "failure_class":report.class.s(),
+            "issue_code":report.code,
+            "diagnostic":report.diag,
+            "replay_command":format!("cairn test-harness --root . --rail {rail}"),
+            "rail":report.attempts.first().cloned().unwrap_or_else(|| json!({"rail_id":rail})),
+        }),
+    );
+    let rendered = serde_json::to_string_pretty(&receipt)?;
+    if let Some(out) = out {
+        let p = root.join(out);
+        if let Some(parent) = p.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(p, format!("{rendered}\n"))?;
+    }
+    println!("{rendered}");
+    if report.outcome == Outcome::Passed {
+        Ok(())
+    } else {
+        Err(format!("test harness rail failed: {}", report.code).into())
+    }
+}
+
+fn real_rail_report(root: &Path, rail: &str) -> Report {
+    let Some(args) = rail_args(rail) else {
+        return Report {
+            outcome: Outcome::Failed,
+            class: Class::Harness,
+            code: "unknown_harness_rail",
+            diag: "choose a supported real rail id",
+            attempts: vec![json!({"rail_id":rail,"status":"not_launched"})],
+        };
+    };
+    let exe = match std::env::current_exe() {
+        Ok(exe) => exe,
+        Err(_) => {
+            return Report {
+                outcome: Outcome::Failed,
+                class: Class::Environment,
+                code: "rail_launcher_unavailable",
+                diag: "current executable path is unavailable",
+                attempts: vec![json!({"rail_id":rail,"status":"not_launched"})],
+            };
+        }
+    };
+    let output = Command::new(exe).args(&args).current_dir(root).output();
+    match output {
+        Ok(output) => rail_output_report(
+            rail,
+            &args,
+            output.status.code(),
+            &output.stdout,
+            &output.stderr,
+        ),
+        Err(_) => Report {
+            outcome: Outcome::Failed,
+            class: Class::Environment,
+            code: "rail_launch_failed",
+            diag: "the selected rail could not be launched in this environment",
+            attempts: vec![json!({"rail_id":rail,"argv":args,"status":"launch_failed"})],
+        },
+    }
+}
+
+fn rail_output_report(
+    rail: &str,
+    args: &[String],
+    exit_code: Option<i32>,
+    stdout: &[u8],
+    stderr: &[u8],
+) -> Report {
+    let passed = exit_code == Some(0);
+    Report {
+        outcome: if passed {
+            Outcome::Passed
+        } else {
+            Outcome::Failed
+        },
+        class: if passed { Class::None } else { Class::Product },
+        code: if passed { "ok" } else { "rail_failed" },
+        diag: if passed {
+            "real verification rail passed"
+        } else {
+            "debug the selected verification rail output before changing harness plumbing"
+        },
+        attempts: vec![json!({
+            "rail_id":rail,
+            "argv":args,
+            "status":if passed {"passed"} else {"failed"},
+            "exit_code":exit_code,
+            "stdout_blake3":blake3_hex(stdout),
+            "stderr_blake3":blake3_hex(stderr),
+            "stdout_bytes":stdout.len(),
+            "stderr_bytes":stderr.len(),
+        })],
+    }
+}
+
+fn rail_args(rail: &str) -> Option<Vec<String>> {
+    let args = match rail {
+        "validate" => vec!["validate", "--root", "."],
+        "tracey-coverage" => vec!["tracey", "coverage", "--root", "."],
+        "release-readiness" => vec!["release-readiness", "--root", "."],
+        "policy-export-check" => vec!["policy", "export", "--root", ".", "--check"],
+        _ => return None,
+    };
+    Some(args.into_iter().map(str::to_string).collect())
+}
+
 fn case_report(
     root: &Path,
     case: &str,
@@ -218,6 +345,34 @@ mod tests {
         let report = case_report(&r, "harness-fail", "1", 1, &a).expect("case");
         assert_eq!(report.class, Class::Harness);
         assert_eq!(artifact_schema(&fs::read(&a).expect("artifact")), "invalid");
+        fs::remove_dir_all(r).ok();
+    }
+    #[test]
+    fn known_rail_args_are_bounded() {
+        assert_eq!(
+            rail_args("validate").expect("validate"),
+            vec!["validate", "--root", "."]
+        );
+        assert_eq!(
+            rail_args("tracey-coverage").expect("tracey"),
+            vec!["tracey", "coverage", "--root", "."]
+        );
+        assert!(rail_args("arbitrary-shell").is_none());
+    }
+    #[test]
+    fn rail_output_classifies_product_failure() {
+        let args = rail_args("validate").expect("validate");
+        let report = rail_output_report("validate", &args, Some(2), b"bad", b"err");
+        assert_eq!(report.outcome, Outcome::Failed);
+        assert_eq!(report.class, Class::Product);
+        assert_eq!(report.code, "rail_failed");
+    }
+    #[test]
+    fn unknown_rail_is_harness_failure() {
+        let r = root("unknown-rail");
+        let report = real_rail_report(&r, "not-a-rail");
+        assert_eq!(report.class, Class::Harness);
+        assert_eq!(report.code, "unknown_harness_rail");
         fs::remove_dir_all(r).ok();
     }
     #[test]
