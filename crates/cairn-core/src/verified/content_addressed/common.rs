@@ -37,6 +37,8 @@ pub(super) fn strip_non_hash_fields(value: &mut Value) {
                 object.remove("pointer_hash");
                 object.remove("bundle_hash");
                 object.remove("pilot_hash");
+                object.remove("graph_hash");
+                object.remove("primitive_hash");
                 object.remove("display_root");
                 object.remove("display_path");
                 object.remove("display_only");
@@ -76,12 +78,10 @@ pub(super) fn entropy_hash_material_messages(root_path: &str, root: &Value) -> V
                     stack.push((format!("{path}[{index}]"), child));
                 }
             }
-            Value::String(text) => {
-                if is_temporary_path(text) {
-                    issues.push(format!(
-                        "temporary absolute path is not allowed in hash material: {path}"
-                    ));
-                }
+            Value::String(text) if is_temporary_path(text) => {
+                issues.push(format!(
+                    "temporary absolute path is not allowed in hash material: {path}"
+                ));
             }
             _ => {}
         }

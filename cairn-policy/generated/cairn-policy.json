@@ -844,6 +844,24 @@
       ],
       "ownership": "rust-dto-derived",
       "schema": "octet.downstream-pilot.v1"
+    },
+    {
+      "command": "evidence circuit-primitive validate",
+      "compatibility_class": "cairn-owned-electrical-receipt",
+      "encoding": "deterministic-json-v1",
+      "family": "circuit-primitive",
+      "hash_field": "graph_hash",
+      "hash_material": "canonical-json-excluding-graph_hash-primitive_hash-display_root-and-host-entropy",
+      "non_claims": [
+        "no_simulation_correctness",
+        "no_analog_equivalence",
+        "no_electrical_safety",
+        "no_regulatory_compliance",
+        "no_layout_correctness",
+        "no_manufacturability"
+      ],
+      "ownership": "rust-dto-derived",
+      "schema": "electrical.circuit-primitive-graph.v1"
     }
   ],
   "receipt_hash_policy": {

@@ -1,9 +1,15 @@
+mod circuit_primitive;
 mod common;
 mod downstream_pilot;
 mod export_bundle;
 mod function_object;
 mod name_pointer;
 
+pub use circuit_primitive::{
+    circuit_primitive_graph_hash, circuit_primitive_hash_material,
+    validate_circuit_primitive_receipt, CircuitPrimitiveIssue, CircuitPrimitiveReport,
+    CIRCUIT_PRIMITIVE_SCHEMA_V1,
+};
 pub use downstream_pilot::{
     downstream_pilot_hash, downstream_pilot_hash_material, validate_downstream_pilot_receipt,
     DownstreamPilotIssue, DownstreamPilotReport, DOWNSTREAM_PILOT_SCHEMA_V1,

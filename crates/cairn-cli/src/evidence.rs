@@ -13,8 +13,8 @@ use crate::agent_receipt::{
     REQUIRED_AGENT_REPLAY_GROUP,
 };
 use crate::content_addressed_evidence::{
-    run_evidence_downstream_pilot, run_evidence_export_bundle_receipt,
-    run_evidence_function_object, run_evidence_name_pointer,
+    run_evidence_circuit_primitive, run_evidence_downstream_pilot,
+    run_evidence_export_bundle_receipt, run_evidence_function_object, run_evidence_name_pointer,
 };
 use crate::determinism::{
     determinism_coverage_audit_receipt, determinism_replay_receipt,
@@ -86,6 +86,7 @@ pub(crate) fn run_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "name-pointer" => run_evidence_name_pointer(iter.collect()),
         "export-bundle" => run_evidence_export_bundle_receipt(iter.collect()),
         "downstream-pilot" => run_evidence_downstream_pilot(iter.collect()),
+        "circuit-primitive" => run_evidence_circuit_primitive(iter.collect()),
         unknown => Err(format!("unknown evidence subcommand: {unknown}").into()),
     }
 }

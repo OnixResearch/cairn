@@ -212,6 +212,64 @@ fn export_bundle_evidence_validator_rejects_unknown_pointer_object() -> Result<(
 }
 
 #[test]
+fn circuit_primitive_evidence_validator_accepts_positive_fixture() -> Result<(), Box<dyn Error>> {
+    // r[impl electrical_circuit_primitives.topology.reference_node]
+    // r[impl electrical_circuit_primitives.components.passive_primitives]
+    // r[impl electrical_circuit_primitives.units.dimensioned_values]
+    // r[impl electrical_circuit_primitives.receipts.portable_hashes]
+    // r[impl electrical_circuit_primitive_receipts.validator.cli]
+    // r[impl electrical_circuit_primitive_receipts.validator_cli]
+    // r[impl electrical_circuit_primitive_receipts.policy]
+    // r[impl electrical_circuit_primitive_receipts.policy.family]
+    let fixture =
+        repo_root().join("fixtures/electrical-circuit-primitives/positive-rc-filter.json");
+    let receipt = run_json(&[
+        "evidence",
+        "circuit-primitive",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "PASS");
+    assert_eq!(receipt["issues"].as_array().map(Vec::len), Some(0));
+    assert_hash_field(&receipt, "computed_graph_hash")?;
+    assert_hash_field(&receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn circuit_primitive_evidence_validator_rejects_missing_terminal() -> Result<(), Box<dyn Error>> {
+    // r[impl electrical_circuit_primitives.topology.connection_arity]
+    let fixture = repo_root().join("fixtures/electrical-circuit-primitives/missing-terminal.json");
+    let receipt = run_json_failure(&[
+        "evidence",
+        "circuit-primitive",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert_issue_code(&receipt, "circuit_primitive.terminal_binding_missing")?;
+    Ok(())
+}
+
+#[test]
+fn circuit_primitive_evidence_validator_rejects_safety_overclaim() -> Result<(), Box<dyn Error>> {
+    // r[impl electrical_circuit_primitives.non_claims.no_safety_claim]
+    let fixture = repo_root().join("fixtures/electrical-circuit-primitives/safety-overclaim.json");
+    let receipt = run_json_failure(&[
+        "evidence",
+        "circuit-primitive",
+        "validate",
+        fixture.to_str().ok_or("fixture path")?,
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert_issue_code(&receipt, "circuit_primitive.non_claim_missing")?;
+    Ok(())
+}
+
+#[test]
 fn downstream_pilot_evidence_validator_accepts_crunch_fixture() -> Result<(), Box<dyn Error>> {
     // Active Cairn ref: content_addressed_rust_evidence.downstream_pilots.crunch.
     let fixture = repo_root().join(

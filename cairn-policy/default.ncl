@@ -255,6 +255,17 @@ let Contracts = import "contracts.ncl" in
       hash_material = "canonical-json-excluding-pilot_hash-display_root-and-host-entropy",
       non_claims = ["no_correctness", "no_semantic_equivalence", "no_distributed_correctness"],
     },
+    {
+      family = "circuit-primitive",
+      schema = "electrical.circuit-primitive-graph.v1",
+      command = "evidence circuit-primitive validate",
+      ownership = "rust-dto-derived",
+      compatibility_class = "cairn-owned-electrical-receipt",
+      encoding = "deterministic-json-v1",
+      hash_field = "graph_hash",
+      hash_material = "canonical-json-excluding-graph_hash-primitive_hash-display_root-and-host-entropy",
+      non_claims = ["no_simulation_correctness", "no_analog_equivalence", "no_electrical_safety", "no_regulatory_compliance", "no_layout_correctness", "no_manufacturability"],
+    },
   ],
 
   determinism_replay_policy = {
