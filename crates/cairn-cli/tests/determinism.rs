@@ -1,3 +1,6 @@
+// r[verify cli_maintainability.determinism_replay_submodules.behavior_preserved]
+// r[verify cli_maintainability.determinism_replay_submodules.behavior_preserved.focused_checks]
+// r[verify cli_maintainability.determinism_replay_submodules.behavior_preserved.repository_checks]
 use std::{env, error::Error, fs, path::PathBuf, process::Command};
 
 use serde_json::{json, Value};
