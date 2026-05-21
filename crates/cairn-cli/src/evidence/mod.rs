@@ -25,9 +25,10 @@ use crate::evidence_manifest::{
     EvidenceManifestGenerateOptions,
 };
 use crate::evidence_registry::run_evidence_registry;
+use crate::release_readiness::release_readiness_receipt;
 use crate::{
     default_policy_path, load_policy_file, path_string, portable_json_hash, print_json,
-    read_option, read_string_option, release_readiness_receipt, with_portable_receipt_hash,
+    read_option, read_string_option, with_portable_receipt_hash,
 };
 
 mod export;

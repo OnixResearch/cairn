@@ -12,30 +12,29 @@ mod evidence_manifest;
 mod evidence_registry;
 mod lifecycle;
 mod mcp;
+mod migration;
 mod native;
+mod plan_receipts;
 mod policy;
+mod release_readiness;
+mod rename_classification;
 mod tracey;
 
 mod content_addressed_evidence;
 
-use determinism::{determinism_coverage_audit_receipt, run_determinism};
+use determinism::run_determinism;
 use evidence::run_evidence;
 use evidence_manifest::run_evidence_manifest;
-use mcp::{mcp_agent_smoke_receipt, run_mcp};
-use native::{
-    cairn_validation_receipt, change_status_json, run_change, run_doctor, run_init, run_spec,
-    run_status, run_validate,
-};
+use mcp::run_mcp;
+use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
-use tracey::{repository_gate_summary, run_tracey, tracey_coverage_receipt};
+use tracey::run_tracey;
 
 use cairn_core::{
-    archive_dir, blake3_hex, build_ironspec_migration_plan, build_openspec_migration_plan,
-    build_repo_status, canonical_json_hash, changes_dir, evaluate_gate_snapshot,
-    init_artifacts_for, layout_name, layout_root, merge_delta_spec, parse_policy_json, specs_dir,
-    validate_spec_sources, ArchivePlan, ChangeSource, ChangeStatus, GateArtifact, GateReport,
-    GateSnapshot, GateStage, LifecycleArtifactKind, LifecycleLayout, MigrationInput, MigrationPlan,
-    PlanAction, PlanActionKind, Policy, RepoStatus, SpecSource, SyncPlan,
+    archive_dir, blake3_hex, build_repo_status, canonical_json_hash, changes_dir,
+    evaluate_gate_snapshot, merge_delta_spec, parse_policy_json, specs_dir, validate_spec_sources,
+    ChangeSource, ChangeStatus, GateArtifact, GateSnapshot, GateStage, LifecycleLayout, Policy,
+    RepoStatus, SpecSource, SyncPlan,
 };
 use serde_json::{json, Value};
 
@@ -65,15 +64,17 @@ fn run() -> Result<(), Box<dyn Error>> {
         "status" => run_status(args.collect())?,
         "doctor" => run_doctor(args.collect())?,
         "validate" => run_validate(args.collect())?,
-        "release-readiness" => run_release_readiness(args.collect())?,
+        "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "determinism" => run_determinism(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,
         "evidence-manifest" => run_evidence_manifest(args.collect())?,
         "policy" => run_policy(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
-        "rename-classification" => run_rename_classification(args.collect())?,
-        "migrate" => run_migrate(args.collect())?,
+        "rename-classification" => {
+            rename_classification::run_rename_classification(args.collect())?
+        }
+        "migrate" => migration::run_migrate(args.collect())?,
         "mcp" => run_mcp(args.collect())?,
         "gate" => lifecycle::run_gate(args.collect())?,
         "gate-context" => {
@@ -99,333 +100,11 @@ fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let root = read_option(args.clone(), "--root", ".");
-    let policy_path = read_option(args, "--policy", default_policy_path());
-    print_json(release_readiness_receipt(root, policy_path))
-}
-
-pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> Value {
-    // r[impl cairn.supersede.release_readiness_bundle]
-    // r[impl cairn.supersede.release_readiness_bundle.schema]
-    // r[impl cairn.supersede.release_readiness_bundle.local]
-    // r[impl cairn.supersede.release_readiness_bundle.evidence]
-    // r[impl cairn.supersede.release_readiness_bundle.failure]
-    let root_text = path_string(root.clone());
-    let validation = readiness_component("cairn_validate", || {
-        cairn_validation_receipt(root.clone(), policy_path.clone())
-    });
-    let tracey = readiness_component("tracey_coverage", || tracey_coverage_receipt(root.clone()));
-    let mcp_smoke =
-        readiness_component("mcp_agent_smoke", || mcp_agent_smoke_receipt(root.clone()));
-    let coverage_audit = readiness_component("determinism_coverage_audit", || {
-        let policy = load_policy_file(policy_path.clone())?;
-        Ok(determinism_coverage_audit_receipt(&root, &policy))
-    });
-    let repository_gate_summary = repository_gate_summary();
-    let replay_preflight = json!({
-        "command": "determinism replay --root <root>",
-        "included": false,
-        "required": true,
-        "reason": "workspace replay may copy fixtures and is an explicit operator/CI preflight",
-    });
-    let coverage_audit_valid = coverage_audit.check["passed"].clone();
-    let mut checks = vec![
-        validation.check,
-        tracey.check,
-        mcp_smoke.check,
-        coverage_audit.check,
-    ];
-    checks.push(json!({
-        "name": "repository_gate_policy_listed",
-        "passed": true,
-        "source": "maintained local policy",
-        "required_external_commands": repository_gate_summary["required_commands"].clone(),
-        "evidence_hash": canonical_json_hash(&repository_gate_summary)
-    }));
-    let is_valid = checks
-        .iter()
-        .all(|check| check["passed"].as_bool().unwrap_or(false));
-    with_portable_receipt_hash(
-        &root,
-        json!({
-            "command": "release-readiness",
-            "root": root_text,
-            "valid": is_valid,
-            "verdict": if is_valid { "pass" } else { "fail" },
-            "checks": checks,
-            "cairn_validation_hash": validation.receipt_hash,
-            "tracey_coverage_hash": tracey.receipt_hash,
-            "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
-            "coverage_audit_valid": coverage_audit_valid,
-            "coverage_audit_receipt_hash": coverage_audit.receipt_hash,
-            "repository_gate_summary": repository_gate_summary,
-            "determinism_replay": replay_preflight,
-            "mcp": {"read_only": true, "destructive": false}
-        }),
-    )
-}
-
-struct ReadinessComponent {
-    check: Value,
-    receipt_hash: String,
-}
-
-fn readiness_component<F>(name: &str, operation: F) -> ReadinessComponent
-where
-    F: FnOnce() -> Result<Value, Box<dyn Error>>,
-{
-    match operation() {
-        Ok(receipt) => {
-            let is_passed = receipt["valid"].as_bool().unwrap_or(false)
-                || receipt["verdict"].as_str() == Some("pass")
-                || receipt["verdict"].as_str() == Some("PASS");
-            let receipt_hash = receipt["receipt_hash"]
-                .as_str()
-                .map(ToOwned::to_owned)
-                .unwrap_or_else(|| canonical_json_hash(&receipt));
-            ReadinessComponent {
-                check: json!({
-                    "name": name,
-                    "passed": is_passed,
-                    "source": component_source(name),
-                    "receipt_hash": receipt_hash,
-                }),
-                receipt_hash,
-            }
-        }
-        Err(error) => ReadinessComponent {
-            check: json!({
-                "name": name,
-                "passed": false,
-                "source": component_source(name),
-                "issue": error.to_string(),
-            }),
-            receipt_hash: String::new(),
-        },
-    }
-}
-
-fn component_source(name: &str) -> &'static str {
-    match name {
-        "cairn_validate" => "cairn validate --root <root>",
-        "tracey_coverage" => "cairn tracey coverage --root <root>",
-        "mcp_agent_smoke" => "cairn agent-receipt smoke-mcp --root <root>",
-        "determinism_coverage_audit" => "cairn determinism coverage-audit --root <root>",
-        _ => "unknown",
-    }
-}
-
-fn run_rename_classification(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    // r[verify cairn.supersede.rename_cairn.classification]
-    // r[impl cairn.supersede.rust_nickel_only_gates.rename_classification]
-    let output = read_string_option(&args, "--output").map(PathBuf::from);
-    let root = PathBuf::from(".");
-    let occurrences = rename_classification_occurrences(&root)?;
-    let mut buckets = std::collections::BTreeMap::<String, usize>::new();
-    for occurrence in &occurrences {
-        if let Some(bucket) = occurrence["bucket"].as_str() {
-            *buckets.entry(bucket.to_string()).or_insert(0) += 1;
-        }
-    }
-    let report = json!({
-        "legacy": "ironspec",
-        "canonical": "cairn",
-        "total": occurrences.len(),
-        "buckets": buckets,
-        "occurrences": occurrences,
-        "valid": buckets.get("needs-fix").copied().unwrap_or(0) == 0,
-    });
-    let rendered = serde_json::to_string_pretty(&report)? + "\n";
-    if let Some(path) = output {
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(path, &rendered)?;
-    }
-    print!("{rendered}");
-    if report["valid"].as_bool() == Some(true) {
-        Ok(())
-    } else {
-        Err("rename classification found needs-fix occurrences".into())
-    }
-}
-
-fn rename_classification_occurrences(root: &Path) -> Result<Vec<Value>, Box<dyn Error>> {
-    let mut occurrences = Vec::new();
-    for path in collect_files(root)? {
-        let relative = safe_relative_path(root, &path);
-        if !rename_classification_is_text_file(&relative)
-            || rename_classification_is_skipped(&relative)
-        {
-            continue;
-        }
-        let Ok(text) = fs::read_to_string(&path) else {
-            continue;
-        };
-        let mut in_rename_classifier_impl = false;
-        for (line_index, line) in text.lines().enumerate() {
-            if relative == "crates/cairn-cli/src/main.rs"
-                && line.starts_with("fn run_rename_classification")
-            {
-                in_rename_classifier_impl = true;
-            }
-            if relative == "crates/cairn-cli/src/main.rs"
-                && line.starts_with("fn safe_relative_path")
-            {
-                in_rename_classifier_impl = false;
-            }
-            if in_rename_classifier_impl {
-                continue;
-            }
-            if line.to_ascii_lowercase().contains("ironspec") {
-                let bucket = rename_classification_bucket(&relative, line);
-                occurrences.push(json!({
-                    "path": relative,
-                    "line": line_index + 1,
-                    "bucket": bucket,
-                    "text": line.trim(),
-                }));
-            }
-        }
-        if relative.to_ascii_lowercase().contains("ironspec") {
-            let bucket = rename_classification_bucket(&relative, &relative);
-            occurrences.push(json!({
-                "path": relative,
-                "line": 0,
-                "bucket": bucket,
-                "text": "<path>",
-            }));
-        }
-    }
-    occurrences.sort_by_key(|value| {
-        format!(
-            "{}:{:09}:{}:{}",
-            value["path"].as_str().unwrap_or_default(),
-            value["line"].as_u64().unwrap_or(0),
-            value["bucket"].as_str().unwrap_or_default(),
-            value["text"].as_str().unwrap_or_default()
-        )
-    });
-    Ok(occurrences)
-}
-
-fn rename_classification_is_skipped(relative: &str) -> bool {
-    relative
-        .split('/')
-        .any(|part| matches!(part, ".git" | "target" | "artifacts" | ".direnv"))
-        || relative.ends_with("evidence/rename-classification.json")
-}
-
-fn rename_classification_is_text_file(relative: &str) -> bool {
-    let suffixes = [
-        ".md", ".rs", ".toml", ".nix", ".json", ".ncl", ".lock", ".txt", ".styx",
-    ];
-    relative == "Cargo.lock"
-        || relative == "README.md"
-        || suffixes.iter().any(|suffix| relative.ends_with(suffix))
-}
-
-fn rename_classification_bucket(path: &str, line: &str) -> &'static str {
-    let text = line.to_ascii_lowercase();
-    let path_text = path.to_ascii_lowercase();
-    if path_text.contains("/archive/") || path_text.contains("openspec/changes/archive/") {
-        return "historical-archive";
-    }
-    if path_text.starts_with("openspec/specs/") {
-        return "requirement-id-history";
-    }
-    if path_text.contains("rename-ironspec-to-cairn")
-        || path_text == "tools/check-rename-classification.rs"
-    {
-        return "intentional-reference";
-    }
-    if path_text.contains("ironspec")
-        && (path_text.contains("docs/hermes")
-            || path_text.contains("tool")
-            || path_text.contains("src/ironspec.rs")
-            || path_text.contains("ironspec-supersession"))
-    {
-        return "intentional-reference";
-    }
-    if text.contains("r[") && text.contains("ironspec.") {
-        return "requirement-id-history";
-    }
-    if text.contains("ironspec") && text.contains("cairn") {
-        return "intentional-reference";
-    }
-    let compatibility_tokens = [
-        "legacy",
-        "alias",
-        "compat",
-        "migration source",
-        "migrate ironspec",
-        "migrate_ironspec",
-        "legacyironspec",
-        "build_ironspec_migration_plan",
-        "cargo_bin_exe_ironspec",
-        "ironspec_archive_date",
-        "name = \"ironspec\"",
-        "path = \"src/ironspec.rs\"",
-        "bin/ironspec",
-        "invoked_as.ends_with(\"ironspec\")",
-        "source_layout\"] == \"ironspec\"",
-        "dry_run[\"source_layout\"], \"ironspec\"",
-        "source_layout\", \"ironspec\"",
-        "migrate-ironspec",
-        "ironspec = {",
-        "\"ironspec\" =>",
-        "\"ironspec\",",
-        "[\"openspec\", \"ironspec\"]",
-        "openspec or ironspec",
-        "<openspec|ironspec>",
-    ];
-    if text.contains("ironspec")
-        && compatibility_tokens
-            .iter()
-            .any(|token| text.contains(token))
-    {
-        return "compatibility-alias";
-    }
-    "needs-fix"
-}
-
 pub(crate) fn safe_relative_path(root: &Path, path: &Path) -> String {
     path.strip_prefix(root)
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/")
-}
-
-fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let mut iter = args.into_iter();
-    let Some(source) = iter.next() else {
-        return Err("migrate requires a source: openspec or ironspec".into());
-    };
-    let rest = iter.collect::<Vec<_>>();
-    let root = read_option(rest.clone(), "--root", ".");
-    let is_execute = has_flag(&rest, "--execute");
-    let policy_path = read_option(rest.clone(), "--policy", default_policy_path());
-    let policy = load_policy_file(policy_path)?;
-    let source_layout = migration_source_layout(&source)?;
-    let inputs = collect_layout_migration_inputs(&root, source_layout)?;
-    let mut plan = match source_layout {
-        LifecycleLayout::LegacyOpenSpec => build_openspec_migration_plan(inputs, is_execute),
-        LifecycleLayout::LegacyIronspec => build_ironspec_migration_plan(inputs, is_execute),
-        LifecycleLayout::Native => return Err("cannot migrate from canonical cairn layout".into()),
-    };
-    let mutation_paths = migration_mutation_paths(&plan);
-    let before_manifest = file_content_manifest(&root, &mutation_paths);
-    let mut mutation_manifest = Value::Null;
-    if is_execute && !plan.blocked {
-        execute_migration_plan(&root, &plan)?;
-        plan.mutated = !plan.actions.is_empty();
-        mutation_manifest = migration_mutation_manifest(&root, &plan, &before_manifest);
-    }
-    print_json(with_portable_receipt_hash(
-        &root,
-        migration_plan_json(&root, &policy, &plan, mutation_manifest),
-    ))
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -681,31 +360,6 @@ pub(crate) fn mutation_gate_blockers(
     Ok(blockers)
 }
 
-pub(crate) fn gate_input_json(
-    layout: LifecycleLayout,
-    stage: GateStage,
-    policy: &Policy,
-    snapshot: &GateSnapshot,
-) -> Value {
-    json!({
-        "layout": layout_name(layout),
-        "stage": stage.as_str(),
-        "policy_hash": canonical_json_hash(&policy.raw),
-        "change": change_status_json(&snapshot.change),
-        "proposal": snapshot.proposal.as_ref().map(gate_artifact_json),
-        "design": snapshot.design.as_ref().map(gate_artifact_json),
-        "tasks": snapshot.tasks.as_ref().map(gate_artifact_json),
-        "delta_specs": snapshot.delta_specs.iter().map(gate_artifact_json).collect::<Vec<_>>(),
-    })
-}
-
-fn gate_artifact_json(artifact: &GateArtifact) -> Value {
-    json!({
-        "path": artifact.path,
-        "markdown_hash": canonical_json_hash(&json!({"markdown": artifact.markdown})),
-    })
-}
-
 pub(crate) fn execute_sync_plan(
     root: &Path,
     layout: LifecycleLayout,
@@ -790,56 +444,6 @@ pub(crate) fn execute_archive_plan(
     Ok(destination)
 }
 
-fn collect_layout_migration_inputs(
-    root: &Path,
-    source_layout: LifecycleLayout,
-) -> std::io::Result<Vec<MigrationInput>> {
-    let source_root = root.join(layout_root(source_layout));
-    if !source_root.exists() {
-        return Ok(Vec::new());
-    }
-    let source_files = collect_files(&source_root)?;
-    let mut inputs = Vec::with_capacity(source_files.len());
-    for source in source_files {
-        let relative = source.strip_prefix(&source_root).unwrap_or(&source);
-        let destination = root.join(native_migration_destination(source_layout, relative));
-        let source_hash = blake3_hex(&fs::read(&source)?);
-        let destination_hash = if destination.exists() {
-            Some(blake3_hex(&fs::read(&destination)?))
-        } else {
-            None
-        };
-        inputs.push(MigrationInput {
-            source: path_string(&source),
-            source_hash,
-            destination: path_string(&destination),
-            destination_hash,
-            destination_exists: destination.exists(),
-        });
-    }
-    Ok(inputs)
-}
-
-fn native_migration_destination(source_layout: LifecycleLayout, relative: &Path) -> PathBuf {
-    let relative_text = path_string(relative);
-    if source_layout == LifecycleLayout::LegacyOpenSpec {
-        if let Some(rest) = relative_text.strip_prefix("changes/archive/") {
-            return PathBuf::from(layout_root(LifecycleLayout::Native))
-                .join("archive")
-                .join(rest);
-        }
-    }
-    PathBuf::from(layout_root(LifecycleLayout::Native)).join(relative)
-}
-
-fn migration_source_layout(source: &str) -> Result<LifecycleLayout, Box<dyn Error>> {
-    match source {
-        "openspec" => Ok(LifecycleLayout::LegacyOpenSpec),
-        "ironspec" => Ok(LifecycleLayout::LegacyIronspec),
-        _ => Err(format!("unsupported migration source: {source}").into()),
-    }
-}
-
 pub(crate) fn collect_files(root: &Path) -> std::io::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
     let mut dirs = vec![root.to_path_buf()];
@@ -858,30 +462,6 @@ pub(crate) fn collect_files(root: &Path) -> std::io::Result<Vec<PathBuf>> {
     }
     files.sort();
     Ok(files)
-}
-
-fn execute_migration_plan(root: &Path, plan: &MigrationPlan) -> Result<(), Box<dyn Error>> {
-    for artifact in init_artifacts_for(LifecycleLayout::Native) {
-        let path = root.join(artifact.path);
-        if matches!(artifact.kind, LifecycleArtifactKind::Directory) {
-            fs::create_dir_all(path)?;
-        }
-    }
-    for action in &plan.actions {
-        let source = PathBuf::from(&action.source);
-        let destination = PathBuf::from(&action.destination);
-        if let Some(parent) = destination.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::copy(&source, &destination).map_err(|source_error| {
-            format!(
-                "failed to migrate {} to {}: {source_error}",
-                source.display(),
-                destination.display()
-            )
-        })?;
-    }
-    Ok(())
 }
 
 fn archive_date() -> Result<String, Box<dyn Error>> {
@@ -907,150 +487,6 @@ fn is_archive_date(date: &str) -> bool {
             .iter()
             .enumerate()
             .all(|(index, byte)| index == 4 || index == 7 || byte.is_ascii_digit())
-}
-
-fn migration_plan_json(
-    root: &Path,
-    policy: &Policy,
-    plan: &MigrationPlan,
-    mutation_manifest: Value,
-) -> Value {
-    let mut value = json!({
-        "command": format!("migrate_{}", layout_name(plan.source_layout)),
-        "root": path_string(root),
-        "source_layout": layout_name(plan.source_layout),
-        "destination_layout": layout_name(plan.destination_layout),
-        "dry_run": plan.dry_run,
-        "blocked": plan.blocked,
-        "mutated": plan.mutated,
-        "actions": plan.actions.iter().map(|action| {
-            json!({
-                "source": action.source,
-                "source_hash": action.source_hash,
-                "destination": action.destination,
-                "destination_hash": action.destination_hash,
-            })
-        }).collect::<Vec<_>>(),
-        "conflicts": plan.conflicts,
-        "policy": policy.name,
-        "policy_hash": canonical_json_hash(&policy.raw),
-        "mutation_manifest": mutation_manifest,
-    });
-    value["source_manifest_hash"] = json!(portable_json_hash(
-        root,
-        &json!({
-            "source_layout": layout_name(plan.source_layout),
-            "sources": plan.actions.iter().map(|action| json!({
-                "source": action.source,
-                "source_hash": action.source_hash,
-            })).collect::<Vec<_>>(),
-        })
-    ));
-    value["destination_manifest_hash"] = json!(portable_json_hash(
-        root,
-        &json!({
-            "destination_layout": layout_name(plan.destination_layout),
-            "destinations": plan.actions.iter().map(|action| json!({
-                "destination": action.destination,
-                "destination_hash": action.destination_hash,
-            })).collect::<Vec<_>>(),
-        })
-    ));
-    value["manifest_hash"] = json!(portable_json_hash(root, &value));
-    value
-}
-
-pub(crate) fn sync_plan_json(
-    root: &Path,
-    layout: LifecycleLayout,
-    policy: &Policy,
-    plan: &SyncPlan,
-    input_hash: &str,
-    mutation_manifest: Value,
-) -> Value {
-    let mut value = json!({
-        "change": plan.change,
-        "layout": layout_name(layout),
-        "dry_run": plan.dry_run,
-        "mutated": plan.mutated,
-        "actions": plan.actions.iter().map(plan_action_json).collect::<Vec<_>>(),
-        "delta_specs": plan.delta_specs,
-        "blocked": plan.blocked,
-        "reasons": plan.reasons,
-        "policy": policy.name,
-        "policy_hash": canonical_json_hash(&policy.raw),
-        "input_hash": input_hash,
-        "mutation_manifest": mutation_manifest,
-    });
-    let plan_hash = portable_json_hash(root, &value);
-    value["plan_hash"] = json!(plan_hash);
-    value
-}
-
-pub(crate) fn archive_plan_json(
-    root: &Path,
-    layout: LifecycleLayout,
-    policy: &Policy,
-    plan: &ArchivePlan,
-    input_hash: &str,
-    mutation_manifest: Value,
-) -> Value {
-    let mut value = json!({
-        "change": plan.change,
-        "layout": layout_name(layout),
-        "dry_run": plan.dry_run,
-        "mutated": plan.mutated,
-        "actions": plan.actions.iter().map(plan_action_json).collect::<Vec<_>>(),
-        "blocked": plan.blocked,
-        "reasons": plan.reasons,
-        "policy": policy.name,
-        "policy_hash": canonical_json_hash(&policy.raw),
-        "input_hash": input_hash,
-        "mutation_manifest": mutation_manifest,
-    });
-    let plan_hash = portable_json_hash(root, &value);
-    value["plan_hash"] = json!(plan_hash);
-    value
-}
-
-pub(crate) fn gate_report_json(
-    layout: LifecycleLayout,
-    policy: &Policy,
-    report: &GateReport,
-    input_hash: &str,
-) -> Value {
-    json!({
-        "change": report.change,
-        "stage": report.stage,
-        "verdict": report.verdict,
-        "valid": report.issues.is_empty(),
-        "issues": report.issues.iter().map(|issue| {
-            json!({
-                "message": issue.message,
-                "scope": issue.scope,
-                "promoted": issue.promoted,
-            })
-        }).collect::<Vec<_>>(),
-        "policy": policy.name,
-        "policy_hash": canonical_json_hash(&policy.raw),
-        "input_hash": input_hash,
-        "layout": layout_name(layout),
-    })
-}
-
-fn plan_action_json(action: &PlanAction) -> Value {
-    json!({
-        "kind": plan_action_kind(action.kind),
-        "path": action.path,
-        "description": action.description,
-    })
-}
-
-fn plan_action_kind(kind: PlanActionKind) -> &'static str {
-    match kind {
-        PlanActionKind::SyncDeltaSpec => "sync_delta_spec",
-        PlanActionKind::ArchiveChange => "archive_change",
-    }
 }
 
 pub(crate) fn portable_json_hash(root: &Path, value: &Value) -> String {
@@ -1178,29 +614,6 @@ pub(crate) fn archive_mutation_manifest(
     let after = file_content_manifest(root, &after_paths);
     json!({
         "kind": "archive",
-        "before": before,
-        "after": after,
-        "manifest_hash": portable_json_hash(root, &json!({"before": before, "after": after})),
-    })
-}
-
-fn migration_mutation_paths(plan: &MigrationPlan) -> Vec<PathBuf> {
-    plan.actions
-        .iter()
-        .flat_map(|action| {
-            [
-                PathBuf::from(&action.source),
-                PathBuf::from(&action.destination),
-            ]
-        })
-        .collect()
-}
-
-fn migration_mutation_manifest(root: &Path, plan: &MigrationPlan, before: &Value) -> Value {
-    let paths = migration_mutation_paths(plan);
-    let after = file_content_manifest(root, &paths);
-    json!({
-        "kind": "migration",
         "before": before,
         "after": after,
         "manifest_hash": portable_json_hash(root, &json!({"before": before, "after": after})),

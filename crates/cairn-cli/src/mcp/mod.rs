@@ -25,17 +25,21 @@ use crate::agent_receipt::{
     AGENT_RECEIPT_MAX_BYTES,
 };
 use crate::lifecycle::parse_gate_stage;
+use crate::migration::{
+    collect_layout_migration_inputs, execute_migration_plan, migration_source_layout,
+};
 use crate::native::{
     change_detail_json, change_status_json, change_template, doctor_report_json, repo_status_json,
     spec_detail_json, write_new_file,
 };
+use crate::plan_receipts::{
+    archive_plan_json, gate_input_json, gate_report_json, migration_plan_json, sync_plan_json,
+};
 use crate::{
-    archive_plan_json, collect_layout_migration_inputs, collect_validation_spec_sources,
-    default_policy_path, detect_layout, execute_archive_plan, execute_migration_plan,
-    execute_sync_plan, find_change, find_spec_source, gate_input_json, gate_report_json, has_flag,
-    load_policy_file, migration_plan_json, migration_source_layout, mutation_gate_blockers,
-    path_string, portable_json_hash, print_json, read_gate_snapshot, scan_repo, sync_plan_json,
-    with_portable_receipt_hash, with_receipt_hash,
+    collect_validation_spec_sources, default_policy_path, detect_layout, execute_archive_plan,
+    execute_sync_plan, find_change, find_spec_source, has_flag, load_policy_file,
+    mutation_gate_blockers, path_string, portable_json_hash, print_json, read_gate_snapshot,
+    scan_repo, with_portable_receipt_hash, with_receipt_hash,
 };
 
 const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
