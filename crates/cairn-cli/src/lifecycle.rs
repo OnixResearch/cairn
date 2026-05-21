@@ -6,13 +6,13 @@ use cairn_core::{
 };
 use serde_json::Value;
 
+use crate::native::change_status_json;
 use crate::{
-    archive_mutation_manifest, archive_plan_json, change_status_json, default_policy_path,
-    detect_layout, execute_archive_plan, execute_sync_plan, file_content_manifest, find_change,
-    gate_input_json, gate_report_json, has_flag, load_policy_file, mutation_gate_blockers,
-    path_string, portable_json_hash, print_json, read_gate_snapshot, read_option,
-    sync_mutation_manifest, sync_mutation_paths, sync_plan_json, tree_content_paths,
-    with_portable_receipt_hash,
+    archive_mutation_manifest, archive_plan_json, default_policy_path, detect_layout,
+    execute_archive_plan, execute_sync_plan, file_content_manifest, find_change, gate_input_json,
+    gate_report_json, has_flag, load_policy_file, mutation_gate_blockers, path_string,
+    portable_json_hash, print_json, read_gate_snapshot, read_option, sync_mutation_manifest,
+    sync_mutation_paths, sync_plan_json, tree_content_paths, with_portable_receipt_hash,
 };
 
 pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
