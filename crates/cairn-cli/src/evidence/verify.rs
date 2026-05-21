@@ -1,0 +1,313 @@
+use super::*;
+
+pub(super) struct EvidenceVerifyOptions {
+    pub(super) root: PathBuf,
+    pub(super) bundle: Option<PathBuf>,
+}
+
+pub(super) fn run_evidence_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.supersede.evidence_bundle_verify_command.command]
+    // r[impl cairn.supersede.evidence_bundle_verify_command.artifacts]
+    // r[impl cairn.supersede.evidence_bundle_verify_command.failures]
+    let options = evidence_verify_options(&args)?;
+    let receipt = evidence_verify_receipt(&options);
+    let valid = receipt
+        .get("valid")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    print_json(receipt)?;
+    if !valid {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+fn evidence_verify_options(args: &[String]) -> Result<EvidenceVerifyOptions, Box<dyn Error>> {
+    let root = read_option(args.to_vec(), "--root", ".");
+    let bundle = read_string_option(args, "--bundle").map(PathBuf::from);
+    if bundle.is_none() {
+        return Err("evidence verify requires --bundle <dir>".into());
+    }
+    Ok(EvidenceVerifyOptions { root, bundle })
+}
+
+pub(super) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value {
+    let root = options.root.clone();
+    let bundle_dir = options.bundle.clone().unwrap_or_else(|| PathBuf::from("."));
+    let mut issues = Vec::new();
+    let export_receipt_path = bundle_dir.join("evidence-export-receipt.json");
+    let export_receipt = match read_json_artifact(&export_receipt_path, AGENT_RECEIPT_MAX_BYTES) {
+        Ok(receipt) => receipt,
+        Err(_) => {
+            issues.push(evidence_verify_issue(
+                "evidence_verify.export_receipt_missing",
+                "evidence-export-receipt.json",
+                "readable export receipt",
+                "missing",
+            ));
+            return evidence_verify_final_receipt(
+                &root,
+                issues,
+                Vec::new(),
+                Value::Null,
+                Value::Null,
+                Value::Null,
+            );
+        }
+    };
+
+    if export_receipt.get("command").and_then(Value::as_str) != Some("evidence export") {
+        issues.push(evidence_verify_issue(
+            "evidence_verify.export_receipt_command_invalid",
+            "evidence-export-receipt.command",
+            "evidence export",
+            "invalid",
+        ));
+    }
+    let stated_export_hash = export_receipt
+        .get("receipt_hash")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let computed_export_hash = receipt_stated_or_computed_hash(&root, &export_receipt);
+    if computed_export_hash.as_str() != Some(stated_export_hash) {
+        issues.push(evidence_verify_issue(
+            "evidence_verify.export_receipt_hash_mismatch",
+            "evidence-export-receipt.receipt_hash",
+            "self-consistent receipt hash",
+            "mismatch",
+        ));
+    }
+
+    let mut verified_artifacts = Vec::new();
+    let mut seen_roles = std::collections::BTreeSet::new();
+    if let Some(artifacts) = export_receipt.get("artifacts").and_then(Value::as_array) {
+        for artifact in artifacts {
+            let role = artifact
+                .get("role")
+                .and_then(Value::as_str)
+                .unwrap_or("<missing>");
+            if !seen_roles.insert(role.to_string()) {
+                issues.push(evidence_verify_issue(
+                    "evidence_verify.role_duplicate",
+                    role,
+                    "unique artifact role",
+                    "duplicate",
+                ));
+            }
+            let relative = artifact.get("path").and_then(Value::as_str).unwrap_or("");
+            let Some(path) = safe_bundle_artifact_path(&bundle_dir, relative) else {
+                issues.push(evidence_verify_issue(
+                    "evidence_verify.artifact_path_unsafe",
+                    role,
+                    "safe relative artifact path",
+                    "unsafe",
+                ));
+                continue;
+            };
+            let declared_hash = artifact.get("hash").and_then(Value::as_str).unwrap_or("");
+            let actual_hash = match fs::read(&path) {
+                Ok(bytes) => blake3_hex(&bytes),
+                Err(_) => {
+                    issues.push(evidence_verify_issue(
+                        "evidence_verify.artifact_missing",
+                        role,
+                        "declared artifact file",
+                        "missing",
+                    ));
+                    String::new()
+                }
+            };
+            if !actual_hash.is_empty() && actual_hash != declared_hash {
+                issues.push(evidence_verify_issue(
+                    "evidence_verify.artifact_hash_mismatch",
+                    role,
+                    "declared artifact hash",
+                    "mismatch",
+                ));
+            }
+            verified_artifacts.push(json!({
+                "role": role,
+                "path": relative,
+                "hash": if actual_hash.is_empty() { Value::Null } else { json!(actual_hash) },
+                "required": artifact.get("required").and_then(Value::as_bool).unwrap_or(true),
+            }));
+        }
+    } else {
+        issues.push(evidence_verify_issue(
+            "evidence_verify.artifacts_missing",
+            "artifacts",
+            "artifact array",
+            "missing",
+        ));
+    }
+
+    for role in EVIDENCE_EXPORT_REQUIRED_ROLES {
+        if !seen_roles.contains(*role) {
+            issues.push(evidence_verify_issue(
+                "evidence_verify.required_role_missing",
+                role,
+                "required artifact role",
+                "missing",
+            ));
+        }
+    }
+
+    verify_saved_receipt_valid(
+        &bundle_dir,
+        "coverage_audit",
+        "coverage-audit.json",
+        "evidence_verify.coverage_audit_invalid",
+        &mut issues,
+    );
+    verify_saved_receipt_valid(
+        &bundle_dir,
+        "replay_verification",
+        "replay-verification.json",
+        "evidence_verify.replay_verification_invalid",
+        &mut issues,
+    );
+    verify_saved_receipt_valid(
+        &bundle_dir,
+        "release_readiness",
+        "release-readiness.json",
+        "evidence_verify.release_readiness_invalid",
+        &mut issues,
+    );
+    verify_saved_receipt_valid(
+        &bundle_dir,
+        "agent_evidence_bundle_verification",
+        "agent-evidence-bundle-verification.json",
+        "evidence_verify.bundle_verification_invalid",
+        &mut issues,
+    );
+    verify_saved_receipt_valid(
+        &bundle_dir,
+        "evidence_manifest_verification",
+        "evidence-manifest-verification.json",
+        "evidence_verify.manifest_verification_invalid",
+        &mut issues,
+    );
+
+    let rerun_bundle = agent_evidence_bundle_verification_receipt(
+        &root,
+        &bundle_dir.join("agent-evidence-bundle.json"),
+    );
+    if rerun_bundle.get("valid").and_then(Value::as_bool) != Some(true) {
+        issues.push(evidence_verify_issue(
+            "evidence_verify.bundle_rerun_invalid",
+            "agent-evidence-bundle.json",
+            "valid rerun bundle verification",
+            "invalid",
+        ));
+    }
+    let rerun_manifest =
+        evidence_manifest_verification_receipt(&root, &bundle_dir.join("evidence-manifest.json"));
+    if rerun_manifest.get("valid").and_then(Value::as_bool) != Some(true) {
+        issues.push(evidence_verify_issue(
+            "evidence_verify.manifest_rerun_invalid",
+            "evidence-manifest.json",
+            "valid rerun manifest verification",
+            "invalid",
+        ));
+    }
+
+    let manifest_hash = export_receipt
+        .get("manifest_hash")
+        .cloned()
+        .unwrap_or(Value::Null);
+    let manifest_verification_receipt_hash = export_receipt
+        .get("manifest_verification_receipt_hash")
+        .cloned()
+        .unwrap_or(Value::Null);
+    evidence_verify_final_receipt(
+        &root,
+        issues,
+        verified_artifacts,
+        computed_export_hash,
+        manifest_hash,
+        manifest_verification_receipt_hash,
+    )
+}
+
+const EVIDENCE_EXPORT_REQUIRED_ROLES: &[&str] = &[
+    "agent_evidence_bundle",
+    "agent_evidence_bundle_verification",
+    "agent_receipt",
+    "coverage_audit",
+    "evidence_manifest",
+    "evidence_manifest_verification",
+    "release_readiness",
+    "replay_receipt",
+    "replay_verification",
+];
+
+fn verify_saved_receipt_valid(
+    bundle_dir: &Path,
+    role: &str,
+    relative: &str,
+    code: &str,
+    issues: &mut Vec<Value>,
+) {
+    let path = bundle_dir.join(relative);
+    match read_json_artifact(&path, AGENT_RECEIPT_MAX_BYTES) {
+        Ok(receipt) => {
+            if receipt.get("valid").and_then(Value::as_bool) != Some(true) {
+                issues.push(evidence_verify_issue(
+                    code,
+                    role,
+                    "persisted valid receipt",
+                    "invalid",
+                ));
+            }
+        }
+        Err(_) => issues.push(evidence_verify_issue(
+            "evidence_verify.receipt_unreadable",
+            role,
+            "readable JSON receipt",
+            "unreadable",
+        )),
+    }
+}
+
+fn evidence_verify_issue(code: &str, field_path: &str, expected: &str, actual: &str) -> Value {
+    json!({
+        "code": code,
+        "field_path": field_path,
+        "expected": expected,
+        "actual": actual,
+    })
+}
+
+fn evidence_verify_final_receipt(
+    root: &Path,
+    mut issues: Vec<Value>,
+    mut artifacts: Vec<Value>,
+    export_receipt_hash: Value,
+    manifest_hash: Value,
+    manifest_verification_receipt_hash: Value,
+) -> Value {
+    issues.sort_by_key(canonical_json_hash);
+    artifacts.sort_by_key(|artifact| {
+        artifact
+            .get("role")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string()
+    });
+    let valid = issues.is_empty();
+    with_portable_receipt_hash(
+        root,
+        json!({
+            "command": "evidence verify",
+            "root": path_string(root),
+            "bundle": "<bundle>",
+            "valid": valid,
+            "verdict": if valid { "pass" } else { "fail" },
+            "issues": issues,
+            "artifacts": artifacts,
+            "export_receipt_hash": export_receipt_hash,
+            "manifest_hash": manifest_hash,
+            "manifest_verification_receipt_hash": manifest_verification_receipt_hash,
+        }),
+    )
+}
