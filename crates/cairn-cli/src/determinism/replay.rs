@@ -1,593 +1,4 @@
-use std::{
-    env,
-    error::Error,
-    fs,
-    path::{Path, PathBuf},
-};
-
-use cairn_core::{
-    build_archive_plan, build_openspec_migration_plan, build_sync_plan, canonical_json_hash,
-    evaluate_gate_snapshot, GateStage, LifecycleLayout, Policy,
-};
-use serde_json::{json, Value};
-
-use crate::agent_receipt::{
-    agent_receipt_validation_receipt, is_blake3_hex_text, read_agent_receipt_file,
-};
-use crate::lifecycle::parse_gate_stage;
-use crate::mcp::{mcp_call_tool, mcp_tool_catalog};
-use crate::native::{cairn_validation_receipt, change_status_json, repo_status_json};
-use crate::{
-    archive_plan_json, collect_files, collect_layout_migration_inputs, default_policy_path,
-    detect_layout, file_content_manifest, find_change, gate_input_json, gate_report_json, has_flag,
-    load_policy_file, migration_plan_json, mutation_gate_blockers, path_string, portable_json_hash,
-    portable_text, print_json, read_gate_snapshot, read_option, read_string_option,
-    release_readiness_receipt, scan_repo, sync_plan_json, with_portable_receipt_hash,
-};
-
-pub(crate) fn run_determinism(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let mut iter = args.into_iter();
-    let Some(subcommand) = iter.next() else {
-        return Err("determinism requires a subcommand: replay".into());
-    };
-    match subcommand.as_str() {
-        "coverage-audit" => run_determinism_coverage_audit(iter.collect()),
-        "replay" => run_determinism_replay(iter.collect()),
-        "verify-receipt" => run_determinism_verify_receipt(iter.collect()),
-        unknown => Err(format!("unknown determinism subcommand: {unknown}").into()),
-    }
-}
-
-fn run_determinism_coverage_audit(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    // r[impl cairn.supersede.determinism_surface_coverage_audit.cli]
-    // r[impl cairn.supersede.determinism_surface_coverage_audit.inventory]
-    // r[impl cairn.supersede.determinism_surface_coverage_audit.failures]
-    let root = read_option(args, "--root", ".");
-    let policy = load_policy_file(default_policy_path().into())?;
-    let receipt = determinism_coverage_audit_receipt(&root, &policy);
-    let valid = receipt
-        .get("valid")
-        .and_then(Value::as_bool)
-        .unwrap_or(false);
-    print_json(receipt)?;
-    if !valid {
-        std::process::exit(1);
-    }
-    Ok(())
-}
-
-#[derive(Clone)]
-pub(crate) struct DeterminismSurface {
-    pub(crate) id: String,
-    pub(crate) command: String,
-    pub(crate) surface_kind: String,
-    pub(crate) receipt_command: String,
-    pub(crate) required_replay_cases: Vec<String>,
-    pub(crate) required_replay_groups: Vec<String>,
-    pub(crate) determinism_claim: String,
-}
-
-pub(crate) fn determinism_coverage_audit_receipt(root: &Path, policy: &Policy) -> Value {
-    let current_policy_hash = canonical_json_hash(&policy.raw);
-    let surfaces = determinism_surfaces_from_policy(policy).unwrap_or_default();
-    let cases = replay_cases_from_policy(policy).unwrap_or_default();
-    let groups = replay_groups_from_policy(policy).unwrap_or_default();
-    let (covered_surfaces, missing_surfaces, mut issues) =
-        audit_determinism_surface_coverage(&surfaces, &cases, &groups);
-    issues.sort_by_key(canonical_json_hash);
-    let surface_inventory = determinism_surfaces_json(&surfaces);
-    let valid = issues.is_empty();
-    with_portable_receipt_hash(
-        root,
-        json!({
-            "command": "determinism coverage-audit",
-            "root": path_string(root),
-            "valid": valid,
-            "verdict": if valid { "pass" } else { "fail" },
-            "issues": issues,
-            "current_replay_policy_hash": current_policy_hash,
-            "surface_inventory_hash": canonical_json_hash(&json!(surface_inventory)),
-            "surface_count": surfaces.len(),
-            "covered_surfaces": covered_surfaces,
-            "missing_surfaces": missing_surfaces,
-        }),
-    )
-}
-
-pub(crate) fn determinism_surfaces_from_policy(
-    policy: &Policy,
-) -> Result<Vec<DeterminismSurface>, Box<dyn Error>> {
-    let surfaces = policy
-        .raw
-        .get("determinism_surface_inventory")
-        .and_then(Value::as_array)
-        .ok_or("policy missing determinism_surface_inventory")?;
-    let mut parsed = surfaces
-        .iter()
-        .map(determinism_surface_from_policy_value)
-        .collect::<Result<Vec<_>, _>>()?;
-    parsed.sort_by_key(|surface| surface.id.clone());
-    Ok(parsed)
-}
-
-fn determinism_surface_from_policy_value(
-    value: &Value,
-) -> Result<DeterminismSurface, Box<dyn Error>> {
-    Ok(DeterminismSurface {
-        id: required_string(value, "id")?.to_owned(),
-        command: required_string(value, "command")?.to_owned(),
-        surface_kind: required_string(value, "surface_kind")?.to_owned(),
-        receipt_command: required_string(value, "receipt_command")?.to_owned(),
-        required_replay_cases: required_string_array(value, "required_replay_cases")?,
-        required_replay_groups: required_string_array(value, "required_replay_groups")?,
-        determinism_claim: required_string(value, "determinism_claim")?.to_owned(),
-    })
-}
-
-fn determinism_surfaces_json(surfaces: &[DeterminismSurface]) -> Vec<Value> {
-    surfaces
-        .iter()
-        .map(|surface| {
-            json!({
-                "id": surface.id,
-                "command": surface.command,
-                "surface_kind": surface.surface_kind,
-                "receipt_command": surface.receipt_command,
-                "required_replay_cases": surface.required_replay_cases,
-                "required_replay_groups": surface.required_replay_groups,
-                "determinism_claim": surface.determinism_claim,
-            })
-        })
-        .collect()
-}
-
-fn audit_determinism_surface_coverage(
-    surfaces: &[DeterminismSurface],
-    cases: &[ReplayCase],
-    groups: &[ReplayGroup],
-) -> (Vec<Value>, Vec<Value>, Vec<Value>) {
-    let case_ids = cases
-        .iter()
-        .map(|case| case.id.as_str())
-        .collect::<std::collections::BTreeSet<_>>();
-    let group_map = groups
-        .iter()
-        .map(|group| (group.id.as_str(), group))
-        .collect::<std::collections::BTreeMap<_, _>>();
-    let mut covered = Vec::new();
-    let mut missing = Vec::new();
-    let mut issues = Vec::new();
-    for surface in surfaces {
-        let mut surface_issues = Vec::new();
-        for case_id in &surface.required_replay_cases {
-            if !case_ids.contains(case_id.as_str()) {
-                surface_issues.push(coverage_issue(
-                    "coverage.required_case_missing",
-                    &surface.id,
-                    "required_replay_cases",
-                    case_id,
-                ));
-            }
-        }
-        for group_id in &surface.required_replay_groups {
-            match group_map.get(group_id.as_str()) {
-                Some(group) => {
-                    for case_id in &surface.required_replay_cases {
-                        if !group.cases.iter().any(|candidate| candidate == case_id) {
-                            surface_issues.push(coverage_issue(
-                                "coverage.group_missing_case",
-                                &surface.id,
-                                group_id,
-                                case_id,
-                            ));
-                        }
-                    }
-                }
-                None => surface_issues.push(coverage_issue(
-                    "coverage.required_group_missing",
-                    &surface.id,
-                    "required_replay_groups",
-                    group_id,
-                )),
-            }
-        }
-        let surface_json = json!({
-            "id": surface.id,
-            "command": surface.command,
-            "required_replay_cases": surface.required_replay_cases,
-            "required_replay_groups": surface.required_replay_groups,
-        });
-        if surface_issues.is_empty() {
-            covered.push(surface_json);
-        } else {
-            issues.extend(surface_issues);
-            missing.push(surface_json);
-        }
-    }
-    covered.sort_by(|left, right| left["id"].as_str().cmp(&right["id"].as_str()));
-    missing.sort_by(|left, right| left["id"].as_str().cmp(&right["id"].as_str()));
-    (covered, missing, issues)
-}
-
-fn coverage_issue(code: &str, surface_id: &str, field_path: &str, actual: &str) -> Value {
-    json!({
-        "code": code,
-        "surface_id": surface_id,
-        "field_path": field_path,
-        "expected": "policy replay coverage",
-        "actual": actual,
-    })
-}
-
-struct ReplayVerifyOptions {
-    root: PathBuf,
-    path: PathBuf,
-}
-
-fn run_determinism_verify_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let options = replay_verify_options(&args)?;
-    let receipt = determinism_verify_replay_receipt(&options.root, &options.path);
-    let valid = receipt
-        .get("valid")
-        .and_then(Value::as_bool)
-        .unwrap_or(false);
-    print_json(receipt)?;
-    if !valid {
-        std::process::exit(1);
-    }
-    Ok(())
-}
-
-fn replay_verify_options(args: &[String]) -> Result<ReplayVerifyOptions, Box<dyn Error>> {
-    let root = read_option(args.to_vec(), "--root", ".");
-    let path = args
-        .iter()
-        .find(|arg| !arg.starts_with("--") && *arg != &root)
-        .ok_or("determinism verify-receipt requires <receipt.json>")?;
-    Ok(ReplayVerifyOptions {
-        root,
-        path: PathBuf::from(path),
-    })
-}
-
-pub(crate) fn determinism_verify_replay_receipt(root: &Path, path: &Path) -> Value {
-    // r[impl cairn.supersede.replay_receipt_verification.contract]
-    // r[impl cairn.supersede.replay_receipt_verification.cli]
-    // r[impl cairn.supersede.replay_receipt_verification.validation]
-    // r[impl cairn.supersede.replay_receipt_verification.receipt]
-    let policy = match load_policy_file(default_policy_path().into()) {
-        Ok(policy) => policy,
-        Err(error) => {
-            return replay_verification_receipt(
-                root,
-                path,
-                vec![replay_verification_issue(
-                    "policy.load_failed",
-                    "policy",
-                    "generated policy loads",
-                    &error.to_string(),
-                )],
-                String::new(),
-                String::new(),
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-            )
-        }
-    };
-    let current_policy_hash = canonical_json_hash(&policy.raw);
-    let all_cases = replay_cases_from_policy(&policy).unwrap_or_default();
-    let groups = replay_groups_from_policy(&policy).unwrap_or_default();
-    let entropy_inventory = replay_entropy_inventory_from_policy(&policy).unwrap_or_default();
-    let environment_facts = replay_environment_facts_from_policy(&policy).unwrap_or_default();
-    let expected_entropy_policy_hash = replay_entropy_policy_hash(&entropy_inventory);
-    let expected_attestation_policy_hash = replay_attestation_policy_hash(&environment_facts);
-
-    let text = match fs::read_to_string(path) {
-        Ok(text) => text,
-        Err(error) => {
-            return replay_verification_receipt(
-                root,
-                path,
-                vec![replay_verification_issue(
-                    "receipt.read_failed",
-                    "path",
-                    "readable replay receipt",
-                    &error.to_string(),
-                )],
-                current_policy_hash,
-                String::new(),
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-            )
-        }
-    };
-    let receipt: Value = match serde_json::from_str(&text) {
-        Ok(value) => value,
-        Err(error) => {
-            return replay_verification_receipt(
-                root,
-                path,
-                vec![replay_verification_issue(
-                    "receipt.malformed_json",
-                    "json",
-                    "valid JSON replay receipt",
-                    &error.to_string(),
-                )],
-                current_policy_hash,
-                String::new(),
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-            )
-        }
-    };
-
-    let mut issues = Vec::new();
-    if receipt.get("command").and_then(Value::as_str) != Some("determinism replay") {
-        issues.push(replay_verification_issue(
-            "receipt.command_mismatch",
-            "command",
-            "determinism replay",
-            receipt
-                .get("command")
-                .and_then(Value::as_str)
-                .unwrap_or("<missing>"),
-        ));
-    }
-    if receipt.get("valid").and_then(Value::as_bool) != Some(true)
-        || receipt.get("verdict").and_then(Value::as_str) != Some("pass")
-    {
-        issues.push(replay_verification_issue(
-            "receipt.replay_not_passing",
-            "valid/verdict",
-            "valid=true verdict=pass",
-            "non-passing replay receipt",
-        ));
-    }
-
-    let stated_receipt_hash = receipt
-        .get("receipt_hash")
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string();
-    if !is_blake3_hex_text(&stated_receipt_hash) {
-        issues.push(replay_verification_issue(
-            "receipt_hash.malformed",
-            "receipt_hash",
-            "BLAKE3 hex",
-            stated_receipt_hash.as_str(),
-        ));
-    }
-    let mut receipt_hash_input = receipt.clone();
-    if let Some(object) = receipt_hash_input.as_object_mut() {
-        object.remove("receipt_hash");
-    }
-    let replay_receipt_hash = portable_json_hash(root, &receipt_hash_input);
-    if stated_receipt_hash != replay_receipt_hash {
-        issues.push(replay_verification_issue(
-            "receipt_hash.mismatch",
-            "receipt_hash",
-            &replay_receipt_hash,
-            &stated_receipt_hash,
-        ));
-    }
-
-    let selected_cases = receipt
-        .get("selected_cases")
-        .cloned()
-        .unwrap_or(Value::Null);
-    let selected_groups = receipt
-        .get("selected_groups")
-        .cloned()
-        .unwrap_or(Value::Null);
-    verify_replay_string_members(
-        &mut issues,
-        &selected_cases,
-        "selected_cases",
-        "selected_cases.invalid",
-        all_cases.iter().map(|case| case.id.as_str()).collect(),
-    );
-    verify_replay_string_members(
-        &mut issues,
-        &selected_groups,
-        "selected_groups",
-        "selected_groups.invalid",
-        groups.iter().map(|group| group.id.as_str()).collect(),
-    );
-
-    let entropy_policy_hash = receipt
-        .get("entropy_policy_hash")
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string();
-    if entropy_policy_hash != expected_entropy_policy_hash {
-        issues.push(replay_verification_issue(
-            "entropy_policy_hash.mismatch",
-            "entropy_policy_hash",
-            &expected_entropy_policy_hash,
-            &entropy_policy_hash,
-        ));
-    }
-
-    let attestation = receipt
-        .get("environment_attestation")
-        .cloned()
-        .unwrap_or(Value::Null);
-    let replay_policy_hash = attestation
-        .get("generated_policy_hash")
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string();
-    if replay_policy_hash != current_policy_hash {
-        issues.push(replay_verification_issue(
-            "replay_policy_hash.stale",
-            "environment_attestation.generated_policy_hash",
-            &current_policy_hash,
-            &replay_policy_hash,
-        ));
-    }
-    let environment_attestation_hash = attestation
-        .get("attestation_hash")
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string();
-    if !attestation.is_object() {
-        issues.push(replay_verification_issue(
-            "environment_attestation.missing",
-            "environment_attestation",
-            "object",
-            "missing",
-        ));
-    } else {
-        if !is_blake3_hex_text(&environment_attestation_hash) {
-            issues.push(replay_verification_issue(
-                "environment_attestation_hash.malformed",
-                "environment_attestation.attestation_hash",
-                "BLAKE3 hex",
-                &environment_attestation_hash,
-            ));
-        }
-        let mut attestation_hash_input = attestation.clone();
-        if let Some(object) = attestation_hash_input.as_object_mut() {
-            object.remove("attestation_hash");
-        }
-        let expected_attestation_hash = canonical_json_hash(&attestation_hash_input);
-        if environment_attestation_hash != expected_attestation_hash {
-            issues.push(replay_verification_issue(
-                "environment_attestation_hash.mismatch",
-                "environment_attestation.attestation_hash",
-                &expected_attestation_hash,
-                &environment_attestation_hash,
-            ));
-        }
-        let stated_attestation_policy_hash = attestation
-            .get("attestation_policy_hash")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        if stated_attestation_policy_hash != expected_attestation_policy_hash {
-            issues.push(replay_verification_issue(
-                "attestation_policy_hash.mismatch",
-                "environment_attestation.attestation_policy_hash",
-                &expected_attestation_policy_hash,
-                stated_attestation_policy_hash,
-            ));
-        }
-        let stated_attestation_entropy_hash = attestation
-            .get("entropy_policy_hash")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        if stated_attestation_entropy_hash != expected_entropy_policy_hash {
-            issues.push(replay_verification_issue(
-                "attestation_entropy_policy_hash.mismatch",
-                "environment_attestation.entropy_policy_hash",
-                &expected_entropy_policy_hash,
-                stated_attestation_entropy_hash,
-            ));
-        }
-    }
-    issues.sort_by_key(canonical_json_hash);
-
-    replay_verification_receipt(
-        root,
-        path,
-        issues,
-        current_policy_hash,
-        replay_receipt_hash,
-        Value::String(stated_receipt_hash),
-        Value::String(replay_policy_hash),
-        selected_cases,
-        selected_groups,
-        Value::String(environment_attestation_hash),
-    )
-}
-
-fn verify_replay_string_members(
-    issues: &mut Vec<Value>,
-    value: &Value,
-    field_path: &str,
-    code: &str,
-    allowed: std::collections::BTreeSet<&str>,
-) {
-    let Some(items) = value.as_array() else {
-        issues.push(replay_verification_issue(
-            code,
-            field_path,
-            "array",
-            "missing/non-array",
-        ));
-        return;
-    };
-    for item in items {
-        let Some(text) = item.as_str() else {
-            issues.push(replay_verification_issue(
-                code,
-                field_path,
-                "string ids",
-                "non-string",
-            ));
-            continue;
-        };
-        if !allowed.contains(text) {
-            issues.push(replay_verification_issue(
-                code,
-                field_path,
-                "known policy id",
-                text,
-            ));
-        }
-    }
-}
-
-fn replay_verification_issue(code: &str, field_path: &str, expected: &str, actual: &str) -> Value {
-    json!({
-        "code": code,
-        "field_path": field_path,
-        "expected": expected,
-        "actual": actual,
-    })
-}
-
-#[allow(clippy::too_many_arguments)]
-fn replay_verification_receipt(
-    root: &Path,
-    path: &Path,
-    issues: Vec<Value>,
-    current_replay_policy_hash: String,
-    replay_receipt_hash: String,
-    stated_replay_receipt_hash: Value,
-    replay_policy_hash: Value,
-    selected_cases: Value,
-    selected_groups: Value,
-    environment_attestation_hash: Value,
-) -> Value {
-    let valid = issues.is_empty();
-    with_portable_receipt_hash(
-        root,
-        json!({
-            "command": "determinism verify-receipt",
-            "root": path_string(root),
-            "path": portable_text(root, &path_string(path)),
-            "valid": valid,
-            "verdict": if valid { "pass" } else { "fail" },
-            "issues": issues,
-            "current_replay_policy_hash": current_replay_policy_hash,
-            "replay_policy_hash": replay_policy_hash,
-            "replay_receipt_hash": replay_receipt_hash,
-            "stated_replay_receipt_hash": stated_replay_receipt_hash,
-            "selected_cases": selected_cases,
-            "selected_groups": selected_groups,
-            "environment_attestation_hash": environment_attestation_hash,
-        }),
-    )
-}
+use super::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum ReplayOutputFormat {
@@ -604,7 +15,7 @@ struct ReplayOptions {
     out: Option<PathBuf>,
 }
 
-fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub(super) fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let options = replay_options(&args)?;
     let root = options.root.clone();
     if has_flag(&args, "--execute") || has_flag(&args, "--allow-mutations") {
@@ -699,7 +110,7 @@ pub(crate) struct ReplayGroup {
 }
 
 #[derive(Clone)]
-struct ReplayEntropyEntry {
+pub(super) struct ReplayEntropyEntry {
     id: String,
     class: String,
     source: String,
@@ -709,7 +120,7 @@ struct ReplayEntropyEntry {
 }
 
 #[derive(Clone)]
-struct ReplayEnvironmentFact {
+pub(super) struct ReplayEnvironmentFact {
     id: String,
     class: String,
     source: String,
@@ -1002,7 +413,7 @@ pub(crate) fn replay_groups_from_policy(
     Ok(parsed)
 }
 
-fn replay_entropy_inventory_from_policy(
+pub(super) fn replay_entropy_inventory_from_policy(
     policy: &Policy,
 ) -> Result<Vec<ReplayEntropyEntry>, Box<dyn Error>> {
     let entries = policy
@@ -1032,7 +443,7 @@ fn replay_entropy_entry_from_policy_value(
     })
 }
 
-fn replay_environment_facts_from_policy(
+pub(super) fn replay_environment_facts_from_policy(
     policy: &Policy,
 ) -> Result<Vec<ReplayEnvironmentFact>, Box<dyn Error>> {
     let entries = policy
@@ -1078,7 +489,7 @@ fn replay_environment_facts_json(entries: &[ReplayEnvironmentFact]) -> Vec<Value
         .collect()
 }
 
-fn replay_attestation_policy_hash(entries: &[ReplayEnvironmentFact]) -> String {
+pub(super) fn replay_attestation_policy_hash(entries: &[ReplayEnvironmentFact]) -> String {
     canonical_json_hash(&json!(replay_environment_facts_json(entries)))
 }
 
@@ -1160,7 +571,7 @@ fn replay_entropy_assumptions(entries: &[ReplayEntropyEntry]) -> Vec<Value> {
         .collect()
 }
 
-fn replay_entropy_policy_hash(entries: &[ReplayEntropyEntry]) -> String {
+pub(super) fn replay_entropy_policy_hash(entries: &[ReplayEntropyEntry]) -> String {
     canonical_json_hash(&json!(replay_entropy_inventory_json(entries)))
 }
 
@@ -1266,14 +677,20 @@ fn replay_case_from_policy_value(value: &Value) -> Result<ReplayCase, Box<dyn Er
     })
 }
 
-fn required_string<'a>(value: &'a Value, field: &str) -> Result<&'a str, Box<dyn Error>> {
+pub(super) fn required_string<'a>(
+    value: &'a Value,
+    field: &str,
+) -> Result<&'a str, Box<dyn Error>> {
     value
         .get(field)
         .and_then(Value::as_str)
         .ok_or_else(|| format!("policy replay case missing string field {field}").into())
 }
 
-fn required_string_array(value: &Value, field: &str) -> Result<Vec<String>, Box<dyn Error>> {
+pub(super) fn required_string_array(
+    value: &Value,
+    field: &str,
+) -> Result<Vec<String>, Box<dyn Error>> {
     Ok(value
         .get(field)
         .and_then(Value::as_array)
