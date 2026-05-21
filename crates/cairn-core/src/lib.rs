@@ -51,9 +51,9 @@ pub use verified::policy::{
 };
 pub use verified::repo::{
     build_change_detail, build_change_list, build_change_status, build_repo_status,
-    build_spec_detail, build_spec_list, count_tasks, spec_title, ChangeDetail, ChangeList,
-    ChangeSource, ChangeStatus, RepoStatus, SpecDetail, SpecList, SpecSource, SpecSummary,
-    TaskCounts,
+    build_spec_detail, build_spec_list, count_tasks, filter_changes_by_metadata, spec_title,
+    ChangeDetail, ChangeList, ChangeSource, ChangeStatus, RepoStatus, SpecDetail, SpecList,
+    SpecSource, SpecSummary, TaskCounts,
 };
 pub use verified::validation::{
     change_issues, evaluate_gate, evaluate_gate_snapshot, validate_changes, validate_spec_source,

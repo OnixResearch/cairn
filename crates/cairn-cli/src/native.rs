@@ -7,17 +7,17 @@ use std::{
 use cairn_core::{
     archive_dir, build_change_detail, build_change_list, build_change_skeleton,
     build_doctor_report, build_spec_detail, build_spec_list, changes_dir, design_template,
-    init_artifacts, layout_name, layout_root, proposal_template, specs_dir, tasks_template,
-    validate_changes, validate_spec_sources, ChangeDetail, ChangeList, ChangeStatus,
-    DoctorCheckStatus, DoctorReport, DoctorSnapshot, LifecycleArtifactKind, LifecycleLayout,
-    RepoStatus, SpecDetail, SpecList, SpecSummary, TaskCounts,
+    filter_changes_by_metadata, init_artifacts, layout_name, layout_root, proposal_template,
+    specs_dir, tasks_template, validate_changes, validate_spec_sources, ChangeDetail, ChangeList,
+    ChangeStatus, DoctorCheckStatus, DoctorReport, DoctorSnapshot, LifecycleArtifactKind,
+    LifecycleLayout, RepoStatus, SpecDetail, SpecList, SpecSummary, TaskCounts,
 };
 use serde_json::{json, Value};
 
 use crate::{
     collect_spec_sources, collect_validation_spec_sources, default_policy_path, detect_layout,
     find_change, find_spec_source, has_flag, load_policy_file, path_string, print_json,
-    read_option, scan_repo,
+    read_option, read_string_option, scan_repo,
 };
 
 pub(crate) fn run_status(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -104,10 +104,19 @@ pub(crate) fn run_spec(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_change_list(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let root = read_option(args, "--root", ".");
+    let root = read_option(args.clone(), "--root", ".");
+    let group = read_string_option(&args, "--group");
+    let target_after = read_string_option(&args, "--target-after");
+    let target_before = read_string_option(&args, "--target-before");
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
-    let list = build_change_list(status.changes);
+    let changes = filter_changes_by_metadata(
+        status.changes,
+        group.as_deref(),
+        target_after.as_deref(),
+        target_before.as_deref(),
+    );
+    let list = build_change_list(changes);
     print_json(change_list_json(&path_string(root), selected.layout, &list))
 }
 
@@ -349,6 +358,15 @@ pub(crate) fn change_status_json(change: &ChangeStatus) -> Value {
         "has_tasks": change.has_tasks,
         "delta_specs": change.delta_specs,
         "task_counts": change.task_counts.map(task_counts_json),
+        "metadata": change_metadata_json(change),
+    })
+}
+
+fn change_metadata_json(change: &ChangeStatus) -> Value {
+    json!({
+        "groups": change.metadata.groups,
+        "target_date": change.metadata.target_date,
+        "status": change.metadata.status,
     })
 }
 

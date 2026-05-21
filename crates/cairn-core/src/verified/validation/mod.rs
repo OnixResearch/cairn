@@ -80,6 +80,14 @@ mod tests {
                 date_fields: vec!["until".to_string()],
                 optional_fields: vec!["scope".to_string()],
             },
+            change_metadata_allowed_groups: vec!["current".to_string(), "future".to_string()],
+            change_metadata_group_prefixes: vec!["feature:".to_string()],
+            change_metadata_statuses: vec![
+                "current".to_string(),
+                "planned".to_string(),
+                "blocked".to_string(),
+                "deferred".to_string(),
+            ],
             raw: json!({}),
         }
     }
@@ -99,6 +107,8 @@ mod tests {
                 todo: 2,
                 unmarked: 0,
             }),
+            metadata: Default::default(),
+            metadata_issues: Vec::new(),
         }
     }
 

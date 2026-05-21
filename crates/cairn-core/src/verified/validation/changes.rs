@@ -1,4 +1,7 @@
-use crate::verified::{policy::Policy, repo::ChangeStatus};
+use crate::verified::{
+    policy::Policy,
+    repo::{validate_change_metadata_policy, ChangeStatus},
+};
 
 pub fn validate_changes(changes: &[ChangeStatus], policy: &Policy) -> Vec<String> {
     let mut issues = Vec::with_capacity(changes.len().saturating_mul(3));
@@ -19,6 +22,12 @@ pub fn change_issues(change: &ChangeStatus, policy: &Policy) -> Vec<String> {
     if let Some(message) = unmarked_tasks_issue(change, policy) {
         issues.push(message);
     }
+    issues.extend(validate_change_metadata_policy(
+        change,
+        &policy.change_metadata_allowed_groups,
+        &policy.change_metadata_group_prefixes,
+        &policy.change_metadata_statuses,
+    ));
     issues
 }
 

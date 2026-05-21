@@ -51,6 +51,14 @@ pub struct ChangeSource {
     pub has_tasks: bool,
     pub delta_specs: Vec<String>,
     pub tasks_markdown: Option<String>,
+    pub metadata_json: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ChangeMetadata {
+    pub groups: Vec<String>,
+    pub target_date: Option<String>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -62,6 +70,8 @@ pub struct ChangeStatus {
     pub has_tasks: bool,
     pub delta_specs: Vec<String>,
     pub task_counts: Option<TaskCounts>,
+    pub metadata: ChangeMetadata,
+    pub metadata_issues: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -92,8 +102,12 @@ pub fn build_repo_status(
 }
 
 pub fn build_change_status(mut source: ChangeSource) -> ChangeStatus {
+    // r[impl cairn.supersede.change_metadata.schema]
+    // r[impl cairn.supersede.change_metadata.validation]
     source.delta_specs.sort();
     let task_counts = source.tasks_markdown.as_deref().map(count_tasks);
+    let (metadata, metadata_issues) =
+        parse_change_metadata(&source.name, source.metadata_json.as_deref());
     ChangeStatus {
         name: source.name,
         path: source.path,
@@ -102,14 +116,192 @@ pub fn build_change_status(mut source: ChangeSource) -> ChangeStatus {
         has_tasks: source.has_tasks,
         delta_specs: source.delta_specs,
         task_counts,
+        metadata,
+        metadata_issues,
     }
 }
 
 pub fn build_change_list(mut changes: Vec<ChangeStatus>) -> ChangeList {
     // r[impl cairn.supersede.read_parity] r[impl cairn.supersede.read_parity.change_list]
+    // r[impl cairn.supersede.change_metadata.read_receipts] r[impl cairn.supersede.change_metadata.filters]
     // r[impl cairn.supersede.boundary] r[impl cairn.supersede.boundary.read_models]
     changes.sort_by(|left, right| left.name.cmp(&right.name));
     ChangeList { changes }
+}
+
+pub fn filter_changes_by_metadata(
+    changes: Vec<ChangeStatus>,
+    group: Option<&str>,
+    target_after: Option<&str>,
+    target_before: Option<&str>,
+) -> Vec<ChangeStatus> {
+    // r[impl cairn.supersede.change_metadata.filters]
+    changes
+        .into_iter()
+        .filter(|change| matches_metadata_filter(change, group, target_after, target_before))
+        .collect()
+}
+
+fn matches_metadata_filter(
+    change: &ChangeStatus,
+    group: Option<&str>,
+    target_after: Option<&str>,
+    target_before: Option<&str>,
+) -> bool {
+    if let Some(group) = group {
+        if !change
+            .metadata
+            .groups
+            .iter()
+            .any(|candidate| candidate == group)
+        {
+            return false;
+        }
+    }
+    if target_after.is_some() || target_before.is_some() {
+        let Some(target_date) = change.metadata.target_date.as_deref() else {
+            return false;
+        };
+        if target_after.is_some_and(|bound| target_date <= bound) {
+            return false;
+        }
+        if target_before.is_some_and(|bound| target_date >= bound) {
+            return false;
+        }
+    }
+    true
+}
+
+fn parse_change_metadata(
+    change_name: &str,
+    metadata_json: Option<&str>,
+) -> (ChangeMetadata, Vec<String>) {
+    let Some(metadata_json) = metadata_json else {
+        return (ChangeMetadata::default(), Vec::new());
+    };
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(metadata_json) else {
+        return (
+            ChangeMetadata::default(),
+            vec![format!("{change_name}: metadata.json is not valid JSON")],
+        );
+    };
+    let Some(object) = value.as_object() else {
+        return (
+            ChangeMetadata::default(),
+            vec![format!(
+                "{change_name}: metadata.json must contain an object"
+            )],
+        );
+    };
+
+    let mut issues = Vec::new();
+    let groups = match object.get("groups") {
+        None => Vec::new(),
+        Some(value) => string_array(value).unwrap_or_else(|| {
+            issues.push(format!(
+                "{change_name}: metadata groups must be an array of strings"
+            ));
+            Vec::new()
+        }),
+    };
+    let target_date = optional_string(object.get("target_date"), change_name, "target_date");
+    issues.extend(target_date.1);
+    let target_date = target_date.0;
+    let status = optional_string(object.get("status"), change_name, "status");
+    issues.extend(status.1);
+    let status = status.0;
+    let mut sorted_groups = groups;
+    sorted_groups.sort();
+    let has_duplicates = sorted_groups
+        .windows(2)
+        .any(|window| window[0] == window[1]);
+    if has_duplicates {
+        issues.push(format!("{change_name}: metadata groups must be unique"));
+        sorted_groups.dedup();
+    }
+    (
+        ChangeMetadata {
+            groups: sorted_groups,
+            target_date,
+            status,
+        },
+        issues,
+    )
+}
+
+fn string_array(value: &serde_json::Value) -> Option<Vec<String>> {
+    value
+        .as_array()?
+        .iter()
+        .map(|item| item.as_str().map(str::to_string))
+        .collect()
+}
+
+fn optional_string(
+    value: Option<&serde_json::Value>,
+    change_name: &str,
+    field: &str,
+) -> (Option<String>, Option<String>) {
+    match value {
+        None => (None, None),
+        Some(value) => match value.as_str() {
+            Some(text) => (Some(text.to_string()), None),
+            None => {
+                let issue = format!("{change_name}: metadata {field} must be a string");
+                (None, Some(issue))
+            }
+        },
+    }
+}
+
+fn is_yyyy_mm_dd(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    bytes.len() == 10
+        && bytes[4] == b'-'
+        && bytes[7] == b'-'
+        && bytes
+            .iter()
+            .enumerate()
+            .all(|(index, byte)| index == 4 || index == 7 || byte.is_ascii_digit())
+}
+
+pub fn validate_change_metadata_policy(
+    change: &ChangeStatus,
+    allowed_groups: &[String],
+    group_prefixes: &[String],
+    allowed_statuses: &[String],
+) -> Vec<String> {
+    // r[impl cairn.supersede.change_metadata.validation]
+    let mut issues = change.metadata_issues.clone();
+    for group in &change.metadata.groups {
+        let is_allowed_group = allowed_groups.iter().any(|allowed| allowed == group)
+            || group_prefixes
+                .iter()
+                .any(|prefix| group.starts_with(prefix));
+        if !is_allowed_group {
+            issues.push(format!(
+                "{}: metadata group {group} is not allowed by policy",
+                change.name
+            ));
+        }
+    }
+    if let Some(target_date) = &change.metadata.target_date {
+        if !is_yyyy_mm_dd(target_date) {
+            issues.push(format!(
+                "{}: metadata target_date must be YYYY-MM-DD",
+                change.name
+            ));
+        }
+    }
+    if let Some(status) = &change.metadata.status {
+        if !allowed_statuses.iter().any(|allowed| allowed == status) {
+            issues.push(format!(
+                "{}: metadata status {status} is not allowed by policy",
+                change.name
+            ));
+        }
+    }
+    issues
 }
 
 pub fn build_change_detail(change: ChangeStatus) -> ChangeDetail {
@@ -229,12 +421,50 @@ mod tests {
                 has_tasks: true,
                 delta_specs: vec!["openspec/changes/demo/specs/a/spec.md".to_string()],
                 tasks_markdown: Some("- [ ] [serial] todo\n- [x] done\n".to_string()),
+                metadata_json: Some(r#"{"groups":["future","current"],"target_date":"2026-05-21","status":"planned"}"#.to_string()),
             }],
         );
         assert_eq!(status.specs[0], "openspec/specs/a/spec.md");
         assert_eq!(status.changes.len(), 1);
         assert_eq!(status.changes[0].name, "demo");
         assert_eq!(status.changes[0].task_counts.unwrap().total, 2);
+        assert_eq!(status.changes[0].metadata.groups, vec!["current", "future"]);
+    }
+
+    #[test]
+    fn filters_changes_by_metadata() {
+        let matching = ChangeStatus {
+            name: "matching".to_string(),
+            path: "cairn/changes/matching".to_string(),
+            has_proposal: true,
+            has_design: true,
+            has_tasks: true,
+            delta_specs: Vec::new(),
+            task_counts: None,
+            metadata: ChangeMetadata {
+                groups: vec!["current".to_string(), "feature:registry".to_string()],
+                target_date: Some("2026-06-01".to_string()),
+                status: Some("planned".to_string()),
+            },
+            metadata_issues: Vec::new(),
+        };
+        let without_date = ChangeStatus {
+            name: "without-date".to_string(),
+            metadata: ChangeMetadata {
+                groups: vec!["current".to_string()],
+                target_date: None,
+                status: None,
+            },
+            ..matching.clone()
+        };
+        let filtered = filter_changes_by_metadata(
+            vec![matching, without_date],
+            Some("current"),
+            Some("2026-05-01"),
+            Some("2026-07-01"),
+        );
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].name, "matching");
     }
 
     #[test]

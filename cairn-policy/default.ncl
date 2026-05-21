@@ -61,6 +61,12 @@ let Contracts = import "contracts.ncl" in
     release_format = "YYYY-MM-DD",
   },
 
+  change_metadata_policy = {
+    allowed_groups = ["current", "future"],
+    group_prefixes = ["feature:"],
+    statuses = ["current", "planned", "blocked", "deferred"],
+  },
+
   receipt_schemas = [
     {
       command = "agent-receipt validate",

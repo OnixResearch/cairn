@@ -148,6 +148,8 @@ mod tests {
                 todo: 0,
                 unmarked: 0,
             }),
+            metadata: Default::default(),
+            metadata_issues: Vec::new(),
         }
     }
 

@@ -299,6 +299,71 @@ fn read_outputs_match_canonical_goldens() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn change_metadata_is_validated_and_filterable() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.change_metadata.schema.valid_metadata]
+    // r[verify cairn.supersede.change_metadata.schema.optional_metadata]
+    // r[verify cairn.supersede.change_metadata.validation.invalid_metadata]
+    // r[verify cairn.supersede.change_metadata.read_receipts.list_show]
+    // r[verify cairn.supersede.change_metadata.filters.group]
+    // r[verify cairn.supersede.change_metadata.filters.target_date]
+    // r[verify cairn.supersede.change_metadata.verification]
+    // r[verify cairn.supersede.change_metadata.verification.gates]
+    let fixture = temp_fixture("change-metadata", "fixtures/basic")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    fs::write(
+        fixture.join("cairn/changes/demo/metadata.json"),
+        "{\"groups\":[\"feature:registry\",\"current\"],\"target_date\":\"2026-06-01\",\"status\":\"planned\"}\n",
+    )?;
+
+    let filtered = run_json(&[
+        "change",
+        "list",
+        "--root",
+        root,
+        "--group",
+        "feature:registry",
+        "--target-after",
+        "2026-05-01",
+        "--target-before",
+        "2026-07-01",
+    ])?;
+    assert_eq!(filtered["changes"].as_array().ok_or("changes")?.len(), 1);
+    assert_eq!(filtered["changes"][0]["metadata"]["groups"][0], "current");
+    assert_eq!(
+        filtered["changes"][0]["metadata"]["groups"][1],
+        "feature:registry"
+    );
+    assert_eq!(
+        filtered["changes"][0]["metadata"]["target_date"],
+        "2026-06-01"
+    );
+
+    let excluded = run_json(&["change", "list", "--root", root, "--group", "future"])?;
+    assert!(excluded["changes"].as_array().ok_or("changes")?.is_empty());
+
+    fs::write(
+        fixture.join("cairn/changes/demo/metadata.json"),
+        "{\"groups\":[\"unknown\"],\"target_date\":\"not-a-date\",\"status\":\"unknown\"}\n",
+    )?;
+    let invalid = run_json(&["validate", "--root", root])?;
+    assert_eq!(invalid["valid"], false);
+    let issues = invalid["change_issues"].as_array().ok_or("change_issues")?;
+    assert_eq!(issues.len(), 3);
+    let issue_text = serde_json::to_string(issues)?;
+    assert!(
+        issue_text.contains("metadata group unknown"),
+        "{issue_text}"
+    );
+    assert!(issue_text.contains("metadata target_date"), "{issue_text}");
+    assert!(
+        issue_text.contains("metadata status unknown"),
+        "{issue_text}"
+    );
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
 fn legacy_openspec_is_not_runtime_fallback() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.native_layout.native_only]
     let fixture = temp_fixture("legacy-no-fallback", "fixtures/basic")?;

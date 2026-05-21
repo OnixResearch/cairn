@@ -21,6 +21,9 @@ pub struct Policy {
     pub require_receipt_hashes: bool,
     pub receipt_schemas: Vec<ReceiptSchema>,
     pub exemption_marker_policy: ExemptionMarkerPolicy,
+    pub change_metadata_allowed_groups: Vec<String>,
+    pub change_metadata_group_prefixes: Vec<String>,
+    pub change_metadata_statuses: Vec<String>,
     pub raw: Value,
 }
 
@@ -115,6 +118,19 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
     )?;
     let receipt_schemas = receipt_schemas(&value)?;
     let exemption_marker_policy = exemption_marker_policy(&value)?;
+    let change_metadata_policy = value
+        .get("change_metadata_policy")
+        .ok_or(PolicyError::MissingField("change_metadata_policy"))?;
+    let change_metadata_allowed_groups = string_array_field(
+        change_metadata_policy,
+        "change_metadata_policy.allowed_groups",
+    )?;
+    let change_metadata_group_prefixes = string_array_field(
+        change_metadata_policy,
+        "change_metadata_policy.group_prefixes",
+    )?;
+    let change_metadata_statuses =
+        string_array_field(change_metadata_policy, "change_metadata_policy.statuses")?;
 
     Ok(Policy {
         name,
@@ -132,6 +148,9 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         require_receipt_hashes: should_require_receipt_hashes,
         receipt_schemas,
         exemption_marker_policy,
+        change_metadata_allowed_groups,
+        change_metadata_group_prefixes,
+        change_metadata_statuses,
         raw: value,
     })
 }
@@ -368,6 +387,11 @@ mod tests {
             "version": SUPPORTED_POLICY_VERSION + 1,
             "schemas": [{}],
             "task_marker_policy": { "enabled": true, "strictness": "strict" },
+            "change_metadata_policy": {
+                "allowed_groups": ["current", "future"],
+                "group_prefixes": ["feature:"],
+                "statuses": ["current", "planned", "blocked", "deferred"]
+            },
             "gate_policy": {
                 "stages": ["tasks"],
                 "ignore_archives": true,

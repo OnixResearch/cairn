@@ -114,6 +114,12 @@ let Promoted = std.contract.from_predicate (fun value =>
     release_format | NonEmptyString,
   },
 
+  ChangeMetadataPolicy = {
+    allowed_groups | NonEmptyArray | Array NonEmptyString,
+    group_prefixes | Array NonEmptyString | default = [],
+    statuses | NonEmptyArray | Array NonEmptyString,
+  },
+
   ReceiptSchema = {
     command | NonEmptyString,
     top_level_keys | NonEmptyArray | Array NonEmptyString,
@@ -240,6 +246,7 @@ let Promoted = std.contract.from_predicate (fun value =>
     finding_defaults | FindingPolicy,
     report_contract | ReportContract,
     registry_label_policy | RegistryLabelPolicy,
+    change_metadata_policy | ChangeMetadataPolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
     receipt_contracts | Array ReceiptContract | default = [],
     determinism_replay_policy | DeterminismReplayPolicy,
