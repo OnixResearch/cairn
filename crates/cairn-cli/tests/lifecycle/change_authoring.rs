@@ -76,6 +76,117 @@ fn change_create_rejects_invalid_name_without_mutation() -> Result<(), Box<dyn E
 }
 
 #[test]
+fn onboarding_template_apply_and_scaffold_are_deterministic() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.developer_experience.onboarding_templates.catalog]
+    // r[verify cairn.developer_experience.onboarding_templates.catalog.list]
+    // r[verify cairn.developer_experience.onboarding_templates.apply]
+    // r[verify cairn.developer_experience.onboarding_templates.apply.preview]
+    // r[verify cairn.developer_experience.onboarding_templates.apply.execute]
+    // r[verify cairn.developer_experience.onboarding_templates.apply.reject_unsafe]
+    // r[verify cairn.developer_experience.onboarding_templates.quickstart]
+    // r[verify cairn.developer_experience.onboarding_templates.quickstart.follow]
+    // r[verify cairn.developer_experience.onboarding_templates.verification]
+    // r[verify cairn.developer_experience.onboarding_templates.verification.receipts]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.planner.request_text]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.planner.insufficient_input]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.cli]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.cli.preview]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.cli.execute]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.gate_ready]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.gate_ready.refs]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.docs]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.docs.non_claims]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.verification]
+    // r[verify cairn.developer_experience.prompt_to_change_scaffold.verification.fixtures]
+    let root = temp_project("devex-template-scaffold")?;
+    let root_text = root.to_str().ok_or("utf8 root")?;
+    run_json(&["init", "--root", root_text])?;
+
+    let templates = run_json(&["template", "list", "--root", root_text])?;
+    assert_eq!(templates["valid"], true);
+    assert!(serde_json::to_string(&templates)?.contains("agent-workflow"));
+
+    let preview = run_json(&["template", "apply", "agent-workflow", "--root", root_text])?;
+    assert_eq!(preview["dry_run"], true);
+    assert_eq!(preview["mutated"], false);
+    assert!(!root.join("docs/cairn-agent-workflow.md").exists());
+
+    let applied = run_json(&[
+        "template",
+        "apply",
+        "agent-workflow",
+        "--root",
+        root_text,
+        "--execute",
+    ])?;
+    assert_eq!(applied["valid"], true);
+    assert_eq!(applied["mutated"], true);
+    assert!(root.join("docs/cairn-agent-workflow.md").is_file());
+
+    let scaffold = run_json(&[
+        "scaffold",
+        "change",
+        "add-friendly-start",
+        "--root",
+        root_text,
+        "--request",
+        "Add a friendly start path",
+        "--execute",
+    ])?;
+    assert_eq!(scaffold["valid"], true);
+    assert_eq!(scaffold["mutated"], true);
+    assert!(root
+        .join("cairn/changes/add-friendly-start/specs/developer-experience/spec.md")
+        .is_file());
+    let gate = run_json(&["gate", "tasks", "add-friendly-start", "--root", root_text])?;
+    assert_eq!(gate["verdict"], "PASS");
+    Ok(())
+}
+
+#[test]
+fn reverse_spec_discovery_emits_review_needed_candidates() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.developer_experience.reverse_spec_discovery.policy]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.policy.load]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.planner.candidates]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.planner.limits]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.cli]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.cli.receipt]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.cli.out]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.docs]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.docs.review_needed]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.verification]
+    // r[verify cairn.developer_experience.reverse_spec_discovery.verification.fixtures]
+    let root = temp_project("devex-discovery")?;
+    fs::create_dir_all(root.join("src"))?;
+    fs::write(root.join("src/lib.rs"), "pub fn visible_behavior() {}\n")?;
+    let root_text = root.to_str().ok_or("utf8 root")?;
+
+    let receipt = run_json(&[
+        "discover-specs",
+        "--root",
+        root_text,
+        "--include",
+        "src/lib.rs",
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["candidates"][0]["review_status"], "review-needed");
+    assert_eq!(receipt["candidates"][0]["evidence_path"], "src/lib.rs");
+
+    let draft = run_json(&[
+        "discover-specs",
+        "--root",
+        root_text,
+        "--include",
+        "src/lib.rs",
+        "--out",
+        "target/discovery-draft.md",
+    ])?;
+    assert_eq!(draft["valid"], true);
+    assert!(root.join("target/discovery-draft.md").is_file());
+    Ok(())
+}
+
+#[test]
 fn change_metadata_is_validated_and_filterable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.change_metadata.schema.valid_metadata]
     // r[verify cairn.supersede.change_metadata.schema.optional_metadata]

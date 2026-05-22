@@ -32,6 +32,12 @@ pub use verified::content_addressed::{
     EXPORT_BUNDLE_SCHEMA_V1, FUNCTION_OBJECT_SCHEMA_V1, NAME_POINTER_SCHEMA_V1,
 };
 pub use verified::delta_merge::{merge_delta_spec, DeltaMerge};
+pub use verified::developer_experience::{
+    onboarding_templates, plan_prompt_scaffold, plan_reverse_spec_discovery,
+    plan_template_application, DiscoveryCandidate, DiscoveryPlan, DiscoverySnapshot, FilePlan,
+    FilePlanEntry, PlannedFile, ScaffoldPlan, TemplateProfile, DISCOVERY_MAX_BYTES,
+    DISCOVERY_MAX_FILES, DISCOVERY_POLICY_ID, SCAFFOLD_POLICY_ID, TEMPLATE_POLICY_ID,
+};
 pub use verified::doctor::{
     build_doctor_report, DoctorCheck, DoctorCheckStatus, DoctorReport, DoctorSnapshot,
 };

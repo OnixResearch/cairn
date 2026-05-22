@@ -1,6 +1,7 @@
 pub mod agent_receipt;
 pub mod content_addressed;
 pub mod delta_merge;
+pub mod developer_experience;
 pub mod doctor;
 pub mod evidence;
 pub mod lifecycle;

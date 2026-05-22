@@ -82,7 +82,7 @@
           cargoLock.lockFile = ./Cargo.lock;
           cargoBuildFlags = [ "--workspace" "--all-targets" ];
           cargoTestFlags = [ "--workspace" ];
-          nativeCheckInputs = [ pkgs.nickel ];
+          nativeCheckInputs = [ pkgs.git pkgs.nickel ];
           preCheck = ''
             ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
           '';

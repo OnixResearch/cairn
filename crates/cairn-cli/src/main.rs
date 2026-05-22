@@ -2,6 +2,7 @@ use std::{env, error::Error};
 
 mod agent_receipt;
 mod determinism;
+mod developer_experience;
 mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
@@ -54,6 +55,9 @@ fn run() -> Result<(), Box<dyn Error>> {
         "--help" | "-h" | "help" => print_usage(),
         "init" => run_init(args.collect())?,
         "change" => run_change(args.collect())?,
+        "template" => developer_experience::run_template(args.collect())?,
+        "scaffold" => developer_experience::run_scaffold(args.collect())?,
+        "discover-specs" => developer_experience::run_discover_specs(args.collect())?,
         "spec" => run_spec(args.collect())?,
         "status" => run_status(args.collect())?,
         "doctor" => run_doctor(args.collect())?,
