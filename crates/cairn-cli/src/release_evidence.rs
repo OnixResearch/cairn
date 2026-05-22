@@ -32,14 +32,20 @@ use crate::support::{
     path_string, print_json, read_option, read_string_option, with_portable_receipt_hash,
 };
 
+const RETENTION_PUBLICATION_SCAN_MAX_DEPTH: usize = 8;
+
 pub(crate) fn run_release_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
     let Some(subcommand) = iter.next() else {
-        return Err("release-evidence requires a subcommand: index|publish".into());
+        return Err(
+            "release-evidence requires a subcommand: index|publish|retention-plan|rotate".into(),
+        );
     };
     match subcommand.as_str() {
         "index" => run_release_evidence_index(iter.collect()),
         "publish" => run_release_evidence_publish(iter.collect()),
+        "retention-plan" => run_release_evidence_retention_plan(iter.collect()),
+        "rotate" => run_release_evidence_rotate(iter.collect()),
         unknown => Err(format!("unknown release-evidence subcommand: {unknown}").into()),
     }
 }
@@ -898,6 +904,503 @@ fn release_evidence_publish_final_receipt(
     )
 }
 
+fn run_release_evidence_retention_plan(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let options = release_evidence_retention_options(&args)?;
+    let receipt = release_evidence_retention_plan_receipt(&options);
+    let valid = receipt
+        .get("valid")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    print_json(receipt)?;
+    if !valid {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+struct ReleaseEvidenceRetentionOptions {
+    root: PathBuf,
+    publish_root: PathBuf,
+    out: PathBuf,
+    channel: Option<String>,
+    keep_latest: usize,
+    retain: Option<String>,
+}
+
+fn release_evidence_retention_options(
+    args: &[String],
+) -> Result<ReleaseEvidenceRetentionOptions, Box<dyn Error>> {
+    let root = read_option(args.to_vec(), "--root", ".");
+    let Some(publish_root) = read_string_option(args, "--publish-root").map(PathBuf::from) else {
+        return Err("release-evidence retention-plan requires --publish-root <dir>".into());
+    };
+    let Some(out) = read_string_option(args, "--out").map(PathBuf::from) else {
+        return Err("release-evidence retention-plan requires --out <file>".into());
+    };
+    let keep_latest = read_string_option(args, "--keep-latest")
+        .map(|value| value.parse::<usize>())
+        .transpose()
+        .map_err(|_| "--keep-latest must be a non-negative integer")?
+        .unwrap_or(1);
+    Ok(ReleaseEvidenceRetentionOptions {
+        root,
+        publish_root,
+        out,
+        channel: read_string_option(args, "--channel"),
+        keep_latest,
+        retain: read_string_option(args, "--retain"),
+    })
+}
+
+fn release_evidence_retention_plan_receipt(options: &ReleaseEvidenceRetentionOptions) -> Value {
+    // r[impl release_evidence.retention_rotation.cli_contract]
+    // r[impl release_evidence.retention_rotation.cli_contract.inputs_outputs]
+    // r[impl release_evidence.retention_rotation.composes_publication_validators]
+    // r[impl release_evidence.retention_rotation.composes_publication_validators.manifest_receipt]
+    // r[impl release_evidence.retention_rotation.plan_receipt]
+    // r[impl release_evidence.retention_rotation.plan_receipt.decisions]
+    // r[impl release_evidence.retention_rotation.plan_receipt.ordering]
+    // r[impl release_evidence.retention_rotation.fail_closed]
+    // r[impl release_evidence.retention_rotation.fail_closed.unsafe_or_stale]
+    // r[impl release_evidence.retention_rotation.operator_docs]
+    // r[impl release_evidence.retention_rotation.operator_docs.non_claims]
+    let mut issues = Vec::new();
+    validate_publish_label("channel", options.channel.as_deref(), &mut issues);
+    validate_publish_label("retain", options.retain.as_deref(), &mut issues);
+    let mut candidates = retention_candidates(options, &mut issues);
+    let mut seen_current = std::collections::BTreeSet::new();
+    for candidate in &mut candidates {
+        if candidate.get("valid").and_then(Value::as_bool) != Some(true) {
+            candidate["action"] = json!("invalid");
+            continue;
+        }
+        let release = candidate["labels"]
+            .get("release")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string();
+        let channel = candidate["labels"]
+            .get("channel")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string();
+        let retention = candidate["labels"]
+            .get("retention")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        if options
+            .channel
+            .as_deref()
+            .is_some_and(|wanted| wanted != channel)
+        {
+            candidate["action"] = json!("keep");
+            candidate["reason"] = json!("outside_selected_channel");
+        } else if options
+            .retain
+            .as_deref()
+            .is_some_and(|wanted| wanted == retention)
+        {
+            candidate["action"] = json!("keep");
+            candidate["reason"] = json!("retention_label_matched");
+        } else if !seen_current.insert((channel.clone(), release.clone())) {
+            candidate["action"] = json!("invalid");
+            candidate["reason"] = json!("duplicate_channel_release");
+            issues.push(release_evidence_issue(
+                "release_evidence_retention.duplicate_channel_release",
+                "labels.channel_release",
+                "unique channel/release identity",
+                "duplicate",
+            ));
+        }
+    }
+    let mut sortable: Vec<(String, usize)> = candidates
+        .iter()
+        .enumerate()
+        .map(|(index, candidate)| {
+            let channel = candidate["labels"]
+                .get("channel")
+                .and_then(Value::as_str)
+                .unwrap_or("");
+            let release = candidate["labels"]
+                .get("release")
+                .and_then(Value::as_str)
+                .unwrap_or("");
+            (
+                format!(
+                    "{channel}\u{0}{release}\u{0}{}",
+                    candidate["path"].as_str().unwrap_or("")
+                ),
+                index,
+            )
+        })
+        .collect();
+    sortable.sort_by(|left, right| right.0.cmp(&left.0));
+    let mut kept_by_channel = std::collections::BTreeMap::<String, usize>::new();
+    for (_, index) in sortable {
+        if candidates[index]
+            .get("action")
+            .and_then(Value::as_str)
+            .is_some()
+        {
+            continue;
+        }
+        let channel = candidates[index]["labels"]
+            .get("channel")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string();
+        let kept = kept_by_channel.entry(channel).or_default();
+        if *kept < options.keep_latest {
+            candidates[index]["action"] = json!("keep");
+            candidates[index]["reason"] = json!("within_keep_latest");
+            *kept += 1;
+        } else {
+            candidates[index]["action"] = json!("prune_candidate");
+            candidates[index]["reason"] = json!("superseded_by_newer_release");
+        }
+    }
+    candidates.sort_by_key(canonical_json_hash);
+    let plan = json!({
+        "schema": "cairn.release-evidence.retention-plan.v1",
+        "publish_root": path_string(&options.publish_root),
+        "selectors": {
+            "channel": options.channel,
+            "keep_latest": options.keep_latest,
+            "retain": options.retain,
+        },
+        "decisions": candidates,
+        "non_claims": [
+            "local_retention_plan_only",
+            "no_remote_deletion",
+            "no_credential_validation",
+            "no_remote_mirror_trust",
+            "no_signature_validation",
+            "no_tag_movement",
+            "no_public_release_page_mutation",
+        ],
+    });
+    let mut plan_hash = None;
+    if issues.is_empty() {
+        write_json_file(&options.out, &plan, &mut issues, "retention_plan");
+        plan_hash = read_file_hash(
+            &options.out,
+            &mut issues,
+            "retention_plan",
+            "retention_plan",
+        );
+    }
+    issues.sort_by_key(canonical_json_hash);
+    let valid = issues.is_empty();
+    with_portable_receipt_hash(
+        &options.root,
+        json!({
+            "command": "release-evidence retention-plan",
+            "root": path_string(&options.root),
+            "publish_root": path_string(&options.publish_root),
+            "out": path_string(&options.out),
+            "valid": valid,
+            "verdict": if valid { "pass" } else { "fail" },
+            "plan_hash": plan_hash.unwrap_or_default(),
+            "decision_count": plan["decisions"].as_array().map(Vec::len).unwrap_or(0),
+            "decisions": plan["decisions"].clone(),
+            "issues": issues,
+        }),
+    )
+}
+
+fn retention_candidates(
+    options: &ReleaseEvidenceRetentionOptions,
+    issues: &mut Vec<Value>,
+) -> Vec<Value> {
+    if fs::read_dir(&options.publish_root).is_err() {
+        issues.push(release_evidence_issue(
+            "release_evidence_retention.publish_root_unreadable",
+            "publish_root",
+            "readable publication root",
+            "unreadable",
+        ));
+        return Vec::new();
+    };
+    let mut candidates = Vec::new();
+    collect_retention_candidates(
+        &options.publish_root,
+        &options.publish_root,
+        0,
+        &mut candidates,
+        issues,
+    );
+    candidates
+}
+
+fn collect_retention_candidates(
+    publish_root: &Path,
+    current: &Path,
+    depth: usize,
+    candidates: &mut Vec<Value>,
+    issues: &mut Vec<Value>,
+) {
+    if depth > RETENTION_PUBLICATION_SCAN_MAX_DEPTH {
+        issues.push(release_evidence_issue(
+            "release_evidence_retention.scan_depth_exceeded",
+            "publish_root",
+            "bounded publication tree depth",
+            "too_deep",
+        ));
+        return;
+    }
+    let Ok(entries) = fs::read_dir(current) else {
+        issues.push(release_evidence_issue(
+            "release_evidence_retention.directory_unreadable",
+            &publish_relative_path(publish_root, current),
+            "readable publication directory",
+            "unreadable",
+        ));
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let relative = publish_relative_path(publish_root, &path);
+        if !safe_relative_path_text(&relative) {
+            issues.push(release_evidence_issue(
+                "release_evidence_retention.path_unsafe",
+                "candidate.path",
+                "safe relative candidate path",
+                "unsafe",
+            ));
+            continue;
+        }
+        let Ok(meta) = fs::symlink_metadata(&path) else {
+            continue;
+        };
+        if meta.file_type().is_symlink() {
+            issues.push(release_evidence_issue(
+                "release_evidence_retention.symlink_rejected",
+                &relative,
+                "real publication directory",
+                "symlink",
+            ));
+            continue;
+        }
+        if !meta.is_dir() {
+            continue;
+        }
+        let has_manifest = path.join("manifest.json").exists();
+        let has_receipt = path.join("receipt.json").exists();
+        if has_manifest || has_receipt {
+            candidates.push(read_retention_candidate(&path, &relative, issues));
+        } else {
+            collect_retention_candidates(publish_root, &path, depth + 1, candidates, issues);
+        }
+    }
+}
+
+fn read_retention_candidate(path: &Path, relative: &str, issues: &mut Vec<Value>) -> Value {
+    let manifest_path = path.join("manifest.json");
+    let receipt_path = path.join("receipt.json");
+    let manifest_hash =
+        read_file_hash(&manifest_path, issues, relative, "retention_manifest").unwrap_or_default();
+    let receipt_hash =
+        read_file_hash(&receipt_path, issues, relative, "retention_receipt").unwrap_or_default();
+    let manifest = read_json_artifact(&manifest_path, AGENT_RECEIPT_MAX_BYTES).ok();
+    let receipt = read_json_artifact(&receipt_path, AGENT_RECEIPT_MAX_BYTES).ok();
+    let mut valid = true;
+    if manifest.is_none() || receipt.is_none() {
+        valid = false;
+    }
+    let stated_manifest_hash = receipt
+        .as_ref()
+        .and_then(|receipt| receipt.get("manifest_hash"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    if !stated_manifest_hash.is_empty() && stated_manifest_hash != manifest_hash {
+        valid = false;
+        issues.push(release_evidence_issue(
+            "release_evidence_retention.manifest_hash_mismatch",
+            relative,
+            "receipt manifest hash matches manifest.json",
+            "mismatch",
+        ));
+    }
+    if receipt
+        .as_ref()
+        .and_then(|receipt| receipt.get("valid"))
+        .and_then(Value::as_bool)
+        != Some(true)
+    {
+        valid = false;
+        issues.push(release_evidence_issue(
+            "release_evidence_retention.publication_receipt_invalid",
+            relative,
+            "valid publication receipt",
+            "invalid",
+        ));
+    }
+    let labels = manifest
+        .as_ref()
+        .and_then(|manifest| manifest.get("labels"))
+        .cloned()
+        .unwrap_or_else(|| json!({}));
+    for field in ["channel", "release", "retention"] {
+        validate_publish_label(field, labels.get(field).and_then(Value::as_str), issues);
+    }
+    json!({
+        "path": relative,
+        "manifest_hash": manifest_hash,
+        "receipt_hash": receipt_hash,
+        "labels": labels,
+        "valid": valid,
+    })
+}
+
+fn run_release_evidence_rotate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let options = release_evidence_rotate_options(&args)?;
+    let receipt = release_evidence_rotate_receipt(&options);
+    let valid = receipt
+        .get("valid")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    print_json(receipt)?;
+    if !valid {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+struct ReleaseEvidenceRotateOptions {
+    root: PathBuf,
+    plan: PathBuf,
+    execute: bool,
+}
+
+fn release_evidence_rotate_options(
+    args: &[String],
+) -> Result<ReleaseEvidenceRotateOptions, Box<dyn Error>> {
+    let root = read_option(args.to_vec(), "--root", ".");
+    let Some(plan) = read_string_option(args, "--plan").map(PathBuf::from) else {
+        return Err("release-evidence rotate requires --plan <file>".into());
+    };
+    Ok(ReleaseEvidenceRotateOptions {
+        root,
+        plan,
+        execute: args.iter().any(|arg| arg == "--execute"),
+    })
+}
+
+fn release_evidence_rotate_receipt(options: &ReleaseEvidenceRotateOptions) -> Value {
+    // r[impl release_evidence.retention_rotation.rotation_execution]
+    // r[impl release_evidence.retention_rotation.rotation_execution.verify_before_mutation]
+    // r[impl release_evidence.retention_rotation.fail_closed]
+    let mut issues = Vec::new();
+    let plan_hash =
+        read_file_hash(&options.plan, &mut issues, "plan", "rotation_plan").unwrap_or_default();
+    let plan = read_json_artifact(&options.plan, AGENT_RECEIPT_MAX_BYTES).ok();
+    if plan.is_none() {
+        issues.push(release_evidence_issue(
+            "release_evidence_rotation.plan_unreadable",
+            "plan",
+            "readable retention plan JSON",
+            "unreadable",
+        ));
+    }
+    let publish_root = plan
+        .as_ref()
+        .and_then(|plan| plan.get("publish_root"))
+        .and_then(Value::as_str)
+        .map(PathBuf::from)
+        .unwrap_or_default();
+    let mut mutations = Vec::new();
+    if let Some(plan) = &plan {
+        for decision in plan
+            .get("decisions")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            if decision.get("action").and_then(Value::as_str) != Some("prune_candidate") {
+                continue;
+            }
+            let relative = decision.get("path").and_then(Value::as_str).unwrap_or("");
+            if !safe_relative_path_text(relative) {
+                issues.push(release_evidence_issue(
+                    "release_evidence_rotation.path_unsafe",
+                    "decision.path",
+                    "safe relative prune path",
+                    "unsafe",
+                ));
+                continue;
+            }
+            let target = publish_root.join(relative);
+            let before_hash = directory_manifest_hash(&target).unwrap_or_default();
+            if options.execute && issues.is_empty() && fs::remove_dir_all(&target).is_err() {
+                issues.push(release_evidence_issue(
+                    "release_evidence_rotation.remove_failed",
+                    relative,
+                    "removable local publication tree",
+                    "failed",
+                ));
+            }
+            let after_hash = directory_manifest_hash(&target).unwrap_or_default();
+            mutations.push(json!({
+                "path": relative,
+                "action": if options.execute { "removed" } else { "would_remove" },
+                "before_hash": before_hash,
+                "after_hash": after_hash,
+            }));
+        }
+    }
+    mutations.sort_by_key(canonical_json_hash);
+    issues.sort_by_key(canonical_json_hash);
+    let valid = issues.is_empty();
+    with_portable_receipt_hash(
+        &options.root,
+        json!({
+            "command": "release-evidence rotate",
+            "root": path_string(&options.root),
+            "plan": path_string(&options.plan),
+            "execute": options.execute,
+            "valid": valid,
+            "verdict": if valid { "pass" } else { "fail" },
+            "plan_hash": plan_hash,
+            "mutation_count": mutations.len(),
+            "mutation_manifest": mutations,
+            "issues": issues,
+        }),
+    )
+}
+
+fn directory_manifest_hash(path: &Path) -> Option<String> {
+    if !path.exists() {
+        return None;
+    }
+    let mut entries = Vec::new();
+    collect_directory_hashes(path, path, &mut entries).ok()?;
+    Some(canonical_json_hash(&json!(entries)))
+}
+
+fn collect_directory_hashes(
+    root: &Path,
+    path: &Path,
+    entries: &mut Vec<Value>,
+) -> std::io::Result<()> {
+    let mut children = fs::read_dir(path)?.collect::<Result<Vec<_>, _>>()?;
+    children.sort_by_key(|entry| entry.path());
+    for child in children {
+        let child_path = child.path();
+        let meta = fs::symlink_metadata(&child_path)?;
+        if meta.file_type().is_symlink() {
+            continue;
+        }
+        if meta.is_dir() {
+            collect_directory_hashes(root, &child_path, entries)?;
+        } else if meta.is_file() {
+            let relative = publish_relative_path(root, &child_path);
+            let bytes = fs::read(&child_path)?;
+            entries.push(json!({"path": relative, "hash": blake3_hex(&bytes)}));
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use std::{env, fs, process::Command};
@@ -1019,6 +1522,147 @@ mod tests {
         assert!(issues
             .iter()
             .any(|issue| issue["code"].as_str() == Some("release_evidence_publish.label_invalid")));
+    }
+
+    #[test]
+    fn retention_plan_marks_newest_keep_and_older_prune_candidate() {
+        // r[verify release_evidence.retention_rotation.plan_receipt]
+        // r[verify release_evidence.retention_rotation.plan_receipt.decisions]
+        // r[verify release_evidence.retention_rotation.plan_receipt.ordering]
+        let root = env::temp_dir().join(format!(
+            "cairn-release-evidence-retention-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        let publish_root = root.join("published");
+        write_publish_tree(
+            &publish_root.join("stable/2026-05-01"),
+            "stable",
+            "2026-05-01",
+            "short",
+        );
+        write_publish_tree(
+            &publish_root.join("stable/2026-05-02"),
+            "stable",
+            "2026-05-02",
+            "short",
+        );
+        let out = root.join("plan.json");
+        let receipt = release_evidence_retention_plan_receipt(&ReleaseEvidenceRetentionOptions {
+            root: root.clone(),
+            publish_root: publish_root.clone(),
+            out: out.clone(),
+            channel: Some("stable".to_string()),
+            keep_latest: 1,
+            retain: None,
+        });
+        assert_eq!(receipt["valid"].as_bool(), Some(true));
+        let decisions = receipt["decisions"].as_array().expect("decisions");
+        assert!(decisions.iter().any(|decision| {
+            decision["path"].as_str() == Some("stable/2026-05-02")
+                && decision["action"].as_str() == Some("keep")
+        }));
+        assert!(decisions.iter().any(|decision| {
+            decision["path"].as_str() == Some("stable/2026-05-01")
+                && decision["action"].as_str() == Some("prune_candidate")
+        }));
+        assert!(out.exists());
+        fs::remove_dir_all(&root).expect("remove temp tree");
+    }
+
+    #[test]
+    fn rotate_dry_run_does_not_delete_prune_candidate() {
+        // r[verify release_evidence.retention_rotation.rotation_execution]
+        // r[verify release_evidence.retention_rotation.rotation_execution.verify_before_mutation]
+        let root = env::temp_dir().join(format!(
+            "cairn-release-evidence-rotate-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        let publish_root = root.join("published");
+        write_publish_tree(&publish_root.join("old"), "stable", "2026-05-01", "short");
+        let plan = root.join("plan.json");
+        fs::write(
+            &plan,
+            serde_json::to_vec_pretty(&json!({
+                "schema": "cairn.release-evidence.retention-plan.v1",
+                "publish_root": path_string(&publish_root),
+                "decisions": [{
+                    "path": "old",
+                    "action": "prune_candidate",
+                    "manifest_hash": "unused",
+                    "receipt_hash": "unused",
+                    "labels": {"channel": "stable", "release": "2026-05-01"},
+                    "valid": true,
+                }]
+            }))
+            .expect("serialize plan"),
+        )
+        .expect("write plan");
+        let receipt = release_evidence_rotate_receipt(&ReleaseEvidenceRotateOptions {
+            root: root.clone(),
+            plan,
+            execute: false,
+        });
+        assert_eq!(receipt["valid"].as_bool(), Some(true));
+        assert!(publish_root.join("old").exists());
+        assert_eq!(receipt["mutation_count"].as_u64(), Some(1));
+        fs::remove_dir_all(&root).expect("remove temp tree");
+    }
+
+    #[test]
+    fn retention_rejects_duplicate_release_identity() {
+        // r[verify release_evidence.retention_rotation.fail_closed]
+        // r[verify release_evidence.retention_rotation.fail_closed.unsafe_or_stale]
+        let root = env::temp_dir().join(format!(
+            "cairn-release-evidence-retention-duplicate-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        let publish_root = root.join("published");
+        write_publish_tree(&publish_root.join("a"), "stable", "2026-05-01", "short");
+        write_publish_tree(&publish_root.join("b"), "stable", "2026-05-01", "short");
+        let receipt = release_evidence_retention_plan_receipt(&ReleaseEvidenceRetentionOptions {
+            root: root.clone(),
+            publish_root,
+            out: root.join("plan.json"),
+            channel: Some("stable".to_string()),
+            keep_latest: 1,
+            retain: None,
+        });
+        assert_eq!(receipt["valid"].as_bool(), Some(false));
+        assert!(receipt["issues"]
+            .as_array()
+            .expect("issues")
+            .iter()
+            .any(|issue| {
+                issue["code"].as_str()
+                    == Some("release_evidence_retention.duplicate_channel_release")
+            }));
+        fs::remove_dir_all(&root).expect("remove temp tree");
+    }
+
+    fn write_publish_tree(path: &std::path::Path, channel: &str, release: &str, retention: &str) {
+        fs::create_dir_all(path).expect("publish tree");
+        let manifest = json!({
+            "schema": "cairn.release-evidence.publish-manifest.v1",
+            "labels": {"channel": channel, "release": release, "retention": retention},
+            "materialized": [],
+        });
+        let manifest_bytes = serde_json::to_vec_pretty(&manifest).expect("manifest bytes");
+        fs::write(path.join("manifest.json"), &manifest_bytes).expect("manifest");
+        let manifest_hash = blake3_hex(&manifest_bytes);
+        fs::write(
+            path.join("receipt.json"),
+            serde_json::to_vec_pretty(&json!({
+                "command": "release-evidence publish",
+                "valid": true,
+                "verdict": "pass",
+                "manifest_hash": manifest_hash,
+            }))
+            .expect("receipt bytes"),
+        )
+        .expect("receipt");
     }
 
     fn run_git(root: &std::path::Path, args: &[&str]) {

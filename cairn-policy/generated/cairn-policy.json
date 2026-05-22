@@ -1599,6 +1599,81 @@
     {
       "action_keys": [],
       "artifact_keys": [
+        "action",
+        "labels",
+        "manifest_hash",
+        "path",
+        "reason",
+        "receipt_hash",
+        "valid"
+      ],
+      "case_keys": [],
+      "command": "release-evidence retention-plan",
+      "hash_fields": [
+        "plan_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "decision_count",
+        "decisions",
+        "issues",
+        "out",
+        "plan_hash",
+        "publish_root",
+        "receipt_hash",
+        "root",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
+        "action",
+        "after_hash",
+        "before_hash",
+        "path"
+      ],
+      "case_keys": [],
+      "command": "release-evidence rotate",
+      "hash_fields": [
+        "plan_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "execute",
+        "issues",
+        "mutation_count",
+        "mutation_manifest",
+        "plan",
+        "plan_hash",
+        "receipt_hash",
+        "root",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
         "hash",
         "path",
         "role"
