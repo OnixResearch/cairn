@@ -1555,6 +1555,50 @@
     {
       "action_keys": [],
       "artifact_keys": [
+        "expected_hash",
+        "observed_hash",
+        "path",
+        "role"
+      ],
+      "case_keys": [],
+      "command": "release-evidence publish",
+      "hash_fields": [
+        "manifest_hash",
+        "receipt_hash",
+        "source_index_hash",
+        "source_index_receipt_hash",
+        "source_index_verification_receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "artifact_dir",
+        "command",
+        "index",
+        "issues",
+        "labels",
+        "manifest_hash",
+        "materialized",
+        "materialized_count",
+        "publish_dir",
+        "receipt_hash",
+        "root",
+        "source_index_hash",
+        "source_index_receipt_hash",
+        "source_index_verification_receipt_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [
         "hash",
         "path",
         "role"

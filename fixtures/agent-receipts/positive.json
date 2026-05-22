@@ -24,9 +24,9 @@
   "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
   "replay_evidence": {
     "replay_artifact_path": "replay-agent.json",
-    "replay_environment_attestation_hash": "4f5dd1ce44f530a4619f527aabf0d4fd84506bb40448becf712355278e3b7b03",
-    "replay_policy_hash": "5a37bba5361bf36be45eb0222bbc09c6acd6a84f77d562e57de8a36afdebcb24",
-    "replay_receipt_hash": "baf82fc03d81de01088333244a7554090c94f76f36362af76dedb650d507872f",
+    "replay_environment_attestation_hash": "15e6c15745aa8a196cfd232465015a820eba3f2f7399bcd96f63b8d0372c97cb",
+    "replay_policy_hash": "fc9eb0692f69994b7e1c22169c86e10e713bc4bd34ee3b488c96f4024022a488",
+    "replay_receipt_hash": "b91cb7ae99695cfa400e7f45cdefadec41266144ff24b8a702c2ab2a0b97e0f1",
     "replay_selected_cases": [
       "agent_receipt_validate",
       "mcp_describe",
@@ -58,5 +58,5 @@
       }
     ]
   },
-  "receipt_hash": "ddf14a1e1c6f125a2570834da9c96eb18b82c8e4e2a33d5d477576194b6c8ade"
+  "receipt_hash": "f3c783c521f1b73333b16f8a4a41194d1b496f3df9acdc019ced0f54f57d83f6"
 }
