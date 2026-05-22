@@ -16,11 +16,14 @@
 // r[impl release_evidence.cli_source_split.behavior_preserved]
 use std::error::Error;
 
+mod check_index;
 mod common;
 mod index;
 mod publish;
 mod retention;
 mod rotate;
+
+pub(crate) use check_index::release_evidence_check_index_receipt_for_path;
 
 #[cfg(test)]
 mod tests;
@@ -29,11 +32,12 @@ pub(crate) fn run_release_evidence(args: Vec<String>) -> Result<(), Box<dyn Erro
     let mut iter = args.into_iter();
     let Some(subcommand) = iter.next() else {
         return Err(
-            "release-evidence requires a subcommand: index|publish|retention-plan|rotate".into(),
+            "release-evidence requires a subcommand: index|check-index|publish|retention-plan|rotate".into(),
         );
     };
     match subcommand.as_str() {
         "index" => index::run_release_evidence_index(iter.collect()),
+        "check-index" => check_index::run_release_evidence_check_index(iter.collect()),
         "publish" => publish::run_release_evidence_publish(iter.collect()),
         "retention-plan" => retention::run_release_evidence_retention_plan(iter.collect()),
         "rotate" => rotate::run_release_evidence_rotate(iter.collect()),

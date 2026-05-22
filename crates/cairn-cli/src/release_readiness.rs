@@ -18,6 +18,7 @@ use serde_json::{json, Value};
 use crate::determinism::determinism_coverage_audit_receipt;
 use crate::mcp::mcp_agent_smoke_receipt;
 use crate::native::cairn_validation_receipt;
+use crate::release_evidence::release_evidence_check_index_receipt_for_path;
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
     with_portable_receipt_hash,
@@ -47,6 +48,7 @@ pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> 
         let policy = load_policy_file(policy_path.clone())?;
         Ok(determinism_coverage_audit_receipt(&root, &policy))
     });
+    let release_evidence_index = conventional_release_evidence_index_component(root.clone());
     let repository_gate_summary = repository_gate_summary();
     let replay_preflight = json!({
         "command": "determinism replay --root <root>",
@@ -60,6 +62,7 @@ pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> 
         tracey.check,
         mcp_smoke.check,
         coverage_audit.check,
+        release_evidence_index.check,
     ];
     checks.push(json!({
         "name": "repository_gate_policy_listed",
@@ -84,11 +87,40 @@ pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> 
             "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
             "coverage_audit_valid": coverage_audit_valid,
             "coverage_audit_receipt_hash": coverage_audit.receipt_hash,
+            "release_evidence_index_check_hash": release_evidence_index.receipt_hash,
             "repository_gate_summary": repository_gate_summary,
             "determinism_replay": replay_preflight,
             "mcp": {"read_only": true, "destructive": false}
         }),
     )
+}
+
+fn conventional_release_evidence_index_component(root: PathBuf) -> ReadinessComponent {
+    // r[impl release_evidence.current_head_staleness_guard.release_readiness]
+    let index = root.join("docs/release-evidence-current-head.md");
+    if index.exists() {
+        readiness_component("release_evidence_index_freshness", || {
+            Ok(release_evidence_check_index_receipt_for_path(root, index))
+        })
+    } else {
+        let receipt = json!({
+            "command": "release-evidence check-index",
+            "valid": true,
+            "verdict": "pass",
+            "skipped": true,
+            "reason": "conventional checked-in current-head evidence page is absent; checked-in evidence is treated as immutable audited payload snapshots",
+        });
+        ReadinessComponent {
+            check: json!({
+                "name": "release_evidence_index_freshness",
+                "passed": true,
+                "source": component_source("release_evidence_index_freshness"),
+                "skipped": true,
+                "receipt_hash": canonical_json_hash(&receipt),
+            }),
+            receipt_hash: canonical_json_hash(&receipt),
+        }
+    }
 }
 
 struct ReadinessComponent {
@@ -137,6 +169,9 @@ fn component_source(name: &str) -> &'static str {
         "tracey_coverage" => "cairn tracey coverage --root <root>",
         "mcp_agent_smoke" => "cairn agent-receipt smoke-mcp --root <root>",
         "determinism_coverage_audit" => "cairn determinism coverage-audit --root <root>",
+        "release_evidence_index_freshness" => {
+            "cairn release-evidence check-index --root <root> --index docs/release-evidence-current-head.md"
+        }
         _ => "unknown",
     }
 }

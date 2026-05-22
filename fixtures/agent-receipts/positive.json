@@ -22,11 +22,12 @@
     "forbidden_uncaptured": []
   },
   "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "receipt_hash": "f66fbad9a2a6ade19edc93fa26da01bf203dee0d3cb8d65dabc3618e1ea72b2d",
   "replay_evidence": {
     "replay_artifact_path": "replay-agent.json",
-    "replay_environment_attestation_hash": "f65940237f5900d3f5e506b03598be768c4feeb5e3c3e91d6af4d9778b71d2f8",
-    "replay_policy_hash": "ec45383a7db63a6e56dc785805e6e6ddbb3df5e4d2ae81162104996b1f0cdefa",
-    "replay_receipt_hash": "44690768fe5a92372faf4d927808652a4fb2e7f25ff2b1b6cd6b9df0946a5f98",
+    "replay_environment_attestation_hash": "d71996b449abc9ab8b9f2936abcdc4a9049c60e20dc038408b49327e7bf9e5b7",
+    "replay_policy_hash": "fbbd35e94ca667aae96273835a75af7cfcd89f36677a74a0b01e83583eece3d6",
+    "replay_receipt_hash": "3c903ec70b2a72fec190eaba220d0ee36ee1d7104701a33ed820cef914170857",
     "replay_selected_cases": [
       "agent_receipt_validate",
       "mcp_describe",
@@ -57,6 +58,5 @@
         "verdict": "PASS"
       }
     ]
-  },
-  "receipt_hash": "2cff73cc28ea7f050bae4f2b5ac17d3d56e8f59e485e0fab73a24e683b86c65c"
+  }
 }

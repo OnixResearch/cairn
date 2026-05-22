@@ -247,7 +247,8 @@
           "cairn_validation_hash",
           "tracey_coverage_hash",
           "mcp_smoke_receipt_hash",
-          "coverage_audit_receipt_hash"
+          "coverage_audit_receipt_hash",
+          "release_evidence_index_check_hash"
         ],
         "id": "release_readiness",
         "normalization_rules": [
@@ -1548,6 +1549,40 @@
         "receipt_hash",
         "receipt_hashes",
         "root",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "release-evidence check-index",
+      "hash_fields": [
+        "receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "current_head_match",
+        "index",
+        "issues",
+        "live_head",
+        "mode",
+        "payload",
+        "payload_ancestor_of_head",
+        "payload_commit",
+        "payload_exists",
+        "receipt_hash",
+        "root",
+        "schema",
         "valid",
         "verdict"
       ]

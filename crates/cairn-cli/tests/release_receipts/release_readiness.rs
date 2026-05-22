@@ -46,6 +46,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "mcp_smoke_receipt_hash",
             "coverage_audit_valid",
             "coverage_audit_receipt_hash",
+            "release_evidence_index_check_hash",
             "repository_gate_summary",
             "determinism_replay",
             "mcp",
@@ -60,6 +61,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_hash_field(&receipt, "tracey_coverage_hash")?;
     assert_hash_field(&receipt, "mcp_smoke_receipt_hash")?;
     assert_hash_field(&receipt, "coverage_audit_receipt_hash")?;
+    assert_hash_field(&receipt, "release_evidence_index_check_hash")?;
     assert_eq!(receipt["coverage_audit_valid"], true);
     let check_names = receipt["checks"]
         .as_array()
@@ -71,6 +73,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert!(check_names.contains(&"tracey_coverage"));
     assert!(check_names.contains(&"mcp_agent_smoke"));
     assert!(check_names.contains(&"determinism_coverage_audit"));
+    assert!(check_names.contains(&"release_evidence_index_freshness"));
     assert!(check_names.contains(&"repository_gate_policy_listed"));
     assert_eq!(receipt["mcp"]["read_only"], true);
     assert_eq!(receipt["mcp"]["destructive"], false);
@@ -90,6 +93,7 @@ fn release_readiness_bundle_is_reproducible() -> Result<(), Box<dyn Error>> {
             "tracey_coverage_hash",
             "mcp_smoke_receipt_hash",
             "coverage_audit_receipt_hash",
+            "release_evidence_index_check_hash",
         ],
     )?;
     assert_eq!(receipt["valid"], true);
