@@ -11,6 +11,7 @@ mod migration;
 mod native;
 mod plan_receipts;
 mod policy;
+mod release_evidence;
 mod release_readiness;
 mod rename_classification;
 mod support;
@@ -58,6 +59,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "doctor" => run_doctor(args.collect())?,
         "validate" => run_validate(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
+        "release-evidence" => release_evidence::run_release_evidence(args.collect())?,
         "determinism" => run_determinism(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,

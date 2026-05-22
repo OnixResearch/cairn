@@ -1,9 +1,9 @@
 use super::*;
 
-struct EvidenceExportOptions {
-    root: PathBuf,
-    out: Option<PathBuf>,
-    agent_receipt: Option<PathBuf>,
+pub(crate) struct EvidenceExportOptions {
+    pub(crate) root: PathBuf,
+    pub(crate) out: Option<PathBuf>,
+    pub(crate) agent_receipt: Option<PathBuf>,
 }
 
 pub(super) fn run_evidence_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -37,7 +37,7 @@ fn evidence_export_options(args: &[String]) -> Result<EvidenceExportOptions, Box
     })
 }
 
-fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value {
+pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value {
     let root = options.root.clone();
     let out_dir = options.out.clone().unwrap_or_else(|| PathBuf::from("."));
     let mut issues = Vec::new();
@@ -395,7 +395,7 @@ fn evidence_export_artifacts(out_dir: &Path, issues: &mut Vec<Value>) -> Vec<Val
         .collect()
 }
 
-fn write_evidence_json(path: &Path, value: &Value, issues: &mut Vec<Value>, role: &str) {
+pub(crate) fn write_evidence_json(path: &Path, value: &Value, issues: &mut Vec<Value>, role: &str) {
     if let Some(parent) = path.parent() {
         if fs::create_dir_all(parent).is_err() {
             issues.push(evidence_export_issue(

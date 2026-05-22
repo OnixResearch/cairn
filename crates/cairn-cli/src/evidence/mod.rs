@@ -37,7 +37,14 @@ mod index;
 mod republish;
 mod verify;
 
-pub(crate) use index::{evidence_index_verify_receipt, EvidenceIndexVerifyOptions};
+pub(crate) use export::{evidence_export_receipt, write_evidence_json, EvidenceExportOptions};
+pub(crate) use import::{evidence_import_receipt, EvidenceImportOptions};
+pub(crate) use index::{
+    evidence_index_receipt, evidence_index_verify_receipt, EvidenceIndexOptions,
+    EvidenceIndexVerifyOptions,
+};
+pub(crate) use republish::{evidence_republish_receipt, EvidenceRepublishOptions};
+pub(crate) use verify::{evidence_verify_receipt, EvidenceVerifyOptions};
 
 pub(crate) fn run_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();

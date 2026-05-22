@@ -1,8 +1,8 @@
 use super::*;
 
-pub(super) struct EvidenceVerifyOptions {
-    pub(super) root: PathBuf,
-    pub(super) bundle: Option<PathBuf>,
+pub(crate) struct EvidenceVerifyOptions {
+    pub(crate) root: PathBuf,
+    pub(crate) bundle: Option<PathBuf>,
 }
 
 pub(super) fn run_evidence_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -31,7 +31,7 @@ fn evidence_verify_options(args: &[String]) -> Result<EvidenceVerifyOptions, Box
     Ok(EvidenceVerifyOptions { root, bundle })
 }
 
-pub(super) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value {
+pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value {
     let root = options.root.clone();
     let bundle_dir = options.bundle.clone().unwrap_or_else(|| PathBuf::from("."));
     let mut issues = Vec::new();

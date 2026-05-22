@@ -1,10 +1,10 @@
 use super::import::EVIDENCE_IMPORT_MAX_FILES;
 use super::*;
 
-struct EvidenceRepublishOptions {
-    root: PathBuf,
-    imported: Option<PathBuf>,
-    out: Option<PathBuf>,
+pub(crate) struct EvidenceRepublishOptions {
+    pub(crate) root: PathBuf,
+    pub(crate) imported: Option<PathBuf>,
+    pub(crate) out: Option<PathBuf>,
 }
 
 pub(super) fn run_evidence_republish(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -41,7 +41,7 @@ fn evidence_republish_options(args: &[String]) -> Result<EvidenceRepublishOption
     })
 }
 
-fn evidence_republish_receipt(options: &EvidenceRepublishOptions) -> Value {
+pub(crate) fn evidence_republish_receipt(options: &EvidenceRepublishOptions) -> Value {
     let root = options.root.clone();
     let imported_dir = options
         .imported

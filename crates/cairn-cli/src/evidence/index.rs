@@ -1,9 +1,9 @@
 use super::*;
 
-struct EvidenceIndexOptions {
-    root: PathBuf,
-    bundle: Option<PathBuf>,
-    out: Option<PathBuf>,
+pub(crate) struct EvidenceIndexOptions {
+    pub(crate) root: PathBuf,
+    pub(crate) bundle: Option<PathBuf>,
+    pub(crate) out: Option<PathBuf>,
 }
 
 #[derive(Default)]
@@ -73,7 +73,7 @@ fn evidence_index_verify_options(
     Ok(EvidenceIndexVerifyOptions { root, index })
 }
 
-fn evidence_index_receipt(options: &EvidenceIndexOptions) -> Value {
+pub(crate) fn evidence_index_receipt(options: &EvidenceIndexOptions) -> Value {
     // r[impl cairn.supersede.evidence_publish_index_rail.command]
     // r[impl cairn.supersede.evidence_publish_index_rail.failures]
     let root = options.root.clone();

@@ -1,10 +1,10 @@
 use super::verify::{evidence_verify_receipt, EvidenceVerifyOptions};
 use super::*;
 
-struct EvidenceImportOptions {
-    root: PathBuf,
-    bundle: Option<PathBuf>,
-    into: Option<PathBuf>,
+pub(crate) struct EvidenceImportOptions {
+    pub(crate) root: PathBuf,
+    pub(crate) bundle: Option<PathBuf>,
+    pub(crate) into: Option<PathBuf>,
 }
 
 pub(super) fn run_evidence_import(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -37,7 +37,7 @@ fn evidence_import_options(args: &[String]) -> Result<EvidenceImportOptions, Box
     Ok(EvidenceImportOptions { root, bundle, into })
 }
 
-fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value {
+pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value {
     let root = options.root.clone();
     let bundle_dir = options.bundle.clone().unwrap_or_else(|| PathBuf::from("."));
     let into_dir = options.into.clone().unwrap_or_else(|| PathBuf::from("."));

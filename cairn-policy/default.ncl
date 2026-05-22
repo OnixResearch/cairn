@@ -180,6 +180,13 @@ let Contracts = import "contracts.ncl" in
       hash_fields = ["bundle_receipt_hash", "index_receipt_hash", "receipt_hash"],
     },
     {
+      command = "release-evidence index",
+      top_level_keys = ["artifact_dir", "artifacts", "command", "git", "issues", "out", "receipt_hash", "receipt_hashes", "root", "valid", "verdict"],
+      artifact_keys = ["hash", "path", "required", "role"],
+      issue_keys = ["actual", "code", "expected", "field_path"],
+      hash_fields = ["receipt_hash"],
+    },
+    {
       command = "evidence registry build",
       top_level_keys = ["command", "entries", "entry_count", "issues", "out", "receipt_hash", "registry_hash", "root", "valid", "verdict"],
       artifact_keys = ["hash", "path", "role"],
