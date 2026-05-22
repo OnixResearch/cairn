@@ -40,6 +40,7 @@ All default tools include MCP annotations equivalent to `readOnlyHint=true` and 
 - `cairn_gate`: required `change` and `stage`, optional `root`, `policy`; `stage` must be `proposal`, `design`, or `tasks`.
 - `cairn_gate_context`: required `change`, optional `root`; return bounded gate context for a change.
 - `cairn_agent_receipt_validate`: either `path` plus optional `root`, or inline `receipt`; validate a bounded agent-run receipt. r[verify cairn.supersede.agent_receipt_validation_surface.mcp]
+- `cairn_drain_plan`: optional `root`, `policy`; return a read-only repository-wide drain plan for all active changes, including task counts, proposal/design/tasks gate summaries, blockers, and explicit next actions. It recommends `cairn_sync_execute`/`cairn_archive_execute` for ready changes but never performs mutations itself. r[verify cairn.mcp_drain_all.plan.read_only] r[verify cairn.mcp_drain_all.plan.readiness] r[verify cairn.mcp_drain_all.plan.next_actions] r[verify cairn.mcp_drain_all.plan.mutation_boundary]
 - `cairn_sync_plan`: required `change`, optional `root`, `policy`; return a dry-run sync plan.
 - `cairn_archive_plan`: required `change`, optional `root`, `policy`; return a dry-run archive plan.
 - `cairn_migrate_plan`: required `source`, optional `root`, `policy`; `source` must be `openspec` or `ironspec`.

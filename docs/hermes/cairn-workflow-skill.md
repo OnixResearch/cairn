@@ -120,6 +120,7 @@ Expected result: no matches.
   - `cairn mcp --describe`
   - `cairn mcp --call <tool> '<json>'`
   - `cairn mcp --allow-mutations` is required for mutation-capable tools.
+  - `cairn_drain_plan` is the read-only MCP repository-wide drain planner: it summarizes every active change with gate/task readiness, blockers, and safe next actions; ready changes still require explicit `cairn_sync_execute` / `cairn_archive_execute` calls under `--allow-mutations`.
   - MCP tool schemas are strict object schemas with `additionalProperties=false`.
   - Default mutation denial is checked before argument validation for mutation-capable tools.
   - `cairn agent-receipt validate <path>` validates deterministic agent-run receipt fixtures.
