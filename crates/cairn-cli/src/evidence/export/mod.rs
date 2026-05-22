@@ -1,10 +1,28 @@
 use super::*;
 
-pub(crate) struct EvidenceExportOptions {
-    pub(crate) root: PathBuf,
-    pub(crate) out: Option<PathBuf>,
-    pub(crate) agent_receipt: Option<PathBuf>,
-}
+mod agent_receipt;
+mod artifacts;
+mod issue;
+mod manifest;
+mod options;
+mod receipt;
+
+pub(crate) use options::EvidenceExportOptions;
+pub(crate) use receipt::evidence_export_final_receipt;
+pub(crate) use receipt::write_evidence_json;
+
+// r[impl cli_maintainability.evidence_export_submodule_split.focused_modules]
+// r[impl cli_maintainability.evidence_export_submodule_split.focused_modules.visible_boundaries]
+// r[impl cli_maintainability.evidence_export_submodule_split.focused_modules.narrow_bridges]
+// r[impl cli_maintainability.evidence_export_submodule_split.behavior_preserved]
+// r[impl cli_maintainability.evidence_export_submodule_split.behavior_preserved.focused_checks]
+// r[impl cli_maintainability.evidence_export_submodule_split.behavior_preserved.repository_checks]
+
+use agent_receipt::export_agent_receipt_bound_to_replay;
+use artifacts::evidence_export_artifacts;
+use issue::{evidence_export_issue, evidence_export_nested_issue};
+use manifest::evidence_manifest_with_relative_paths;
+use options::evidence_export_options;
 
 pub(super) fn run_evidence_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.evidence_export_bundle.command]
@@ -21,20 +39,6 @@ pub(super) fn run_evidence_export(args: Vec<String>) -> Result<(), Box<dyn Error
         std::process::exit(1);
     }
     Ok(())
-}
-
-fn evidence_export_options(args: &[String]) -> Result<EvidenceExportOptions, Box<dyn Error>> {
-    let root = read_option(args.to_vec(), "--root", ".");
-    let out = read_string_option(args, "--out").map(PathBuf::from);
-    let agent_receipt = read_string_option(args, "--agent-receipt").map(PathBuf::from);
-    if out.is_none() {
-        return Err("evidence export requires --out <dir>".into());
-    }
-    Ok(EvidenceExportOptions {
-        root,
-        out,
-        agent_receipt,
-    })
 }
 
 pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value {
@@ -272,199 +276,4 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         "evidence_export_receipt",
     );
     receipt
-}
-
-fn export_agent_receipt_bound_to_replay(
-    template_path: &Path,
-    output_path: &Path,
-    replay_verification: &Value,
-    policy: &Policy,
-) -> Result<Value, Box<dyn Error>> {
-    let mut receipt = read_json_artifact(template_path, AGENT_RECEIPT_MAX_BYTES)?;
-    let evidence = json!({
-        "replay_artifact_path": "replay-agent.json",
-        "replay_receipt_hash": replay_verification
-            .get("replay_receipt_hash")
-            .cloned()
-            .unwrap_or(Value::Null),
-        "replay_policy_hash": replay_verification
-            .get("replay_policy_hash")
-            .cloned()
-            .unwrap_or(Value::Null),
-        "replay_environment_attestation_hash": replay_verification
-            .get("environment_attestation_hash")
-            .cloned()
-            .unwrap_or(Value::Null),
-        "replay_selected_cases": replay_verification
-            .get("selected_cases")
-            .cloned()
-            .unwrap_or_else(|| json!([])),
-        "replay_selected_groups": replay_verification
-            .get("selected_groups")
-            .cloned()
-            .unwrap_or_else(|| json!([])),
-        "replay_verdict": if replay_verification.get("valid").and_then(Value::as_bool) == Some(true) { "pass" } else { "fail" },
-    });
-    receipt["replay_evidence"] = evidence;
-    if let Some(object) = receipt.as_object_mut() {
-        object.remove("receipt_hash");
-    }
-    let validation = agent_receipt_validation_receipt(
-        "agent-receipt validate",
-        Some(output_path.to_path_buf()),
-        &receipt,
-        false,
-        policy,
-    );
-    receipt["receipt_hash"] = validation
-        .get("agent_receipt_hash")
-        .cloned()
-        .unwrap_or(Value::Null);
-    let final_validation = agent_receipt_validation_receipt(
-        "agent-receipt validate",
-        Some(output_path.to_path_buf()),
-        &receipt,
-        false,
-        policy,
-    );
-    if final_validation.get("valid").and_then(Value::as_bool) != Some(true) {
-        return Err("generated agent receipt failed validation".into());
-    }
-    write_evidence_json(output_path, &receipt, &mut Vec::new(), "agent_receipt");
-    Ok(receipt)
-}
-
-fn evidence_manifest_with_relative_paths(manifest: &Value, out_dir: &Path) -> Value {
-    let mut value = manifest.clone();
-    if let Some(entries) = value.get_mut("artifacts").and_then(Value::as_array_mut) {
-        for entry in entries {
-            if let Some(path_text) = entry.get("path").and_then(Value::as_str) {
-                let path = PathBuf::from(path_text);
-                if let Ok(relative) = path.strip_prefix(out_dir) {
-                    entry["path"] = json!(path_string(relative));
-                }
-            }
-        }
-    }
-    value
-}
-
-fn evidence_export_artifacts(out_dir: &Path, issues: &mut Vec<Value>) -> Vec<Value> {
-    let roles = [
-        ("agent_evidence_bundle", "agent-evidence-bundle.json", true),
-        (
-            "agent_evidence_bundle_verification",
-            "agent-evidence-bundle-verification.json",
-            true,
-        ),
-        ("agent_receipt", "agent-receipt.json", true),
-        ("coverage_audit", "coverage-audit.json", true),
-        ("evidence_manifest", "evidence-manifest.json", true),
-        (
-            "evidence_manifest_verification",
-            "evidence-manifest-verification.json",
-            true,
-        ),
-        ("release_readiness", "release-readiness.json", true),
-        ("replay_receipt", "replay-agent.json", true),
-        ("replay_verification", "replay-verification.json", true),
-    ];
-    roles
-        .iter()
-        .map(|(role, relative, required)| {
-            let path = out_dir.join(relative);
-            let hash = match fs::read(&path) {
-                Ok(bytes) => Value::String(blake3_hex(&bytes)),
-                Err(_) => {
-                    issues.push(evidence_export_issue(
-                        "export.artifact_missing",
-                        role,
-                        "generated artifact file",
-                        "missing",
-                    ));
-                    Value::Null
-                }
-            };
-            json!({
-                "role": role,
-                "path": relative,
-                "hash": hash,
-                "required": required,
-            })
-        })
-        .collect()
-}
-
-pub(crate) fn write_evidence_json(path: &Path, value: &Value, issues: &mut Vec<Value>, role: &str) {
-    if let Some(parent) = path.parent() {
-        if fs::create_dir_all(parent).is_err() {
-            issues.push(evidence_export_issue(
-                "export.artifact_parent_create_failed",
-                role,
-                "writable parent directory",
-                "failed",
-            ));
-            return;
-        }
-    }
-    if fs::write(
-        path,
-        format!(
-            "{}\n",
-            serde_json::to_string_pretty(value).unwrap_or_default()
-        ),
-    )
-    .is_err()
-    {
-        issues.push(evidence_export_issue(
-            "export.artifact_write_failed",
-            role,
-            "writable JSON artifact",
-            "failed",
-        ));
-    }
-}
-
-fn evidence_export_nested_issue(code: &str, issue: Value) -> Value {
-    json!({
-        "code": code,
-        "field_path": issue.get("field_path").and_then(Value::as_str).unwrap_or("nested"),
-        "expected": issue.get("expected").and_then(Value::as_str).unwrap_or("valid nested receipt"),
-        "actual": issue.get("actual").and_then(Value::as_str).unwrap_or("invalid"),
-    })
-}
-
-fn evidence_export_issue(code: &str, field_path: &str, expected: &str, actual: &str) -> Value {
-    json!({
-        "code": code,
-        "field_path": field_path,
-        "expected": expected,
-        "actual": actual,
-    })
-}
-
-fn evidence_export_final_receipt(
-    root: &Path,
-    _out_dir: &Path,
-    mut issues: Vec<Value>,
-    artifacts: Vec<Value>,
-    manifest_hash: Value,
-    manifest_verification_receipt_hash: Value,
-) -> Value {
-    issues.sort_by_key(canonical_json_hash);
-    let valid = issues.is_empty();
-    with_portable_receipt_hash(
-        root,
-        json!({
-            "command": "evidence export",
-            "root": path_string(root),
-            "output": "<out>",
-            "valid": valid,
-            "verdict": if valid { "pass" } else { "fail" },
-            "issues": issues,
-            "artifacts": artifacts,
-            "manifest_hash": manifest_hash,
-            "manifest_verification_receipt_hash": manifest_verification_receipt_hash,
-        }),
-    )
 }
