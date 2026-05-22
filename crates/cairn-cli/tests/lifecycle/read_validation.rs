@@ -5,6 +5,7 @@ use super::support::{assert_matches_golden, run_json, temp_fixture, temp_project
 #[test]
 fn status_matches_canonical_golden() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.rename_cairn] r[verify cairn.supersede.rename_cairn.packaging]
+    // r[verify cairn.supersede.repo_native_labels] r[verify cairn.supersede.repo_native_labels.check]
     assert_matches_golden(&["status", "--root", "fixtures/basic"], "status-basic.json")
 }
 
@@ -22,6 +23,7 @@ fn validate_matches_canonical_golden() -> Result<(), Box<dyn Error>> {
 #[test]
 fn doctor_reports_healthy_fixture() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.doctor]
+    // r[verify cairn.supersede.repo_native_only] r[verify cairn.supersede.repo_native_only.doctor]
     let value = run_json(&["doctor", "--root", "fixtures/basic"])?;
     assert_eq!(value["valid"], true);
     assert_eq!(value["layout"], "cairn");

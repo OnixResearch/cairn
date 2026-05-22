@@ -10,6 +10,7 @@ fn migrate_execute_copies_legacy_to_native_and_prefers_native() -> Result<(), Bo
     // r[verify cairn.supersede.migrate_openspec.dry_run] r[verify cairn.supersede.native_layout.prefer]
     // r[verify cairn.supersede.native_layout.prefer_cairn]
     // r[verify cairn.supersede.native_layout.native_only] r[verify cairn.supersede.migrate_openspec.boundary]
+    // r[verify cairn.supersede.repo_native_verification] r[verify cairn.supersede.repo_native_verification.import]
     let fixture = temp_fixture("migrate-execute", "fixtures/basic")?;
     fs::remove_dir_all(fixture.join("cairn"))?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;

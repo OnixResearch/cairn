@@ -1,10 +1,10 @@
 # cairn
 
-`cairn` is a Rust lifecycle engine intended to supersede the upstream
-OpenSpec CLI rather than chase long-term interop. Native repositories use an
-`cairn/` lifecycle layout; legacy `openspec/` trees remain supported as an
-import/migration source. Cairn adds a Nickel-authored policy/config/schema
-layer and a Slotcar-enforced functional-core / imperative-shell boundary.
+`cairn` is a Rust lifecycle engine for native repository lifecycle work.
+Repositories use a `cairn/` lifecycle layout; legacy `openspec/` trees remain
+supported only as an explicit import/migration source. Cairn adds a
+Nickel-authored policy/config/schema layer and a Slotcar-enforced
+functional-core / imperative-shell boundary.
 
 Boundaries:
 
@@ -89,7 +89,7 @@ part of the `cairn` runtime.
 
 ```bash
 nix run path:$PWD#cairn -- init --root /path/to/repo
-nix run path:$PWD#cairn -- change create replace-openspec --root /path/to/repo
+nix run path:$PWD#cairn -- change create native-lifecycle --root /path/to/repo
 nix run path:$PWD#cairn -- change list --root fixtures/basic
 nix run path:$PWD#cairn -- change show demo --root fixtures/basic
 nix run path:$PWD#cairn -- spec list --root fixtures/basic
@@ -347,7 +347,7 @@ with `--allow-mutations`. Tool responses include short text plus
 annotation object. See `docs/cairn-mcp.md`. r[verify
 cairn.supersede.mcp_server.verification.docs]
 
-## Migrate legacy OpenSpec content
+## Import legacy lifecycle content
 
 `migrate openspec` is also dry-run by default. It copies accepted specs, active
 changes, and archived changes from legacy `openspec/` into native `cairn/`
@@ -363,7 +363,7 @@ fields are `command`, `root`, `source_layout`, `destination_layout`, `actions`,
 
 `docs/hermes/cairn-workflow-skill.md` is the repo-maintained Hermes skill
 source for future `cairn` work. It captures the FCIS boundary,
-Cairn-native lifecycle workflow, legacy OpenSpec migration bridge,
+Cairn-native lifecycle workflow, explicit legacy migration bridge,
 Slotcar/Nix verification rails, command contracts, and known pitfalls without
 transient session state or secrets. Copy or patch it into a local Hermes skill
 named `cairn-workflow` when updating agent workflow knowledge.

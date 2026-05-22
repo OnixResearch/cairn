@@ -319,6 +319,7 @@ r[cairn.supersede.native_layout] The system MUST use the canonical `cairn/` life
 
 #### Scenario: Initialize canonical Cairn layout
 r[cairn.supersede.native_layout.init_cairn]
+r[cairn.supersede.native_layout.init]
 - GIVEN a writable project root without a `cairn/` directory
 - WHEN the operator runs `cairn init --root <path>`
 - THEN the system creates `cairn/specs`, `cairn/changes`, and `cairn/archive`
@@ -326,6 +327,7 @@ r[cairn.supersede.native_layout.init_cairn]
 
 #### Scenario: Prefer canonical layout over compatibility layout
 r[cairn.supersede.native_layout.prefer_cairn]
+r[cairn.supersede.native_layout.prefer]
 - GIVEN a repository containing both canonical `cairn/` lifecycle content and legacy `ironspec/` lifecycle content
 - WHEN the operator runs read, status, doctor, validate, gate, sync, or archive commands
 - THEN the system uses the canonical `cairn/` layout
@@ -333,6 +335,7 @@ r[cairn.supersede.native_layout.prefer_cairn]
 
 #### Scenario: Reject implicit legacy fallback
 r[cairn.supersede.native_layout.no_implicit_legacy_after_rename]
+r[cairn.supersede.native_layout.native_only]
 - GIVEN a repository containing only legacy `ironspec/` lifecycle content
 - WHEN the operator runs `cairn` read, status, doctor, validate, gate, sync, or archive commands without an explicit compatibility flag or migration command
 - THEN the command evaluates the canonical `cairn/` layout
@@ -340,6 +343,33 @@ r[cairn.supersede.native_layout.no_implicit_legacy_after_rename]
 
 ### Requirement: OpenSpec migration bridge
 r[cairn.supersede.migrate_openspec] The system MUST provide deterministic migration bridges from legacy `openspec/` and `ironspec/` layouts to canonical `cairn/` layout without using legacy content as an implicit runtime fallback.
+
+#### Scenario: Dry-run legacy OpenSpec migration plan
+r[cairn.supersede.migrate_openspec.dry_run]
+- GIVEN a repository with legacy `openspec/` lifecycle content
+- WHEN the operator runs `cairn migrate openspec --root <path>`
+- THEN the CLI emits a deterministic JSON migration plan from legacy `openspec/` paths into canonical `cairn/` paths
+- AND no filesystem content is mutated
+
+#### Scenario: Execute legacy OpenSpec migration copy
+r[cairn.supersede.migrate_openspec.execute]
+- GIVEN a repository with legacy `openspec/` lifecycle content and no conflicting canonical destination files
+- WHEN the operator runs `cairn migrate openspec --root <path> --execute`
+- THEN the system copies planned files into matching canonical `cairn/` paths
+- AND the JSON receipt reports `mutated=true`
+
+#### Scenario: Block conflicting legacy OpenSpec migration
+r[cairn.supersede.migrate_openspec.conflict]
+- GIVEN a repository with legacy `openspec/` lifecycle content and an existing canonical destination file
+- WHEN the operator runs `cairn migrate openspec --root <path> --execute`
+- THEN the JSON receipt reports the migration as blocked
+- AND the existing canonical destination file is not overwritten
+
+#### Scenario: Migration bridge preserves runtime boundary
+r[cairn.supersede.migrate_openspec.boundary]
+- GIVEN legacy migration support exists
+- WHEN normal read, status, doctor, validate, gate, sync, or archive commands run without an explicit migration command
+- THEN the commands evaluate the canonical `cairn/` layout rather than using legacy `openspec/` as an implicit runtime fallback
 
 #### Scenario: Dry-run legacy Ironspec migration plan
 r[cairn.supersede.migrate_openspec.ironspec_dry_run]
@@ -2480,3 +2510,33 @@ r[cairn.supersede.change_metadata.verification.gates]
 - GIVEN change metadata support is implemented
 - WHEN the operator runs focused CLI/core tests plus repository validation, Tracey coverage, formatting, linting, and diff checks
 - THEN all checks pass and the feature is ready for archive
+
+### Requirement: Repository carries only the native lifecycle root
+r[cairn.supersede.repo_native_only] The Cairn repository MUST NOT keep a top-level legacy OpenSpec lifecycle root as source-controlled lifecycle content once equivalent native Cairn content exists.
+
+#### Scenario: Native-only repository doctor
+r[cairn.supersede.repo_native_only.doctor]
+- GIVEN the Cairn repository contains its native lifecycle content under `cairn/`
+- WHEN an operator runs `cairn doctor --root .`
+- THEN the selected layout is `cairn`
+- AND the layout selection check does not warn that legacy and native roots are both present
+
+### Requirement: Cairn-owned labels use Cairn identity
+r[cairn.supersede.repo_native_labels] The repository MUST describe Cairn-owned packages, checks, and normal workflow examples with Cairn-primary wording rather than OpenSpec-primary labels.
+
+#### Scenario: Local validation check naming
+r[cairn.supersede.repo_native_labels.check]
+- GIVEN the repository flake defines local verification checks for Cairn
+- WHEN those checks are reviewed
+- THEN Cairn validation checks use Cairn-primary names
+- AND OpenSpec naming is limited to explicit legacy migration inputs or historical compatibility references
+
+### Requirement: Legacy import remains explicit compatibility
+r[cairn.supersede.repo_native_verification] The system MUST preserve explicit legacy OpenSpec import compatibility while making the Cairn repository itself native-only.
+
+#### Scenario: Migration bridge preserved
+r[cairn.supersede.repo_native_verification.import]
+- GIVEN an external repository still has legacy `openspec/` lifecycle content
+- WHEN an operator explicitly runs `cairn migrate openspec --root <path>`
+- THEN Cairn treats that content as a migration source
+- AND normal runtime operations on the Cairn repository do not require a checked-in top-level `openspec/` root

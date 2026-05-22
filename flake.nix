@@ -1,5 +1,5 @@
 {
-  description = "Rust/Nickel OpenSpec engine";
+  description = "Rust/Nickel Cairn lifecycle engine";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.slotcar.url = "github:OnixResearch/slotcar";
@@ -88,13 +88,14 @@
           '';
         };
 
-        openspec-validate = pkgs.runCommand "cairn-openspec-validate" {
+        cairn-validate = pkgs.runCommand "cairn-validate" {
           nativeBuildInputs = [ ];
         } ''
           cp -r ${self} source
           chmod -R u+w source
           cd source
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn validate --root . --strict > /tmp/cairn-openspec-validate.json
+          # r[verify cairn.supersede.repo_native_labels.check]
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn validate --root . --strict > /tmp/cairn-validate.json
           touch $out
         '';
 
@@ -134,10 +135,12 @@
             $cairn policy >/tmp/cairn-policy.json
             scratch=$(mktemp -d)
             $cairn init --root "$scratch" >/tmp/cairn-init.json
-            $cairn change create replace-openspec --root "$scratch" >/tmp/cairn-change-create.json
+            $cairn change create native-lifecycle --root "$scratch" >/tmp/cairn-change-create.json
             $cairn change list --root "$scratch" >/tmp/cairn-change-list.json
-            $cairn change show replace-openspec --root "$scratch" >/tmp/cairn-change-show.json
+            $cairn change show native-lifecycle --root "$scratch" >/tmp/cairn-change-show.json
             $cairn status --root "$scratch" >/tmp/cairn-scratch-status.json
+            # r[verify cairn.supersede.repo_native_only.doctor] r[verify cairn.supersede.repo_native_verification.import]
+            $cairn doctor --root . >/tmp/cairn-doctor.json
             $cairn status --root . >/tmp/cairn-status.json
             $cairn validate --root . --strict >/tmp/cairn-validate.json
             $cairn status --root fixtures/basic >/tmp/cairn-fixture-status.json
