@@ -7,7 +7,7 @@ use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
 use crate::determinism::determinism_verify_replay_receipt;
-use crate::{
+use crate::support::{
     default_policy_path, load_policy_file, path_string, portable_json_hash, print_json,
     read_option, with_portable_receipt_hash,
 };

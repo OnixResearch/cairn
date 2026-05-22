@@ -2,7 +2,7 @@ use std::path::Path;
 
 use serde_json::{json, Value};
 
-use crate::{default_policy_path, load_policy_file, read_string_option};
+use crate::support::{default_policy_path, load_policy_file, read_string_option};
 use cairn_core::canonical_json_hash;
 
 use super::common::evidence_registry_issue;

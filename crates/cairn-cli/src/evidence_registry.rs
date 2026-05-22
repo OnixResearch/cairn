@@ -2,7 +2,7 @@ use std::{error::Error, path::PathBuf};
 
 use serde_json::Value;
 
-use crate::{print_json, read_option, read_string_option};
+use crate::support::{print_json, read_option, read_string_option};
 
 mod build_verify;
 mod common;

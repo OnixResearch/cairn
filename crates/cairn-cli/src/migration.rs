@@ -11,7 +11,7 @@ use cairn_core::{
 use serde_json::Value;
 
 use crate::plan_receipts::migration_plan_json;
-use crate::{
+use crate::support::{
     collect_files, default_policy_path, file_content_manifest, has_flag, load_policy_file,
     path_string, portable_json_hash, print_json, read_option, with_portable_receipt_hash,
 };

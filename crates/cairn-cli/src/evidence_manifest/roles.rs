@@ -7,7 +7,7 @@ use crate::agent_receipt::{
 };
 use crate::determinism::determinism_verify_replay_receipt;
 use crate::evidence_registry::{evidence_registry_verify_receipt, EvidenceRegistryVerifyOptions};
-use crate::{default_policy_path, load_policy_file};
+use crate::support::{default_policy_path, load_policy_file};
 
 use super::issues::evidence_manifest_issue;
 

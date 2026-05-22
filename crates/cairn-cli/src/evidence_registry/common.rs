@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 
 use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
 use crate::evidence::{evidence_index_verify_receipt, EvidenceIndexVerifyOptions};
-use crate::{path_string, with_portable_receipt_hash};
+use crate::support::{path_string, with_portable_receipt_hash};
 use cairn_core::canonical_json_hash;
 
 use super::labels::{evidence_registry_labels_json, EvidenceRegistryLabels};

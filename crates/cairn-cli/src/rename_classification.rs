@@ -6,7 +6,7 @@ use std::{
 
 use serde_json::{json, Value};
 
-use crate::{collect_files, read_string_option, safe_relative_path};
+use crate::support::{collect_files, read_string_option, safe_relative_path};
 
 pub(crate) fn run_rename_classification(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.rename_cairn.classification]

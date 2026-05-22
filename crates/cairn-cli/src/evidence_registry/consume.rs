@@ -6,7 +6,7 @@ use std::{
 use serde_json::{json, Value};
 
 use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
-use crate::{path_string, read_string_option, with_portable_receipt_hash};
+use crate::support::{path_string, read_string_option, with_portable_receipt_hash};
 use cairn_core::canonical_json_hash;
 
 use super::build_verify::evidence_registry_verify_receipt;

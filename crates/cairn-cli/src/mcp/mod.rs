@@ -35,7 +35,7 @@ use crate::native::{
 use crate::plan_receipts::{
     archive_plan_json, gate_input_json, gate_report_json, migration_plan_json, sync_plan_json,
 };
-use crate::{
+use crate::support::{
     collect_validation_spec_sources, default_policy_path, detect_layout, execute_archive_plan,
     execute_sync_plan, find_change, find_spec_source, has_flag, load_policy_file,
     mutation_gate_blockers, path_string, portable_json_hash, print_json, read_gate_snapshot,

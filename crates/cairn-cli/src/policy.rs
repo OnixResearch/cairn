@@ -11,7 +11,7 @@ use serde_json::Value;
 use crate::determinism::{
     determinism_surfaces_from_policy, replay_cases_from_policy, replay_groups_from_policy,
 };
-use crate::{default_policy_path, has_flag, load_policy_file, print_json, read_option};
+use crate::support::{default_policy_path, has_flag, load_policy_file, print_json, read_option};
 
 pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if args.first().map(String::as_str) == Some("export") {

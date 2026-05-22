@@ -7,7 +7,7 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 use crate::native::change_status_json;
-use crate::{path_string, portable_json_hash};
+use crate::support::{path_string, portable_json_hash};
 
 pub(crate) fn migration_plan_json(
     root: &Path,

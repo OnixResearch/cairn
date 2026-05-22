@@ -10,7 +10,9 @@ use serde_json::{json, Value};
 use crate::agent_receipt::{
     read_json_artifact, receipt_stated_or_computed_hash, AGENT_RECEIPT_MAX_BYTES,
 };
-use crate::{path_string, portable_json_hash, print_json, read_option, with_portable_receipt_hash};
+use crate::support::{
+    path_string, portable_json_hash, print_json, read_option, with_portable_receipt_hash,
+};
 
 use super::issues::evidence_manifest_issue;
 use super::metadata::read_optional_manifest_metadata;

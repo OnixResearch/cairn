@@ -19,7 +19,9 @@
 // r[impl test_harness.real_rails.classification] r[impl test_harness.real_rails.classification.product]
 // r[impl test_harness.real_rails.classification.environment] r[impl test_harness.real_rails.selection]
 // r[impl test_harness.real_rails.selection.known] r[impl test_harness.real_rails.selection.unknown]
-use crate::{read_option, read_string_option, safe_relative_path, with_portable_receipt_hash};
+use crate::support::{
+    read_option, read_string_option, safe_relative_path, with_portable_receipt_hash,
+};
 use cairn_core::blake3_hex;
 use serde_json::{json, Value};
 use std::{error::Error, fs, path::Path, process::Command};

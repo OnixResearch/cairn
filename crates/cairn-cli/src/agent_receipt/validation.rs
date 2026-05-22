@@ -4,7 +4,7 @@ use cairn_core::{canonical_json_hash, evaluate_agent_run_completion, AgentRunGat
 use serde_json::{json, Value};
 
 use crate::determinism::replay_groups_from_policy;
-use crate::{path_string, with_receipt_hash};
+use crate::support::{path_string, with_receipt_hash};
 
 use super::{AGENT_RECEIPT_MAX_BYTES, REQUIRED_AGENT_REPLAY_GROUP};
 

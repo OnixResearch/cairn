@@ -14,7 +14,7 @@ use cairn_core::{
 };
 use serde_json::{json, Value};
 
-use crate::{
+use crate::support::{
     collect_spec_sources, collect_validation_spec_sources, default_policy_path, detect_layout,
     find_change, find_spec_source, has_flag, load_policy_file, path_string, print_json,
     read_option, read_string_option, scan_repo,

@@ -6,7 +6,7 @@
 // r[verify cli_maintainability.agent_receipt_cli_source.behavior_preserved.repository_checks]
 use std::{error::Error, path::PathBuf};
 
-use crate::{default_policy_path, load_policy_file, print_json, read_option};
+use crate::support::{default_policy_path, load_policy_file, print_json, read_option};
 
 mod bundle;
 mod io;

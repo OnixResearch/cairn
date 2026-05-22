@@ -6,7 +6,7 @@ use std::{
 
 use serde_json::{json, Value};
 
-use crate::{
+use crate::support::{
     collect_files, has_flag, path_string, print_json, read_option, safe_relative_path,
     with_receipt_hash,
 };

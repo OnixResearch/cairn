@@ -6,7 +6,7 @@ use std::{
 use serde_json::Value;
 
 use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
-use crate::portable_json_hash;
+use crate::support::portable_json_hash;
 use cairn_core::canonical_json_hash;
 
 use super::common::*;
