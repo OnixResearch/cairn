@@ -171,6 +171,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_gate" => mcp_gate(input)?,
             "cairn_gate_context" => mcp_gate_context(input)?,
             "cairn_agent_receipt_validate" => mcp_agent_receipt_validate(input)?,
+            "cairn_drain_plan" => mcp_drain_plan(input)?,
             "cairn_sync_plan" => mcp_sync(input, false)?,
             "cairn_archive_plan" => mcp_archive(input, false)?,
             "cairn_migrate_plan" => mcp_migrate(input, false)?,

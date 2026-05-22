@@ -70,6 +70,12 @@ fn mcp_read_tools() -> Vec<Value> {
             false,
             "Validate an agent-run receipt without mutation",
         ),
+        mcp_tool(
+            "cairn_drain_plan",
+            true,
+            false,
+            "Plan a repository-wide active-change drain without mutation",
+        ),
     ]
 }
 
@@ -148,7 +154,7 @@ pub(super) fn is_mutating_mcp_tool(name: &str) -> bool {
 fn mcp_input_schema(name: &str) -> Value {
     match name {
         "cairn_status" | "cairn_list_content" => mcp_object_schema(&[], &["root"]),
-        "cairn_doctor" | "cairn_validate" | "cairn_init" => {
+        "cairn_doctor" | "cairn_validate" | "cairn_init" | "cairn_drain_plan" => {
             mcp_object_schema(&[], &["root", "policy"])
         }
         "cairn_read_spec" => mcp_object_schema(&["spec"], &["root"]),
@@ -225,7 +231,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
     };
     match name {
         "cairn_status" | "cairn_list_content" => validate_string_args(name, object, &[], &["root"]),
-        "cairn_doctor" | "cairn_validate" | "cairn_init" => {
+        "cairn_doctor" | "cairn_validate" | "cairn_init" | "cairn_drain_plan" => {
             validate_string_args(name, object, &[], &["root", "policy"])
         }
         "cairn_read_spec" => validate_string_args(name, object, &["spec"], &["root"]),

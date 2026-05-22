@@ -144,6 +144,203 @@ pub(super) fn mcp_gate_context(input: &Value) -> Result<Value, Box<dyn Error>> {
     Ok(with_portable_receipt_hash(&root, value))
 }
 
+pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.mcp_drain_all.plan]
+    // r[impl cairn.mcp_drain_all.plan.read_only]
+    // r[impl cairn.mcp_drain_all.plan.readiness]
+    // r[impl cairn.mcp_drain_all.plan.next_actions]
+    // r[impl cairn.mcp_drain_all.plan.mutation_boundary]
+    let root = mcp_root(input);
+    let policy = load_policy_file(mcp_policy(input))?;
+    let selected = detect_layout(&root);
+    let status = scan_repo(root.clone(), selected.layout)?;
+    let mut changes = Vec::with_capacity(status.changes.len());
+    let mut next_actions = Vec::new();
+    let mut ready_change_count = 0usize;
+
+    for change in &status.changes {
+        let snapshot = read_gate_snapshot(&root, selected.layout, change.clone())?;
+        let proposal_gate = drain_gate_summary(&snapshot, GateStage::Proposal, &policy);
+        let design_gate = drain_gate_summary(&snapshot, GateStage::Design, &policy);
+        let tasks_gate = drain_gate_summary(&snapshot, GateStage::Tasks, &policy);
+        let mut blockers = Vec::new();
+        collect_gate_blocker(&mut blockers, "proposal_gate", &proposal_gate);
+        collect_gate_blocker(&mut blockers, "design_gate", &design_gate);
+        collect_gate_blocker(&mut blockers, "tasks_gate", &tasks_gate);
+        if !tasks_are_complete(change.task_counts) {
+            blockers.push(json!({"class": "unfinished_tasks", "message": "all task checkboxes must be completed before archive"}));
+        }
+
+        let mut sync_plan = build_sync_plan(change);
+        if policy.sync_require_gate && !sync_plan.blocked {
+            sync_plan.reasons.extend(mutation_gate_blockers(
+                &root,
+                selected.layout,
+                change,
+                GateStage::Tasks,
+                &policy,
+            )?);
+            sync_plan.reasons.sort();
+            sync_plan.reasons.dedup();
+            sync_plan.blocked = !sync_plan.reasons.is_empty();
+        }
+        append_plan_blockers(&mut blockers, "sync_blocked", &sync_plan.reasons);
+
+        let mut archive_plan = build_archive_plan(change);
+        if policy.archive_require_gate && !archive_plan.blocked {
+            archive_plan.reasons.extend(mutation_gate_blockers(
+                &root,
+                selected.layout,
+                change,
+                GateStage::Tasks,
+                &policy,
+            )?);
+            archive_plan.reasons.sort();
+            archive_plan.reasons.dedup();
+            archive_plan.blocked = !archive_plan.reasons.is_empty();
+        }
+        append_plan_blockers(&mut blockers, "archive_blocked", &archive_plan.reasons);
+
+        let is_ready = blockers.is_empty();
+        if is_ready {
+            ready_change_count += 1;
+        }
+        let change_next_actions = drain_next_actions(&change.name, is_ready, &blockers);
+        next_actions.extend(change_next_actions.iter().cloned());
+
+        changes.push(json!({
+            "name": change.name,
+            "path": change.path,
+            "task_counts": change.task_counts.map(|counts| json!({
+                "total": counts.total,
+                "done": counts.done,
+                "in_progress": counts.in_progress,
+                "todo": counts.todo,
+                "unmarked": counts.unmarked,
+            })),
+            "gates": {
+                "proposal": proposal_gate,
+                "design": design_gate,
+                "tasks": tasks_gate,
+            },
+            "sync_plan": {"blocked": sync_plan.blocked, "reasons": sync_plan.reasons},
+            "archive_plan": {"blocked": archive_plan.blocked, "reasons": archive_plan.reasons},
+            "drain_ready": is_ready,
+            "blockers": blockers,
+            "next_actions": change_next_actions,
+        }));
+    }
+
+    Ok(with_portable_receipt_hash(
+        &root,
+        json!({
+            "command": "mcp cairn_drain_plan",
+            "root": path_string(&root),
+            "layout": layout_name(selected.layout),
+            "policy": policy.name,
+            "active_change_count": changes.len(),
+            "ready_change_count": ready_change_count,
+            "drain_complete": changes.is_empty(),
+            "changes": changes,
+            "next_actions": next_actions,
+            "mcp": {"read_only": true, "destructive": false},
+        }),
+    ))
+}
+
+fn drain_gate_summary(
+    snapshot: &cairn_core::GateSnapshot,
+    stage: GateStage,
+    policy: &cairn_core::Policy,
+) -> Value {
+    let report = evaluate_gate_snapshot(snapshot, stage, policy);
+    json!({
+        "stage": report.stage,
+        "valid": report.issues.is_empty(),
+        "verdict": report.verdict,
+        "issue_count": report.issues.len(),
+        "issues": report.issues.iter().map(|issue| json!({
+            "message": issue.message,
+            "scope": issue.scope,
+            "promoted": issue.promoted,
+        })).collect::<Vec<_>>(),
+    })
+}
+
+fn collect_gate_blocker(blockers: &mut Vec<Value>, class: &str, gate: &Value) {
+    if gate["valid"].as_bool() == Some(true) {
+        return;
+    }
+    blockers.push(json!({
+        "class": class,
+        "message": format!("{} gate did not pass", gate["stage"].as_str().unwrap_or("unknown")),
+        "issue_count": gate["issue_count"],
+    }));
+}
+
+fn append_plan_blockers(blockers: &mut Vec<Value>, class: &str, reasons: &[String]) {
+    blockers.extend(
+        reasons
+            .iter()
+            .map(|reason| json!({"class": class, "message": reason})),
+    );
+}
+
+fn tasks_are_complete(counts: Option<cairn_core::TaskCounts>) -> bool {
+    counts
+        .map(|counts| {
+            counts.total > 0 && counts.todo == 0 && counts.in_progress == 0 && counts.unmarked == 0
+        })
+        .unwrap_or(false)
+}
+
+fn drain_next_actions(change: &str, is_ready: bool, blockers: &[Value]) -> Vec<Value> {
+    if is_ready {
+        return vec![
+            json!({"change": change, "tool": "cairn_sync_execute", "requires_allow_mutations": true}),
+            json!({"change": change, "tool": "cairn_archive_execute", "requires_allow_mutations": true}),
+        ];
+    }
+    let mut actions = Vec::new();
+    if blockers
+        .iter()
+        .any(|blocker| blocker["class"] == "proposal_gate")
+    {
+        actions.push(json!({"change": change, "tool": "cairn_gate", "arguments": {"change": change, "stage": "proposal"}}));
+    }
+    if blockers
+        .iter()
+        .any(|blocker| blocker["class"] == "design_gate")
+    {
+        actions.push(json!({"change": change, "tool": "cairn_gate", "arguments": {"change": change, "stage": "design"}}));
+    }
+    if blockers
+        .iter()
+        .any(|blocker| blocker["class"] == "tasks_gate")
+    {
+        actions.push(json!({"change": change, "tool": "cairn_gate", "arguments": {"change": change, "stage": "tasks"}}));
+    }
+    if blockers
+        .iter()
+        .any(|blocker| blocker["class"] == "unfinished_tasks")
+    {
+        actions.push(json!({"change": change, "action": "complete implementation tasks and mark tasks.md checkboxes"}));
+    }
+    if blockers
+        .iter()
+        .any(|blocker| blocker["class"] == "sync_blocked")
+    {
+        actions.push(json!({"change": change, "tool": "cairn_sync_plan"}));
+    }
+    if blockers
+        .iter()
+        .any(|blocker| blocker["class"] == "archive_blocked")
+    {
+        actions.push(json!({"change": change, "tool": "cairn_archive_plan"}));
+    }
+    actions
+}
+
 pub(super) fn mcp_agent_receipt_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.agent_receipt_validation_surface.mcp]
     // r[impl cairn.supersede.agent_receipt_validation_surface.mcp.read_only]
