@@ -320,7 +320,7 @@ validity. Stable public evidence manifest verification fields are `command`,
 `root`, `valid`, `verdict`, `issues`, `manifest_hash`, `artifacts`,
 `coverage_audit_receipt_hash`, `signer_metadata_hash`, `anchor_metadata_hash`, and `receipt_hash`. See
 `docs/agent-run-receipts.md` for wrapper guidance,
-validation commands, and privacy rules. r[verify
+validation commands, and privacy rules. The checked-in release evidence index for verified code commit `a5d3928` lives at `docs/release-evidence-current-head.md`. r[verify release_evidence.current_head_evidence_index.behavior_preserved.focused_checks] r[verify
 cairn.supersede.agent_run_receipts.schema]
 r[verify cairn.supersede.agent_receipt_replay_evidence.docs]
 r[verify cairn.supersede.agent_receipt_replay_group_coverage.docs]

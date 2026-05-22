@@ -4,6 +4,12 @@
 // r[impl cli_maintainability.main_compat_release_cli.behavior_preserved]
 // r[verify cli_maintainability.main_compat_release_cli.behavior_preserved.focused_checks]
 // r[verify cli_maintainability.main_compat_release_cli.behavior_preserved.repository_checks]
+// r[impl release_evidence.current_head_evidence_index.focused_modules]
+// r[impl release_evidence.current_head_evidence_index.focused_modules.visible_boundaries]
+// r[impl release_evidence.current_head_evidence_index.focused_modules.narrow_bridges]
+// r[verify release_evidence.current_head_evidence_index.behavior_preserved]
+// r[verify release_evidence.current_head_evidence_index.behavior_preserved.focused_checks]
+// r[verify release_evidence.current_head_evidence_index.behavior_preserved.repository_checks]
 use std::{error::Error, path::PathBuf};
 
 use cairn_core::canonical_json_hash;
