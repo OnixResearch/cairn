@@ -157,6 +157,8 @@ fn name_pointer_evidence_validator_rejects_unknown_effect_pure_cache_fixture(
 fn export_bundle_evidence_validator_accepts_positive_fixture() -> Result<(), Box<dyn Error>> {
     // Active Cairn refs: content_addressed_rust_evidence.export_bundle.replay,
     // content_addressed_rust_evidence.compiler_ir.hir_dependencies.
+    // r[verify cli_maintainability.export_bundle_core_modules.behavior_preserved.focused_checks]
+    // r[verify cli_maintainability.export_bundle_core_modules.behavior_preserved.repository_checks]
     let fixture = repo_root().join(
         "fixtures/content-addressed-rust-evidence/ir-and-bundles/export-bundle-positive.json",
     );
