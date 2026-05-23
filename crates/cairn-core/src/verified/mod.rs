@@ -8,4 +8,5 @@ pub mod lifecycle;
 pub mod plan;
 pub mod policy;
 pub mod repo;
+pub mod semantic_review;
 pub mod validation;

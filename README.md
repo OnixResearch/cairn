@@ -101,10 +101,30 @@ nix run path:$PWD#cairn -- spec show demo --root fixtures/basic
 nix run path:$PWD#cairn -- status --root fixtures/basic
 nix run path:$PWD#cairn -- doctor --root fixtures/basic
 nix run path:$PWD#cairn -- validate --root .
+nix run path:$PWD#cairn -- review profiles
+nix run path:$PWD#cairn -- review validate review.json --root .
+nix run path:$PWD#cairn -- review ledger --include reviews --root .
+nix run path:$PWD#cairn -- review revision validate revision.json --root .
 nix run path:$PWD#cairn -- gate tasks demo --root fixtures/basic
 nix run path:$PWD#cairn -- sync demo --root fixtures/basic
 nix run path:$PWD#cairn -- migrate openspec --root fixtures/basic
 ```
+
+`review validate <receipt.json>` validates externally produced semantic review
+receipts without running reviewers or interpreting model output. The receipt schema
+records `schema_version`, `review_kind`, `decision`, `reviewer.source/id`, hashed
+`reviewed_inputs`, and categorized findings; when an input path exists under
+`--root`, Cairn checks the stated BLAKE3 hash against the local artifact. Non-
+approved decisions require at least one finding categorized by the built-in
+omission/systematic/incoherent/infra taxonomy. `review ledger --include <path>`
+loads review receipts from files or directories and emits deterministic counts,
+input receipt hashes, invalid-input reports, and small-sample warnings. `review
+revision validate <receipt.json>` validates revision handoff receipts linking
+prior review hashes to revision artifacts and finding dispositions. `review
+profiles` prints the policy-owned review kinds, reviewer sources, decisions,
+severities, and profile criteria. These commands validate structure, hashes, and
+policy vocabularies only; they do not call LLMs, execute reviewer code, publish
+remote state, or claim to prove semantic correctness. r[impl cairn.semantic_review.semantic_review_receipts.docs] r[impl cairn.semantic_review.semantic_review_receipts.docs.docs.non_claims] r[impl cairn.semantic_review.semantic_review_boundary.boundary.boundary.claims]
 
 `template list` and `template apply <id>` provide a reviewed first-use catalog for
 `agent-workflow`, `generic-cli`, `rust-nix`, `docs-lifecycle`, and

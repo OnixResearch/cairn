@@ -15,6 +15,7 @@ mod policy;
 mod release_evidence;
 mod release_readiness;
 mod rename_classification;
+mod semantic_review;
 mod support;
 mod test_harness;
 mod tracey;
@@ -30,6 +31,7 @@ use evidence_manifest::run_evidence_manifest;
 use mcp::run_mcp;
 use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
+use semantic_review::run_review;
 use support::{print_usage, usage_text};
 use tracey::run_tracey;
 
@@ -70,6 +72,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "evidence-manifest" => run_evidence_manifest(args.collect())?,
         "policy" => run_policy(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
+        "review" => run_review(args.collect())?,
         "test-harness" => test_harness::run_test_harness(args.collect())?,
         "rename-classification" => {
             rename_classification::run_rename_classification(args.collect())?
