@@ -182,7 +182,7 @@ Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix c
 - `cairn sync <change> --execute` can report success without promoting a direct/full spec-shaped change body when the change spec lacks explicit delta headings. Before archive commit, search accepted specs for new `r[...]` IDs; if absent, manually append/merge the archived requirement text, rerun Cairn validation and Tracey coverage, then commit the repair with the archive.
 - Historical archives and compatibility code may mention legacy lifecycle names; do not churn those unless the task is explicitly a migration/rename cleanup.
 - Slotcar Nix checks need a C compiler/linker; keep `pkgs.stdenv.cc` in check inputs.
-- The canonical repo at `/home/brittonr/git/cairn` has origin `OnixResearch/cairn`; after verified slices, commit and push `main`.
+- The canonical repo at `/home/brittonr/git/cairn` has origin `onixresearch/cairn`; after verified slices, commit and push `main`.
 
 ## Skill maintenance
 
