@@ -7,7 +7,7 @@
 
 ## Phase 2: Implement registry and receipt validation
 
-- [ ] [serial] I1: Add pure core DTOs and validation for category registry entries, including duplicate/missing binding diagnostics [r[cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]]
+- [x] [serial] I1: Add pure core DTOs and validation for category registry entries, including duplicate/missing binding diagnostics [r[cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]]
 - [ ] [serial] I2: Add fixture-pair validation that checks negative diagnostics and positive passing coverage [r[cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]]
 - [ ] [parallel] I3: Add guidance/task/spec synchronization checks for diagnostic codes and requirement ids [r[cairn.semantic_review.review_metrics_regression_rail.guidance_task_sync]]
 - [ ] [parallel] I4: Add secret-free evidence boundary checks for metrics snapshot references [r[cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]]

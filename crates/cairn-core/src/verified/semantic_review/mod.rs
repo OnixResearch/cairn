@@ -4,6 +4,7 @@
 mod analytics;
 mod common;
 mod completeness;
+mod metrics_regression;
 mod profile;
 mod review_receipt;
 mod revision_handoff;
@@ -11,6 +12,9 @@ mod revision_handoff;
 pub use analytics::review_ledger_analytics;
 pub use common::issues_json;
 pub use completeness::completeness_receipt;
+pub use metrics_regression::{
+    validate_review_metrics_registry, REVIEW_METRICS_REGRESSION_SCHEMA_V1,
+};
 pub use profile::semantic_review_policy_profile_json;
 pub use review_receipt::{review_receipt_hash, validate_review_receipt};
 pub use revision_handoff::{revision_handoff_hash, validate_revision_handoff};
@@ -110,5 +114,72 @@ mod tests {
         assert!(findings
             .iter()
             .any(|finding| finding["code"] == "missing_verification_coverage"));
+    }
+
+    #[test]
+    fn review_metrics_registry_accepts_complete_category_binding() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]
+        let registry = json!({
+            "schema_version": REVIEW_METRICS_REGRESSION_SCHEMA_V1,
+            "categories": [{
+                "code": "tasks-auto-fix",
+                "metrics_class": "omission",
+                "metrics_stage": "tasks",
+                "metrics_source": "agentic",
+                "diagnostic_code": "missing-auto-fix-task",
+                "requirement_id": "project.review.auto_fix",
+                "guidance_anchor": "# auto-fix guidance",
+                "positive_fixture": "fixtures/positive-auto-fix",
+                "negative_fixture": "fixtures/negative-auto-fix",
+                "evidence_ref": "evidence/metrics-snapshot.md"
+            }]
+        });
+        let report = validate_review_metrics_registry(&registry);
+        assert!(report.valid, "{:?}", report.issues);
+        assert_eq!(report.verdict, "PASS");
+    }
+
+    #[test]
+    fn review_metrics_registry_rejects_missing_and_duplicate_bindings() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]
+        let registry = json!({
+            "schema_version": REVIEW_METRICS_REGRESSION_SCHEMA_V1,
+            "categories": [
+                {
+                    "code": "tasks-auto-fix",
+                    "metrics_class": "unknown",
+                    "metrics_stage": "tasks",
+                    "metrics_source": "agentic",
+                    "diagnostic_code": "missing-auto-fix-task",
+                    "requirement_id": "project.review.auto_fix",
+                    "guidance_anchor": "# auto-fix guidance",
+                    "positive_fixture": "fixtures/positive-auto-fix",
+                    "negative_fixture": "fixtures/negative-auto-fix",
+                    "evidence_ref": "evidence/metrics-snapshot.md"
+                },
+                {
+                    "code": "tasks-auto-fix",
+                    "metrics_class": "omission",
+                    "metrics_stage": "tasks",
+                    "metrics_source": "agentic",
+                    "diagnostic_code": "missing-auto-fix-task",
+                    "requirement_id": "project.review.auto_fix",
+                    "guidance_anchor": "",
+                    "positive_fixture": "fixtures/positive-auto-fix-2",
+                    "negative_fixture": "fixtures/negative-auto-fix-2",
+                    "evidence_ref": "evidence/metrics-snapshot.md"
+                }
+            ]
+        });
+        let report = validate_review_metrics_registry(&registry);
+        assert!(!report.valid);
+        let codes = report
+            .issues
+            .iter()
+            .map(|issue| issue.code.as_str())
+            .collect::<Vec<_>>();
+        assert!(codes.contains(&"invalid_registry_binding"));
+        assert!(codes.contains(&"missing_registry_binding"));
+        assert!(codes.contains(&"duplicate_registry_binding"));
     }
 }
