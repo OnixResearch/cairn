@@ -13,8 +13,9 @@ pub use analytics::review_ledger_analytics;
 pub use common::issues_json;
 pub use completeness::completeness_receipt;
 pub use metrics_regression::{
-    validate_review_metrics_fixture_pairs, validate_review_metrics_guidance_sync,
-    validate_review_metrics_registry, REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1,
+    validate_review_metrics_evidence_boundary, validate_review_metrics_fixture_pairs,
+    validate_review_metrics_guidance_sync, validate_review_metrics_registry,
+    REVIEW_METRICS_EVIDENCE_BOUNDARY_SCHEMA_V1, REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1,
     REVIEW_METRICS_GUIDANCE_SYNC_SCHEMA_V1, REVIEW_METRICS_REGRESSION_SCHEMA_V1,
 };
 pub use profile::semantic_review_policy_profile_json;
@@ -340,6 +341,88 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(codes.contains(&"invalid_guidance_sync"));
         assert!(codes.contains(&"missing_spec_sync"));
+    }
+
+    #[test]
+    fn review_metrics_evidence_boundary_accepts_sanitized_metadata_and_provenance() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]
+        let registry = review_metrics_registry_fixture();
+        let evidence = json!({
+            "schema_version": REVIEW_METRICS_EVIDENCE_BOUNDARY_SCHEMA_V1,
+            "evidence": [{
+                "ref": "evidence/metrics-snapshot.md",
+                "category_code": "tasks-auto-fix",
+                "metrics_class": "omission",
+                "metrics_stage": "tasks",
+                "metrics_source": "agentic",
+                "provenance": {
+                    "source": "review-metrics-summary",
+                    "generated_by": "cairn-test-fixture",
+                    "snapshot_hash": hash()
+                },
+                "summary": {
+                    "finding_count": 491,
+                    "sanitization": "aggregated counts only; no transcript bodies"
+                }
+            }]
+        });
+        let report = validate_review_metrics_evidence_boundary(&registry, &evidence);
+        assert!(report.valid, "{:?}", report.issues);
+        assert_eq!(report.verdict, "PASS");
+    }
+
+    #[test]
+    fn review_metrics_evidence_boundary_rejects_missing_refs_and_metadata_drift() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]
+        let registry = review_metrics_registry_fixture();
+        let evidence = json!({
+            "schema_version": REVIEW_METRICS_EVIDENCE_BOUNDARY_SCHEMA_V1,
+            "evidence": [{
+                "ref": "evidence/other-snapshot.md",
+                "category_code": "other-category",
+                "metrics_class": "omission",
+                "metrics_stage": "tasks",
+                "metrics_source": "agentic",
+                "provenance": {"source": "review-metrics-summary"}
+            }]
+        });
+        let report = validate_review_metrics_evidence_boundary(&registry, &evidence);
+        assert!(!report.valid);
+        let codes = report
+            .issues
+            .iter()
+            .map(|issue| issue.code.as_str())
+            .collect::<Vec<_>>();
+        assert!(codes.contains(&"missing_evidence_ref"));
+    }
+
+    #[test]
+    fn review_metrics_evidence_boundary_rejects_secret_bearing_fields_and_text() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]
+        let registry = review_metrics_registry_fixture();
+        let evidence = json!({
+            "schema_version": REVIEW_METRICS_EVIDENCE_BOUNDARY_SCHEMA_V1,
+            "evidence": [{
+                "ref": "evidence/metrics-snapshot.md",
+                "category_code": "tasks-auto-fix",
+                "metrics_class": "omission",
+                "metrics_stage": "tasks",
+                "metrics_source": "agentic",
+                "provenance": {"source": "review-metrics-summary"},
+                "account_id": "acct-123",
+                "provider_payload": {"request_body": "raw transcript"},
+                "summary": "Authorization: Bearer abc and operator@example.com"
+            }]
+        });
+        let report = validate_review_metrics_evidence_boundary(&registry, &evidence);
+        assert!(!report.valid);
+        let codes = report
+            .issues
+            .iter()
+            .map(|issue| issue.code.as_str())
+            .collect::<Vec<_>>();
+        assert!(codes.contains(&"unsafe_evidence_field"));
+        assert!(codes.contains(&"unsafe_evidence_text"));
     }
 
     fn review_metrics_registry_fixture() -> serde_json::Value {
