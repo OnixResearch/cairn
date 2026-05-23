@@ -15,5 +15,5 @@
 
 ## Phase 3: Verify and archive
 
-- [ ] [serial] V1: Add positive and negative Cairn fixtures for registry drift, fixture-pair drift, guidance/task drift, and unsafe evidence [r[cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]] [r[cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]] [r[cairn.semantic_review.review_metrics_regression_rail.guidance_task_sync]] [r[cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]]
+- [x] [serial] V1: Add positive and negative Cairn fixtures for registry drift, fixture-pair drift, guidance/task drift, and unsafe evidence [r[cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]] [r[cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]] [r[cairn.semantic_review.review_metrics_regression_rail.guidance_task_sync]] [r[cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]]
 - [ ] [serial] V2: Run focused semantic-review tests plus `nix run path:$PWD#cairn -- validate --root .`, proposal/design/tasks gates, and `git diff --check` [r[cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership]]
