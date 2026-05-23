@@ -770,7 +770,7 @@ r[cairn.supersede.release_readiness_bundle.verification]
 - AND Cairn validation, Tracey coverage, repository formatting, tests, Clippy, Slotcar, and flake checks MUST pass before the change is synced and archived
 
 ### Requirement: Canonical Cairn Hermes workflow skill
-r[cairn.supersede.hermes_skill.canonical_cairn] The system MUST maintain the repository workflow skill under the canonical Cairn identity rather than an OpenSpec or Ironspec primary name.
+r[cairn.supersede.hermes_skill.canonical_cairn] The system MUST maintain the repository workflow skill under the canonical Cairn identity rather than any legacy lifecycle primary name.
 
 #### Scenario: Canonical repo skill path
 r[cairn.supersede.hermes_skill.canonical_cairn.path]
@@ -786,14 +786,14 @@ r[cairn.supersede.hermes_skill.canonical_cairn.live]
 - AND the skill describes Cairn-native lifecycle, MCP, receipt, release-readiness, Tracey, Slotcar, and Nix verification contracts
 
 ### Requirement: Legacy workflow skill redirect
-r[cairn.supersede.hermes_skill.redirect] The system MUST preserve a safe compatibility path from older Ironspec/OpenSpec workflow skill names to the canonical Cairn workflow skill.
+r[cairn.supersede.hermes_skill.redirect] The system MUST preserve a safe compatibility path from older workflow skill names to the canonical Cairn workflow skill.
 
 #### Scenario: Older skill points to Cairn
 r[cairn.supersede.hermes_skill.redirect.local]
-- GIVEN a future session loads the older `ironspec-workflow` skill while working on Cairn
+- GIVEN a future session loads an older workflow skill while working on Cairn
 - WHEN the skill body is read
 - THEN it directs the agent to use `cairn-workflow` for Cairn repository work
-- AND it does not present OpenSpec or Ironspec as the primary Cairn identity
+- AND it does not present any legacy lifecycle as the primary Cairn identity
 
 ### Requirement: Portable receipt hash inputs
 r[cairn.supersede.portable_receipts] The system MUST distinguish operator-facing display fields from canonical hash inputs so semantically identical repository evidence can remain portable across checkout roots.

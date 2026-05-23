@@ -14,7 +14,7 @@ description: >
 <!-- r[verify cairn.supersede.hermes_skill.canonical_cairn.live] r[verify cairn.supersede.hermes_skill.redirect] -->
 <!-- r[verify cairn.supersede.hermes_skill.redirect.local] r[verify cairn.supersede.hermes_skill.contracts] r[verify cairn.supersede.hermes_skill.audit] -->
 
-Use this Hermes skill for work in `/home/brittonr/git/cairn`. Cairn is the canonical product, repository, CLI, package, lifecycle layout, and skill name. Treat `ironspec` and upstream `openspec` references as legacy aliases, historical archives, or explicit migration inputs unless the task is specifically about compatibility.
+Use this Hermes skill for work in `/home/brittonr/git/cairn`. Cairn is the canonical product, repository, CLI, package, lifecycle layout, and skill name. For normal agent workflow, reason only in native Cairn terms; compatibility bridges are explicit product features, not alternate planning authority.
 
 ## Project shape
 
@@ -22,7 +22,7 @@ Use this Hermes skill for work in `/home/brittonr/git/cairn`. Cairn is the canon
 - CLI shell: `crates/cairn-cli`.
 - Pure deterministic core: `crates/cairn-core`.
 - Native lifecycle content lives under `cairn/`.
-- Legacy OpenSpec lifecycle content under `openspec/` is an explicit import/migration source, not a runtime fallback layout.
+- Legacy lifecycle content is an explicit import/migration source, not a runtime fallback layout.
 - Fixtures live under `fixtures/` and are part of the behavior contract.
 - Slotcar input MUST stay `github:OnixResearch/slotcar`.
 - Run the CLI through Nix as `nix run path:$PWD#cairn -- ...`.
@@ -32,7 +32,7 @@ Use this Hermes skill for work in `/home/brittonr/git/cairn`. Cairn is the canon
 - For public CLI behavior, compatibility semantics, mutation, architecture, receipt schemas, or roadmap work, write a native `cairn/changes/<slug>/` package first.
 - Small fixture/test/doc hardening can be direct when it does not alter public behavior.
 - Prefer one narrow ROI slice at a time, then verify, sync/archive the change when applicable, commit, and push.
-- Treat upstream OpenSpec as a legacy import/change-management compatibility surface, not the primary Cairn authority.
+- Treat compatibility surfaces as import-only product behavior; native Cairn remains the sole planning authority.
 
 ## Native change package workflow
 
@@ -84,7 +84,7 @@ Expected result: no matches.
   - `cairn change show <name> --root PATH`
   - `cairn spec list --root PATH`
   - `cairn spec show <id> --root PATH`
-  - native `cairn/` layout is used for normal runtime commands; legacy `openspec/` is migration-only and is not an implicit fallback.
+  - native `cairn/` layout is used for normal runtime commands; legacy layouts are migration-only and are not implicit fallbacks.
 - Diagnostics:
   - `cairn doctor --root PATH [--policy PATH]`
   - read-only receipt fields include `valid`, `layout`, spec/change counts, validation issue count, and named checks.
@@ -111,7 +111,7 @@ Expected result: no matches.
   - blocked plans must not mutate, even with `--execute`.
   - For real archives, set `CAIRN_ARCHIVE_DATE=$(date +%F)` before `cairn archive <change> --execute`.
 - Migration:
-  - `cairn migrate openspec --root PATH` emits a dry-run copy plan from legacy `openspec/` to native `cairn/`.
+  - Cairn migration commands emit dry-run copy plans from legacy lifecycle layouts to native `cairn/`.
   - `--execute` copies accepted specs, active changes, and archives; it never deletes legacy content.
   - existing native destinations are blockers and must not be overwritten.
   - stable public migration receipt fields are `command`, `root`, `source_layout`, `destination_layout`, `actions`, `conflicts`, `blocked`, `dry_run`, `mutated`, `policy`, `policy_hash`, `source_manifest_hash`, `destination_manifest_hash`, `manifest_hash`, and `receipt_hash`.
@@ -180,7 +180,7 @@ Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix c
 - Direct host `cargo` may be unavailable; use `nix develop -c ...`.
 - Nix flakes snapshot tracked/staged files. Stage new source/doc files before `nix flake check` if the check needs them.
 - `cairn sync <change> --execute` can report success without promoting a direct/full spec-shaped change body when the change spec lacks explicit delta headings. Before archive commit, search accepted specs for new `r[...]` IDs; if absent, manually append/merge the archived requirement text, rerun Cairn validation and Tracey coverage, then commit the repair with the archive.
-- Historical archives and compatibility code may mention `openspec` or `ironspec`; do not churn those unless the task is explicitly a migration/rename cleanup.
+- Historical archives and compatibility code may mention legacy lifecycle names; do not churn those unless the task is explicitly a migration/rename cleanup.
 - Slotcar Nix checks need a C compiler/linker; keep `pkgs.stdenv.cc` in check inputs.
 - The canonical repo at `/home/brittonr/git/cairn` has origin `OnixResearch/cairn`; after verified slices, commit and push `main`.
 
@@ -188,4 +188,4 @@ Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix c
 
 - Update this source when Cairn changes workflow contracts, verification rails, or command semantics.
 - Keep it class-level and reusable; do not add transient session progress or credentials.
-- Use this skill for Cairn work instead of `ironspec-workflow` or generic OpenSpec skills, except when the task is specifically about legacy OpenSpec compatibility.
+- Use this skill for Cairn work instead of legacy or generic lifecycle skills, except when the task is specifically about compatibility behavior.
