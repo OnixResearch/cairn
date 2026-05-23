@@ -64,12 +64,13 @@ pub use verified::repo::{
 pub use verified::semantic_review::{
     completeness_receipt, issues_json as semantic_review_issues_json, review_ledger_analytics,
     review_receipt_hash, semantic_review_policy_profile_json,
-    validate_review_metrics_fixture_pairs, validate_review_metrics_registry,
-    validate_review_receipt, validate_revision_handoff, SemanticReviewIssue, SemanticReviewReport,
-    REVIEW_ANALYTICS_SCHEMA_V1, REVIEW_CATEGORIES, REVIEW_COMPLETENESS_SCHEMA_V1, REVIEW_DECISIONS,
-    REVIEW_KINDS, REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1, REVIEW_METRICS_REGRESSION_SCHEMA_V1,
-    REVIEW_RECEIPT_SCHEMA_V1, REVIEW_SEVERITIES, REVIEW_SOURCES, REVISION_DISPOSITIONS,
-    REVISION_HANDOFF_SCHEMA_V1,
+    validate_review_metrics_fixture_pairs, validate_review_metrics_guidance_sync,
+    validate_review_metrics_registry, validate_review_receipt, validate_revision_handoff,
+    SemanticReviewIssue, SemanticReviewReport, REVIEW_ANALYTICS_SCHEMA_V1, REVIEW_CATEGORIES,
+    REVIEW_COMPLETENESS_SCHEMA_V1, REVIEW_DECISIONS, REVIEW_KINDS,
+    REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1, REVIEW_METRICS_GUIDANCE_SYNC_SCHEMA_V1,
+    REVIEW_METRICS_REGRESSION_SCHEMA_V1, REVIEW_RECEIPT_SCHEMA_V1, REVIEW_SEVERITIES,
+    REVIEW_SOURCES, REVISION_DISPOSITIONS, REVISION_HANDOFF_SCHEMA_V1,
 };
 pub use verified::validation::{
     change_issues, evaluate_gate, evaluate_gate_snapshot, validate_changes, validate_spec_source,

@@ -13,8 +13,9 @@ pub use analytics::review_ledger_analytics;
 pub use common::issues_json;
 pub use completeness::completeness_receipt;
 pub use metrics_regression::{
-    validate_review_metrics_fixture_pairs, validate_review_metrics_registry,
-    REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1, REVIEW_METRICS_REGRESSION_SCHEMA_V1,
+    validate_review_metrics_fixture_pairs, validate_review_metrics_guidance_sync,
+    validate_review_metrics_registry, REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1,
+    REVIEW_METRICS_GUIDANCE_SYNC_SCHEMA_V1, REVIEW_METRICS_REGRESSION_SCHEMA_V1,
 };
 pub use profile::semantic_review_policy_profile_json;
 pub use review_receipt::{review_receipt_hash, validate_review_receipt};
@@ -259,6 +260,86 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(codes.contains(&"missing_fixture_result"));
         assert!(codes.contains(&"negative_fixture_passed"));
+    }
+
+    #[test]
+    fn review_metrics_guidance_sync_accepts_documented_diagnostic_and_refs() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.guidance_task_sync]
+        let registry = review_metrics_registry_fixture();
+        let sync = json!({
+            "schema_version": REVIEW_METRICS_GUIDANCE_SYNC_SCHEMA_V1,
+            "guidance": [{
+                "anchor": "# auto-fix guidance",
+                "diagnostics": ["missing-auto-fix-task"]
+            }],
+            "tasks": [{
+                "path": "cairn/changes/example/tasks.md",
+                "requirement_ids": ["project.review.auto_fix"]
+            }],
+            "specs": [{
+                "path": "cairn/changes/example/specs/review/spec.md",
+                "requirement_ids": ["project.review.auto_fix"]
+            }]
+        });
+        let report = validate_review_metrics_guidance_sync(&registry, &sync);
+        assert!(report.valid, "{:?}", report.issues);
+        assert_eq!(report.verdict, "PASS");
+    }
+
+    #[test]
+    fn review_metrics_guidance_sync_rejects_missing_diagnostic_anchor_and_refs() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.guidance_task_sync]
+        let registry = review_metrics_registry_fixture();
+        let sync = json!({
+            "schema_version": REVIEW_METRICS_GUIDANCE_SYNC_SCHEMA_V1,
+            "guidance": [{
+                "anchor": "# other guidance",
+                "diagnostics": ["other-diagnostic"]
+            }],
+            "tasks": [{
+                "path": "cairn/changes/example/tasks.md",
+                "requirement_ids": ["project.review.other"]
+            }],
+            "specs": [{
+                "path": "cairn/changes/example/specs/review/spec.md",
+                "requirement_ids": ["project.review.other"]
+            }]
+        });
+        let report = validate_review_metrics_guidance_sync(&registry, &sync);
+        assert!(!report.valid);
+        let codes = report
+            .issues
+            .iter()
+            .map(|issue| issue.code.as_str())
+            .collect::<Vec<_>>();
+        assert!(codes.contains(&"guidance_missing_diagnostic"));
+        assert!(codes.contains(&"guidance_missing_anchor"));
+        assert!(codes.contains(&"task_missing_requirement_ref"));
+        assert!(codes.contains(&"spec_missing_requirement_ref"));
+    }
+
+    #[test]
+    fn review_metrics_guidance_sync_rejects_invalid_sync_surfaces() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.guidance_task_sync]
+        let registry = review_metrics_registry_fixture();
+        let sync = json!({
+            "schema_version": REVIEW_METRICS_GUIDANCE_SYNC_SCHEMA_V1,
+            "guidance": [{
+                "anchor": "",
+                "diagnostics": [""]
+            }],
+            "tasks": [{"path": "tasks.md"}],
+            "specs": []
+        });
+        let report = validate_review_metrics_guidance_sync(&registry, &sync);
+        assert!(!report.valid);
+        let codes = report
+            .issues
+            .iter()
+            .map(|issue| issue.code.as_str())
+            .collect::<Vec<_>>();
+        assert!(codes.contains(&"invalid_guidance_sync"));
+        assert!(codes.contains(&"missing_spec_sync"));
     }
 
     fn review_metrics_registry_fixture() -> serde_json::Value {
