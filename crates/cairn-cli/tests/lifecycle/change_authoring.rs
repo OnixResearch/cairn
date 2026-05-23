@@ -106,6 +106,7 @@ fn onboarding_template_apply_and_scaffold_are_deterministic() -> Result<(), Box<
     // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.docs.read]
     // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.verification]
     // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.verification.run]
+    // r[verify cairn.developer_experience.cli_modules.behavior_preservation.receipts]
     let root = temp_project("devex-template-scaffold")?;
     let root_text = root.to_str().ok_or("utf8 root")?;
     run_json(&["init", "--root", root_text])?;
