@@ -11,7 +11,7 @@
 - [x] [serial] I2: Add fixture-pair validation that checks negative diagnostics and positive passing coverage [r[cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]]
 - [x] [parallel] I3: Add guidance/task/spec synchronization checks for diagnostic codes and requirement ids [r[cairn.semantic_review.review_metrics_regression_rail.guidance_task_sync]]
 - [x] [parallel] I4: Add secret-free evidence boundary checks for metrics snapshot references [r[cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]]
-- [ ] [serial] I5: Expose a deterministic CLI receipt command for downstream projects to run against their registry and fixture roots [r[cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership]]
+- [x] [serial] I5: Expose a deterministic CLI receipt command for downstream projects to run against their registry and fixture roots [r[cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership]]
 
 ## Phase 3: Verify and archive
 

@@ -6,7 +6,9 @@ use std::{
 
 use cairn_core::{
     blake3_hex, completeness_receipt, review_ledger_analytics, semantic_review_issues_json,
-    semantic_review_policy_profile_json, validate_review_receipt, validate_revision_handoff,
+    semantic_review_policy_profile_json, validate_review_metrics_evidence_boundary,
+    validate_review_metrics_fixture_pairs, validate_review_metrics_guidance_sync,
+    validate_review_metrics_registry, validate_review_receipt, validate_revision_handoff,
 };
 use serde_json::{json, Value};
 
@@ -18,7 +20,7 @@ pub(crate) fn run_review(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
     let Some(command) = iter.next() else {
         return Err(
-            "review requires a subcommand: validate, ledger, revision, completeness, or profiles"
+            "review requires a subcommand: validate, ledger, revision, completeness, profiles, or metrics-regression"
                 .into(),
         );
     };
@@ -29,6 +31,7 @@ pub(crate) fn run_review(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "revision" => run_review_revision(rest),
         "completeness" => run_review_completeness(rest),
         "profiles" => run_review_profiles(rest),
+        "metrics-regression" => run_review_metrics_regression(rest),
         unknown => Err(format!("unknown review subcommand: {unknown}").into()),
     }
 }
@@ -188,6 +191,59 @@ fn run_review_profiles(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn run_review_metrics_regression(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership]
+    // r[impl cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]
+    // r[impl cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]
+    // r[impl cairn.semantic_review.review_metrics_regression_rail.guidance_task_sync]
+    // r[impl cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]
+    let root = read_root(&args);
+    let registry_path = required_path_option(&args, "--registry")?;
+    let fixtures_path = required_path_option(&args, "--fixtures")?;
+    let guidance_path = required_path_option(&args, "--guidance")?;
+    let evidence_path = required_path_option(&args, "--evidence")?;
+    let registry = read_json_file(&registry_path)?;
+    let fixtures = read_json_file(&fixtures_path)?;
+    let guidance = read_json_file(&guidance_path)?;
+    let evidence = read_json_file(&evidence_path)?;
+    let registry_report = validate_review_metrics_registry(&registry);
+    let fixture_report = validate_review_metrics_fixture_pairs(&registry, &fixtures);
+    let guidance_report = validate_review_metrics_guidance_sync(&registry, &guidance);
+    let evidence_report = validate_review_metrics_evidence_boundary(&registry, &evidence);
+    let reports = [
+        ("registry", registry_report),
+        ("fixtures", fixture_report),
+        ("guidance", guidance_report),
+        ("evidence", evidence_report),
+    ];
+    let valid = reports.iter().all(|(_, report)| report.valid);
+    let verdict = if valid { "PASS" } else { "FAIL" };
+    let receipt = with_receipt_hash(json!({
+        "command": "review metrics-regression",
+        "root": path_string(&root),
+        "valid": valid,
+        "verdict": verdict,
+        "inputs": [
+            input_receipt(&root, &registry_path)?,
+            input_receipt(&root, &fixtures_path)?,
+            input_receipt(&root, &guidance_path)?,
+            input_receipt(&root, &evidence_path)?,
+        ],
+        "reports": reports.iter().map(|(name, report)| json!({
+            "name": name,
+            "valid": report.valid,
+            "verdict": report.verdict,
+            "issues": semantic_review_issues_json(&report.issues),
+            "receipt_hash": report.receipt_hash,
+        })).collect::<Vec<_>>(),
+    }));
+    print_json(receipt)?;
+    if !valid {
+        return Err("review metrics-regression inputs invalid".into());
+    }
+    Ok(())
+}
+
 fn validation_receipt(
     command: &str,
     root: &Path,
@@ -231,6 +287,20 @@ fn read_all_options(args: &[String], flag: &str) -> Vec<String> {
         }
     }
     values
+}
+
+fn required_path_option(args: &[String], flag: &str) -> Result<PathBuf, Box<dyn Error>> {
+    read_string_option(args, flag)
+        .map(PathBuf::from)
+        .ok_or_else(|| format!("review metrics-regression requires {flag} path").into())
+}
+
+fn input_receipt(root: &Path, path: &Path) -> Result<Value, Box<dyn Error>> {
+    let bytes = fs::read(path)?;
+    Ok(json!({
+        "path": safe_relative_path(root, path),
+        "hash": blake3_hex(&bytes),
+    }))
 }
 
 fn read_json_file(path: impl AsRef<Path>) -> Result<Value, Box<dyn Error>> {

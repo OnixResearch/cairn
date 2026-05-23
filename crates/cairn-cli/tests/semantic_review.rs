@@ -1,5 +1,7 @@
 use std::{env, error::Error, fs, path::PathBuf, process::Command};
 
+use serde_json::json;
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -255,4 +257,162 @@ fn review_profiles_exposes_policy_owned_vocabularies() -> Result<(), Box<dyn Err
     assert!(stdout.to_string().contains("required_criteria"));
     assert!(!stdout.to_string().contains("secret"));
     Ok(())
+}
+
+#[test]
+fn review_metrics_regression_accepts_complete_downstream_inputs() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership]
+    let dir = temp_dir("metrics-regression-valid")?;
+    let paths = write_metrics_regression_inputs(&dir, false)?;
+    let output = run_metrics_regression_command(&paths, &dir)?.output()?;
+    assert!(
+        output.status.success(),
+        "stderr={}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout: serde_json::Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(stdout["valid"], true);
+    assert_eq!(stdout["verdict"], "PASS");
+    assert_eq!(stdout["reports"].as_array().unwrap().len(), 4);
+    assert!(stdout["receipt_hash"].as_str().unwrap().len() >= 64);
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[test]
+fn review_metrics_regression_rejects_unsafe_evidence() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.semantic_review.review_metrics_regression_rail.secret_free_evidence]
+    let dir = temp_dir("metrics-regression-invalid")?;
+    let paths = write_metrics_regression_inputs(&dir, true)?;
+    let output = run_metrics_regression_command(&paths, &dir)?.output()?;
+    assert!(!output.status.success());
+    let stdout: serde_json::Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(stdout["valid"], false);
+    let evidence_report = stdout["reports"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|report| report["name"] == "evidence")
+        .unwrap();
+    let issue_codes = evidence_report["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(issue_codes.contains(&"unsafe_evidence_field"));
+    assert!(issue_codes.contains(&"unsafe_evidence_text"));
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+struct MetricsRegressionPaths {
+    registry: PathBuf,
+    fixtures: PathBuf,
+    guidance: PathBuf,
+    evidence: PathBuf,
+}
+
+fn run_metrics_regression_command(
+    paths: &MetricsRegressionPaths,
+    root: &std::path::Path,
+) -> Result<Command, Box<dyn Error>> {
+    let mut command = cairn();
+    command.args([
+        "review",
+        "metrics-regression",
+        "--registry",
+        paths.registry.to_str().unwrap(),
+        "--fixtures",
+        paths.fixtures.to_str().unwrap(),
+        "--guidance",
+        paths.guidance.to_str().unwrap(),
+        "--evidence",
+        paths.evidence.to_str().unwrap(),
+        "--root",
+        root.to_str().unwrap(),
+    ]);
+    Ok(command)
+}
+
+fn write_metrics_regression_inputs(
+    dir: &std::path::Path,
+    unsafe_evidence: bool,
+) -> Result<MetricsRegressionPaths, Box<dyn Error>> {
+    let registry = dir.join("registry.json");
+    let fixtures = dir.join("fixtures.json");
+    let guidance = dir.join("guidance.json");
+    let evidence = dir.join("evidence.json");
+    fs::write(
+        &registry,
+        serde_json::to_string_pretty(&json!({
+            "schema_version": "cairn.semantic-review.metrics-regression-registry.v1",
+            "categories": [{
+                "code": "omission|tasks|auto-fix",
+                "metrics_class": "omission",
+                "metrics_stage": "tasks",
+                "metrics_source": "manual",
+                "diagnostic_code": "missing_auto_fix_task",
+                "requirement_id": "cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership",
+                "guidance_anchor": "review-metrics-auto-fix",
+                "positive_fixture": "fixtures/positive/tasks.md",
+                "negative_fixture": "fixtures/negative/tasks.md",
+                "evidence_ref": "metrics-snapshot-2026-05-23"
+            }]
+        }))?,
+    )?;
+    fs::write(
+        &fixtures,
+        serde_json::to_string_pretty(&json!({
+            "schema_version": "cairn.semantic-review.metrics-regression-fixtures.v1",
+            "fixtures": [
+                {"path": "fixtures/positive/tasks.md", "valid": true, "diagnostics": []},
+                {"path": "fixtures/negative/tasks.md", "valid": false, "diagnostics": ["missing_auto_fix_task"]}
+            ]
+        }))?,
+    )?;
+    fs::write(
+        &guidance,
+        serde_json::to_string_pretty(&json!({
+            "schema_version": "cairn.semantic-review.metrics-regression-guidance-sync.v1",
+            "guidance": [{
+                "anchor": "review-metrics-auto-fix",
+                "diagnostics": ["missing_auto_fix_task"]
+            }],
+            "tasks": [{
+                "path": "cairn/changes/example/tasks.md",
+                "requirement_ids": ["cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership"]
+            }],
+            "specs": [{
+                "path": "cairn/changes/example/specs/semantic-review/spec.md",
+                "requirement_ids": ["cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership"]
+            }]
+        }))?,
+    )?;
+    let mut evidence_value = json!({
+        "schema_version": "cairn.semantic-review.metrics-regression-evidence-boundary.v1",
+        "evidence": [{
+            "ref": "metrics-snapshot-2026-05-23",
+            "category_code": "omission|tasks|auto-fix",
+            "metrics_class": "omission",
+            "metrics_stage": "tasks",
+            "metrics_source": "manual",
+            "provenance": {
+                "path": "cairn/changes/example/evidence/metrics-snapshot.md",
+                "sanitized": true
+            },
+            "summary": "sanitized aggregate count only"
+        }]
+    });
+    if unsafe_evidence {
+        evidence_value["evidence"][0]["api_key"] = json!("[REDACTED]");
+        evidence_value["evidence"][0]["summary"] = json!("raw transcript included");
+    }
+    fs::write(&evidence, serde_json::to_string_pretty(&evidence_value)?)?;
+    Ok(MetricsRegressionPaths {
+        registry,
+        fixtures,
+        guidance,
+        evidence,
+    })
 }
