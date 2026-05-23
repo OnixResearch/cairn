@@ -13,7 +13,8 @@ pub use analytics::review_ledger_analytics;
 pub use common::issues_json;
 pub use completeness::completeness_receipt;
 pub use metrics_regression::{
-    validate_review_metrics_registry, REVIEW_METRICS_REGRESSION_SCHEMA_V1,
+    validate_review_metrics_fixture_pairs, validate_review_metrics_registry,
+    REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1, REVIEW_METRICS_REGRESSION_SCHEMA_V1,
 };
 pub use profile::semantic_review_policy_profile_json;
 pub use review_receipt::{review_receipt_hash, validate_review_receipt};
@@ -181,5 +182,100 @@ mod tests {
         assert!(codes.contains(&"invalid_registry_binding"));
         assert!(codes.contains(&"missing_registry_binding"));
         assert!(codes.contains(&"duplicate_registry_binding"));
+    }
+
+    #[test]
+    fn review_metrics_fixture_pairs_accept_expected_positive_and_negative_results() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]
+        let registry = review_metrics_registry_fixture();
+        let coverage = json!({
+            "schema_version": REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1,
+            "fixtures": [
+                {
+                    "path": "fixtures/positive-auto-fix",
+                    "valid": true,
+                    "diagnostics": []
+                },
+                {
+                    "path": "fixtures/negative-auto-fix",
+                    "valid": false,
+                    "diagnostics": ["missing-auto-fix-task"]
+                }
+            ]
+        });
+        let report = validate_review_metrics_fixture_pairs(&registry, &coverage);
+        assert!(report.valid, "{:?}", report.issues);
+        assert_eq!(report.verdict, "PASS");
+    }
+
+    #[test]
+    fn review_metrics_fixture_pairs_reject_drifted_fixture_results() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]
+        let registry = review_metrics_registry_fixture();
+        let coverage = json!({
+            "schema_version": REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1,
+            "fixtures": [
+                {
+                    "path": "fixtures/positive-auto-fix",
+                    "valid": false,
+                    "diagnostics": ["unexpected-positive-failure"]
+                },
+                {
+                    "path": "fixtures/negative-auto-fix",
+                    "valid": false,
+                    "diagnostics": ["wrong-diagnostic"]
+                }
+            ]
+        });
+        let report = validate_review_metrics_fixture_pairs(&registry, &coverage);
+        assert!(!report.valid);
+        let codes = report
+            .issues
+            .iter()
+            .map(|issue| issue.code.as_str())
+            .collect::<Vec<_>>();
+        assert!(codes.contains(&"positive_fixture_failed"));
+        assert!(codes.contains(&"negative_fixture_missing_diagnostic"));
+    }
+
+    #[test]
+    fn review_metrics_fixture_pairs_reject_missing_and_passing_negative_results() {
+        // r[verify cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]
+        let registry = review_metrics_registry_fixture();
+        let coverage = json!({
+            "schema_version": REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1,
+            "fixtures": [{
+                "path": "fixtures/negative-auto-fix",
+                "valid": true,
+                "diagnostics": []
+            }]
+        });
+        let report = validate_review_metrics_fixture_pairs(&registry, &coverage);
+        assert!(!report.valid);
+        let codes = report
+            .issues
+            .iter()
+            .map(|issue| issue.code.as_str())
+            .collect::<Vec<_>>();
+        assert!(codes.contains(&"missing_fixture_result"));
+        assert!(codes.contains(&"negative_fixture_passed"));
+    }
+
+    fn review_metrics_registry_fixture() -> serde_json::Value {
+        json!({
+            "schema_version": REVIEW_METRICS_REGRESSION_SCHEMA_V1,
+            "categories": [{
+                "code": "tasks-auto-fix",
+                "metrics_class": "omission",
+                "metrics_stage": "tasks",
+                "metrics_source": "agentic",
+                "diagnostic_code": "missing-auto-fix-task",
+                "requirement_id": "project.review.auto_fix",
+                "guidance_anchor": "# auto-fix guidance",
+                "positive_fixture": "fixtures/positive-auto-fix",
+                "negative_fixture": "fixtures/negative-auto-fix",
+                "evidence_ref": "evidence/metrics-snapshot.md"
+            }]
+        })
     }
 }
