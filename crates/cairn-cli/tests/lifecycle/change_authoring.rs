@@ -98,13 +98,24 @@ fn onboarding_template_apply_and_scaffold_are_deterministic() -> Result<(), Box<
     // r[verify cairn.developer_experience.prompt_to_change_scaffold.docs.non_claims]
     // r[verify cairn.developer_experience.prompt_to_change_scaffold.verification]
     // r[verify cairn.developer_experience.prompt_to_change_scaffold.verification.fixtures]
+    // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.catalog]
+    // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.catalog.list]
+    // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.apply]
+    // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.apply.preview]
+    // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.docs]
+    // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.docs.read]
+    // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.verification]
+    // r[verify cairn.developer_experience.onboarding_template_catalog_expansion.verification.run]
     let root = temp_project("devex-template-scaffold")?;
     let root_text = root.to_str().ok_or("utf8 root")?;
     run_json(&["init", "--root", root_text])?;
 
     let templates = run_json(&["template", "list", "--root", root_text])?;
     assert_eq!(templates["valid"], true);
-    assert!(serde_json::to_string(&templates)?.contains("agent-workflow"));
+    let template_text = serde_json::to_string(&templates)?;
+    assert!(template_text.contains("agent-workflow"));
+    assert!(template_text.contains("docs-lifecycle"));
+    assert!(template_text.contains("release-evidence"));
 
     let preview = run_json(&["template", "apply", "agent-workflow", "--root", root_text])?;
     assert_eq!(preview["dry_run"], true);
@@ -122,6 +133,12 @@ fn onboarding_template_apply_and_scaffold_are_deterministic() -> Result<(), Box<
     assert_eq!(applied["valid"], true);
     assert_eq!(applied["mutated"], true);
     assert!(root.join("docs/cairn-agent-workflow.md").is_file());
+
+    let release_preview =
+        run_json(&["template", "apply", "release-evidence", "--root", root_text])?;
+    assert_eq!(release_preview["valid"], true);
+    assert_eq!(release_preview["dry_run"], true);
+    assert!(!root.join("docs/cairn-release-evidence.md").exists());
 
     let scaffold = run_json(&[
         "scaffold",
@@ -156,9 +173,23 @@ fn reverse_spec_discovery_emits_review_needed_candidates() -> Result<(), Box<dyn
     // r[verify cairn.developer_experience.reverse_spec_discovery.docs.review_needed]
     // r[verify cairn.developer_experience.reverse_spec_discovery.verification]
     // r[verify cairn.developer_experience.reverse_spec_discovery.verification.fixtures]
+    // r[verify cairn.developer_experience.reverse_spec_directory_inventory.expand]
+    // r[verify cairn.developer_experience.reverse_spec_directory_inventory.expand.source_dir]
+    // r[verify cairn.developer_experience.reverse_spec_directory_inventory.receipt]
+    // r[verify cairn.developer_experience.reverse_spec_directory_inventory.receipt.review]
+    // r[verify cairn.developer_experience.reverse_spec_directory_inventory.docs]
+    // r[verify cairn.developer_experience.reverse_spec_directory_inventory.docs.read]
+    // r[verify cairn.developer_experience.reverse_spec_directory_inventory.verification]
+    // r[verify cairn.developer_experience.reverse_spec_directory_inventory.verification.run]
     let root = temp_project("devex-discovery")?;
     fs::create_dir_all(root.join("src"))?;
+    fs::create_dir_all(root.join("src/nested"))?;
+    fs::create_dir_all(root.join("src/.hidden"))?;
+    fs::create_dir_all(root.join("target"))?;
     fs::write(root.join("src/lib.rs"), "pub fn visible_behavior() {}\n")?;
+    fs::write(root.join("src/nested/feature.md"), "### Nested Feature\n")?;
+    fs::write(root.join("src/.hidden/secret.rs"), "pub fn secret() {}\n")?;
+    fs::write(root.join("target/generated.rs"), "pub fn generated() {}\n")?;
     let root_text = root.to_str().ok_or("utf8 root")?;
 
     let receipt = run_json(&[
@@ -171,6 +202,26 @@ fn reverse_spec_discovery_emits_review_needed_candidates() -> Result<(), Box<dyn
     assert_eq!(receipt["valid"], true);
     assert_eq!(receipt["candidates"][0]["review_status"], "review-needed");
     assert_eq!(receipt["candidates"][0]["evidence_path"], "src/lib.rs");
+
+    let directory_receipt = run_json(&[
+        "discover-specs",
+        "--root",
+        root_text,
+        "--include",
+        "src",
+        "--include",
+        "target",
+    ])?;
+    assert_eq!(directory_receipt["valid"], true);
+    let directory_text = serde_json::to_string(&directory_receipt)?;
+    assert!(directory_text.contains("src/lib.rs"), "{directory_text}");
+    assert!(
+        directory_text.contains("src/nested/feature.md"),
+        "{directory_text}"
+    );
+    assert!(directory_text.contains("src/.hidden"), "{directory_text}");
+    assert!(directory_text.contains("target"), "{directory_text}");
+    assert!(!directory_text.contains("generated"), "{directory_text}");
 
     let draft = run_json(&[
         "discover-specs",

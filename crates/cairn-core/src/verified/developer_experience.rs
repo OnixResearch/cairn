@@ -96,6 +96,23 @@ pub fn onboarding_templates() -> Vec<TemplateProfile> {
                 "# Cairn for Rust/Nix\n\nUse `nix develop -c cargo test --workspace` for implementation checks and `cairn validate --root .` for lifecycle checks.\n",
             )],
         },
+        TemplateProfile {
+            id: "docs-lifecycle",
+            // r[impl cairn.developer_experience.onboarding_template_catalog_expansion.catalog]
+            description: "Docs-only repository quickstart for reviewed changes without code-build assumptions.",
+            files: vec![file(
+                "docs/cairn-docs-lifecycle.md",
+                "# Cairn for docs-only repositories\n\nUse `cairn change create <slug> --root .` to propose documentation changes, `cairn gate proposal <slug> --root .` / `cairn gate design <slug> --root .` / `cairn gate tasks <slug> --root .` for review, and `cairn sync <slug> --root . --execute` only after the documentation update is verified.\n",
+            )],
+        },
+        TemplateProfile {
+            id: "release-evidence",
+            description: "Release-evidence quickstart for local/offline readiness receipts and evidence indexes.",
+            files: vec![file(
+                "docs/cairn-release-evidence.md",
+                "# Cairn release evidence\n\nUse `cairn release-readiness --root .` to inspect local readiness, `cairn release-evidence index --root . --out target/release-evidence.md` to compose a current-head evidence page, and evidence registry commands for local/offline publication materialization. This template does not configure remote publishing, credential handling, hosted UI, or signing.\n",
+            )],
+        },
     ]
 }
 

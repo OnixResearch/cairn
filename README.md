@@ -93,7 +93,7 @@ nix run path:$PWD#cairn -- change create native-lifecycle --root /path/to/repo
 nix run path:$PWD#cairn -- template list --root /path/to/repo
 nix run path:$PWD#cairn -- template apply agent-workflow --root /path/to/repo --execute
 nix run path:$PWD#cairn -- scaffold change first-change --root /path/to/repo --request "Add the first reviewed capability" --execute
-nix run path:$PWD#cairn -- discover-specs --root /path/to/repo --include src/lib.rs --out target/reverse-spec-draft.md
+nix run path:$PWD#cairn -- discover-specs --root /path/to/repo --include src --include docs --out target/reverse-spec-draft.md
 nix run path:$PWD#cairn -- change list --root fixtures/basic
 nix run path:$PWD#cairn -- change show demo --root fixtures/basic
 nix run path:$PWD#cairn -- spec list --root fixtures/basic
@@ -107,11 +107,13 @@ nix run path:$PWD#cairn -- migrate openspec --root fixtures/basic
 ```
 
 `template list` and `template apply <id>` provide a reviewed first-use catalog for
-`agent-workflow`, `generic-cli`, and `rust-nix` onboarding profiles. Template
-application is preview-first unless `--execute` is passed; executed receipts list
-created files and BLAKE3-bound mutation manifests. Templates create quickstart
-artifacts only and do not write accepted specs, contact network services, or
-claim remote publishing/signing. r[impl cairn.developer_experience.onboarding_templates.quickstart]
+`agent-workflow`, `generic-cli`, `rust-nix`, `docs-lifecycle`, and
+`release-evidence` onboarding profiles. Template application is preview-first
+unless `--execute` is passed; executed receipts list created files and BLAKE3-bound
+mutation manifests. Templates create quickstart artifacts only and do not write
+accepted specs, contact network services, or claim remote publishing/signing.
+r[impl cairn.developer_experience.onboarding_templates.quickstart]
+r[impl cairn.developer_experience.onboarding_template_catalog_expansion.docs]
 
 `scaffold change <name> --request <text>` turns explicit local request material
 into a gate-ready draft change package with proposal, design, tasks, and a delta
@@ -120,11 +122,15 @@ uses deterministic templates rather than built-in LLM/network inference. r[impl
 cairn.developer_experience.prompt_to_change_scaffold.docs]
 
 `discover-specs --include <path>` is a read-only reverse-spec discovery rail for
-existing repositories. It inventories explicit source/docs/test paths, emits
-review-needed candidate requirements with evidence paths and input hashes, and
-only writes draft artifacts when `--out` is provided. Candidates are not accepted
-specs or implementation proof until reviewed through the normal Cairn lifecycle.
+existing repositories. Includes may name explicit files or safe repository-relative
+directories; directory includes expand deterministically over text-like source,
+docs, tests, and config files while skipping hidden/build/vendor artifacts. The
+command inventories explicit evidence paths, emits review-needed candidate
+requirements with evidence paths and input hashes, and only writes draft artifacts
+when `--out` is provided. Candidates are not accepted specs or implementation proof
+until reviewed through the normal Cairn lifecycle.
 r[impl cairn.developer_experience.reverse_spec_discovery.docs]
+r[impl cairn.developer_experience.reverse_spec_directory_inventory.docs]
 
 `doctor [--root PATH] [--policy PATH]` is read-only and emits a compact JSON
 health receipt for the selected layout, policy load status, discovered spec/change
