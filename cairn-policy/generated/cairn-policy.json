@@ -248,7 +248,8 @@
           "tracey_coverage_hash",
           "mcp_smoke_receipt_hash",
           "coverage_audit_receipt_hash",
-          "release_evidence_index_check_hash"
+          "release_evidence_index_check_hash",
+          "semantic_review_ledger_hash"
         ],
         "id": "release_readiness",
         "normalization_rules": [

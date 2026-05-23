@@ -104,6 +104,7 @@ nix run path:$PWD#cairn -- validate --root .
 nix run path:$PWD#cairn -- review profiles
 nix run path:$PWD#cairn -- review validate review.json --root .
 nix run path:$PWD#cairn -- review ledger --include reviews --root .
+nix run path:$PWD#cairn -- release-readiness --root . --review-ledger target/review-ledger.json
 nix run path:$PWD#cairn -- review revision validate revision.json --root .
 nix run path:$PWD#cairn -- gate tasks demo --root fixtures/basic
 nix run path:$PWD#cairn -- sync demo --root fixtures/basic
@@ -122,8 +123,12 @@ input receipt hashes, invalid-input reports, and small-sample warnings. `review
 revision validate <receipt.json>` validates revision handoff receipts linking
 prior review hashes to revision artifacts and finding dispositions. `review
 profiles` prints the policy-owned review kinds, reviewer sources, decisions,
-severities, and profile criteria. These commands validate structure, hashes, and
-policy vocabularies only; they do not call LLMs, execute reviewer code, publish
+severities, and profile criteria. `release-readiness --review-ledger <path>`
+consumes a deterministic `review ledger` receipt and fails the readiness bundle
+when that supplied ledger is invalid or reports a failing verdict; when no ledger
+is supplied and no conventional `docs/semantic-review-ledger.json` exists, the
+readiness receipt records an explicit skipped semantic-review check. These
+commands validate structure, hashes, and policy vocabularies only; they do not call LLMs, execute reviewer code, publish
 remote state, or claim to prove semantic correctness. r[impl cairn.semantic_review.semantic_review_receipts.docs] r[impl cairn.semantic_review.semantic_review_receipts.docs.docs.non_claims] r[impl cairn.semantic_review.semantic_review_boundary.boundary.boundary.claims]
 
 `template list` and `template apply <id>` provide a reviewed first-use catalog for

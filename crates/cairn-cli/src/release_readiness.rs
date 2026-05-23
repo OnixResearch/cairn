@@ -10,7 +10,7 @@
 // r[verify release_evidence.current_head_evidence_index.behavior_preserved]
 // r[verify release_evidence.current_head_evidence_index.behavior_preserved.focused_checks]
 // r[verify release_evidence.current_head_evidence_index.behavior_preserved.repository_checks]
-use std::{error::Error, path::PathBuf};
+use std::{error::Error, fs, path::PathBuf};
 
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
@@ -21,17 +21,30 @@ use crate::native::cairn_validation_receipt;
 use crate::release_evidence::release_evidence_check_index_receipt_for_path;
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
-    with_portable_receipt_hash,
+    read_string_option, safe_relative_path, with_portable_receipt_hash,
 };
 use crate::tracey::{repository_gate_summary, tracey_coverage_receipt};
 
 pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let root = read_option(args.clone(), "--root", ".");
-    let policy_path = read_option(args, "--policy", default_policy_path());
-    print_json(release_readiness_receipt(root, policy_path))
+    let policy_path = read_option(args.clone(), "--policy", default_policy_path());
+    let review_ledger = read_string_option(&args, "--review-ledger").map(PathBuf::from);
+    print_json(release_readiness_receipt_with_review_ledger(
+        root,
+        policy_path,
+        review_ledger,
+    ))
 }
 
 pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> Value {
+    release_readiness_receipt_with_review_ledger(root, policy_path, None)
+}
+
+pub(crate) fn release_readiness_receipt_with_review_ledger(
+    root: PathBuf,
+    policy_path: PathBuf,
+    review_ledger: Option<PathBuf>,
+) -> Value {
     // r[impl cairn.supersede.release_readiness_bundle]
     // r[impl cairn.supersede.release_readiness_bundle.schema]
     // r[impl cairn.supersede.release_readiness_bundle.local]
@@ -49,6 +62,7 @@ pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> 
         Ok(determinism_coverage_audit_receipt(&root, &policy))
     });
     let release_evidence_index = conventional_release_evidence_index_component(root.clone());
+    let semantic_review_ledger = semantic_review_ledger_component(root.clone(), review_ledger);
     let repository_gate_summary = repository_gate_summary();
     let replay_preflight = json!({
         "command": "determinism replay --root <root>",
@@ -63,6 +77,7 @@ pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> 
         mcp_smoke.check,
         coverage_audit.check,
         release_evidence_index.check,
+        semantic_review_ledger.check,
     ];
     checks.push(json!({
         "name": "repository_gate_policy_listed",
@@ -88,11 +103,86 @@ pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> 
             "coverage_audit_valid": coverage_audit_valid,
             "coverage_audit_receipt_hash": coverage_audit.receipt_hash,
             "release_evidence_index_check_hash": release_evidence_index.receipt_hash,
+            "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
             "repository_gate_summary": repository_gate_summary,
             "determinism_replay": replay_preflight,
             "mcp": {"read_only": true, "destructive": false}
         }),
     )
+}
+
+fn semantic_review_ledger_component(
+    root: PathBuf,
+    explicit_path: Option<PathBuf>,
+) -> ReadinessComponent {
+    // r[impl cairn.semantic_review.readiness_gate.release_readiness]
+    // r[impl cairn.semantic_review.readiness_gate.release_readiness.supplied_valid]
+    // r[impl cairn.semantic_review.readiness_gate.release_readiness.supplied_invalid]
+    // r[impl cairn.semantic_review.readiness_gate.release_readiness.skipped_absent]
+    // r[impl cairn.semantic_review.readiness_gate.boundary]
+    // r[impl cairn.semantic_review.readiness_gate.boundary.no_reviewer_execution]
+    let path = explicit_path.or_else(|| {
+        let conventional = root.join("docs/semantic-review-ledger.json");
+        conventional.exists().then_some(conventional)
+    });
+    let Some(path) = path else {
+        let receipt = json!({
+            "command": "review ledger",
+            "valid": true,
+            "verdict": "PASS",
+            "skipped": true,
+            "reason": "semantic review ledger not supplied and conventional docs/semantic-review-ledger.json is absent; Cairn did not run reviewers or infer semantic correctness",
+        });
+        let receipt_hash = canonical_json_hash(&receipt);
+        return ReadinessComponent {
+            check: json!({
+                "name": "semantic_review_ledger",
+                "passed": true,
+                "source": component_source("semantic_review_ledger"),
+                "skipped": true,
+                "receipt_hash": receipt_hash,
+            }),
+            receipt_hash,
+        };
+    };
+
+    match fs::read_to_string(&path)
+        .map_err(|error| error.to_string())
+        .and_then(|text| serde_json::from_str::<Value>(&text).map_err(|error| error.to_string()))
+    {
+        Ok(receipt) => {
+            let is_passed = receipt["valid"].as_bool().unwrap_or(false)
+                && matches!(
+                    receipt["verdict"].as_str(),
+                    Some("pass" | "PASS" | "approved" | "APPROVED")
+                );
+            let receipt_hash = receipt["receipt_hash"]
+                .as_str()
+                .map(ToOwned::to_owned)
+                .unwrap_or_else(|| canonical_json_hash(&receipt));
+            ReadinessComponent {
+                check: json!({
+                    "name": "semantic_review_ledger",
+                    "passed": is_passed,
+                    "source": component_source("semantic_review_ledger"),
+                    "path": safe_relative_path(&root, &path),
+                    "receipt_hash": receipt_hash,
+                    "verdict": receipt["verdict"].clone(),
+                }),
+                receipt_hash,
+            }
+        }
+        Err(issue) => ReadinessComponent {
+            check: json!({
+                "name": "semantic_review_ledger",
+                "passed": false,
+                "source": component_source("semantic_review_ledger"),
+                "path": safe_relative_path(&root, &path),
+                "issue": issue,
+            }),
+            receipt_hash: String::new(),
+        },
+    }
 }
 
 fn conventional_release_evidence_index_component(root: PathBuf) -> ReadinessComponent {
@@ -171,6 +261,9 @@ fn component_source(name: &str) -> &'static str {
         "determinism_coverage_audit" => "cairn determinism coverage-audit --root <root>",
         "release_evidence_index_freshness" => {
             "cairn release-evidence check-index --root <root> --index docs/release-evidence-current-head.md"
+        }
+        "semantic_review_ledger" => {
+            "cairn release-readiness --root <root> --review-ledger <review-ledger.json>"
         }
         _ => "unknown",
     }

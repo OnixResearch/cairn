@@ -3,7 +3,7 @@
     "model": "captured-model",
     "wrapper": "cairn-fixture"
   },
-  "agent_run_receipt_hash": "501ba02cf5b19d0762546efc59d0364be8bda09ef96a161c5f7fee3233112721",
+  "agent_run_receipt_hash": "b37fe9e163689f4ec6d46221f03d323b6438f52a24f6969712336779c9331010",
   "input_hash": "1111111111111111111111111111111111111111111111111111111111111111",
   "mutation_manifest": {
     "files": [
@@ -22,12 +22,12 @@
     "forbidden_uncaptured": []
   },
   "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
-  "receipt_hash": "f66fbad9a2a6ade19edc93fa26da01bf203dee0d3cb8d65dabc3618e1ea72b2d",
+  "receipt_hash": "bdd52af8f7fa50b3b88b94b7fd81177a58e25ec2fa5b6a99b6efc5ca80658da6",
   "replay_evidence": {
     "replay_artifact_path": "replay-agent.json",
-    "replay_environment_attestation_hash": "d71996b449abc9ab8b9f2936abcdc4a9049c60e20dc038408b49327e7bf9e5b7",
-    "replay_policy_hash": "fbbd35e94ca667aae96273835a75af7cfcd89f36677a74a0b01e83583eece3d6",
-    "replay_receipt_hash": "3c903ec70b2a72fec190eaba220d0ee36ee1d7104701a33ed820cef914170857",
+    "replay_environment_attestation_hash": "5dc4ac752af5e4fa6d127e698fa9ca8cc34cedfa98d17bf4cb9c3b6d47f0e526",
+    "replay_policy_hash": "248ef2d2239b7168825d4f7f625ae3eac4bcaacccc35b84bbac8f8d261fb5f4d",
+    "replay_receipt_hash": "4e52a016ea2559243511ea6573d2517a1252cb132194fed5e4bb8cfc90fa2b1c",
     "replay_selected_cases": [
       "agent_receipt_validate",
       "mcp_describe",
