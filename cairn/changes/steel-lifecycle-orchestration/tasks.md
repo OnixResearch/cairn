@@ -1,0 +1,14 @@
+## Phase 1: Policy and DTO boundary
+
+- [ ] [serial] Define policy-owned Steel orchestration profiles, allowed host functions, deterministic budgets, redaction classes, fallback modes, and receipt schema versions. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.policy_declared_surface]]
+- [ ] [serial] Add Rust DTOs for Steel lifecycle action envelopes and fail-closed validation for malformed, unsupported, or unauthorized requests. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.typed_action_envelopes], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.rust_owned_authority]]
+
+## Phase 2: Execution shell and receipts
+
+- [ ] [serial] Add an optional Steel orchestration shell that evaluates reviewed scripts, maps output into Rust-owned action envelopes, and preserves normal Cairn behavior when Steel is disabled or unavailable. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.optional_fallback], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.no_core_replacement]]
+- [ ] [serial] Emit deterministic, redacted receipts for successful, denied, disabled, and fallback Steel orchestration attempts. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.deterministic_receipts]]
+
+## Phase 3: Fixtures and verification
+
+- [ ] [serial] Add positive and negative fixtures covering allowed typed plans, denied host effects, malformed policy, missing Steel runtime, deterministic receipt stability, and secret redaction. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.typed_action_envelopes], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.policy_declared_surface], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.deterministic_receipts]]
+- [ ] [serial] Verify the change with policy export, formatting, focused tests, lifecycle validation, Tracey coverage, and the relevant Nix checks before sync/archive. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.no_core_replacement]]
