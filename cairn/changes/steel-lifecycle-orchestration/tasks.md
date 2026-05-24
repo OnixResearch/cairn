@@ -5,9 +5,9 @@
 
 ## Phase 2: Execution shell and receipts
 
-- [ ] [serial] Add an optional Steel orchestration shell that evaluates reviewed scripts, maps output into Rust-owned action envelopes, and preserves normal Cairn behavior when Steel is disabled or unavailable. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.optional_fallback], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.no_core_replacement]]
+- [x] [serial] Add an optional Steel orchestration shell that evaluates reviewed scripts, maps output into Rust-owned action envelopes, and preserves normal Cairn behavior when Steel is disabled or unavailable. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.optional_fallback], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.no_core_replacement]]
 - [x] [serial] Add the initial no-eval CLI receipt shell for disabled, denied-profile, and runtime-unavailable fallback Steel orchestration attempts. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.optional_fallback], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.deterministic_receipts]]
-- [ ] [serial] Emit deterministic, redacted receipts for successful, denied, disabled, and fallback Steel orchestration attempts. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.deterministic_receipts]]
+- [x] [serial] Emit deterministic, redacted receipts for successful, denied, disabled, and fallback Steel orchestration attempts. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.deterministic_receipts]]
 
 ## Phase 3: Fixtures and verification
 

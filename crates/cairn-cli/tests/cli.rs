@@ -1,4 +1,4 @@
-use std::{env, error::Error, fs, path::PathBuf, process::Command};
+use std::{env, error::Error, fs, path::PathBuf, process::Command, time::SystemTime};
 
 use serde_json::Value;
 
@@ -10,6 +10,60 @@ fn cairn() -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_cairn"));
     command.current_dir(repo_root());
     command
+}
+
+fn temp_test_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
+    let nanos = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)?
+        .as_nanos();
+    let dir = env::temp_dir().join(format!(
+        "cairn-cli-test-{name}-{}-{nanos}",
+        std::process::id()
+    ));
+    fs::create_dir_all(&dir)?;
+    Ok(dir)
+}
+
+fn write_enabled_steel_policy(dir: &std::path::Path) -> Result<PathBuf, Box<dyn Error>> {
+    let policy_path = repo_root().join("cairn-policy/generated/cairn-policy.json");
+    let policy_text = fs::read_to_string(policy_path)?;
+    let mut policy: Value = serde_json::from_str(&policy_text)?;
+    policy["steel_orchestration_policy"] = serde_json::json!({
+        "enabled": true,
+        "profiles": [{
+            "id": "comparison.lifecycle.closeout",
+            "mode": "comparison",
+            "allowed_host_functions": ["cairn.validate"],
+            "deterministic_budgets": ["no-fs-mutation"],
+            "redaction_classes": ["safe_metadata"],
+            "fallback_modes": ["rust-nickel-canonical"],
+            "receipt_schema_version": "cairn.steel-orchestration-receipt.v1"
+        }]
+    });
+    let output_path = dir.join("policy.json");
+    fs::write(&output_path, serde_json::to_string_pretty(&policy)?)?;
+    Ok(output_path)
+}
+
+fn write_script_envelope(
+    dir: &std::path::Path,
+    host_function: &str,
+) -> Result<PathBuf, Box<dyn Error>> {
+    let script_path = dir.join("steel-plan.json");
+    fs::write(
+        &script_path,
+        serde_json::to_string_pretty(&serde_json::json!({
+            "schema_version": "cairn.steel-action-envelope.v1",
+            "profile_id": "comparison.lifecycle.closeout",
+            "script_hash": "reviewed-script-fixture",
+            "actions": [{
+                "id": "validate",
+                "host_function": host_function,
+                "args": {"root": "."}
+            }]
+        }))?,
+    )?;
+    Ok(script_path)
 }
 
 #[test]
@@ -99,5 +153,85 @@ fn steel_orchestration_receipt_denies_unknown_profile() -> Result<(), Box<dyn Er
     assert_eq!(receipt["issues"][0]["code"], "profile_not_found");
     assert_eq!(receipt["issues"][0]["class"], "denied");
     assert_eq!(receipt["fallback_reason"], "policy_disabled");
+    Ok(())
+}
+
+#[test]
+fn steel_orchestration_receipt_plans_reviewed_allowed_script() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("steel-allowed")?;
+    let policy_path = write_enabled_steel_policy(&dir)?;
+    let script_path = write_script_envelope(&dir, "cairn.validate")?;
+
+    let output = cairn()
+        .args([
+            "steel-orchestration",
+            "receipt",
+            "--root",
+            ".",
+            "--policy",
+            policy_path.to_str().ok_or("utf8 policy path")?,
+            "--profile",
+            "comparison.lifecycle.closeout",
+            "--script",
+            script_path.to_str().ok_or("utf8 script path")?,
+        ])
+        .output()?;
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout)?;
+    let receipt: Value = serde_json::from_str(&stdout)?;
+
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["outcome"], "planned");
+    assert_eq!(receipt["fallback_reason"], "none");
+    assert_eq!(receipt["steel_enabled"], true);
+    assert_eq!(receipt["steel_runtime_available"], true);
+    assert_eq!(receipt["script_hash"].as_str().unwrap().len(), 64);
+    assert_eq!(receipt["authorized_actions"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        receipt["authorized_actions"][0]["host_function"],
+        "cairn.validate"
+    );
+    assert_eq!(receipt["denied_actions"].as_array().unwrap().len(), 0);
+    assert_eq!(receipt["receipt_hash"].as_str().unwrap().len(), 64);
+
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[test]
+fn steel_orchestration_receipt_denies_unapproved_host_function() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("steel-denied")?;
+    let policy_path = write_enabled_steel_policy(&dir)?;
+    let script_path = write_script_envelope(&dir, "host.fs.write")?;
+
+    let output = cairn()
+        .args([
+            "steel-orchestration",
+            "receipt",
+            "--root",
+            ".",
+            "--policy",
+            policy_path.to_str().ok_or("utf8 policy path")?,
+            "--profile",
+            "comparison.lifecycle.closeout",
+            "--script",
+            script_path.to_str().ok_or("utf8 script path")?,
+        ])
+        .output()?;
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout)?;
+    let receipt: Value = serde_json::from_str(&stdout)?;
+
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["outcome"], "denied");
+    assert_eq!(receipt["fallback_reason"], "none");
+    assert_eq!(receipt["authorized_actions"].as_array().unwrap().len(), 0);
+    assert_eq!(
+        receipt["denied_actions"][0]["code"],
+        "host_function_not_allowed"
+    );
+    assert_eq!(receipt["issues"][0]["class"], "denied");
+
+    fs::remove_dir_all(dir)?;
     Ok(())
 }

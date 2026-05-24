@@ -1,7 +1,8 @@
-use std::error::Error;
+use std::{error::Error, fs, path::PathBuf};
 
 use cairn_core::{
-    canonical_json_hash, SteelOrchestrationProfile, STEEL_ORCHESTRATION_RECEIPT_SCHEMA_V1,
+    blake3_hex, canonical_json_hash, validate_steel_action_envelope, SteelActionIssue,
+    SteelOrchestrationProfile, STEEL_ORCHESTRATION_RECEIPT_SCHEMA_V1,
 };
 use serde_json::{json, Value};
 
@@ -40,8 +41,8 @@ fn run_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     );
     let policy = load_policy_file(policy_path)?;
     let requested_profile_id = read_string_option(&args, "--profile");
-    let script_hash =
-        read_string_option(&args, "--script-hash").unwrap_or_else(|| NO_SCRIPT_HASH.into());
+    let requested_script_hash = read_string_option(&args, "--script-hash");
+    let script_path = read_string_option(&args, "--script").map(PathBuf::from);
 
     let profiles = &policy.steel_orchestration_policy.profiles;
     let selected_profile = select_profile(profiles, requested_profile_id.as_deref());
@@ -55,15 +56,23 @@ fn run_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     }
 
     let profile = selected_profile.cloned().unwrap_or_else(fallback_profile);
-    let outcome = receipt_outcome(policy.steel_orchestration_policy.enabled, &profile);
-    let fallback_reason = fallback_reason(policy.steel_orchestration_policy.enabled, &profile);
-    if outcome != "disabled" {
-        issues.push(json!({
-            "code": "steel_runtime_unavailable",
-            "class": "fallback",
-            "message": "Steel orchestration runtime evaluation is not wired in this shell"
-        }));
-    }
+    let evaluation = evaluate_script_if_enabled(
+        policy.steel_orchestration_policy.enabled,
+        &profile,
+        script_path.as_ref(),
+        requested_script_hash.as_deref(),
+    );
+    issues.extend(evaluation.issues.clone());
+    let outcome = receipt_outcome(
+        policy.steel_orchestration_policy.enabled,
+        &profile,
+        &evaluation,
+    );
+    let fallback_reason = fallback_reason(
+        policy.steel_orchestration_policy.enabled,
+        &profile,
+        &evaluation,
+    );
 
     let mut receipt = json!({
         "schema_version": STEEL_ORCHESTRATION_RECEIPT_SCHEMA_V1,
@@ -74,10 +83,10 @@ fn run_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "mode": profile.mode,
         "profile_id": profile.id,
         "steel_enabled": policy.steel_orchestration_policy.enabled,
-        "steel_runtime_available": false,
-        "script_hash": script_hash,
-        "authorized_actions": [],
-        "denied_actions": [],
+        "steel_runtime_available": evaluation.runtime_available,
+        "script_hash": evaluation.script_hash,
+        "authorized_actions": evaluation.authorized_actions,
+        "denied_actions": evaluation.denied_actions,
         "fallback_reason": fallback_reason,
         "redaction_classes": profile.redaction_classes,
         "receipt_schema_version": profile.receipt_schema_version,
@@ -102,22 +111,184 @@ fn select_profile<'a>(
     }
 }
 
-fn receipt_outcome(is_policy_enabled: bool, profile: &SteelOrchestrationProfile) -> &'static str {
+fn receipt_outcome(
+    is_policy_enabled: bool,
+    profile: &SteelOrchestrationProfile,
+    evaluation: &ScriptEvaluation,
+) -> &'static str {
     if !is_policy_enabled || profile.mode == "disabled" {
         "disabled"
+    } else if evaluation.runtime_available && !evaluation.has_denial() {
+        "planned"
+    } else if evaluation.runtime_available {
+        "denied"
     } else {
         "fallback"
     }
 }
 
-fn fallback_reason(is_policy_enabled: bool, profile: &SteelOrchestrationProfile) -> &'static str {
+fn fallback_reason(
+    is_policy_enabled: bool,
+    profile: &SteelOrchestrationProfile,
+    evaluation: &ScriptEvaluation,
+) -> &'static str {
     if !is_policy_enabled {
         "policy_disabled"
     } else if profile.mode == "disabled" {
         "profile_disabled"
+    } else if evaluation.runtime_available {
+        "none"
+    } else if evaluation.script_requested {
+        "steel_script_unavailable"
     } else {
         "steel_runtime_unavailable"
     }
+}
+
+struct ScriptEvaluation {
+    runtime_available: bool,
+    script_requested: bool,
+    script_hash: String,
+    authorized_actions: Vec<Value>,
+    denied_actions: Vec<Value>,
+    issues: Vec<Value>,
+}
+
+impl ScriptEvaluation {
+    fn disabled(requested_hash: Option<&str>) -> Self {
+        Self {
+            runtime_available: false,
+            script_requested: false,
+            script_hash: requested_hash.unwrap_or(NO_SCRIPT_HASH).to_string(),
+            authorized_actions: Vec::new(),
+            denied_actions: Vec::new(),
+            issues: Vec::new(),
+        }
+    }
+
+    fn has_denial(&self) -> bool {
+        self.issues
+            .iter()
+            .any(|issue| issue.get("class").and_then(Value::as_str) == Some("denied"))
+    }
+}
+
+fn evaluate_script_if_enabled(
+    is_policy_enabled: bool,
+    profile: &SteelOrchestrationProfile,
+    script_path: Option<&PathBuf>,
+    requested_script_hash: Option<&str>,
+) -> ScriptEvaluation {
+    if !is_policy_enabled || profile.mode == "disabled" {
+        return ScriptEvaluation::disabled(requested_script_hash);
+    }
+
+    let Some(script_path) = script_path else {
+        let mut evaluation = ScriptEvaluation::disabled(requested_script_hash);
+        evaluation.issues.push(json!({
+            "code": "steel_runtime_unavailable",
+            "class": "fallback",
+            "message": "no reviewed Steel script envelope was provided"
+        }));
+        return evaluation;
+    };
+
+    let script_bytes = match fs::read(script_path) {
+        Ok(bytes) => bytes,
+        Err(_) => {
+            let mut evaluation = ScriptEvaluation::disabled(requested_script_hash);
+            evaluation.script_requested = true;
+            evaluation.issues.push(json!({
+                "code": "steel_script_unavailable",
+                "class": "fallback",
+                "message": "reviewed Steel script envelope could not be read"
+            }));
+            return evaluation;
+        }
+    };
+    let script_hash = blake3_hex(&script_bytes);
+    let mut issues = Vec::new();
+    if let Some(expected_hash) = requested_script_hash {
+        if expected_hash != script_hash {
+            issues.push(json!({
+                "code": "script_hash_mismatch",
+                "class": "denied",
+                "message": "reviewed Steel script hash does not match the requested hash"
+            }));
+        }
+    }
+
+    let envelope: Value = match serde_json::from_slice(&script_bytes) {
+        Ok(value) => value,
+        Err(_) => {
+            issues.push(json!({
+                "code": "invalid_script_envelope_json",
+                "class": "denied",
+                "message": "reviewed Steel script envelope is not valid JSON"
+            }));
+            return ScriptEvaluation {
+                runtime_available: true,
+                script_requested: true,
+                script_hash,
+                authorized_actions: Vec::new(),
+                denied_actions: Vec::new(),
+                issues,
+            };
+        }
+    };
+
+    if envelope.get("profile_id").and_then(Value::as_str) != Some(profile.id.as_str()) {
+        issues.push(json!({
+            "code": "profile_mismatch",
+            "class": "denied",
+            "message": "reviewed Steel script envelope targets a different profile"
+        }));
+    }
+    let validation = validate_steel_action_envelope(&envelope, &profile.allowed_host_functions);
+    let denied_actions = validation
+        .issues
+        .iter()
+        .map(steel_issue_json)
+        .collect::<Vec<_>>();
+    issues.extend(denied_actions.iter().cloned());
+    let authorized_actions = if validation.valid && issues.is_empty() {
+        envelope
+            .get("actions")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .map(redacted_action)
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    ScriptEvaluation {
+        runtime_available: true,
+        script_requested: true,
+        script_hash,
+        authorized_actions,
+        denied_actions,
+        issues,
+    }
+}
+
+fn steel_issue_json(issue: &SteelActionIssue) -> Value {
+    json!({
+        "code": issue.code,
+        "class": "denied",
+        "field_path": issue.field_path,
+        "message": issue.message,
+    })
+}
+
+fn redacted_action(action: Value) -> Value {
+    json!({
+        "id": action.get("id").and_then(Value::as_str).unwrap_or(""),
+        "host_function": action.get("host_function").and_then(Value::as_str).unwrap_or(""),
+        "request_hash": canonical_json_hash(&action),
+    })
 }
 
 fn fallback_profile() -> SteelOrchestrationProfile {
@@ -139,7 +310,7 @@ fn receipt_without_hash(receipt: &Value) -> Value {
 }
 
 fn steel_usage() -> &'static str {
-    "usage: cairn steel-orchestration receipt [--root PATH] [--policy PATH] [--profile ID] [--script-hash HASH]"
+    "usage: cairn steel-orchestration receipt [--root PATH] [--policy PATH] [--profile ID] [--script PATH] [--script-hash HASH]"
 }
 
 #[cfg(test)]
@@ -176,7 +347,11 @@ mod tests {
             receipt_schema_version: STEEL_ORCHESTRATION_RECEIPT_SCHEMA_V1.into(),
         };
 
-        assert_eq!(receipt_outcome(true, &profile), "fallback");
-        assert_eq!(fallback_reason(true, &profile), "steel_runtime_unavailable");
+        let evaluation = ScriptEvaluation::disabled(None);
+        assert_eq!(receipt_outcome(true, &profile, &evaluation), "fallback");
+        assert_eq!(
+            fallback_reason(true, &profile, &evaluation),
+            "steel_runtime_unavailable"
+        );
     }
 }
