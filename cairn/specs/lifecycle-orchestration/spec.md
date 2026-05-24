@@ -56,3 +56,9 @@ The system MUST support optional Steel-based lifecycle orchestration that compos
 - WHEN Cairn evaluates the Steel script beside the existing Rust/Nickel workflow
 - THEN the Steel path MUST produce plan and comparison receipts without executing filesystem, process, network, lifecycle mutation, or evidence-writing effects
 - AND the Rust/Nickel workflow MUST remain the only effecting path for that run
+
+#### Scenario: Steel orchestration CLI is documented for operators [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.operator_docs]]
+- GIVEN an operator reviews Cairn's public Steel orchestration documentation
+- WHEN they inspect the `steel-orchestration receipt` and `steel-orchestration default-gate` examples
+- THEN the documentation MUST show the disabled-by-default receipt behavior, default-gate failure under the default disabled policy, and selected-default gate shape with complete evidence hashes
+- AND the documentation MUST state that Steel orchestration receipts are deterministic, redacted, and do not prove host effects executed
