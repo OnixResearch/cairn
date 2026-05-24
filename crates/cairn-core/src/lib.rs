@@ -49,11 +49,16 @@ pub use verified::lifecycle::{
     validate_change_name, ChangeSkeleton, LifecycleArtifact, LifecycleArtifactKind,
     LifecycleLayout, MigrationAction, MigrationInput, MigrationPlan,
 };
+pub use verified::lifecycle_orchestration::{
+    validate_steel_action_envelope, SteelActionIssue, SteelActionValidationReport,
+    STEEL_ACTION_ENVELOPE_SCHEMA_V1, STEEL_ORCHESTRATION_RECEIPT_SCHEMA_V1,
+};
 pub use verified::plan::{
     build_archive_plan, build_sync_plan, ArchivePlan, PlanAction, PlanActionKind, SyncPlan,
 };
 pub use verified::policy::{
-    parse_policy_json, validate_policy_json, Policy, PolicyError, SUPPORTED_POLICY_VERSION,
+    parse_policy_json, validate_policy_json, Policy, PolicyError, SteelOrchestrationPolicy,
+    SteelOrchestrationProfile, SUPPORTED_POLICY_VERSION,
 };
 pub use verified::repo::{
     build_change_detail, build_change_list, build_change_status, build_repo_status,

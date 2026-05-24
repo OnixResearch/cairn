@@ -67,7 +67,27 @@ let Contracts = import "contracts.ncl" in
     statuses = ["current", "planned", "blocked", "deferred"],
   },
 
+  steel_orchestration_policy = {
+    enabled = false,
+    profiles = [{
+      id = "disabled.lifecycle.default",
+      mode = "disabled",
+      allowed_host_functions = [],
+      deterministic_budgets = ["no-evaluation"],
+      redaction_classes = ["no-secret-fields"],
+      fallback_modes = ["rust-nickel-canonical"],
+      receipt_schema_version = "cairn.steel-orchestration-receipt.v1",
+    }],
+  },
+
   receipt_schemas = [
+    {
+      command = "steel orchestration",
+      top_level_keys = ["authorized_actions", "command", "fallback_reason", "issues", "mode", "profile_id", "receipt_hash", "schema_version", "script_hash", "valid", "verdict"],
+      action_keys = ["host_function", "id", "request_hash"],
+      issue_keys = ["code", "field_path", "message"],
+      hash_fields = ["receipt_hash", "script_hash"],
+    },
     {
       command = "agent-receipt validate",
       top_level_keys = ["agent_receipt_hash", "command", "current_replay_policy_hash", "input_hash", "input_kind", "issues", "max_content_bytes", "path", "receipt_hash", "replay_evidence", "required_replay_cases", "required_replay_group", "stated_agent_receipt_hash", "valid", "verdict"],

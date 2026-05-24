@@ -22,7 +22,9 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::verified::policy::{ExemptionMarkerPolicy, Policy, ReceiptSchema, TaskMarker};
+    use crate::verified::policy::{
+        ExemptionMarkerPolicy, Policy, ReceiptSchema, SteelOrchestrationPolicy, TaskMarker,
+    };
     use crate::verified::repo::{ChangeStatus, SpecSource, TaskCounts};
 
     fn policy(enabled: bool, strictness: &str) -> Policy {
@@ -88,6 +90,10 @@ mod tests {
                 "blocked".to_string(),
                 "deferred".to_string(),
             ],
+            steel_orchestration_policy: SteelOrchestrationPolicy {
+                enabled: false,
+                profiles: Vec::new(),
+            },
             raw: json!({}),
         }
     }

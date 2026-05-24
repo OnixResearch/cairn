@@ -5,6 +5,7 @@ pub mod developer_experience;
 pub mod doctor;
 pub mod evidence;
 pub mod lifecycle;
+pub mod lifecycle_orchestration;
 pub mod plan;
 pub mod policy;
 pub mod repo;

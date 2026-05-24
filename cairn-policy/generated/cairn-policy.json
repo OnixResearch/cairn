@@ -888,6 +888,40 @@
   },
   "receipt_schemas": [
     {
+      "action_keys": [
+        "host_function",
+        "id",
+        "request_hash"
+      ],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "steel orchestration",
+      "hash_fields": [
+        "receipt_hash",
+        "script_hash"
+      ],
+      "issue_keys": [
+        "code",
+        "field_path",
+        "message"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "authorized_actions",
+        "command",
+        "fallback_reason",
+        "issues",
+        "mode",
+        "profile_id",
+        "receipt_hash",
+        "schema_version",
+        "script_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
       "action_keys": [],
       "artifact_keys": [],
       "case_keys": [],
@@ -1970,6 +2004,26 @@
       "id": "spec-driven"
     }
   ],
+  "steel_orchestration_policy": {
+    "enabled": false,
+    "profiles": [
+      {
+        "allowed_host_functions": [],
+        "deterministic_budgets": [
+          "no-evaluation"
+        ],
+        "fallback_modes": [
+          "rust-nickel-canonical"
+        ],
+        "id": "disabled.lifecycle.default",
+        "mode": "disabled",
+        "receipt_schema_version": "cairn.steel-orchestration-receipt.v1",
+        "redaction_classes": [
+          "no-secret-fields"
+        ]
+      }
+    ]
+  },
   "sync_archive_policy": {
     "archive_date_prefix": true,
     "default_archive_dir": "cairn/archive",

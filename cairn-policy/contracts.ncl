@@ -60,6 +60,10 @@ let Promoted = std.contract.from_predicate (fun value =>
   std.is_string value && (value == "yes" || value == "no")
 ) in
 
+let SteelProfileMode = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "disabled" || value == "comparison" || value == "opt_in" || value == "selected_default" || value == "broad_default")
+) in
+
 {
   Artifact = {
     id | NonEmptyString,
@@ -118,6 +122,21 @@ let Promoted = std.contract.from_predicate (fun value =>
     allowed_groups | NonEmptyArray | Array NonEmptyString,
     group_prefixes | Array NonEmptyString | default = [],
     statuses | NonEmptyArray | Array NonEmptyString,
+  },
+
+  SteelOrchestrationProfile = {
+    id | NonEmptyString,
+    mode | SteelProfileMode,
+    allowed_host_functions | Array NonEmptyString | default = [],
+    deterministic_budgets | NonEmptyArray | Array NonEmptyString,
+    redaction_classes | NonEmptyArray | Array NonEmptyString,
+    fallback_modes | NonEmptyArray | Array NonEmptyString,
+    receipt_schema_version | NonEmptyString,
+  },
+
+  SteelOrchestrationPolicy = {
+    enabled | Bool,
+    profiles | Array SteelOrchestrationProfile | default = [],
   },
 
   ReceiptSchema = {
@@ -247,6 +266,7 @@ let Promoted = std.contract.from_predicate (fun value =>
     report_contract | ReportContract,
     registry_label_policy | RegistryLabelPolicy,
     change_metadata_policy | ChangeMetadataPolicy,
+    steel_orchestration_policy | SteelOrchestrationPolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
     receipt_contracts | Array ReceiptContract | default = [],
     determinism_replay_policy | DeterminismReplayPolicy,

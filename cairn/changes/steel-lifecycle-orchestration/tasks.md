@@ -1,7 +1,7 @@
 ## Phase 1: Policy and DTO boundary
 
-- [ ] [serial] Define policy-owned Steel orchestration profiles, allowed host functions, deterministic budgets, redaction classes, fallback modes, and receipt schema versions. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.policy_declared_surface]]
-- [ ] [serial] Add Rust DTOs for Steel lifecycle action envelopes and fail-closed validation for malformed, unsupported, or unauthorized requests. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.typed_action_envelopes], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.rust_owned_authority]]
+- [x] [serial] Define policy-owned Steel orchestration profiles, allowed host functions, deterministic budgets, redaction classes, fallback modes, and receipt schema versions. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.policy_declared_surface]]
+- [x] [serial] Add Rust DTOs for Steel lifecycle action envelopes and fail-closed validation for malformed, unsupported, or unauthorized requests. [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.typed_action_envelopes], r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.rust_owned_authority]]
 
 ## Phase 2: Execution shell and receipts
 
