@@ -84,6 +84,7 @@ fn run_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "profile_id": profile.id,
         "steel_enabled": policy.steel_orchestration_policy.enabled,
         "steel_runtime_available": evaluation.runtime_available,
+        "effects_executed": false,
         "script_hash": evaluation.script_hash,
         "authorized_actions": evaluation.authorized_actions,
         "denied_actions": evaluation.denied_actions,
