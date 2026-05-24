@@ -49,6 +49,27 @@ fn write_enabled_steel_policy(dir: &std::path::Path) -> Result<PathBuf, Box<dyn 
     Ok(output_path)
 }
 
+fn write_default_steel_policy(dir: &std::path::Path) -> Result<PathBuf, Box<dyn Error>> {
+    let policy_path = repo_root().join("cairn-policy/generated/cairn-policy.json");
+    let policy_text = fs::read_to_string(policy_path)?;
+    let mut policy: Value = serde_json::from_str(&policy_text)?;
+    policy["steel_orchestration_policy"] = serde_json::json!({
+        "enabled": true,
+        "profiles": [{
+            "id": "selected.lifecycle.closeout",
+            "mode": "selected_default",
+            "allowed_host_functions": ["cairn.validate"],
+            "deterministic_budgets": ["no-fs-mutation"],
+            "redaction_classes": ["safe_metadata"],
+            "fallback_modes": ["rust-nickel-canonical"],
+            "receipt_schema_version": "cairn.steel-orchestration-receipt.v1"
+        }]
+    });
+    let output_path = dir.join("default-policy.json");
+    fs::write(&output_path, serde_json::to_string_pretty(&policy)?)?;
+    Ok(output_path)
+}
+
 fn write_malformed_steel_policy(dir: &std::path::Path) -> Result<PathBuf, Box<dyn Error>> {
     let policy_path = repo_root().join("cairn-policy/generated/cairn-policy.json");
     let policy_text = fs::read_to_string(policy_path)?;
@@ -381,6 +402,91 @@ fn steel_orchestration_receipt_is_stable_and_redacts_action_args() -> Result<(),
             .len(),
         64
     );
+
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[test]
+fn steel_orchestration_default_gate_denies_default_without_evidence() -> Result<(), Box<dyn Error>>
+{
+    let dir = temp_test_dir("steel-default-denied")?;
+    let policy_path = write_default_steel_policy(&dir)?;
+
+    let output = cairn()
+        .args([
+            "steel-orchestration",
+            "default-gate",
+            "--root",
+            ".",
+            "--policy",
+            policy_path.to_str().ok_or("utf8 policy path")?,
+            "--profile",
+            "selected.lifecycle.closeout",
+        ])
+        .output()?;
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout)?;
+    let receipt: Value = serde_json::from_str(&stdout)?;
+    let issue_codes = receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "FAIL");
+    assert_eq!(receipt["default_candidate"], true);
+    assert_eq!(receipt["operator_diagnostics_visible"], false);
+    assert!(issue_codes.contains(&"missing_promotion_evidence"));
+
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[test]
+fn steel_orchestration_default_gate_accepts_complete_promotion_evidence(
+) -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("steel-default-accepted")?;
+    let policy_path = write_default_steel_policy(&dir)?;
+    let evidence_hash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    let output = cairn()
+        .args([
+            "steel-orchestration",
+            "default-gate",
+            "--root",
+            ".",
+            "--policy",
+            policy_path.to_str().ok_or("utf8 policy path")?,
+            "--profile",
+            "selected.lifecycle.closeout",
+            "--equivalence-receipt-hash",
+            evidence_hash,
+            "--fallback-receipt-hash",
+            evidence_hash,
+            "--ci-reproducibility-receipt-hash",
+            evidence_hash,
+            "--diagnostics-receipt-hash",
+            evidence_hash,
+        ])
+        .output()?;
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout)?;
+    let receipt: Value = serde_json::from_str(&stdout)?;
+
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "PASS");
+    assert_eq!(receipt["mode"], "selected_default");
+    assert_eq!(receipt["default_candidate"], true);
+    assert_eq!(receipt["operator_diagnostics_visible"], true);
+    assert_eq!(
+        receipt["evidence"]["equivalence_receipt_hash"],
+        evidence_hash
+    );
+    assert_eq!(receipt["fallback_modes"][0], "rust-nickel-canonical");
+    assert_eq!(receipt["receipt_hash"].as_str().unwrap().len(), 64);
 
     fs::remove_dir_all(dir)?;
     Ok(())

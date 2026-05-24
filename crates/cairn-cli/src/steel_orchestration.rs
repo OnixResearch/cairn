@@ -20,6 +20,7 @@ pub(crate) fn run_steel_orchestration(args: Vec<String>) -> Result<(), Box<dyn E
 
     match command {
         "receipt" => run_receipt(args[1..].to_vec()),
+        "default-gate" => run_default_gate(args[1..].to_vec()),
         "--help" | "-h" | "help" => {
             println!("{}", steel_usage());
             Ok(())
@@ -30,6 +31,110 @@ pub(crate) fn run_steel_orchestration(args: Vec<String>) -> Result<(), Box<dyn E
         )
         .into()),
     }
+}
+
+fn run_default_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let root = read_option(args.clone(), "--root", ".");
+    let policy_path = read_option(
+        args.clone(),
+        "--policy",
+        &root.join(default_policy_path()).to_string_lossy(),
+    );
+    let policy = load_policy_file(policy_path)?;
+    let requested_profile_id = read_string_option(&args, "--profile");
+    let profiles = &policy.steel_orchestration_policy.profiles;
+    let selected_profile = select_profile(profiles, requested_profile_id.as_deref());
+    let profile = selected_profile.cloned().unwrap_or_else(fallback_profile);
+    let mut issues = Vec::new();
+
+    if selected_profile.is_none() {
+        issues.push(json!({
+            "code": "profile_not_found",
+            "class": "denied",
+            "message": "requested Steel orchestration profile is not declared by policy"
+        }));
+    }
+
+    let is_default_candidate =
+        matches!(profile.mode.as_str(), "selected_default" | "broad_default");
+    if !policy.steel_orchestration_policy.enabled {
+        issues.push(json!({
+            "code": "steel_policy_disabled",
+            "class": "denied",
+            "message": "default Steel promotion requires the policy Steel orchestration surface to be enabled"
+        }));
+    }
+    if !is_default_candidate {
+        issues.push(json!({
+            "code": "profile_not_default_candidate",
+            "class": "denied",
+            "message": "default Steel promotion requires a policy-selected default workflow profile"
+        }));
+    }
+    if is_default_candidate {
+        require_promotion_hash(
+            &args,
+            "--equivalence-receipt-hash",
+            "equivalence_receipt_hash",
+            &mut issues,
+        );
+        require_promotion_hash(
+            &args,
+            "--fallback-receipt-hash",
+            "fallback_receipt_hash",
+            &mut issues,
+        );
+        require_promotion_hash(
+            &args,
+            "--ci-reproducibility-receipt-hash",
+            "ci_reproducibility_receipt_hash",
+            &mut issues,
+        );
+        require_promotion_hash(
+            &args,
+            "--diagnostics-receipt-hash",
+            "diagnostics_receipt_hash",
+            &mut issues,
+        );
+        if profile.fallback_modes.is_empty() {
+            issues.push(json!({
+                "code": "missing_fallback_mode",
+                "class": "denied",
+                "message": "default Steel profiles must retain a policy-declared fallback mode"
+            }));
+        }
+    }
+
+    let evidence = json!({
+        "equivalence_receipt_hash": read_string_option(&args, "--equivalence-receipt-hash"),
+        "fallback_receipt_hash": read_string_option(&args, "--fallback-receipt-hash"),
+        "ci_reproducibility_receipt_hash": read_string_option(&args, "--ci-reproducibility-receipt-hash"),
+        "diagnostics_receipt_hash": read_string_option(&args, "--diagnostics-receipt-hash"),
+    });
+    let mut receipt = json!({
+        "schema_version": STEEL_ORCHESTRATION_RECEIPT_SCHEMA_V1,
+        "command": "steel-orchestration default-gate",
+        "valid": issues.iter().all(|issue| issue.get("class").and_then(Value::as_str) != Some("denied")),
+        "verdict": if issues.iter().any(|issue| issue.get("class").and_then(Value::as_str) == Some("denied")) { "FAIL" } else { "PASS" },
+        "profile_id": profile.id,
+        "mode": profile.mode,
+        "steel_enabled": policy.steel_orchestration_policy.enabled,
+        "default_candidate": is_default_candidate,
+        "required_evidence": [
+            "equivalence_receipt_hash",
+            "fallback_receipt_hash",
+            "ci_reproducibility_receipt_hash",
+            "diagnostics_receipt_hash"
+        ],
+        "evidence": evidence,
+        "operator_diagnostics_visible": read_string_option(&args, "--diagnostics-receipt-hash").is_some(),
+        "fallback_modes": profile.fallback_modes,
+        "issues": issues,
+        "receipt_hash": "",
+    });
+    let hash_material = receipt_without_hash(&receipt);
+    receipt["receipt_hash"] = json!(canonical_json_hash(&hash_material));
+    print_json(receipt)
 }
 
 fn run_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -97,6 +202,36 @@ fn run_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let hash_material = receipt_without_hash(&receipt);
     receipt["receipt_hash"] = json!(canonical_json_hash(&hash_material));
     print_json(receipt)
+}
+
+fn require_promotion_hash(
+    args: &[String],
+    flag: &'static str,
+    field: &'static str,
+    issues: &mut Vec<Value>,
+) {
+    match read_string_option(args, flag) {
+        Some(hash) if is_hex_64(&hash) => {}
+        Some(_) => issues.push(json!({
+            "code": "invalid_promotion_evidence_hash",
+            "class": "denied",
+            "field": field,
+            "message": "default Steel promotion evidence must be a 64-character lowercase hex receipt hash"
+        })),
+        None => issues.push(json!({
+            "code": "missing_promotion_evidence",
+            "class": "denied",
+            "field": field,
+            "message": "default Steel promotion requires equivalence, fallback, CI reproducibility, and diagnostics receipt evidence"
+        })),
+    }
+}
+
+fn is_hex_64(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
 }
 
 fn select_profile<'a>(
@@ -311,7 +446,7 @@ fn receipt_without_hash(receipt: &Value) -> Value {
 }
 
 fn steel_usage() -> &'static str {
-    "usage: cairn steel-orchestration receipt [--root PATH] [--policy PATH] [--profile ID] [--script PATH] [--script-hash HASH]"
+    "usage: cairn steel-orchestration <receipt|default-gate> [--root PATH] [--policy PATH] [--profile ID] [--script PATH] [--script-hash HASH] [--equivalence-receipt-hash HASH] [--fallback-receipt-hash HASH] [--ci-reproducibility-receipt-hash HASH] [--diagnostics-receipt-hash HASH]"
 }
 
 #[cfg(test)]
