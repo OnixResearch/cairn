@@ -16,6 +16,7 @@ mod release_evidence;
 mod release_readiness;
 mod rename_classification;
 mod semantic_review;
+mod steel_orchestration;
 mod support;
 mod test_harness;
 mod tracey;
@@ -73,6 +74,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "policy" => run_policy(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
         "review" => run_review(args.collect())?,
+        "steel-orchestration" => steel_orchestration::run_steel_orchestration(args.collect())?,
         "test-harness" => test_harness::run_test_harness(args.collect())?,
         "rename-classification" => {
             rename_classification::run_rename_classification(args.collect())?
