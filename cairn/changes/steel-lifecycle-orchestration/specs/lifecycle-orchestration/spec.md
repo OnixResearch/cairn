@@ -40,3 +40,15 @@ The system MUST support optional Steel-based lifecycle orchestration that compos
 - WHEN Steel orchestration is used to compose those operations
 - THEN the underlying primitive MUST remain the existing Rust/Nickel-owned implementation
 - AND Steel MUST NOT become the canonical implementation of validation, mutation manifests, receipt hashing, policy export, Tracey coverage, Nix verification, or release-readiness checks
+
+#### Scenario: Steel default promotion is evidence-gated [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.evidence_gated_default]]
+- GIVEN Cairn supports Steel lifecycle orchestration
+- WHEN a workflow is promoted from disabled, comparison, or opt-in mode toward default Steel orchestration
+- THEN policy MUST name the workflow profile, fallback mode, required comparison evidence, and required receipt checks
+- AND promotion MUST fail closed unless deterministic receipts prove equivalent requested actions, stable denial and fallback behavior, CI reproducibility, and operator-visible debugging evidence for the promoted workflow
+
+#### Scenario: Comparison mode cannot execute effects [r[cairn.lifecycle_orchestration.steel_lifecycle_orchestration.comparison_mode_no_effects]]
+- GIVEN Steel is configured in comparison mode for a lifecycle workflow
+- WHEN Cairn evaluates the Steel script beside the existing Rust/Nickel workflow
+- THEN the Steel path MUST produce plan and comparison receipts without executing filesystem, process, network, lifecycle mutation, or evidence-writing effects
+- AND the Rust/Nickel workflow MUST remain the only effecting path for that run

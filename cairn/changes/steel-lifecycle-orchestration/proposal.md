@@ -7,6 +7,7 @@ Steel is a good fit for the programmable layer if Cairn keeps Rust as the author
 ## What Changes
 
 - Define Steel lifecycle orchestration as an optional Cairn subsystem for composing existing Cairn primitives into typed action plans.
+- Document a staged promotion path from disabled-by-default to comparison mode, selected default workflows, and broad default orchestration.
 - Require Steel scripts to run without ambient authority: they may request reviewed host functions and produce action envelopes, but Rust/Nickel/UCAN decide whether anything executes.
 - Require deterministic, redacted receipts for Steel-driven runs, including script identity, requested capabilities, authorized actions, fallback behavior, and output hashes.
 - Preserve the existing Rust/Nickel trust split: Rust owns validators/effects/receipts, Nickel owns static policy/config, and Steel owns reviewable orchestration glue.

@@ -30,6 +30,17 @@ The target shape mirrors the emerging Clankers/Tile pattern: Steel is trusted on
 
 **Rationale:** Steel should replace ad-hoc orchestration glue, not the enforcement substrate.
 
+### 5. Default promotion is phased and evidence-gated
+
+**Choice:** Steel MUST NOT become the default lifecycle orchestration path in one step. Cairn should promote Steel through explicit stages:
+
+1. **Disabled by default:** Steel support exists behind policy/config, and normal Rust/Nickel flows remain canonical.
+2. **Comparison mode:** Steel plans the same workflow beside the Rust path, emits receipts, and performs no effects.
+3. **Selected default:** reviewed low-risk workflows may default to Steel only when policy names the profile, comparison receipts show equivalence, and Rust fallback remains available.
+4. **Broad default:** Steel may become the normal orchestration layer only after deterministic receipt stability, CI reproducibility, denial/fallback behavior, and operator debugging evidence are all covered by gates.
+
+**Rationale:** The desired endpoint is Steel as the programmable default orchestration layer, but Cairn must earn that state with reproducibility evidence instead of weakening its trust story by defaulting too early.
+
 ## Risks / Trade-offs
 
 - **Sandbox overclaim:** Steel embedding alone is not a security boundary. The spec must describe Rust-owned authority and deterministic host functions instead of claiming generic sandboxing.
