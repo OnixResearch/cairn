@@ -5,6 +5,7 @@ pub(super) enum ReplayCaseKind {
     AgentReceiptPreservesHash,
     AgentReceiptValidate,
     ArchiveDryRun,
+    PreservesCorpusFreshness,
     Gate { stage: GateStage, change: String },
     MigrateDryRun,
     McpDescribe,

@@ -112,6 +112,18 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
                 ),
             ))
         }
+        ReplayCaseKind::PreservesCorpusFreshness => {
+            // r[impl cairn.determinism.preserves_corpus_policy_inventory.replay_case]
+            let Some(path) = case.args.get(3) else {
+                return Err("Preserves corpus freshness replay case missing corpus path".into());
+            };
+            let corpus_path = replay_fixture_path(root, path);
+            let mut value = preserves_corpus_freshness_receipt(corpus_path);
+            value
+                .as_object_mut()
+                .map(|object| object.remove("receipt_hash"));
+            Ok(with_portable_receipt_hash(root, value))
+        }
         ReplayCaseKind::Gate { stage, change } => {
             let policy = load_policy_file(default_policy_path().into())?;
             let selected = detect_layout(root);

@@ -39,7 +39,7 @@ fn agent_receipt_preserves_hash_cli_is_deterministic() -> Result<(), Box<dyn Err
     assert_eq!(receipt["max_content_bytes"], 64 * 1024);
     assert_eq!(
         receipt["agent_receipt_preserves_hash"],
-        "c801baf6b809064540ab17bcc9a98c5f830aed8dca88de5f6bef20656b3d1644"
+        "5b2a534ba878f756da6aebe3d9c9458b5aab2cdf119149d00ba18ec506d1fe2f"
     );
     Ok(())
 }

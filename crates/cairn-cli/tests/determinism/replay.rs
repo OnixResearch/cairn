@@ -30,6 +30,9 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     // r[verify cairn.determinism.preserves_hash_cli.replay_policy]
     // r[verify cairn.determinism.preserves_hash_cli.replay_execution]
     // r[verify cairn.determinism.preserves_hash_cli.replay_validation]
+    // r[verify cairn.determinism.preserves_corpus_policy_inventory.replay_case]
+    // r[verify cairn.determinism.preserves_corpus_policy_inventory.tests]
+    // r[verify cairn.determinism.preserves_corpus_policy_inventory.validation]
     let first = run_json(&["determinism", "replay", "--root", "."])?;
     let second = run_json(&["determinism", "replay", "--root", "."])?;
     assert_eq!(first["valid"], true);
@@ -40,7 +43,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         0
     );
     assert_eq!(first["receipt_hash"], second["receipt_hash"]);
-    assert_eq!(first["summary"]["total_cases"], 13);
+    assert_eq!(first["summary"]["total_cases"], 14);
     assert_eq!(first["summary"]["mismatch_count"], 0);
     assert_eq!(first["available_cases"], first["selected_cases"]);
     assert_eq!(
@@ -128,6 +131,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
             "mcp_describe",
             "mcp_status",
             "migrate_dry_run",
+            "preserves_corpus_freshness",
             "release_readiness",
             "status",
             "sync_dry_run",
@@ -190,6 +194,37 @@ fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<()
         selected["cases"][0]["hash_fields"],
         serde_json::json!(["agent_receipt_preserves_hash", "input_hash", "receipt_hash"])
     );
+    assert_hash_field(&selected["cases"][0], "portable_evidence_hash")?;
+    assert_hash_field(&selected["cases"][0]["runs"][0], "normalized_output_hash")?;
+
+    let selected = run_json(&[
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--case",
+        "preserves_corpus_freshness",
+    ])?;
+    // r[verify cairn.determinism.preserves_corpus_policy_inventory.replay_case]
+    assert_eq!(selected["valid"], true);
+    assert_eq!(
+        selected["selected_cases"],
+        serde_json::json!(["preserves_corpus_freshness"])
+    );
+    assert_eq!(selected["summary"]["total_cases"], 1);
+    assert_eq!(selected["cases"][0]["id"], "preserves_corpus_freshness");
+    assert_eq!(
+        selected["cases"][0]["hash_fields"],
+        serde_json::json!(["corpus_hash", "receipt_hash"])
+    );
+    assert!(selected["mutability_observations"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(
+            |observation| observation["case"] == "preserves_corpus_freshness"
+                && observation["mutated"] == false
+        ));
     assert_hash_field(&selected["cases"][0], "portable_evidence_hash")?;
     assert_hash_field(&selected["cases"][0]["runs"][0], "normalized_output_hash")?;
 

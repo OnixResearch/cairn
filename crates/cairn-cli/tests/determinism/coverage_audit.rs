@@ -15,6 +15,8 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
     // r[verify cairn.supersede.determinism_surface_coverage_audit.gates]
     // r[verify cairn.supersede.determinism_surface_coverage_audit.archive]
     // r[verify cairn.supersede.determinism_surface_coverage_audit.tests]
+    // r[verify cairn.determinism.preserves_corpus_policy_inventory.surface]
+    // r[verify cairn.determinism.preserves_corpus_policy_inventory.tests]
     let first = run_json(&["determinism", "coverage-audit", "--root", "."])?;
     let second = run_json(&["determinism", "coverage-audit", "--root", "."])?;
     assert_eq!(first["valid"], true);
@@ -57,6 +59,7 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
             "mcp_describe",
             "mcp_status",
             "migrate_dry_run",
+            "preserves_corpus_freshness",
             "release_readiness",
             "status",
             "sync_dry_run",

@@ -227,6 +227,7 @@ fn replay_case_kind(command_kind: &str, args: &[String]) -> Result<ReplayCaseKin
         "agent_receipt_preserves_hash" => Ok(ReplayCaseKind::AgentReceiptPreservesHash),
         "agent_receipt_validate" => Ok(ReplayCaseKind::AgentReceiptValidate),
         "archive_dry_run" => Ok(ReplayCaseKind::ArchiveDryRun),
+        "preserves_corpus_freshness" => Ok(ReplayCaseKind::PreservesCorpusFreshness),
         "gate" => {
             let stage = args
                 .get(1)

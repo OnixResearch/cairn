@@ -98,6 +98,32 @@
       },
       {
         "args": [
+          "preserves-corpus",
+          "update",
+          "--path",
+          "fixtures/preserves-canonicalization/corpus.json"
+        ],
+        "command_kind": "preserves_corpus_freshness",
+        "comparison_modes": [
+          "repeated"
+        ],
+        "display_only_paths": [
+          "path"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "<root>",
+        "hash_fields": [
+          "corpus_hash",
+          "receipt_hash"
+        ],
+        "id": "preserves_corpus_freshness",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
           "gate",
           "design",
           "demo",
@@ -489,6 +515,7 @@
           "agent_receipt_preserves_hash",
           "agent_receipt_validate",
           "archive_dry_run",
+          "preserves_corpus_freshness",
           "gate_design",
           "gate_proposal",
           "gate_tasks",
@@ -657,6 +684,19 @@
       "required_replay_groups": [
         "full",
         "release"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json",
+      "determinism_claim": "preserves_corpus_freshness_stability",
+      "id": "preserves_corpus_freshness",
+      "receipt_command": "preserves-corpus update",
+      "required_replay_cases": [
+        "preserves_corpus_freshness"
+      ],
+      "required_replay_groups": [
+        "full"
       ],
       "surface_kind": "cli"
     },

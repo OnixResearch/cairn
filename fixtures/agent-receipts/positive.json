@@ -22,12 +22,12 @@
     "forbidden_uncaptured": []
   },
   "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
-  "receipt_hash": "068b567c5dd683df8c056ef466a2327364e51456e975bd341c06f1675c9480ba",
+  "receipt_hash": "7948744e7cae227966b05004d8127a056a44dba0fc13c2e2e0243b34620837cd",
   "replay_evidence": {
     "replay_artifact_path": "replay-agent.json",
-    "replay_environment_attestation_hash": "d9dc7de89e79ba8c21237ef853519b2c00df0d9ba0b4d7428fc387da29fccd6d",
-    "replay_policy_hash": "1aa5c44452d63646c8219c7961daf47e3b68336d3e83c32b583d745c08631319",
-    "replay_receipt_hash": "c203055bbfc0f95498efe770e8d49cda1be75de4c8f25ff4b99f55ca3994ec8b",
+    "replay_environment_attestation_hash": "807e25cbae99006cbc4c23e12b0d3b949edd8204992d3812714e4a68cbde378e",
+    "replay_policy_hash": "9407639fb8df9e677250f222595d8526e544a6bba55062cd6839d29b8cae2eca",
+    "replay_receipt_hash": "de3748fa891a04b70d95a0426c0f9ab1a1dc844df6d606d50ad93e767ad71873",
     "replay_selected_cases": [
       "agent_receipt_validate",
       "mcp_describe",

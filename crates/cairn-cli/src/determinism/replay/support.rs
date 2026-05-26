@@ -21,6 +21,7 @@ pub(super) use crate::native::{cairn_validation_receipt, change_status_json, rep
 pub(super) use crate::plan_receipts::{
     archive_plan_json, gate_input_json, gate_report_json, migration_plan_json, sync_plan_json,
 };
+pub(super) use crate::preserves_corpus::preserves_corpus_freshness_receipt;
 pub(super) use crate::release_readiness::release_readiness_receipt;
 pub(super) use crate::support::{
     collect_files, default_policy_path, detect_layout, file_content_manifest, find_change,
