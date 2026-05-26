@@ -54,6 +54,9 @@ fn checked_in_corpus_text() -> Result<String, Box<dyn Error>> {
 
 #[test]
 // r[verify cairn.determinism.preserves_corpus_update_rail.validation]
+// r[verify cairn.determinism.preserves_corpus_ci_guard]
+// r[verify cairn.determinism.preserves_corpus_ci_guard.clean_check]
+// r[verify cairn.determinism.preserves_corpus_ci_guard.validation]
 fn preserves_corpus_update_reports_clean_checked_in_corpus() -> Result<(), Box<dyn Error>> {
     let path = temp_file("clean")?;
     fs::write(&path, checked_in_corpus_text()?)?;
@@ -78,6 +81,7 @@ fn preserves_corpus_update_reports_clean_checked_in_corpus() -> Result<(), Box<d
 
 #[test]
 // r[verify cairn.determinism.preserves_corpus_update_rail.validation]
+// r[verify cairn.determinism.preserves_corpus_ci_guard.stale_detection]
 fn preserves_corpus_update_dry_run_detects_stale_without_mutating() -> Result<(), Box<dyn Error>> {
     let path = temp_file("stale-dry-run")?;
     let first_hash = "4111d2d01cd6f342ffbf86955fa72cd2af2e4cbb38d4db96bb3c28f77eb9661a";

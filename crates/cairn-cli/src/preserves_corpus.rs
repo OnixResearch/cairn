@@ -38,6 +38,10 @@ fn run_preserves_corpus_update(args: Vec<String>) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
+// r[impl cairn.determinism.preserves_corpus_ci_guard]
+// r[impl cairn.determinism.preserves_corpus_ci_guard.clean_check]
+// r[impl cairn.determinism.preserves_corpus_ci_guard.stale_detection]
+// r[impl cairn.determinism.preserves_corpus_ci_guard.validation]
 // r[impl cairn.determinism.preserves_corpus_update_rail.command]
 // r[impl cairn.determinism.preserves_corpus_update_rail.hash_recompute]
 // r[impl cairn.determinism.preserves_corpus_update_rail.receipt]

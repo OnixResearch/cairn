@@ -65,6 +65,42 @@
           touch $out
         '';
 
+        preserves-corpus-fresh = pkgs.runCommand "cairn-preserves-corpus-fresh" {
+          nativeBuildInputs = [ ];
+        } ''
+          cp -r ${self} source
+          chmod -R u+w source
+          cd source
+          # r[impl cairn.determinism.preserves_corpus_ci_guard.clean_check]
+          # r[verify cairn.determinism.preserves_corpus_ci_guard.clean_check]
+          # r[verify cairn.determinism.preserves_corpus_ci_guard.validation]
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json >preserves-corpus-fresh.json
+          grep -q '"valid": true' preserves-corpus-fresh.json
+          grep -q '"stale_count": 0' preserves-corpus-fresh.json
+          touch $out
+        '';
+
+        preserves-corpus-stale-detects-drift = pkgs.runCommand "cairn-preserves-corpus-stale-detects-drift" {
+          nativeBuildInputs = [ ];
+        } ''
+          cp -r ${self} source
+          chmod -R u+w source
+          cd source
+          # r[impl cairn.determinism.preserves_corpus_ci_guard.stale_detection]
+          # r[verify cairn.determinism.preserves_corpus_ci_guard.stale_detection]
+          substituteInPlace fixtures/preserves-canonicalization/corpus.json \
+            --replace-fail '4111d2d01cd6f342ffbf86955fa72cd2af2e4cbb38d4db96bb3c28f77eb9661a' \
+                           '0000000000000000000000000000000000000000000000000000000000000000'
+          if ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json >preserves-corpus-stale.json 2>preserves-corpus-stale.err; then
+            echo "expected stale Preserves corpus check to fail" >&2
+            exit 1
+          fi
+          grep -q '"valid": false' preserves-corpus-stale.json
+          grep -q '"stale_count": 1' preserves-corpus-stale.json
+          grep -q '"mutated": false' preserves-corpus-stale.json
+          touch $out
+        '';
+
         rustfmt = pkgs.runCommand "cairn-rustfmt-check" {
           nativeBuildInputs = [ pkgs.cargo pkgs.rustfmt ];
         } ''
