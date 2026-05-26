@@ -120,6 +120,31 @@ mod tests {
     }
 
     #[test]
+    fn review_metrics_regression_split_preserves_public_api_behavior() {
+        // r[verify cairn.semantic_review.metrics_regression_split.boundaries]
+        // r[verify cairn.semantic_review.metrics_regression_split.public_api]
+        // r[verify cairn.semantic_review.metrics_regression_split.focused_helpers]
+        // r[verify cairn.semantic_review.metrics_regression_split.behavior_preserved]
+        // r[verify cairn.semantic_review.metrics_regression_split.focused_verification]
+        // r[verify cairn.semantic_review.metrics_regression_split.repository_verification]
+        let registry = review_metrics_registry_fixture();
+        let report = validate_review_metrics_registry(&registry);
+        assert!(report.valid, "{:?}", report.issues);
+        assert_eq!(report.verdict, "PASS");
+        assert!(report.receipt_hash.len() == 64);
+
+        let coverage = json!({
+            "schema_version": REVIEW_METRICS_FIXTURE_COVERAGE_SCHEMA_V1,
+            "fixtures": [
+                {"path": "fixtures/positive-auto-fix", "valid": true, "diagnostics": []},
+                {"path": "fixtures/negative-auto-fix", "valid": false, "diagnostics": ["missing-auto-fix-task"]}
+            ]
+        });
+        let fixture_report = validate_review_metrics_fixture_pairs(&registry, &coverage);
+        assert!(fixture_report.valid, "{:?}", fixture_report.issues);
+    }
+
+    #[test]
     fn review_metrics_registry_accepts_complete_category_binding() {
         // r[verify cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]
         let registry = json!({
