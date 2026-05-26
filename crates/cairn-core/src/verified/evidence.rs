@@ -33,9 +33,46 @@ pub fn canonical_preserves_hash(value: &Value) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
+    use serde_json::{json, Value};
 
     use super::*;
+
+    struct PreservesCorpusCase {
+        id: String,
+        description: String,
+        value: Value,
+        expected_hash: String,
+    }
+
+    fn preserves_corpus_cases() -> Vec<PreservesCorpusCase> {
+        let corpus: Value = serde_json::from_str(include_str!(
+            "../../../../fixtures/preserves-canonicalization/corpus.json"
+        ))
+        .expect("Preserves canonicalization corpus parses");
+        corpus
+            .as_array()
+            .expect("Preserves canonicalization corpus is an array")
+            .iter()
+            .map(|case| PreservesCorpusCase {
+                id: case
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .expect("corpus case id")
+                    .to_string(),
+                description: case
+                    .get("description")
+                    .and_then(Value::as_str)
+                    .expect("corpus case description")
+                    .to_string(),
+                value: case.get("value").expect("corpus case value").clone(),
+                expected_hash: case
+                    .get("expected_hash")
+                    .and_then(Value::as_str)
+                    .expect("corpus case expected_hash")
+                    .to_string(),
+            })
+            .collect()
+    }
 
     #[test]
     fn hashes_canonical_json_deterministically() {
@@ -78,6 +115,79 @@ mod tests {
         assert_ne!(
             canonical_preserves_hash(&json!({"actions": ["a"]})).expect("first hash"),
             canonical_preserves_hash(&json!({"actions": ["b"]})).expect("second hash")
+        );
+    }
+
+    #[test]
+    // r[impl cairn.determinism.preserves_canonicalization_corpus.fixture_corpus]
+    // r[verify cairn.determinism.preserves_canonicalization_corpus.golden_hashes]
+    fn preserves_canonicalization_corpus_matches_checked_in_golden_hashes() {
+        let cases = preserves_corpus_cases();
+        let ids: Vec<&str> = cases.iter().map(|case| case.id.as_str()).collect();
+        assert_eq!(
+            ids,
+            vec![
+                "null_value",
+                "boolean_true",
+                "integer_negative",
+                "unicode_string",
+                "mixed_array",
+                "nested_object",
+                "receipt_shaped"
+            ]
+        );
+
+        for case in cases {
+            assert!(!case.description.is_empty(), "{} has description", case.id);
+            assert_eq!(
+                canonical_preserves_hash(&case.value).expect("corpus Preserves hash"),
+                case.expected_hash,
+                "{} hash remains stable",
+                case.id
+            );
+        }
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_canonicalization_corpus.golden_hashes]
+    fn preserves_canonicalization_corpus_nested_object_ignores_key_order() {
+        let corpus = preserves_corpus_cases();
+        let nested = corpus
+            .iter()
+            .find(|case| case.id == "nested_object")
+            .expect("nested object corpus case");
+        let reordered = json!({
+            "kind": "nested",
+            "outer": {
+                "a": {"ok": true},
+                "b": [2, 1]
+            }
+        });
+
+        assert_eq!(
+            canonical_preserves_bytes(&nested.value).expect("fixture bytes"),
+            canonical_preserves_bytes(&reordered).expect("reordered bytes")
+        );
+        assert_eq!(
+            canonical_preserves_hash(&reordered).expect("reordered hash"),
+            nested.expected_hash
+        );
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_canonicalization_corpus.validation]
+    fn preserves_canonicalization_corpus_hashes_are_content_sensitive() {
+        let corpus = preserves_corpus_cases();
+        let receipt = corpus
+            .iter()
+            .find(|case| case.id == "receipt_shaped")
+            .expect("receipt-shaped corpus case");
+        let mut changed = receipt.value.clone();
+        changed["valid"] = Value::Bool(false);
+
+        assert_ne!(
+            canonical_preserves_hash(&changed).expect("changed hash"),
+            receipt.expected_hash
         );
     }
 }
