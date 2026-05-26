@@ -287,3 +287,36 @@ r[cairn.determinism.preserves_corpus_policy_inventory.validation]
 - GIVEN the Preserves corpus policy inventory case
 - WHEN policy export, coverage audit, replay selection, Cairn validation, and Tracey coverage run
 - THEN the surface and replay case SHALL be covered by durable verification.
+
+### Requirement: Preserves corpus has a read-only explain command
+r[cairn.determinism.preserves_corpus_explain_cli.command] Cairn MUST provide a read-only command that explains Preserves corpus cases as deterministic operator evidence.
+
+#### Scenario: Explain command is read-only and deterministic
+r[cairn.determinism.preserves_corpus_explain_cli.read_only]
+- GIVEN a Preserves corpus file
+- WHEN an operator runs `cairn preserves-corpus explain --path <corpus.json>`
+- THEN Cairn SHALL emit deterministic JSON with case ids, descriptions, expected hash metadata, issue codes, and receipt hash
+- AND it SHALL NOT mutate the corpus file.
+
+#### Scenario: Explain command has positive and negative tests
+r[cairn.determinism.preserves_corpus_explain_cli.tests]
+r[cairn.determinism.preserves_corpus_explain_cli.validation]
+- GIVEN valid and malformed corpus fixtures
+- WHEN focused CLI tests and Cairn lifecycle validation run
+- THEN read-only behavior, malformed failures, duplicate-case issues, Tracey coverage, and diff checks SHALL pass.
+
+### Requirement: Preserves workflow docs tests are isolated from corpus behavior tests
+r[cairn.determinism.preserves_workflow_test_split.docs_target] Cairn MUST keep Preserves workflow documentation coverage in a focused test surface separate from corpus mutation behavior checks.
+
+#### Scenario: Corpus tests remain behavior-focused
+r[cairn.determinism.preserves_workflow_test_split.corpus_focus]
+- GIVEN Preserves corpus update integration tests
+- WHEN documentation workflow assertions are split out
+- THEN corpus tests SHALL continue to cover clean, stale, execute, and malformed corpus behavior without docs-only coupling.
+
+#### Scenario: Split tests preserve coverage
+r[cairn.determinism.preserves_workflow_test_split.tests]
+r[cairn.determinism.preserves_workflow_test_split.validation]
+- GIVEN the split Preserves workflow tests
+- WHEN focused tests, Cairn validation, Tracey coverage, and diff checks run
+- THEN all previous docs/runbook assertions and live Tracey references SHALL remain covered.

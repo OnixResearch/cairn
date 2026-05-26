@@ -53,69 +53,111 @@ fn checked_in_corpus_text() -> Result<String, Box<dyn Error>> {
 }
 
 #[test]
-// r[verify cairn.determinism.preserves_operator_docs]
-// r[verify cairn.determinism.preserves_operator_docs.workflow]
-// r[verify cairn.determinism.preserves_operator_docs.discoverability]
-// r[verify cairn.determinism.preserves_operator_docs.validation]
-fn preserves_operator_docs_cover_receipt_workflow() -> Result<(), Box<dyn Error>> {
-    let docs = fs::read_to_string(repo_root().join("docs/preserves-receipts.md"))?;
-    let readme = fs::read_to_string(repo_root().join("README.md"))?;
-    let agent_docs = fs::read_to_string(repo_root().join("docs/agent-run-receipts.md"))?;
+// r[verify cairn.determinism.preserves_corpus_explain_cli.command]
+// r[verify cairn.determinism.preserves_corpus_explain_cli.read_only]
+// r[verify cairn.determinism.preserves_corpus_explain_cli.tests]
+// r[verify cairn.determinism.preserves_corpus_explain_cli.validation]
+fn preserves_corpus_explain_reports_cases_without_values() -> Result<(), Box<dyn Error>> {
+    let path = temp_file("explain-clean")?;
+    fs::write(&path, checked_in_corpus_text()?)?;
+    let before = fs::read_to_string(&path)?;
 
-    for required in [
-        "JSON `receipt_hash`",
-        "agent-receipt preserves-hash",
-        "preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json",
-        "--execute",
-        "preserves-corpus-fresh",
-        "preserves-corpus-stale-detects-drift",
-        "Preserves is not a replacement for JSON public/stored receipt schemas",
-    ] {
-        assert!(
-            docs.contains(required),
-            "Preserves operator docs missing required text: {required}"
-        );
-    }
-    assert!(readme.contains("docs/preserves-receipts.md"));
-    assert!(agent_docs.contains("preserves-receipts.md"));
+    let receipt = run_json(&[
+        "preserves-corpus",
+        "explain",
+        "--path",
+        path.to_str().ok_or("temp path")?,
+    ])?;
+
+    assert_eq!(receipt["command"], "preserves-corpus explain");
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["mutated"], false);
+    assert_eq!(receipt["case_count"], 7);
+    assert_eq!(receipt["cases"][0]["id"], "null_value");
+    assert_eq!(receipt["cases"][0]["description"], "JSON null primitive");
+    assert_eq!(receipt["cases"][0]["value_redacted"], true);
+    assert!(receipt["cases"][0].get("value").is_none());
+    assert_eq!(receipt["cases"][0]["expected_hash_present"], true);
+    assert_eq!(receipt["cases"][0]["expected_hash_shape"], "hex64");
+    assert_eq!(fs::read_to_string(&path)?, before);
+    fs::remove_file(path)?;
     Ok(())
 }
 
 #[test]
-// r[verify cairn.determinism.preserves_dependency_bump_runbook]
-// r[verify cairn.determinism.preserves_dependency_bump_runbook.workflow]
-// r[verify cairn.determinism.preserves_dependency_bump_runbook.intentional_drift]
-// r[verify cairn.determinism.preserves_dependency_bump_runbook.discoverability]
-// r[verify cairn.determinism.preserves_dependency_bump_runbook.validation]
-fn preserves_dependency_bump_runbook_covers_review_paths() -> Result<(), Box<dyn Error>> {
-    let runbook = fs::read_to_string(repo_root().join("docs/preserves-dependency-bumps.md"))?;
-    let workflow_docs = fs::read_to_string(repo_root().join("docs/preserves-receipts.md"))?;
-    let readme = fs::read_to_string(repo_root().join("README.md"))?;
+// r[verify cairn.determinism.preserves_corpus_explain_cli.tests]
+fn preserves_corpus_explain_rejects_malformed_cases_without_mutating() -> Result<(), Box<dyn Error>>
+{
+    let path = temp_file("explain-malformed")?;
+    let text = serde_json::to_string_pretty(&json!([
+        { "id": "missing_value", "description": "bad", "expected_hash": "abc" }
+    ]))?;
+    fs::write(&path, &text)?;
 
-    for required in [
-        "preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json",
-        "preserves-corpus-fresh",
-        "preserves-corpus-stale-detects-drift",
-        "--execute",
-        "JSON `receipt_hash`",
-        "must not change public/stored JSON receipt schemas",
-        "CI must never run `--execute` automatically",
-        "cargo test -p cairn-core preserves",
-        "cargo test -p cairn-cli --test preserves_corpus",
-        "cargo test --workspace",
-    ] {
-        assert!(
-            runbook.contains(required),
-            "Preserves dependency-bump runbook missing required text: {required}"
-        );
-    }
-    assert!(workflow_docs.contains("preserves-dependency-bumps.md"));
-    assert!(readme.contains("docs/preserves-dependency-bumps.md"));
+    let receipt = run_json_failure(&[
+        "preserves-corpus",
+        "explain",
+        "--path",
+        path.to_str().ok_or("temp path")?,
+    ])?;
+
+    let issue_codes: Vec<_> = receipt["issues"]
+        .as_array()
+        .ok_or("issues array")?
+        .iter()
+        .filter_map(|issue| issue["code"].as_str())
+        .collect();
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["mutated"], false);
+    assert!(issue_codes.contains(&"preserves_corpus.case_missing_value"));
+    assert!(issue_codes.contains(&"preserves_corpus.expected_hash_malformed"));
+    assert_eq!(fs::read_to_string(&path)?, text);
+    fs::remove_file(path)?;
+    Ok(())
+}
+
+#[test]
+// r[verify cairn.determinism.preserves_corpus_explain_cli.tests]
+fn preserves_corpus_explain_reports_duplicate_case_ids() -> Result<(), Box<dyn Error>> {
+    let path = temp_file("explain-duplicate")?;
+    let text = serde_json::to_string_pretty(&json!([
+        {
+            "id": "duplicate",
+            "description": "first",
+            "value": null,
+            "expected_hash": "4111d2d01cd6f342ffbf86955fa72cd2af2e4cbb38d4db96bb3c28f77eb9661a"
+        },
+        {
+            "id": "duplicate",
+            "description": "second",
+            "value": true,
+            "expected_hash": "51d26a6b9bfaec0d66accd6f887d2dd4933b4f0a8f5a2bbba55ea4d60949be22"
+        }
+    ]))?;
+    fs::write(&path, &text)?;
+
+    let receipt = run_json_failure(&[
+        "preserves-corpus",
+        "explain",
+        "--path",
+        path.to_str().ok_or("temp path")?,
+    ])?;
+
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["case_count"], 2);
+    assert_eq!(
+        receipt["issues"][0]["code"],
+        "preserves_corpus.duplicate_case_id"
+    );
+    assert_eq!(receipt["issues"][0]["case_id"], "duplicate");
+    assert_eq!(fs::read_to_string(&path)?, text);
+    fs::remove_file(path)?;
     Ok(())
 }
 
 #[test]
 // r[verify cairn.determinism.preserves_corpus_update_rail.validation]
+// r[verify cairn.determinism.preserves_workflow_test_split.corpus_focus]
 // r[verify cairn.determinism.preserves_corpus_ci_guard]
 // r[verify cairn.determinism.preserves_corpus_ci_guard.clean_check]
 // r[verify cairn.determinism.preserves_corpus_ci_guard.validation]

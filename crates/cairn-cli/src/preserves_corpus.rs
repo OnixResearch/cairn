@@ -1,4 +1,4 @@
-use std::{error::Error, fs, path::PathBuf};
+use std::{collections::BTreeSet, error::Error, fs, path::PathBuf};
 
 use cairn_core::canonical_preserves_hash;
 use serde_json::{json, Value};
@@ -8,12 +8,145 @@ use crate::support::{has_flag, print_json, read_option, with_receipt_hash};
 pub(crate) fn run_preserves_corpus(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.iter();
     let Some(subcommand) = iter.next() else {
-        return Err("preserves-corpus requires a subcommand: update".into());
+        return Err("preserves-corpus requires a subcommand: update|explain".into());
     };
     match subcommand.as_str() {
         "update" => run_preserves_corpus_update(args),
+        "explain" => run_preserves_corpus_explain(args),
         unknown => Err(format!("unknown preserves-corpus subcommand: {unknown}").into()),
     }
+}
+
+fn run_preserves_corpus_explain(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let path = read_option(
+        args,
+        "--path",
+        "fixtures/preserves-canonicalization/corpus.json",
+    );
+    let receipt = preserves_corpus_explain_receipt(path);
+    let valid = receipt["valid"].as_bool().unwrap_or(false);
+    print_json(with_receipt_hash(receipt))?;
+    if !valid {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+// r[impl cairn.determinism.preserves_corpus_explain_cli.command]
+// r[impl cairn.determinism.preserves_corpus_explain_cli.read_only]
+fn preserves_corpus_explain_receipt(path: PathBuf) -> Value {
+    let path_text = path.to_string_lossy().to_string();
+    let mut issues = Vec::new();
+    let input = match fs::read_to_string(&path) {
+        Ok(text) => text,
+        Err(error) => {
+            issues.push(json!({
+                "code": "preserves_corpus.read_failed",
+                "message": error.to_string(),
+            }));
+            return base_explain_receipt(path_text, false, issues, Vec::new());
+        }
+    };
+    let corpus: Value = match serde_json::from_str(&input) {
+        Ok(value) => value,
+        Err(error) => {
+            issues.push(json!({
+                "code": "preserves_corpus.parse_failed",
+                "message": error.to_string(),
+            }));
+            return base_explain_receipt(path_text, false, issues, Vec::new());
+        }
+    };
+    let Some(cases) = corpus.as_array() else {
+        issues.push(json!({
+            "code": "preserves_corpus.not_array",
+            "message": "Preserves corpus must be a JSON array",
+        }));
+        return base_explain_receipt(path_text, false, issues, Vec::new());
+    };
+
+    let mut seen_ids = BTreeSet::new();
+    let mut case_summaries = Vec::new();
+    for (index, case) in cases.iter().enumerate() {
+        let id = case
+            .get("id")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .unwrap_or_else(|| format!("<case-{index}>"));
+        if !seen_ids.insert(id.clone()) {
+            issues.push(json!({
+                "code": "preserves_corpus.duplicate_case_id",
+                "case_id": id,
+                "index": index,
+            }));
+        }
+
+        let description = case
+            .get("description")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        let value_present = case.get("value").is_some();
+        if !value_present {
+            issues.push(json!({
+                "code": "preserves_corpus.case_missing_value",
+                "case_id": id,
+                "index": index,
+            }));
+        }
+        let expected_hash = case.get("expected_hash").and_then(Value::as_str);
+        if expected_hash.is_none() {
+            issues.push(json!({
+                "code": "preserves_corpus.case_missing_expected_hash",
+                "case_id": id,
+                "index": index,
+            }));
+        }
+        let expected_hash_shape = expected_hash.map(hash_shape).unwrap_or("missing");
+        if expected_hash_shape == "malformed" {
+            issues.push(json!({
+                "code": "preserves_corpus.expected_hash_malformed",
+                "case_id": id,
+                "index": index,
+            }));
+        }
+
+        case_summaries.push(json!({
+            "id": id,
+            "index": index,
+            "description": description,
+            "value_present": value_present,
+            "value_redacted": true,
+            "expected_hash_present": expected_hash.is_some(),
+            "expected_hash_shape": expected_hash_shape,
+        }));
+    }
+
+    let valid = issues.is_empty();
+    base_explain_receipt(path_text, valid, issues, case_summaries)
+}
+
+fn hash_shape(hash: &str) -> &'static str {
+    if hash.len() == 64 && hash.chars().all(|ch| ch.is_ascii_hexdigit()) {
+        "hex64"
+    } else {
+        "malformed"
+    }
+}
+
+fn base_explain_receipt(path: String, valid: bool, issues: Vec<Value>, cases: Vec<Value>) -> Value {
+    json!({
+        "command": "preserves-corpus explain",
+        "path": path,
+        "mutated": false,
+        "valid": valid,
+        "case_count": cases.len(),
+        "cases": cases,
+        "issues": issues,
+        "review_guidance": [
+            "Values are intentionally redacted; use preserves-corpus update for hash recomputation.",
+            "Duplicate ids, missing values, and malformed expected_hash fields require operator review."
+        ],
+    })
 }
 
 fn run_preserves_corpus_update(args: Vec<String>) -> Result<(), Box<dyn Error>> {
