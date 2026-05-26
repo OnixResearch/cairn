@@ -15,9 +15,9 @@
 pub mod verified;
 
 pub use verified::agent_receipt::{
-    agent_run_receipt_hash, agent_run_receipt_issues, evaluate_agent_run_completion,
-    positive_agent_run_fixture, AgentRunGateIssue, AgentRunGateReport,
-    AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
+    agent_run_preserves_receipt_hash, agent_run_receipt_hash, agent_run_receipt_issues,
+    evaluate_agent_run_completion, positive_agent_run_fixture, AgentRunGateIssue,
+    AgentRunGateReport, AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
 };
 pub use verified::content_addressed::{
     circuit_primitive_graph_hash, circuit_primitive_hash_material, downstream_pilot_hash,

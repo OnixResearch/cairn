@@ -13,7 +13,7 @@ mod verification;
 
 pub use constants::{AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH};
 pub use fixture::positive_agent_run_fixture;
-pub use hash::agent_run_receipt_hash;
+pub use hash::{agent_run_preserves_receipt_hash, agent_run_receipt_hash};
 pub use types::{AgentRunGateIssue, AgentRunGateReport};
 
 use common::issue;
@@ -78,6 +78,57 @@ mod tests {
         );
         let hash = first.get("receipt_hash").and_then(Value::as_str).unwrap();
         assert!(is_blake3_hex(hash));
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_receipt_consumer.golden_fixture]
+    fn agent_run_preserves_hash_matches_positive_fixture_golden() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../../../../../fixtures/agent-receipts/positive.json"
+        ))
+        .expect("checked-in positive agent-run fixture parses");
+        let hash = agent_run_preserves_receipt_hash(&fixture)
+            .expect("checked-in positive fixture Preserves hash");
+        assert_eq!(
+            hash,
+            "d057d9e38a3742abfc9d88523579b69dff7cbeb0b83e75c020f29f2fbafc9477"
+        );
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_receipt_consumer.stable_hashing]
+    fn agent_run_preserves_hash_ignores_object_key_order() {
+        let left = json!({
+            "schema_version": AGENT_RUN_RECEIPT_SCHEMA_VERSION,
+            "task_id": "fixture-agent-run-success",
+            "agent_identity": {"wrapper": "cairn-fixture", "model": "captured-model"},
+            "receipt_hash": "ignored",
+        });
+        let right = json!({
+            "receipt_hash": "ignored",
+            "agent_identity": {"model": "captured-model", "wrapper": "cairn-fixture"},
+            "task_id": "fixture-agent-run-success",
+            "schema_version": AGENT_RUN_RECEIPT_SCHEMA_VERSION,
+        });
+
+        assert_eq!(
+            agent_run_preserves_receipt_hash(&left).expect("left Preserves hash"),
+            agent_run_preserves_receipt_hash(&right).expect("right Preserves hash")
+        );
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_receipt_consumer.stable_hashing]
+    // r[verify cairn.determinism.preserves_receipt_consumer.validation]
+    fn agent_run_preserves_hash_changes_when_fixture_content_changes() {
+        let mut changed = positive_agent_run_fixture();
+        changed["task_id"] = Value::String("different-task".to_string());
+
+        assert_ne!(
+            agent_run_preserves_receipt_hash(&positive_agent_run_fixture())
+                .expect("positive fixture Preserves hash"),
+            agent_run_preserves_receipt_hash(&changed).expect("changed fixture Preserves hash")
+        );
     }
 
     #[test]
