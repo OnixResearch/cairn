@@ -12,6 +12,7 @@ mod migration;
 mod native;
 mod plan_receipts;
 mod policy;
+mod preserves_corpus;
 mod release_evidence;
 mod release_readiness;
 mod rename_classification;
@@ -72,6 +73,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "evidence" => run_evidence(args.collect())?,
         "evidence-manifest" => run_evidence_manifest(args.collect())?,
         "policy" => run_policy(args.collect())?,
+        "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
         "review" => run_review(args.collect())?,
         "steel-orchestration" => steel_orchestration::run_steel_orchestration(args.collect())?,
