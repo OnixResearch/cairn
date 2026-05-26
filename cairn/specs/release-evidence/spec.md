@@ -429,3 +429,51 @@ r[release_evidence.preserves_readiness_summary.validation]
 - GIVEN the release-readiness Preserves summary
 - WHEN focused tests and lifecycle validation run
 - THEN schema expectations, failure issues, Cairn validation, and Tracey references SHALL pass.
+
+### Requirement: Post-tag remote install smoke
+r[release_evidence.post_tag_remote_install_smoke.build] The system MUST support a post-tag smoke workflow that verifies the tagged remote flake package can build outside the local checkout.
+
+#### Scenario: Remote tag package builds
+r[release_evidence.post_tag_remote_install_smoke.lifecycle]
+- GIVEN a published Cairn release tag
+- WHEN an operator builds `github:OnixResearch/cairn/<tag>#cairn` and runs the resulting binary against a temporary lifecycle root
+- THEN `init`, `status`, and `validate` SHALL complete successfully without requiring repository-local target artifacts.
+
+#### Scenario: Smoke evidence stays bounded
+r[release_evidence.post_tag_remote_install_smoke.docs]
+r[release_evidence.post_tag_remote_install_smoke.validation]
+- GIVEN the post-tag smoke completes
+- WHEN the operator records evidence
+- THEN the report SHALL name the tag, commands, verdict, and non-claims without preserving credentials, absolute temp paths, or claiming remote production readiness.
+
+### Requirement: v0.1.0 release evidence publication snapshot
+r[release_evidence.v010_publication.index] The system MUST support generating and verifying a local release-evidence index for the v0.1.0 release payload without mutating the release tag.
+
+#### Scenario: v0.1.0 evidence index is verified
+r[release_evidence.v010_publication.publish]
+- GIVEN a clean checkout at the v0.1.0 payload commit
+- WHEN the operator generates, verifies, and materializes release evidence
+- THEN the index and publication receipts SHALL be valid and bind to the evaluated payload commit.
+
+#### Scenario: v0.1.0 evidence summary is auditable
+r[release_evidence.v010_publication.docs]
+r[release_evidence.v010_publication.validation]
+- GIVEN generated release evidence artifacts exist under `target/`
+- WHEN the operator records checked-in evidence
+- THEN only a compact audited summary SHALL be committed and it SHALL distinguish local/trusted evidence from remote publication, signature, credential, or production-readiness claims.
+
+### Requirement: aarch64 release support boundary is explicit
+r[release_evidence.aarch64_support_boundary.docs] The system SHOULD document the architecture support boundary for release evidence when a full multi-system Nix check was not performed.
+
+#### Scenario: aarch64 non-claim is visible
+r[release_evidence.aarch64_support_boundary.non_claims]
+- GIVEN release-readiness evidence was produced on x86_64 and Nix omitted incompatible aarch64 checks
+- WHEN an operator reads release evidence notes
+- THEN the notes SHALL state that aarch64 release support still requires builder-backed validation before being claimed.
+
+#### Scenario: Future validation path is concrete
+r[release_evidence.aarch64_support_boundary.validation]
+r[release_evidence.aarch64_support_boundary.priority]
+- GIVEN a suitable aarch64 builder or evaluator is available
+- WHEN an operator wants to expand release support
+- THEN the notes SHALL name the future command path and SHALL keep unavailable builder noise separate from current product-local release proof.

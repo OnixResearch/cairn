@@ -305,3 +305,35 @@ r[cairn.developer_experience.cli_modules.archived_design.review]
 - WHEN a maintainer reviews the archive
 - THEN the proposal, design, tasks, and spec delta describe the façade and submodule boundaries
 - AND the archive records that the split is behavior-preserving rather than a new capability
+
+### Requirement: Canonical Git remote is documented for operators
+r[developer_experience.git_remote_relocation_cleanup.configure] The system SHOULD document the canonical Cairn Git remote so operators can remove relocation-warning noise from future pushes.
+
+#### Scenario: Remote configuration is verified
+r[developer_experience.git_remote_relocation_cleanup.verify]
+- GIVEN an operator updates the local `origin` URL
+- WHEN they inspect `git remote -v` and branch status
+- THEN the remote SHALL point at `git@github.com:OnixResearch/cairn.git` and the worktree SHALL remain clean and synced.
+
+#### Scenario: Remote note avoids credential overclaims
+r[developer_experience.git_remote_relocation_cleanup.docs]
+r[developer_experience.git_remote_relocation_cleanup.validation]
+- GIVEN the operator note is committed
+- WHEN future agents inspect repository docs
+- THEN it SHALL describe the canonical URL and SHALL NOT expose credentials, SSH agent sockets, or imply credential validation.
+
+### Requirement: CLI maintainability hotspot inventory
+r[developer_experience.cli_maintainability_hotspot_inventory.scan] The system SHOULD maintain an operator-readable inventory of large Cairn source/test hotspots after release checkpoints.
+
+#### Scenario: Inventory records future split seams
+r[developer_experience.cli_maintainability_hotspot_inventory.docs]
+- GIVEN a post-release maintainability review
+- WHEN the operator scans source and test sizes
+- THEN the inventory SHALL list the largest hotspots, candidate future splits, and focused verification commands.
+
+#### Scenario: Inventory remains non-mutating advisory evidence
+r[developer_experience.cli_maintainability_hotspot_inventory.boundary]
+r[developer_experience.cli_maintainability_hotspot_inventory.validation]
+- GIVEN the inventory is committed
+- WHEN validation runs
+- THEN it SHALL avoid behavior-change claims, generated artifacts, broad rewrites, and unverified refactor assertions.
