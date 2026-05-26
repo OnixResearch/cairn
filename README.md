@@ -109,7 +109,13 @@ nix run path:$PWD#cairn -- review revision validate revision.json --root .
 nix run path:$PWD#cairn -- gate tasks demo --root fixtures/basic
 nix run path:$PWD#cairn -- sync demo --root fixtures/basic
 nix run path:$PWD#cairn -- migrate openspec --root fixtures/basic
+nix run path:$PWD#cairn -- agent-receipt preserves-hash fixtures/agent-receipts/positive.json
+nix run path:$PWD#cairn -- preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json
 ```
+
+For the Preserves receipt/hash operator workflow, including the JSON receipt boundary, read-only inspection, corpus update rail, and CI drift guards, see [`docs/preserves-receipts.md`](docs/preserves-receipts.md).
+
+r[impl cairn.determinism.preserves_operator_docs.discoverability]
 
 `review validate <receipt.json>` validates externally produced semantic review
 receipts without running reviewers or interpreting model output. The receipt schema

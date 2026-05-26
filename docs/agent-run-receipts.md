@@ -199,6 +199,12 @@ r[verify cairn.supersede.evidence_export_bundle.docs]
 r[verify cairn.supersede.evidence_bundle_verify_command.docs]
 r[verify cairn.supersede.evidence_export_bundle.archive]
 
+## Preserves receipt inspection
+
+Cairn also provides an internal Preserves hash lens for receipt-shaped material. Operators should keep using JSON `receipt_hash` for public/stored receipt compatibility, and use Preserves only for read-only inspection and canonicalization drift checks. See [`preserves-receipts.md`](preserves-receipts.md) for the `agent-receipt preserves-hash` command, corpus update rail, and CI guard workflow.
+
+r[impl cairn.determinism.preserves_operator_docs.discoverability]
+
 ## Manual replay and publication flow
 
 `agent-receipt validate` compares `replay_policy_hash` with the current generated

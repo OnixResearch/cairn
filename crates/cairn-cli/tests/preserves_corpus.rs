@@ -53,6 +53,35 @@ fn checked_in_corpus_text() -> Result<String, Box<dyn Error>> {
 }
 
 #[test]
+// r[verify cairn.determinism.preserves_operator_docs]
+// r[verify cairn.determinism.preserves_operator_docs.workflow]
+// r[verify cairn.determinism.preserves_operator_docs.discoverability]
+// r[verify cairn.determinism.preserves_operator_docs.validation]
+fn preserves_operator_docs_cover_receipt_workflow() -> Result<(), Box<dyn Error>> {
+    let docs = fs::read_to_string(repo_root().join("docs/preserves-receipts.md"))?;
+    let readme = fs::read_to_string(repo_root().join("README.md"))?;
+    let agent_docs = fs::read_to_string(repo_root().join("docs/agent-run-receipts.md"))?;
+
+    for required in [
+        "JSON `receipt_hash`",
+        "agent-receipt preserves-hash",
+        "preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json",
+        "--execute",
+        "preserves-corpus-fresh",
+        "preserves-corpus-stale-detects-drift",
+        "Preserves is not a replacement for JSON public/stored receipt schemas",
+    ] {
+        assert!(
+            docs.contains(required),
+            "Preserves operator docs missing required text: {required}"
+        );
+    }
+    assert!(readme.contains("docs/preserves-receipts.md"));
+    assert!(agent_docs.contains("preserves-receipts.md"));
+    Ok(())
+}
+
+#[test]
 // r[verify cairn.determinism.preserves_corpus_update_rail.validation]
 // r[verify cairn.determinism.preserves_corpus_ci_guard]
 // r[verify cairn.determinism.preserves_corpus_ci_guard.clean_check]
