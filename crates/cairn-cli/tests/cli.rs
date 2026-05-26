@@ -131,6 +131,9 @@ fn invalid_policy_returns_parse_error() -> Result<(), Box<dyn Error>> {
 #[test]
 fn steel_orchestration_receipt_reports_disabled_default_without_effects(
 ) -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.lifecycle_orchestration.steel_lifecycle_orchestration.boundary_split.dispatch]
+    // r[verify cairn.lifecycle_orchestration.steel_lifecycle_orchestration.boundary_split.receipts]
+    // r[verify cairn.lifecycle_orchestration.steel_lifecycle_orchestration.boundary_split.tests]
     let output = cairn()
         .args(["steel-orchestration", "receipt", "--root", "."])
         .output()?;
@@ -179,6 +182,7 @@ fn steel_orchestration_receipt_denies_unknown_profile() -> Result<(), Box<dyn Er
 
 #[test]
 fn steel_orchestration_receipt_plans_reviewed_allowed_script() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.lifecycle_orchestration.steel_lifecycle_orchestration.boundary_split.evaluation]
     let dir = temp_test_dir("steel-allowed")?;
     let policy_path = write_enabled_steel_policy(&dir)?;
     let script_path = steel_fixture("allowed-plan.json");
