@@ -38,6 +38,10 @@ fn run_preserves_corpus_update(args: Vec<String>) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
+pub(crate) fn preserves_corpus_freshness_receipt(path: PathBuf) -> Value {
+    with_receipt_hash(preserves_corpus_update_receipt(path, false).0)
+}
+
 // r[impl cairn.determinism.preserves_operator_docs]
 // r[impl cairn.determinism.preserves_operator_docs.workflow]
 // r[impl cairn.determinism.preserves_operator_docs.discoverability]

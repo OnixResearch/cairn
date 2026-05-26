@@ -47,6 +47,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "coverage_audit_valid",
             "coverage_audit_receipt_hash",
             "release_evidence_index_check_hash",
+            "preserves_corpus_freshness_hash",
             "semantic_review_ledger_hash",
             "repository_gate_summary",
             "determinism_replay",
@@ -63,6 +64,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_hash_field(&receipt, "mcp_smoke_receipt_hash")?;
     assert_hash_field(&receipt, "coverage_audit_receipt_hash")?;
     assert_hash_field(&receipt, "release_evidence_index_check_hash")?;
+    assert_hash_field(&receipt, "preserves_corpus_freshness_hash")?;
     assert_hash_field(&receipt, "semantic_review_ledger_hash")?;
     assert_eq!(receipt["coverage_audit_valid"], true);
     let check_names = receipt["checks"]
@@ -76,6 +78,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert!(check_names.contains(&"mcp_agent_smoke"));
     assert!(check_names.contains(&"determinism_coverage_audit"));
     assert!(check_names.contains(&"release_evidence_index_freshness"));
+    assert!(check_names.contains(&"preserves_corpus_freshness"));
     assert!(check_names.contains(&"semantic_review_ledger"));
     assert!(check_names.contains(&"repository_gate_policy_listed"));
     assert_eq!(receipt["mcp"]["read_only"], true);
@@ -97,11 +100,56 @@ fn release_readiness_bundle_is_reproducible() -> Result<(), Box<dyn Error>> {
             "mcp_smoke_receipt_hash",
             "coverage_audit_receipt_hash",
             "release_evidence_index_check_hash",
+            "preserves_corpus_freshness_hash",
             "semantic_review_ledger_hash",
         ],
     )?;
     assert_eq!(receipt["valid"], true);
     assert_eq!(receipt["verdict"], "pass");
+    Ok(())
+}
+
+#[test]
+fn release_readiness_reports_preserves_corpus_freshness() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.preserves_readiness_summary.output]
+    // r[verify release_evidence.preserves_readiness_summary.tests]
+    let receipt = run_json(&["release-readiness", "--root", "."])?;
+    let preserves = receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .find(|check| check["name"] == "preserves_corpus_freshness")
+        .ok_or("preserves corpus freshness check")?;
+    assert_eq!(preserves["passed"], true);
+    assert!(preserves["source"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("preserves-corpus update"));
+    assert_hash_field(&receipt, "preserves_corpus_freshness_hash")?;
+    Ok(())
+}
+
+#[test]
+fn release_readiness_fails_closed_when_preserves_corpus_is_absent() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.preserves_readiness_summary.fail_closed]
+    // r[verify release_evidence.preserves_readiness_summary.validation]
+    let fixture = temp_fixture(
+        "release-readiness-missing-preserves-corpus",
+        "fixtures/basic",
+    )?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let receipt = run_json(&["release-readiness", "--root", root])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "fail");
+    let preserves = receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .find(|check| check["name"] == "preserves_corpus_freshness")
+        .ok_or("preserves corpus freshness check")?;
+    assert_eq!(preserves["passed"], false);
+    assert_hash_field(&receipt, "preserves_corpus_freshness_hash")?;
+    fs::remove_dir_all(fixture)?;
     Ok(())
 }
 

@@ -18,6 +18,7 @@ use serde_json::{json, Value};
 use crate::determinism::determinism_coverage_audit_receipt;
 use crate::mcp::mcp_agent_smoke_receipt;
 use crate::native::cairn_validation_receipt;
+use crate::preserves_corpus::preserves_corpus_freshness_receipt;
 use crate::release_evidence::release_evidence_check_index_receipt_for_path;
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
@@ -62,6 +63,7 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
         Ok(determinism_coverage_audit_receipt(&root, &policy))
     });
     let release_evidence_index = conventional_release_evidence_index_component(root.clone());
+    let preserves_corpus = preserves_corpus_component(root.clone());
     let semantic_review_ledger = semantic_review_ledger_component(root.clone(), review_ledger);
     let repository_gate_summary = repository_gate_summary();
     let replay_preflight = json!({
@@ -77,6 +79,7 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
         mcp_smoke.check,
         coverage_audit.check,
         release_evidence_index.check,
+        preserves_corpus.check,
         semantic_review_ledger.check,
     ];
     checks.push(json!({
@@ -103,12 +106,22 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
             "coverage_audit_valid": coverage_audit_valid,
             "coverage_audit_receipt_hash": coverage_audit.receipt_hash,
             "release_evidence_index_check_hash": release_evidence_index.receipt_hash,
+            "preserves_corpus_freshness_hash": preserves_corpus.receipt_hash,
             "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
             "repository_gate_summary": repository_gate_summary,
             "determinism_replay": replay_preflight,
             "mcp": {"read_only": true, "destructive": false}
         }),
     )
+}
+
+fn preserves_corpus_component(root: PathBuf) -> ReadinessComponent {
+    // r[impl release_evidence.preserves_readiness_summary.output]
+    // r[impl release_evidence.preserves_readiness_summary.fail_closed]
+    let path = root.join("fixtures/preserves-canonicalization/corpus.json");
+    readiness_component("preserves_corpus_freshness", || {
+        Ok(preserves_corpus_freshness_receipt(path))
+    })
 }
 
 fn semantic_review_ledger_component(
@@ -261,6 +274,9 @@ fn component_source(name: &str) -> &'static str {
         "determinism_coverage_audit" => "cairn determinism coverage-audit --root <root>",
         "release_evidence_index_freshness" => {
             "cairn release-evidence check-index --root <root> --index docs/release-evidence-current-head.md"
+        }
+        "preserves_corpus_freshness" => {
+            "cairn preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json"
         }
         "semantic_review_ledger" => {
             "cairn release-readiness --root <root> --review-ledger <review-ledger.json>"

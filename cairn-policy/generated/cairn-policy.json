@@ -275,6 +275,7 @@
           "mcp_smoke_receipt_hash",
           "coverage_audit_receipt_hash",
           "release_evidence_index_check_hash",
+          "preserves_corpus_freshness_hash",
           "semantic_review_ledger_hash"
         ],
         "id": "release_readiness",

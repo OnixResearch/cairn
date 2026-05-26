@@ -37,7 +37,7 @@ The command is read-only. It emits a deterministic inspection receipt containing
 Do not copy `agent_receipt_preserves_hash` into stored agent-run receipts unless a future reviewed Cairn change explicitly promotes such a schema. The positive fixture's current internal Preserves hash is:
 
 ```text
-12dbd475fffb1529d1f81f095371052a9d00e598beeb168d793325389ecce029
+c801baf6b809064540ab17bcc9a98c5f830aed8dca88de5f6bef20656b3d1644
 ```
 
 ## Check the canonicalization corpus
