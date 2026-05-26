@@ -1,6 +1,8 @@
 // r[impl release_evidence.current_head_staleness_guard.command]
 // r[impl release_evidence.current_head_staleness_guard.parser]
 // r[impl release_evidence.current_head_staleness_guard.git_checks]
+// r[impl release_evidence.current_head_snapshot.check_index]
+// r[verify release_evidence.current_head_snapshot.validation]
 // r[verify release_evidence.current_head_staleness_guard.operator_docs]
 // r[verify release_evidence.current_head_staleness_guard.archive_ready]
 use std::{error::Error, fs, path::PathBuf, process::Command};

@@ -1,4 +1,6 @@
 // r[impl release_evidence.cli_source_split.index_module]
+// r[impl release_evidence.current_head_snapshot.generate]
+// r[impl release_evidence.current_head_snapshot.docs_boundary]
 use std::{
     error::Error,
     path::{Path, PathBuf},
