@@ -41,7 +41,10 @@ pub use verified::developer_experience::{
 pub use verified::doctor::{
     build_doctor_report, DoctorCheck, DoctorCheckStatus, DoctorReport, DoctorSnapshot,
 };
-pub use verified::evidence::{blake3_hex, canonical_json, canonical_json_hash};
+pub use verified::evidence::{
+    blake3_hex, canonical_json, canonical_json_hash, canonical_preserves_bytes,
+    canonical_preserves_hash,
+};
 pub use verified::lifecycle::{
     archive_dir, build_change_skeleton, build_change_skeleton_for, build_ironspec_migration_plan,
     build_openspec_migration_plan, changes_dir, design_template, init_artifacts,

@@ -13,6 +13,7 @@ version = "0.1.0"
 
 [workspace.dependencies]
 blake3 = "1.5"
+preserves = "4.996.0"
 serde_json = "1.0"
 
 [workspace.metadata.slotcar]
