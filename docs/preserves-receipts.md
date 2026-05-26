@@ -70,7 +70,7 @@ nix build path:$PWD#checks.x86_64-linux.preserves-corpus-stale-detects-drift --n
 - `preserves-corpus-fresh` runs the dry-run update command against the checked-in corpus and expects no stale hashes.
 - `preserves-corpus-stale-detects-drift` deliberately corrupts one expected hash and proves the dry-run command fails without mutation.
 
-During a Preserves dependency bump, CI should either remain green with a clean no-op corpus check, or the reviewed change should include an intentional `--execute` corpus hash update plus the associated focused tests.
+During a Preserves dependency bump, CI should either remain green with a clean no-op corpus check, or the reviewed change should include an intentional `--execute` corpus hash update plus the associated focused tests. Use the dedicated dependency-bump runbook in [`preserves-dependency-bumps.md`](preserves-dependency-bumps.md) for the exact checklist.
 
 ## Non-claims
 

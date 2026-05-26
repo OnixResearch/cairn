@@ -113,9 +113,10 @@ nix run path:$PWD#cairn -- agent-receipt preserves-hash fixtures/agent-receipts/
 nix run path:$PWD#cairn -- preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json
 ```
 
-For the Preserves receipt/hash operator workflow, including the JSON receipt boundary, read-only inspection, corpus update rail, and CI drift guards, see [`docs/preserves-receipts.md`](docs/preserves-receipts.md).
+For the Preserves receipt/hash operator workflow, including the JSON receipt boundary, read-only inspection, corpus update rail, and CI drift guards, see [`docs/preserves-receipts.md`](docs/preserves-receipts.md). For Preserves dependency upgrades, use [`docs/preserves-dependency-bumps.md`](docs/preserves-dependency-bumps.md).
 
 r[impl cairn.determinism.preserves_operator_docs.discoverability]
+r[impl cairn.determinism.preserves_dependency_bump_runbook.discoverability]
 
 `review validate <receipt.json>` validates externally produced semantic review
 receipts without running reviewers or interpreting model output. The receipt schema
