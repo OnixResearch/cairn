@@ -18,7 +18,9 @@ pub(crate) use bundle::{
 pub(crate) use io::{
     ensure_inline_receipt_is_bounded, read_agent_receipt_file, read_json_artifact,
 };
-pub(crate) use validation::{agent_receipt_validation_receipt, is_blake3_hex_text};
+pub(crate) use validation::{
+    agent_preserves_hash_receipt, agent_receipt_validation_receipt, is_blake3_hex_text,
+};
 
 pub(crate) const AGENT_RECEIPT_MAX_BYTES: u64 = 64 * 1024;
 pub(crate) const REQUIRED_AGENT_REPLAY_GROUP: &str = "agent";
@@ -43,6 +45,14 @@ pub(crate) fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>>
                 false,
                 &policy,
             ))
+        }
+        "preserves-hash" => {
+            let Some(path) = iter.next() else {
+                return Err("agent-receipt preserves-hash requires a JSON receipt path".into());
+            };
+            let path = PathBuf::from(path);
+            let receipt = read_agent_receipt_file(&path)?;
+            print_json(agent_preserves_hash_receipt(path, &receipt))
         }
         "verify-bundle" => bundle::run_agent_receipt_verify_bundle(iter.collect()),
         "smoke-mcp" => {

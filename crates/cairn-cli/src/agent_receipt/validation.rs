@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use cairn_core::{canonical_json_hash, evaluate_agent_run_completion, AgentRunGateIssue, Policy};
+use cairn_core::{
+    agent_run_preserves_receipt_hash, canonical_json_hash, evaluate_agent_run_completion,
+    AgentRunGateIssue, Policy,
+};
 use serde_json::{json, Value};
 
 use crate::determinism::replay_groups_from_policy;
@@ -194,6 +197,44 @@ fn agent_replay_evidence_summary(receipt: &Value) -> Value {
         "replay_environment_attestation_hash": evidence.get("replay_environment_attestation_hash").cloned().unwrap_or(Value::Null),
         "replay_artifact_path": evidence.get("replay_artifact_path").cloned().unwrap_or(Value::Null),
     })
+}
+
+pub(crate) fn agent_preserves_hash_receipt(path: PathBuf, receipt: &Value) -> Value {
+    // r[impl cairn.determinism.preserves_hash_cli.command]
+    // r[impl cairn.determinism.preserves_hash_cli.bounded_read]
+    // r[impl cairn.determinism.preserves_hash_cli.no_schema_churn]
+    let mut issues = Vec::new();
+    let agent_receipt_preserves_hash = if receipt.is_object() {
+        match agent_run_preserves_receipt_hash(receipt) {
+            Ok(hash) => hash,
+            Err(error) => {
+                issues.push(json!({
+                    "code": "preserves.encode_failed",
+                    "message": format!("failed to encode agent receipt as Preserves packed bytes: {error}"),
+                }));
+                String::new()
+            }
+        }
+    } else {
+        issues.push(json!({
+            "code": "receipt.not_object",
+            "message": "agent-run receipt must be a JSON object",
+        }));
+        String::new()
+    };
+    issues.sort_by_key(canonical_json_hash);
+    let is_valid = issues.is_empty();
+    with_receipt_hash(json!({
+        "command": "agent-receipt preserves-hash",
+        "path": path_string(path),
+        "input_kind": "path",
+        "valid": is_valid,
+        "verdict": if is_valid { "PASS" } else { "FAIL" },
+        "issues": issues,
+        "agent_receipt_preserves_hash": agent_receipt_preserves_hash,
+        "input_hash": canonical_json_hash(receipt),
+        "max_content_bytes": AGENT_RECEIPT_MAX_BYTES,
+    }))
 }
 
 pub(crate) fn is_blake3_hex_text(candidate: &str) -> bool {
