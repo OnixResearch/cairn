@@ -6,6 +6,8 @@ use super::support::{assert_hash_field, policy_json, receipt_schema, run_json};
 
 #[test]
 fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.determinism.preserves_hash_cli.surface_inventory]
+    // r[verify cairn.determinism.preserves_hash_cli.replay_validation]
     // r[verify cairn.supersede.determinism_surface_coverage_audit.cli]
     // r[verify cairn.supersede.determinism_surface_coverage_audit.inventory]
     // r[verify cairn.supersede.determinism_surface_coverage_audit.failures]
@@ -40,6 +42,7 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
     assert_eq!(
         covered_ids,
         vec![
+            "agent_receipt_preserves_hash",
             "agent_receipt_validate",
             "archive_dry_run",
             "evidence_registry_build",

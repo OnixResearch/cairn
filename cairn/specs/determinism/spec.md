@@ -121,3 +121,18 @@ r[cairn.determinism.preserves_hash_cli.validation]
 - GIVEN the Preserves hash inspection CLI
 - WHEN focused tests run
 - THEN they SHALL prove the positive fixture golden hash, reproducible receipt output, and structured failure for non-object JSON input
+
+#### Scenario: Agent receipt Preserves hash CLI is policy-owned replay evidence
+
+r[cairn.determinism.preserves_hash_cli.replay_policy]
+r[cairn.determinism.preserves_hash_cli.surface_inventory]
+r[cairn.determinism.preserves_hash_cli.replay_execution]
+r[cairn.determinism.preserves_hash_cli.replay_validation]
+
+- GIVEN the `agent-receipt preserves-hash` operator command exists
+- WHEN Cairn exports and validates its deterministic replay policy
+- THEN `determinism_replay_policy.cases` SHALL include an `agent_receipt_preserves_hash` case for the checked-in positive agent receipt fixture
+- AND the case SHALL be included in the `full` replay group without expanding existing `agent` or `release` required preflight groups
+- AND `determinism_surface_inventory` SHALL list the command as a covered CLI surface
+- AND `cairn determinism replay --case agent_receipt_preserves_hash` SHALL produce a passing deterministic replay receipt
+- AND `cairn determinism coverage-audit` SHALL report the surface as covered

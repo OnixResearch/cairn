@@ -331,6 +331,7 @@ let Contracts = import "contracts.ncl" in
 
   determinism_replay_policy = {
     cases = [
+      { id = "agent_receipt_preserves_hash", command_kind = "agent_receipt_preserves_hash", args = ["agent-receipt", "preserves-hash", "fixtures/agent-receipts/positive.json"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["path"], hash_fields = ["agent_receipt_preserves_hash", "input_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "agent_receipt_validate", command_kind = "agent_receipt_validate", args = ["agent-receipt", "validate", "fixtures/agent-receipts/positive.json"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["path"], hash_fields = ["agent_receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "archive_dry_run", command_kind = "archive_dry_run", args = ["archive", "ready", "--root", "<root>"], fixture_root = "fixtures/archive-ready", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.path", "delta_specs"], hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "gate_design", command_kind = "gate", args = ["gate", "design", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = [], hash_fields = ["input_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
@@ -346,7 +347,7 @@ let Contracts = import "contracts.ncl" in
     ],
     groups = [
       { id = "agent", description = "Agent receipt replay evidence preflight", cases = ["agent_receipt_validate", "mcp_describe", "status", "validate"], },
-      { id = "full", description = "All policy-owned replay cases", cases = ["agent_receipt_validate", "archive_dry_run", "gate_design", "gate_proposal", "gate_tasks", "mcp_describe", "mcp_status", "migrate_dry_run", "release_readiness", "status", "sync_dry_run", "validate"], },
+      { id = "full", description = "All policy-owned replay cases", cases = ["agent_receipt_preserves_hash", "agent_receipt_validate", "archive_dry_run", "gate_design", "gate_proposal", "gate_tasks", "mcp_describe", "mcp_status", "migrate_dry_run", "release_readiness", "status", "sync_dry_run", "validate"], },
       { id = "release", description = "Release-readiness replay preflight", cases = ["agent_receipt_validate", "mcp_describe", "release_readiness", "status", "validate"], },
       { id = "smoke", description = "Cheap status and validation replay preflight", cases = ["status", "validate"], },
     ],
@@ -370,6 +371,7 @@ let Contracts = import "contracts.ncl" in
   },
 
   determinism_surface_inventory = [
+    { id = "agent_receipt_preserves_hash", command = "agent-receipt preserves-hash fixtures/agent-receipts/positive.json", surface_kind = "cli", receipt_command = "agent-receipt preserves-hash", required_replay_cases = ["agent_receipt_preserves_hash"], required_replay_groups = ["full"], determinism_claim = "agent_receipt_preserves_hash_stability" },
     { id = "agent_receipt_validate", command = "agent-receipt validate fixtures/agent-receipts/positive.json", surface_kind = "cli", receipt_command = "agent-receipt validate", required_replay_cases = ["agent_receipt_validate"], required_replay_groups = ["agent", "full", "release"], determinism_claim = "agent_receipt_stability" },
     { id = "archive_dry_run", command = "archive ready --root <root>", surface_kind = "cli", receipt_command = "archive", required_replay_cases = ["archive_dry_run"], required_replay_groups = ["full"], determinism_claim = "lifecycle_dry_run_stability" },
     { id = "gate_design", command = "gate design demo --root <root>", surface_kind = "cli", receipt_command = "gate", required_replay_cases = ["gate_design"], required_replay_groups = ["full"], determinism_claim = "gate_receipt_stability" },

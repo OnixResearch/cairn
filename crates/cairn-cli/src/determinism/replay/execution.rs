@@ -46,6 +46,19 @@ pub(super) fn replay_manifest_for_case(
 
 pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, Box<dyn Error>> {
     match &case.kind {
+        ReplayCaseKind::AgentReceiptPreservesHash => {
+            // r[impl cairn.determinism.preserves_hash_cli.replay_execution]
+            let Some(path) = case.args.get(2) else {
+                return Err("agent receipt Preserves hash replay case missing fixture path".into());
+            };
+            let receipt_path = replay_fixture_path(root, path);
+            let receipt = read_agent_receipt_file(&receipt_path)?;
+            let mut value = agent_preserves_hash_receipt(receipt_path, &receipt);
+            value
+                .as_object_mut()
+                .map(|object| object.remove("receipt_hash"));
+            Ok(with_portable_receipt_hash(root, value))
+        }
         ReplayCaseKind::AgentReceiptValidate => {
             let Some(path) = case.args.get(2) else {
                 return Err("agent receipt replay case missing fixture path".into());

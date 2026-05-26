@@ -19,6 +19,32 @@
       {
         "args": [
           "agent-receipt",
+          "preserves-hash",
+          "fixtures/agent-receipts/positive.json"
+        ],
+        "command_kind": "agent_receipt_preserves_hash",
+        "comparison_modes": [
+          "repeated"
+        ],
+        "display_only_paths": [
+          "path"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "<root>",
+        "hash_fields": [
+          "agent_receipt_preserves_hash",
+          "input_hash",
+          "receipt_hash"
+        ],
+        "id": "agent_receipt_preserves_hash",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "agent-receipt",
           "validate",
           "fixtures/agent-receipts/positive.json"
         ],
@@ -459,6 +485,7 @@
       },
       {
         "cases": [
+          "agent_receipt_preserves_hash",
           "agent_receipt_validate",
           "archive_dry_run",
           "gate_design",
@@ -497,6 +524,19 @@
     ]
   },
   "determinism_surface_inventory": [
+    {
+      "command": "agent-receipt preserves-hash fixtures/agent-receipts/positive.json",
+      "determinism_claim": "agent_receipt_preserves_hash_stability",
+      "id": "agent_receipt_preserves_hash",
+      "receipt_command": "agent-receipt preserves-hash",
+      "required_replay_cases": [
+        "agent_receipt_preserves_hash"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
     {
       "command": "agent-receipt validate fixtures/agent-receipts/positive.json",
       "determinism_claim": "agent_receipt_stability",

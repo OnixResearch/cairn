@@ -27,6 +27,9 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.replay_environment_attestation.policy]
     // r[verify cairn.supersede.replay_environment_attestation.receipt]
     // r[verify cairn.supersede.replay_environment_attestation.secret_safe]
+    // r[verify cairn.determinism.preserves_hash_cli.replay_policy]
+    // r[verify cairn.determinism.preserves_hash_cli.replay_execution]
+    // r[verify cairn.determinism.preserves_hash_cli.replay_validation]
     let first = run_json(&["determinism", "replay", "--root", "."])?;
     let second = run_json(&["determinism", "replay", "--root", "."])?;
     assert_eq!(first["valid"], true);
@@ -37,7 +40,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         0
     );
     assert_eq!(first["receipt_hash"], second["receipt_hash"]);
-    assert_eq!(first["summary"]["total_cases"], 12);
+    assert_eq!(first["summary"]["total_cases"], 13);
     assert_eq!(first["summary"]["mismatch_count"], 0);
     assert_eq!(first["available_cases"], first["selected_cases"]);
     assert_eq!(
@@ -116,6 +119,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     assert_eq!(
         case_ids,
         vec![
+            "agent_receipt_preserves_hash",
             "agent_receipt_validate",
             "archive_dry_run",
             "gate_design",
@@ -162,6 +166,33 @@ fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<()
     // r[verify cairn.supersede.determinism_replay.groups.cli]
     // r[verify cairn.supersede.determinism_replay.groups.receipt]
     // r[verify cairn.supersede.determinism_replay.groups.docs]
+    let selected = run_json(&[
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--case",
+        "agent_receipt_preserves_hash",
+    ])?;
+    // r[verify cairn.determinism.preserves_hash_cli.replay_policy]
+    // r[verify cairn.determinism.preserves_hash_cli.replay_execution]
+    // r[verify cairn.determinism.preserves_hash_cli.replay_validation]
+    assert_eq!(selected["valid"], true);
+    assert_eq!(
+        selected["selected_cases"],
+        serde_json::json!(["agent_receipt_preserves_hash"])
+    );
+    assert_eq!(selected["selected_groups"], serde_json::json!([]));
+    assert_eq!(selected["summary"]["total_cases"], 1);
+    assert_eq!(selected["cases"].as_array().unwrap().len(), 1);
+    assert_eq!(selected["cases"][0]["id"], "agent_receipt_preserves_hash");
+    assert_eq!(
+        selected["cases"][0]["hash_fields"],
+        serde_json::json!(["agent_receipt_preserves_hash", "input_hash", "receipt_hash"])
+    );
+    assert_hash_field(&selected["cases"][0], "portable_evidence_hash")?;
+    assert_hash_field(&selected["cases"][0]["runs"][0], "normalized_output_hash")?;
+
     let selected = run_json(&["determinism", "replay", "--root", ".", "--case", "status"])?;
     assert_eq!(selected["valid"], true);
     assert_eq!(selected["selected_cases"], serde_json::json!(["status"]));
