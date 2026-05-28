@@ -119,6 +119,120 @@ The Nix `tracey-coverage` check runs the deterministic helper so every accepted
 reference in source-controlled code. Tracey remains optional tooling and is not
 part of the `cairn` runtime.
 
+## How Cairn uses EARS
+
+EARS means "Easy Approach to Requirements Syntax". Alistair Mavin, Philip
+Wilkinson, Adrian Harwood, and Mark Novak published it at IEEE Requirements
+Engineering 2009 after work at Rolls-Royce on constrained natural-language
+requirements.
+
+Useful references:
+
+- [Easy Approach to Requirements Syntax (EARS), DOI 10.1109/RE.2009.9](https://doi.org/10.1109/RE.2009.9)
+- [IEEE Xplore record](https://ieeexplore.ieee.org/document/5328509)
+- [Alistair Mavin's EARS overview](https://alistairmavin.com/ears/)
+
+Cairn uses an EARS-style shape so requirements are easy for agents and
+reviewers to check. Each requirement gets a stable `r[...]` id and a clear
+normative word such as `MUST`, `SHALL`, `SHOULD`, or `MAY`. Scenario blocks use
+`GIVEN`, `WHEN`, `THEN`, and optional `AND` lines as acceptance examples around
+the requirement. Those scenario blocks are Cairn's gate-friendly convention;
+the original EARS patterns use keywords such as `While`, `When`, `Where`, and
+`If ... then` inside requirement sentences.
+
+```markdown
+### Requirement: Semantic review CLI
+r[cairn.semantic_review.semantic_review_receipts.cli] The system MUST expose semantic review receipt validation through a deterministic CLI command.
+
+#### Scenario: Valid receipt passes
+r[cairn.semantic_review.semantic_review_receipts.cli.cli.valid]
+- GIVEN a valid semantic review receipt
+- WHEN the operator runs `cairn review validate <receipt>`
+- THEN Cairn emits a valid deterministic validation receipt
+```
+
+## How Cairn uses policy
+
+Policy is Cairn's reviewed rulebook. It says which lifecycle stages exist, which
+artifacts each stage expects, which task markers are valid, which gate stages run,
+which receipt fields are public, which hash algorithm and canonical JSON form are
+used, and which labels, replay cases, redaction classes, and optional orchestration
+profiles are allowed.
+
+Policy source lives in Nickel under `cairn-policy/`. Runtime commands do not run
+Nickel. During development, `cairn policy export` checks the Nickel contracts and
+writes the checked-in runtime bundle at `cairn-policy/generated/cairn-policy.json`.
+Rust then consumes that generated JSON and evaluates repository snapshots against
+it.
+
+Policy keeps rules out of hidden code literals. For example:
+
+- gate receipts include `policy` and `policy_hash`;
+- `sync`, `archive`, and migration plans bind `policy_hash` into their receipts;
+- agent and replay receipts compare evidence against current policy hashes;
+- registry labels and receipt schemas are policy-owned vocabularies;
+- malformed or stale policy fails closed with deterministic diagnostics.
+
+Run this before trusting generated policy changes:
+
+```bash
+nix run path:$PWD#cairn -- policy export --check
+```
+
+## Deterministic enforcement model
+
+Cairn enforcement is deterministic when every decision follows this sequence:
+
+1. Export policy from reviewed Nickel and confirm generated JSON is fresh.
+2. Read a bounded repository snapshot: lifecycle files, policy JSON, and command inputs.
+3. Hash the snapshot into `input_hash` and hash policy into `policy_hash`.
+4. Evaluate the snapshot in `cairn-core` without filesystem, clock, process, or network access.
+5. Emit a receipt with `valid` or `verdict`, issues, `input_hash`, `policy_hash`, and `receipt_hash`.
+6. Allow mutation only through commands that re-check blockers and write a mutation manifest.
+7. Let CI, release-readiness, or operator policy reject failed or stale receipts.
+
+The boundary is explicit: Cairn can block its own `sync`, `archive`, migration,
+and MCP mutation tools, but it cannot stop a person or script from editing files
+directly. To make enforcement hard rather than advisory, require passing Cairn
+receipts in CI before merge or release.
+
+## Hardening verification artifacts
+
+Tracey links are necessary but not sufficient. A `r[verify ...]` marker says a
+requirement has a verification artifact; the artifact itself must carry the
+behavioral claim.
+
+A stronger verification artifact has:
+
+- a stable requirement id, such as `r[cairn.example.behavior]`;
+- an executable check or reviewed proof next to `r[verify cairn.example.behavior]`;
+- a clear oracle: exact assertion, expected issue code, proof obligation, or receipt field;
+- positive and negative coverage for valid, invalid, missing, malformed, and boundary inputs;
+- deterministic inputs, fixtures, and command lines that can run in CI;
+- a receipt or test result bound to current content and policy hashes.
+
+Use docs-only verification refs for documentation or non-claim requirements. For
+behavioral requirements, prefer executable tests, property tests, model checks,
+or formal proofs. The stronger the artifact, the stronger the claim; Cairn then
+records which artifact was present and which checks ran against exact content.
+
+## Deterministic rails
+
+Cairn evidence proves bounded facts, not full correctness. A receipt says:
+
+```text
+for content hash H
+with policy hash P
+tool T produced result R
+and receipt hash B binds them
+```
+
+That is useful because another operator or CI job can re-check the same inputs,
+policy, tool result, and receipt binding. It is still lossy: Tracey coverage does
+not prove the code satisfies a requirement, tests do not prove all cases, and a
+receipt hash does not prove the tool has no bugs. Stronger claims need stronger
+rails, such as property tests, model checking, or formal verification.
+
 ## Running with Nix
 
 For a full first-use flow, start with the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md)
