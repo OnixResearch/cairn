@@ -1,5 +1,7 @@
 # cairn
 
+<img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/5f3ecfb2-0abb-42c8-b03c-8cd35afa7b77" />
+
 `cairn` is a Rust lifecycle engine for native repository lifecycle work.
 Repositories use a `cairn/` lifecycle layout; legacy `openspec/` trees remain
 supported only as an explicit import/migration source. Cairn adds a
