@@ -5,13 +5,14 @@
 |------|--------|----------------|-------------------|
 
 ## User Preferences
-- (accumulate here as you learn them)
+- Avoid AI writing tells in docs/responses: pompous adverbs, "delve/leverage/robust", tapestry/landscape/framework filler, "not X but Y" reframes, rhetorical question reveals, repeated punchy fragments, filler transitions, patronizing analogies, false suspense, grandiose stakes, em-dash overuse, bold-first bullets, unicode decoration, signposted conclusions.
 
 ## Patterns That Work
 - (approaches that succeeded)
 
 ## Patterns That Don't Work
 - Running multiple `nix run path:$PWD#cairn -- gate ...` commands in parallel can contend on the Nix eval cache and time out; run Cairn gates sequentially or use one pueue task.
+- Assuming `cairn init` writes `.gitkeep` files into empty lifecycle dirs is wrong; smoke output lists only files created by later template/scaffold commands.
 
 ## Domain Notes
 - crates.io names `cairn`, `cairn-cli`, and `cairn-core` are already taken by unrelated owners; publish under an Onix-prefixed name (e.g. `onix-cairn*`) or use Nix/GitHub release channels.

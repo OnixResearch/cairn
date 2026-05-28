@@ -27,7 +27,9 @@ cairn-policy/        Nickel contracts, defaults, fixtures, generated JSON
 crates/cairn-core/   Pure Rust models, policy parsing, repo/status/read/gate/doctor/EARS-style validation
 crates/cairn-cli/    CLI/MCP shell for init/change/spec/status/doctor/validate/policy/migrate/gate plus safe sync/archive planning/execution
 fixtures/               Fixture legacy and native lifecycle repositories
+docs/tutorials/         Step-by-step operator tutorials
 docs/hermes/            Copyable Hermes skill source for cairn workflow
+examples/               Copyable command examples
 tools/                  Export/check helpers
 ```
 
@@ -43,6 +45,36 @@ Commands use the native `cairn/` layout for normal runtime operations. Legacy
 `openspec/` content is read only by the explicit `migrate openspec` import bridge;
 there is no implicit runtime fallback. `cairn init` and `cairn change
 create` create native layout artifacts.
+
+## Make a Cairn
+
+From a Cairn source checkout:
+
+```bash
+export CAIRN_SOURCE=$PWD
+export REPO=/path/to/your/repo
+
+nix run path:$CAIRN_SOURCE#cairn -- init --root "$REPO"
+nix run path:$CAIRN_SOURCE#cairn -- template list --root "$REPO"
+nix run path:$CAIRN_SOURCE#cairn -- template apply generic-cli --root "$REPO"
+nix run path:$CAIRN_SOURCE#cairn -- template apply generic-cli --root "$REPO" --execute
+nix run path:$CAIRN_SOURCE#cairn -- scaffold change add-friendly-start \
+  --root "$REPO" \
+  --request "Add a friendly start path for first-time users." \
+  --execute
+nix run path:$CAIRN_SOURCE#cairn -- validate --root "$REPO"
+nix run path:$CAIRN_SOURCE#cairn -- gate proposal add-friendly-start --root "$REPO"
+nix run path:$CAIRN_SOURCE#cairn -- gate design add-friendly-start --root "$REPO"
+nix run path:$CAIRN_SOURCE#cairn -- gate tasks add-friendly-start --root "$REPO"
+```
+
+These commands create the native `cairn/` lifecycle, apply a quickstart
+template, scaffold a deterministic change package, and print validation/gate
+receipts. Template and scaffold commands preview changes unless `--execute` is
+passed; sync/archive are dry-run by default too.
+
+Tutorial: [`docs/tutorials/make-a-cairn.md`](docs/tutorials/make-a-cairn.md).
+Copyable example: [`examples/make-a-cairn/README.md`](examples/make-a-cairn/README.md).
 
 ## Local checks
 
@@ -86,6 +118,9 @@ reference in source-controlled code. Tracey remains optional tooling and is not
 part of the `cairn` runtime.
 
 ## Running with Nix
+
+For a full first-use flow, start with the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md)
+or the [copyable example](examples/make-a-cairn/README.md).
 
 ```bash
 nix run path:$PWD#cairn -- init --root /path/to/repo
