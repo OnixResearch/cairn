@@ -147,12 +147,12 @@ Expected result: no matches.
 Run the full gate after substantive changes:
 
 ```bash
-nix develop -c cairn policy export --check
+nix run path:$PWD#cairn -- policy export --check
 nix develop -c cargo fmt --check
 nix develop -c cargo test --workspace
 nix develop -c cargo clippy --workspace --all-targets -- -D warnings
 nix run path:$PWD#cairn -- validate --root .
-cairn tracey coverage --root .
+nix run path:$PWD#cairn -- tracey coverage --root .
 nix flake check "path:$PWD" -L
 ```
 

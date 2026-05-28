@@ -63,6 +63,29 @@ fn maintainability_hotspot_inventory_is_advisory() {
 }
 
 #[test]
+fn packaged_policy_export_runtime_is_documented_and_checked() {
+    // r[verify cairn.supersede.policy_export_packaged_runtime]
+    // r[verify cairn.supersede.policy_export_packaged_runtime.wrapper]
+    // r[verify cairn.supersede.policy_export_packaged_runtime.check]
+    // r[verify cairn.supersede.policy_export_packaged_runtime.docs]
+    // r[verify cairn.supersede.policy_export_packaged_runtime.validation]
+    let flake = read_workspace_file("flake.nix");
+    assert!(flake.contains("pkgs.makeWrapper"));
+    assert!(flake.contains("wrapProgram $out/bin/cairn"));
+    assert!(flake.contains("wrapProgram $out/bin/ironspec"));
+    assert!(flake.contains("pkgs.nickel"));
+    assert!(flake.contains("cairn-packaged-policy-export-runtime"));
+    assert!(flake.contains("env -i"));
+
+    let readme = read_workspace_file("README.md");
+    assert!(readme.contains("nix run path:$PWD#cairn -- policy export --check"));
+
+    let workflow = read_workspace_file("docs/hermes/cairn-workflow-skill.md");
+    assert!(workflow.contains("nix run path:$PWD#cairn -- policy export --check"));
+    assert!(!workflow.contains("nix develop -c cairn policy export --check"));
+}
+
+#[test]
 fn aarch64_release_support_boundary_is_a_non_claim() {
     // r[verify release_evidence.aarch64_support_boundary.docs]
     // r[verify release_evidence.aarch64_support_boundary.non_claims]

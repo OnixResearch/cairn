@@ -16,6 +16,14 @@
           src = self;
           cargoLock.lockFile = ./Cargo.lock;
           cargoBuildFlags = [ "-p" "cairn-cli" ];
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+          postInstall = ''
+            # r[impl cairn.supersede.policy_export_packaged_runtime.wrapper]
+            wrapProgram $out/bin/cairn \
+              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nickel ]}
+            wrapProgram $out/bin/ironspec \
+              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nickel ]}
+          '';
           doCheck = false;
         };
         ironspec = self.packages.${pkgs.stdenv.hostPlatform.system}.cairn;
@@ -62,6 +70,22 @@
             exit 1
           fi
           grep -q "generated policy is stale" policy-check.err
+          touch $out
+        '';
+
+        packaged-policy-export-runtime = pkgs.runCommand "cairn-packaged-policy-export-runtime" {
+          nativeBuildInputs = [ ];
+        } ''
+          cp -r ${self} source
+          chmod -R u+w source
+          cd source
+          # r[verify cairn.supersede.policy_export_packaged_runtime.check]
+          ${pkgs.coreutils}/bin/env -i \
+            HOME="$TMPDIR" \
+            PATH=${pkgs.coreutils}/bin \
+            ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn \
+            policy export --check >packaged-policy-export.out
+          grep -q "policy fresh: cairn-policy/generated/cairn-policy.json" packaged-policy-export.out
           touch $out
         '';
 

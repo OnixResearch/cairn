@@ -47,7 +47,7 @@ create` create native layout artifacts.
 ## Local checks
 
 ```bash
-cairn policy export --check
+nix run path:$PWD#cairn -- policy export --check
 cargo fmt --check
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
