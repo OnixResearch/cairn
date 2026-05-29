@@ -27,7 +27,8 @@ pub fn validate_structured_lifecycle_bundle(bundle: &Value) -> StructuredLifecyc
     let mut issues = Vec::new();
     require_schema(bundle, &mut issues);
     validate_specs(bundle.get("specs"), &mut issues);
-    validate_changes(bundle.get("changes"), &mut issues);
+    let requirement_ids = collect_requirement_ids(bundle.get("specs"));
+    validate_changes(bundle.get("changes"), &requirement_ids, &mut issues);
     validate_global_ids(bundle, &mut issues);
     StructuredLifecycleReport {
         valid: issues.is_empty(),
@@ -74,7 +75,7 @@ fn validate_specs(value: Option<&Value>, issues: &mut Vec<StructuredLifecycleIss
 }
 
 fn validate_spec(spec: &Value, path: &str, issues: &mut Vec<StructuredLifecycleIssue>) {
-    require_non_empty_text(spec, "id", &format!("{path}.id"), issues);
+    require_stable_id(spec, "id", &format!("{path}.id"), issues);
     require_non_empty_text(spec, "purpose", &format!("{path}.purpose"), issues);
     let req_path = format!("{path}.requirements");
     let Some(requirements) = spec.get("requirements").and_then(Value::as_array) else {
@@ -106,7 +107,7 @@ fn validate_requirement(
     path: &str,
     issues: &mut Vec<StructuredLifecycleIssue>,
 ) {
-    require_non_empty_text(requirement, "id", &format!("{path}.id"), issues);
+    require_stable_id(requirement, "id", &format!("{path}.id"), issues);
     validate_strength(
         requirement.get("strength"),
         &format!("{path}.strength"),
@@ -140,13 +141,17 @@ fn validate_requirement(
 }
 
 fn validate_scenario(scenario: &Value, path: &str, issues: &mut Vec<StructuredLifecycleIssue>) {
-    require_non_empty_text(scenario, "id", &format!("{path}.id"), issues);
+    require_stable_id(scenario, "id", &format!("{path}.id"), issues);
     require_non_empty_text_array(scenario, "given", &format!("{path}.given"), issues);
     require_non_empty_text_array(scenario, "when", &format!("{path}.when"), issues);
     require_non_empty_text_array(scenario, "then", &format!("{path}.then"), issues);
 }
 
-fn validate_changes(value: Option<&Value>, issues: &mut Vec<StructuredLifecycleIssue>) {
+fn validate_changes(
+    value: Option<&Value>,
+    requirement_ids: &BTreeSet<String>,
+    issues: &mut Vec<StructuredLifecycleIssue>,
+) {
     let Some(changes) = value else {
         return;
     };
@@ -159,17 +164,42 @@ fn validate_changes(value: Option<&Value>, issues: &mut Vec<StructuredLifecycleI
         return;
     };
     for (index, change) in changes.iter().enumerate() {
-        validate_change(change, &format!("changes[{index}]"), issues);
+        validate_change(
+            change,
+            &format!("changes[{index}]"),
+            requirement_ids,
+            issues,
+        );
     }
 }
 
-fn validate_change(change: &Value, path: &str, issues: &mut Vec<StructuredLifecycleIssue>) {
-    require_non_empty_text(change, "id", &format!("{path}.id"), issues);
-    validate_tasks(change.get("tasks"), &format!("{path}.tasks"), issues);
-    validate_probes(change.get("probes"), &format!("{path}.probes"), issues);
+fn validate_change(
+    change: &Value,
+    path: &str,
+    requirement_ids: &BTreeSet<String>,
+    issues: &mut Vec<StructuredLifecycleIssue>,
+) {
+    require_stable_id(change, "id", &format!("{path}.id"), issues);
+    validate_tasks(
+        change.get("tasks"),
+        &format!("{path}.tasks"),
+        requirement_ids,
+        issues,
+    );
+    validate_probes(
+        change.get("probes"),
+        &format!("{path}.probes"),
+        requirement_ids,
+        issues,
+    );
 }
 
-fn validate_tasks(value: Option<&Value>, path: &str, issues: &mut Vec<StructuredLifecycleIssue>) {
+fn validate_tasks(
+    value: Option<&Value>,
+    path: &str,
+    requirement_ids: &BTreeSet<String>,
+    issues: &mut Vec<StructuredLifecycleIssue>,
+) {
     let Some(tasks) = value else {
         return;
     };
@@ -183,12 +213,24 @@ fn validate_tasks(value: Option<&Value>, path: &str, issues: &mut Vec<Structured
     };
     for (index, task) in tasks.iter().enumerate() {
         let task_path = format!("{path}[{index}]");
-        require_non_empty_text(task, "id", &format!("{task_path}.id"), issues);
+        require_stable_id(task, "id", &format!("{task_path}.id"), issues);
         require_non_empty_text_array(task, "covers", &format!("{task_path}.covers"), issues);
+        validate_requirement_refs(
+            task,
+            "covers",
+            &format!("{task_path}.covers"),
+            requirement_ids,
+            issues,
+        );
     }
 }
 
-fn validate_probes(value: Option<&Value>, path: &str, issues: &mut Vec<StructuredLifecycleIssue>) {
+fn validate_probes(
+    value: Option<&Value>,
+    path: &str,
+    requirement_ids: &BTreeSet<String>,
+    issues: &mut Vec<StructuredLifecycleIssue>,
+) {
     let Some(probes) = value else {
         return;
     };
@@ -201,16 +243,28 @@ fn validate_probes(value: Option<&Value>, path: &str, issues: &mut Vec<Structure
         return;
     };
     for (index, probe) in probes.iter().enumerate() {
-        validate_probe(probe, &format!("{path}[{index}]"), issues);
+        validate_probe(probe, &format!("{path}[{index}]"), requirement_ids, issues);
     }
 }
 
-fn validate_probe(probe: &Value, path: &str, issues: &mut Vec<StructuredLifecycleIssue>) {
-    require_non_empty_text(probe, "id", &format!("{path}.id"), issues);
+fn validate_probe(
+    probe: &Value,
+    path: &str,
+    requirement_ids: &BTreeSet<String>,
+    issues: &mut Vec<StructuredLifecycleIssue>,
+) {
+    require_stable_id(probe, "id", &format!("{path}.id"), issues);
     require_non_empty_text_array(
         probe,
         "requirements",
         &format!("{path}.requirements"),
+        issues,
+    );
+    validate_requirement_refs(
+        probe,
+        "requirements",
+        &format!("{path}.requirements"),
+        requirement_ids,
         issues,
     );
     validate_coverage_class(
@@ -224,6 +278,48 @@ fn validate_probe(probe: &Value, path: &str, issues: &mut Vec<StructuredLifecycl
         &format!("{path}.evidence_role"),
         issues,
     );
+}
+
+fn collect_requirement_ids(value: Option<&Value>) -> BTreeSet<String> {
+    let mut ids = BTreeSet::new();
+    let Some(specs) = value.and_then(Value::as_array) else {
+        return ids;
+    };
+    for spec in specs {
+        let Some(requirements) = spec.get("requirements").and_then(Value::as_array) else {
+            continue;
+        };
+        for requirement in requirements {
+            if let Some(id) = requirement.get("id").and_then(Value::as_str) {
+                ids.insert(id.to_string());
+            }
+        }
+    }
+    ids
+}
+
+fn validate_requirement_refs(
+    value: &Value,
+    field: &str,
+    path: &str,
+    requirement_ids: &BTreeSet<String>,
+    issues: &mut Vec<StructuredLifecycleIssue>,
+) {
+    let Some(refs) = value.get(field).and_then(Value::as_array) else {
+        return;
+    };
+    for (index, requirement_ref) in refs.iter().enumerate() {
+        let Some(requirement_id) = requirement_ref.as_str() else {
+            continue;
+        };
+        if !requirement_ids.contains(requirement_id) {
+            issues.push(issue(
+                "structured_lifecycle.requirement_ref.unknown",
+                format!("unknown requirement reference: {requirement_id}"),
+                format!("{path}[{index}]"),
+            ));
+        }
+    }
 }
 
 fn validate_global_ids(bundle: &Value, issues: &mut Vec<StructuredLifecycleIssue>) {
@@ -326,6 +422,45 @@ fn require_non_empty_text(
             path,
         ));
     }
+}
+
+fn require_stable_id(
+    value: &Value,
+    field: &str,
+    path: &str,
+    issues: &mut Vec<StructuredLifecycleIssue>,
+) {
+    let Some(id) = value.get(field).and_then(Value::as_str) else {
+        issues.push(issue(
+            format!("structured_lifecycle.{field}.missing"),
+            format!("{field} must be a non-empty string"),
+            path,
+        ));
+        return;
+    };
+    if id.is_empty() {
+        issues.push(issue(
+            format!("structured_lifecycle.{field}.missing"),
+            format!("{field} must be a non-empty string"),
+            path,
+        ));
+        return;
+    }
+    if !is_stable_id(id) {
+        issues.push(issue(
+            "structured_lifecycle.id.malformed",
+            format!(
+                "id must contain only ASCII letters, digits, underscores, dots, or hyphens: {id}"
+            ),
+            path,
+        ));
+    }
+}
+
+fn is_stable_id(value: &str) -> bool {
+    value
+        .bytes()
+        .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.' | b'-'))
 }
 
 fn require_non_empty_text_array(
@@ -434,5 +569,41 @@ mod tests {
             .issues
             .iter()
             .any(|issue| issue.code == "structured_lifecycle.id.duplicate"));
+    }
+
+    #[test]
+    fn malformed_ids_fail() {
+        let mut bundle = bundle();
+        bundle["specs"][0]["requirements"][0]["id"] = Value::String("bad id".to_string());
+        let report = validate_structured_lifecycle_bundle(&bundle);
+        assert!(!report.valid);
+        assert!(report
+            .issues
+            .iter()
+            .any(|issue| issue.code == "structured_lifecycle.id.malformed"));
+    }
+
+    #[test]
+    fn invalid_task_links_fail() {
+        let mut bundle = bundle();
+        bundle["changes"][0]["tasks"][0]["covers"] = json!(["missing.requirement"]);
+        let report = validate_structured_lifecycle_bundle(&bundle);
+        assert!(!report.valid);
+        assert!(report
+            .issues
+            .iter()
+            .any(|issue| issue.code == "structured_lifecycle.requirement_ref.unknown"));
+    }
+
+    #[test]
+    fn invalid_probe_requirement_links_fail() {
+        let mut bundle = bundle();
+        bundle["changes"][0]["probes"][0]["requirements"] = json!(["missing.requirement"]);
+        let report = validate_structured_lifecycle_bundle(&bundle);
+        assert!(!report.valid);
+        assert!(report
+            .issues
+            .iter()
+            .any(|issue| issue.code == "structured_lifecycle.requirement_ref.unknown"));
     }
 }

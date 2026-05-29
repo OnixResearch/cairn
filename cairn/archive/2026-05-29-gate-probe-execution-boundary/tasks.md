@@ -9,3 +9,13 @@
 - [x] [serial] Add positive and negative fixtures covering passing probe receipts, failing assertion receipts, stale lifecycle bundle hashes, stale policy hashes, undeclared probe IDs, mismatched requirement IDs, and tampered receipt hashes. r[cairn.probe_execution_boundary.explicit_probe_run] r[cairn.probe_execution_boundary.gates_verify_receipts] r[cairn.probe_execution_boundary.fail_closed]
 - [x] [serial] Document CI workflow: run probes explicitly, store probe receipts, then run gates that verify receipts; warn that default gates do not create probe evidence. r[cairn.probe_execution_boundary.default_gate_no_execution] r[cairn.probe_execution_boundary.explicit_probe_run] r[cairn.probe_execution_boundary.gates_verify_receipts]
 - [x] [serial] Run focused verification: `nix run path:$PWD#cairn -- validate --root .`, proposal/design/tasks gates for `gate-probe-execution-boundary`, and focused positive/negative tests added by the implementation. r[cairn.probe_execution_boundary.default_gate_no_execution] r[cairn.probe_execution_boundary.explicit_probe_run] r[cairn.probe_execution_boundary.gates_verify_receipts] r[cairn.probe_execution_boundary.inline_probe_mode] r[cairn.probe_execution_boundary.fail_closed]
+
+## Verification Evidence
+
+- `probe_execution::probe_run_emits_receipt_and_gate_verifies_saved_receipt` covers passing receipts and valid saved-receipt gate verification.
+- `probe_execution::default_gate_reports_missing_probe_receipt_without_running_probe` covers missing evidence and default non-execution.
+- `probe_execution::gate_rejects_tampered_probe_receipt` covers command mismatch and tampered receipt hash.
+- `probe_execution::gate_rejects_stale_policy_hash` covers stale policy hash rejection.
+- `probe_execution::gate_rejects_undeclared_probe_id_in_receipt` covers undeclared probe ID rejection.
+- `probe_execution::gate_rejects_mismatched_requirement_ids` covers mismatched requirement ID / insufficient coverage rejection.
+- `probe_execution::probe_run_denies_unauthorized_execute_by_default` covers denied-by-default inline/mutating execution.

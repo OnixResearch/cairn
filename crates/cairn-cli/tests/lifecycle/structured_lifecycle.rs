@@ -30,6 +30,32 @@ fn lifecycle_check_accepts_nickel_source_and_rejects_invalid_json() -> Result<()
     assert!(issues
         .iter()
         .any(|issue| issue["code"] == "structured_lifecycle.then.missing"));
+
+    let malformed_id = run_json(&[
+        "lifecycle",
+        "check",
+        "--source",
+        "fixtures/structured-lifecycle/invalid-malformed-id.json",
+    ])?;
+    assert_eq!(malformed_id["valid"], false);
+    assert!(malformed_id["issues"]
+        .as_array()
+        .ok_or("malformed id issues")?
+        .iter()
+        .any(|issue| issue["code"] == "structured_lifecycle.id.malformed"));
+
+    let invalid_task_link = run_json(&[
+        "lifecycle",
+        "check",
+        "--source",
+        "fixtures/structured-lifecycle/invalid-task-link.json",
+    ])?;
+    assert_eq!(invalid_task_link["valid"], false);
+    assert!(invalid_task_link["issues"]
+        .as_array()
+        .ok_or("invalid task link issues")?
+        .iter()
+        .any(|issue| issue["code"] == "structured_lifecycle.requirement_ref.unknown"));
     Ok(())
 }
 

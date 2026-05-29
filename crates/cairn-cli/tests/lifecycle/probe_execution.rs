@@ -134,17 +134,16 @@ fn default_gate_reports_missing_probe_receipt_without_running_probe() -> Result<
     Ok(())
 }
 
-#[test]
-fn gate_rejects_tampered_probe_receipt() -> Result<(), Box<dyn Error>> {
-    // r[verify cairn.probe_execution_boundary.gates_verify_receipts.command_mismatch]
-    // r[verify cairn.probe_execution_boundary.fail_closed.tampered_receipt]
-    // r[verify cairn.probe_execution_boundary.fail_closed.stale_hash]
-    let fixture = temp_fixture("probe-gate-tampered-receipt", "fixtures/basic")?;
+fn gate_messages_after_receipt_mutation(
+    name: &str,
+    mutate_receipt: impl FnOnce(&mut Value),
+) -> Result<Vec<String>, Box<dyn Error>> {
+    let fixture = temp_fixture(name, "fixtures/basic")?;
     fs::write(
         fixture.join("probe.json"),
         serde_json::to_string_pretty(&valid_probe_declaration(None))?,
     )?;
-    let receipt_path = "target/probes/validate-basic.json";
+    let receipt_path = format!("target/probes/{name}.json");
     let _ = run_json_strings(&[
         "probe".into(),
         "run".into(),
@@ -153,11 +152,11 @@ fn gate_rejects_tampered_probe_receipt() -> Result<(), Box<dyn Error>> {
         "--probe-file".into(),
         "probe.json".into(),
         "--out".into(),
-        receipt_path.into(),
+        receipt_path.clone(),
     ])?;
-    let full_receipt_path = fixture.join(receipt_path);
+    let full_receipt_path = fixture.join(&receipt_path);
     let mut receipt: Value = serde_json::from_slice(&fs::read(&full_receipt_path)?)?;
-    receipt["command_identity"] = Value::String("different".to_string());
+    mutate_receipt(&mut receipt);
     fs::write(&full_receipt_path, serde_json::to_string_pretty(&receipt)?)?;
 
     let probes_dir = fixture.join("cairn/changes/demo/probes");
@@ -165,7 +164,7 @@ fn gate_rejects_tampered_probe_receipt() -> Result<(), Box<dyn Error>> {
     fs::write(
         probes_dir.join("probes.json"),
         serde_json::to_string_pretty(
-            &json!({"probes": [valid_probe_declaration(Some(receipt_path))]}),
+            &json!({"probes": [valid_probe_declaration(Some(&receipt_path))]}),
         )?,
     )?;
     let gate = run_json_strings(&[
@@ -176,18 +175,75 @@ fn gate_rejects_tampered_probe_receipt() -> Result<(), Box<dyn Error>> {
         fixture.display().to_string(),
     ])?;
     assert_eq!(gate["valid"], false);
-    let messages = gate["issues"]
+    Ok(gate["issues"]
         .as_array()
         .ok_or("issues")?
         .iter()
-        .map(|issue| issue["message"].as_str().unwrap_or_default())
-        .collect::<Vec<_>>();
+        .map(|issue| issue["message"].as_str().unwrap_or_default().to_string())
+        .collect())
+}
+
+fn restamp_probe_receipt_hash(receipt: &mut Value) {
+    receipt["receipt_hash"] = Value::String(cairn_core::probe_receipt_hash(receipt));
+}
+
+#[test]
+fn gate_rejects_tampered_probe_receipt() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.probe_execution_boundary.gates_verify_receipts.command_mismatch]
+    // r[verify cairn.probe_execution_boundary.fail_closed.tampered_receipt]
+    // r[verify cairn.probe_execution_boundary.fail_closed.stale_hash]
+    let messages =
+        gate_messages_after_receipt_mutation("probe-gate-tampered-receipt", |receipt| {
+            receipt["command_identity"] = Value::String("different".to_string())
+        })?;
     assert!(messages
         .iter()
         .any(|message| message.contains("receipt_hash must equal")));
     assert!(messages
         .iter()
         .any(|message| message.contains("command_identity does not match")));
+    Ok(())
+}
+
+#[test]
+fn gate_rejects_stale_policy_hash() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.probe_execution_boundary.fail_closed.stale_hash]
+    let alternate_policy_hash = cairn_core::canonical_json_hash(&json!({"policy": "other"}));
+    let messages =
+        gate_messages_after_receipt_mutation("probe-gate-stale-policy-hash", |receipt| {
+            receipt["policy_hash"] = Value::String(alternate_policy_hash);
+            restamp_probe_receipt_hash(receipt);
+        })?;
+    assert!(messages
+        .iter()
+        .any(|message| message.contains("policy_hash does not match")));
+    Ok(())
+}
+
+#[test]
+fn gate_rejects_undeclared_probe_id_in_receipt() -> Result<(), Box<dyn Error>> {
+    let messages =
+        gate_messages_after_receipt_mutation("probe-gate-undeclared-probe-id", |receipt| {
+            receipt["probe_id"] = Value::String("undeclared-probe".to_string());
+            restamp_probe_receipt_hash(receipt);
+        })?;
+    assert!(messages
+        .iter()
+        .any(|message| message.contains("probe_id does not match")));
+    Ok(())
+}
+
+#[test]
+fn gate_rejects_mismatched_requirement_ids() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.probe_execution_boundary.fail_closed.insufficient_coverage]
+    let messages =
+        gate_messages_after_receipt_mutation("probe-gate-mismatched-requirements", |receipt| {
+            receipt["requirements"] = json!(["demo.other"]);
+            restamp_probe_receipt_hash(receipt);
+        })?;
+    assert!(messages
+        .iter()
+        .any(|message| message.contains("receipt requirements must match")));
     Ok(())
 }
 

@@ -499,6 +499,21 @@ mod tests {
     }
 
     #[test]
+    fn invalid_probe_assertions_fail_validation() {
+        let mut value = declaration();
+        value["assertions"] = json!([{
+            "id": "ambiguous",
+            "path": "valid",
+            "equals": true,
+            "contains": true
+        }]);
+        let issues = validate_probe_declaration(&value);
+        assert!(issues
+            .iter()
+            .any(|issue| issue.code == "probe.assertion.operator_invalid"));
+    }
+
+    #[test]
     fn assertions_support_positive_and_negative_results() {
         let assertions = declaration()["assertions"].as_array().unwrap().clone();
         let passed = evaluate_probe_assertions(&json!({"valid": true}), &assertions);
@@ -510,6 +525,7 @@ mod tests {
     #[test]
     fn receipt_validation_rejects_tampering() {
         let declaration = declaration();
+        let policy_hash = canonical_json_hash(&json!({"policy": "test"}));
         let declaration_hash = probe_declaration_hash(&declaration);
         let mut receipt = json!({
             "schema": PROBE_RECEIPT_SCHEMA_V1,
@@ -520,7 +536,7 @@ mod tests {
             "status_class": "success",
             "assertions": [{"id": "valid", "passed": true}],
             "lifecycle_bundle_hash": declaration_hash,
-            "policy_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            "policy_hash": policy_hash
         });
         let hash = probe_receipt_hash(&receipt);
         receipt["receipt_hash"] = Value::String(hash);
@@ -528,7 +544,7 @@ mod tests {
             &declaration,
             &receipt,
             &probe_declaration_hash(&declaration),
-            Some("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            Some(policy_hash.as_str())
         )
         .is_empty());
         receipt["probe_id"] = Value::String("other".to_string());
@@ -536,7 +552,7 @@ mod tests {
             &declaration,
             &receipt,
             &probe_declaration_hash(&declaration),
-            Some("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+            Some(policy_hash.as_str()),
         );
         assert!(issues
             .iter()
@@ -544,5 +560,39 @@ mod tests {
         assert!(issues
             .iter()
             .any(|issue| issue.code == "probe.receipt.hash_mismatch"));
+    }
+
+    #[test]
+    fn receipt_validation_rejects_stale_policy_probe_id_and_requirement_ids() {
+        let declaration = declaration();
+        let policy_hash = canonical_json_hash(&json!({"policy": "test"}));
+        let stale_policy_hash = canonical_json_hash(&json!({"policy": "stale"}));
+        let mut receipt = json!({
+            "schema": PROBE_RECEIPT_SCHEMA_V1,
+            "probe_id": "undeclared-probe",
+            "requirements": ["cairn.example.other"],
+            "coverage_class": "positive",
+            "command_identity": "cairn validate",
+            "status_class": "success",
+            "assertions": [{"id": "valid", "passed": true}],
+            "lifecycle_bundle_hash": probe_declaration_hash(&declaration),
+            "policy_hash": stale_policy_hash
+        });
+        receipt["receipt_hash"] = Value::String(probe_receipt_hash(&receipt));
+        let issues = validate_probe_receipt(
+            &declaration,
+            &receipt,
+            &probe_declaration_hash(&declaration),
+            Some(policy_hash.as_str()),
+        );
+        assert!(issues
+            .iter()
+            .any(|issue| issue.code == "probe.policy_hash.mismatch"));
+        assert!(issues
+            .iter()
+            .any(|issue| issue.code == "probe.probe_id.mismatch"));
+        assert!(issues
+            .iter()
+            .any(|issue| issue.code == "probe.receipt.requirements_mismatch"));
     }
 }

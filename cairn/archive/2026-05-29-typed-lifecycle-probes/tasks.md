@@ -9,3 +9,13 @@
 - [x] [serial] Add gate diagnostics that classify requirement verification as docs-only, fixture, probe, property, model, or formal evidence without immediately blocking existing Markdown-only repositories. r[cairn.structured_lifecycle.probes] r[cairn.structured_lifecycle.migration]
 - [x] [serial] Document the format strategy: Nickel contracts as authoring source, generated JSON as initial runtime bundle, Preserves as a future canonical encoding candidate, and Steel only as an optional bounded probe DSL. r[cairn.structured_lifecycle.format_strategy]
 - [x] [serial] Run focused verification: `nix run path:$PWD#cairn -- validate --root .`, proposal/design/tasks gates for `typed-lifecycle-probes`, and focused positive/negative tests added by the implementation. r[cairn.structured_lifecycle.typed_authoring] r[cairn.structured_lifecycle.runtime_bundle] r[cairn.structured_lifecycle.markdown_projection] r[cairn.structured_lifecycle.probes] r[cairn.structured_lifecycle.format_strategy] r[cairn.structured_lifecycle.migration]
+
+## Verification Evidence
+
+- `fixtures/structured-lifecycle/positive-bundle.ncl` covers valid Nickel typed authoring.
+- `fixtures/structured-lifecycle/invalid-missing-then.json` plus `structured_lifecycle::missing_scenario_then_fails` cover missing scenario clauses.
+- `fixtures/structured-lifecycle/invalid-malformed-id.json` plus `structured_lifecycle::malformed_ids_fail` cover malformed IDs.
+- `fixtures/structured-lifecycle/invalid-task-link.json` plus `structured_lifecycle::invalid_task_links_fail` cover invalid task links.
+- `structured_lifecycle::duplicate_ids_fail` covers duplicate IDs.
+- `verified::probe::tests::invalid_probe_assertions_fail_validation` covers invalid probe assertions.
+- `lifecycle_check_accepts_nickel_source_and_rejects_invalid_json`, `lifecycle_export_check_detects_stale_bundle`, and `lifecycle_markdown_render_and_import_are_receipted` cover CLI lifecycle receipts and projections.
