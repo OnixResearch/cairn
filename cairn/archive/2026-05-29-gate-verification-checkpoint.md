@@ -27,6 +27,17 @@ Reconstructed a temporary active root at `/tmp/cairn-archived-gate-check`:
 | gate-probe-execution-boundary | design | `cairn/archive/2026-05-29-gate-probe-execution-boundary/gate-receipts/design.json` | PASS | `6de08dda3f37338c7b49f46ac370b0eda5f5bd13d918fa0af24c29d1ee815ff7` |
 | gate-probe-execution-boundary | tasks | `cairn/archive/2026-05-29-gate-probe-execution-boundary/gate-receipts/tasks.json` | PASS | `1589a9936a663203b5b31627f2306c4ac3f9a00034f89e8ba7dec784f4fcc72e` |
 
+## Repository Verification
+
+Repo-wide verification evidence is saved under `cairn/archive/2026-05-29-repo-verification/`:
+
+- `tracey-coverage.json`: `valid=true`, `referenced=902`, `requirements=902`.
+- `validate.json`: `valid=true`, `specs_validated=14`, `changes=0`.
+
 ## Decision
 
 The archived task-gate completion claims are accepted. The saved receipts provide deterministic evidence for all required proposal/design/tasks gates after replaying the archived changes as active changes in an isolated temporary root.
+
+## Next Action
+
+No further action required for these archived gate claims. Preserve the gate receipts and repo-wide verification receipts as audit evidence; future lifecycle/probe work should create fresh active-change gate receipts before archive.
