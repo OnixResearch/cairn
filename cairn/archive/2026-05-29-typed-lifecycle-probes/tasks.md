@@ -12,6 +12,7 @@
 
 ## Verification Evidence
 
+- Proposal/design/tasks gate receipts are saved under `cairn/archive/2026-05-29-typed-lifecycle-probes/gate-receipts/`; replay method and hashes are recorded in `cairn/archive/2026-05-29-gate-verification-checkpoint.md`.
 - `fixtures/structured-lifecycle/positive-bundle.ncl` covers valid Nickel typed authoring.
 - `fixtures/structured-lifecycle/invalid-missing-then.json` plus `structured_lifecycle::missing_scenario_then_fails` cover missing scenario clauses.
 - `fixtures/structured-lifecycle/invalid-malformed-id.json` plus `structured_lifecycle::malformed_ids_fail` cover malformed IDs.

@@ -1,0 +1,21 @@
+{
+  "change": "gate-probe-execution-boundary",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "a3fc7c3501ebce5749d30a21a26524ae9d8c1a195d0b81ee64bb7ef013ab973e",
+  "issues": [],
+  "layout": "cairn",
+  "policy": "cairn-default",
+  "policy_hash": "a210ed841d260e0bf026f3c67ec810216b6409cfe6036f9132b51cc4e3176618",
+  "receipt_hash": "36c53a872b86156e773df9b2780cfd67917b48ef6bd2724028ddd537cb2a55ff",
+  "stage": "proposal",
+  "valid": true,
+  "verdict": "PASS"
+}

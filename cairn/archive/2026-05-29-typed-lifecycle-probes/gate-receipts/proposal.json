@@ -1,0 +1,21 @@
+{
+  "change": "typed-lifecycle-probes",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "7186587417ecbf518dbfba847488806276ed4e52a3c3ca9aa3947fe899937cff",
+  "issues": [],
+  "layout": "cairn",
+  "policy": "cairn-default",
+  "policy_hash": "a210ed841d260e0bf026f3c67ec810216b6409cfe6036f9132b51cc4e3176618",
+  "receipt_hash": "f6e25dcfbe29822d45d13eae4cc6b47a256bf435982b4d74c545c739ce37e9b8",
+  "stage": "proposal",
+  "valid": true,
+  "verdict": "PASS"
+}

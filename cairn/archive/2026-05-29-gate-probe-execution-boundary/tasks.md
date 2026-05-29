@@ -12,6 +12,7 @@
 
 ## Verification Evidence
 
+- Proposal/design/tasks gate receipts are saved under `cairn/archive/2026-05-29-gate-probe-execution-boundary/gate-receipts/`; replay method and hashes are recorded in `cairn/archive/2026-05-29-gate-verification-checkpoint.md`.
 - `probe_execution::probe_run_emits_receipt_and_gate_verifies_saved_receipt` covers passing receipts and valid saved-receipt gate verification.
 - `probe_execution::default_gate_reports_missing_probe_receipt_without_running_probe` covers missing evidence and default non-execution.
 - `probe_execution::gate_rejects_tampered_probe_receipt` covers command mismatch and tampered receipt hash.
