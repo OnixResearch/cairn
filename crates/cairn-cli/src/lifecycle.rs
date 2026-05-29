@@ -1,13 +1,14 @@
 use std::{error::Error, path::PathBuf};
 
 use cairn_core::{
-    build_archive_plan, build_sync_plan, evaluate_gate_snapshot, GateStage, PlanAction,
-    PlanActionKind,
+    build_archive_plan, build_sync_plan, classify_gate_evidence, evaluate_gate_snapshot, GateIssue,
+    GateStage, PlanAction, PlanActionKind,
 };
 use serde_json::Value;
 
 use crate::native::change_status_json;
 use crate::plan_receipts::{archive_plan_json, gate_input_json, gate_report_json, sync_plan_json};
+use crate::probe::gate_probe_issues;
 use crate::support::{
     archive_mutation_manifest, default_policy_path, detect_layout, execute_archive_plan,
     execute_sync_plan, file_content_manifest, find_change, has_flag, load_policy_file,
@@ -26,21 +27,42 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         return Err("gate requires a change name".into());
     };
     let rest = iter.collect::<Vec<_>>();
+    let run_probes_requested = has_flag(&rest, "--run-probes");
     let root = read_option(rest.clone(), "--root", ".");
     let policy_path = read_option(rest, "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, &change)?;
     let snapshot = read_gate_snapshot(&root, selected.layout, change_status)?;
-    let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
+    let mut report = evaluate_gate_snapshot(&snapshot, stage, &policy);
+    if run_probes_requested {
+        report.issues.push(GateIssue {
+            message: "inline probe execution is disabled by policy".to_string(),
+            scope: policy.gate_finding_scope.clone(),
+            promoted: policy.gate_finding_promoted.clone(),
+        });
+    }
+    if matches!(stage, GateStage::Tasks) {
+        report
+            .issues
+            .extend(gate_probe_issues(&root, selected.layout, &change, &policy)?);
+    }
     let input_hash = portable_json_hash(
         &root,
         &gate_input_json(selected.layout, stage, &policy, &snapshot),
     );
-    print_json(with_portable_receipt_hash(
-        &root,
-        gate_report_json(selected.layout, &policy, &report, &input_hash),
-    ))
+    let mut receipt = gate_report_json(selected.layout, &policy, &report, &input_hash);
+    let evidence = classify_gate_evidence(&snapshot);
+    receipt["evidence_summary"] = serde_json::json!({
+        "mode": "advisory",
+        "docs_only": evidence.docs_only,
+        "fixture": evidence.fixture,
+        "probe": evidence.probe,
+        "property": evidence.property,
+        "model": evidence.model,
+        "formal": evidence.formal,
+    });
+    print_json(with_portable_receipt_hash(&root, receipt))
 }
 
 pub(crate) fn parse_gate_stage(stage: &str) -> Result<GateStage, Box<dyn Error>> {

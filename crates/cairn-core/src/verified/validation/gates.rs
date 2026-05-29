@@ -42,6 +42,16 @@ pub struct GateArtifact {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EvidenceStrengthSummary {
+    pub docs_only: usize,
+    pub fixture: usize,
+    pub probe: usize,
+    pub property: usize,
+    pub model: usize,
+    pub formal: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GateSnapshot {
     pub change: ChangeStatus,
     pub proposal: Option<GateArtifact>,
@@ -64,6 +74,26 @@ impl GateSnapshot {
 
 pub fn evaluate_gate(change: &ChangeStatus, stage: GateStage, policy: &Policy) -> GateReport {
     evaluate_gate_snapshot(&GateSnapshot::from_change(change.clone()), stage, policy)
+}
+
+pub fn classify_gate_evidence(snapshot: &GateSnapshot) -> EvidenceStrengthSummary {
+    // r[impl cairn.structured_lifecycle.probes]
+    // r[impl cairn.structured_lifecycle.migration]
+    let mut summary = EvidenceStrengthSummary {
+        docs_only: 0,
+        fixture: 0,
+        probe: 0,
+        property: 0,
+        model: 0,
+        formal: 0,
+    };
+    for marker in gate_markdown_blobs(snapshot)
+        .flat_map(|markdown| markdown.lines())
+        .filter_map(verify_marker_text)
+    {
+        classify_verify_marker(&mut summary, marker);
+    }
+    summary
 }
 
 pub fn evaluate_gate_snapshot(
@@ -143,5 +173,37 @@ pub(super) fn gate_issue(message: String, policy: &Policy) -> GateIssue {
         message,
         scope: policy.gate_finding_scope.clone(),
         promoted: policy.gate_finding_promoted.clone(),
+    }
+}
+
+fn gate_markdown_blobs(snapshot: &GateSnapshot) -> impl Iterator<Item = &str> {
+    snapshot
+        .proposal
+        .iter()
+        .chain(snapshot.design.iter())
+        .chain(snapshot.tasks.iter())
+        .chain(snapshot.delta_specs.iter())
+        .map(|artifact| artifact.markdown.as_str())
+}
+
+fn verify_marker_text(line: &str) -> Option<&str> {
+    let marker_start = line.find("r[verify ")? + "r[verify ".len();
+    let marker_end = line[marker_start..].find(']')? + marker_start;
+    Some(&line[marker_start..marker_end])
+}
+
+fn classify_verify_marker(summary: &mut EvidenceStrengthSummary, marker: &str) {
+    if marker.contains("formal") || marker.contains("proof") || marker.contains("verus") {
+        summary.formal += 1;
+    } else if marker.contains("model") {
+        summary.model += 1;
+    } else if marker.contains("property") {
+        summary.property += 1;
+    } else if marker.contains("probe") {
+        summary.probe += 1;
+    } else if marker.contains("fixture") {
+        summary.fixture += 1;
+    } else {
+        summary.docs_only += 1;
     }
 }

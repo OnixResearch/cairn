@@ -129,6 +129,8 @@ fn gate_reports_stage_verdicts() -> Result<(), Box<dyn Error>> {
     assert_eq!(pass["verdict"], "PASS");
     assert_eq!(pass["valid"], true);
     assert_eq!(pass["policy"], "cairn-default");
+    assert_eq!(pass["evidence_summary"]["mode"], "advisory");
+    assert!(pass["evidence_summary"].get("docs_only").is_some());
 
     let fail = run_json(&[
         "gate",

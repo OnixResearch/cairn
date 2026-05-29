@@ -64,7 +64,9 @@ Task markers must reference requirement IDs present in that change delta or use 
 
 - `cairn-core` is the functional core: pure deterministic transforms only.
 - Keep pure code under `crates/cairn-core/src/verified/` so Slotcar checks cover it.
-- Filesystem, environment, process execution, stdout/stderr, mutation, and JSON presentation belong in `crates/cairn-cli`.
+- Filesystem, environment, process execution, stdout/stderr, mutation, probe execution, and JSON presentation belong in `crates/cairn-cli`.
+- Structured lifecycle source uses Nickel contracts plus generated JSON bundles; Markdown is a render/import projection once structured source exists.
+- Default gates do not execute probe commands. Run `cairn probe run ... --out ...` first, then let gates verify saved probe receipts; `--run-probes` is explicit and denied by default until policy enables a bounded profile.
 - Do not add filesystem traversal, environment reads, process execution, clocks, async, `println!`, `eprintln!`, or JSON rendering helpers to core.
 
 Core purity smoke check:
@@ -97,6 +99,7 @@ Expected result: no matches.
   - `cairn gate proposal <change> --root PATH`
   - `cairn gate design <change> --root PATH`
   - `cairn gate tasks <change> --root PATH`
+  - `cairn gate tasks <change> --root PATH --run-probes` is denied by default unless policy later enables inline probe execution.
   - stable public receipt fields are `change`, `stage`, `verdict`, `valid`, `issues`, `policy`, `layout`, `policy_hash`, `input_hash`, and `receipt_hash`.
   - AgentKit/OpenGate is a policy-shape reference only; Cairn owns the Nickel policy under `cairn-policy/` and does not depend on AgentKit at runtime.
   - Nickel owns generated receipt/action/hash schema declarations, marker vocabulary, exemption marker required/date fields, and semantic policy invariants. Runtime Rust consumes `cairn-policy/generated/cairn-policy.json`; do not add runtime Nickel execution.
@@ -110,6 +113,13 @@ Expected result: no matches.
   - `--execute` refuses mutation when the configured gate adds blockers to an otherwise unblocked plan.
   - blocked plans must not mutate, even with `--execute`.
   - For real archives, set `CAIRN_ARCHIVE_DATE=$(date +%F)` before `cairn archive <change> --execute`.
+- Structured lifecycle/probes:
+  - `cairn lifecycle check --source PATH`
+  - `cairn lifecycle export --source PATH --output PATH [--check]`
+  - `cairn lifecycle render-markdown --source PATH [--out-dir DIR]`
+  - `cairn lifecycle import-markdown --root PATH --out PATH [--execute]`
+  - `cairn probe run --root PATH --probe-file PATH [--out PATH]`
+  - `cairn probe validate --root PATH --probe-file PATH --receipt PATH`
 - Migration:
   - Cairn migration commands emit dry-run copy plans from legacy lifecycle layouts to native `cairn/`.
   - `--execute` copies accepted specs, active changes, and archives; it never deletes legacy content.

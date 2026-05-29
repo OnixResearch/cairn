@@ -139,6 +139,21 @@ let SteelProfileMode = std.contract.from_predicate (fun value =>
     profiles | Array SteelOrchestrationProfile | default = [],
   },
 
+  ProbeCommandProfile = {
+    id | NonEmptyString,
+    commands | NonEmptyArray | Array NonEmptyString,
+    capability_classes | Array NonEmptyString | default = [],
+  },
+
+  ProbePolicy = {
+    enabled | Bool,
+    inline_gate_execution_enabled | Bool,
+    receipt_schema_version | NonEmptyString,
+    coverage_classes | NonEmptyArray | Array NonEmptyString,
+    command_profiles | NonEmptyArray | Array ProbeCommandProfile,
+    redaction_classes | NonEmptyArray | Array NonEmptyString,
+  },
+
   ReceiptSchema = {
     command | NonEmptyString,
     top_level_keys | NonEmptyArray | Array NonEmptyString,
@@ -267,6 +282,7 @@ let SteelProfileMode = std.contract.from_predicate (fun value =>
     registry_label_policy | RegistryLabelPolicy,
     change_metadata_policy | ChangeMetadataPolicy,
     steel_orchestration_policy | SteelOrchestrationPolicy,
+    probe_policy | ProbePolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
     receipt_contracts | Array ReceiptContract | default = [],
     determinism_replay_policy | DeterminismReplayPolicy,

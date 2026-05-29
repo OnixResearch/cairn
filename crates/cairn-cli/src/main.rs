@@ -7,12 +7,14 @@ mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
 mod lifecycle;
+mod lifecycle_data;
 mod mcp;
 mod migration;
 mod native;
 mod plan_receipts;
 mod policy;
 mod preserves_corpus;
+mod probe;
 mod release_evidence;
 mod release_readiness;
 mod rename_classification;
@@ -68,12 +70,14 @@ fn run() -> Result<(), Box<dyn Error>> {
         "validate" => run_validate(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-evidence" => release_evidence::run_release_evidence(args.collect())?,
+        "lifecycle" => lifecycle_data::run_lifecycle_data(args.collect())?,
         "determinism" => run_determinism(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,
         "evidence-manifest" => run_evidence_manifest(args.collect())?,
         "policy" => run_policy(args.collect())?,
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
+        "probe" => probe::run_probe(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
         "review" => run_review(args.collect())?,
         "steel-orchestration" => steel_orchestration::run_steel_orchestration(args.collect())?,

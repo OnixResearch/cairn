@@ -63,6 +63,11 @@ pub use verified::policy::{
     parse_policy_json, validate_policy_json, Policy, PolicyError, SteelOrchestrationPolicy,
     SteelOrchestrationProfile, SUPPORTED_POLICY_VERSION,
 };
+pub use verified::probe::{
+    all_probe_assertions_passed, evaluate_probe_assertions, probe_declaration_hash,
+    probe_issue_json, probe_receipt_hash, validate_probe_declaration, validate_probe_receipt,
+    ProbeIssue, PROBE_DECLARATION_SCHEMA_V1, PROBE_RECEIPT_SCHEMA_V1,
+};
 pub use verified::repo::{
     build_change_detail, build_change_list, build_change_status, build_repo_status,
     build_spec_detail, build_spec_list, count_tasks, filter_changes_by_metadata, spec_title,
@@ -81,7 +86,13 @@ pub use verified::semantic_review::{
     REVIEW_METRICS_REGRESSION_SCHEMA_V1, REVIEW_RECEIPT_SCHEMA_V1, REVIEW_SEVERITIES,
     REVIEW_SOURCES, REVISION_DISPOSITIONS, REVISION_HANDOFF_SCHEMA_V1,
 };
+pub use verified::structured_lifecycle::{
+    structured_lifecycle_bundle_hash, structured_lifecycle_issue_json,
+    validate_structured_lifecycle_bundle, StructuredLifecycleIssue, StructuredLifecycleReport,
+    STRUCTURED_LIFECYCLE_SCHEMA_V1,
+};
 pub use verified::validation::{
-    change_issues, evaluate_gate, evaluate_gate_snapshot, validate_changes, validate_spec_source,
-    validate_spec_sources, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
+    change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, validate_changes,
+    validate_spec_source, validate_spec_sources, EvidenceStrengthSummary, GateArtifact, GateIssue,
+    GateReport, GateSnapshot, GateStage,
 };

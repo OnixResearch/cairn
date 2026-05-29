@@ -80,6 +80,19 @@ let Contracts = import "contracts.ncl" in
     }],
   },
 
+  probe_policy = {
+    enabled = true,
+    inline_gate_execution_enabled = false,
+    receipt_schema_version = "cairn.probe-receipt.v1",
+    coverage_classes = ["positive", "negative", "malformed-input", "boundary", "regression"],
+    command_profiles = [{
+      id = "cairn-local",
+      commands = ["archive", "doctor", "gate", "policy", "sync", "test-harness", "tracey", "validate"],
+      capability_classes = ["local-process", "bounded-stdout-stderr-hashes", "optional-fixture-mutation"],
+    }],
+    redaction_classes = ["hash-stdout", "hash-stderr", "no-secret-fields"],
+  },
+
   receipt_schemas = [
     {
       command = "steel orchestration",
@@ -87,6 +100,18 @@ let Contracts = import "contracts.ncl" in
       action_keys = ["host_function", "id", "request_hash"],
       issue_keys = ["code", "field_path", "message"],
       hash_fields = ["receipt_hash", "script_hash"],
+    },
+    {
+      command = "probe run",
+      top_level_keys = ["argv", "assertions", "command", "command_identity", "coverage_class", "expected_status_class", "fixtures", "issues", "lifecycle_bundle_hash", "policy", "policy_hash", "probe_file", "probe_id", "receipt_hash", "requirements", "root", "schema", "status_class", "status_matches", "stderr_blake3", "stderr_bytes", "stdout_blake3", "stdout_bytes", "valid", "verdict"],
+      issue_keys = ["code", "field_path", "message"],
+      hash_fields = ["lifecycle_bundle_hash", "policy_hash", "receipt_hash", "stderr_blake3", "stdout_blake3"],
+    },
+    {
+      command = "lifecycle export",
+      top_level_keys = ["bundle_hash", "bundle_schema", "check", "command", "issues", "output", "receipt_hash", "schema", "source", "source_format", "valid", "verdict"],
+      issue_keys = ["code", "field_path", "message"],
+      hash_fields = ["bundle_hash", "receipt_hash"],
     },
     {
       command = "agent-receipt validate",
@@ -97,7 +122,7 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "gate",
-      top_level_keys = ["change", "input_hash", "issues", "layout", "policy", "policy_hash", "receipt_hash", "stage", "valid", "verdict"],
+      top_level_keys = ["change", "evidence_summary", "input_hash", "issues", "layout", "policy", "policy_hash", "receipt_hash", "stage", "valid", "verdict"],
       issue_keys = ["message", "promoted", "scope"],
       hash_fields = ["input_hash", "policy_hash", "receipt_hash"],
     },

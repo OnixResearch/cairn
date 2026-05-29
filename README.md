@@ -233,6 +233,41 @@ not prove the code satisfies a requirement, tests do not prove all cases, and a
 receipt hash does not prove the tool has no bugs. Stronger claims need stronger
 rails, such as property tests, model checking, or formal verification.
 
+## Structured lifecycle and probes
+
+Structured lifecycle source is now a typed data path beside the existing Markdown
+layout. Nickel contracts in `cairn-policy/structured-lifecycle-contracts.ncl`
+validate authored lifecycle bundles, `cairn lifecycle export` writes or checks
+canonical JSON runtime bundles, and Rust revalidates generated data before
+trusting it. Markdown remains a compatibility view/import path through
+`cairn lifecycle render-markdown` and `cairn lifecycle import-markdown`; rendered
+Markdown is not the authoritative source when structured lifecycle data exists.
+r[impl cairn.structured_lifecycle.typed_authoring] r[impl cairn.structured_lifecycle.runtime_bundle]
+r[impl cairn.structured_lifecycle.markdown_projection] r[impl cairn.structured_lifecycle.migration]
+r[impl cairn.structured_lifecycle.format_strategy]
+
+Probe execution is explicit. Default `cairn gate proposal|design|tasks` commands
+read lifecycle artifacts, policy, declarations, and saved receipts; they do not
+run probe commands. CI should run probes first with `cairn probe run --out ...`,
+store the probe receipts, then run gates that verify the saved receipts. Inline
+`--run-probes` is denied by default unless a later policy explicitly enables a
+bounded execution profile. Probe receipts store command identity, status class,
+stdout/stderr BLAKE3 hashes, fixture hashes, assertion results, lifecycle bundle
+hash, policy hash, and receipt hash. r[impl cairn.probe_execution_boundary.default_gate_no_execution]
+r[impl cairn.probe_execution_boundary.explicit_probe_run]
+r[impl cairn.probe_execution_boundary.gates_verify_receipts]
+r[impl cairn.probe_execution_boundary.inline_probe_mode]
+r[impl cairn.probe_execution_boundary.fail_closed]
+
+Format boundary: Nickel contracts own authoring validation, generated JSON is the
+initial runtime interchange, Preserves remains a future canonical encoding
+candidate, and Steel is only a future optional bounded probe DSL rather than the
+lifecycle source of truth. r[verify cairn.structured_lifecycle.format_strategy.nickel_authoring]
+r[verify cairn.structured_lifecycle.format_strategy.generated_json]
+r[verify cairn.structured_lifecycle.format_strategy.preserves_candidate]
+r[verify cairn.structured_lifecycle.format_strategy.steel_not_source]
+r[verify cairn.structured_lifecycle.format_strategy.steel_probe_dsl]
+
 ## Running with Nix
 
 For a full first-use flow, start with the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md)

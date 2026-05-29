@@ -12,8 +12,8 @@ mod spec;
 
 pub use changes::{change_issues, validate_changes};
 pub use gates::{
-    evaluate_gate, evaluate_gate_snapshot, GateArtifact, GateIssue, GateReport, GateSnapshot,
-    GateStage,
+    classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, EvidenceStrengthSummary,
+    GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
 };
 pub use spec::{validate_spec_source, validate_spec_sources};
 

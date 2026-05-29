@@ -18,5 +18,9 @@ mod change_authoring;
 mod gate_cli;
 #[path = "lifecycle/migration_compat.rs"]
 mod migration_compat;
+#[path = "lifecycle/probe_execution.rs"]
+mod probe_execution;
 #[path = "lifecycle/read_validation.rs"]
 mod read_validation;
+#[path = "lifecycle/structured_lifecycle.rs"]
+mod structured_lifecycle;
