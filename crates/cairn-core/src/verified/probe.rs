@@ -203,18 +203,16 @@ fn validate_assertion(assertion: &Value, index: usize, issues: &mut Vec<ProbeIss
     let has_equals = assertion.get("equals").is_some();
     let has_contains = assertion.get("contains").is_some();
     let has_file_hash = assertion.get("file_blake3_equals").is_some();
-    if has_equals || has_contains {
-        if assertion
-            .get("path")
-            .and_then(Value::as_str)
-            .is_none_or(str::is_empty)
-        {
-            issues.push(issue(
-                "probe.assertion.path_missing",
-                "assertion.path must be a non-empty string",
-                format!("{field_prefix}.path"),
-            ));
-        }
+    let is_path_missing = assertion
+        .get("path")
+        .and_then(Value::as_str)
+        .is_none_or(str::is_empty);
+    if (has_equals || has_contains) && is_path_missing {
+        issues.push(issue(
+            "probe.assertion.path_missing",
+            "assertion.path must be a non-empty string",
+            format!("{field_prefix}.path"),
+        ));
     }
     if has_file_hash
         && assertion
