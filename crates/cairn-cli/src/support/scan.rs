@@ -1,9 +1,50 @@
 use super::*;
 
+const ARCHIVE_DATE_LEN: usize = 10;
+const ARCHIVE_DATE_SEPARATOR_INDEX: usize = ARCHIVE_DATE_LEN;
+const ARCHIVE_NAME_PREFIX_LEN: usize = ARCHIVE_DATE_LEN + 1;
+
 pub(crate) fn scan_repo(root: PathBuf, layout: LifecycleLayout) -> std::io::Result<RepoStatus> {
     let specs = collect_spec_files(&root.join(specs_dir(layout)))?;
     let changes = collect_change_sources(&root.join(changes_dir(layout)))?;
     Ok(build_repo_status(path_string(root), specs, changes))
+}
+
+pub(crate) fn read_change_dependency_graph(
+    root: &Path,
+    layout: LifecycleLayout,
+) -> std::io::Result<ChangeDependencyGraph> {
+    let status = scan_repo(root.to_path_buf(), layout)?;
+    let archived_changes = collect_archived_change_ids(root, layout)?;
+    Ok(build_change_dependency_graph(
+        &status.changes,
+        &archived_changes,
+    ))
+}
+
+pub(crate) fn collect_archived_change_ids(
+    root: &Path,
+    layout: LifecycleLayout,
+) -> std::io::Result<Vec<String>> {
+    let archive_root = root.join(archive_dir(layout));
+    if !archive_root.exists() {
+        return Ok(Vec::new());
+    }
+    let entries = fs::read_dir(archive_root)?.collect::<Result<Vec<_>, _>>()?;
+    let mut archived = Vec::with_capacity(entries.len());
+    for entry in entries {
+        if !entry.file_type()?.is_dir() {
+            continue;
+        }
+        let directory_name = entry.file_name().to_string_lossy().to_string();
+        if is_hidden_or_archive_change(&directory_name) {
+            continue;
+        }
+        archived.push(archived_change_id_from_directory(&directory_name));
+    }
+    archived.sort();
+    archived.dedup();
+    Ok(archived)
 }
 
 fn collect_change_sources(changes_dir: &Path) -> std::io::Result<Vec<ChangeSource>> {
@@ -147,6 +188,34 @@ fn spec_id(specs_dir: &Path, path: &Path) -> String {
         .and_then(|relative| relative.parent())
         .map(path_string)
         .unwrap_or_else(|| path_string(path))
+}
+
+fn archived_change_id_from_directory(directory_name: &str) -> String {
+    if has_archive_date_prefix(directory_name) {
+        return directory_name[ARCHIVE_NAME_PREFIX_LEN..].to_string();
+    }
+    directory_name.to_string()
+}
+
+fn has_archive_date_prefix(directory_name: &str) -> bool {
+    let bytes = directory_name.as_bytes();
+    if bytes.len() <= ARCHIVE_NAME_PREFIX_LEN {
+        return false;
+    }
+    bytes[ARCHIVE_DATE_SEPARATOR_INDEX] == b'-'
+        && bytes[..ARCHIVE_DATE_LEN]
+            .iter()
+            .enumerate()
+            .all(|(index, byte)| is_archive_date_byte(index, *byte))
+}
+
+fn is_archive_date_byte(index: usize, byte: u8) -> bool {
+    const FIRST_DASH_INDEX: usize = 4;
+    const SECOND_DASH_INDEX: usize = 7;
+    if index == FIRST_DASH_INDEX || index == SECOND_DASH_INDEX {
+        return byte == b'-';
+    }
+    byte.is_ascii_digit()
 }
 
 fn is_hidden_or_archive_change(name: &str) -> bool {

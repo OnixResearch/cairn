@@ -35,6 +35,12 @@ fn mcp_describes_read_only_tools_without_mutations() -> Result<(), Box<dyn Error
         .find(|tool| tool["name"] == "cairn_agent_receipt_validate")
         .ok_or("receipt tool")?;
     assert!(receipt_tool["inputSchema"]["anyOf"].is_array());
+    let graph_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "cairn_change_graph")
+        .ok_or("change graph tool")?;
+    assert_eq!(graph_tool["annotations"]["readOnlyHint"], true);
+    assert_eq!(graph_tool["annotations"]["destructiveHint"], false);
     let drain_tool = tools
         .iter()
         .find(|tool| tool["name"] == "cairn_drain_plan")

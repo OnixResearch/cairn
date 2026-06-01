@@ -1,4 +1,5 @@
 pub mod agent_receipt;
+pub mod change_dependencies;
 pub mod content_addressed;
 pub mod delta_merge;
 pub mod developer_experience;

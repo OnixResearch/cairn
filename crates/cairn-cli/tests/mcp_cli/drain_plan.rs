@@ -85,3 +85,49 @@ fn mcp_drain_plan_recommends_explicit_mutation_tools_for_ready_changes(
     fs::remove_dir_all(&temp_root)?;
     Ok(())
 }
+
+#[test]
+fn mcp_drain_plan_orders_active_dependencies_before_dependents() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.change_dependency_graph.drain_order]
+    // r[verify cairn.change_dependency_graph.drain_order.topological]
+    // r[verify cairn.change_dependency_graph.positive_negative_tests]
+    let temp_root = env::temp_dir().join(format!(
+        "cairn-mcp-drain-dependencies-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&temp_root);
+    copy_dir_recursive(&repo_root().join("fixtures/archive-ready"), &temp_root)?;
+    let ready_change = temp_root.join("cairn/changes/ready");
+    let prereq_change = temp_root.join("cairn/changes/z-prereq");
+    let dependent_change = temp_root.join("cairn/changes/a-dependent");
+    copy_dir_recursive(&ready_change, &prereq_change)?;
+    copy_dir_recursive(&ready_change, &dependent_change)?;
+    fs::write(
+        dependent_change.join("metadata.json"),
+        "{\"depends_on\":[\"z-prereq\"]}\n",
+    )?;
+    fs::remove_dir_all(&ready_change)?;
+
+    let request = format!(r#"{{"root":"{}"}}"#, temp_root.display());
+    let value = run_json(&["mcp", "--call", "cairn_drain_plan", &request])?;
+    let receipt = &value["structuredContent"];
+    assert_eq!(
+        receipt["drain_order"],
+        serde_json::json!(["z-prereq", "a-dependent"])
+    );
+    assert_eq!(receipt["ready_change_count"], 1);
+    let changes = receipt["changes"].as_array().ok_or("changes")?;
+    let dependent = changes
+        .iter()
+        .find(|change| change["name"] == "a-dependent")
+        .ok_or("dependent change")?;
+    assert_eq!(dependent["blocked_by"], serde_json::json!(["z-prereq"]));
+    assert_eq!(dependent["dependency_ready"], false);
+    assert!(dependent["blockers"]
+        .as_array()
+        .ok_or("blockers")?
+        .iter()
+        .any(|blocker| blocker["class"] == "dependency_blocked"));
+    fs::remove_dir_all(&temp_root)?;
+    Ok(())
+}

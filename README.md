@@ -281,6 +281,7 @@ nix run path:$PWD#cairn -- template apply agent-workflow --root /path/to/repo --
 nix run path:$PWD#cairn -- scaffold change first-change --root /path/to/repo --request "Add the first reviewed capability" --execute
 nix run path:$PWD#cairn -- discover-specs --root /path/to/repo --include src --include docs --out target/reverse-spec-draft.md
 nix run path:$PWD#cairn -- change list --root fixtures/basic
+nix run path:$PWD#cairn -- change graph --root fixtures/basic
 nix run path:$PWD#cairn -- change show demo --root fixtures/basic
 nix run path:$PWD#cairn -- spec list --root fixtures/basic
 nix run path:$PWD#cairn -- spec show demo --root fixtures/basic
@@ -587,9 +588,9 @@ r[verify release_evidence.current_head_staleness_guard.archive_ready]
 ## MCP server
 
 `cairn mcp` exposes Cairn lifecycle receipts through a bounded MCP-style
-JSON-RPC tool surface. The default server lists read-only inspection tools and
-dry-run planning tools only; mutation tools are omitted unless the server starts
-with `--allow-mutations`. Tool responses include short text plus
+JSON-RPC tool surface. The default server lists read-only inspection tools,
+including `cairn_change_graph`, and dry-run planning tools only; mutation tools
+are omitted unless the server starts with `--allow-mutations`. Tool responses include short text plus
 `structuredContent` receipts with Cairn hashes and an `mcp` read/destructive
 annotation object. See `docs/cairn-mcp.md`. r[verify cairn.supersede.mcp_server.verification.docs]
 

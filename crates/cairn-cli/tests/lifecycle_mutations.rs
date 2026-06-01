@@ -241,6 +241,48 @@ fn sync_execute_creates_wrapped_spec_for_new_domain() -> Result<(), Box<dyn Erro
 }
 
 #[test]
+fn sync_and_archive_block_unsatisfied_change_dependencies() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.change_dependency_graph.mutation_block]
+    // r[verify cairn.change_dependency_graph.mutation_block.dry_run]
+    // r[verify cairn.change_dependency_graph.mutation_block.unsatisfied]
+    // r[verify cairn.change_dependency_graph.positive_negative_tests]
+    let fixture = temp_fixture("dependency-blocked-mutation", "fixtures/archive-ready")?;
+    let ready_change = fixture.join("cairn/changes/ready");
+    let prereq_change = fixture.join("cairn/changes/z-prereq");
+    let dependent_change = fixture.join("cairn/changes/a-dependent");
+    support::copy_dir(&ready_change, &prereq_change)?;
+    support::copy_dir(&ready_change, &dependent_change)?;
+    fs::write(
+        dependent_change.join("metadata.json"),
+        "{\"depends_on\":[\"z-prereq\"]}\n",
+    )?;
+    fs::remove_dir_all(&ready_change)?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+
+    let sync = run_json(&["sync", "a-dependent", "--root", root])?;
+    assert_eq!(sync["blocked"], true);
+    assert_eq!(sync["mutated"], false);
+    assert!(sync["reasons"]
+        .as_array()
+        .ok_or("sync reasons")?
+        .iter()
+        .any(|reason| reason
+            .as_str()
+            .unwrap_or_default()
+            .contains("change_dependency.unsatisfied_dependency")));
+
+    let archive = run_json(&["archive", "a-dependent", "--root", root, "--execute"])?;
+    assert_eq!(archive["blocked"], true);
+    assert_eq!(archive["mutated"], false);
+    assert!(dependent_change.exists());
+    assert!(!fixture
+        .join("cairn/archive/1970-01-01-a-dependent")
+        .exists());
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
 fn archive_execute_moves_temp_fixture_change() -> Result<(), Box<dyn Error>> {
     // r[verify sync_archive.execute.archive] r[verify sync_archive.execute.archive.moves]
     // r[verify sync_archive.execute.boundary] r[verify sync_archive.execute.boundary.pure_core]

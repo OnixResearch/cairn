@@ -12,11 +12,13 @@ use std::{
 };
 
 use cairn_core::{
-    archive_dir, build_archive_plan, build_change_detail, build_change_skeleton,
-    build_doctor_report, build_ironspec_migration_plan, build_openspec_migration_plan,
-    build_spec_detail, build_sync_plan, canonical_json_hash, changes_dir, evaluate_gate_snapshot,
-    init_artifacts, layout_name, layout_root, specs_dir, validate_changes, validate_spec_sources,
-    DoctorSnapshot, GateStage, LifecycleArtifactKind, LifecycleLayout, PlanAction, PlanActionKind,
+    archive_dir, build_archive_plan_with_dependency_blockers, build_change_dependency_graph,
+    build_change_detail, build_change_skeleton, build_doctor_report, build_ironspec_migration_plan,
+    build_openspec_migration_plan, build_spec_detail, build_sync_plan_with_dependency_blockers,
+    canonical_json_hash, changes_dir, dependency_blockers_for_change, evaluate_gate_snapshot,
+    init_artifacts, layout_name, layout_root, specs_dir, validate_changes_with_archives,
+    validate_spec_sources, ChangeDependencyGraph, ChangeStatus, DoctorSnapshot, GateStage,
+    LifecycleArtifactKind, LifecycleLayout, PlanAction, PlanActionKind,
 };
 use serde_json::{json, Value};
 
@@ -29,17 +31,19 @@ use crate::migration::{
     collect_layout_migration_inputs, execute_migration_plan, migration_source_layout,
 };
 use crate::native::{
-    change_detail_json, change_status_json, change_template, doctor_report_json, repo_status_json,
-    spec_detail_json, write_new_file,
+    change_dependency_edge_json, change_dependency_graph_json, change_dependency_issue_json,
+    change_dependency_node_json, change_detail_json, change_status_json, change_template,
+    doctor_report_json, repo_status_json, spec_detail_json, write_new_file,
 };
 use crate::plan_receipts::{
     archive_plan_json, gate_input_json, gate_report_json, migration_plan_json, sync_plan_json,
 };
 use crate::support::{
-    collect_validation_spec_sources, default_policy_path, detect_layout, execute_archive_plan,
-    execute_sync_plan, find_change, find_spec_source, has_flag, load_policy_file,
-    mutation_gate_blockers, path_string, portable_json_hash, print_json, read_gate_snapshot,
-    scan_repo, with_portable_receipt_hash, with_receipt_hash,
+    collect_archived_change_ids, collect_validation_spec_sources, default_policy_path,
+    detect_layout, execute_archive_plan, execute_sync_plan, find_change, find_spec_source,
+    has_flag, load_policy_file, mutation_gate_blockers, path_string, portable_json_hash,
+    print_json, read_change_dependency_graph, read_gate_snapshot, scan_repo,
+    with_portable_receipt_hash, with_receipt_hash,
 };
 
 const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
@@ -170,6 +174,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_validate" => mcp_validate(input)?,
             "cairn_gate" => mcp_gate(input)?,
             "cairn_gate_context" => mcp_gate_context(input)?,
+            "cairn_change_graph" => mcp_change_graph(input)?,
             "cairn_agent_receipt_validate" => mcp_agent_receipt_validate(input)?,
             "cairn_drain_plan" => mcp_drain_plan(input)?,
             "cairn_sync_plan" => mcp_sync(input, false)?,

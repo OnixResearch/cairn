@@ -1,3 +1,9 @@
+use crate::verified::change_dependencies::{
+    DEPENDENCY_ISSUE_EMPTY_ID, DEPENDENCY_ISSUE_INVALID_ID, DEPENDENCY_ISSUE_INVALID_ITEM,
+    DEPENDENCY_ISSUE_INVALID_TYPE,
+};
+use crate::verified::lifecycle::validate_change_name;
+
 use super::{ChangeMetadata, ChangeStatus};
 
 pub(super) fn parse_change_metadata(
@@ -38,6 +44,7 @@ pub(super) fn parse_change_metadata(
     let status = optional_string(object.get("status"), change_name, "status");
     issues.extend(status.1);
     let status = status.0;
+    let depends_on = parse_dependency_metadata(object.get("depends_on"), change_name, &mut issues);
     let mut sorted_groups = groups;
     sorted_groups.sort();
     let has_duplicates = sorted_groups
@@ -52,6 +59,7 @@ pub(super) fn parse_change_metadata(
             groups: sorted_groups,
             target_date,
             status,
+            depends_on,
         },
         issues,
     )
@@ -63,6 +71,46 @@ fn string_array(value: &serde_json::Value) -> Option<Vec<String>> {
         .iter()
         .map(|item| item.as_str().map(str::to_string))
         .collect()
+}
+
+fn parse_dependency_metadata(
+    value: Option<&serde_json::Value>,
+    change_name: &str,
+    issues: &mut Vec<String>,
+) -> Vec<String> {
+    let Some(value) = value else {
+        return Vec::new();
+    };
+    let Some(items) = value.as_array() else {
+        issues.push(format!(
+            "{change_name}: {DEPENDENCY_ISSUE_INVALID_TYPE}: metadata depends_on must be an array of strings"
+        ));
+        return Vec::new();
+    };
+    let mut dependencies = Vec::with_capacity(items.len());
+    for item in items {
+        let Some(dependency) = item.as_str() else {
+            issues.push(format!(
+                "{change_name}: {DEPENDENCY_ISSUE_INVALID_ITEM}: metadata depends_on entries must be strings"
+            ));
+            continue;
+        };
+        if dependency.is_empty() {
+            issues.push(format!(
+                "{change_name}: {DEPENDENCY_ISSUE_EMPTY_ID}: dependency id must not be empty"
+            ));
+            continue;
+        }
+        if let Err(error) = validate_change_name(dependency) {
+            issues.push(format!(
+                "{change_name}: {DEPENDENCY_ISSUE_INVALID_ID}: invalid dependency id {dependency}: {error}"
+            ));
+            continue;
+        }
+        dependencies.push(dependency.to_string());
+    }
+    dependencies.sort();
+    dependencies
 }
 
 fn optional_string(

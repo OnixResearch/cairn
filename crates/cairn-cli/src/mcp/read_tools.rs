@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use super::common::*;
 use super::*;
 
@@ -70,7 +72,12 @@ pub(super) fn mcp_doctor(input: &Value) -> Result<Value, Box<dyn Error>> {
         Ok(policy) => (
             Some(policy.name.clone()),
             None,
-            validate_changes(&status.changes, &policy).len(),
+            validate_changes_with_archives(
+                &status.changes,
+                &collect_archived_change_ids(&root, selected.layout)?,
+                &policy,
+            )
+            .len(),
         ),
         Err(error) => (None, Some(error.to_string()), 0),
     };
@@ -101,7 +108,8 @@ pub(super) fn mcp_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
     let policy = load_policy_file(mcp_policy(input))?;
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
-    let change_issues = validate_changes(&status.changes, &policy);
+    let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
+    let change_issues = validate_changes_with_archives(&status.changes, &archived_changes, &policy);
     let spec_sources = collect_validation_spec_sources(&root, selected.layout)?;
     let spec_issues = validate_spec_sources(&spec_sources);
     let mut issues = Vec::with_capacity(change_issues.len() + spec_issues.len());
@@ -144,6 +152,23 @@ pub(super) fn mcp_gate_context(input: &Value) -> Result<Value, Box<dyn Error>> {
     Ok(with_portable_receipt_hash(&root, value))
 }
 
+pub(super) fn mcp_change_graph(input: &Value) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.change_dependency_graph.drain_order]
+    let root = mcp_root(input);
+    let selected = detect_layout(&root);
+    let status = scan_repo(root.clone(), selected.layout)?;
+    let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
+    let graph = build_change_dependency_graph(&status.changes, &archived_changes);
+    let mut value = change_dependency_graph_json(
+        &path_string(&root),
+        selected.layout,
+        &archived_changes,
+        &graph,
+    );
+    value["mcp"] = json!({"read_only": true, "destructive": false});
+    Ok(with_portable_receipt_hash(&root, value))
+}
+
 pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.mcp_drain_all.plan]
     // r[impl cairn.mcp_drain_all.plan.read_only]
@@ -154,11 +179,21 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
     let policy = load_policy_file(mcp_policy(input))?;
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
+    let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
+    let dependency_graph = build_change_dependency_graph(&status.changes, &archived_changes);
+    let ordered_change_names = drain_order_with_remaining(&status.changes, &dependency_graph);
     let mut changes = Vec::with_capacity(status.changes.len());
     let mut next_actions = Vec::new();
     let mut ready_change_count = 0usize;
 
-    for change in &status.changes {
+    for change_name in ordered_change_names {
+        let Some(change) = status
+            .changes
+            .iter()
+            .find(|candidate| candidate.name == change_name)
+        else {
+            continue;
+        };
         let snapshot = read_gate_snapshot(&root, selected.layout, change.clone())?;
         let proposal_gate = drain_gate_summary(&snapshot, GateStage::Proposal, &policy);
         let design_gate = drain_gate_summary(&snapshot, GateStage::Design, &policy);
@@ -171,7 +206,10 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
             blockers.push(json!({"class": "unfinished_tasks", "message": "all task checkboxes must be completed before archive"}));
         }
 
-        let mut sync_plan = build_sync_plan(change);
+        let dependency_blockers = dependency_blockers_for_change(&dependency_graph, &change.name);
+        append_dependency_blockers(&mut blockers, &dependency_graph, &change.name);
+
+        let mut sync_plan = build_sync_plan_with_dependency_blockers(change, &dependency_blockers);
         if policy.sync_require_gate && !sync_plan.blocked {
             sync_plan.reasons.extend(mutation_gate_blockers(
                 &root,
@@ -186,7 +224,8 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
         }
         append_plan_blockers(&mut blockers, "sync_blocked", &sync_plan.reasons);
 
-        let mut archive_plan = build_archive_plan(change);
+        let mut archive_plan =
+            build_archive_plan_with_dependency_blockers(change, &dependency_blockers);
         if policy.archive_require_gate && !archive_plan.blocked {
             archive_plan.reasons.extend(mutation_gate_blockers(
                 &root,
@@ -207,10 +246,17 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
         }
         let change_next_actions = drain_next_actions(&change.name, is_ready, &blockers);
         next_actions.extend(change_next_actions.iter().cloned());
+        let dependency_node = dependency_graph.node(&change.name);
+        let dependency_issues = dependency_issues_for_change(&dependency_graph, &change.name);
 
         changes.push(json!({
             "name": change.name,
             "path": change.path,
+            "dependencies": dependency_node.map(|node| node.dependencies.clone()).unwrap_or_default(),
+            "blocked_by": dependency_node.map(|node| node.blocked_by.clone()).unwrap_or_default(),
+            "blocks": dependency_node.map(|node| node.blocks.clone()).unwrap_or_default(),
+            "dependency_ready": dependency_node.is_some_and(|node| node.dependency_ready),
+            "dependency_issues": dependency_issues,
             "task_counts": change.task_counts.map(|counts| json!({
                 "total": counts.total,
                 "done": counts.done,
@@ -241,11 +287,76 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
             "active_change_count": changes.len(),
             "ready_change_count": ready_change_count,
             "drain_complete": changes.is_empty(),
+            "archived_changes": archived_changes,
+            "dependency_graph": {
+                "valid": dependency_graph.valid,
+                "nodes": dependency_graph.nodes.iter().map(change_dependency_node_json).collect::<Vec<_>>(),
+                "edges": dependency_graph.edges.iter().map(change_dependency_edge_json).collect::<Vec<_>>(),
+                "issues": dependency_graph.issues.iter().map(change_dependency_issue_json).collect::<Vec<_>>(),
+                "drain_order": dependency_graph.drain_order,
+            },
+            "drain_order": dependency_graph.drain_order,
             "changes": changes,
             "next_actions": next_actions,
             "mcp": {"read_only": true, "destructive": false},
         }),
     ))
+}
+
+fn drain_order_with_remaining(
+    changes: &[ChangeStatus],
+    dependency_graph: &ChangeDependencyGraph,
+) -> Vec<String> {
+    let mut ordered = dependency_graph.drain_order.clone();
+    let mut seen = ordered.iter().cloned().collect::<BTreeSet<_>>();
+    for change in changes {
+        if seen.insert(change.name.clone()) {
+            ordered.push(change.name.clone());
+        }
+    }
+    ordered
+}
+
+fn dependency_issues_for_change(
+    dependency_graph: &ChangeDependencyGraph,
+    change_name: &str,
+) -> Vec<Value> {
+    dependency_graph
+        .issues
+        .iter()
+        .filter(|issue| issue.change == change_name)
+        .map(change_dependency_issue_json)
+        .collect()
+}
+
+fn append_dependency_blockers(
+    blockers: &mut Vec<Value>,
+    dependency_graph: &ChangeDependencyGraph,
+    change_name: &str,
+) {
+    if let Some(node) = dependency_graph.node(change_name) {
+        blockers.extend(node.blocked_by.iter().map(|dependency| {
+            json!({
+                "class": "dependency_blocked",
+                "dependency": dependency,
+                "message": format!("dependency {dependency} must be archived before {change_name}"),
+            })
+        }));
+    }
+    blockers.extend(
+        dependency_graph
+            .issues
+            .iter()
+            .filter(|issue| issue.change == change_name)
+            .map(|issue| {
+                json!({
+                    "class": "dependency_issue",
+                    "code": issue.code,
+                    "dependency": issue.dependency,
+                    "message": issue.message,
+                })
+            }),
+    );
 }
 
 fn drain_gate_summary(
@@ -325,6 +436,18 @@ fn drain_next_actions(change: &str, is_ready: bool, blockers: &[Value]) -> Vec<V
         .any(|blocker| blocker["class"] == "unfinished_tasks")
     {
         actions.push(json!({"change": change, "action": "complete implementation tasks and mark tasks.md checkboxes"}));
+    }
+    if blockers
+        .iter()
+        .any(|blocker| blocker["class"] == "dependency_blocked")
+    {
+        actions.push(json!({"change": change, "action": "archive dependency changes first"}));
+    }
+    if blockers
+        .iter()
+        .any(|blocker| blocker["class"] == "dependency_issue")
+    {
+        actions.push(json!({"change": change, "tool": "cairn_change_graph"}));
     }
     if blockers
         .iter()

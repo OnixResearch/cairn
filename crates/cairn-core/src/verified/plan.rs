@@ -35,11 +35,19 @@ pub enum PlanActionKind {
 }
 
 pub fn build_sync_plan(change: &ChangeStatus) -> SyncPlan {
+    build_sync_plan_with_dependency_blockers(change, &[])
+}
+
+pub fn build_sync_plan_with_dependency_blockers(
+    change: &ChangeStatus,
+    dependency_blockers: &[String],
+) -> SyncPlan {
     // r[impl sync_archive.plan.sync] r[impl sync_archive.plan.sync.delta_specs]
     // r[impl sync_archive.plan.purity] r[impl sync_archive.plan.purity.no_effects]
     // r[impl sync_archive.execute.sync] r[impl sync_archive.execute.sync.applies]
     // r[impl sync_archive.execute.sync.default_dry_run]
-    let reasons = sync_blockers(change);
+    // r[impl cairn.change_dependency_graph.mutation_block]
+    let reasons = sync_blockers(change, dependency_blockers);
     let actions = if reasons.is_empty() {
         change
             .delta_specs
@@ -66,11 +74,19 @@ pub fn build_sync_plan(change: &ChangeStatus) -> SyncPlan {
 }
 
 pub fn build_archive_plan(change: &ChangeStatus) -> ArchivePlan {
+    build_archive_plan_with_dependency_blockers(change, &[])
+}
+
+pub fn build_archive_plan_with_dependency_blockers(
+    change: &ChangeStatus,
+    dependency_blockers: &[String],
+) -> ArchivePlan {
     // r[impl sync_archive.plan.archive] r[impl sync_archive.plan.archive.blockers]
     // r[impl sync_archive.execute.archive] r[impl sync_archive.execute.archive.moves]
     // r[impl sync_archive.execute.archive.blocked_noop] r[impl sync_archive.execute.boundary]
     // r[impl sync_archive.execute.boundary.pure_core]
-    let reasons = archive_blockers(change);
+    // r[impl cairn.change_dependency_graph.mutation_block]
+    let reasons = archive_blockers(change, dependency_blockers);
     let actions = if reasons.is_empty() {
         vec![PlanAction {
             kind: PlanActionKind::ArchiveChange,
@@ -91,19 +107,24 @@ pub fn build_archive_plan(change: &ChangeStatus) -> ArchivePlan {
     }
 }
 
-fn sync_blockers(change: &ChangeStatus) -> Vec<String> {
+fn sync_blockers(change: &ChangeStatus, dependency_blockers: &[String]) -> Vec<String> {
     let mut reasons = required_artifact_blockers(change);
     if change.delta_specs.is_empty() {
         reasons.push(format!("{}: no delta specs to sync", change.name));
     }
+    reasons.extend(dependency_blockers.iter().cloned());
+    reasons.sort();
+    reasons.dedup();
     reasons
 }
 
-fn archive_blockers(change: &ChangeStatus) -> Vec<String> {
-    let mut reasons = sync_blockers(change);
+fn archive_blockers(change: &ChangeStatus, dependency_blockers: &[String]) -> Vec<String> {
+    let mut reasons = sync_blockers(change, dependency_blockers);
     if let Some(message) = incomplete_tasks_blocker(change.name.as_str(), change.task_counts) {
         reasons.push(message);
     }
+    reasons.sort();
+    reasons.dedup();
     reasons
 }
 
@@ -204,5 +225,24 @@ mod tests {
         assert!(!plan.blocked);
         assert_eq!(plan.actions.len(), 1);
         assert_eq!(plan.actions[0].kind, PlanActionKind::ArchiveChange);
+    }
+
+    #[test]
+    fn dependency_blockers_prevent_sync_and_archive_actions() {
+        // r[verify cairn.change_dependency_graph.mutation_block]
+        let blockers = vec![
+            "demo: change_dependency.unsatisfied_dependency: dependency prereq is not archived"
+                .to_string(),
+        ];
+        let sync_plan = build_sync_plan_with_dependency_blockers(&complete_change(), &blockers);
+        assert!(sync_plan.blocked);
+        assert!(sync_plan.actions.is_empty());
+        assert_eq!(sync_plan.reasons, blockers);
+
+        let archive_plan =
+            build_archive_plan_with_dependency_blockers(&complete_change(), &blockers);
+        assert!(archive_plan.blocked);
+        assert!(archive_plan.actions.is_empty());
+        assert_eq!(archive_plan.reasons, blockers);
     }
 }

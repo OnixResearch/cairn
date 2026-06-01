@@ -15,7 +15,9 @@ mod validate;
 
 pub(crate) use authoring::{change_template, write_new_file};
 pub(crate) use json::{
-    change_detail_json, change_status_json, doctor_report_json, repo_status_json, spec_detail_json,
+    change_dependency_edge_json, change_dependency_graph_json, change_dependency_issue_json,
+    change_dependency_node_json, change_detail_json, change_status_json, doctor_report_json,
+    repo_status_json, spec_detail_json,
 };
 pub(crate) use validate::cairn_validation_receipt;
 
@@ -30,7 +32,7 @@ pub(crate) fn run_doctor(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 pub(crate) fn run_change(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
     let Some(subcommand) = iter.next() else {
-        return Err("change requires a subcommand: create, list, or show".into());
+        return Err("change requires a subcommand: create, graph, list, or show".into());
     };
     match subcommand.as_str() {
         "create" => {
@@ -40,6 +42,7 @@ pub(crate) fn run_change(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             authoring::run_change_create(iter.collect(), &change)
         }
         "list" => read::run_change_list(iter.collect()),
+        "graph" => read::run_change_graph(iter.collect()),
         "show" => {
             let Some(change) = iter.next() else {
                 return Err("change show requires a change name".into());

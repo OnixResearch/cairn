@@ -19,6 +19,14 @@ pub use verified::agent_receipt::{
     evaluate_agent_run_completion, positive_agent_run_fixture, AgentRunGateIssue,
     AgentRunGateReport, AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
 };
+pub use verified::change_dependencies::{
+    build_change_dependency_graph, change_dependency_issue_messages,
+    dependency_blockers_for_change, ChangeDependencyEdge, ChangeDependencyGraph,
+    ChangeDependencyIssue, ChangeDependencyNode, DEPENDENCY_BLOCKER_UNSATISFIED,
+    DEPENDENCY_ISSUE_CYCLE, DEPENDENCY_ISSUE_DUPLICATE, DEPENDENCY_ISSUE_EMPTY_ID,
+    DEPENDENCY_ISSUE_INVALID_ID, DEPENDENCY_ISSUE_INVALID_ITEM, DEPENDENCY_ISSUE_INVALID_TYPE,
+    DEPENDENCY_ISSUE_SELF, DEPENDENCY_ISSUE_UNKNOWN,
+};
 pub use verified::content_addressed::{
     circuit_primitive_graph_hash, circuit_primitive_hash_material, downstream_pilot_hash,
     downstream_pilot_hash_material, export_bundle_hash, export_bundle_hash_material,
@@ -57,7 +65,8 @@ pub use verified::lifecycle_orchestration::{
     STEEL_ACTION_ENVELOPE_SCHEMA_V1, STEEL_ORCHESTRATION_RECEIPT_SCHEMA_V1,
 };
 pub use verified::plan::{
-    build_archive_plan, build_sync_plan, ArchivePlan, PlanAction, PlanActionKind, SyncPlan,
+    build_archive_plan, build_archive_plan_with_dependency_blockers, build_sync_plan,
+    build_sync_plan_with_dependency_blockers, ArchivePlan, PlanAction, PlanActionKind, SyncPlan,
 };
 pub use verified::policy::{
     parse_policy_json, validate_policy_json, Policy, PolicyError, SteelOrchestrationPolicy,
@@ -71,8 +80,8 @@ pub use verified::probe::{
 pub use verified::repo::{
     build_change_detail, build_change_list, build_change_status, build_repo_status,
     build_spec_detail, build_spec_list, count_tasks, filter_changes_by_metadata, spec_title,
-    ChangeDetail, ChangeList, ChangeSource, ChangeStatus, RepoStatus, SpecDetail, SpecList,
-    SpecSource, SpecSummary, TaskCounts,
+    ChangeDetail, ChangeList, ChangeMetadata, ChangeSource, ChangeStatus, RepoStatus, SpecDetail,
+    SpecList, SpecSource, SpecSummary, TaskCounts,
 };
 pub use verified::semantic_review::{
     completeness_receipt, issues_json as semantic_review_issues_json, review_ledger_analytics,
@@ -93,6 +102,6 @@ pub use verified::structured_lifecycle::{
 };
 pub use verified::validation::{
     change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, validate_changes,
-    validate_spec_source, validate_spec_sources, EvidenceStrengthSummary, GateArtifact, GateIssue,
-    GateReport, GateSnapshot, GateStage,
+    validate_changes_with_archives, validate_spec_source, validate_spec_sources,
+    EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
 };

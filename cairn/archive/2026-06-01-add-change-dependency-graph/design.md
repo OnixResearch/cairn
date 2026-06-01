@@ -18,6 +18,19 @@ Use Trellis as the primitive source for the graph logic:
 
 Do not make normal Cairn builds depend on `../trellis`. Adapt the needed pure primitives into Cairn-owned code or add a reviewed portable dependency path only if the release/build contract remains self-contained. Mark the adapted implementation with Tracey references back to this change's requirements.
 
+### I1 core surface decision
+
+The minimal Cairn-owned pure core surface is:
+
+- `ChangeMetadata.depends_on: Vec<String>` parsed from optional metadata JSON.
+- `build_change_dependency_graph(changes, archived_changes) -> ChangeDependencyGraph` as the only graph constructor.
+- `ChangeDependencyGraph { valid, nodes, edges, issues, drain_order }` as the deterministic receipt model.
+- `ChangeDependencyNode { name, dependencies, satisfied_dependencies, blocked_by, blocks, dependency_ready }` for per-change readiness.
+- `ChangeDependencyIssue { change, code, dependency, message }` with stable issue-code constants for invalid metadata, unknown/self/duplicate edges, cycles, and unsatisfied dependencies.
+- `dependency_blockers_for_change(graph, change_name) -> Vec<String>` as the mutation-plan bridge.
+
+This mirrors Trellis while staying self-contained: Kahn ordering from `topo_sort`, cycle detection by incomplete ordering from `cycle_detect`, and dependency readiness/unsatisfied-count shape from `job_dag`.
+
 ## CLI and MCP shell
 
 Extend metadata parsing in the CLI shell, then pass plain data into core. Add a read-only graph surface, either `cairn change graph --root PATH` or an equivalent deterministic receipt path, and extend `cairn_drain_plan` with dependency fields:

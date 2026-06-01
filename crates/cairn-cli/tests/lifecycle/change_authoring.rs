@@ -302,3 +302,57 @@ fn change_metadata_is_validated_and_filterable() -> Result<(), Box<dyn Error>> {
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
+
+#[test]
+fn change_dependency_metadata_is_validated_and_reported() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.change_dependency_graph.metadata]
+    // r[verify cairn.change_dependency_graph.metadata.known]
+    // r[verify cairn.change_dependency_graph.metadata.invalid]
+    // r[verify cairn.change_dependency_graph.graph_validation]
+    // r[verify cairn.change_dependency_graph.positive_negative_tests]
+    // r[verify cairn.change_dependency_graph.validation]
+    // r[verify cairn.change_dependency_graph.validation.repository_checks]
+    let fixture = temp_fixture("change-dependencies", "fixtures/basic")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    fs::create_dir_all(fixture.join("cairn/archive/2026-05-21-finished-prereq"))?;
+    fs::write(
+        fixture.join("cairn/changes/demo/metadata.json"),
+        "{\"depends_on\":[\"finished-prereq\"]}\n",
+    )?;
+
+    let shown = run_json(&["change", "show", "demo", "--root", root])?;
+    assert_eq!(
+        shown["change"]["metadata"]["depends_on"][0],
+        "finished-prereq"
+    );
+    let graph = run_json(&["change", "graph", "--root", root])?;
+    assert_eq!(graph["valid"], true);
+    assert_eq!(
+        graph["nodes"][0]["satisfied_dependencies"][0],
+        "finished-prereq"
+    );
+    assert_eq!(graph["nodes"][0]["dependency_ready"], true);
+
+    fs::write(
+        fixture.join("cairn/changes/demo/metadata.json"),
+        "{\"depends_on\":[\"\",\"bad/name\",\"missing\",\"missing\",\"demo\"]}\n",
+    )?;
+    let invalid = run_json(&["validate", "--root", root])?;
+    assert_eq!(invalid["valid"], false);
+    let issue_text = serde_json::to_string(&invalid["change_issues"])?;
+    assert!(issue_text.contains("change_dependency.metadata.depends_on.empty_id"));
+    assert!(issue_text.contains("change_dependency.metadata.depends_on.invalid_id"));
+    assert!(issue_text.contains("change_dependency.duplicate_dependency"));
+    assert!(issue_text.contains("change_dependency.unknown_dependency"));
+    assert!(issue_text.contains("change_dependency.self_dependency"));
+
+    fs::write(
+        fixture.join("cairn/changes/demo/metadata.json"),
+        "{\"depends_on\":\"not-an-array\"}\n",
+    )?;
+    let invalid_type = run_json(&["validate", "--root", root])?;
+    let type_issue_text = serde_json::to_string(&invalid_type["change_issues"])?;
+    assert!(type_issue_text.contains("change_dependency.metadata.depends_on.invalid_type"));
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}

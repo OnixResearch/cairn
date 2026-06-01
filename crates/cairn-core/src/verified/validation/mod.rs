@@ -10,7 +10,7 @@ mod markdown;
 mod references;
 mod spec;
 
-pub use changes::{change_issues, validate_changes};
+pub use changes::{change_issues, validate_changes, validate_changes_with_archives};
 pub use gates::{
     classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, EvidenceStrengthSummary,
     GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,

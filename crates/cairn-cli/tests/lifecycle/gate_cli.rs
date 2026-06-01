@@ -73,6 +73,7 @@ fn help_lists_commands() -> Result<(), Box<dyn Error>> {
         "{stdout}"
     );
     assert!(stdout.contains("change list [--root PATH]"), "{stdout}");
+    assert!(stdout.contains("change graph [--root PATH]"), "{stdout}");
     assert!(
         stdout.contains("change show <name> [--root PATH]"),
         "{stdout}"

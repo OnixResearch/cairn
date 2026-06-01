@@ -1,5 +1,6 @@
 use cairn_core::{
-    layout_name, ChangeDetail, ChangeList, ChangeStatus, DoctorCheckStatus, DoctorReport,
+    layout_name, ChangeDependencyEdge, ChangeDependencyGraph, ChangeDependencyIssue,
+    ChangeDependencyNode, ChangeDetail, ChangeList, ChangeStatus, DoctorCheckStatus, DoctorReport,
     LifecycleLayout, RepoStatus, SpecDetail, SpecList, SpecSummary, TaskCounts,
 };
 use serde_json::{json, Value};
@@ -88,6 +89,54 @@ fn spec_summary_json(summary: &SpecSummary) -> Value {
     })
 }
 
+pub(crate) fn change_dependency_graph_json(
+    root: &str,
+    layout: LifecycleLayout,
+    archived_changes: &[String],
+    graph: &ChangeDependencyGraph,
+) -> Value {
+    json!({
+        "command": "change graph",
+        "root": root,
+        "layout": layout_name(layout),
+        "valid": graph.valid,
+        "active_change_count": graph.nodes.len(),
+        "archived_changes": archived_changes,
+        "nodes": graph.nodes.iter().map(change_dependency_node_json).collect::<Vec<_>>(),
+        "edges": graph.edges.iter().map(change_dependency_edge_json).collect::<Vec<_>>(),
+        "issues": graph.issues.iter().map(change_dependency_issue_json).collect::<Vec<_>>(),
+        "drain_order": graph.drain_order,
+    })
+}
+
+pub(crate) fn change_dependency_node_json(node: &ChangeDependencyNode) -> Value {
+    json!({
+        "name": node.name,
+        "dependencies": node.dependencies,
+        "satisfied_dependencies": node.satisfied_dependencies,
+        "blocked_by": node.blocked_by,
+        "blocks": node.blocks,
+        "dependency_ready": node.dependency_ready,
+    })
+}
+
+pub(crate) fn change_dependency_edge_json(edge: &ChangeDependencyEdge) -> Value {
+    json!({
+        "dependent": edge.dependent,
+        "dependency": edge.dependency,
+        "satisfied": edge.satisfied,
+    })
+}
+
+pub(crate) fn change_dependency_issue_json(issue: &ChangeDependencyIssue) -> Value {
+    json!({
+        "change": issue.change,
+        "code": issue.code,
+        "dependency": issue.dependency,
+        "message": issue.message,
+    })
+}
+
 pub(crate) fn change_status_json(change: &ChangeStatus) -> Value {
     json!({
         "name": change.name,
@@ -102,11 +151,15 @@ pub(crate) fn change_status_json(change: &ChangeStatus) -> Value {
 }
 
 fn change_metadata_json(change: &ChangeStatus) -> Value {
-    json!({
+    let mut value = json!({
         "groups": change.metadata.groups,
         "target_date": change.metadata.target_date,
         "status": change.metadata.status,
-    })
+    });
+    if !change.metadata.depends_on.is_empty() {
+        value["depends_on"] = json!(change.metadata.depends_on);
+    }
+    value
 }
 
 fn task_counts_json(counts: TaskCounts) -> Value {

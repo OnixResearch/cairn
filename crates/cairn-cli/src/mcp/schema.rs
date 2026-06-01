@@ -65,6 +65,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Return bounded gate context for a change",
         ),
         mcp_tool(
+            "cairn_change_graph",
+            true,
+            false,
+            "Return dependency graph readiness for active changes",
+        ),
+        mcp_tool(
             "cairn_agent_receipt_validate",
             true,
             false,
@@ -157,6 +163,7 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_doctor" | "cairn_validate" | "cairn_init" | "cairn_drain_plan" => {
             mcp_object_schema(&[], &["root", "policy"])
         }
+        "cairn_change_graph" => mcp_object_schema(&[], &["root"]),
         "cairn_read_spec" => mcp_object_schema(&["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" | "cairn_change_create" => {
             mcp_object_schema(&["change"], &["root"])
@@ -234,6 +241,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_doctor" | "cairn_validate" | "cairn_init" | "cairn_drain_plan" => {
             validate_string_args(name, object, &[], &["root", "policy"])
         }
+        "cairn_change_graph" => validate_string_args(name, object, &[], &["root"]),
         "cairn_read_spec" => validate_string_args(name, object, &["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" | "cairn_change_create" => {
             validate_string_args(name, object, &["change"], &["root"])

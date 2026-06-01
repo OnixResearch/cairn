@@ -52,7 +52,7 @@ mod tests {
                 has_tasks: true,
                 delta_specs: vec!["openspec/changes/demo/specs/a/spec.md".to_string()],
                 tasks_markdown: Some("- [ ] [serial] todo\n- [x] done\n".to_string()),
-                metadata_json: Some(r#"{"groups":["future","current"],"target_date":"2026-05-21","status":"planned"}"#.to_string()),
+                metadata_json: Some(r#"{"groups":["future","current"],"target_date":"2026-05-21","status":"planned","depends_on":["blocked-by"]}"#.to_string()),
             }],
         );
         // r[verify cli_maintainability.repo_core_modules.behavior_preserved.focused_checks]
@@ -61,6 +61,7 @@ mod tests {
         assert_eq!(status.changes[0].name, "demo");
         assert_eq!(status.changes[0].task_counts.unwrap().total, 2);
         assert_eq!(status.changes[0].metadata.groups, vec!["current", "future"]);
+        assert_eq!(status.changes[0].metadata.depends_on, vec!["blocked-by"]);
     }
 
     #[test]
@@ -77,6 +78,7 @@ mod tests {
                 groups: vec!["current".to_string(), "feature:registry".to_string()],
                 target_date: Some("2026-06-01".to_string()),
                 status: Some("planned".to_string()),
+                depends_on: Vec::new(),
             },
             metadata_issues: Vec::new(),
         };
@@ -86,6 +88,7 @@ mod tests {
                 groups: vec!["current".to_string()],
                 target_date: None,
                 status: None,
+                depends_on: Vec::new(),
             },
             ..matching.clone()
         };

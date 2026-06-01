@@ -11,7 +11,9 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
     let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
-    let mut plan = build_sync_plan(&change_status);
+    let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
+    let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
     if policy.sync_require_gate && !plan.blocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
@@ -54,7 +56,10 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
     let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
-    let mut plan = build_archive_plan(&change_status);
+    let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
+    let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    let mut plan =
+        build_archive_plan_with_dependency_blockers(&change_status, &dependency_blockers);
     if policy.archive_require_gate && !plan.blocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,

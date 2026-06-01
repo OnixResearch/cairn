@@ -59,6 +59,7 @@ pub struct ChangeMetadata {
     pub groups: Vec<String>,
     pub target_date: Option<String>,
     pub status: Option<String>,
+    pub depends_on: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

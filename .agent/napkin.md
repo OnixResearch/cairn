@@ -12,6 +12,8 @@
 
 ## Patterns That Don't Work
 - Running multiple `nix run path:$PWD#cairn -- gate ...` commands in parallel can contend on the Nix eval cache and time out; run Cairn gates sequentially or use one pueue task.
+- Running `nix run path:$PWD#cairn ...` in foreground can exceed a short shell timeout while building; use pueue for first-use or derivation-building Cairn CLI commands.
+- For focused Cargo test replays, prefer `env RUSTC_WRAPPER= CARGO_TARGET_DIR=target nix develop -c cargo test ...`; shared `/home/brittonr/.cargo-target` plus sccache can produce stale missing-rlib/proc-macro noise.
 - Assuming `cairn init` writes `.gitkeep` files into empty lifecycle dirs is wrong; smoke output lists only files created by later template/scaffold commands.
 
 ## Domain Notes

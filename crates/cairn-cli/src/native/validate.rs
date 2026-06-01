@@ -1,11 +1,11 @@
 use std::{error::Error, path::PathBuf};
 
-use cairn_core::{layout_name, validate_changes, validate_spec_sources};
+use cairn_core::{layout_name, validate_changes_with_archives, validate_spec_sources};
 use serde_json::{json, Value};
 
 use crate::support::{
-    collect_validation_spec_sources, default_policy_path, detect_layout, has_flag,
-    load_policy_file, print_json, read_option, scan_repo,
+    collect_archived_change_ids, collect_validation_spec_sources, default_policy_path,
+    detect_layout, has_flag, load_policy_file, print_json, read_option, scan_repo,
 };
 
 pub(crate) fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -28,7 +28,8 @@ pub(crate) fn cairn_validation_receipt(
     let policy = load_policy_file(policy_path)?;
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
-    let change_issues = validate_changes(&status.changes, &policy);
+    let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
+    let change_issues = validate_changes_with_archives(&status.changes, &archived_changes, &policy);
     let spec_sources = collect_validation_spec_sources(&root, selected.layout)?;
     let spec_issues = validate_spec_sources(&spec_sources);
     let mut issues = Vec::with_capacity(change_issues.len() + spec_issues.len());

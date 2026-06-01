@@ -1,7 +1,8 @@
 use std::{error::Error, path::PathBuf};
 
 use cairn_core::{
-    build_archive_plan, build_sync_plan, classify_gate_evidence, evaluate_gate_snapshot, GateIssue,
+    build_archive_plan_with_dependency_blockers, build_sync_plan_with_dependency_blockers,
+    classify_gate_evidence, dependency_blockers_for_change, evaluate_gate_snapshot, GateIssue,
     GateStage, PlanAction, PlanActionKind,
 };
 use serde_json::Value;
@@ -12,9 +13,9 @@ use crate::probe::gate_probe_issues;
 use crate::support::{
     archive_mutation_manifest, default_policy_path, detect_layout, execute_archive_plan,
     execute_sync_plan, file_content_manifest, find_change, has_flag, load_policy_file,
-    mutation_gate_blockers, path_string, portable_json_hash, print_json, read_gate_snapshot,
-    read_option, sync_mutation_manifest, sync_mutation_paths, tree_content_paths,
-    with_portable_receipt_hash,
+    mutation_gate_blockers, path_string, portable_json_hash, print_json,
+    read_change_dependency_graph, read_gate_snapshot, read_option, sync_mutation_manifest,
+    sync_mutation_paths, tree_content_paths, with_portable_receipt_hash,
 };
 
 pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -89,7 +90,9 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
     let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
-    let mut plan = build_sync_plan(&change_status);
+    let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
+    let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
     let sync_paths = sync_mutation_paths(&root, selected.layout, change, &plan);
     let before_manifest = file_content_manifest(&root, &sync_paths);
     let mut mutation_manifest = Value::Null;
@@ -138,7 +141,10 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
     let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
-    let mut plan = build_archive_plan(&change_status);
+    let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
+    let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    let mut plan =
+        build_archive_plan_with_dependency_blockers(&change_status, &dependency_blockers);
     let archive_source = PathBuf::from(&change_status.path);
     let before_paths =
         tree_content_paths(&root, &archive_source).unwrap_or_else(|_| vec![archive_source.clone()]);
