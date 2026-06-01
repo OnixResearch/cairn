@@ -17,3 +17,7 @@
 ## Domain Notes
 - crates.io names `cairn`, `cairn-cli`, and `cairn-core` are already taken by unrelated owners; publish under an Onix-prefixed name (e.g. `onix-cairn*`) or use Nix/GitHub release channels.
 - `v0.1.0` tag exists and remote install smoke docs point to commit `2e6ca1f`; current `main` may be ahead and needs fresh release evidence for a new tag.
+
+- 2026-05-29: Cairn native `sync --execute` for newly added specs can create only the accepted spec shell (`# ...`, Purpose, Requirements) instead of copying full delta requirements. After syncing/archiving, copy full archived delta spec into `cairn/specs/<domain>/spec.md` before running `tracey coverage`, or Tracey sees implementation refs as dangling.
+- 2026-05-29: Probe file/receipt/output paths must reject absolute and `..` components; plain `root.join(path)` lets probe declarations or `--out` escape repo bounds.
+- 2026-05-29: `release-readiness` can fail because `fixtures/agent-receipts/positive.json` has stale `replay_policy_hash`/`receipt_hash` after policy changes; regenerate fixture hashes plus plan goldens before trusting MCP smoke evidence.

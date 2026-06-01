@@ -613,3 +613,9 @@ Cairn-native lifecycle workflow, explicit legacy migration bridge,
 Slotcar/Nix verification rails, command contracts, and known pitfalls without
 transient session state or secrets. Copy or patch it into a local Hermes skill
 named `cairn-workflow` when updating agent workflow knowledge.
+
+## References
+
+- `../trellis/`: local verified-primitive reference for graph,
+  cycle-detection, topological-order, and dependency-readiness model shapes used
+  when designing Cairn dependency graph work.
