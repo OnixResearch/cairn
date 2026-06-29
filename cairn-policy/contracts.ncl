@@ -270,6 +270,12 @@ let SteelProfileMode = std.contract.from_predicate (fun value =>
     expires | NonEmptyString,
   },
 
+  PreservesReceiptSourceMap = { _ : NonEmptyString },
+
+  StructuredLifecycle = {
+    preserves_receipt_source_map | PreservesReceiptSourceMap | default = {},
+  },
+
   Policy = {
     name | NonEmptyString,
     version | SupportedPolicyVersion,
@@ -282,6 +288,7 @@ let SteelProfileMode = std.contract.from_predicate (fun value =>
     registry_label_policy | RegistryLabelPolicy,
     change_metadata_policy | ChangeMetadataPolicy,
     steel_orchestration_policy | SteelOrchestrationPolicy,
+    structured_lifecycle | StructuredLifecycle | default = {},
     probe_policy | ProbePolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
     receipt_contracts | Array ReceiptContract | default = [],

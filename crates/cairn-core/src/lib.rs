@@ -51,7 +51,7 @@ pub use verified::doctor::{
 };
 pub use verified::evidence::{
     blake3_hex, canonical_json, canonical_json_hash, canonical_preserves_bytes,
-    canonical_preserves_hash,
+    canonical_preserves_hash, preserves_content_hash,
 };
 pub use verified::lifecycle::{
     archive_dir, build_change_skeleton, build_change_skeleton_for, build_ironspec_migration_plan,
@@ -76,6 +76,9 @@ pub use verified::probe::{
     all_probe_assertions_passed, evaluate_probe_assertions, probe_declaration_hash,
     probe_issue_json, probe_receipt_hash, validate_probe_declaration, validate_probe_receipt,
     ProbeIssue, PROBE_DECLARATION_SCHEMA_V1, PROBE_RECEIPT_SCHEMA_V1,
+};
+pub use verified::receipt_drift::{
+    receipt_field_drift, DriftClass, DriftEntry, DriftReport,
 };
 pub use verified::repo::{
     build_change_detail, build_change_list, build_change_status, build_repo_status,

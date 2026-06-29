@@ -23,6 +23,7 @@ fn receipt_without_self_referential_hashes(receipt: &Value) -> Value {
     if let Some(object) = canonical.as_object_mut() {
         object.remove("receipt_hash");
         object.remove("preserves_receipt_hash");
+        object.remove("preserves_content_hash");
     }
     canonical
 }

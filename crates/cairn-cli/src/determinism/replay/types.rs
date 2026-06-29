@@ -10,6 +10,7 @@ pub(super) enum ReplayCaseKind {
     MigrateDryRun,
     McpDescribe,
     McpStatus,
+    ReceiptPreservesDiff,
     ReleaseReadiness,
     Status,
     SyncDryRun,

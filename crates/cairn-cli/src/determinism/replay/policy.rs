@@ -241,6 +241,7 @@ fn replay_case_kind(command_kind: &str, args: &[String]) -> Result<ReplayCaseKin
                 change,
             })
         }
+        "receipt_preserves_diff" => Ok(ReplayCaseKind::ReceiptPreservesDiff),
         "mcp_describe" => Ok(ReplayCaseKind::McpDescribe),
         "mcp_call" => Ok(ReplayCaseKind::McpStatus),
         "migrate_dry_run" => Ok(ReplayCaseKind::MigrateDryRun),

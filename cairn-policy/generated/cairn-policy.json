@@ -389,6 +389,37 @@
           "portable_root_paths",
           "canonical_json"
         ]
+      },
+      {
+        "args": [
+          "receipt-preserves-diff",
+          "--baseline",
+          "fixtures/receipt-preserves-diff/baseline.json",
+          "--candidate",
+          "fixtures/receipt-preserves-diff/candidate.json"
+        ],
+        "command_kind": "receipt_preserves_diff",
+        "comparison_modes": [
+          "repeated"
+        ],
+        "display_only_paths": [
+          "baseline_path",
+          "candidate_path"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": ".",
+        "hash_fields": [
+          "baseline_json_hash",
+          "candidate_json_hash",
+          "baseline_preserves_hash",
+          "candidate_preserves_hash",
+          "receipt_hash"
+        ],
+        "id": "receipt_preserves_diff",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
       }
     ],
     "entropy_inventory": [
@@ -522,6 +553,7 @@
           "mcp_describe",
           "mcp_status",
           "migrate_dry_run",
+          "receipt_preserves_diff",
           "release_readiness",
           "status",
           "sync_dry_run",
@@ -807,6 +839,19 @@
       "receipt_command": "sync",
       "required_replay_cases": [
         "sync_dry_run"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "receipt-preserves-diff --baseline fixtures/receipt-preserves-diff/baseline.json --candidate fixtures/receipt-preserves-diff/candidate.json",
+      "determinism_claim": "receipt_preserves_diff_stability",
+      "id": "receipt_preserves_diff",
+      "receipt_command": "receipt-preserves-diff",
+      "required_replay_cases": [
+        "receipt_preserves_diff"
       ],
       "required_replay_groups": [
         "full"
@@ -2220,6 +2265,9 @@
         ]
       }
     ]
+  },
+  "structured_lifecycle": {
+    "preserves_receipt_source_map": {}
   },
   "sync_archive_policy": {
     "archive_date_prefix": true,

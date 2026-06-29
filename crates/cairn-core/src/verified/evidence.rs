@@ -31,6 +31,99 @@ pub fn canonical_preserves_hash(value: &Value) -> Result<String, String> {
     canonical_preserves_bytes(value).map(|bytes| blake3_hex(&bytes))
 }
 
+// r[impl cairn.determinism.preserves_authoritative_content_hash.field]
+/// Compute the canonical Preserves content hash for a receipt-shaped value,
+/// excluding the `receipt_hash` and `preserves_content_hash` fields to avoid
+/// self-referential hashing.
+///
+/// This mirrors the exclusion rule used by `agent_run_receipt_hash` for the
+/// JSON `receipt_hash` field, extended to also exclude `preserves_content_hash`
+/// itself.
+pub fn preserves_content_hash(receipt: &Value) -> Result<String, String> {
+    let content = receipt_without_content_hashes(receipt);
+    canonical_preserves_hash(&content)
+}
+
+/// Remove self-referential hash fields from a receipt before content hashing.
+fn receipt_without_content_hashes(receipt: &Value) -> Value {
+    let mut canonical = receipt.clone();
+    if let Some(object) = canonical.as_object_mut() {
+        object.remove("receipt_hash");
+        object.remove("preserves_content_hash");
+    }
+    canonical
+}
+
+#[cfg(test)]
+mod content_hash_tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    // r[verify cairn.determinism.preserves_authoritative_content_hash.tests]
+    fn preserves_content_hash_is_deterministic() {
+        let receipt = json!({
+            "schema": "cairn.receipt.v1",
+            "valid": true,
+            "count": 2
+        });
+        let hash1 = preserves_content_hash(&receipt).expect("first hash");
+        let hash2 = preserves_content_hash(&receipt).expect("second hash");
+        assert_eq!(hash1, hash2);
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_authoritative_content_hash.tests]
+    fn preserves_content_hash_excludes_own_field() {
+        let receipt = json!({
+            "receipt_hash": "abc",
+            "preserves_content_hash": "def",
+            "valid": true
+        });
+        let hash = preserves_content_hash(&receipt).expect("content hash");
+        // Adding a different receipt_hash or preserves_content_hash should NOT
+        // change the content hash since they are excluded.
+        let receipt2 = json!({
+            "receipt_hash": "xyz",
+            "preserves_content_hash": "uvw",
+            "valid": true
+        });
+        let hash2 = preserves_content_hash(&receipt2).expect("second hash");
+        assert_eq!(hash, hash2);
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_authoritative_content_hash.tests]
+    fn preserves_content_hash_changes_when_content_changes() {
+        let receipt = json!({"valid": true, "count": 1});
+        let receipt2 = json!({"valid": true, "count": 2});
+        assert_ne!(
+            preserves_content_hash(&receipt).expect("hash a"),
+            preserves_content_hash(&receipt2).expect("hash b")
+        );
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_authoritative_content_hash.field]
+    fn preserves_content_hash_is_serialization_independent() {
+        let left = json!({"b": 2, "a": 1});
+        let right = json!({"a": 1, "b": 2});
+        assert_eq!(
+            preserves_content_hash(&left).expect("left"),
+            preserves_content_hash(&right).expect("right")
+        );
+    }
+
+    #[test]
+    // r[verify cairn.determinism.preserves_authoritative_content_hash.compatibility]
+    fn preserves_content_hash_works_without_hash_fields() {
+        let receipt = json!({"valid": true});
+        let hash = preserves_content_hash(&receipt).expect("hash");
+        assert!(hash.len() == 64);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::{json, Value};

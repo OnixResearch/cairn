@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use cairn_core::{
     agent_run_preserves_receipt_hash, canonical_json_hash, evaluate_agent_run_completion,
-    AgentRunGateIssue, Policy,
+    preserves_content_hash, AgentRunGateIssue, Policy,
 };
 use serde_json::{json, Value};
 
@@ -222,6 +222,11 @@ pub(crate) fn agent_preserves_hash_receipt(path: PathBuf, receipt: &Value) -> Va
         }));
         String::new()
     };
+    let content_hash = if receipt.is_object() {
+        preserves_content_hash(receipt).ok()
+    } else {
+        None
+    };
     issues.sort_by_key(canonical_json_hash);
     let is_valid = issues.is_empty();
     with_receipt_hash(json!({
@@ -232,6 +237,7 @@ pub(crate) fn agent_preserves_hash_receipt(path: PathBuf, receipt: &Value) -> Va
         "verdict": if is_valid { "PASS" } else { "FAIL" },
         "issues": issues,
         "agent_receipt_preserves_hash": agent_receipt_preserves_hash,
+        "preserves_content_hash": content_hash,
         "input_hash": canonical_json_hash(receipt),
         "max_content_bytes": AGENT_RECEIPT_MAX_BYTES,
     }))

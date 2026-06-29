@@ -10,6 +10,7 @@ pub mod lifecycle_orchestration;
 pub mod plan;
 pub mod policy;
 pub mod probe;
+pub mod receipt_drift;
 pub mod repo;
 pub mod semantic_review;
 pub mod structured_lifecycle;

@@ -1,3 +1,6 @@
+use cairn_core::receipt_field_drift;
+use serde_json::Value;
+
 use super::support::*;
 use super::types::*;
 
@@ -152,6 +155,46 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
         ReplayCaseKind::McpDescribe => Ok(mcp_tool_catalog(false)),
         ReplayCaseKind::McpStatus => {
             mcp_call_tool("cairn_status", &json!({"root": path_string(root)}), false)
+        }
+        ReplayCaseKind::ReceiptPreservesDiff => {
+            // r[impl cairn.determinism.preserves_receipt_field_drift.replay_execution]
+            // args: ["receipt-preserves-diff", "--baseline", "<path>", "--candidate", "<path>"]
+            let Some(baseline_flag) = case.args.get(2) else {
+                return Err("receipt-preserves-diff replay case missing --baseline flag".into());
+            };
+            if baseline_flag != "--baseline" {
+                return Err(format!("receipt-preserves-diff replay case expected --baseline, got {baseline_flag}").into());
+            }
+            let Some(baseline_path) = case.args.get(3) else {
+                return Err("receipt-preserves-diff replay case missing baseline path".into());
+            };
+            let Some(candidate_flag) = case.args.get(4) else {
+                return Err("receipt-preserves-diff replay case missing --candidate flag".into());
+            };
+            if candidate_flag != "--candidate" {
+                return Err(format!("receipt-preserves-diff replay case expected --candidate, got {candidate_flag}").into());
+            }
+            let Some(candidate_path) = case.args.get(5) else {
+                return Err("receipt-preserves-diff replay case missing candidate path".into());
+            };
+            let baseline_full = replay_fixture_path(root, baseline_path);
+            let candidate_full = replay_fixture_path(root, candidate_path);
+            let baseline_text = fs::read_to_string(&baseline_full)?;
+            let candidate_text = fs::read_to_string(&candidate_full)?;
+            let baseline_val: Value = serde_json::from_str(&baseline_text)
+                .map_err(|e| format!("baseline parse: {e}"))?;
+            let candidate_val: Value = serde_json::from_str(&candidate_text)
+                .map_err(|e| format!("candidate parse: {e}"))?;
+            let policy = load_policy_file(default_policy_path().into())?;
+            let source_map = crate::receipt_preserves_diff::parse_source_id_map(&policy);
+            let report = receipt_field_drift(&baseline_val, &candidate_val, &source_map);
+            let mut value = crate::receipt_preserves_diff::diff_receipt_json(
+                &baseline_full, &candidate_full, &report, &policy,
+            );
+            value
+                .as_object_mut()
+                .map(|object| object.remove("receipt_hash"));
+            Ok(crate::support::with_portable_receipt_hash(root, value))
         }
         ReplayCaseKind::ReleaseReadiness => Ok(release_readiness_receipt(
             root.to_path_buf(),

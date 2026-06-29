@@ -80,6 +80,10 @@ let Contracts = import "contracts.ncl" in
     }],
   },
 
+  structured_lifecycle = {
+    preserves_receipt_source_map = {},
+  },
+
   probe_policy = {
     enabled = true,
     inline_gate_execution_enabled = false,
@@ -370,10 +374,11 @@ let Contracts = import "contracts.ncl" in
       { id = "status", command_kind = "status", args = ["status", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root", "specs", "changes"], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "sync_dry_run", command_kind = "sync_dry_run", args = ["sync", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.path", "delta_specs"], hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "validate", command_kind = "validate", args = ["validate", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root"], hash_fields = ["receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "receipt_preserves_diff", command_kind = "receipt_preserves_diff", args = ["receipt-preserves-diff", "--baseline", "fixtures/receipt-preserves-diff/baseline.json", "--candidate", "fixtures/receipt-preserves-diff/candidate.json"], fixture_root = ".", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["baseline_path", "candidate_path"], hash_fields = ["baseline_json_hash", "candidate_json_hash", "baseline_preserves_hash", "candidate_preserves_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
     ],
     groups = [
       { id = "agent", description = "Agent receipt replay evidence preflight", cases = ["agent_receipt_validate", "mcp_describe", "status", "validate"], },
-      { id = "full", description = "All policy-owned replay cases", cases = ["agent_receipt_preserves_hash", "agent_receipt_validate", "archive_dry_run", "preserves_corpus_freshness", "gate_design", "gate_proposal", "gate_tasks", "mcp_describe", "mcp_status", "migrate_dry_run", "release_readiness", "status", "sync_dry_run", "validate"], },
+      { id = "full", description = "All policy-owned replay cases", cases = ["agent_receipt_preserves_hash", "agent_receipt_validate", "archive_dry_run", "preserves_corpus_freshness", "gate_design", "gate_proposal", "gate_tasks", "mcp_describe", "mcp_status", "migrate_dry_run", "receipt_preserves_diff", "release_readiness", "status", "sync_dry_run", "validate"], },
       { id = "release", description = "Release-readiness replay preflight", cases = ["agent_receipt_validate", "mcp_describe", "release_readiness", "status", "validate"], },
       { id = "smoke", description = "Cheap status and validation replay preflight", cases = ["status", "validate"], },
     ],
@@ -416,6 +421,7 @@ let Contracts = import "contracts.ncl" in
     { id = "evidence_registry_fetch_execute", command = "evidence registry fetch-execute --root <root> --plan <plan> --source <source> --out <out>", surface_kind = "cli", receipt_command = "evidence registry fetch-execute", required_replay_cases = ["validate"], required_replay_groups = ["smoke", "full"], determinism_claim = "evidence_registry_fetch_execution_stability" },
     { id = "status", command = "status --root <root>", surface_kind = "cli", receipt_command = "status", required_replay_cases = ["status"], required_replay_groups = ["agent", "full", "release", "smoke"], determinism_claim = "status_receipt_stability" },
     { id = "sync_dry_run", command = "sync demo --root <root>", surface_kind = "cli", receipt_command = "sync", required_replay_cases = ["sync_dry_run"], required_replay_groups = ["full"], determinism_claim = "lifecycle_dry_run_stability" },
+    { id = "receipt_preserves_diff", command = "receipt-preserves-diff --baseline fixtures/receipt-preserves-diff/baseline.json --candidate fixtures/receipt-preserves-diff/candidate.json", surface_kind = "cli", receipt_command = "receipt-preserves-diff", required_replay_cases = ["receipt_preserves_diff"], required_replay_groups = ["full"], determinism_claim = "receipt_preserves_diff_stability" },
     { id = "validate", command = "validate --root <root>", surface_kind = "cli", receipt_command = "validate", required_replay_cases = ["validate"], required_replay_groups = ["agent", "full", "release", "smoke"], determinism_claim = "validation_receipt_stability" },
   ],
 

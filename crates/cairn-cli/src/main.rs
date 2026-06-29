@@ -15,6 +15,8 @@ mod plan_receipts;
 mod policy;
 mod preserves_corpus;
 mod probe;
+mod receipt_preserves_diff;
+mod receipt_verify_content_hash;
 mod release_evidence;
 mod release_readiness;
 mod rename_classification;
@@ -37,6 +39,8 @@ use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validat
 use policy::run_policy;
 use semantic_review::run_review;
 use support::{print_usage, usage_text};
+use receipt_preserves_diff::run_receipt_preserves_diff;
+use receipt_verify_content_hash::run_receipt_verify_content_hash;
 use tracey::run_tracey;
 
 fn main() {
@@ -106,6 +110,8 @@ fn run() -> Result<(), Box<dyn Error>> {
             };
             lifecycle::run_archive(args.collect(), &change)?;
         }
+        "receipt-preserves-diff" => run_receipt_preserves_diff(args.collect())?,
+        "receipt-verify-content-hash" => run_receipt_verify_content_hash(args.collect())?,
         unknown => return Err(format!("unknown command: {unknown}\n\n{}", usage_text()).into()),
     }
     Ok(())
