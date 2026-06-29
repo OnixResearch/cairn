@@ -34,6 +34,7 @@
         "hash_fields": [
           "agent_receipt_preserves_hash",
           "input_hash",
+          "preserves_content_hash",
           "receipt_hash"
         ],
         "id": "agent_receipt_preserves_hash",
@@ -295,6 +296,7 @@
         "expected_mutability": "read_only_or_dry_run",
         "fixture_root": ".",
         "hash_fields": [
+          "preserves_content_hash",
           "receipt_hash",
           "cairn_validation_hash",
           "tracey_coverage_hash",
@@ -1396,6 +1398,7 @@
       ],
       "command": "determinism replay",
       "hash_fields": [
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [],
@@ -1422,6 +1425,7 @@
         "mutability_observations",
         "nondeterminism_failures",
         "normalization_rules",
+        "preserves_content_hash",
         "receipt_hash",
         "root",
         "selected_cases",
@@ -1440,6 +1444,7 @@
       "hash_fields": [
         "current_replay_policy_hash",
         "environment_attestation_hash",
+        "preserves_content_hash",
         "receipt_hash",
         "replay_policy_hash",
         "replay_receipt_hash",
@@ -1459,6 +1464,7 @@
         "environment_attestation_hash",
         "issues",
         "path",
+        "preserves_content_hash",
         "receipt_hash",
         "replay_policy_hash",
         "replay_receipt_hash",
@@ -1480,6 +1486,7 @@
         "coverage_audit_receipt_hash",
         "current_replay_policy_hash",
         "environment_attestation_hash",
+        "preserves_content_hash",
         "receipt_hash",
         "release_readiness_receipt_hash",
         "replay_receipt_hash",
@@ -1500,6 +1507,7 @@
         "current_replay_policy_hash",
         "environment_attestation_hash",
         "issues",
+        "preserves_content_hash",
         "receipt_hash",
         "release_readiness_receipt_hash",
         "replay_receipt_hash",
@@ -1590,6 +1598,7 @@
       "hash_fields": [
         "manifest_hash",
         "manifest_verification_receipt_hash",
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1607,6 +1616,7 @@
         "manifest_hash",
         "manifest_verification_receipt_hash",
         "output",
+        "preserves_content_hash",
         "receipt_hash",
         "root",
         "valid",
@@ -1627,6 +1637,7 @@
         "export_receipt_hash",
         "manifest_hash",
         "manifest_verification_receipt_hash",
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1645,6 +1656,7 @@
         "issues",
         "manifest_hash",
         "manifest_verification_receipt_hash",
+        "preserves_content_hash",
         "receipt_hash",
         "root",
         "valid",
@@ -1661,6 +1673,7 @@
       "case_keys": [],
       "command": "evidence import",
       "hash_fields": [
+        "preserves_content_hash",
         "receipt_hash",
         "verification_receipt_hash"
       ],
@@ -1678,6 +1691,7 @@
         "command",
         "into",
         "issues",
+        "preserves_content_hash",
         "receipt_hash",
         "root",
         "valid",
@@ -1696,6 +1710,7 @@
       "command": "evidence republish",
       "hash_fields": [
         "import_receipt_hash",
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1713,6 +1728,7 @@
         "imported",
         "issues",
         "out",
+        "preserves_content_hash",
         "receipt_hash",
         "root",
         "valid",
@@ -1730,6 +1746,7 @@
       "command": "evidence index",
       "hash_fields": [
         "bundle_receipt_hash",
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1751,6 +1768,7 @@
         "issues",
         "out",
         "policy_hash",
+        "preserves_content_hash",
         "receipt_chain",
         "receipt_hash",
         "root",
@@ -1770,6 +1788,7 @@
       "hash_fields": [
         "bundle_receipt_hash",
         "index_receipt_hash",
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1788,6 +1807,7 @@
         "index",
         "index_receipt_hash",
         "issues",
+        "preserves_content_hash",
         "receipt_chain",
         "receipt_hash",
         "root",
@@ -1806,6 +1826,7 @@
       "case_keys": [],
       "command": "release-evidence index",
       "hash_fields": [
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1823,6 +1844,7 @@
         "git",
         "issues",
         "out",
+        "preserves_content_hash",
         "receipt_hash",
         "receipt_hashes",
         "root",
@@ -1836,6 +1858,7 @@
       "case_keys": [],
       "command": "release-evidence check-index",
       "hash_fields": [
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1857,6 +1880,7 @@
         "payload_ancestor_of_head",
         "payload_commit",
         "payload_exists",
+        "preserves_content_hash",
         "receipt_hash",
         "root",
         "schema",
@@ -1876,6 +1900,7 @@
       "command": "release-evidence publish",
       "hash_fields": [
         "manifest_hash",
+        "preserves_content_hash",
         "receipt_hash",
         "source_index_hash",
         "source_index_receipt_hash",
@@ -1898,6 +1923,7 @@
         "manifest_hash",
         "materialized",
         "materialized_count",
+        "preserves_content_hash",
         "publish_dir",
         "receipt_hash",
         "root",
@@ -1923,6 +1949,7 @@
       "command": "release-evidence retention-plan",
       "hash_fields": [
         "plan_hash",
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1940,6 +1967,7 @@
         "issues",
         "out",
         "plan_hash",
+        "preserves_content_hash",
         "publish_root",
         "receipt_hash",
         "root",
@@ -1959,6 +1987,7 @@
       "command": "release-evidence rotate",
       "hash_fields": [
         "plan_hash",
+        "preserves_content_hash",
         "receipt_hash"
       ],
       "issue_keys": [
@@ -1977,6 +2006,7 @@
         "mutation_manifest",
         "plan",
         "plan_hash",
+        "preserves_content_hash",
         "receipt_hash",
         "root",
         "valid",

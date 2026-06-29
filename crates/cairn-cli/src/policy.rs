@@ -24,6 +24,7 @@ pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
 fn run_policy_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.rust_nickel_only_gates.policy_export]
+    // r[impl cairn.determinism.preserves_content_hash_binding_readiness.policy]
     let is_check = has_flag(&args, "--check");
     let default_source = default_policy_source_path();
     let source = read_option(

@@ -37,10 +37,10 @@ use evidence_manifest::run_evidence_manifest;
 use mcp::run_mcp;
 use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
-use semantic_review::run_review;
-use support::{print_usage, usage_text};
 use receipt_preserves_diff::run_receipt_preserves_diff;
 use receipt_verify_content_hash::run_receipt_verify_content_hash;
+use semantic_review::run_review;
+use support::{print_usage, usage_text};
 use tracey::run_tracey;
 
 fn main() {

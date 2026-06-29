@@ -22,7 +22,7 @@ use crate::preserves_corpus::preserves_corpus_freshness_receipt;
 use crate::release_evidence::release_evidence_check_index_receipt_for_path;
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
-    read_string_option, safe_relative_path, with_portable_receipt_hash,
+    read_string_option, safe_relative_path, with_portable_content_hash_receipt,
 };
 use crate::tracey::{repository_gate_summary, tracey_coverage_receipt};
 
@@ -41,6 +41,7 @@ pub(crate) fn release_readiness_receipt(root: PathBuf, policy_path: PathBuf) -> 
     release_readiness_receipt_with_review_ledger(root, policy_path, None)
 }
 
+// r[verify cairn.determinism.preserves_content_hash_binding_readiness.validation]
 pub(crate) fn release_readiness_receipt_with_review_ledger(
     root: PathBuf,
     policy_path: PathBuf,
@@ -92,7 +93,7 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
     let is_valid = checks
         .iter()
         .all(|check| check["passed"].as_bool().unwrap_or(false));
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         &root,
         json!({
             "command": "release-readiness",

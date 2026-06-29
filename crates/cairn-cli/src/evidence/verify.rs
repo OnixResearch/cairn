@@ -295,7 +295,7 @@ fn evidence_verify_final_receipt(
             .to_string()
     });
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         root,
         json!({
             "command": "evidence verify",

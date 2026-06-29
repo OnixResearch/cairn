@@ -27,5 +27,5 @@ pub(super) use crate::support::{
     collect_files, default_policy_path, detect_layout, file_content_manifest, find_change,
     has_flag, load_policy_file, mutation_gate_blockers, path_string, portable_json_hash,
     print_json, read_gate_snapshot, read_option, read_string_option, scan_repo,
-    with_portable_receipt_hash,
+    with_portable_content_hash_receipt, with_portable_receipt_hash,
 };

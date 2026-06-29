@@ -3,7 +3,7 @@ use std::fs;
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
-use crate::support::{path_string, with_portable_receipt_hash};
+use crate::support::{path_string, with_portable_content_hash_receipt};
 
 use super::labels::release_evidence_publish_labels;
 use super::options::ReleaseEvidencePublishOptions;
@@ -50,11 +50,12 @@ fn publish_receipt_with_replaced_issues(
 ) -> Value {
     if let Some(object) = receipt.as_object_mut() {
         object.remove("receipt_hash");
+        object.remove("preserves_content_hash");
         object.insert("valid".to_string(), json!(false));
         object.insert("verdict".to_string(), json!("fail"));
         object.insert("issues".to_string(), Value::Array(issues));
     }
-    with_portable_receipt_hash(&options.root, receipt)
+    with_portable_content_hash_receipt(&options.root, receipt)
 }
 
 pub(super) fn release_evidence_publish_final_receipt(
@@ -68,7 +69,7 @@ pub(super) fn release_evidence_publish_final_receipt(
 ) -> Value {
     issues.sort_by_key(canonical_json_hash);
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         &options.root,
         json!({
             "command": "release-evidence publish",

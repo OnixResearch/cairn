@@ -10,9 +10,10 @@ use std::{
 // r[verify cli_maintainability.main_compat_release_followup.behavior_preserved.repository_checks]
 use cairn_core::{
     archive_dir, blake3_hex, build_change_dependency_graph, build_repo_status, canonical_json_hash,
-    changes_dir, evaluate_gate_snapshot, merge_delta_spec, parse_policy_json, specs_dir,
-    validate_spec_sources, ChangeDependencyGraph, ChangeSource, ChangeStatus, GateArtifact,
-    GateSnapshot, GateStage, LifecycleLayout, Policy, RepoStatus, SpecSource, SyncPlan,
+    changes_dir, evaluate_gate_snapshot, merge_delta_spec, parse_policy_json,
+    preserves_content_hash, specs_dir, validate_spec_sources, ChangeDependencyGraph, ChangeSource,
+    ChangeStatus, GateArtifact, GateSnapshot, GateStage, LifecycleLayout, Policy, RepoStatus,
+    SpecSource, SyncPlan,
 };
 use serde_json::{json, Value};
 
@@ -34,7 +35,9 @@ pub(crate) use paths::{
     collect_files, file_content_manifest, path_string, portable_json_hash, portable_text,
     safe_relative_path, tree_content_paths,
 };
-pub(crate) use receipts::{print_json, with_portable_receipt_hash, with_receipt_hash};
+pub(crate) use receipts::{
+    print_json, with_portable_content_hash_receipt, with_portable_receipt_hash, with_receipt_hash,
+};
 pub(crate) use scan::{
     collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
     find_change, find_spec_source, mutation_gate_blockers, read_change_dependency_graph,

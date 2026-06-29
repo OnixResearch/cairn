@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 use crate::agent_receipt::is_blake3_hex_text;
 use crate::support::{
     default_policy_path, load_policy_file, path_string, portable_json_hash, portable_text,
-    print_json, read_option, with_portable_receipt_hash,
+    print_json, read_option, with_portable_content_hash_receipt, with_portable_receipt_hash,
 };
 
 mod coverage;

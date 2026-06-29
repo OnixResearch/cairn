@@ -311,7 +311,7 @@ fn evidence_import_final_receipt(
         )
     });
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         root,
         json!({
             "command": "evidence import",

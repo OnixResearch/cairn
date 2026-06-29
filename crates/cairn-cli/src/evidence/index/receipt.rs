@@ -2,7 +2,7 @@ use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 use std::path::Path;
 
-use crate::support::{path_string, with_portable_receipt_hash};
+use crate::support::{path_string, with_portable_content_hash_receipt};
 
 pub(super) fn evidence_index_final_receipt(
     root: &Path,
@@ -39,5 +39,5 @@ pub(super) fn evidence_index_final_receipt(
             }
         }
     }
-    with_portable_receipt_hash(root, receipt)
+    with_portable_content_hash_receipt(root, receipt)
 }

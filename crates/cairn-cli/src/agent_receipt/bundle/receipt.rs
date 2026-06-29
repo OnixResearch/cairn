@@ -2,7 +2,7 @@ use std::path::Path;
 
 use serde_json::{json, Value};
 
-use crate::support::{path_string, with_portable_receipt_hash};
+use crate::support::{path_string, with_portable_content_hash_receipt};
 
 use super::REQUIRED_AGENT_REPLAY_GROUP;
 
@@ -19,7 +19,7 @@ pub(super) fn agent_bundle_receipt(
     coverage_audit_receipt_hash: Value,
 ) -> Value {
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         root,
         json!({
             "command": "agent-receipt verify-bundle",

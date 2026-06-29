@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use crate::{
     agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES},
-    support::{path_string, portable_json_hash, with_portable_receipt_hash},
+    support::{path_string, portable_json_hash, with_portable_content_hash_receipt},
 };
 
 use super::{
@@ -78,7 +78,7 @@ pub(super) fn evidence_index_verify_final_receipt(
     let valid = issues.is_empty();
     let empty = json!({});
     let summary = current_summary.as_ref().unwrap_or(&empty);
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         root,
         json!({
             "command": "evidence index verify",

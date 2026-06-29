@@ -28,7 +28,7 @@ use crate::evidence_registry::run_evidence_registry;
 use crate::release_readiness::release_readiness_receipt;
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
-    read_string_option, with_portable_receipt_hash,
+    read_string_option, with_portable_content_hash_receipt,
 };
 
 mod export;

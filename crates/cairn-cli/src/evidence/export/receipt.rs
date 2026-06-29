@@ -41,7 +41,7 @@ pub(crate) fn evidence_export_final_receipt(
 ) -> Value {
     issues.sort_by_key(canonical_json_hash);
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         root,
         json!({
             "command": "evidence export",

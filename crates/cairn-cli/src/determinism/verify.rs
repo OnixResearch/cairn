@@ -354,7 +354,7 @@ fn replay_verification_receipt(
     environment_attestation_hash: Value,
 ) -> Value {
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         root,
         json!({
             "command": "determinism verify-receipt",

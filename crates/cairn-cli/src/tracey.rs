@@ -12,6 +12,7 @@ use crate::support::{
 };
 
 pub(crate) fn tracey_coverage_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
+    // r[verify cairn.determinism.preserves_content_hash_binding_readiness.tracey]
     let report = tracey_coverage_report(&root)?;
     let stdout = if report["valid"].as_bool() == Some(true) {
         format!(

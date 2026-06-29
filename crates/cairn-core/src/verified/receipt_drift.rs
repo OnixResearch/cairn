@@ -74,14 +74,8 @@ pub fn receipt_field_drift(
 ) -> DriftReport {
     let baseline_bytes = canonical_preserves_bytes(baseline);
     let candidate_bytes = canonical_preserves_bytes(candidate);
-    let baseline_preserves_hash = baseline_bytes
-        .as_ref()
-        .map(|bytes| blake3_hex(bytes))
-        .ok();
-    let candidate_preserves_hash = candidate_bytes
-        .as_ref()
-        .map(|bytes| blake3_hex(bytes))
-        .ok();
+    let baseline_preserves_hash = baseline_bytes.as_ref().map(|bytes| blake3_hex(bytes)).ok();
+    let candidate_preserves_hash = candidate_bytes.as_ref().map(|bytes| blake3_hex(bytes)).ok();
     let canonical_bytes_differ = baseline_preserves_hash != candidate_preserves_hash;
 
     let mut entries = Vec::new();
@@ -449,10 +443,7 @@ mod tests {
             .iter()
             .find(|e| e.field_path == "/valid")
             .expect("valid drift entry exists");
-        assert_eq!(
-            valid_entry.source_id.as_deref(),
-            Some("r[example.valid]")
-        );
+        assert_eq!(valid_entry.source_id.as_deref(), Some("r[example.valid]"));
     }
 
     #[test]

@@ -1,18 +1,10 @@
-use std::{
-    collections::HashMap,
-    error::Error,
-    fs,
-    path::PathBuf,
-};
+use std::{collections::HashMap, error::Error, fs, path::PathBuf};
 
-use cairn_core::{
-    canonical_json_hash, receipt_field_drift, DriftReport,
-};
+use cairn_core::{canonical_json_hash, receipt_field_drift, DriftReport};
 use serde_json::{json, Value};
 
 use crate::support::{
-    default_policy_path, load_policy_file, path_string, print_json, read_option,
-    with_receipt_hash,
+    default_policy_path, load_policy_file, path_string, print_json, read_option, with_receipt_hash,
 };
 
 pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -25,13 +17,11 @@ pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dy
     let candidate_path = read_option(args.clone(), "--candidate", "");
 
     if baseline_path.as_os_str().is_empty() || candidate_path.as_os_str().is_empty() {
-        return Err(
-            "receipt-preserves-diff requires --baseline <path> --candidate <path>".into(),
-        );
+        return Err("receipt-preserves-diff requires --baseline <path> --candidate <path>".into());
     }
 
-    let baseline_text = fs::read_to_string(&baseline_path)
-        .map_err(|e| format!("failed to read baseline: {e}"))?;
+    let baseline_text =
+        fs::read_to_string(&baseline_path).map_err(|e| format!("failed to read baseline: {e}"))?;
     let candidate_text = fs::read_to_string(&candidate_path)
         .map_err(|e| format!("failed to read candidate: {e}"))?;
 

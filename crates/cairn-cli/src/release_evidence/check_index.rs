@@ -10,7 +10,7 @@ use std::{error::Error, fs, path::PathBuf, process::Command};
 use serde_json::{json, Value};
 
 use crate::support::{
-    path_string, print_json, read_option, read_string_option, with_portable_receipt_hash,
+    path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
 };
 
 use super::common::release_evidence_issue;
@@ -164,7 +164,7 @@ pub(super) fn release_evidence_check_index_receipt(
     }
 
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         &root,
         json!({
             "schema": "cairn.release-evidence.check-index.v1",

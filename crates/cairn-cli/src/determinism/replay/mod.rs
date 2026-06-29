@@ -62,7 +62,7 @@ pub(super) fn run_determinism_replay(args: Vec<String>) -> Result<(), Box<dyn Er
         );
         receipt["verdict"] = json!("fail");
         receipt["valid"] = json!(false);
-        let receipt = with_portable_receipt_hash(&root, receipt);
+        let receipt = with_portable_content_hash_receipt(&root, receipt);
         render_replay_receipt(&receipt, options.format, options.out.as_deref())?;
         std::process::exit(1);
     }
@@ -313,5 +313,5 @@ pub(crate) fn determinism_replay_receipt(
         entropy_policy_hash,
         environment_attestation,
     );
-    Ok(with_portable_receipt_hash(&root, receipt))
+    Ok(with_portable_content_hash_receipt(&root, receipt))
 }

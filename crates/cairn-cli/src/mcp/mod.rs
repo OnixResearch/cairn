@@ -92,6 +92,7 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
     // r[impl cairn.supersede.mcp_agent_smoke_receipts.flow]
     // r[impl cairn.supersede.mcp_agent_smoke_receipts.evidence]
     // r[impl cairn.supersede.mcp_agent_smoke_receipts.read_only]
+    // r[verify cairn.determinism.preserves_content_hash_binding_readiness.mcp_smoke]
     let fixture = "fixtures/agent-receipts/positive.json";
     let root_string = path_string(root.clone());
     let catalog = mcp_tool_catalog(false);

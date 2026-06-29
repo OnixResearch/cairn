@@ -320,3 +320,92 @@ r[cairn.determinism.preserves_workflow_test_split.validation]
 - GIVEN the split Preserves workflow tests
 - WHEN focused tests, Cairn validation, Tracey coverage, and diff checks run
 - THEN all previous docs/runbook assertions and live Tracey references SHALL remain covered.
+
+### Requirement: Preserves receipt field drift diagnostics
+r[cairn.determinism.preserves_receipt_field_drift.command] Cairn MUST provide a read-only command that maps a Preserves hash delta between two receipt snapshots to sorted receipt field paths and their source requirement IDs.
+
+#### Scenario: Diff command is read-only and deterministic
+r[cairn.determinism.preserves_receipt_field_drift.read_only]
+- GIVEN two stored receipt JSON snapshots
+- WHEN an operator runs `cairn receipt-preserves-diff <baseline.json> <candidate.json>`
+- THEN Cairn SHALL emit deterministic JSON with both input hashes, both Preserves hashes, a sorted drift list of field paths and drift classes, policy/policy hashes, and its own `receipt_hash`
+- AND it SHALL NOT mutate either input file.
+
+#### Scenario: Source-ID mapping comes from reviewed policy
+r[cairn.determinism.preserves_receipt_field_drift.source_id_mapping]
+- GIVEN a field path differs between baseline and candidate
+- WHEN the drift entry is emitted
+- THEN the entry SHALL cite a source requirement ID loaded from generated policy
+- AND unmapped paths SHALL be reported with `source_id: null`.
+
+#### Scenario: Drift is ordering-insensitive and byte-aware
+r[cairn.determinism.preserves_receipt_field_drift.deterministic]
+- GIVEN two receipts that differ only by object key order
+- WHEN the diff is computed
+- THEN the drift list SHALL be empty for reordered keys
+- AND a `canonical_bytes_differ` boolean SHALL reflect the canonical Preserves byte comparison.
+
+#### Scenario: Diagnostics have positive, negative, malformed, and boundary coverage
+r[cairn.determinism.preserves_receipt_field_drift.tests]
+r[cairn.determinism.preserves_receipt_field_drift.validation]
+- GIVEN identical, drifting, malformed, and boundary fixtures
+- WHEN focused CLI tests and Cairn lifecycle validation run
+- THEN identical inputs yield empty drift, drifting inputs cite correct field paths and source IDs, malformed inputs fail closed, boundary cases (float change, key reordering, scalar/object type change) behave deterministically, Tracey coverage is satisfied, and the determinism replay case passes.
+
+### Requirement: Preserves authoritative content hash
+r[cairn.determinism.preserves_authoritative_content_hash.field] Receipt material that claims content identity SHALL bind a `preserves_content_hash` computed from canonical Preserves bytes over the receipt content excluding the hash fields, additive alongside the existing JSON `receipt_hash`.
+
+#### Scenario: Content hash is additive and optional
+r[cairn.determinism.preserves_authoritative_content_hash.compatibility]
+- GIVEN a receipt produced before this change
+- WHEN it is validated against current policy
+- THEN it SHALL remain valid without a `preserves_content_hash` field
+- AND the JSON `receipt_hash` public and stored contract SHALL remain unchanged.
+
+#### Scenario: Content hash is recomputable and tamper-evident
+r[cairn.determinism.preserves_authoritative_content_hash.verification]
+- GIVEN a receipt with a stored `preserves_content_hash`
+- WHEN an operator runs `cairn receipt verify-content-hash <path>`
+- THEN Cairn SHALL recompute canonical Preserves bytes over the receipt content excluding the hash fields
+- AND SHALL fail closed when the stored field does not match the recomputed hash.
+
+#### Scenario: Canonical content identity is serialization-independent
+r[cairn.determinism.preserves_authoritative_content_hash.field]
+- GIVEN two receipts whose JSON differs only by object key ordering or float formatting that serde_json would render differently
+- WHEN their `preserves_content_hash` values are computed
+- THEN the hashes SHALL be equal
+- AND the canonical Preserves bytes SHALL be byte-stable across runs and machines.
+
+#### Scenario: Promotion has positive, negative, compatibility, and boundary coverage
+r[cairn.determinism.preserves_authoritative_content_hash.tests]
+r[cairn.determinism.preserves_authoritative_content_hash.validation]
+- GIVEN receipts with and without the content-hash field and tampered variants
+- WHEN focused tests and Cairn lifecycle validation run
+- THEN present-and-correct fields pass, tampered fields fail closed, pre-change receipts remain valid, serialization-equivalent inputs produce equal hashes, Tracey coverage is satisfied, and the determinism replay case passes.
+
+### Requirement: Preserves content-hash binding readiness
+r[cairn.determinism.preserves_content_hash_binding_readiness.binding] Cairn SHALL add `preserves_content_hash` to durable replay, evidence-bundle, and release-evidence receipt outputs that claim receipt content identity while preserving the existing JSON `receipt_hash` field.
+
+#### Scenario: Policy declares the additive hash field
+r[cairn.determinism.preserves_content_hash_binding_readiness.policy]
+- GIVEN a target receipt command emits `preserves_content_hash`
+- WHEN generated policy receipt schemas are inspected
+- THEN the command SHALL list `preserves_content_hash` as a top-level key and hash field.
+
+#### Scenario: MCP smoke validates fresh agent receipt evidence
+r[cairn.determinism.preserves_content_hash_binding_readiness.mcp_smoke]
+- GIVEN the positive agent receipt fixture and current generated policy
+- WHEN `cairn agent-receipt smoke-mcp --root .` runs
+- THEN fixture replay policy evidence SHALL match current policy and the MCP smoke receipt SHALL pass.
+
+#### Scenario: Tracey coverage remains clean
+r[cairn.determinism.preserves_content_hash_binding_readiness.tracey]
+- GIVEN the accepted Preserves requirements and implementation references
+- WHEN `cairn tracey coverage --root .` runs
+- THEN there SHALL be no missing accepted requirements and no dangling implementation references.
+
+#### Scenario: Readiness verification passes
+r[cairn.determinism.preserves_content_hash_binding_readiness.validation]
+- GIVEN the binding, fixture, and Tracey repairs
+- WHEN focused validation runs
+- THEN Cairn validation, gates, focused cargo checks, Tracey coverage, MCP smoke, and release-readiness SHALL pass.

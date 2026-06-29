@@ -31,7 +31,7 @@ pub(crate) fn portable_json_hash(root: &Path, value: &Value) -> String {
     canonical_json_hash(&portable_json(root, value))
 }
 
-fn portable_json(root: &Path, value: &Value) -> Value {
+pub(crate) fn portable_json(root: &Path, value: &Value) -> Value {
     match value {
         Value::Array(items) => {
             Value::Array(items.iter().map(|item| portable_json(root, item)).collect())

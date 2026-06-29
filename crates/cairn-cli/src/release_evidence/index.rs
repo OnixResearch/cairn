@@ -20,7 +20,7 @@ use crate::evidence::{
     EvidenceRepublishOptions, EvidenceVerifyOptions,
 };
 use crate::support::{
-    path_string, print_json, read_option, read_string_option, with_portable_receipt_hash,
+    path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
 };
 
 use super::common::{
@@ -270,7 +270,7 @@ fn release_evidence_index_final_receipt(
 ) -> Value {
     issues.sort_by_key(canonical_json_hash);
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         root,
         json!({
             "command": "release-evidence index",

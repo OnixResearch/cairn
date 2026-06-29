@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 
 use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
 use crate::support::{
-    path_string, print_json, read_option, read_string_option, with_portable_receipt_hash,
+    path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
 };
 
 use super::common::{
@@ -210,7 +210,7 @@ pub(super) fn release_evidence_retention_plan_receipt(
     }
     issues.sort_by_key(canonical_json_hash);
     let valid = issues.is_empty();
-    with_portable_receipt_hash(
+    with_portable_content_hash_receipt(
         &options.root,
         json!({
             "command": "release-evidence retention-plan",

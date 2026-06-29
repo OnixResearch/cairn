@@ -77,9 +77,7 @@ pub use verified::probe::{
     probe_issue_json, probe_receipt_hash, validate_probe_declaration, validate_probe_receipt,
     ProbeIssue, PROBE_DECLARATION_SCHEMA_V1, PROBE_RECEIPT_SCHEMA_V1,
 };
-pub use verified::receipt_drift::{
-    receipt_field_drift, DriftClass, DriftEntry, DriftReport,
-};
+pub use verified::receipt_drift::{receipt_field_drift, DriftClass, DriftEntry, DriftReport};
 pub use verified::repo::{
     build_change_detail, build_change_list, build_change_status, build_repo_status,
     build_spec_detail, build_spec_list, count_tasks, filter_changes_by_metadata, spec_title,
