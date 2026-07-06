@@ -52,6 +52,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "repository_gate_summary",
             "determinism_replay",
             "mcp",
+            "preserves_content_hash",
+            "verification_role_boundary",
             "receipt_hash",
         ],
     )?;

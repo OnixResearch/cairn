@@ -13,6 +13,7 @@
 use std::{error::Error, fs, path::PathBuf};
 
 use cairn_core::canonical_json_hash;
+use cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY;
 use serde_json::{json, Value};
 
 use crate::determinism::determinism_coverage_audit_receipt;
@@ -111,7 +112,8 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
             "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
             "repository_gate_summary": repository_gate_summary,
             "determinism_replay": replay_preflight,
-            "mcp": {"read_only": true, "destructive": false}
+            "mcp": {"read_only": true, "destructive": false},
+            "verification_role_boundary": VERIFICATION_ROLE_BOUNDARY,
         }),
     )
 }

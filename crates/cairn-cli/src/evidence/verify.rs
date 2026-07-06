@@ -52,6 +52,15 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
                 Value::Null,
                 Value::Null,
                 Value::Null,
+                serde_json::json!({
+                    "property_count": 0,
+                    "recorded_only_count": 0,
+                    "boundary_count": 0,
+                    "unknown_count": 0,
+                    "total": 0,
+                    "verified_count": 0,
+                    "boundary": cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY,
+                }),
             );
         }
     };
@@ -130,6 +139,7 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
                 "path": relative,
                 "hash": if actual_hash.is_empty() { Value::Null } else { json!(actual_hash) },
                 "required": artifact.get("required").and_then(Value::as_bool).unwrap_or(true),
+                "verification_role": artifact.get("verification_role").and_then(Value::as_str).unwrap_or("unknown"),
             }));
         }
     } else {
@@ -211,6 +221,7 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
         ));
     }
 
+    let verification_role_summary = VerificationRoleSummary::from_artifacts(&verified_artifacts);
     let manifest_hash = export_receipt
         .get("manifest_hash")
         .cloned()
@@ -226,6 +237,7 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
         computed_export_hash,
         manifest_hash,
         manifest_verification_receipt_hash,
+        verification_role_summary.to_json(),
     )
 }
 
@@ -285,6 +297,7 @@ fn evidence_verify_final_receipt(
     export_receipt_hash: Value,
     manifest_hash: Value,
     manifest_verification_receipt_hash: Value,
+    verification_role_summary: Value,
 ) -> Value {
     issues.sort_by_key(canonical_json_hash);
     artifacts.sort_by_key(|artifact| {
@@ -308,6 +321,7 @@ fn evidence_verify_final_receipt(
             "export_receipt_hash": export_receipt_hash,
             "manifest_hash": manifest_hash,
             "manifest_verification_receipt_hash": manifest_verification_receipt_hash,
+            "verification_role_summary": verification_role_summary,
         }),
     )
 }

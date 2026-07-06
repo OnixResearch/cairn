@@ -4,7 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use cairn_core::{blake3_hex, canonical_json_hash, Policy};
+use cairn_core::{
+    blake3_hex, canonical_json_hash, verified::verification_role::VerificationRoleSummary, Policy,
+};
 use serde_json::{json, Value};
 
 use crate::agent_receipt::{

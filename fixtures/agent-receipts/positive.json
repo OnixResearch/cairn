@@ -22,11 +22,10 @@
     "forbidden_uncaptured": []
   },
   "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
-  "receipt_hash": "def3430f1542e07dbe0d8de1034d2e255ffd723b76e5d1783afad792fc73935e",
   "replay_evidence": {
     "replay_artifact_path": "replay-agent.json",
     "replay_environment_attestation_hash": "807e25cbae99006cbc4c23e12b0d3b949edd8204992d3812714e4a68cbde378e",
-    "replay_policy_hash": "d5ffccd93a68a497711bb8377a922b1b77b0706964977a886c50385c9032cb97",
+    "replay_policy_hash": "f9df8ee418706cbebd025a93c493f5584750dc606e618eefd7db8009c6f9eac5",
     "replay_receipt_hash": "de3748fa891a04b70d95a0426c0f9ab1a1dc844df6d606d50ad93e767ad71873",
     "replay_selected_cases": [
       "agent_receipt_validate",
@@ -58,5 +57,6 @@
         "verdict": "PASS"
       }
     ]
-  }
+  },
+  "receipt_hash": "3365db2f976c5281b973d6a3fc44b5fc97a4d22b405e6ed46cfbe9de3b6c579e"
 }

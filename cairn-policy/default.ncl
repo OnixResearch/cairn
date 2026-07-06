@@ -195,8 +195,8 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "evidence verify",
-      top_level_keys = ["artifacts", "bundle", "command", "export_receipt_hash", "issues", "manifest_hash", "manifest_verification_receipt_hash", "preserves_content_hash", "receipt_hash", "root", "valid", "verdict"],
-      artifact_keys = ["hash", "path", "required", "role"],
+      top_level_keys = ["artifacts", "bundle", "command", "export_receipt_hash", "issues", "manifest_hash", "manifest_verification_receipt_hash", "preserves_content_hash", "receipt_hash", "root", "valid", "verification_role_summary", "verdict"],
+      artifact_keys = ["hash", "path", "required", "role", "verification_role"],
       issue_keys = ["actual", "code", "expected", "field_path"],
       hash_fields = ["export_receipt_hash", "manifest_hash", "manifest_verification_receipt_hash", "preserves_content_hash", "receipt_hash"],
     },
