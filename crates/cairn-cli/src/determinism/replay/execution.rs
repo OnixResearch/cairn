@@ -159,7 +159,7 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
         ReplayCaseKind::ReceiptPreservesDiff => {
             // r[impl cairn.determinism.preserves_receipt_field_drift.validation]
             // args: ["receipt-preserves-diff", "--baseline", "<path>", "--candidate", "<path>"]
-            let Some(baseline_flag) = case.args.get(2) else {
+            let Some(baseline_flag) = case.args.get(1) else {
                 return Err("receipt-preserves-diff replay case missing --baseline flag".into());
             };
             if baseline_flag != "--baseline" {
@@ -168,10 +168,10 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
                 )
                 .into());
             }
-            let Some(baseline_path) = case.args.get(3) else {
+            let Some(baseline_path) = case.args.get(2) else {
                 return Err("receipt-preserves-diff replay case missing baseline path".into());
             };
-            let Some(candidate_flag) = case.args.get(4) else {
+            let Some(candidate_flag) = case.args.get(3) else {
                 return Err("receipt-preserves-diff replay case missing --candidate flag".into());
             };
             if candidate_flag != "--candidate" {
@@ -180,7 +180,7 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
                 )
                 .into());
             }
-            let Some(candidate_path) = case.args.get(5) else {
+            let Some(candidate_path) = case.args.get(4) else {
                 return Err("receipt-preserves-diff replay case missing candidate path".into());
             };
             let baseline_full = replay_fixture_path(root, baseline_path);

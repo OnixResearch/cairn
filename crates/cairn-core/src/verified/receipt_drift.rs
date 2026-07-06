@@ -155,24 +155,24 @@ fn compute_drift(prefix: &str, baseline: &Value, candidate: &Value, entries: &mu
                 compute_drift(&child_path, &b_items[i], &c_items[i], entries);
             }
             // Extra elements in baseline
-            for i in min_len..b_items.len() {
+            for (i, b) in b_items.iter().enumerate().skip(min_len) {
                 let child_path = format!("{prefix}/{i}");
                 entries.push(DriftEntry {
                     field_path: child_path,
                     class: DriftClass::Removed,
-                    expected: Some(value_summary(&b_items[i])),
+                    expected: Some(value_summary(b)),
                     actual: None,
                     source_id: None,
                 });
             }
             // Extra elements in candidate
-            for i in min_len..c_items.len() {
+            for (i, c) in c_items.iter().enumerate().skip(min_len) {
                 let child_path = format!("{prefix}/{i}");
                 entries.push(DriftEntry {
                     field_path: child_path,
                     class: DriftClass::Added,
                     expected: None,
-                    actual: Some(value_summary(&c_items[i])),
+                    actual: Some(value_summary(c)),
                     source_id: None,
                 });
             }
