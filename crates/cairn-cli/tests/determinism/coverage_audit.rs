@@ -60,6 +60,7 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
             "mcp_status",
             "migrate_dry_run",
             "preserves_corpus_freshness",
+            "receipt_preserves_diff",
             "release_readiness",
             "status",
             "sync_dry_run",

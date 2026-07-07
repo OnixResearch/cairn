@@ -43,7 +43,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         0
     );
     assert_eq!(first["receipt_hash"], second["receipt_hash"]);
-    assert_eq!(first["summary"]["total_cases"], 14);
+    assert_eq!(first["summary"]["total_cases"], 15);
     assert_eq!(first["summary"]["mismatch_count"], 0);
     assert_eq!(first["available_cases"], first["selected_cases"]);
     assert_eq!(
@@ -132,6 +132,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
             "mcp_status",
             "migrate_dry_run",
             "preserves_corpus_freshness",
+            "receipt_preserves_diff",
             "release_readiness",
             "status",
             "sync_dry_run",
@@ -192,7 +193,12 @@ fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<()
     assert_eq!(selected["cases"][0]["id"], "agent_receipt_preserves_hash");
     assert_eq!(
         selected["cases"][0]["hash_fields"],
-        serde_json::json!(["agent_receipt_preserves_hash", "input_hash", "receipt_hash"])
+        serde_json::json!([
+            "agent_receipt_preserves_hash",
+            "input_hash",
+            "preserves_content_hash",
+            "receipt_hash"
+        ])
     );
     assert_hash_field(&selected["cases"][0], "portable_evidence_hash")?;
     assert_hash_field(&selected["cases"][0]["runs"][0], "normalized_output_hash")?;
