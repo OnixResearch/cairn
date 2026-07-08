@@ -95,6 +95,8 @@ fn release_evidence_index_receipt(options: &ReleaseEvidenceIndexOptions) -> Valu
         root: root.clone(),
         out: Some(export_dir.clone()),
         agent_receipt: None,
+        runtime_chain: None,
+        witness_checkpoint: None,
     });
     collect_invalid_receipt("evidence_export", &export, &mut issues);
 

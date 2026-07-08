@@ -22,6 +22,16 @@ struct EvidenceManifestOptions {
     path: PathBuf,
 }
 
+struct EvidenceManifestReceiptParts {
+    manifest_hash: Value,
+    artifacts: Vec<Value>,
+    signer_metadata_hash: Value,
+    anchor_metadata_hash: Value,
+    coverage_audit_receipt_hash: Value,
+    runtime_evidence_receipt_hash: Value,
+    issues: Vec<Value>,
+}
+
 pub(super) fn run_evidence_manifest_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let options = evidence_manifest_options(&args)?;
     let receipt = evidence_manifest_verification_receipt(&options.root, &options.path);
@@ -57,17 +67,20 @@ pub(crate) fn evidence_manifest_verification_receipt(root: &Path, manifest_path:
         Err(_) => {
             return evidence_manifest_receipt(
                 root,
-                Value::Null,
-                Vec::new(),
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                vec![evidence_manifest_issue(
-                    "manifest.read_failed",
-                    "manifest",
-                    "readable JSON object",
-                    "unreadable",
-                )],
+                EvidenceManifestReceiptParts {
+                    manifest_hash: Value::Null,
+                    artifacts: Vec::new(),
+                    signer_metadata_hash: Value::Null,
+                    anchor_metadata_hash: Value::Null,
+                    coverage_audit_receipt_hash: Value::Null,
+                    runtime_evidence_receipt_hash: Value::Null,
+                    issues: vec![evidence_manifest_issue(
+                        "manifest.read_failed",
+                        "manifest",
+                        "readable JSON object",
+                        "unreadable",
+                    )],
+                },
             )
         }
     };
@@ -109,6 +122,12 @@ pub(crate) fn evidence_manifest_verification_receipt(root: &Path, manifest_path:
         .and_then(|artifact| artifact.get("hash"))
         .cloned()
         .unwrap_or(Value::Null);
+    let runtime_evidence_receipt_hash = artifacts
+        .iter()
+        .find(|artifact| artifact.get("role").and_then(Value::as_str) == Some("runtime_evidence"))
+        .and_then(|artifact| artifact.get("hash"))
+        .cloned()
+        .unwrap_or(Value::Null);
     let has_bundle = artifacts.iter().any(|artifact| {
         artifact.get("role").and_then(Value::as_str) == Some("agent_evidence_bundle")
     });
@@ -123,12 +142,15 @@ pub(crate) fn evidence_manifest_verification_receipt(root: &Path, manifest_path:
     issues.sort_by_key(canonical_json_hash);
     evidence_manifest_receipt(
         root,
-        manifest_hash,
-        artifacts,
-        signer_metadata_hash,
-        anchor_metadata_hash,
-        coverage_audit_receipt_hash,
-        issues,
+        EvidenceManifestReceiptParts {
+            manifest_hash,
+            artifacts,
+            signer_metadata_hash,
+            anchor_metadata_hash,
+            coverage_audit_receipt_hash,
+            runtime_evidence_receipt_hash,
+            issues,
+        },
     )
 }
 
@@ -222,17 +244,9 @@ fn verify_evidence_manifest_artifact(
     })
 }
 
-fn evidence_manifest_receipt(
-    root: &Path,
-    manifest_hash: Value,
-    artifacts: Vec<Value>,
-    signer_metadata_hash: Value,
-    anchor_metadata_hash: Value,
-    coverage_audit_receipt_hash: Value,
-    issues: Vec<Value>,
-) -> Value {
+fn evidence_manifest_receipt(root: &Path, parts: EvidenceManifestReceiptParts) -> Value {
     // r[impl cairn.supersede.signed_evidence_manifest.schema]
-    let valid = issues.is_empty();
+    let valid = parts.issues.is_empty();
     with_portable_receipt_hash(
         root,
         json!({
@@ -240,12 +254,13 @@ fn evidence_manifest_receipt(
             "root": path_string(root),
             "valid": valid,
             "verdict": if valid { "pass" } else { "fail" },
-            "issues": issues,
-            "manifest_hash": manifest_hash,
-            "artifacts": artifacts,
-            "signer_metadata_hash": signer_metadata_hash,
-            "anchor_metadata_hash": anchor_metadata_hash,
-            "coverage_audit_receipt_hash": coverage_audit_receipt_hash,
+            "issues": parts.issues,
+            "manifest_hash": parts.manifest_hash,
+            "artifacts": parts.artifacts,
+            "signer_metadata_hash": parts.signer_metadata_hash,
+            "anchor_metadata_hash": parts.anchor_metadata_hash,
+            "coverage_audit_receipt_hash": parts.coverage_audit_receipt_hash,
+            "runtime_evidence_receipt_hash": parts.runtime_evidence_receipt_hash,
         }),
     )
 }

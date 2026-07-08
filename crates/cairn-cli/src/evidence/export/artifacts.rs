@@ -20,29 +20,36 @@ pub(super) fn evidence_export_artifacts(out_dir: &Path, issues: &mut Vec<Value>)
         ("release_readiness", "release-readiness.json", true),
         ("replay_receipt", "replay-agent.json", true),
         ("replay_verification", "replay-verification.json", true),
+        ("runtime_evidence", "runtime-evidence.json", false),
+        ("runtime_chain", "runtime-chain.json", false),
+        ("witness_checkpoint", "witness-checkpoint.json", false),
     ];
     roles
         .iter()
-        .map(|(role, relative, required)| {
+        .filter_map(|(role, relative, required)| {
             let path = out_dir.join(relative);
             let hash = match fs::read(&path) {
                 Ok(bytes) => Value::String(blake3_hex(&bytes)),
                 Err(_) => {
-                    issues.push(evidence_export_issue(
-                        "export.artifact_missing",
-                        role,
-                        "generated artifact file",
-                        "missing",
-                    ));
-                    Value::Null
+                    if *required {
+                        issues.push(evidence_export_issue(
+                            "export.artifact_missing",
+                            role,
+                            "generated artifact file",
+                            "missing",
+                        ));
+                        Value::Null
+                    } else {
+                        return None;
+                    }
                 }
             };
-            json!({
+            Some(json!({
                 "role": role,
                 "path": relative,
                 "hash": hash,
                 "required": required,
-            })
+            }))
         })
         .collect()
 }

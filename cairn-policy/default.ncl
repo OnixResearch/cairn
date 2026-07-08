@@ -116,6 +116,14 @@ let Contracts = import "contracts.ncl" in
     required_boundary = "Cairn consumed Valence and Mantle stack provenance receipts for lifecycle/release policy conformance only; it did not prove source-code correctness, Valence verifier soundness, Mantle build correctness, or Trellis/Octet proof validity",
   },
 
+  runtime_evidence_policy = {
+    allowed_capture_origins = ["boundary_captured", "ingested_telemetry", "wrapper_asserted", "unknown"],
+    allowed_hash_algorithms = ["BLAKE3"],
+    max_summary_bytes = 256,
+    forbidden_summary_fragments = ["SECRET=", "token=", "/home/"],
+    aggregation_profiles = [],
+  },
+
   structured_lifecycle = {
     preserves_receipt_source_map = {},
   },
@@ -210,9 +218,15 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "agent-receipt verify-bundle",
-      top_level_keys = ["agent_receipt_hash", "command", "coverage_audit_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "issues", "preserves_content_hash", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash", "required_replay_group", "root", "valid", "verdict"],
+      top_level_keys = ["agent_receipt_hash", "command", "coverage_audit_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "issues", "preserves_content_hash", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash", "required_replay_group", "root", "runtime_evidence_receipt_hash", "valid", "verdict"],
       issue_keys = ["actual", "code", "expected", "field_path"],
-      hash_fields = ["agent_receipt_hash", "coverage_audit_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "preserves_content_hash", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash"],
+      hash_fields = ["agent_receipt_hash", "coverage_audit_receipt_hash", "current_replay_policy_hash", "environment_attestation_hash", "preserves_content_hash", "receipt_hash", "release_readiness_receipt_hash", "replay_receipt_hash", "replay_verification_receipt_hash", "runtime_evidence_receipt_hash"],
+    },
+    {
+      command = "runtime-evidence verify",
+      top_level_keys = ["boundary", "capture_origin_summary", "chain", "chain_root_hash", "checkpoint", "checkpoint_hash", "command", "completeness", "head_hash", "issues", "preserves_content_hash", "receipt_hash", "record_count", "root", "schema_version", "subject", "valid", "verdict"],
+      issue_keys = ["actual", "code", "expected", "field_path"],
+      hash_fields = ["chain_root_hash", "checkpoint_hash", "head_hash", "preserves_content_hash", "receipt_hash"],
     },
     {
       command = "evidence-manifest generate",
@@ -222,10 +236,10 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "evidence-manifest verify",
-      top_level_keys = ["anchor_metadata_hash", "artifacts", "command", "coverage_audit_receipt_hash", "issues", "manifest_hash", "receipt_hash", "root", "signer_metadata_hash", "valid", "verdict"],
+      top_level_keys = ["anchor_metadata_hash", "artifacts", "command", "coverage_audit_receipt_hash", "issues", "manifest_hash", "receipt_hash", "root", "runtime_evidence_receipt_hash", "signer_metadata_hash", "valid", "verdict"],
       artifact_keys = ["hash", "role", "schema", "valid"],
       issue_keys = ["actual", "code", "expected", "field_path"],
-      hash_fields = ["anchor_metadata_hash", "coverage_audit_receipt_hash", "manifest_hash", "receipt_hash", "signer_metadata_hash"],
+      hash_fields = ["anchor_metadata_hash", "coverage_audit_receipt_hash", "manifest_hash", "receipt_hash", "runtime_evidence_receipt_hash", "signer_metadata_hash"],
     },
     {
       command = "evidence export",

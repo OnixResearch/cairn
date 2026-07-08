@@ -121,6 +121,22 @@ the external Tracey binary or daemon. External Tracey commands such as
 `tracey query status`, `tracey query uncovered`, and `tracey query untested` are
 optional developer diagnostics only.
 
+## Runtime evidence and external witnesses
+
+`cairn runtime-evidence verify --chain <chain.json> [--checkpoint <checkpoint.json>]`
+checks subject-scoped runtime action chains and optional witness checkpoints.
+runtime evidence records use Cairn-owned BLAKE3 identities, policy-declared
+capture origins, hash-only or redacted input/outcome identities, and explicit
+non-claims. A local chain proves presented-sequence integrity only; a matching
+checkpoint proves a bounded witnessed prefix. Cairn does not decide whether a
+witness authority is independent, socially trusted, or legally trusted, and it
+does not prove agent correctness or pre-action policy enforcement. r[verify cairn.runtime_evidence.docs.claims]
+
+Imported Halo/AARM-style metadata may preserve external hash algorithms and
+canonical forms as adapter metadata, but Cairn computes BLAKE3 identities for
+Cairn-owned records, checkpoints, and receipts before using them in lifecycle or
+release evidence. r[verify cairn.runtime_evidence.docs.compatibility]
+
 ## How Cairn uses EARS
 
 EARS means "Easy Approach to Requirements Syntax". Alistair Mavin, Philip

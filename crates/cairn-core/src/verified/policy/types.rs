@@ -1,6 +1,9 @@
 use serde_json::Value;
 
-use crate::verified::{stack_provenance::StackProvenancePolicy, traceability::TraceabilityProfile};
+use crate::verified::{
+    runtime_evidence::RuntimeEvidencePolicy, stack_provenance::StackProvenancePolicy,
+    traceability::TraceabilityProfile,
+};
 
 pub const SUPPORTED_POLICY_VERSION: u64 = 1;
 
@@ -27,6 +30,7 @@ pub struct Policy {
     pub steel_orchestration_policy: SteelOrchestrationPolicy,
     pub traceability_policy: TraceabilityPolicy,
     pub stack_provenance_policy: StackProvenancePolicy,
+    pub runtime_evidence_policy: RuntimeEvidencePolicy,
     pub raw: Value,
 }
 

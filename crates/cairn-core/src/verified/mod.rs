@@ -15,6 +15,7 @@ pub mod policy;
 pub mod probe;
 pub mod receipt_drift;
 pub mod repo;
+pub mod runtime_evidence;
 pub mod semantic_review;
 pub mod stack_provenance;
 pub mod structured_lifecycle;

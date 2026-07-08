@@ -17,6 +17,7 @@ pub(super) fn agent_bundle_receipt(
     environment_attestation_hash: Value,
     release_readiness_receipt_hash: Value,
     coverage_audit_receipt_hash: Value,
+    runtime_evidence_receipt_hash: Value,
 ) -> Value {
     let valid = issues.is_empty();
     with_portable_content_hash_receipt(
@@ -35,6 +36,7 @@ pub(super) fn agent_bundle_receipt(
             "environment_attestation_hash": environment_attestation_hash,
             "release_readiness_receipt_hash": release_readiness_receipt_hash,
             "coverage_audit_receipt_hash": coverage_audit_receipt_hash,
+            "runtime_evidence_receipt_hash": runtime_evidence_receipt_hash,
         }),
     )
 }

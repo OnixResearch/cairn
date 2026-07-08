@@ -95,6 +95,16 @@ pub use verified::repo::{
     ChangeDetail, ChangeList, ChangeMetadata, ChangeSource, ChangeStatus, RepoStatus, SpecDetail,
     SpecList, SpecSource, SpecSummary, TaskCounts,
 };
+pub use verified::runtime_evidence::{
+    is_runtime_capture_origin, runtime_record_hash, verify_runtime_evidence,
+    witness_checkpoint_hash, CaptureOriginSummary, RuntimeEvidenceIssue, RuntimeEvidencePolicy,
+    RuntimeEvidenceReport, CAPTURE_ORIGIN_BOUNDARY, CAPTURE_ORIGIN_INGESTED,
+    CAPTURE_ORIGIN_UNKNOWN, CAPTURE_ORIGIN_WRAPPER_ASSERTED,
+    COMPLETENESS_ALTERED_BEFORE_CHECKPOINT, COMPLETENESS_CHECKPOINT_MALFORMED,
+    COMPLETENESS_INTEGRITY_ONLY, COMPLETENESS_SUBJECT_MISMATCH, COMPLETENESS_TRUNCATED,
+    COMPLETENESS_WITNESSED_PREFIX, DEFAULT_RUNTIME_SUMMARY_MAX_BYTES, RUNTIME_EVIDENCE_BOUNDARY,
+    RUNTIME_EVIDENCE_SCHEMA_V1, RUNTIME_HASH_ALGORITHM_BLAKE3,
+};
 pub use verified::semantic_review::{
     completeness_receipt, issues_json as semantic_review_issues_json, review_ledger_analytics,
     review_receipt_hash, semantic_review_policy_profile_json,

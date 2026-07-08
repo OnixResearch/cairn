@@ -69,6 +69,7 @@ pub(crate) fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_pat
                 Value::Null,
                 Value::Null,
                 Value::Null,
+                Value::Null,
             )
         }
     };
@@ -85,6 +86,7 @@ pub(crate) fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_pat
                     "unreadable",
                 )],
                 current_policy_hash,
+                Value::Null,
                 Value::Null,
                 Value::Null,
                 Value::Null,
@@ -117,6 +119,8 @@ pub(crate) fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_pat
         optional_bundle_artifact_path(&bundle, bundle_base, "release_readiness_path", &mut issues);
     let coverage_audit_path =
         optional_bundle_artifact_path(&bundle, bundle_base, "coverage_audit_path", &mut issues);
+    let runtime_evidence_path =
+        optional_bundle_artifact_path(&bundle, bundle_base, "runtime_evidence_path", &mut issues);
 
     let mut agent_receipt_hash = Value::Null;
     let mut replay_receipt_hash = Value::Null;
@@ -124,6 +128,7 @@ pub(crate) fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_pat
     let mut environment_attestation_hash = Value::Null;
     let mut release_readiness_receipt_hash = Value::Null;
     let mut coverage_audit_receipt_hash = Value::Null;
+    let mut runtime_evidence_receipt_hash = Value::Null;
 
     let mut agent_receipt = Value::Null;
     if let Some(path) = agent_path.as_deref() {
@@ -206,6 +211,22 @@ pub(crate) fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_pat
         );
     }
 
+    if let Some(path) = runtime_evidence_path.as_deref() {
+        runtime_evidence_receipt_hash = verify_optional_receipt_artifact(
+            root,
+            path,
+            &mut issues,
+            "runtime_evidence",
+            "valid runtime-evidence receipt",
+        );
+        verify_optional_bundle_hash(
+            &mut issues,
+            &bundle,
+            "runtime_evidence_receipt_hash",
+            &runtime_evidence_receipt_hash,
+        );
+    }
+
     issues.sort_by_key(canonical_json_hash);
     agent_bundle_receipt(
         root,
@@ -217,5 +238,6 @@ pub(crate) fn agent_evidence_bundle_verification_receipt(root: &Path, bundle_pat
         environment_attestation_hash,
         release_readiness_receipt_hash,
         coverage_audit_receipt_hash,
+        runtime_evidence_receipt_hash,
     )
 }

@@ -30,6 +30,9 @@ pub(crate) struct EvidenceManifestGenerateOptions {
     pub(crate) registry_verification: Option<PathBuf>,
     pub(crate) registry_selection: Option<PathBuf>,
     pub(crate) registry_fetch_plan: Option<PathBuf>,
+    pub(crate) runtime_evidence: Option<PathBuf>,
+    pub(crate) runtime_chain: Option<PathBuf>,
+    pub(crate) witness_checkpoint: Option<PathBuf>,
     pub(crate) signer_metadata: Option<PathBuf>,
     pub(crate) anchor_metadata: Option<PathBuf>,
     pub(crate) out: Option<String>,
@@ -99,6 +102,9 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             | "--registry-verification"
             | "--registry-selection"
             | "--registry-fetch-plan"
+            | "--runtime-evidence"
+            | "--runtime-chain"
+            | "--witness-checkpoint"
             | "--signer-metadata"
             | "--anchor-metadata"
             | "--out"
@@ -129,6 +135,15 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             }
             ("--registry-fetch-plan", Some(value)) => {
                 options.registry_fetch_plan = Some(PathBuf::from(value));
+            }
+            ("--runtime-evidence", Some(value)) => {
+                options.runtime_evidence = Some(PathBuf::from(value));
+            }
+            ("--runtime-chain", Some(value)) => {
+                options.runtime_chain = Some(PathBuf::from(value));
+            }
+            ("--witness-checkpoint", Some(value)) => {
+                options.witness_checkpoint = Some(PathBuf::from(value));
             }
             ("--signer-metadata", Some(value)) => {
                 options.signer_metadata = Some(PathBuf::from(value));
@@ -172,6 +187,9 @@ pub(crate) fn evidence_manifest_generate_manifest(
             "evidence_registry_fetch_plan",
             options.registry_fetch_plan.as_deref(),
         ),
+        ("runtime_evidence", options.runtime_evidence.as_deref()),
+        ("runtime_chain", options.runtime_chain.as_deref()),
+        ("witness_checkpoint", options.witness_checkpoint.as_deref()),
     ] {
         if let Some(path) = path {
             match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
@@ -194,6 +212,9 @@ pub(crate) fn evidence_manifest_generate_manifest(
             "evidence_registry_verification",
             "evidence_registry_selection",
             "evidence_registry_fetch_plan",
+            "runtime_evidence",
+            "runtime_chain",
+            "witness_checkpoint",
         ]
         .contains(&role)
         {

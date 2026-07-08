@@ -154,15 +154,21 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
                 continue;
             };
             let declared_hash = artifact.get("hash").and_then(Value::as_str).unwrap_or("");
+            let required = artifact
+                .get("required")
+                .and_then(Value::as_bool)
+                .unwrap_or(true);
             let actual_hash = match fs::read(&path) {
                 Ok(bytes) => blake3_hex(&bytes),
                 Err(_) => {
-                    issues.push(evidence_verify_issue(
-                        "evidence_verify.artifact_missing",
-                        role,
-                        "declared artifact file",
-                        "missing",
-                    ));
+                    if required {
+                        issues.push(evidence_verify_issue(
+                            "evidence_verify.artifact_missing",
+                            role,
+                            "declared artifact file",
+                            "missing",
+                        ));
+                    }
                     String::new()
                 }
             };
@@ -178,7 +184,7 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
                 "role": role,
                 "path": relative,
                 "hash": if actual_hash.is_empty() { Value::Null } else { json!(actual_hash) },
-                "required": artifact.get("required").and_then(Value::as_bool).unwrap_or(true),
+                "required": required,
                 "verification_role": artifact.get("verification_role").and_then(Value::as_str).unwrap_or("unknown"),
             }));
         }

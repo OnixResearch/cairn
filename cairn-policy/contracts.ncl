@@ -88,6 +88,14 @@ let StackProvenanceGateMode = std.contract.from_predicate (fun value =>
   std.is_string value && (value == "disabled" || value == "optional" || value == "required")
 ) in
 
+let RuntimeCaptureOrigin = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "boundary_captured" || value == "ingested_telemetry" || value == "wrapper_asserted" || value == "unknown")
+) in
+
+let PositiveNumber = std.contract.from_predicate (fun value =>
+  std.is_number value && value > 0
+) in
+
 {
   Artifact = {
     id | NonEmptyString,
@@ -192,6 +200,14 @@ let StackProvenanceGateMode = std.contract.from_predicate (fun value =>
     allowed_claim_scopes | NonEmptyArray | Array NonEmptyString,
     accepted_valence_policy_hashes | Array Blake3HexContract | default = [],
     required_boundary | NonEmptyString,
+  },
+
+  RuntimeEvidencePolicy = {
+    allowed_capture_origins | NonEmptyArray | Array RuntimeCaptureOrigin,
+    allowed_hash_algorithms | NonEmptyArray | Array Blake3Algorithm,
+    max_summary_bytes | PositiveNumber,
+    forbidden_summary_fragments | Array NonEmptyString | default = [],
+    aggregation_profiles | Array NonEmptyString | default = [],
   },
 
   ProbeCommandProfile = {
@@ -345,6 +361,7 @@ let StackProvenanceGateMode = std.contract.from_predicate (fun value =>
     steel_orchestration_policy | SteelOrchestrationPolicy,
     traceability_policy | TraceabilityPolicy,
     stack_provenance_gate | StackProvenancePolicy,
+    runtime_evidence_policy | RuntimeEvidencePolicy,
     structured_lifecycle | StructuredLifecycle | default = {},
     probe_policy | ProbePolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,

@@ -27,6 +27,11 @@ mod tests {
         TraceabilityPolicy,
     };
     use crate::verified::repo::{ChangeStatus, SpecSource, TaskCounts};
+    use crate::verified::runtime_evidence::{
+        RuntimeEvidencePolicy, CAPTURE_ORIGIN_BOUNDARY, CAPTURE_ORIGIN_INGESTED,
+        CAPTURE_ORIGIN_UNKNOWN, CAPTURE_ORIGIN_WRAPPER_ASSERTED, DEFAULT_RUNTIME_SUMMARY_MAX_BYTES,
+        RUNTIME_HASH_ALGORITHM_BLAKE3,
+    };
     use crate::verified::stack_provenance::{
         StackProvenancePolicy, STACK_PROVENANCE_BOUNDARY, STACK_PROVENANCE_CLAIM_SCOPE_LIFECYCLE,
         STACK_PROVENANCE_MODE_DISABLED,
@@ -108,6 +113,18 @@ mod tests {
                 allowed_claim_scopes: vec![STACK_PROVENANCE_CLAIM_SCOPE_LIFECYCLE.to_string()],
                 accepted_valence_policy_hashes: Vec::new(),
                 required_boundary: STACK_PROVENANCE_BOUNDARY.to_string(),
+            },
+            runtime_evidence_policy: RuntimeEvidencePolicy {
+                allowed_capture_origins: vec![
+                    CAPTURE_ORIGIN_BOUNDARY.to_string(),
+                    CAPTURE_ORIGIN_INGESTED.to_string(),
+                    CAPTURE_ORIGIN_WRAPPER_ASSERTED.to_string(),
+                    CAPTURE_ORIGIN_UNKNOWN.to_string(),
+                ],
+                allowed_hash_algorithms: vec![RUNTIME_HASH_ALGORITHM_BLAKE3.to_string()],
+                max_summary_bytes: DEFAULT_RUNTIME_SUMMARY_MAX_BYTES,
+                forbidden_summary_fragments: Vec::new(),
+                aggregation_profiles: Vec::new(),
             },
             raw: json!({}),
         }

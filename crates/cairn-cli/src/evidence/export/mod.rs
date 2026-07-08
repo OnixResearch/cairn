@@ -90,6 +90,9 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
     let replay_path = out_dir.join("replay-agent.json");
     let replay_verification_path = out_dir.join("replay-verification.json");
     let release_path = out_dir.join("release-readiness.json");
+    let runtime_chain_path = out_dir.join("runtime-chain.json");
+    let witness_checkpoint_path = out_dir.join("witness-checkpoint.json");
+    let runtime_evidence_path = out_dir.join("runtime-evidence.json");
     let exported_agent_path = out_dir.join("agent-receipt.json");
     let bundle_path = out_dir.join("agent-evidence-bundle.json");
     let bundle_verification_path = out_dir.join("agent-evidence-bundle-verification.json");
@@ -134,6 +137,38 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
     let release = release_readiness_receipt(root.clone(), default_policy_path().into());
     write_evidence_json(&release_path, &release, &mut issues, "release_readiness");
 
+    let exported_runtime_chain = copy_optional_runtime_artifact(
+        options.runtime_chain.as_ref(),
+        &runtime_chain_path,
+        &mut issues,
+        "runtime_chain",
+    );
+    let exported_witness_checkpoint = copy_optional_runtime_artifact(
+        options.witness_checkpoint.as_ref(),
+        &witness_checkpoint_path,
+        &mut issues,
+        "witness_checkpoint",
+    );
+    let runtime_evidence = if exported_runtime_chain.is_some() {
+        let receipt = runtime_evidence_verification_receipt(&RuntimeEvidenceVerifyOptions {
+            root: root.clone(),
+            policy: default_policy_path().into(),
+            chain: Some(runtime_chain_path.clone()),
+            checkpoint: exported_witness_checkpoint
+                .as_ref()
+                .map(|_| witness_checkpoint_path.clone()),
+        });
+        write_evidence_json(
+            &runtime_evidence_path,
+            &receipt,
+            &mut issues,
+            "runtime_evidence",
+        );
+        receipt
+    } else {
+        Value::Null
+    };
+
     let exported_agent_receipt = if options.agent_receipt.is_some() {
         match fs::copy(&agent_path, &exported_agent_path) {
             Ok(_) => read_json_artifact(&exported_agent_path, AGENT_RECEIPT_MAX_BYTES)
@@ -168,7 +203,7 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         }
     };
 
-    let bundle = json!({
+    let mut bundle = json!({
         "agent_receipt_path": "agent-receipt.json",
         "replay_receipt_path": "replay-agent.json",
         "replay_verification_path": "replay-verification.json",
@@ -180,6 +215,11 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         "release_readiness_receipt_hash": receipt_stated_or_computed_hash(&root, &release),
         "coverage_audit_receipt_hash": receipt_stated_or_computed_hash(&root, &coverage),
     });
+    if runtime_evidence.is_object() {
+        bundle["runtime_evidence_path"] = json!("runtime-evidence.json");
+        bundle["runtime_evidence_receipt_hash"] =
+            receipt_stated_or_computed_hash(&root, &runtime_evidence);
+    }
     write_evidence_json(&bundle_path, &bundle, &mut issues, "agent_evidence_bundle");
 
     let bundle_verification = agent_evidence_bundle_verification_receipt(&root, &bundle_path);
@@ -202,6 +242,15 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         registry_verification: None,
         registry_selection: None,
         registry_fetch_plan: None,
+        runtime_evidence: runtime_evidence
+            .is_object()
+            .then_some(runtime_evidence_path.clone()),
+        runtime_chain: exported_runtime_chain
+            .as_ref()
+            .map(|_| runtime_chain_path.clone()),
+        witness_checkpoint: exported_witness_checkpoint
+            .as_ref()
+            .map(|_| witness_checkpoint_path.clone()),
         signer_metadata: None,
         anchor_metadata: None,
         out: None,
@@ -276,4 +325,25 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         "evidence_export_receipt",
     );
     receipt
+}
+
+fn copy_optional_runtime_artifact(
+    source: Option<&PathBuf>,
+    destination: &Path,
+    issues: &mut Vec<Value>,
+    role: &str,
+) -> Option<()> {
+    let source = source?;
+    match fs::copy(source, destination) {
+        Ok(_) => Some(()),
+        Err(_) => {
+            issues.push(evidence_export_issue(
+                "export.runtime_artifact_copy_failed",
+                role,
+                "readable runtime evidence artifact",
+                "failed",
+            ));
+            None
+        }
+    }
 }

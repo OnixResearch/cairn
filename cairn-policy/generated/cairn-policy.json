@@ -1523,7 +1523,8 @@
         "receipt_hash",
         "release_readiness_receipt_hash",
         "replay_receipt_hash",
-        "replay_verification_receipt_hash"
+        "replay_verification_receipt_hash",
+        "runtime_evidence_receipt_hash"
       ],
       "issue_keys": [
         "actual",
@@ -1547,6 +1548,48 @@
         "replay_verification_receipt_hash",
         "required_replay_group",
         "root",
+        "runtime_evidence_receipt_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "runtime-evidence verify",
+      "hash_fields": [
+        "chain_root_hash",
+        "checkpoint_hash",
+        "head_hash",
+        "preserves_content_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field_path"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "boundary",
+        "capture_origin_summary",
+        "chain",
+        "chain_root_hash",
+        "checkpoint",
+        "checkpoint_hash",
+        "command",
+        "completeness",
+        "head_hash",
+        "issues",
+        "preserves_content_hash",
+        "receipt_hash",
+        "record_count",
+        "root",
+        "schema_version",
+        "subject",
         "valid",
         "verdict"
       ]
@@ -1594,6 +1637,7 @@
         "coverage_audit_receipt_hash",
         "manifest_hash",
         "receipt_hash",
+        "runtime_evidence_receipt_hash",
         "signer_metadata_hash"
       ],
       "issue_keys": [
@@ -1613,6 +1657,7 @@
         "manifest_hash",
         "receipt_hash",
         "root",
+        "runtime_evidence_receipt_hash",
         "signer_metadata_hash",
         "valid",
         "verdict"
@@ -2278,6 +2323,24 @@
       "WARN",
       "FAIL"
     ]
+  },
+  "runtime_evidence_policy": {
+    "aggregation_profiles": [],
+    "allowed_capture_origins": [
+      "boundary_captured",
+      "ingested_telemetry",
+      "wrapper_asserted",
+      "unknown"
+    ],
+    "allowed_hash_algorithms": [
+      "BLAKE3"
+    ],
+    "forbidden_summary_fragments": [
+      "SECRET=",
+      "token=",
+      "/home/"
+    ],
+    "max_summary_bytes": 256
   },
   "schemas": [
     {

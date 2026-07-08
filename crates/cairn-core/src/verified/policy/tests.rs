@@ -212,6 +212,43 @@ fn rejects_stale_stack_provenance_policy_hash_shape() {
 }
 
 #[test]
+fn rejects_unknown_runtime_capture_origin() {
+    // r[verify cairn.runtime_evidence.policy_schema]
+    // r[verify cairn.runtime_evidence.policy_schema.public]
+    // r[verify cairn.runtime_evidence.policy_schema.unknown]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["runtime_evidence_policy"]["allowed_capture_origins"] =
+        serde_json::json!(["boundary_captured", "ambient"]);
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "runtime_evidence_policy.allowed_capture_origins"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_zero_runtime_summary_limit() {
+    // r[verify cairn.runtime_evidence.policy_schema]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["runtime_evidence_policy"]["max_summary_bytes"] = Value::from(0);
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "runtime_evidence_policy.max_summary_bytes"
+        ))
+    ));
+}
+
+#[test]
 fn rejects_unsupported_version() {
     // r[verify developer_experience.core_policy_parser_boundary_split.validation]
     let value = serde_json::json!({

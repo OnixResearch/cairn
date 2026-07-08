@@ -97,8 +97,17 @@ The import command fails before trusting the bundle if verification fails, rejec
 undeclared bundle files and unsafe paths, preserves declared relative artifact
 paths, writes `evidence-import-receipt.json`, and emits stable `bundle =
 "<bundle>"`, `into = "<into>"`, `verification_receipt_hash`, artifact hashes,
-deterministic issue codes, and its own `receipt_hash`. Imported evidence can be
-republished for downstream caches without regenerating local replay evidence:
+deterministic issue codes, and its own `receipt_hash`. Optional runtime evidence
+uses `runtime-chain`, `witness-checkpoint`, and `runtime-evidence` roles: the
+chain proves presented-sequence integrity, while a matching externally held
+checkpoint proves only a bounded witnessed prefix. Cairn records capture origin
+classes without upgrading ingested telemetry or wrapper assertions to
+boundary-captured evidence, preserves imported Halo/AARM hash metadata as
+adapter data, and still computes Cairn-owned BLAKE3 receipt identities. It does
+not prove agent correctness, action-policy enforcement, witness authority trust,
+or completeness without an independently controlled checkpoint. r[verify cairn.runtime_evidence.docs.claims] r[verify cairn.runtime_evidence.docs.compatibility]
+Imported evidence can be republished for downstream caches without regenerating
+local replay evidence:
 
 ```sh
 nix run .#cairn -- evidence republish --root . --imported target/cairn-imported-evidence/ --out target/cairn-republished-evidence/

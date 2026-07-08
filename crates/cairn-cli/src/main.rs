@@ -20,6 +20,7 @@ mod receipt_verify_content_hash;
 mod release_evidence;
 mod release_readiness;
 mod rename_classification;
+mod runtime_evidence;
 mod semantic_review;
 mod stack_provenance;
 mod steel_orchestration;
@@ -40,6 +41,7 @@ use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validat
 use policy::run_policy;
 use receipt_preserves_diff::run_receipt_preserves_diff;
 use receipt_verify_content_hash::run_receipt_verify_content_hash;
+use runtime_evidence::run_runtime_evidence;
 use semantic_review::run_review;
 use support::{print_usage, usage_text};
 use tracey::{run_traceability, run_tracey};
@@ -83,6 +85,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "policy" => run_policy(args.collect())?,
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "probe" => probe::run_probe(args.collect())?,
+        "runtime-evidence" => run_runtime_evidence(args.collect())?,
         "traceability" => run_traceability(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
         "review" => run_review(args.collect())?,
