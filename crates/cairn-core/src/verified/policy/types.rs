@@ -1,5 +1,7 @@
 use serde_json::Value;
 
+use crate::verified::traceability::TraceabilityProfile;
+
 pub const SUPPORTED_POLICY_VERSION: u64 = 1;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,6 +25,7 @@ pub struct Policy {
     pub change_metadata_group_prefixes: Vec<String>,
     pub change_metadata_statuses: Vec<String>,
     pub steel_orchestration_policy: SteelOrchestrationPolicy,
+    pub traceability_policy: TraceabilityPolicy,
     pub raw: Value,
 }
 
@@ -41,6 +44,12 @@ pub struct SteelOrchestrationProfile {
     pub redaction_classes: Vec<String>,
     pub fallback_modes: Vec<String>,
     pub receipt_schema_version: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraceabilityPolicy {
+    pub default_profile: String,
+    pub profiles: Vec<TraceabilityProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

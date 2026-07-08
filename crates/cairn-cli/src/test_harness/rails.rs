@@ -125,7 +125,9 @@ pub(super) fn rail_output_report(
 pub(super) fn rail_args(rail: &str) -> Option<Vec<String>> {
     let args = match rail {
         "validate" => vec!["validate", "--root", "."],
-        "tracey-coverage" => vec!["tracey", "coverage", "--root", "."],
+        "traceability-coverage" | "tracey-coverage" => {
+            vec!["traceability", "coverage", "--root", "."]
+        }
         "release-readiness" => vec!["release-readiness", "--root", "."],
         "policy-export-check" => vec!["policy", "export", "--root", ".", "--check"],
         _ => return None,

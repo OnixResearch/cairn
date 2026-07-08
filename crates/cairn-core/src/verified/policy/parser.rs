@@ -6,6 +6,7 @@ use super::{
         receipt_schemas, require_nonempty_array, task_marker_fields, task_markers, version_field,
     },
     steel::steel_orchestration_policy,
+    traceability::traceability_policy,
     Policy, PolicyError,
 };
 
@@ -37,6 +38,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
     let exemption_marker_policy = exemption_marker_policy(&value)?;
     let change_metadata = change_metadata_fields(&value)?;
     let steel_orchestration_policy = steel_orchestration_policy(&value)?;
+    let traceability_policy = traceability_policy(&value)?;
 
     Ok(Policy {
         name,
@@ -58,6 +60,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         change_metadata_group_prefixes: change_metadata.group_prefixes,
         change_metadata_statuses: change_metadata.statuses,
         steel_orchestration_policy,
+        traceability_policy,
         raw: value,
     })
 }

@@ -49,8 +49,12 @@ fn known_rail_args_are_bounded() {
         vec!["validate", "--root", "."]
     );
     assert_eq!(
+        rail_args("traceability-coverage").expect("traceability"),
+        vec!["traceability", "coverage", "--root", "."]
+    );
+    assert_eq!(
         rail_args("tracey-coverage").expect("tracey"),
-        vec!["tracey", "coverage", "--root", "."]
+        vec!["traceability", "coverage", "--root", "."]
     );
     assert!(rail_args("arbitrary-shell").is_none());
 }

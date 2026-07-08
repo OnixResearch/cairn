@@ -3,7 +3,7 @@ name: cairn-workflow
 description: >
   Work on the Cairn Rust/Nix lifecycle engine in /home/brittonr/git/cairn:
   native Cairn specs and archives, MCP tools, deterministic receipts,
-  release-readiness evidence, Tracey coverage, Slotcar FCIS checks, and Nix
+  release-readiness evidence, Cairn-owned traceability coverage, Slotcar FCIS checks, and Nix
   verification. Use for Cairn CLI/core/spec/test/flake/docs work.
 ---
 
@@ -145,7 +145,7 @@ Expected result: no matches.
   - `cairn evidence registry select --root . --registry <registry.json> --channel stable --bundle-kind <kind> --out <selected-index.json>` copies exactly one selected index after registry verification; `cairn evidence registry fetch-plan --root . --registry <registry.json> --channel stable --out <fetch-plan.json>` emits metadata-only fetch/verify plans with safe label metadata; `cairn evidence registry fetch-execute --root . --plan <fetch-plan.json> --source <local-mirror-dir> --out <artifact-cache-dir>` locally materializes planned artifacts with safe relative paths and BLAKE3 verification before/after copying, without network transport, credential handling, or remote trust validation.
   - `cairn agent-receipt smoke-mcp --root .` proves the MCP catalog, receipt validation path, strict invalid-argument behavior, and default mutation denial compose.
 - Release readiness:
-  - `cairn release-readiness --root .` emits a deterministic local operator bundle over Cairn validation, Tracey coverage, MCP smoke, repository gate summary, and receipt hashes.
+  - `cairn release-readiness --root .` emits a deterministic local operator bundle over Cairn validation, Cairn-owned traceability coverage, MCP smoke, repository gate summary, and receipt hashes.
   - Release-readiness receipts should be byte-for-byte reproducible for the same root.
 
 ## EARS-style validation contract
@@ -164,7 +164,7 @@ nix develop -c cargo fmt --check
 nix develop -c cargo test --workspace
 nix develop -c cargo clippy --workspace --all-targets -- -D warnings
 nix run path:$PWD#cairn -- validate --root .
-nix run path:$PWD#cairn -- tracey coverage --root .
+nix run path:$PWD#cairn -- traceability coverage --root .
 nix flake check "path:$PWD" -L
 ```
 
@@ -180,18 +180,18 @@ nix build "path:$PWD#checks.x86_64-linux.slotcar" --no-link -L
 
 Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix continues locally and the requested checks pass.
 
-## Tracey coverage rail
+## Traceability coverage rail
 
-- Tracey config lives at `.config/tracey/config.styx`.
 - Requirement markers in accepted specs use `r[...]`; implementation and test comments should use `r[impl ...]` and `r[verify ...]`.
-- Run `tracey query status`, `tracey query uncovered`, and `tracey query untested` from the repo root when curating coverage.
-- `cairn tracey coverage --root .` is the deterministic bootstrap rail used by `nix flake check`; it ensures every accepted requirement has at least one source-controlled implementation or verification reference without making Tracey a runtime dependency.
+- `cairn traceability coverage --root .` is the deterministic repo-owned rail used by `nix flake check`; it loads Nickel-authored scan profiles from generated policy and ensures every accepted requirement has at least one source-controlled implementation or verification reference.
+- `cairn tracey coverage --root .` remains a compatibility alias only. External `tracey query ...` commands are optional developer diagnostics and are not required by maintained gates, release-readiness evidence, or Nix checks.
+- Marker coverage does not prove behavioral correctness; cite executable tests, proofs, or stronger receipts for behavioral claims.
 
 ## Known pitfalls
 
 - Direct host `cargo` may be unavailable; use `nix develop -c ...`.
 - Nix flakes snapshot tracked/staged files. Stage new source/doc files before `nix flake check` if the check needs them.
-- `cairn sync <change> --execute` can report success without promoting a direct/full spec-shaped change body when the change spec lacks explicit delta headings. Before archive commit, search accepted specs for new `r[...]` IDs; if absent, manually append/merge the archived requirement text, rerun Cairn validation and Tracey coverage, then commit the repair with the archive.
+- `cairn sync <change> --execute` can report success without promoting a direct/full spec-shaped change body when the change spec lacks explicit delta headings. Before archive commit, search accepted specs for new `r[...]` IDs; if absent, manually append/merge the archived requirement text, rerun Cairn validation and traceability coverage, then commit the repair with the archive.
 - Historical archives and compatibility code may mention legacy lifecycle names; do not churn those unless the task is explicitly a migration/rename cleanup.
 - Slotcar Nix checks need a C compiler/linker; keep `pkgs.stdenv.cc` in check inputs.
 - The canonical repo at `/home/brittonr/git/cairn` has origin `onixresearch/cairn`; after verified slices, commit and push `main`.

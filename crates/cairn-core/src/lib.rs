@@ -6,6 +6,8 @@
 //! r[impl cairn.supersede.boundary.pure_core]
 //! r[impl cairn.supersede.migrate_openspec.boundary]
 //! r[impl cairn.supersede.tracey_coverage.boundary]
+//! r[impl cairn.supersede.traceability_ownership.authoritative_checker]
+//! r[impl cairn.supersede.traceability_ownership.configured_profiles]
 //! r[impl cairn.supersede.gate_policy.references]
 //! r[impl cairn.supersede.gate_policy.task_links]
 //! r[impl cairn.supersede.gate_policy.exemptions]
@@ -79,7 +81,7 @@ pub use verified::plan::{
 };
 pub use verified::policy::{
     parse_policy_json, validate_policy_json, Policy, PolicyError, SteelOrchestrationPolicy,
-    SteelOrchestrationProfile, SUPPORTED_POLICY_VERSION,
+    SteelOrchestrationProfile, TraceabilityPolicy, SUPPORTED_POLICY_VERSION,
 };
 pub use verified::probe::{
     all_probe_assertions_passed, evaluate_probe_assertions, probe_declaration_hash,
@@ -109,6 +111,15 @@ pub use verified::structured_lifecycle::{
     structured_lifecycle_bundle_hash, structured_lifecycle_issue_json,
     validate_structured_lifecycle_bundle, StructuredLifecycleIssue, StructuredLifecycleReport,
     STRUCTURED_LIFECYCLE_SCHEMA_V1,
+};
+pub use verified::traceability::{
+    classify_traceability_coverage, traceability_id_is_valid, traceability_ref_markers,
+    traceability_spec_marker, unique_sorted_strings, TraceabilityCoverageReport, TraceabilityFile,
+    TraceabilityProfile, TraceabilityReferenceMarker, TraceabilityReferenceOccurrence,
+    TraceabilityRequirementOccurrence, TraceabilitySource, TRACEABILITY_COVERAGE_VERBS,
+    TRACEABILITY_PROFILE_CAIRN_DEFAULT, TRACEABILITY_PROFILE_TRELLIS_RUST,
+    TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_RELATED,
+    TRACEABILITY_VERB_VERIFY,
 };
 pub use verified::validation::{
     change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, validate_changes,

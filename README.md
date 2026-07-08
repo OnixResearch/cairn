@@ -104,20 +104,22 @@ under `artifacts/`, which is ignored by git.
 
 ## Traceability
 
-Tracey configuration lives at `.config/tracey/config.styx` and scans accepted
-specs plus Rust/Nickel implementation references:
+Cairn owns the maintained requirement traceability gate:
 
 ```bash
-tracey query status
-tracey query uncovered
-tracey query untested
-cairn tracey coverage --root .
+cairn traceability coverage --root .
+cairn traceability coverage --root . --json
 ```
 
-The Nix `tracey-coverage` check runs the deterministic helper so every accepted
-`r[...]` requirement must have at least one `r[impl ...]` or `r[verify ...]`
-reference in source-controlled code. Tracey remains optional tooling and is not
-part of the `cairn` runtime.
+The command loads Nickel-authored traceability profiles from generated policy,
+scans accepted requirements plus configured evidence roots, and emits a
+BLAKE3-bound receipt with profile identity, counts, missing IDs, dangling IDs,
+input hash, policy hash, and receipt hash. `cairn tracey coverage --root .`
+remains a compatibility alias for existing scripts, but maintained CI gates and
+release-readiness evidence use `cairn traceability coverage` and do not require
+the external Tracey binary or daemon. External Tracey commands such as
+`tracey query status`, `tracey query uncovered`, and `tracey query untested` are
+optional developer diagnostics only.
 
 ## How Cairn uses EARS
 
@@ -198,9 +200,9 @@ receipts in CI before merge or release.
 
 ## Hardening verification artifacts
 
-Tracey links are necessary but not sufficient. A `r[verify ...]` marker says a
-requirement has a verification artifact; the artifact itself must carry the
-behavioral claim.
+Traceability links are necessary but not sufficient. A `r[verify ...]` marker
+says a requirement has a verification artifact; the artifact itself must carry
+the behavioral claim.
 
 A stronger verification artifact has:
 
@@ -228,9 +230,9 @@ and receipt hash B binds them
 ```
 
 That is useful because another operator or CI job can re-check the same inputs,
-policy, tool result, and receipt binding. It is still lossy: Tracey coverage does
-not prove the code satisfies a requirement, tests do not prove all cases, and a
-receipt hash does not prove the tool has no bugs. Stronger claims need stronger
+policy, tool result, and receipt binding. It is still lossy: traceability
+coverage does not prove the code satisfies a requirement, tests do not prove all
+cases, and a receipt hash does not prove the tool has no bugs. Stronger claims need stronger
 rails, such as property tests, model checking, or formal verification.
 
 ## Structured lifecycle and probes

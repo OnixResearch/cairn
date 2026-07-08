@@ -17,5 +17,6 @@ pub mod receipt_drift;
 pub mod repo;
 pub mod semantic_review;
 pub mod structured_lifecycle;
+pub mod traceability;
 pub mod validation;
 pub mod verification_role;

@@ -21,6 +21,7 @@ fn release_readiness_lists_replay_oracle_preflight() -> Result<(), Box<dyn Error
 
 #[test]
 fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.supersede.traceability_ownership.validation.gates]
     // r[verify cairn.supersede.release_readiness_bundle.schema]
     // r[verify cairn.supersede.release_readiness_bundle.local]
     // r[verify cairn.supersede.release_readiness_bundle.evidence]
@@ -42,7 +43,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "verdict",
             "checks",
             "cairn_validation_hash",
-            "tracey_coverage_hash",
+            "traceability_coverage_hash",
             "mcp_smoke_receipt_hash",
             "coverage_audit_valid",
             "coverage_audit_receipt_hash",
@@ -62,7 +63,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_eq!(receipt["verdict"], "pass");
     assert_hash_field(&receipt, "receipt_hash")?;
     assert_hash_field(&receipt, "cairn_validation_hash")?;
-    assert_hash_field(&receipt, "tracey_coverage_hash")?;
+    assert_hash_field(&receipt, "traceability_coverage_hash")?;
     assert_hash_field(&receipt, "mcp_smoke_receipt_hash")?;
     assert_hash_field(&receipt, "coverage_audit_receipt_hash")?;
     assert_hash_field(&receipt, "release_evidence_index_check_hash")?;
@@ -76,7 +77,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
         .map(|check| check["name"].as_str().unwrap_or_default())
         .collect::<Vec<_>>();
     assert!(check_names.contains(&"cairn_validate"));
-    assert!(check_names.contains(&"tracey_coverage"));
+    assert!(check_names.contains(&"traceability_coverage"));
     assert!(check_names.contains(&"mcp_agent_smoke"));
     assert!(check_names.contains(&"determinism_coverage_audit"));
     assert!(check_names.contains(&"release_evidence_index_freshness"));
@@ -98,7 +99,7 @@ fn release_readiness_bundle_is_reproducible() -> Result<(), Box<dyn Error>> {
         &[
             "receipt_hash",
             "cairn_validation_hash",
-            "tracey_coverage_hash",
+            "traceability_coverage_hash",
             "mcp_smoke_receipt_hash",
             "coverage_audit_receipt_hash",
             "release_evidence_index_check_hash",
@@ -253,13 +254,13 @@ fn release_readiness_bundle_reports_missing_evidence() -> Result<(), Box<dyn Err
         .iter()
         .filter(|check| check["passed"] == false)
         .collect::<Vec<_>>();
-    let has_tracey_failure = failed
+    let has_traceability_failure = failed
         .iter()
-        .any(|check| check["name"] == "tracey_coverage");
+        .any(|check| check["name"] == "traceability_coverage");
     let has_mcp_smoke_failure = failed
         .iter()
         .any(|check| check["name"] == "mcp_agent_smoke");
-    let is_missing_evidence_failure = has_tracey_failure || has_mcp_smoke_failure;
+    let is_missing_evidence_failure = has_traceability_failure || has_mcp_smoke_failure;
     assert!(
         is_missing_evidence_failure,
         "expected missing readiness evidence failure: {receipt}"

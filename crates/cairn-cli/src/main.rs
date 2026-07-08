@@ -41,7 +41,7 @@ use receipt_preserves_diff::run_receipt_preserves_diff;
 use receipt_verify_content_hash::run_receipt_verify_content_hash;
 use semantic_review::run_review;
 use support::{print_usage, usage_text};
-use tracey::run_tracey;
+use tracey::{run_traceability, run_tracey};
 
 fn main() {
     if let Err(err) = run() {
@@ -82,6 +82,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "policy" => run_policy(args.collect())?,
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "probe" => probe::run_probe(args.collect())?,
+        "traceability" => run_traceability(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
         "review" => run_review(args.collect())?,
         "steel-orchestration" => steel_orchestration::run_steel_orchestration(args.collect())?,

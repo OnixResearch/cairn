@@ -103,5 +103,5 @@ Receipts must not include credentials, raw host secrets, private provider payloa
 
 - It does not prove Steel is enabled by default.
 - It does not grant Steel ambient authority to mutate the repository or execute host effects.
-- It does not replace `validate`, `gate`, `sync`, `archive`, Tracey, policy export, or release-readiness implementations.
+- It does not replace `validate`, `gate`, `sync`, `archive`, Cairn-owned traceability coverage, policy export, or release-readiness implementations.
 - It does not make placeholder hashes production evidence; real promotion requires reviewed receipts for equivalence, fallback behavior, CI reproducibility, and operator diagnostics.

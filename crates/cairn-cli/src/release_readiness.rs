@@ -25,7 +25,7 @@ use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
     read_string_option, safe_relative_path, with_portable_content_hash_receipt,
 };
-use crate::tracey::{repository_gate_summary, tracey_coverage_receipt};
+use crate::tracey::{repository_gate_summary, traceability_coverage_receipt};
 
 pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let root = read_option(args.clone(), "--root", ".");
@@ -57,7 +57,9 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
     let validation = readiness_component("cairn_validate", || {
         cairn_validation_receipt(root.clone(), policy_path.clone())
     });
-    let tracey = readiness_component("tracey_coverage", || tracey_coverage_receipt(root.clone()));
+    let traceability = readiness_component("traceability_coverage", || {
+        traceability_coverage_receipt(root.clone(), policy_path.clone())
+    });
     let mcp_smoke =
         readiness_component("mcp_agent_smoke", || mcp_agent_smoke_receipt(root.clone()));
     let coverage_audit = readiness_component("determinism_coverage_audit", || {
@@ -77,7 +79,7 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
     let coverage_audit_valid = coverage_audit.check["passed"].clone();
     let mut checks = vec![
         validation.check,
-        tracey.check,
+        traceability.check,
         mcp_smoke.check,
         coverage_audit.check,
         release_evidence_index.check,
@@ -103,7 +105,7 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
             "verdict": if is_valid { "pass" } else { "fail" },
             "checks": checks,
             "cairn_validation_hash": validation.receipt_hash,
-            "tracey_coverage_hash": tracey.receipt_hash,
+            "traceability_coverage_hash": traceability.receipt_hash,
             "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
             "coverage_audit_valid": coverage_audit_valid,
             "coverage_audit_receipt_hash": coverage_audit.receipt_hash,
@@ -272,7 +274,7 @@ where
 fn component_source(name: &str) -> &'static str {
     match name {
         "cairn_validate" => "cairn validate --root <root>",
-        "tracey_coverage" => "cairn tracey coverage --root <root>",
+        "traceability_coverage" => "cairn traceability coverage --root <root>",
         "mcp_agent_smoke" => "cairn agent-receipt smoke-mcp --root <root>",
         "determinism_coverage_audit" => "cairn determinism coverage-audit --root <root>",
         "release_evidence_index_freshness" => {

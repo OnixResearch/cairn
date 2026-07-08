@@ -100,7 +100,7 @@ Before committing a dependency bump, run the Cairn rails for the active change:
 RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/.cargo-target/cairn-preserves \
   nix develop -c cargo run -p cairn-cli --bin cairn -- validate --root .
 RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/.cargo-target/cairn-preserves \
-  nix develop -c cargo run -p cairn-cli --bin cairn -- tracey coverage --root .
+  nix develop -c cargo run -p cairn-cli --bin cairn -- traceability coverage --root .
 git diff --check
 ```
 

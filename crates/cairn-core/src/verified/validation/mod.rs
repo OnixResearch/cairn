@@ -24,6 +24,7 @@ mod tests {
     use super::*;
     use crate::verified::policy::{
         ExemptionMarkerPolicy, Policy, ReceiptSchema, SteelOrchestrationPolicy, TaskMarker,
+        TraceabilityPolicy,
     };
     use crate::verified::repo::{ChangeStatus, SpecSource, TaskCounts};
 
@@ -92,6 +93,10 @@ mod tests {
             ],
             steel_orchestration_policy: SteelOrchestrationPolicy {
                 enabled: false,
+                profiles: Vec::new(),
+            },
+            traceability_policy: TraceabilityPolicy {
+                default_profile: "cairn-default".to_string(),
                 profiles: Vec::new(),
             },
             raw: json!({}),

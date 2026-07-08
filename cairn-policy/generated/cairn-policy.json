@@ -299,7 +299,7 @@
           "preserves_content_hash",
           "receipt_hash",
           "cairn_validation_hash",
-          "tracey_coverage_hash",
+          "traceability_coverage_hash",
           "mcp_smoke_receipt_hash",
           "coverage_audit_receipt_hash",
           "release_evidence_index_check_hash",
@@ -947,6 +947,7 @@
           "policy",
           "sync",
           "test-harness",
+          "traceability",
           "tracey",
           "validate"
         ],
@@ -1376,6 +1377,37 @@
         "root",
         "surface_count",
         "surface_inventory_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "traceability coverage",
+      "hash_fields": [
+        "input_hash",
+        "policy_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "dangling",
+        "input_hash",
+        "missing",
+        "policy",
+        "policy_hash",
+        "profile",
+        "profile_id",
+        "receipt_hash",
+        "referenced",
+        "requirements",
+        "root",
+        "source_summary",
         "valid",
         "verdict"
       ]
@@ -2330,6 +2362,87 @@
       "tasks"
     ],
     "strictness": "strict"
+  },
+  "traceability_policy": {
+    "default_profile": "cairn-default",
+    "profiles": [
+      {
+        "evidence_sources": [
+          {
+            "extensions": [
+              "rs"
+            ],
+            "root": "crates",
+            "source_kind": "rust_source"
+          },
+          {
+            "extensions": [
+              "ncl"
+            ],
+            "root": "crates",
+            "source_kind": "nickel_source"
+          },
+          {
+            "extensions": [
+              "rs",
+              "ncl"
+            ],
+            "root": "tools",
+            "source_kind": "tool_source"
+          }
+        ],
+        "id": "cairn-default",
+        "marker_verbs": [
+          "impl",
+          "verify",
+          "depends",
+          "related"
+        ],
+        "requirement_sources": [
+          {
+            "extensions": [
+              "md"
+            ],
+            "root": "cairn/specs",
+            "source_kind": "accepted_specs"
+          }
+        ]
+      },
+      {
+        "evidence_sources": [
+          {
+            "extensions": [
+              "rs"
+            ],
+            "root": "src",
+            "source_kind": "rust_source"
+          },
+          {
+            "extensions": [
+              "rs"
+            ],
+            "root": "tests",
+            "source_kind": "rust_source"
+          }
+        ],
+        "id": "trellis-rust",
+        "marker_verbs": [
+          "impl",
+          "verify",
+          "depends",
+          "related"
+        ],
+        "requirement_sources": [
+          {
+            "extensions": [
+              "md"
+            ],
+            "root": "docs/requirements.md",
+            "source_kind": "requirements_doc"
+          }
+        ]
+      }
+    ]
   },
   "version": 1
 }

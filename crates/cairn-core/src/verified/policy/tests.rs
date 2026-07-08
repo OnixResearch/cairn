@@ -5,6 +5,7 @@ use super::*;
 #[test]
 fn parses_generated_default_policy_text() {
     // r[verify developer_experience.core_policy_parser_boundary_split.behavior]
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles.cairn_default]
     let text = include_str!("../../../../../cairn-policy/generated/cairn-policy.json");
     let policy = parse_policy_json(text).expect("generated policy parses");
     assert_eq!(policy.name, "cairn-default");
@@ -37,6 +38,12 @@ fn parses_generated_default_policy_text() {
         policy.steel_orchestration_policy.profiles[0].mode,
         "disabled"
     );
+    assert_eq!(policy.traceability_policy.default_profile, "cairn-default");
+    assert!(policy
+        .traceability_policy
+        .profiles
+        .iter()
+        .any(|profile| profile.id == "trellis-rust"));
 }
 
 #[test]
@@ -49,6 +56,7 @@ fn policy_module_split_preserves_public_api_exports() {
     let _exemption_policy: Option<ExemptionMarkerPolicy> = None;
     let _steel_policy: Option<SteelOrchestrationPolicy> = None;
     let _steel_profile: Option<SteelOrchestrationProfile> = None;
+    let _traceability_policy: Option<TraceabilityPolicy> = None;
     assert_eq!(SUPPORTED_POLICY_VERSION, 1);
 }
 
@@ -86,6 +94,79 @@ fn rejects_unknown_steel_profile_mode() {
         validate_policy_json(value),
         Err(PolicyError::InvalidField(
             "steel_orchestration_policy.profiles.mode"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_empty_traceability_profile_id() {
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles]
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles.malformed]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["traceability_policy"]["profiles"][0]["id"] = Value::String(String::new());
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField("traceability_policy.profiles.id"))
+    ));
+}
+
+#[test]
+fn rejects_unsupported_traceability_marker_verb() {
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles]
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles.malformed]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["traceability_policy"]["profiles"][0]["marker_verbs"] =
+        serde_json::json!(["impl", "claims"]);
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "traceability_policy.profiles.marker_verbs"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_unsafe_traceability_source_path() {
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles]
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles.malformed]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["traceability_policy"]["profiles"][0]["requirement_sources"][0]["root"] =
+        Value::String("../requirements".to_string());
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "traceability_policy.profiles.sources.root"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_unsupported_traceability_source_kind() {
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles]
+    // r[verify cairn.supersede.traceability_ownership.configured_profiles.malformed]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["traceability_policy"]["profiles"][0]["evidence_sources"][0]["source_kind"] =
+        Value::String("ambient_source".to_string());
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "traceability_policy.profiles.sources.source_kind"
         ))
     ));
 }

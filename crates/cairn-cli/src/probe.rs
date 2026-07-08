@@ -50,6 +50,7 @@ const READ_ONLY_COMMANDS: &[&str] = &[
     "gate",
     "policy",
     "test-harness",
+    "traceability",
     "tracey",
     "validate",
 ];

@@ -159,14 +159,13 @@
           touch $out
         '';
 
-        tracey-coverage = pkgs.runCommand "cairn-tracey-coverage" {
+        tracey-coverage = pkgs.runCommand "cairn-traceability-coverage" {
           nativeBuildInputs = [ ];
         } ''
           cp -r ${self} source
           chmod -R u+w source
           cd source
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn tracey coverage --root .
-          test -f .config/tracey/config.styx
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn traceability coverage --root .
           touch $out
         '';
 
