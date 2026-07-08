@@ -20,6 +20,7 @@ use serde_json::Value;
 ///
 /// These mirror the c-earchin nine plus trellis-shaped predicates for the
 /// systems domains trellis covers.
+// r[impl cairn.ears_vocabulary.predicates]
 pub const VOCABULARY_PREDICATES: &[&str] = &[
     // c-earchin nine
     "is_non_negative",
@@ -42,6 +43,7 @@ pub const VOCABULARY_PREDICATES: &[&str] = &[
 ];
 
 /// The result of classifying an EARS requirement response against the vocabulary.
+// r[impl cairn.ears_vocabulary]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum VocabularyResolution {
     /// The response resolved to a vocabulary predicate.
@@ -51,6 +53,7 @@ pub enum VocabularyResolution {
 }
 
 /// A report summarizing vocabulary coverage across a set of EARS requirements.
+// r[impl cairn.ears_vocabulary.boundary]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EarsVocabularyReport {
     pub total: usize,
@@ -145,6 +148,7 @@ const RESPONSE_KEYWORD_MAP: &[(&str, &str)] = &[
 /// In strict mode, the report is invalid if any response is unresolved
 /// (recorded_only). In non-strict mode, unresolved responses are accepted but
 /// counted separately.
+// r[impl cairn.ears_vocabulary.strict]
 #[must_use]
 pub fn check_ears_vocabulary_coverage(
     resolutions: &[VocabularyResolution],
@@ -182,7 +186,10 @@ pub fn check_ears_vocabulary_coverage(
 mod tests {
     use super::*;
 
+    const EXPECTED_VOCABULARY_PREDICATE_COUNT: usize = 16;
+
     #[test]
+    // r[verify cairn.ears_vocabulary.non_negative]
     fn classifies_non_negative_response() {
         let result = classify_ears_response("produce non-negative call prices");
         assert!(
@@ -223,6 +230,7 @@ mod tests {
     }
 
     #[test]
+    // r[verify cairn.ears_vocabulary.unresolvable]
     fn classifies_unresolvable_response_as_recorded_only() {
         let result = classify_ears_response("make users happy");
         assert!(
@@ -239,6 +247,7 @@ mod tests {
     }
 
     #[test]
+    // r[verify cairn.ears_vocabulary.strict.fail]
     fn strict_mode_fails_on_unresolved() {
         let resolutions = vec![
             classify_ears_response("produce non-negative prices"),
@@ -252,6 +261,7 @@ mod tests {
     }
 
     #[test]
+    // r[verify cairn.ears_vocabulary.strict.pass]
     fn strict_mode_passes_when_all_resolved() {
         let resolutions = vec![
             classify_ears_response("produce non-negative prices"),
@@ -283,6 +293,7 @@ mod tests {
     }
 
     #[test]
+    // r[verify cairn.ears_vocabulary.boundary.present]
     fn report_includes_boundary_non_claim() {
         let report = check_ears_vocabulary_coverage(&[], false);
         assert!(
@@ -294,12 +305,16 @@ mod tests {
     }
 
     #[test]
+    // r[verify cairn.ears_vocabulary.predicates.stable]
     fn vocabulary_predicates_are_stable() {
         assert!(VOCABULARY_PREDICATES.contains(&"is_non_negative"));
         assert!(VOCABULARY_PREDICATES.contains(&"is_monotone_increasing"));
         assert!(VOCABULARY_PREDICATES.contains(&"preserves_invariant"));
         assert!(VOCABULARY_PREDICATES.contains(&"no_deadlock"));
         assert!(VOCABULARY_PREDICATES.contains(&"linearizable"));
-        assert_eq!(VOCABULARY_PREDICATES.len(), 16);
+        assert_eq!(
+            VOCABULARY_PREDICATES.len(),
+            EXPECTED_VOCABULARY_PREDICATE_COUNT
+        );
     }
 }

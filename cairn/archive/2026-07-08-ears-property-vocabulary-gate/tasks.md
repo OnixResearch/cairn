@@ -5,7 +5,8 @@
 
 ## Phase 2: Archive
 
-- [ ] [serial] r[cairn.ears_vocabulary] Verify and archive the change.
+- [x] [serial] r[cairn.ears_vocabulary] Verify and archive the change.
+  - Evidence 2026-07-08: synced `ears-vocabulary` accepted spec, added source traceability refs for all new IDs, and passed policy export check, `cargo fmt --check`, `cargo test --workspace`, `cargo clippy --workspace --all-targets -- -D warnings`, `cairn validate`, `cairn traceability coverage --root . --json`, `cairn release-readiness`, and Slotcar.
 
 ## Verification Coverage
 
