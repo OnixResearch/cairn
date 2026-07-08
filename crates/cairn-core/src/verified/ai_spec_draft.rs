@@ -468,6 +468,8 @@ mod tests {
     #[test]
     fn ai_drafted_kani_contract_with_passing_receipt_is_accepted_metadata() {
         // r[verify cairn.ai_spec_drafts.positive_fixtures]
+        // r[verify cairn.ai_spec_drafts.positive_fixtures.valid]
+        // r[verify cairn.ai_spec_drafts.acceptance_paths.machine]
         // r[verify cairn.ai_spec_drafts.not_verification.checked]
         let report = validate_ai_spec_draft(&machine_checked_draft());
 
@@ -483,6 +485,9 @@ mod tests {
     #[test]
     fn ai_drafted_spec_with_review_acceptance_is_accepted_metadata() {
         // r[verify cairn.ai_spec_drafts.positive_fixtures]
+        // r[verify cairn.ai_spec_drafts.positive_fixtures.valid]
+        // r[verify cairn.ai_spec_drafts.provenance.recorded]
+        // r[verify cairn.ai_spec_drafts.acceptance_paths.review]
         let report = validate_ai_spec_draft(&reviewed_spec_draft());
 
         assert!(report.valid, "{:?}", report.issues);
@@ -493,7 +498,9 @@ mod tests {
     #[test]
     fn ai_only_property_claim_fails_with_named_diagnostic() {
         // r[verify cairn.ai_spec_drafts.negative_fixtures]
+        // r[verify cairn.ai_spec_drafts.not_verification.ai_only]
         // r[verify cairn.ai_spec_drafts.gate_diagnostics]
+        // r[verify cairn.ai_spec_drafts.gate_diagnostics.named]
         let mut draft = machine_checked_draft();
         draft["acceptance_path"] = json!(ACCEPTANCE_PATH_AI_ONLY);
         draft["machine_receipt_status"] = Value::Null;
@@ -506,6 +513,8 @@ mod tests {
     #[test]
     fn missing_target_and_validation_status_fail_closed() {
         // r[verify cairn.ai_spec_drafts.negative_fixtures]
+        // r[verify cairn.ai_spec_drafts.negative_fixtures.status]
+        // r[verify cairn.ai_spec_drafts.provenance.target]
         let mut draft = machine_checked_draft();
         draft
             .as_object_mut()
@@ -523,6 +532,7 @@ mod tests {
     #[test]
     fn rejected_draft_reuse_fails_closed() {
         // r[verify cairn.ai_spec_drafts.negative_fixtures]
+        // r[verify cairn.ai_spec_drafts.negative_fixtures.rejected]
         let mut draft = reviewed_spec_draft();
         draft["draft_status"] = json!(DRAFT_STATUS_REJECTED);
         draft["cited_as_accepted"] = json!(true);
@@ -536,6 +546,7 @@ mod tests {
     fn docs_only_property_and_raw_prompt_storage_fail_closed() {
         // r[verify cairn.ai_spec_drafts.negative_fixtures]
         // r[verify cairn.ai_spec_drafts.operator_docs]
+        // r[verify cairn.ai_spec_drafts.operator_docs.visible]
         let mut draft = reviewed_spec_draft();
         draft["acceptance_path"] = json!(ACCEPTANCE_PATH_DOCS_ONLY);
         draft["evidence_role"] = json!(EVIDENCE_ROLE_PROPERTY);
