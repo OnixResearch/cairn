@@ -33,6 +33,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     // r[verify cairn.supersede.replay_environment_attestation.archive]
     // r[verify cairn.supersede.replay_receipt_verification.verification]
     // r[verify cairn.supersede.replay_receipt_verification.archive]
+    // r[verify cairn.verification_role.release_readiness]
+    // r[verify cairn.verification_role.release_readiness.boundary]
     let receipt = run_json(&["release-readiness", "--root", "."])?;
     assert_object_keys(
         &receipt,
@@ -86,6 +88,10 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert!(check_names.contains(&"repository_gate_policy_listed"));
     assert_eq!(receipt["mcp"]["read_only"], true);
     assert_eq!(receipt["mcp"]["destructive"], false);
+    assert!(receipt["verification_role_boundary"]
+        .as_str()
+        .ok_or("verification_role_boundary text")?
+        .contains("counts only property artifacts as verified"));
     Ok(())
 }
 

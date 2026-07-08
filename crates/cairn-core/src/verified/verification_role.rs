@@ -25,6 +25,7 @@ pub const ROLE_BOUNDARY: &str = "boundary";
 pub const VERIFICATION_ROLE_BOUNDARY: &str = "verification_role_summary counts only property artifacts as verified; recorded_only and boundary artifacts prove nothing";
 
 /// A classified verification role.
+// r[impl cairn.verification_role]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VerificationRole {
     Property,
@@ -68,6 +69,7 @@ impl VerificationRole {
 ///
 /// `verified_count` is always `property_count`. This is the field consumers
 /// should check; a `verified_count` of 0 means "nothing was verified."
+// r[impl cairn.verification_role.verified_count]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VerificationRoleSummary {
     pub property_count: usize,
@@ -144,6 +146,7 @@ mod tests {
     use super::*;
 
     #[test]
+    // r[verify cairn.verification_role.classify_known]
     fn classifies_known_roles() {
         assert_eq!(
             VerificationRole::classify("property"),
@@ -160,6 +163,7 @@ mod tests {
     }
 
     #[test]
+    // r[verify cairn.verification_role.classify_unknown]
     fn classifies_unknown_role_as_unknown() {
         assert_eq!(
             VerificationRole::classify("verified"),
@@ -173,6 +177,7 @@ mod tests {
     }
 
     #[test]
+    // r[verify cairn.verification_role.verified_count.property_only]
     fn only_property_is_verified() {
         assert!(VerificationRole::Property.is_verified());
         assert!(!VerificationRole::RecordedOnly.is_verified());
@@ -198,6 +203,7 @@ mod tests {
     }
 
     #[test]
+    // r[verify cairn.verification_role.verified_count.zero]
     fn summary_zero_verified_means_nothing_was_verified() {
         let summary =
             VerificationRoleSummary::from_roles(&["recorded_only", "recorded_only", "boundary"]);

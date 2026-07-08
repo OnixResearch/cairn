@@ -2,7 +2,9 @@ use std::{error::Error, fs};
 
 use serde_json::Value;
 
-use super::support::{assert_hash_field, run_json_strings, temp_project, EvidenceChain};
+use super::support::{
+    assert_hash_field, assert_object_keys, run_json_strings, temp_project, EvidenceChain,
+};
 
 pub(crate) fn materialize() -> Result<EvidenceChain, Box<dyn Error>> {
     // r[verify cairn.supersede.evidence_export_bundle.command]
@@ -51,6 +53,8 @@ pub(crate) fn materialize() -> Result<EvidenceChain, Box<dyn Error>> {
     // r[verify cairn.supersede.registry_manifest_binding.generate]
     // r[verify cairn.supersede.registry_manifest_binding.verify]
     // r[verify cairn.supersede.registry_manifest_binding.failure]
+    // r[verify cairn.verification_role.evidence_verify]
+    // r[verify cairn.verification_role.evidence_verify.summary]
     let dir = temp_project("evidence-export-bundle")?;
     let export_dir = dir.join("export");
     let receipt = run_json_strings(&[
@@ -139,6 +143,26 @@ pub(crate) fn materialize() -> Result<EvidenceChain, Box<dyn Error>> {
         receipt["manifest_verification_receipt_hash"]
     );
     assert_hash_field(&verification, "receipt_hash")?;
+    assert_object_keys(
+        &verification["verification_role_summary"],
+        &[
+            "boundary",
+            "boundary_count",
+            "property_count",
+            "recorded_only_count",
+            "total",
+            "unknown_count",
+            "verified_count",
+        ],
+    )?;
+    assert_eq!(
+        verification["verification_role_summary"]["total"],
+        roles.len()
+    );
+    assert_eq!(
+        verification["verification_role_summary"]["verified_count"],
+        verification["verification_role_summary"]["property_count"]
+    );
     let verification_text = serde_json::to_string(&verification)?;
     assert!(
         !verification_text.contains(&dir.display().to_string()),
