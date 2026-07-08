@@ -19,6 +19,10 @@ pub use verified::agent_receipt::{
     evaluate_agent_run_completion, positive_agent_run_fixture, AgentRunGateIssue,
     AgentRunGateReport, AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
 };
+pub use verified::ai_spec_draft::{
+    ai_spec_draft_hash, validate_ai_spec_draft, AiSpecDraftIssue, AiSpecDraftProvenance,
+    AiSpecDraftReport, AI_SPEC_DRAFT_SCHEMA_V1,
+};
 pub use verified::change_dependencies::{
     build_change_dependency_graph, change_dependency_issue_messages,
     dependency_blockers_for_change, ChangeDependencyEdge, ChangeDependencyGraph,
@@ -52,6 +56,11 @@ pub use verified::doctor::{
 pub use verified::evidence::{
     blake3_hex, canonical_json, canonical_json_hash, canonical_preserves_bytes,
     canonical_preserves_hash, preserves_content_hash,
+};
+pub use verified::kani_receipt::{
+    kani_receipt_hash, validate_kani_receipt, KaniReceiptIssue, KaniReceiptProfile,
+    KaniReceiptReport, KANI_NON_CLAIM_BOUNDED_ONLY, KANI_NON_CLAIM_FFI_STUB,
+    KANI_NON_CLAIM_VERIFIER_SOUNDNESS, KANI_NON_CLAIM_WHOLE_PROGRAM, KANI_RECEIPT_SCHEMA_V1,
 };
 pub use verified::lifecycle::{
     archive_dir, build_change_skeleton, build_change_skeleton_for, build_ironspec_migration_plan,

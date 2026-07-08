@@ -1,4 +1,5 @@
 pub mod agent_receipt;
+pub mod ai_spec_draft;
 pub mod change_dependencies;
 pub mod content_addressed;
 pub mod delta_merge;
@@ -6,6 +7,7 @@ pub mod developer_experience;
 pub mod doctor;
 pub mod ears_property_vocabulary;
 pub mod evidence;
+pub mod kani_receipt;
 pub mod lifecycle;
 pub mod lifecycle_orchestration;
 pub mod plan;

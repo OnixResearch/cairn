@@ -249,7 +249,9 @@ r[impl cairn.structured_lifecycle.format_strategy]
 Probe execution is explicit. Default `cairn gate proposal|design|tasks` commands
 read lifecycle artifacts, policy, declarations, and saved receipts; they do not
 run probe commands. CI should run probes first with `cairn probe run --out ...`,
-store the probe receipts, then run gates that verify the saved receipts. Inline
+store the probe receipts, then run gates that verify the saved receipts. Kani
+receipts follow the same saved-evidence boundary; see
+[`docs/kani-receipt-gates.md`](docs/kani-receipt-gates.md). Inline
 `--run-probes` is denied by default unless a later policy explicitly enables a
 bounded execution profile. Probe receipts store command identity, status class,
 stdout/stderr BLAKE3 hashes, fixture hashes, assertion results, lifecycle bundle
@@ -337,8 +339,11 @@ r[impl cairn.developer_experience.onboarding_template_catalog_expansion.docs]
 `scaffold change <name> --request <text>` turns explicit local request material
 into a gate-ready draft change package with proposal, design, tasks, and a delta
 spec. The command records an input hash, supports preview or `--execute`, and
-uses deterministic templates rather than built-in LLM/network inference. r[impl
-cairn.developer_experience.prompt_to_change_scaffold.docs]
+uses deterministic templates rather than built-in LLM/network inference. For
+AI-assisted lifecycle drafts, record only safe provenance metadata and require a
+separate accepted evidence path; see
+[`docs/ai-assisted-draft-provenance.md`](docs/ai-assisted-draft-provenance.md).
+r[impl cairn.developer_experience.prompt_to_change_scaffold.docs]
 
 `discover-specs --include <path>` is a read-only reverse-spec discovery rail for
 existing repositories. Includes may name explicit files or safe repository-relative
