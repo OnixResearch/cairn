@@ -20,7 +20,8 @@ use crate::evidence::{
     EvidenceRepublishOptions, EvidenceVerifyOptions,
 };
 use crate::support::{
-    path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
+    default_policy_path, path_string, print_json, read_option, read_string_option,
+    with_portable_content_hash_receipt,
 };
 
 use super::common::{
@@ -99,7 +100,10 @@ fn release_evidence_index_receipt(options: &ReleaseEvidenceIndexOptions) -> Valu
 
     let verify = evidence_verify_receipt(&EvidenceVerifyOptions {
         root: root.clone(),
+        policy: default_policy_path().into(),
         bundle: Some(export_dir.clone()),
+        stack_provenance: None,
+        stack_provenance_graph: None,
     });
     write_json_artifact(&verify_path, &verify, &mut issues, "evidence_verify");
     collect_invalid_receipt("evidence_verify", &verify, &mut issues);

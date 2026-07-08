@@ -109,6 +109,13 @@ let Contracts = import "contracts.ncl" in
     ],
   },
 
+  stack_provenance_gate = {
+    mode = "optional",
+    allowed_claim_scopes = ["stack_provenance.v1.lifecycle_policy_conformance"],
+    accepted_valence_policy_hashes = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],
+    required_boundary = "Cairn consumed Valence and Mantle stack provenance receipts for lifecycle/release policy conformance only; it did not prove source-code correctness, Valence verifier soundness, Mantle build correctness, or Trellis/Octet proof validity",
+  },
+
   structured_lifecycle = {
     preserves_receipt_source_map = {},
   },
@@ -229,10 +236,10 @@ let Contracts = import "contracts.ncl" in
     },
     {
       command = "evidence verify",
-      top_level_keys = ["artifacts", "bundle", "command", "export_receipt_hash", "issues", "manifest_hash", "manifest_verification_receipt_hash", "preserves_content_hash", "receipt_hash", "root", "valid", "verification_role_summary", "verdict"],
+      top_level_keys = ["artifacts", "bundle", "command", "export_receipt_hash", "issues", "manifest_hash", "manifest_verification_receipt_hash", "preserves_content_hash", "receipt_hash", "root", "stack_provenance", "stack_provenance_hash", "valid", "verification_role_summary", "verdict"],
       artifact_keys = ["hash", "path", "required", "role", "verification_role"],
       issue_keys = ["actual", "code", "expected", "field_path"],
-      hash_fields = ["export_receipt_hash", "manifest_hash", "manifest_verification_receipt_hash", "preserves_content_hash", "receipt_hash"],
+      hash_fields = ["export_receipt_hash", "manifest_hash", "manifest_verification_receipt_hash", "preserves_content_hash", "receipt_hash", "stack_provenance_hash"],
     },
     {
       command = "evidence import",
@@ -404,7 +411,7 @@ let Contracts = import "contracts.ncl" in
       { id = "mcp_describe", command_kind = "mcp_describe", args = ["mcp", "--describe"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = [], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "mcp_status", command_kind = "mcp_call", args = ["mcp", "--call", "cairn_status", "{root:<root>}"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["content.root"], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "migrate_dry_run", command_kind = "migrate_dry_run", args = ["migrate", "openspec", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.source", "actions.destination", "root"], hash_fields = ["source_manifest_hash", "destination_manifest_hash", "manifest_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
-      { id = "release_readiness", command_kind = "release_readiness", args = ["release-readiness", "--root", "<root>"], fixture_root = ".", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["root"], hash_fields = ["preserves_content_hash", "receipt_hash", "cairn_validation_hash", "traceability_coverage_hash", "mcp_smoke_receipt_hash", "coverage_audit_receipt_hash", "release_evidence_index_check_hash", "preserves_corpus_freshness_hash", "semantic_review_ledger_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "release_readiness", command_kind = "release_readiness", args = ["release-readiness", "--root", "<root>"], fixture_root = ".", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["root"], hash_fields = ["preserves_content_hash", "receipt_hash", "cairn_validation_hash", "traceability_coverage_hash", "mcp_smoke_receipt_hash", "coverage_audit_receipt_hash", "release_evidence_index_check_hash", "preserves_corpus_freshness_hash", "semantic_review_ledger_hash", "stack_provenance_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "status", command_kind = "status", args = ["status", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root", "specs", "changes"], hash_fields = [], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "sync_dry_run", command_kind = "sync_dry_run", args = ["sync", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.path", "delta_specs"], hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "validate", command_kind = "validate", args = ["validate", "--root", "<root>"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["root"], hash_fields = ["receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },

@@ -1,6 +1,7 @@
 mod error;
 mod fields;
 mod parser;
+mod stack_provenance;
 mod steel;
 mod traceability;
 mod types;

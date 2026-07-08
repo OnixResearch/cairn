@@ -44,7 +44,10 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
     let mut issues = Vec::new();
     let verify_options = EvidenceVerifyOptions {
         root: root.clone(),
+        policy: default_policy_path().into(),
         bundle: Some(bundle_dir.clone()),
+        stack_provenance: None,
+        stack_provenance_graph: None,
     };
     let verify_receipt = evidence_verify_receipt(&verify_options);
     let verification_receipt_hash = verify_receipt

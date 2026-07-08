@@ -44,6 +44,11 @@ fn parses_generated_default_policy_text() {
         .profiles
         .iter()
         .any(|profile| profile.id == "trellis-rust"));
+    assert_eq!(policy.stack_provenance_policy.mode, "optional");
+    assert!(policy
+        .stack_provenance_policy
+        .allowed_claim_scopes
+        .contains(&"stack_provenance.v1.lifecycle_policy_conformance".to_string()));
 }
 
 #[test]
@@ -57,6 +62,8 @@ fn policy_module_split_preserves_public_api_exports() {
     let _steel_policy: Option<SteelOrchestrationPolicy> = None;
     let _steel_profile: Option<SteelOrchestrationProfile> = None;
     let _traceability_policy: Option<TraceabilityPolicy> = None;
+    let _stack_provenance_policy: Option<crate::verified::stack_provenance::StackProvenancePolicy> =
+        None;
     assert_eq!(SUPPORTED_POLICY_VERSION, 1);
 }
 
@@ -167,6 +174,39 @@ fn rejects_unsupported_traceability_source_kind() {
         validate_policy_json(value),
         Err(PolicyError::InvalidField(
             "traceability_policy.profiles.sources.source_kind"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_unknown_stack_provenance_mode() {
+    // r[verify cairn.stack_provenance_gates.policy]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["stack_provenance_gate"]["mode"] = Value::String("ambient".to_string());
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField("stack_provenance_gate.mode"))
+    ));
+}
+
+#[test]
+fn rejects_stale_stack_provenance_policy_hash_shape() {
+    // r[verify cairn.stack_provenance_gates.policy]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["stack_provenance_gate"]["accepted_valence_policy_hashes"] =
+        serde_json::json!(["not-a-hash"]);
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "stack_provenance_gate.accepted_valence_policy_hashes"
         ))
     ));
 }

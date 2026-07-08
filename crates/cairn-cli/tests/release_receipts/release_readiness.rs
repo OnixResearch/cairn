@@ -1,5 +1,6 @@
 use super::support::*;
-use std::{error::Error, fs};
+use serde_json::{json, Value};
+use std::{error::Error, fs, path::PathBuf};
 
 #[test]
 fn release_readiness_lists_replay_oracle_preflight() -> Result<(), Box<dyn Error>> {
@@ -52,6 +53,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "release_evidence_index_check_hash",
             "preserves_corpus_freshness_hash",
             "semantic_review_ledger_hash",
+            "stack_provenance_hash",
+            "stack_provenance",
             "repository_gate_summary",
             "determinism_replay",
             "mcp",
@@ -71,6 +74,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_hash_field(&receipt, "release_evidence_index_check_hash")?;
     assert_hash_field(&receipt, "preserves_corpus_freshness_hash")?;
     assert_hash_field(&receipt, "semantic_review_ledger_hash")?;
+    assert_hash_field(&receipt, "stack_provenance_hash")?;
     assert_eq!(receipt["coverage_audit_valid"], true);
     let check_names = receipt["checks"]
         .as_array()
@@ -85,9 +89,14 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert!(check_names.contains(&"release_evidence_index_freshness"));
     assert!(check_names.contains(&"preserves_corpus_freshness"));
     assert!(check_names.contains(&"semantic_review_ledger"));
+    assert!(check_names.contains(&"stack_provenance"));
     assert!(check_names.contains(&"repository_gate_policy_listed"));
     assert_eq!(receipt["mcp"]["read_only"], true);
     assert_eq!(receipt["mcp"]["destructive"], false);
+    assert_eq!(receipt["stack_provenance"]["mode"], "optional");
+    assert_eq!(receipt["stack_provenance"]["disposition"], "absent");
+    assert_eq!(receipt["stack_provenance"]["passed"], true);
+    assert_eq!(receipt["stack_provenance"]["skipped"], true);
     assert!(receipt["verification_role_boundary"]
         .as_str()
         .ok_or("verification_role_boundary text")?
@@ -111,10 +120,82 @@ fn release_readiness_bundle_is_reproducible() -> Result<(), Box<dyn Error>> {
             "release_evidence_index_check_hash",
             "preserves_corpus_freshness_hash",
             "semantic_review_ledger_hash",
+            "stack_provenance_hash",
         ],
     )?;
     assert_eq!(receipt["valid"], true);
     assert_eq!(receipt["verdict"], "pass");
+    Ok(())
+}
+
+fn stack_policy_path(name: &str, mode: &str) -> Result<PathBuf, Box<dyn Error>> {
+    let path = temp_project(name)?.join("policy.json");
+    let mut policy = policy_json()?;
+    policy["stack_provenance_gate"]["mode"] = json!(mode);
+    fs::write(&path, serde_json::to_vec_pretty(&policy)?)?;
+    Ok(path)
+}
+
+fn stack_fixture(name: &str) -> String {
+    repo_root()
+        .join("fixtures/stack-provenance")
+        .join(name)
+        .display()
+        .to_string()
+}
+
+fn stack_issue_codes(receipt: &Value) -> Vec<String> {
+    receipt["stack_provenance"]["issues"]
+        .as_array()
+        .map(|issues| {
+            issues
+                .iter()
+                .filter_map(|issue| issue["code"].as_str().map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+#[test]
+fn release_readiness_accepts_required_stack_provenance_fixture() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.stack_provenance_gates.policy]
+    // r[verify cairn.stack_provenance_gates.receipt_validation.complete]
+    // r[verify cairn.stack_provenance_gates.graph_summary.included]
+    let policy = stack_policy_path("stack-provenance-required", "required")?;
+    let receipt = run_json_strings(&[
+        "release-readiness".into(),
+        "--root".into(),
+        ".".into(),
+        "--policy".into(),
+        policy.display().to_string(),
+        "--stack-provenance".into(),
+        stack_fixture("positive/required-complete.json"),
+        "--stack-provenance-graph".into(),
+        stack_fixture("positive/graph-summary.json"),
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["stack_provenance"]["passed"], true);
+    assert_eq!(receipt["stack_provenance"]["disposition"], "present");
+    assert_hash_field(&receipt, "stack_provenance_hash")?;
+    assert_hash_field(&receipt["stack_provenance"], "valence_receipt_hash")?;
+    assert_hash_field(&receipt["stack_provenance"]["graph_summary"], "report_hash")?;
+    Ok(())
+}
+
+#[test]
+fn release_readiness_fails_required_missing_stack_provenance() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.stack_provenance_gates.policy.required_missing]
+    let policy = stack_policy_path("stack-provenance-required-missing", "required")?;
+    let receipt = run_json_strings(&[
+        "release-readiness".into(),
+        "--root".into(),
+        ".".into(),
+        "--policy".into(),
+        policy.display().to_string(),
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert!(stack_issue_codes(&receipt)
+        .contains(&"stack_provenance.valence_receipt_missing".to_string()));
     Ok(())
 }
 

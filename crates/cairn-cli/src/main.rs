@@ -21,6 +21,7 @@ mod release_evidence;
 mod release_readiness;
 mod rename_classification;
 mod semantic_review;
+mod stack_provenance;
 mod steel_orchestration;
 mod support;
 mod test_harness;

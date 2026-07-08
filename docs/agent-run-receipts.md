@@ -78,11 +78,16 @@ nix run .#cairn -- evidence verify --root . --bundle target/cairn-evidence/
 
 The verify command locates `evidence-export-receipt.json`, rehashes declared
 relative artifact paths, rejects unsafe or missing paths, checks canonical roles,
-re-runs the replay, bundle, and manifest receipt validators, and emits a
-path-safe receipt with `export_receipt_hash`, `manifest_hash`,
+re-runs the replay, bundle, manifest, and optional stack-provenance receipt
+validators, and emits a path-safe receipt with `export_receipt_hash`,
+`manifest_hash`, optional `stack_provenance_hash`,
 `manifest_verification_receipt_hash`, per-artifact hashes, deterministic issue
-codes, and its own `receipt_hash`. Consumers that need a safe local evidence copy
-can import only declared artifacts after verification:
+codes, and its own `receipt_hash`. Stack-provenance verification is a Cairn
+release/lifecycle policy-conformance check over supplied Valence/Mantle evidence;
+it does not prove source-code correctness, Valence verifier soundness, Mantle
+build correctness, or Trellis/Octet proof validity. r[verify cairn.stack_provenance_gates.boundary.visible]
+Consumers that need a safe local evidence copy can import only declared artifacts
+after verification:
 
 ```sh
 nix run .#cairn -- evidence import --root . --bundle target/cairn-evidence/ --into target/cairn-imported-evidence/

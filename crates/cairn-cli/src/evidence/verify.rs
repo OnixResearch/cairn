@@ -2,7 +2,21 @@ use super::*;
 
 pub(crate) struct EvidenceVerifyOptions {
     pub(crate) root: PathBuf,
+    pub(crate) policy: PathBuf,
     pub(crate) bundle: Option<PathBuf>,
+    pub(crate) stack_provenance: Option<PathBuf>,
+    pub(crate) stack_provenance_graph: Option<PathBuf>,
+}
+
+struct EvidenceVerifyFinalReceiptParts {
+    issues: Vec<Value>,
+    artifacts: Vec<Value>,
+    export_receipt_hash: Value,
+    manifest_hash: Value,
+    manifest_verification_receipt_hash: Value,
+    stack_provenance: Value,
+    stack_provenance_hash: Value,
+    verification_role_summary: Value,
 }
 
 pub(super) fn run_evidence_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -24,11 +38,21 @@ pub(super) fn run_evidence_verify(args: Vec<String>) -> Result<(), Box<dyn Error
 
 fn evidence_verify_options(args: &[String]) -> Result<EvidenceVerifyOptions, Box<dyn Error>> {
     let root = read_option(args.to_vec(), "--root", ".");
+    let policy = read_option(args.to_vec(), "--policy", default_policy_path());
     let bundle = read_string_option(args, "--bundle").map(PathBuf::from);
+    let stack_provenance = read_string_option(args, "--stack-provenance").map(PathBuf::from);
+    let stack_provenance_graph =
+        read_string_option(args, "--stack-provenance-graph").map(PathBuf::from);
     if bundle.is_none() {
         return Err("evidence verify requires --bundle <dir>".into());
     }
-    Ok(EvidenceVerifyOptions { root, bundle })
+    Ok(EvidenceVerifyOptions {
+        root,
+        policy,
+        bundle,
+        stack_provenance,
+        stack_provenance_graph,
+    })
 }
 
 pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value {
@@ -47,20 +71,36 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
             ));
             return evidence_verify_final_receipt(
                 &root,
-                issues,
-                Vec::new(),
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                serde_json::json!({
-                    "property_count": 0,
-                    "recorded_only_count": 0,
-                    "boundary_count": 0,
-                    "unknown_count": 0,
-                    "total": 0,
-                    "verified_count": 0,
-                    "boundary": cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY,
-                }),
+                EvidenceVerifyFinalReceiptParts {
+                    issues,
+                    artifacts: Vec::new(),
+                    export_receipt_hash: Value::Null,
+                    manifest_hash: Value::Null,
+                    manifest_verification_receipt_hash: Value::Null,
+                    stack_provenance: serde_json::json!({
+                        "name": "stack_provenance",
+                        "mode": "unknown",
+                        "required": false,
+                        "passed": true,
+                        "skipped": true,
+                        "disposition": "not-evaluated",
+                        "issues": [],
+                        "valence_receipt_hash": null,
+                        "claim_scope": null,
+                        "graph_summary": null,
+                        "boundary": cairn_core::verified::stack_provenance::STACK_PROVENANCE_BOUNDARY,
+                    }),
+                    stack_provenance_hash: Value::Null,
+                    verification_role_summary: serde_json::json!({
+                        "property_count": 0,
+                        "recorded_only_count": 0,
+                        "boundary_count": 0,
+                        "unknown_count": 0,
+                        "total": 0,
+                        "verified_count": 0,
+                        "boundary": cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY,
+                    }),
+                },
             );
         }
     };
@@ -221,6 +261,20 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
         ));
     }
 
+    let stack_provenance = crate::stack_provenance::stack_provenance_receipt_value(
+        options.policy.clone(),
+        options.stack_provenance.clone(),
+        options.stack_provenance_graph.clone(),
+    );
+    if stack_provenance.get("passed").and_then(Value::as_bool) != Some(true) {
+        issues.push(evidence_verify_issue(
+            "evidence_verify.stack_provenance_invalid",
+            "stack_provenance",
+            "passing stack provenance contribution",
+            "invalid",
+        ));
+    }
+    let stack_provenance_hash = crate::stack_provenance::stack_provenance_hash(&stack_provenance);
     let verification_role_summary = VerificationRoleSummary::from_artifacts(&verified_artifacts);
     let manifest_hash = export_receipt
         .get("manifest_hash")
@@ -232,12 +286,16 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
         .unwrap_or(Value::Null);
     evidence_verify_final_receipt(
         &root,
-        issues,
-        verified_artifacts,
-        computed_export_hash,
-        manifest_hash,
-        manifest_verification_receipt_hash,
-        verification_role_summary.to_json(),
+        EvidenceVerifyFinalReceiptParts {
+            issues,
+            artifacts: verified_artifacts,
+            export_receipt_hash: computed_export_hash,
+            manifest_hash,
+            manifest_verification_receipt_hash,
+            stack_provenance,
+            stack_provenance_hash: json!(stack_provenance_hash),
+            verification_role_summary: verification_role_summary.to_json(),
+        },
     )
 }
 
@@ -290,24 +348,16 @@ fn evidence_verify_issue(code: &str, field_path: &str, expected: &str, actual: &
     })
 }
 
-fn evidence_verify_final_receipt(
-    root: &Path,
-    mut issues: Vec<Value>,
-    mut artifacts: Vec<Value>,
-    export_receipt_hash: Value,
-    manifest_hash: Value,
-    manifest_verification_receipt_hash: Value,
-    verification_role_summary: Value,
-) -> Value {
-    issues.sort_by_key(canonical_json_hash);
-    artifacts.sort_by_key(|artifact| {
+fn evidence_verify_final_receipt(root: &Path, mut parts: EvidenceVerifyFinalReceiptParts) -> Value {
+    parts.issues.sort_by_key(canonical_json_hash);
+    parts.artifacts.sort_by_key(|artifact| {
         artifact
             .get("role")
             .and_then(Value::as_str)
             .unwrap_or("")
             .to_string()
     });
-    let valid = issues.is_empty();
+    let valid = parts.issues.is_empty();
     with_portable_content_hash_receipt(
         root,
         json!({
@@ -316,12 +366,14 @@ fn evidence_verify_final_receipt(
             "bundle": "<bundle>",
             "valid": valid,
             "verdict": if valid { "pass" } else { "fail" },
-            "issues": issues,
-            "artifacts": artifacts,
-            "export_receipt_hash": export_receipt_hash,
-            "manifest_hash": manifest_hash,
-            "manifest_verification_receipt_hash": manifest_verification_receipt_hash,
-            "verification_role_summary": verification_role_summary,
+            "issues": parts.issues,
+            "artifacts": parts.artifacts,
+            "export_receipt_hash": parts.export_receipt_hash,
+            "manifest_hash": parts.manifest_hash,
+            "manifest_verification_receipt_hash": parts.manifest_verification_receipt_hash,
+            "stack_provenance": parts.stack_provenance,
+            "stack_provenance_hash": parts.stack_provenance_hash,
+            "verification_role_summary": parts.verification_role_summary,
         }),
     )
 }

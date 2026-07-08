@@ -3,7 +3,7 @@ use std::{error::Error, fs};
 use serde_json::Value;
 
 use super::support::{
-    assert_hash_field, assert_object_keys, run_json_strings, temp_project, EvidenceChain,
+    assert_hash_field, assert_object_keys, repo_root, run_json_strings, temp_project, EvidenceChain,
 };
 
 pub(crate) fn materialize() -> Result<EvidenceChain, Box<dyn Error>> {
@@ -168,6 +168,32 @@ pub(crate) fn materialize() -> Result<EvidenceChain, Box<dyn Error>> {
         !verification_text.contains(&dir.display().to_string()),
         "{verification_text}"
     );
+
+    let stack_verification = run_json_strings(&[
+        "evidence".into(),
+        "verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--bundle".into(),
+        export_dir.display().to_string(),
+        "--stack-provenance".into(),
+        repo_root()
+            .join("fixtures/stack-provenance/positive/required-complete.json")
+            .display()
+            .to_string(),
+        "--stack-provenance-graph".into(),
+        repo_root()
+            .join("fixtures/stack-provenance/positive/graph-summary.json")
+            .display()
+            .to_string(),
+    ])?;
+    assert_eq!(stack_verification["valid"], true);
+    assert_eq!(stack_verification["stack_provenance"]["passed"], true);
+    assert_hash_field(&stack_verification, "stack_provenance_hash")?;
+    assert_hash_field(
+        &stack_verification["stack_provenance"]["graph_summary"],
+        "report_hash",
+    )?;
 
     let import_dir = dir.join("imported");
     let import = run_json_strings(&[

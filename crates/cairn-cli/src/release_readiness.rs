@@ -21,6 +21,7 @@ use crate::mcp::mcp_agent_smoke_receipt;
 use crate::native::cairn_validation_receipt;
 use crate::preserves_corpus::preserves_corpus_freshness_receipt;
 use crate::release_evidence::release_evidence_check_index_receipt_for_path;
+use crate::stack_provenance::{stack_provenance_hash, stack_provenance_receipt_value};
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
     read_string_option, safe_relative_path, with_portable_content_hash_receipt,
@@ -31,10 +32,15 @@ pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Err
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let review_ledger = read_string_option(&args, "--review-ledger").map(PathBuf::from);
-    print_json(release_readiness_receipt_with_review_ledger(
+    let stack_provenance = read_string_option(&args, "--stack-provenance").map(PathBuf::from);
+    let stack_provenance_graph =
+        read_string_option(&args, "--stack-provenance-graph").map(PathBuf::from);
+    print_json(release_readiness_receipt_with_review_ledger_and_stack(
         root,
         policy_path,
         review_ledger,
+        stack_provenance,
+        stack_provenance_graph,
     ))
 }
 
@@ -47,6 +53,22 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
     root: PathBuf,
     policy_path: PathBuf,
     review_ledger: Option<PathBuf>,
+) -> Value {
+    release_readiness_receipt_with_review_ledger_and_stack(
+        root,
+        policy_path,
+        review_ledger,
+        None,
+        None,
+    )
+}
+
+fn release_readiness_receipt_with_review_ledger_and_stack(
+    root: PathBuf,
+    policy_path: PathBuf,
+    review_ledger: Option<PathBuf>,
+    stack_provenance: Option<PathBuf>,
+    stack_provenance_graph: Option<PathBuf>,
 ) -> Value {
     // r[impl cairn.supersede.release_readiness_bundle]
     // r[impl cairn.supersede.release_readiness_bundle.schema]
@@ -69,6 +91,11 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
     let release_evidence_index = conventional_release_evidence_index_component(root.clone());
     let preserves_corpus = preserves_corpus_component(root.clone());
     let semantic_review_ledger = semantic_review_ledger_component(root.clone(), review_ledger);
+    let stack_provenance = stack_provenance_component(
+        policy_path.clone(),
+        stack_provenance,
+        stack_provenance_graph,
+    );
     let repository_gate_summary = repository_gate_summary();
     let replay_preflight = json!({
         "command": "determinism replay --root <root>",
@@ -85,6 +112,7 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
         release_evidence_index.check,
         preserves_corpus.check,
         semantic_review_ledger.check,
+        stack_provenance.check,
     ];
     checks.push(json!({
         "name": "repository_gate_policy_listed",
@@ -112,12 +140,38 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
             "release_evidence_index_check_hash": release_evidence_index.receipt_hash,
             "preserves_corpus_freshness_hash": preserves_corpus.receipt_hash,
             "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
+            "stack_provenance_hash": stack_provenance.receipt_hash,
+            "stack_provenance": stack_provenance.value,
             "repository_gate_summary": repository_gate_summary,
             "determinism_replay": replay_preflight,
             "mcp": {"read_only": true, "destructive": false},
             "verification_role_boundary": VERIFICATION_ROLE_BOUNDARY,
         }),
     )
+}
+
+fn stack_provenance_component(
+    policy_path: PathBuf,
+    receipt_path: Option<PathBuf>,
+    graph_path: Option<PathBuf>,
+) -> StackProvenanceComponent {
+    let value = stack_provenance_receipt_value(policy_path, receipt_path, graph_path);
+    let receipt_hash = stack_provenance_hash(&value);
+    let mut check = json!({
+        "name": "stack_provenance",
+        "passed": value["passed"].as_bool().unwrap_or(false),
+        "source": component_source("stack_provenance"),
+        "receipt_hash": receipt_hash,
+        "disposition": value["disposition"].clone(),
+    });
+    if value["skipped"].as_bool() == Some(true) {
+        check["skipped"] = Value::Bool(true);
+    }
+    StackProvenanceComponent {
+        check,
+        receipt_hash,
+        value,
+    }
 }
 
 fn preserves_corpus_component(root: PathBuf) -> ReadinessComponent {
@@ -236,6 +290,12 @@ struct ReadinessComponent {
     receipt_hash: String,
 }
 
+struct StackProvenanceComponent {
+    check: Value,
+    receipt_hash: String,
+    value: Value,
+}
+
 fn readiness_component<F>(name: &str, operation: F) -> ReadinessComponent
 where
     F: FnOnce() -> Result<Value, Box<dyn Error>>,
@@ -285,6 +345,9 @@ fn component_source(name: &str) -> &'static str {
         }
         "semantic_review_ledger" => {
             "cairn release-readiness --root <root> --review-ledger <review-ledger.json>"
+        }
+        "stack_provenance" => {
+            "cairn release-readiness --root <root> --stack-provenance <valence-receipt.json> --stack-provenance-graph <graph-summary.json>"
         }
         _ => "unknown",
     }

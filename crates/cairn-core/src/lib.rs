@@ -107,6 +107,12 @@ pub use verified::semantic_review::{
     REVIEW_METRICS_REGRESSION_SCHEMA_V1, REVIEW_RECEIPT_SCHEMA_V1, REVIEW_SEVERITIES,
     REVIEW_SOURCES, REVISION_DISPOSITIONS, REVISION_HANDOFF_SCHEMA_V1,
 };
+pub use verified::stack_provenance::{
+    evaluate_stack_provenance, is_blake3_hex, is_stack_provenance_mode, StackProvenanceEvidence,
+    StackProvenanceIssue, StackProvenancePolicy, StackProvenanceReadiness,
+    STACK_PROVENANCE_BOUNDARY, STACK_PROVENANCE_CLAIM_SCOPE_LIFECYCLE,
+    STACK_PROVENANCE_MODE_DISABLED, STACK_PROVENANCE_MODE_OPTIONAL, STACK_PROVENANCE_MODE_REQUIRED,
+};
 pub use verified::structured_lifecycle::{
     structured_lifecycle_bundle_hash, structured_lifecycle_issue_json,
     validate_structured_lifecycle_bundle, StructuredLifecycleIssue, StructuredLifecycleReport,

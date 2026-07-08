@@ -5,6 +5,7 @@ use super::{
         change_metadata_fields, exemption_marker_policy, gate_fields, mutation_policy_fields,
         receipt_schemas, require_nonempty_array, task_marker_fields, task_markers, version_field,
     },
+    stack_provenance::stack_provenance_policy,
     steel::steel_orchestration_policy,
     traceability::traceability_policy,
     Policy, PolicyError,
@@ -39,6 +40,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
     let change_metadata = change_metadata_fields(&value)?;
     let steel_orchestration_policy = steel_orchestration_policy(&value)?;
     let traceability_policy = traceability_policy(&value)?;
+    let stack_provenance_policy = stack_provenance_policy(&value)?;
 
     Ok(Policy {
         name,
@@ -61,6 +63,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         change_metadata_statuses: change_metadata.statuses,
         steel_orchestration_policy,
         traceability_policy,
+        stack_provenance_policy,
         raw: value,
     })
 }

@@ -304,7 +304,8 @@
           "coverage_audit_receipt_hash",
           "release_evidence_index_check_hash",
           "preserves_corpus_freshness_hash",
-          "semantic_review_ledger_hash"
+          "semantic_review_ledger_hash",
+          "stack_provenance_hash"
         ],
         "id": "release_readiness",
         "normalization_rules": [
@@ -1671,7 +1672,8 @@
         "manifest_hash",
         "manifest_verification_receipt_hash",
         "preserves_content_hash",
-        "receipt_hash"
+        "receipt_hash",
+        "stack_provenance_hash"
       ],
       "issue_keys": [
         "actual",
@@ -1692,6 +1694,8 @@
         "preserves_content_hash",
         "receipt_hash",
         "root",
+        "stack_provenance",
+        "stack_provenance_hash",
         "valid",
         "verification_role_summary",
         "verdict"
@@ -2310,6 +2314,16 @@
       "id": "spec-driven"
     }
   ],
+  "stack_provenance_gate": {
+    "accepted_valence_policy_hashes": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "allowed_claim_scopes": [
+      "stack_provenance.v1.lifecycle_policy_conformance"
+    ],
+    "mode": "optional",
+    "required_boundary": "Cairn consumed Valence and Mantle stack provenance receipts for lifecycle/release policy conformance only; it did not prove source-code correctness, Valence verifier soundness, Mantle build correctness, or Trellis/Octet proof validity"
+  },
   "steel_orchestration_policy": {
     "enabled": false,
     "profiles": [

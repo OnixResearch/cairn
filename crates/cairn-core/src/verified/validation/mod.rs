@@ -27,6 +27,10 @@ mod tests {
         TraceabilityPolicy,
     };
     use crate::verified::repo::{ChangeStatus, SpecSource, TaskCounts};
+    use crate::verified::stack_provenance::{
+        StackProvenancePolicy, STACK_PROVENANCE_BOUNDARY, STACK_PROVENANCE_CLAIM_SCOPE_LIFECYCLE,
+        STACK_PROVENANCE_MODE_DISABLED,
+    };
 
     fn policy(enabled: bool, strictness: &str) -> Policy {
         Policy {
@@ -98,6 +102,12 @@ mod tests {
             traceability_policy: TraceabilityPolicy {
                 default_profile: "cairn-default".to_string(),
                 profiles: Vec::new(),
+            },
+            stack_provenance_policy: StackProvenancePolicy {
+                mode: STACK_PROVENANCE_MODE_DISABLED.to_string(),
+                allowed_claim_scopes: vec![STACK_PROVENANCE_CLAIM_SCOPE_LIFECYCLE.to_string()],
+                accepted_valence_policy_hashes: Vec::new(),
+                required_boundary: STACK_PROVENANCE_BOUNDARY.to_string(),
             },
             raw: json!({}),
         }

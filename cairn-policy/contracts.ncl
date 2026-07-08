@@ -20,7 +20,7 @@ let Canonicalization = std.contract.from_predicate (fun value =>
   std.is_string value && value == "serde_json_compact_sorted_keys"
 ) in
 
-let Blake3Hex = std.contract.from_predicate (fun value =>
+let Blake3HexContract = std.contract.from_predicate (fun value =>
   std.is_string value && std.string.is_match "^[0-9a-fA-F]{64}$" value
 ) in
 
@@ -82,6 +82,10 @@ let TraceabilityMarkerVerb = std.contract.from_predicate (fun value =>
 
 let TraceabilityExtension = std.contract.from_predicate (fun value =>
   std.is_string value && std.string.length value > 0 && std.string.is_match "^[A-Za-z0-9_-]+$" value
+) in
+
+let StackProvenanceGateMode = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "disabled" || value == "optional" || value == "required")
 ) in
 
 {
@@ -181,6 +185,13 @@ let TraceabilityExtension = std.contract.from_predicate (fun value =>
   TraceabilityPolicy = {
     default_profile | NonEmptyString,
     profiles | NonEmptyArray | Array TraceabilityProfile,
+  },
+
+  StackProvenancePolicy = {
+    mode | StackProvenanceGateMode,
+    allowed_claim_scopes | NonEmptyArray | Array NonEmptyString,
+    accepted_valence_policy_hashes | Array Blake3HexContract | default = [],
+    required_boundary | NonEmptyString,
   },
 
   ProbeCommandProfile = {
@@ -333,6 +344,7 @@ let TraceabilityExtension = std.contract.from_predicate (fun value =>
     change_metadata_policy | ChangeMetadataPolicy,
     steel_orchestration_policy | SteelOrchestrationPolicy,
     traceability_policy | TraceabilityPolicy,
+    stack_provenance_gate | StackProvenancePolicy,
     structured_lifecycle | StructuredLifecycle | default = {},
     probe_policy | ProbePolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,
@@ -346,5 +358,5 @@ let TraceabilityExtension = std.contract.from_predicate (fun value =>
     exemptions | Array Exemption,
   },
 
-  Blake3Hex = Blake3Hex,
+  Blake3Hex = Blake3HexContract,
 }
