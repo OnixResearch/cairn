@@ -232,9 +232,7 @@ fn metadata_field_path(field: &'static str) -> &'static str {
 }
 
 fn refresh_required_field(field: &str) -> bool {
-    REFRESH_REQUIRED_FIELDS
-        .iter()
-        .any(|candidate| *candidate == field)
+    REFRESH_REQUIRED_FIELDS.contains(&field)
 }
 
 fn refresh_command_from_value(value: &Value) -> String {
