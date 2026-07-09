@@ -59,6 +59,12 @@ pub use verified::evidence::{
     blake3_hex, canonical_json, canonical_json_hash, canonical_preserves_bytes,
     canonical_preserves_hash, preserves_content_hash,
 };
+pub use verified::hash_algorithm_policy::{
+    hash_algorithm_policy_issues_json, validate_hash_algorithm_policy,
+    validate_hash_algorithm_policy_value, HashAlgorithmException, HashAlgorithmPolicy,
+    HashAlgorithmPolicyIssue, HashAlgorithmPolicyReport, HashFieldObservation,
+    HASH_ALGORITHM_POLICY_BOUNDARY, HASH_ALGORITHM_POLICY_SCHEMA_V1,
+};
 pub use verified::kani_receipt::{
     kani_receipt_hash, validate_kani_receipt, KaniReceiptIssue, KaniReceiptProfile,
     KaniReceiptReport, KANI_NON_CLAIM_BOUNDED_ONLY, KANI_NON_CLAIM_FFI_STUB,

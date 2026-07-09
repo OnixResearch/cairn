@@ -6,6 +6,7 @@ mod developer_experience;
 mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
+mod hash_algorithm_policy;
 mod lifecycle;
 mod lifecycle_data;
 mod mcp;
@@ -36,6 +37,7 @@ mod content_addressed_evidence;
 use determinism::run_determinism;
 use evidence::run_evidence;
 use evidence_manifest::run_evidence_manifest;
+use hash_algorithm_policy::run_hash_policy;
 use mcp::run_mcp;
 use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
@@ -82,6 +84,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,
         "evidence-manifest" => run_evidence_manifest(args.collect())?,
+        "hash-policy" => run_hash_policy(args.collect())?,
         "policy" => run_policy(args.collect())?,
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "probe" => probe::run_probe(args.collect())?,
