@@ -80,8 +80,12 @@ pub use verified::plan::{
     build_sync_plan_with_dependency_blockers, ArchivePlan, PlanAction, PlanActionKind, SyncPlan,
 };
 pub use verified::policy::{
-    parse_policy_json, validate_policy_json, Policy, PolicyError, SteelOrchestrationPolicy,
-    SteelOrchestrationProfile, TraceabilityPolicy, SUPPORTED_POLICY_VERSION,
+    classify_policy_schema_compatibility, default_policy_schema_metadata, parse_policy_json,
+    policy_schema_compatibility_diagnostic, policy_schema_metadata, validate_policy_json, Policy,
+    PolicyError, PolicySchemaCompatibilityMetadata, PolicySchemaCompatibilityReport,
+    SteelOrchestrationPolicy, SteelOrchestrationProfile, TraceabilityPolicy,
+    CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_SCHEMA_VERSION, DEFAULT_POLICY_REFRESH_COMMAND,
+    POLICY_SCHEMA_METADATA_FIELD, SUPPORTED_POLICY_VERSION,
 };
 pub use verified::probe::{
     all_probe_assertions_passed, evaluate_probe_assertions, probe_declaration_hash,

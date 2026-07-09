@@ -126,6 +126,7 @@ mod tests {
                 forbidden_summary_fragments: Vec::new(),
                 aggregation_profiles: Vec::new(),
             },
+            policy_schema_compatibility: None,
             raw: json!({}),
         }
     }

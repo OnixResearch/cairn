@@ -6,6 +6,7 @@ use super::{
         receipt_schemas, require_nonempty_array, task_marker_fields, task_markers, version_field,
     },
     runtime_evidence::runtime_evidence_policy,
+    schema_compatibility::{policy_schema_metadata, POLICY_SCHEMA_METADATA_FIELD},
     stack_provenance::stack_provenance_policy,
     steel::steel_orchestration_policy,
     traceability::traceability_policy,
@@ -43,6 +44,8 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
     let traceability_policy = traceability_policy(&value)?;
     let stack_provenance_policy = stack_provenance_policy(&value)?;
     let runtime_evidence_policy = runtime_evidence_policy(&value)?;
+    let policy_schema_compatibility = policy_schema_metadata(&value)?
+        .ok_or(PolicyError::MissingField(POLICY_SCHEMA_METADATA_FIELD))?;
 
     Ok(Policy {
         name,
@@ -67,6 +70,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         traceability_policy,
         stack_provenance_policy,
         runtime_evidence_policy,
+        policy_schema_compatibility: Some(policy_schema_compatibility),
         raw: value,
     })
 }

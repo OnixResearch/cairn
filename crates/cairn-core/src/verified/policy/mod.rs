@@ -2,6 +2,7 @@ mod error;
 mod fields;
 mod parser;
 mod runtime_evidence;
+mod schema_compatibility;
 mod stack_provenance;
 mod steel;
 mod traceability;
@@ -9,6 +10,13 @@ mod types;
 
 pub use error::PolicyError;
 pub use parser::{parse_policy_json, validate_policy_json};
+pub use schema_compatibility::{
+    classify_policy_schema_compatibility, default_policy_schema_metadata,
+    policy_schema_compatibility_diagnostic, policy_schema_metadata,
+    PolicySchemaCompatibilityMetadata, PolicySchemaCompatibilityReport,
+    CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_SCHEMA_VERSION, DEFAULT_POLICY_REFRESH_COMMAND,
+    POLICY_SCHEMA_METADATA_FIELD,
+};
 pub use types::{
     ExemptionMarkerPolicy, Policy, ReceiptSchema, SteelOrchestrationPolicy,
     SteelOrchestrationProfile, TaskMarker, TraceabilityPolicy, SUPPORTED_POLICY_VERSION,

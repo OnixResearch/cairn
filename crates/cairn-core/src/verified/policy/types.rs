@@ -1,5 +1,7 @@
 use serde_json::Value;
 
+use super::PolicySchemaCompatibilityMetadata;
+
 use crate::verified::{
     runtime_evidence::RuntimeEvidencePolicy, stack_provenance::StackProvenancePolicy,
     traceability::TraceabilityProfile,
@@ -31,6 +33,7 @@ pub struct Policy {
     pub traceability_policy: TraceabilityPolicy,
     pub stack_provenance_policy: StackProvenancePolicy,
     pub runtime_evidence_policy: RuntimeEvidencePolicy,
+    pub policy_schema_compatibility: Option<PolicySchemaCompatibilityMetadata>,
     pub raw: Value,
 }
 

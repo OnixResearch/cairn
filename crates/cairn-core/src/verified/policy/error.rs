@@ -2,10 +2,19 @@ use std::{error::Error, fmt};
 
 #[derive(Debug)]
 pub enum PolicyError {
-    Parse { source: serde_json::Error },
+    Parse {
+        source: serde_json::Error,
+    },
     MissingField(&'static str),
     InvalidField(&'static str),
-    UnsupportedVersion { found: u64, expected: u64 },
+    UnsupportedVersion {
+        found: u64,
+        expected: u64,
+    },
+    UnsupportedPolicySchema {
+        found: String,
+        expected: &'static str,
+    },
 }
 
 impl fmt::Display for PolicyError {
@@ -16,6 +25,9 @@ impl fmt::Display for PolicyError {
             Self::InvalidField(field) => write!(f, "policy has invalid field {field}"),
             Self::UnsupportedVersion { found, expected } => {
                 write!(f, "unsupported policy version {found}; expected {expected}")
+            }
+            Self::UnsupportedPolicySchema { found, expected } => {
+                write!(f, "unsupported policy schema {found}; expected {expected}")
             }
         }
     }

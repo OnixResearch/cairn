@@ -14,8 +14,13 @@ pub(crate) fn detect_layout(_root: &Path) -> SelectedLayout {
 pub(crate) fn load_policy_file(path: PathBuf) -> Result<Policy, Box<dyn Error>> {
     let text = fs::read_to_string(&path)
         .map_err(|source| format!("failed to read policy {}: {source}", path.display()))?;
-    parse_policy_json(&text)
-        .map_err(|source| format!("failed to parse policy {}: {source}", path.display()).into())
+    let value: Value = serde_json::from_str(&text)
+        .map_err(|source| format!("failed to parse policy {}: {source}", path.display()))?;
+    validate_policy_json(value.clone()).map_err(|source| {
+        let diagnostic = policy_schema_compatibility_diagnostic(&value, &source)
+            .unwrap_or_else(|| source.to_string());
+        format!("failed to parse policy {}: {diagnostic}", path.display()).into()
+    })
 }
 
 pub(crate) fn default_policy_path() -> &'static str {
