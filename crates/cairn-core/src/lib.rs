@@ -105,6 +105,12 @@ pub use verified::repo::{
     ChangeDetail, ChangeList, ChangeMetadata, ChangeSource, ChangeStatus, RepoStatus, SpecDetail,
     SpecList, SpecSource, SpecSummary, TaskCounts,
 };
+pub use verified::requirement_id_registry::{
+    requirement_id_registry_issues_json, validate_requirement_id_registry,
+    validate_requirement_id_registry_value, RequirementIdAlias, RequirementIdRegistry,
+    RequirementIdRegistryIssue, RequirementIdRegistryReport, RequirementReference,
+    RequirementRegistryRow, REQUIREMENT_ID_REGISTRY_BOUNDARY, REQUIREMENT_ID_REGISTRY_SCHEMA_V1,
+};
 pub use verified::runtime_evidence::{
     is_runtime_capture_origin, runtime_record_hash, verify_runtime_evidence,
     witness_checkpoint_hash, CaptureOriginSummary, RuntimeEvidenceIssue, RuntimeEvidencePolicy,
