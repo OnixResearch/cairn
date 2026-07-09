@@ -12,8 +12,11 @@
 // r[verify release_evidence.current_head_evidence_index.behavior_preserved.repository_checks]
 use std::{error::Error, fs, path::PathBuf};
 
-use cairn_core::canonical_json_hash;
 use cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY;
+use cairn_core::{
+    canonical_json_hash, evaluate_workspace_contract_matrix_readiness,
+    workspace_contract_readiness_issues_json, workspace_contract_readiness_policy_from_value,
+};
 use serde_json::{json, Value};
 
 use crate::determinism::determinism_coverage_audit_receipt;
@@ -35,12 +38,15 @@ pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Err
     let stack_provenance = read_string_option(&args, "--stack-provenance").map(PathBuf::from);
     let stack_provenance_graph =
         read_string_option(&args, "--stack-provenance-graph").map(PathBuf::from);
+    let workspace_contract_matrix_receipt =
+        read_string_option(&args, "--workspace-contract-matrix-receipt").map(PathBuf::from);
     print_json(release_readiness_receipt_with_review_ledger_and_stack(
         root,
         policy_path,
         review_ledger,
         stack_provenance,
         stack_provenance_graph,
+        workspace_contract_matrix_receipt,
     ))
 }
 
@@ -60,6 +66,7 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
         review_ledger,
         None,
         None,
+        None,
     )
 }
 
@@ -69,6 +76,7 @@ fn release_readiness_receipt_with_review_ledger_and_stack(
     review_ledger: Option<PathBuf>,
     stack_provenance: Option<PathBuf>,
     stack_provenance_graph: Option<PathBuf>,
+    workspace_contract_matrix_receipt: Option<PathBuf>,
 ) -> Value {
     // r[impl cairn.supersede.release_readiness_bundle]
     // r[impl cairn.supersede.release_readiness_bundle.schema]
@@ -91,10 +99,16 @@ fn release_readiness_receipt_with_review_ledger_and_stack(
     let release_evidence_index = conventional_release_evidence_index_component(root.clone());
     let preserves_corpus = preserves_corpus_component(root.clone());
     let semantic_review_ledger = semantic_review_ledger_component(root.clone(), review_ledger);
+    let policy = load_policy_file(policy_path.clone()).ok();
     let stack_provenance = stack_provenance_component(
         policy_path.clone(),
         stack_provenance,
         stack_provenance_graph,
+    );
+    let workspace_contract_matrix = workspace_contract_matrix_component(
+        root.clone(),
+        policy.as_ref().map(|value| &value.raw),
+        workspace_contract_matrix_receipt,
     );
     let repository_gate_summary = repository_gate_summary();
     let replay_preflight = json!({
@@ -113,6 +127,7 @@ fn release_readiness_receipt_with_review_ledger_and_stack(
         preserves_corpus.check,
         semantic_review_ledger.check,
         stack_provenance.check,
+        workspace_contract_matrix.check,
     ];
     checks.push(json!({
         "name": "repository_gate_policy_listed",
@@ -142,12 +157,61 @@ fn release_readiness_receipt_with_review_ledger_and_stack(
             "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
             "stack_provenance_hash": stack_provenance.receipt_hash,
             "stack_provenance": stack_provenance.value,
+            "workspace_contract_matrix_hash": workspace_contract_matrix.receipt_hash,
+            "workspace_contract_matrix": workspace_contract_matrix.value,
             "repository_gate_summary": repository_gate_summary,
             "determinism_replay": replay_preflight,
             "mcp": {"read_only": true, "destructive": false},
             "verification_role_boundary": VERIFICATION_ROLE_BOUNDARY,
         }),
     )
+}
+
+fn workspace_contract_matrix_component(
+    root: PathBuf,
+    policy: Option<&Value>,
+    receipt_path: Option<PathBuf>,
+) -> WorkspaceContractMatrixComponent {
+    // r[impl cairn.workspace_contract_matrix.release_readiness]
+    // r[impl cairn.workspace_contract_matrix.release_readiness.optional]
+    // r[impl cairn.workspace_contract_matrix.release_readiness.required]
+    let policy_value = policy.unwrap_or(&Value::Null);
+    let readiness_policy = workspace_contract_readiness_policy_from_value(policy_value);
+    let receipt_value = receipt_path
+        .as_ref()
+        .and_then(|path| fs::read_to_string(path).ok())
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok());
+    let readiness =
+        evaluate_workspace_contract_matrix_readiness(&readiness_policy, receipt_value.as_ref());
+    let value = json!({
+        "mode": readiness.mode,
+        "required": readiness.required,
+        "passed": readiness.passed,
+        "skipped": readiness.skipped,
+        "disposition": readiness.disposition,
+        "receipt_hash": readiness.receipt_hash,
+        "boundary": readiness.boundary,
+        "issues": workspace_contract_readiness_issues_json(&readiness),
+    });
+    let receipt_hash = canonical_json_hash(&value);
+    let mut check = json!({
+        "name": "workspace_contract_matrix",
+        "passed": readiness.passed,
+        "source": component_source("workspace_contract_matrix"),
+        "receipt_hash": receipt_hash,
+        "disposition": value["disposition"].clone(),
+    });
+    if readiness.skipped {
+        check["skipped"] = Value::Bool(true);
+    }
+    if let Some(path) = receipt_path.as_ref() {
+        check["path"] = json!(safe_relative_path(&root, path));
+    }
+    WorkspaceContractMatrixComponent {
+        check,
+        receipt_hash,
+        value,
+    }
 }
 
 fn stack_provenance_component(
@@ -296,6 +360,12 @@ struct StackProvenanceComponent {
     value: Value,
 }
 
+struct WorkspaceContractMatrixComponent {
+    check: Value,
+    receipt_hash: String,
+    value: Value,
+}
+
 fn readiness_component<F>(name: &str, operation: F) -> ReadinessComponent
 where
     F: FnOnce() -> Result<Value, Box<dyn Error>>,
@@ -348,6 +418,9 @@ fn component_source(name: &str) -> &'static str {
         }
         "stack_provenance" => {
             "cairn release-readiness --root <root> --stack-provenance <valence-receipt.json> --stack-provenance-graph <graph-summary.json>"
+        }
+        "workspace_contract_matrix" => {
+            "cairn release-readiness --root <root> --workspace-contract-matrix-receipt <receipt.json>"
         }
         _ => "unknown",
     }

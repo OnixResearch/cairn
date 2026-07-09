@@ -164,3 +164,14 @@ pub use verified::validation::{
     validate_changes_with_archives, validate_spec_source, validate_spec_sources,
     EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
 };
+pub use verified::workspace_contract_matrix::{
+    evaluate_workspace_contract_matrix_readiness, is_workspace_contract_mode,
+    validate_workspace_contract_matrix, validate_workspace_contract_matrix_value,
+    workspace_contract_issues_json, workspace_contract_readiness_issues_json,
+    workspace_contract_readiness_policy_from_value, WorkspaceArtifactObservation,
+    WorkspaceContractEdge, WorkspaceContractIssue, WorkspaceContractMatrix,
+    WorkspaceContractReadiness, WorkspaceContractReadinessPolicy, WorkspaceContractReport,
+    WORKSPACE_CONTRACT_MATRIX_BOUNDARY, WORKSPACE_CONTRACT_MATRIX_RECEIPT_SCHEMA_V1,
+    WORKSPACE_CONTRACT_MATRIX_SCHEMA_V1, WORKSPACE_CONTRACT_MODE_DISABLED,
+    WORKSPACE_CONTRACT_MODE_OPTIONAL, WORKSPACE_CONTRACT_MODE_REQUIRED,
+};

@@ -25,3 +25,4 @@ pub mod toolchain_profile_matrix;
 pub mod traceability;
 pub mod validation;
 pub mod verification_role;
+pub mod workspace_contract_matrix;

@@ -202,6 +202,12 @@ let PositiveNumber = std.contract.from_predicate (fun value =>
     required_boundary | NonEmptyString,
   },
 
+  WorkspaceContractMatrixGate = {
+    mode | StackProvenanceGateMode,
+    accepted_matrix_hashes | Array Blake3HexContract | default = [],
+    required_boundary | NonEmptyString,
+  },
+
   RuntimeEvidencePolicy = {
     allowed_capture_origins | NonEmptyArray | Array RuntimeCaptureOrigin,
     allowed_hash_algorithms | NonEmptyArray | Array Blake3Algorithm,
@@ -369,6 +375,11 @@ let PositiveNumber = std.contract.from_predicate (fun value =>
     steel_orchestration_policy | SteelOrchestrationPolicy,
     traceability_policy | TraceabilityPolicy,
     stack_provenance_gate | StackProvenancePolicy,
+    workspace_contract_matrix_gate | WorkspaceContractMatrixGate | default = {
+      mode = "disabled",
+      accepted_matrix_hashes = [],
+      required_boundary = "workspace contract matrix validation proves declared edge health only; it does not prove provider correctness, does not prove consumer behavioral correctness, does not prove verifier soundness, or does not prove release eligibility",
+    },
     runtime_evidence_policy | RuntimeEvidencePolicy,
     structured_lifecycle | StructuredLifecycle | default = {},
     probe_policy | ProbePolicy,

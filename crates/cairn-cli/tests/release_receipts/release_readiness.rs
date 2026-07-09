@@ -55,6 +55,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "semantic_review_ledger_hash",
             "stack_provenance_hash",
             "stack_provenance",
+            "workspace_contract_matrix_hash",
+            "workspace_contract_matrix",
             "repository_gate_summary",
             "determinism_replay",
             "mcp",
@@ -75,6 +77,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_hash_field(&receipt, "preserves_corpus_freshness_hash")?;
     assert_hash_field(&receipt, "semantic_review_ledger_hash")?;
     assert_hash_field(&receipt, "stack_provenance_hash")?;
+    assert_hash_field(&receipt, "workspace_contract_matrix_hash")?;
     assert_eq!(receipt["coverage_audit_valid"], true);
     let check_names = receipt["checks"]
         .as_array()
@@ -90,6 +93,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert!(check_names.contains(&"preserves_corpus_freshness"));
     assert!(check_names.contains(&"semantic_review_ledger"));
     assert!(check_names.contains(&"stack_provenance"));
+    assert!(check_names.contains(&"workspace_contract_matrix"));
     assert!(check_names.contains(&"repository_gate_policy_listed"));
     assert_eq!(receipt["mcp"]["read_only"], true);
     assert_eq!(receipt["mcp"]["destructive"], false);
@@ -97,6 +101,13 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_eq!(receipt["stack_provenance"]["disposition"], "absent");
     assert_eq!(receipt["stack_provenance"]["passed"], true);
     assert_eq!(receipt["stack_provenance"]["skipped"], true);
+    assert_eq!(receipt["workspace_contract_matrix"]["mode"], "disabled");
+    assert_eq!(
+        receipt["workspace_contract_matrix"]["disposition"],
+        "disabled"
+    );
+    assert_eq!(receipt["workspace_contract_matrix"]["passed"], true);
+    assert_eq!(receipt["workspace_contract_matrix"]["skipped"], true);
     assert!(receipt["verification_role_boundary"]
         .as_str()
         .ok_or("verification_role_boundary text")?

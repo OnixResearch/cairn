@@ -30,6 +30,7 @@ mod support;
 mod test_harness;
 mod toolchain_profile_matrix;
 mod tracey;
+mod workspace_contract_matrix;
 
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules]
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules.visible_boundaries]
@@ -51,6 +52,7 @@ use semantic_review::run_review;
 use support::{print_usage, usage_text};
 use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
+use workspace_contract_matrix::run_workspace_contract;
 
 fn main() {
     if let Err(err) = run() {
@@ -100,6 +102,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "steel-orchestration" => steel_orchestration::run_steel_orchestration(args.collect())?,
         "test-harness" => test_harness::run_test_harness(args.collect())?,
         "toolchain-profile" => run_toolchain_profile(args.collect())?,
+        "workspace-contract" => run_workspace_contract(args.collect())?,
         "rename-classification" => {
             rename_classification::run_rename_classification(args.collect())?
         }

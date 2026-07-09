@@ -305,7 +305,8 @@
           "release_evidence_index_check_hash",
           "preserves_corpus_freshness_hash",
           "semantic_review_ledger_hash",
-          "stack_provenance_hash"
+          "stack_provenance_hash",
+          "workspace_contract_matrix_hash"
         ],
         "id": "release_readiness",
         "normalization_rules": [
@@ -2527,5 +2528,10 @@
       }
     ]
   },
-  "version": 1
+  "version": 1,
+  "workspace_contract_matrix_gate": {
+    "accepted_matrix_hashes": [],
+    "mode": "disabled",
+    "required_boundary": "workspace contract matrix validation proves declared edge health only; it does not prove provider correctness, does not prove consumer behavioral correctness, does not prove verifier soundness, or does not prove release eligibility"
+  }
 }
