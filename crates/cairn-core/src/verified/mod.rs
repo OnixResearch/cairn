@@ -21,6 +21,7 @@ pub mod runtime_evidence;
 pub mod semantic_review;
 pub mod stack_provenance;
 pub mod structured_lifecycle;
+pub mod toolchain_profile_matrix;
 pub mod traceability;
 pub mod validation;
 pub mod verification_role;

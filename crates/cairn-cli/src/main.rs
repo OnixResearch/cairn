@@ -28,6 +28,7 @@ mod stack_provenance;
 mod steel_orchestration;
 mod support;
 mod test_harness;
+mod toolchain_profile_matrix;
 mod tracey;
 
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules]
@@ -48,6 +49,7 @@ use requirement_id_registry::run_requirement_registry;
 use runtime_evidence::run_runtime_evidence;
 use semantic_review::run_review;
 use support::{print_usage, usage_text};
+use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
 
 fn main() {
@@ -97,6 +99,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "review" => run_review(args.collect())?,
         "steel-orchestration" => steel_orchestration::run_steel_orchestration(args.collect())?,
         "test-harness" => test_harness::run_test_harness(args.collect())?,
+        "toolchain-profile" => run_toolchain_profile(args.collect())?,
         "rename-classification" => {
             rename_classification::run_rename_classification(args.collect())?
         }

@@ -144,6 +144,12 @@ pub use verified::structured_lifecycle::{
     validate_structured_lifecycle_bundle, StructuredLifecycleIssue, StructuredLifecycleReport,
     STRUCTURED_LIFECYCLE_SCHEMA_V1,
 };
+pub use verified::toolchain_profile_matrix::{
+    toolchain_profile_issues_json, validate_toolchain_profile_matrix,
+    validate_toolchain_profile_matrix_value, ToolchainProfileIssue, ToolchainProfileMatrix,
+    ToolchainProfileReport, ToolchainProfileRow, TOOLCHAIN_PROFILE_MATRIX_BOUNDARY,
+    TOOLCHAIN_PROFILE_MATRIX_SCHEMA_V1,
+};
 pub use verified::traceability::{
     classify_traceability_coverage, traceability_id_is_valid, traceability_ref_markers,
     traceability_spec_marker, unique_sorted_strings, TraceabilityCoverageReport, TraceabilityFile,
