@@ -59,6 +59,10 @@ pub use verified::evidence::{
     blake3_hex, canonical_json, canonical_json_hash, canonical_preserves_bytes,
     canonical_preserves_hash, preserves_content_hash,
 };
+pub use verified::formal_proof_readiness_fixture::{
+    validate_formal_proof_readiness_fixture, FormalProofReadinessFixture,
+    FormalProofReadinessIssue, FormalProofReadinessReport, FORMAL_PROOF_READINESS_BOUNDARY,
+};
 pub use verified::hash_algorithm_policy::{
     hash_algorithm_policy_issues_json, validate_hash_algorithm_policy,
     validate_hash_algorithm_policy_value, HashAlgorithmException, HashAlgorithmPolicy,

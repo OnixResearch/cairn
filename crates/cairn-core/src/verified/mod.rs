@@ -7,6 +7,7 @@ pub mod developer_experience;
 pub mod doctor;
 pub mod ears_property_vocabulary;
 pub mod evidence;
+pub mod formal_proof_readiness_fixture;
 pub mod hash_algorithm_policy;
 pub mod kani_receipt;
 pub mod lifecycle;
