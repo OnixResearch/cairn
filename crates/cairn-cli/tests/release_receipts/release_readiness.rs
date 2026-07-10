@@ -269,6 +269,17 @@ fn function_address_issue_codes(receipt: &Value) -> Vec<String> {
         .unwrap_or_default()
 }
 
+fn prefix_function_address_digest(path: PathBuf, field: &str) -> Result<(), Box<dyn Error>> {
+    let mut value: Value = serde_json::from_slice(&fs::read(&path)?)?;
+    let digest = value[field]
+        .as_str()
+        .ok_or("function-address digest string")?
+        .to_string();
+    value[field] = json!(format!("b3:{digest}"));
+    fs::write(path, serde_json::to_vec_pretty(&value)?)?;
+    Ok(())
+}
+
 #[test]
 fn release_readiness_accepts_required_stack_provenance_fixture() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.stack_provenance_gates.policy]
@@ -349,6 +360,46 @@ fn release_readiness_accepts_required_function_address_fixture() -> Result<(), B
         .as_str()
         .ok_or("function-address boundary text")?
         .contains("did not prove Rust semantic correctness"));
+    Ok(())
+}
+
+#[test]
+fn release_readiness_accepts_function_address_b3_digest_spellings() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.shell]
+    // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.positive]
+    // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.validation]
+    let policy = function_address_policy_path("function-address-b3-required", "required")?;
+    let fixture = function_address_fixture_dir("function-address-b3-fixtures")?;
+    prefix_function_address_digest(fixture.join("valence.json"), "receipt_hash")?;
+    prefix_function_address_digest(fixture.join("mantle.json"), "valence_receipt_digest")?;
+    prefix_function_address_digest(fixture.join("mantle.json"), "sidecar_digest")?;
+    prefix_function_address_digest(fixture.join("kamacite.json"), "receipt_hash")?;
+    prefix_function_address_digest(fixture.join("graph.json"), "report_hash")?;
+
+    let receipt = run_json_strings(&[
+        "release-readiness".into(),
+        "--root".into(),
+        ".".into(),
+        "--policy".into(),
+        policy.display().to_string(),
+        "--function-address-valence".into(),
+        fixture.join("valence.json").display().to_string(),
+        "--function-address-mantle".into(),
+        fixture.join("mantle.json").display().to_string(),
+        "--function-address-kamacite".into(),
+        fixture.join("kamacite.json").display().to_string(),
+        "--function-address-graph".into(),
+        fixture.join("graph.json").display().to_string(),
+    ])?;
+
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["function_address"]["passed"], true);
+    assert_eq!(
+        receipt["function_address"]["valence_receipt_hash"],
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    );
+    assert_hash_field(&receipt["function_address"], "mantle_binding_hash")?;
+    assert_hash_field(&receipt["function_address"]["graph_summary"], "report_hash")?;
     Ok(())
 }
 

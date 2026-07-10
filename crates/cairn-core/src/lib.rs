@@ -70,9 +70,13 @@ pub use verified::formal_proof_readiness_fixture::{
     FormalProofReadinessIssue, FormalProofReadinessReport, FORMAL_PROOF_READINESS_BOUNDARY,
 };
 pub use verified::function_address_gates::{
-    evaluate_function_address_evidence, is_function_address_mode, FunctionAddressEvidence,
-    FunctionAddressIssue, FunctionAddressPolicy, FunctionAddressReadiness,
-    FUNCTION_ADDRESS_BOUNDARY, FUNCTION_ADDRESS_CLAIM_SCOPE_LIFECYCLE,
+    evaluate_function_address_evidence, function_address_digest_rules, is_function_address_mode,
+    normalize_function_address_evidence_digests, FunctionAddressDigestNormalization,
+    FunctionAddressDigestRule, FunctionAddressEvidence, FunctionAddressIssue,
+    FunctionAddressPolicy, FunctionAddressReadiness, FUNCTION_ADDRESS_BOUNDARY,
+    FUNCTION_ADDRESS_CLAIM_SCOPE_LIFECYCLE, FUNCTION_ADDRESS_DIGEST_ISSUE_CASE_UNSUPPORTED,
+    FUNCTION_ADDRESS_DIGEST_ISSUE_MALFORMED, FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED,
+    FUNCTION_ADDRESS_DIGEST_SPELLING_B3_PREFIX, FUNCTION_ADDRESS_DIGEST_SPELLING_BARE,
     FUNCTION_ADDRESS_MODE_DISABLED, FUNCTION_ADDRESS_MODE_OPTIONAL, FUNCTION_ADDRESS_MODE_REQUIRED,
 };
 pub use verified::hash_algorithm_policy::{

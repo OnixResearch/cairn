@@ -6,8 +6,16 @@ pub const FUNCTION_ADDRESS_MODE_REQUIRED: &str = "required";
 pub const FUNCTION_ADDRESS_CLAIM_SCOPE_LIFECYCLE: &str =
     "function_address.v1.lifecycle_policy_conformance";
 pub const FUNCTION_ADDRESS_BOUNDARY: &str = "Cairn consumed Valence, Mantle, and Kamacite function-address evidence for lifecycle/release policy conformance only; it did not prove Rust semantic correctness, compiler correctness, whole-program safety, verifier soundness, or release eligibility";
+pub const FUNCTION_ADDRESS_DIGEST_SPELLING_BARE: &str = "bare-blake3-hex";
+pub const FUNCTION_ADDRESS_DIGEST_SPELLING_B3_PREFIX: &str = "b3-prefixed-blake3-hex";
+pub const FUNCTION_ADDRESS_DIGEST_ISSUE_MALFORMED: &str = "function_address.digest_malformed";
+pub const FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED: &str =
+    "function_address.digest_prefix_unsupported";
+pub const FUNCTION_ADDRESS_DIGEST_ISSUE_CASE_UNSUPPORTED: &str =
+    "function_address.digest_case_unsupported";
 
 const BLAKE3_HEX_LENGTH: usize = 64;
+const B3_DIGEST_PREFIX: &str = "b3:";
 const DISPOSITION_DISABLED: &str = "disabled";
 const DISPOSITION_ABSENT: &str = "absent";
 const DISPOSITION_PRESENT: &str = "present";
@@ -21,6 +29,20 @@ const GRAPH_U64_FIELDS: &[&str] = &[
     "property_count",
     "failed_link_count",
 ];
+const VALENCE_DIGEST_FIELDS: &[&str] = &[
+    "receipt_hash",
+    "valence_policy_hash",
+    "kamacite_receipt_hash",
+];
+const MANTLE_DIGEST_FIELDS: &[&str] = &[
+    "receipt_hash",
+    "sidecar_digest",
+    "valence_receipt_digest",
+    "source_archive_digest",
+    "release_binary_digest",
+];
+const KAMACITE_DIGEST_FIELDS: &[&str] = &["receipt_hash"];
+const GRAPH_DIGEST_FIELDS: &[&str] = &["report_hash"];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionAddressPolicy {
@@ -38,6 +60,19 @@ pub struct FunctionAddressEvidence {
     pub mantle_binding: Option<Value>,
     pub kamacite_receipt: Option<Value>,
     pub graph_summary: Option<Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FunctionAddressDigestRule {
+    pub producer: String,
+    pub field_path: String,
+    pub accepted_spellings: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FunctionAddressDigestNormalization {
+    pub evidence: FunctionAddressEvidence,
+    pub issues: Vec<FunctionAddressIssue>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -76,6 +111,14 @@ struct FunctionAddressReadinessParts {
     graph_summary: Option<Value>,
 }
 
+struct DigestFieldRule {
+    producer: &'static str,
+    object_path: &'static str,
+    field: &'static str,
+    allow_bare: bool,
+    allow_b3_prefix: bool,
+}
+
 impl FunctionAddressReadiness {
     #[must_use]
     pub fn to_json(&self) -> Value {
@@ -110,6 +153,61 @@ impl FunctionAddressIssue {
 }
 
 #[must_use]
+pub fn function_address_digest_rules() -> Vec<FunctionAddressDigestRule> {
+    // r[impl cairn.stack_provenance_gates.function_address_digest_normalization.contract]
+    digest_field_rules()
+        .iter()
+        .map(|rule| FunctionAddressDigestRule {
+            producer: rule.producer.to_string(),
+            field_path: format!("{}.{}", rule.object_path, rule.field),
+            accepted_spellings: accepted_digest_spellings(rule),
+        })
+        .collect()
+}
+
+#[must_use]
+pub fn normalize_function_address_evidence_digests(
+    evidence: &FunctionAddressEvidence,
+) -> FunctionAddressDigestNormalization {
+    // r[impl cairn.stack_provenance_gates.function_address_digest_normalization.shell]
+    let mut normalized = evidence.clone();
+    let mut issues = Vec::new();
+    normalize_digest_object(
+        normalized.valence_receipt.as_mut(),
+        "valence_receipt",
+        VALENCE_DIGEST_FIELDS,
+        &mut issues,
+    );
+    normalize_digest_object(
+        normalized.mantle_binding.as_mut(),
+        "mantle_binding",
+        MANTLE_DIGEST_FIELDS,
+        &mut issues,
+    );
+    normalize_digest_object(
+        normalized.kamacite_receipt.as_mut(),
+        "kamacite_receipt",
+        KAMACITE_DIGEST_FIELDS,
+        &mut issues,
+    );
+    normalize_digest_object(
+        normalized.graph_summary.as_mut(),
+        "graph_summary",
+        GRAPH_DIGEST_FIELDS,
+        &mut issues,
+    );
+    issues.sort_by(|left, right| {
+        left.code
+            .cmp(&right.code)
+            .then(left.field_path.cmp(&right.field_path))
+    });
+    FunctionAddressDigestNormalization {
+        evidence: normalized,
+        issues,
+    }
+}
+
+#[must_use]
 pub fn evaluate_function_address_evidence(
     policy: &FunctionAddressPolicy,
     evidence: &FunctionAddressEvidence,
@@ -118,6 +216,7 @@ pub fn evaluate_function_address_evidence(
     // r[impl cairn.function_address_gates.receipt_validation]
     // r[impl cairn.function_address_gates.boundary]
     // r[impl cairn.function_address_gates.graph_summary]
+    // r[impl cairn.stack_provenance_gates.function_address_digest_normalization.domain]
     if policy.mode == FUNCTION_ADDRESS_MODE_DISABLED {
         return function_address_readiness(
             policy,
@@ -586,7 +685,7 @@ fn validate_hash_field(
         issues.push(function_address_issue(
             code,
             field_path,
-            "BLAKE3 hash",
+            "lowercase BLAKE3 hash",
             if actual.is_empty() {
                 "missing"
             } else {
@@ -655,6 +754,143 @@ fn function_address_text_overclaims(value: &str) -> bool {
     .any(|fragment| lower.contains(fragment))
 }
 
+fn digest_field_rules() -> Vec<DigestFieldRule> {
+    let mut rules = Vec::new();
+    extend_digest_rules(
+        &mut rules,
+        "valence",
+        "valence_receipt",
+        VALENCE_DIGEST_FIELDS,
+    );
+    extend_digest_rules(&mut rules, "mantle", "mantle_binding", MANTLE_DIGEST_FIELDS);
+    extend_digest_rules(
+        &mut rules,
+        "kamacite",
+        "kamacite_receipt",
+        KAMACITE_DIGEST_FIELDS,
+    );
+    extend_digest_rules(&mut rules, "graph", "graph_summary", GRAPH_DIGEST_FIELDS);
+    rules
+}
+
+fn extend_digest_rules(
+    rules: &mut Vec<DigestFieldRule>,
+    producer: &'static str,
+    object_path: &'static str,
+    fields: &'static [&'static str],
+) {
+    for field in fields {
+        rules.push(DigestFieldRule {
+            producer,
+            object_path,
+            field,
+            allow_bare: true,
+            allow_b3_prefix: true,
+        });
+    }
+}
+
+fn accepted_digest_spellings(rule: &DigestFieldRule) -> Vec<String> {
+    let mut spellings = Vec::new();
+    if rule.allow_bare {
+        spellings.push(FUNCTION_ADDRESS_DIGEST_SPELLING_BARE.to_string());
+    }
+    if rule.allow_b3_prefix {
+        spellings.push(FUNCTION_ADDRESS_DIGEST_SPELLING_B3_PREFIX.to_string());
+    }
+    spellings
+}
+
+fn normalize_digest_object(
+    value: Option<&mut Value>,
+    object_path: &'static str,
+    fields: &'static [&'static str],
+    issues: &mut Vec<FunctionAddressIssue>,
+) {
+    let Some(object) = value.and_then(Value::as_object_mut) else {
+        return;
+    };
+    for field in fields {
+        let Some(slot) = object.get_mut(*field) else {
+            continue;
+        };
+        let rule = DigestFieldRule {
+            producer: object_path,
+            object_path,
+            field,
+            allow_bare: true,
+            allow_b3_prefix: true,
+        };
+        match normalize_digest_value(slot, &rule) {
+            Ok(normalized) => *slot = Value::String(normalized),
+            Err(issue) => issues.push(issue),
+        }
+    }
+}
+
+fn normalize_digest_value(
+    value: &Value,
+    rule: &DigestFieldRule,
+) -> Result<String, FunctionAddressIssue> {
+    let Some(raw) = value.as_str() else {
+        return Err(function_address_issue(
+            FUNCTION_ADDRESS_DIGEST_ISSUE_MALFORMED,
+            &format!("{}.{}", rule.object_path, rule.field),
+            "documented function-address digest spelling",
+            "non-string",
+        ));
+    };
+    if let Some(stripped) = raw.strip_prefix(B3_DIGEST_PREFIX) {
+        if !rule.allow_b3_prefix {
+            return Err(function_address_issue(
+                FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED,
+                &format!("{}.{}", rule.object_path, rule.field),
+                "bare BLAKE3 hex digest",
+                "b3-prefixed digest",
+            ));
+        }
+        return validate_digest_hex(stripped, rule);
+    }
+    if raw.contains(':') {
+        return Err(function_address_issue(
+            FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED,
+            &format!("{}.{}", rule.object_path, rule.field),
+            "documented function-address digest prefix",
+            "unsupported prefix",
+        ));
+    }
+    if !rule.allow_bare {
+        return Err(function_address_issue(
+            FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED,
+            &format!("{}.{}", rule.object_path, rule.field),
+            "b3-prefixed BLAKE3 digest",
+            "bare digest",
+        ));
+    }
+    validate_digest_hex(raw, rule)
+}
+
+fn validate_digest_hex(raw: &str, rule: &DigestFieldRule) -> Result<String, FunctionAddressIssue> {
+    let field_path = format!("{}.{}", rule.object_path, rule.field);
+    if raw.bytes().any(|byte| byte.is_ascii_uppercase()) {
+        return Err(function_address_issue(
+            FUNCTION_ADDRESS_DIGEST_ISSUE_CASE_UNSUPPORTED,
+            &field_path,
+            "lowercase BLAKE3 hex digest",
+            "uppercase digest",
+        ));
+    }
+    if !is_blake3_hex(raw) {
+        return Err(function_address_issue(
+            FUNCTION_ADDRESS_DIGEST_ISSUE_MALFORMED,
+            &field_path,
+            "lowercase BLAKE3 hex digest",
+            "malformed digest",
+        ));
+    }
+    Ok(raw.to_string())
+}
+
 #[must_use]
 pub fn is_function_address_mode(mode: &str) -> bool {
     matches!(
@@ -667,7 +903,10 @@ pub fn is_function_address_mode(mode: &str) -> bool {
 
 #[must_use]
 pub fn is_blake3_hex(value: &str) -> bool {
-    value.len() == BLAKE3_HEX_LENGTH && value.chars().all(|character| character.is_ascii_hexdigit())
+    value.len() == BLAKE3_HEX_LENGTH
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
 #[cfg(test)]
@@ -761,6 +1000,120 @@ mod tests {
             kamacite_receipt: Some(kamacite_receipt()),
             graph_summary: Some(graph_summary()),
         }
+    }
+
+    fn b3(hash: &str) -> String {
+        format!("{B3_DIGEST_PREFIX}{hash}")
+    }
+
+    fn issue_codes(issues: &[FunctionAddressIssue]) -> Vec<String> {
+        issues.iter().map(|issue| issue.code.clone()).collect()
+    }
+
+    #[test]
+    fn digest_rules_document_supported_producer_spellings() {
+        // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.contract]
+        let rules = function_address_digest_rules();
+
+        assert!(rules
+            .iter()
+            .any(|rule| rule.field_path == "valence_receipt.receipt_hash"));
+        assert!(rules
+            .iter()
+            .any(|rule| rule.field_path == "mantle_binding.sidecar_digest"));
+        assert!(rules
+            .iter()
+            .any(|rule| rule.field_path == "kamacite_receipt.receipt_hash"));
+        assert!(rules
+            .iter()
+            .any(|rule| rule.field_path == "graph_summary.report_hash"));
+        assert!(rules.iter().all(|rule| rule
+            .accepted_spellings
+            .contains(&FUNCTION_ADDRESS_DIGEST_SPELLING_BARE.to_string())));
+        assert!(rules.iter().all(|rule| rule
+            .accepted_spellings
+            .contains(&FUNCTION_ADDRESS_DIGEST_SPELLING_B3_PREFIX.to_string())));
+    }
+
+    #[test]
+    fn digest_normalization_accepts_supported_producer_spellings() {
+        // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.positive]
+        // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.shell]
+        // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.validation]
+        let mut evidence = evidence();
+        evidence.valence_receipt.as_mut().unwrap()["receipt_hash"] = json!(b3(RECEIPT_HASH));
+        evidence.valence_receipt.as_mut().unwrap()["valence_policy_hash"] =
+            json!(b3(ACCEPTED_POLICY_HASH));
+        evidence.mantle_binding.as_mut().unwrap()["sidecar_digest"] = json!(b3(SIDE_CAR_HASH));
+        evidence.mantle_binding.as_mut().unwrap()["valence_receipt_digest"] =
+            json!(b3(RECEIPT_HASH));
+        evidence.kamacite_receipt.as_mut().unwrap()["receipt_hash"] = json!(b3(KAMACITE_HASH));
+        evidence.graph_summary.as_mut().unwrap()["report_hash"] = json!(b3(GRAPH_HASH));
+
+        let normalized = normalize_function_address_evidence_digests(&evidence);
+        assert!(normalized.issues.is_empty(), "{:?}", normalized.issues);
+        assert_eq!(
+            normalized.evidence.valence_receipt.as_ref().unwrap()["receipt_hash"],
+            json!(RECEIPT_HASH)
+        );
+        assert_eq!(
+            normalized.evidence.mantle_binding.as_ref().unwrap()["sidecar_digest"],
+            json!(SIDE_CAR_HASH)
+        );
+        assert_eq!(
+            normalized.evidence.kamacite_receipt.as_ref().unwrap()["receipt_hash"],
+            json!(KAMACITE_HASH)
+        );
+        assert_eq!(
+            normalized.evidence.graph_summary.as_ref().unwrap()["report_hash"],
+            json!(GRAPH_HASH)
+        );
+        let readiness = evaluate_function_address_evidence(
+            &policy(FUNCTION_ADDRESS_MODE_REQUIRED),
+            &normalized.evidence,
+        );
+        assert!(readiness.passed, "{:?}", readiness.issues);
+    }
+
+    #[test]
+    fn digest_normalization_rejects_malformed_spellings() {
+        // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.negative]
+        let mut evidence = evidence();
+        evidence.valence_receipt.as_mut().unwrap()["receipt_hash"] =
+            json!(RECEIPT_HASH.to_ascii_uppercase());
+        evidence.mantle_binding.as_mut().unwrap()["sidecar_digest"] =
+            json!(format!("sha256:{SIDE_CAR_HASH}"));
+        evidence.kamacite_receipt.as_mut().unwrap()["receipt_hash"] = json!(b3(
+            "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+        ));
+        evidence.graph_summary.as_mut().unwrap()["report_hash"] = json!("abc");
+        let normalized = normalize_function_address_evidence_digests(&evidence);
+        let codes = issue_codes(&normalized.issues);
+
+        assert!(codes.contains(&FUNCTION_ADDRESS_DIGEST_ISSUE_CASE_UNSUPPORTED.to_string()));
+        assert!(codes.contains(&FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED.to_string()));
+        assert!(codes.contains(&FUNCTION_ADDRESS_DIGEST_ISSUE_MALFORMED.to_string()));
+    }
+
+    #[test]
+    fn normalized_digest_spelling_does_not_bypass_domain_checks() {
+        // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.domain]
+        // r[verify cairn.stack_provenance_gates.function_address_digest_normalization.negative]
+        let mut evidence = evidence();
+        evidence.mantle_binding.as_mut().unwrap()["valence_receipt_digest"] =
+            json!(b3(SIDE_CAR_HASH));
+        let normalized = normalize_function_address_evidence_digests(&evidence);
+        assert!(normalized.issues.is_empty(), "{:?}", normalized.issues);
+
+        let readiness = evaluate_function_address_evidence(
+            &policy(FUNCTION_ADDRESS_MODE_REQUIRED),
+            &normalized.evidence,
+        );
+        assert!(!readiness.passed);
+        assert!(readiness
+            .issues
+            .iter()
+            .any(|issue| issue.code == "function_address.valence_receipt_digest_stale"));
     }
 
     #[test]

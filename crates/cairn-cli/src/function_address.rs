@@ -3,7 +3,8 @@ use std::{fs, path::PathBuf};
 use cairn_core::{
     canonical_json_hash,
     verified::function_address_gates::{
-        evaluate_function_address_evidence, FunctionAddressEvidence, FUNCTION_ADDRESS_BOUNDARY,
+        evaluate_function_address_evidence, normalize_function_address_evidence_digests,
+        FunctionAddressEvidence, FUNCTION_ADDRESS_BOUNDARY,
     },
 };
 use serde_json::{json, Value};
@@ -43,8 +44,15 @@ pub(crate) fn function_address_receipt_value(
         kamacite_receipt,
         graph_summary,
     };
-    let mut value =
-        evaluate_function_address_evidence(&policy.function_address_policy, &evidence).to_json();
+    let normalization = normalize_function_address_evidence_digests(&evidence);
+    let mut value = evaluate_function_address_evidence(
+        &policy.function_address_policy,
+        &normalization.evidence,
+    )
+    .to_json();
+    for issue in normalization.issues {
+        append_optional_function_address_issue(&mut value, Some(issue.to_json()));
+    }
     append_optional_function_address_issue(&mut value, valence_issue);
     append_optional_function_address_issue(&mut value, mantle_issue);
     append_optional_function_address_issue(&mut value, kamacite_issue);
