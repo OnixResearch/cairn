@@ -97,6 +97,24 @@ pub use verified::lifecycle_orchestration::{
     validate_steel_action_envelope, SteelActionIssue, SteelActionValidationReport,
     STEEL_ACTION_ENVELOPE_SCHEMA_V1, STEEL_ORCHESTRATION_RECEIPT_SCHEMA_V1,
 };
+pub use verified::lifecycle_receipt::{
+    adapt_cairn_gate_receipt, adapt_cairn_sync_archive_receipt, adapt_cairn_validate_receipt,
+    adapt_downstream_lifecycle_receipt, adapt_lifecycle_receipt_value,
+    default_lifecycle_receipt_hash_profile, default_lifecycle_receipt_non_claims,
+    lifecycle_receipt_envelope_from_value, lifecycle_receipt_hash, lifecycle_receipt_hash_material,
+    validate_lifecycle_receipt_envelope, LifecycleReceiptCommandIdentity,
+    LifecycleReceiptDiagnostic, LifecycleReceiptEnvelope, LifecycleReceiptEvidenceSummary,
+    LifecycleReceiptHashField, LifecycleReceiptHashProfile, LifecycleReceiptIssue,
+    LifecycleReceiptValidationInput, LifecycleReceiptValidationReport,
+    LIFECYCLE_RECEIPT_CORE_BOUNDARY, LIFECYCLE_RECEIPT_CORE_SCHEMA_V1,
+    LIFECYCLE_RECEIPT_HASH_FIELD_INPUT_HASH, LIFECYCLE_RECEIPT_HASH_FIELD_POLICY_HASH,
+    LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH, LIFECYCLE_RECEIPT_HASH_PROFILE_CORE_V1,
+    LIFECYCLE_RECEIPT_ISSUE_HASH_PROFILE, LIFECYCLE_RECEIPT_ISSUE_MALFORMED_HASH,
+    LIFECYCLE_RECEIPT_ISSUE_MISSING_DIAGNOSTIC, LIFECYCLE_RECEIPT_ISSUE_MISSING_FIELD,
+    LIFECYCLE_RECEIPT_ISSUE_MISSING_HASH, LIFECYCLE_RECEIPT_ISSUE_OVERCLAIM,
+    LIFECYCLE_RECEIPT_ISSUE_SELF_HASH, LIFECYCLE_RECEIPT_ISSUE_STALE_HASH,
+    LIFECYCLE_RECEIPT_ISSUE_UNSUPPORTED_VERDICT, LIFECYCLE_RECEIPT_ISSUE_WEAK_NON_CLAIM,
+};
 pub use verified::plan::{
     build_archive_plan, build_archive_plan_with_dependency_blockers, build_sync_plan,
     build_sync_plan_with_dependency_blockers, ArchivePlan, PlanAction, PlanActionKind, SyncPlan,

@@ -13,6 +13,7 @@ pub mod hash_algorithm_policy;
 pub mod kani_receipt;
 pub mod lifecycle;
 pub mod lifecycle_orchestration;
+pub mod lifecycle_receipt;
 pub mod plan;
 pub mod policy;
 pub mod probe;

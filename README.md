@@ -263,6 +263,16 @@ coverage does not prove the code satisfies a requirement, tests do not prove all
 cases, and a receipt hash does not prove the tool has no bugs. Stronger claims need stronger
 rails, such as property tests, model checking, or formal verification.
 
+The reusable lifecycle receipt core in `cairn-core` validates only shared envelope
+shape: verdict vocabulary, diagnostic rows, command identity, evidence summary,
+named hash-profile rules, receipt-hash consistency, and explicit non-claims. It
+adapts existing Cairn gate/validate/sync/archive receipts and downstream
+receipt-shaped evidence without taking ownership of policy decisions. Passing the
+core proves envelope syntax, hash consistency, diagnostic shape, and non-claim
+presence only; it does not prove release eligibility, lifecycle readiness,
+policy satisfaction, evidence truth, source-code correctness, verifier soundness,
+or downstream behavioral correctness. r[verify cairn.release_evidence.lifecycle_receipt_core.docs]
+
 ## Structured lifecycle and probes
 
 Structured lifecycle source is now a typed data path beside the existing Markdown
