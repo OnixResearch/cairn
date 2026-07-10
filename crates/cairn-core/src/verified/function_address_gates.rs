@@ -13,6 +13,14 @@ pub const FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED: &str =
     "function_address.digest_prefix_unsupported";
 pub const FUNCTION_ADDRESS_DIGEST_ISSUE_CASE_UNSUPPORTED: &str =
     "function_address.digest_case_unsupported";
+pub const FUNCTION_ADDRESS_VALENCE_SCHEMA_V1: &str = "valence.function-address-evidence.v1";
+pub const FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1: &str = "mantle.function-address-binding.v1";
+pub const FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1: &str = "kamacite.function-address-receipt.v1";
+pub const FUNCTION_ADDRESS_GRAPH_SCHEMA_V1: &str = "valence.function-address-graph.v1";
+pub const FUNCTION_ADDRESS_ISSUE_INPUT_SCHEMA_UNSUPPORTED: &str =
+    "function_address.input_schema_unsupported";
+pub const FUNCTION_ADDRESS_ISSUE_INPUT_DISPOSITION_UNSUPPORTED: &str =
+    "function_address.input_disposition_unsupported";
 
 const BLAKE3_HEX_LENGTH: usize = 64;
 const B3_DIGEST_PREFIX: &str = "b3:";
@@ -43,6 +51,11 @@ const MANTLE_DIGEST_FIELDS: &[&str] = &[
 ];
 const KAMACITE_DIGEST_FIELDS: &[&str] = &["receipt_hash"];
 const GRAPH_DIGEST_FIELDS: &[&str] = &["report_hash"];
+const FIELD_SCHEMA_VERSION: &str = "schema_version";
+const FIELD_DISPOSITION: &str = "disposition";
+const DISPOSITION_VALUE_PRESENT: &str = "present";
+const DISPOSITION_VALUE_ABSENT: &str = "absent";
+const DISPOSITION_VALUE_SKIPPED: &str = "skipped";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionAddressPolicy {
@@ -67,6 +80,13 @@ pub struct FunctionAddressDigestRule {
     pub producer: String,
     pub field_path: String,
     pub accepted_spellings: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FunctionAddressInputContract {
+    pub producer: String,
+    pub schema_version: String,
+    pub required_fields: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -163,6 +183,57 @@ pub fn function_address_digest_rules() -> Vec<FunctionAddressDigestRule> {
             accepted_spellings: accepted_digest_spellings(rule),
         })
         .collect()
+}
+
+#[must_use]
+pub fn function_address_input_contracts() -> Vec<FunctionAddressInputContract> {
+    // r[impl cairn.stack_provenance_gates.function_address_input_schema.contract]
+    vec![
+        input_contract(
+            "valence",
+            FUNCTION_ADDRESS_VALENCE_SCHEMA_V1,
+            &[
+                "receipt_hash",
+                "valence_policy_hash",
+                "roles",
+                "schemas",
+                "verification_role_summary",
+                "non_claim_boundary",
+            ],
+        ),
+        input_contract(
+            "mantle",
+            FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1,
+            &[
+                "receipt_hash",
+                "claim_scope",
+                "sidecar_digest",
+                "valence_receipt_digest",
+                "source_archive_digest",
+                "release_binary_digest",
+                "non_claim_boundary",
+                "disposition",
+            ],
+        ),
+        input_contract(
+            "kamacite",
+            FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1,
+            &["receipt_hash"],
+        ),
+        input_contract(
+            "graph",
+            FUNCTION_ADDRESS_GRAPH_SCHEMA_V1,
+            &[
+                "function_count",
+                "source_count",
+                "dependency_edge_count",
+                "recorded_only_count",
+                "property_count",
+                "failed_link_count",
+                "report_hash",
+            ],
+        ),
+    ]
 }
 
 #[must_use]
@@ -284,6 +355,7 @@ pub fn evaluate_function_address_evidence(
         .and_then(|receipt| receipt_string(receipt, "receipt_hash"));
     let claim_scope = claim_scope(evidence, valence_receipt);
 
+    validate_input_schemas(evidence, valence_receipt, &mut issues);
     validate_valence_receipt(policy, valence_receipt, &mut issues);
     validate_mantle_binding(policy, evidence.mantle_binding.as_ref(), &mut issues);
     validate_kamacite_receipt(evidence.kamacite_receipt.as_ref(), &mut issues);
@@ -338,6 +410,89 @@ fn function_address_readiness(
         claim_scope: parts.claim_scope,
         graph_summary: parts.graph_summary,
         boundary: policy.required_boundary.clone(),
+    }
+}
+
+fn validate_input_schemas(
+    evidence: &FunctionAddressEvidence,
+    valence_receipt: &Value,
+    issues: &mut Vec<FunctionAddressIssue>,
+) {
+    // r[impl cairn.stack_provenance_gates.function_address_input_schema.validation]
+    validate_optional_schema_version(
+        valence_receipt,
+        "valence_receipt",
+        FUNCTION_ADDRESS_VALENCE_SCHEMA_V1,
+        issues,
+    );
+    if let Some(binding) = evidence.mantle_binding.as_ref() {
+        let has_direct_schema = validate_optional_schema_version(
+            binding,
+            "mantle_binding",
+            FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1,
+            issues,
+        );
+        if has_direct_schema {
+            validate_direct_mantle_disposition(binding, issues);
+        }
+    }
+    if let Some(receipt) = evidence.kamacite_receipt.as_ref() {
+        validate_optional_schema_version(
+            receipt,
+            "kamacite_receipt",
+            FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1,
+            issues,
+        );
+    }
+    if let Some(graph) = evidence.graph_summary.as_ref() {
+        validate_optional_schema_version(
+            graph,
+            "graph_summary",
+            FUNCTION_ADDRESS_GRAPH_SCHEMA_V1,
+            issues,
+        );
+    }
+}
+
+fn validate_optional_schema_version(
+    value: &Value,
+    object_path: &str,
+    expected: &str,
+    issues: &mut Vec<FunctionAddressIssue>,
+) -> bool {
+    let Some(actual) = value.get(FIELD_SCHEMA_VERSION).and_then(Value::as_str) else {
+        return false;
+    };
+    if actual != expected {
+        issues.push(function_address_issue(
+            FUNCTION_ADDRESS_ISSUE_INPUT_SCHEMA_UNSUPPORTED,
+            &format!("{object_path}.{FIELD_SCHEMA_VERSION}"),
+            expected,
+            actual,
+        ));
+    }
+    true
+}
+
+fn validate_direct_mantle_disposition(value: &Value, issues: &mut Vec<FunctionAddressIssue>) {
+    let disposition = value
+        .get(FIELD_DISPOSITION)
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if !matches!(
+        disposition,
+        DISPOSITION_VALUE_PRESENT | DISPOSITION_VALUE_ABSENT | DISPOSITION_VALUE_SKIPPED
+    ) {
+        issues.push(function_address_issue(
+            FUNCTION_ADDRESS_ISSUE_INPUT_DISPOSITION_UNSUPPORTED,
+            "mantle_binding.disposition",
+            "present, absent, or skipped direct Mantle disposition",
+            if disposition.is_empty() {
+                "missing"
+            } else {
+                disposition
+            },
+        ));
     }
 }
 
@@ -754,6 +909,21 @@ fn function_address_text_overclaims(value: &str) -> bool {
     .any(|fragment| lower.contains(fragment))
 }
 
+fn input_contract(
+    producer: &str,
+    schema_version: &str,
+    required_fields: &[&str],
+) -> FunctionAddressInputContract {
+    FunctionAddressInputContract {
+        producer: producer.to_string(),
+        schema_version: schema_version.to_string(),
+        required_fields: required_fields
+            .iter()
+            .map(|field| (*field).to_string())
+            .collect(),
+    }
+}
+
 fn digest_field_rules() -> Vec<DigestFieldRule> {
     let mut rules = Vec::new();
     extend_digest_rules(
@@ -1033,6 +1203,79 @@ mod tests {
         assert!(rules.iter().all(|rule| rule
             .accepted_spellings
             .contains(&FUNCTION_ADDRESS_DIGEST_SPELLING_B3_PREFIX.to_string())));
+    }
+
+    #[test]
+    fn input_contracts_document_direct_readiness_artifacts() {
+        // r[verify cairn.stack_provenance_gates.function_address_input_schema.contract]
+        let contracts = function_address_input_contracts();
+
+        assert!(contracts
+            .iter()
+            .any(|contract| contract.schema_version == FUNCTION_ADDRESS_VALENCE_SCHEMA_V1));
+        assert!(contracts
+            .iter()
+            .any(|contract| contract.schema_version == FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1));
+        assert!(contracts
+            .iter()
+            .any(|contract| contract.schema_version == FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1));
+        assert!(contracts
+            .iter()
+            .any(|contract| contract.schema_version == FUNCTION_ADDRESS_GRAPH_SCHEMA_V1));
+        assert!(contracts.iter().any(|contract| contract
+            .required_fields
+            .contains(&"receipt_hash".to_string())));
+    }
+
+    #[test]
+    fn direct_schema_versioned_inputs_pass_readiness() {
+        // r[verify cairn.stack_provenance_gates.function_address_input_schema.mantle_direct]
+        // r[verify cairn.stack_provenance_gates.function_address_input_schema.positive]
+        let mut evidence = evidence();
+        evidence.valence_receipt.as_mut().unwrap()[FIELD_SCHEMA_VERSION] =
+            json!(FUNCTION_ADDRESS_VALENCE_SCHEMA_V1);
+        evidence.mantle_binding.as_mut().unwrap()[FIELD_SCHEMA_VERSION] =
+            json!(FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1);
+        evidence.mantle_binding.as_mut().unwrap()[FIELD_DISPOSITION] =
+            json!(DISPOSITION_VALUE_PRESENT);
+        evidence.kamacite_receipt.as_mut().unwrap()[FIELD_SCHEMA_VERSION] =
+            json!(FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1);
+        evidence.graph_summary.as_mut().unwrap()[FIELD_SCHEMA_VERSION] =
+            json!(FUNCTION_ADDRESS_GRAPH_SCHEMA_V1);
+
+        let readiness =
+            evaluate_function_address_evidence(&policy(FUNCTION_ADDRESS_MODE_REQUIRED), &evidence);
+        assert!(readiness.passed, "{:?}", readiness.issues);
+        assert_eq!(readiness.disposition, DISPOSITION_PRESENT);
+    }
+
+    #[test]
+    fn malformed_direct_input_schemas_fail_closed() {
+        // r[verify cairn.stack_provenance_gates.function_address_input_schema.validation]
+        // r[verify cairn.stack_provenance_gates.function_address_input_schema.negative]
+        let mut bad_schema_evidence = evidence();
+        bad_schema_evidence.mantle_binding.as_mut().unwrap()[FIELD_SCHEMA_VERSION] =
+            json!("mantle.bad.v0");
+        bad_schema_evidence.graph_summary.as_mut().unwrap()[FIELD_SCHEMA_VERSION] =
+            json!("graph.bad.v0");
+        let bad_schema = evaluate_function_address_evidence(
+            &policy(FUNCTION_ADDRESS_MODE_REQUIRED),
+            &bad_schema_evidence,
+        );
+        let codes = issue_codes(&bad_schema.issues);
+        assert!(!bad_schema.passed);
+        assert!(codes.contains(&FUNCTION_ADDRESS_ISSUE_INPUT_SCHEMA_UNSUPPORTED.to_string()));
+
+        let mut missing_disposition = evidence();
+        missing_disposition.mantle_binding.as_mut().unwrap()[FIELD_SCHEMA_VERSION] =
+            json!(FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1);
+        let bad_disposition = evaluate_function_address_evidence(
+            &policy(FUNCTION_ADDRESS_MODE_REQUIRED),
+            &missing_disposition,
+        );
+        assert!(!bad_disposition.passed);
+        assert!(issue_codes(&bad_disposition.issues)
+            .contains(&FUNCTION_ADDRESS_ISSUE_INPUT_DISPOSITION_UNSUPPORTED.to_string()));
     }
 
     #[test]

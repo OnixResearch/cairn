@@ -81,14 +81,20 @@ pub use verified::formal_proof_readiness_fixture::{
     FormalProofReadinessIssue, FormalProofReadinessReport, FORMAL_PROOF_READINESS_BOUNDARY,
 };
 pub use verified::function_address_gates::{
-    evaluate_function_address_evidence, function_address_digest_rules, is_function_address_mode,
+    evaluate_function_address_evidence, function_address_digest_rules,
+    function_address_input_contracts, is_function_address_mode,
     normalize_function_address_evidence_digests, FunctionAddressDigestNormalization,
-    FunctionAddressDigestRule, FunctionAddressEvidence, FunctionAddressIssue,
-    FunctionAddressPolicy, FunctionAddressReadiness, FUNCTION_ADDRESS_BOUNDARY,
-    FUNCTION_ADDRESS_CLAIM_SCOPE_LIFECYCLE, FUNCTION_ADDRESS_DIGEST_ISSUE_CASE_UNSUPPORTED,
-    FUNCTION_ADDRESS_DIGEST_ISSUE_MALFORMED, FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED,
-    FUNCTION_ADDRESS_DIGEST_SPELLING_B3_PREFIX, FUNCTION_ADDRESS_DIGEST_SPELLING_BARE,
-    FUNCTION_ADDRESS_MODE_DISABLED, FUNCTION_ADDRESS_MODE_OPTIONAL, FUNCTION_ADDRESS_MODE_REQUIRED,
+    FunctionAddressDigestRule, FunctionAddressEvidence, FunctionAddressInputContract,
+    FunctionAddressIssue, FunctionAddressPolicy, FunctionAddressReadiness,
+    FUNCTION_ADDRESS_BOUNDARY, FUNCTION_ADDRESS_CLAIM_SCOPE_LIFECYCLE,
+    FUNCTION_ADDRESS_DIGEST_ISSUE_CASE_UNSUPPORTED, FUNCTION_ADDRESS_DIGEST_ISSUE_MALFORMED,
+    FUNCTION_ADDRESS_DIGEST_ISSUE_PREFIX_UNSUPPORTED, FUNCTION_ADDRESS_DIGEST_SPELLING_B3_PREFIX,
+    FUNCTION_ADDRESS_DIGEST_SPELLING_BARE, FUNCTION_ADDRESS_GRAPH_SCHEMA_V1,
+    FUNCTION_ADDRESS_ISSUE_INPUT_DISPOSITION_UNSUPPORTED,
+    FUNCTION_ADDRESS_ISSUE_INPUT_SCHEMA_UNSUPPORTED, FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1,
+    FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1, FUNCTION_ADDRESS_MODE_DISABLED,
+    FUNCTION_ADDRESS_MODE_OPTIONAL, FUNCTION_ADDRESS_MODE_REQUIRED,
+    FUNCTION_ADDRESS_VALENCE_SCHEMA_V1,
 };
 pub use verified::hash_algorithm_policy::{
     hash_algorithm_policy_issues_json, validate_hash_algorithm_policy,

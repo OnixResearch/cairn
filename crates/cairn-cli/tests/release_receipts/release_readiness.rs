@@ -198,6 +198,7 @@ fn function_address_fixture_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     fs::write(
         dir.join("valence.json"),
         serde_json::to_vec_pretty(&json!({
+            "schema_version": "valence.function-address-evidence.v1",
             "valid": true,
             "verdict": "PASS",
             "receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -225,6 +226,8 @@ fn function_address_fixture_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     fs::write(
         dir.join("mantle.json"),
         serde_json::to_vec_pretty(&json!({
+            "schema_version": "mantle.function-address-binding.v1",
+            "disposition": "present",
             "valid": true,
             "receipt_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
             "claim_scope": "function_address.v1.lifecycle_policy_conformance",
@@ -238,6 +241,7 @@ fn function_address_fixture_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     fs::write(
         dir.join("kamacite.json"),
         serde_json::to_vec_pretty(&json!({
+            "schema_version": "kamacite.function-address-receipt.v1",
             "valid": true,
             "receipt_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
         }))?,
@@ -245,6 +249,7 @@ fn function_address_fixture_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     fs::write(
         dir.join("graph.json"),
         serde_json::to_vec_pretty(&json!({
+            "schema_version": "valence.function-address-graph.v1",
             "function_count": function_count,
             "source_count": source_count,
             "dependency_edge_count": dependency_edge_count,
@@ -325,6 +330,7 @@ fn release_readiness_fails_required_missing_stack_provenance() -> Result<(), Box
 
 #[test]
 fn release_readiness_accepts_required_function_address_fixture() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.stack_provenance_gates.function_address_input_schema.final_validation]
     // r[verify cairn.function_address_gates.receipt_validation.complete]
     // r[verify cairn.function_address_gates.graph_summary.included]
     // r[verify cairn.function_address_gates.docs]
