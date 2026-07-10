@@ -25,6 +25,17 @@ pub use verified::ai_spec_draft::{
     ai_spec_draft_hash, validate_ai_spec_draft, AiSpecDraftIssue, AiSpecDraftProvenance,
     AiSpecDraftReport, AI_SPEC_DRAFT_SCHEMA_V1,
 };
+pub use verified::ast_grep_gate::{
+    ast_grep_receipt_hash, ast_grep_receipt_hash_material, default_ast_grep_gate_policy,
+    is_ast_grep_gate_mode, validate_ast_grep_receipt, AstGrepGateIssue, AstGrepGatePolicy,
+    AstGrepGateReport, AST_GREP_GATE_BOUNDARY, AST_GREP_GATE_ISSUE_BLOCKING_FINDING,
+    AST_GREP_GATE_ISSUE_CODEMOD_REVIEW, AST_GREP_GATE_ISSUE_MALFORMED_FINDING,
+    AST_GREP_GATE_ISSUE_MALFORMED_HASH, AST_GREP_GATE_ISSUE_MISSING_FIELD,
+    AST_GREP_GATE_ISSUE_OVERCLAIM, AST_GREP_GATE_ISSUE_STALE_SCOPE,
+    AST_GREP_GATE_ISSUE_UNSUPPORTED_MODE, AST_GREP_GATE_ISSUE_UNSUPPORTED_OUTPUT_FORMAT,
+    AST_GREP_GATE_ISSUE_WEAK_NON_CLAIM, AST_GREP_GATE_MODE_ADVISORY, AST_GREP_GATE_MODE_BLOCKING,
+    AST_GREP_GATE_MODE_CODEMOD_REVIEW, AST_GREP_GATE_MODE_INVENTORY,
+};
 pub use verified::change_dependencies::{
     build_change_dependency_graph, change_dependency_issue_messages,
     change_metadata_with_dependencies, dependency_blockers_for_change, next_ready_change,

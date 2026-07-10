@@ -273,6 +273,17 @@ presence only; it does not prove release eligibility, lifecycle readiness,
 policy satisfaction, evidence truth, source-code correctness, verifier soundness,
 or downstream behavioral correctness. r[verify cairn.release_evidence.lifecycle_receipt_core.docs]
 
+The ast-grep lifecycle gate validates parsed scan/test receipts rather than
+running ast-grep from pure code. Repositories or CLI shells own command
+execution, file discovery, stdout/stderr capture, and raw report loading; the
+Cairn core checks in-memory receipt shape, tool identity, BLAKE3 rule-bundle
+identity, repository scope, output format, findings summary, policy mode, source
+span compatibility, and non-claim text. Inventory and advisory modes record
+findings without treating them as release blockers; blocking and codemod-review
+modes fail closed according to policy. Passing the gate does not prove source
+correctness, requirement satisfaction, proof discharge, or release eligibility.
+r[verify cairn.ast_grep_gate.shell_boundary]
+
 ## Structured lifecycle and probes
 
 Structured lifecycle source is now a typed data path beside the existing Markdown
