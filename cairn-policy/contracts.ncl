@@ -202,6 +202,15 @@ let PositiveNumber = std.contract.from_predicate (fun value =>
     required_boundary | NonEmptyString,
   },
 
+  FunctionAddressPolicy = {
+    mode | StackProvenanceGateMode,
+    allowed_claim_scopes | NonEmptyArray | Array NonEmptyString,
+    accepted_valence_policy_hashes | Array Blake3HexContract | default = [],
+    required_roles | NonEmptyArray | Array NonEmptyString,
+    required_schemas | NonEmptyArray | Array NonEmptyString,
+    required_boundary | NonEmptyString,
+  },
+
   WorkspaceContractMatrixGate = {
     mode | StackProvenanceGateMode,
     accepted_matrix_hashes | Array Blake3HexContract | default = [],
@@ -375,6 +384,7 @@ let PositiveNumber = std.contract.from_predicate (fun value =>
     steel_orchestration_policy | SteelOrchestrationPolicy,
     traceability_policy | TraceabilityPolicy,
     stack_provenance_gate | StackProvenancePolicy,
+    function_address_gate | FunctionAddressPolicy,
     workspace_contract_matrix_gate | WorkspaceContractMatrixGate | default = {
       mode = "disabled",
       accepted_matrix_hashes = [],

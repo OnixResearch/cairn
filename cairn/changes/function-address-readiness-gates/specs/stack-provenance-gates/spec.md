@@ -72,7 +72,7 @@ r[cairn.function_address_gates.graph_summary] Cairn MAY include a compact functi
 
 #### Scenario: Graph summary is included when supplied
 r[cairn.function_address_gates.graph_summary.included]
-- GIVEN a Valence function-address graph report summary with function count, addressed function count, caveat count, dependency-edge count, unresolved-link count, failed-link count, and report hash
+- GIVEN a Valence function-address graph report summary with function count, source count, dependency-edge count, recorded-only count, property count, failed-link count, and report hash
 - WHEN Cairn emits release-readiness output
 - THEN Cairn MAY include those fields as context bound to the Valence report hash.
 

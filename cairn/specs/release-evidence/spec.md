@@ -532,6 +532,15 @@ r[cairn.workspace_contract_matrix.docs.non_claims]
 - WHEN the supported claim is rendered
 - THEN it MUST state that the matrix proves declared edge health only and does not prove provider correctness, consumer behavioral correctness, verifier soundness, or release eligibility by itself.
 
+### Requirement: Workspace contract matrix final validation
+r[cairn.workspace_contract_matrix.final_validation] The change MUST include positive and negative tests, policy freshness, and Cairn validation evidence before archive.
+
+#### Scenario: Fixture suite covers edge health
+r[cairn.workspace_contract_matrix.final_validation.fixtures]
+- GIVEN positive and negative matrix fixtures
+- WHEN focused validation runs
+- THEN valid fixtures MUST pass, invalid fixtures MUST fail closed, and release-readiness mode coverage MUST be present.
+
 ### Requirement: Formal proof readiness fixture contract
 r[cairn.release_evidence.formal_proof_readiness_fixture.contract] Cairn MUST define a frozen formal-proof readiness fixture contract for Valence stack readiness inputs derived from Octet formal-proof exports.
 

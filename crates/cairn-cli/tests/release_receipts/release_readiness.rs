@@ -55,6 +55,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "semantic_review_ledger_hash",
             "stack_provenance_hash",
             "stack_provenance",
+            "function_address_hash",
+            "function_address",
             "workspace_contract_matrix_hash",
             "workspace_contract_matrix",
             "repository_gate_summary",
@@ -77,6 +79,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_hash_field(&receipt, "preserves_corpus_freshness_hash")?;
     assert_hash_field(&receipt, "semantic_review_ledger_hash")?;
     assert_hash_field(&receipt, "stack_provenance_hash")?;
+    assert_hash_field(&receipt, "function_address_hash")?;
     assert_hash_field(&receipt, "workspace_contract_matrix_hash")?;
     assert_eq!(receipt["coverage_audit_valid"], true);
     let check_names = receipt["checks"]
@@ -93,6 +96,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert!(check_names.contains(&"preserves_corpus_freshness"));
     assert!(check_names.contains(&"semantic_review_ledger"));
     assert!(check_names.contains(&"stack_provenance"));
+    assert!(check_names.contains(&"function_address"));
     assert!(check_names.contains(&"workspace_contract_matrix"));
     assert!(check_names.contains(&"repository_gate_policy_listed"));
     assert_eq!(receipt["mcp"]["read_only"], true);
@@ -101,6 +105,14 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_eq!(receipt["stack_provenance"]["disposition"], "absent");
     assert_eq!(receipt["stack_provenance"]["passed"], true);
     assert_eq!(receipt["stack_provenance"]["skipped"], true);
+    assert_eq!(receipt["function_address"]["mode"], "optional");
+    assert_eq!(receipt["function_address"]["disposition"], "absent");
+    assert_eq!(receipt["function_address"]["passed"], true);
+    assert_eq!(receipt["function_address"]["skipped"], true);
+    assert!(receipt["function_address"]["boundary"]
+        .as_str()
+        .ok_or("function-address boundary text")?
+        .contains("did not prove Rust semantic correctness"));
     assert_eq!(receipt["workspace_contract_matrix"]["mode"], "disabled");
     assert_eq!(
         receipt["workspace_contract_matrix"]["disposition"],
@@ -132,6 +144,7 @@ fn release_readiness_bundle_is_reproducible() -> Result<(), Box<dyn Error>> {
             "preserves_corpus_freshness_hash",
             "semantic_review_ledger_hash",
             "stack_provenance_hash",
+            "function_address_hash",
         ],
     )?;
     assert_eq!(receipt["valid"], true);
@@ -157,6 +170,95 @@ fn stack_fixture(name: &str) -> String {
 
 fn stack_issue_codes(receipt: &Value) -> Vec<String> {
     receipt["stack_provenance"]["issues"]
+        .as_array()
+        .map(|issues| {
+            issues
+                .iter()
+                .filter_map(|issue| issue["code"].as_str().map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn function_address_policy_path(name: &str, mode: &str) -> Result<PathBuf, Box<dyn Error>> {
+    let path = temp_project(name)?.join("policy.json");
+    let mut policy = policy_json()?;
+    policy["function_address_gate"]["mode"] = json!(mode);
+    fs::write(&path, serde_json::to_vec_pretty(&policy)?)?;
+    Ok(path)
+}
+
+fn function_address_fixture_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
+    let dir = temp_project(name)?;
+    let source_count = 1_u64;
+    let dependency_edge_count = 1_u64;
+    let function_count = 2_u64;
+    let recorded_only_count = 2_u64;
+    let boundary = "Cairn consumed Valence, Mantle, and Kamacite function-address evidence for lifecycle/release policy conformance only; it did not prove Rust semantic correctness, compiler correctness, whole-program safety, verifier soundness, or release eligibility";
+    fs::write(
+        dir.join("valence.json"),
+        serde_json::to_vec_pretty(&json!({
+            "valid": true,
+            "verdict": "PASS",
+            "receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "valence_policy_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "claim_scope": "function_address.v1.lifecycle_policy_conformance",
+            "kamacite_receipt_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "roles": [
+                "function-address-evidence-sidecar",
+                "valence-function-address-evidence-profile",
+                "kamacite-function-address-receipt"
+            ],
+            "schemas": [
+                "valence.function-address-evidence.v1",
+                "function-address-evidence-v1",
+                "kamacite.function-address-receipt.v1"
+            ],
+            "verification_role_summary": {
+                "property_count": 0,
+                "recorded_only_count": recorded_only_count,
+                "verified_count": 0
+            },
+            "non_claim_boundary": boundary
+        }))?,
+    )?;
+    fs::write(
+        dir.join("mantle.json"),
+        serde_json::to_vec_pretty(&json!({
+            "valid": true,
+            "receipt_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "claim_scope": "function_address.v1.lifecycle_policy_conformance",
+            "sidecar_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "valence_receipt_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "source_archive_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "release_binary_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+            "non_claim_boundary": boundary
+        }))?,
+    )?;
+    fs::write(
+        dir.join("kamacite.json"),
+        serde_json::to_vec_pretty(&json!({
+            "valid": true,
+            "receipt_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }))?,
+    )?;
+    fs::write(
+        dir.join("graph.json"),
+        serde_json::to_vec_pretty(&json!({
+            "function_count": function_count,
+            "source_count": source_count,
+            "dependency_edge_count": dependency_edge_count,
+            "recorded_only_count": recorded_only_count,
+            "property_count": 0,
+            "failed_link_count": 0,
+            "report_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+        }))?,
+    )?;
+    Ok(dir)
+}
+
+fn function_address_issue_codes(receipt: &Value) -> Vec<String> {
+    receipt["function_address"]["issues"]
         .as_array()
         .map(|issues| {
             issues
@@ -207,6 +309,64 @@ fn release_readiness_fails_required_missing_stack_provenance() -> Result<(), Box
     assert_eq!(receipt["valid"], false);
     assert!(stack_issue_codes(&receipt)
         .contains(&"stack_provenance.valence_receipt_missing".to_string()));
+    Ok(())
+}
+
+#[test]
+fn release_readiness_accepts_required_function_address_fixture() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.function_address_gates.receipt_validation.complete]
+    // r[verify cairn.function_address_gates.graph_summary.included]
+    // r[verify cairn.function_address_gates.docs]
+    // r[verify cairn.function_address_gates.docs.boundary]
+    // r[verify cairn.function_address_gates.final_validation]
+    // r[verify cairn.function_address_gates.final_validation.reviewable]
+    let policy = function_address_policy_path("function-address-required", "required")?;
+    let fixture = function_address_fixture_dir("function-address-fixtures")?;
+    let receipt = run_json_strings(&[
+        "release-readiness".into(),
+        "--root".into(),
+        ".".into(),
+        "--policy".into(),
+        policy.display().to_string(),
+        "--function-address-valence".into(),
+        fixture.join("valence.json").display().to_string(),
+        "--function-address-mantle".into(),
+        fixture.join("mantle.json").display().to_string(),
+        "--function-address-kamacite".into(),
+        fixture.join("kamacite.json").display().to_string(),
+        "--function-address-graph".into(),
+        fixture.join("graph.json").display().to_string(),
+    ])?;
+    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["function_address"]["passed"], true);
+    assert_eq!(receipt["function_address"]["disposition"], "present");
+    assert_hash_field(&receipt, "function_address_hash")?;
+    assert_hash_field(&receipt["function_address"], "valence_receipt_hash")?;
+    assert_hash_field(&receipt["function_address"], "mantle_binding_hash")?;
+    assert_hash_field(&receipt["function_address"], "kamacite_receipt_hash")?;
+    assert_hash_field(&receipt["function_address"]["graph_summary"], "report_hash")?;
+    assert!(receipt["function_address"]["boundary"]
+        .as_str()
+        .ok_or("function-address boundary text")?
+        .contains("did not prove Rust semantic correctness"));
+    Ok(())
+}
+
+#[test]
+fn release_readiness_fails_required_missing_function_address() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.function_address_gates.policy.required_missing]
+    // r[verify cairn.function_address_gates.fixtures.negative.required]
+    let policy = function_address_policy_path("function-address-required-missing", "required")?;
+    let receipt = run_json_strings(&[
+        "release-readiness".into(),
+        "--root".into(),
+        ".".into(),
+        "--policy".into(),
+        policy.display().to_string(),
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert!(function_address_issue_codes(&receipt)
+        .contains(&"function_address.valence_receipt_missing".to_string()));
     Ok(())
 }
 

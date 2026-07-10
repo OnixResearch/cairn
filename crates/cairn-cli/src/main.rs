@@ -6,6 +6,7 @@ mod developer_experience;
 mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
+mod function_address;
 mod hash_algorithm_policy;
 mod lifecycle;
 mod lifecycle_data;

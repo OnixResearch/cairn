@@ -20,6 +20,7 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 use crate::determinism::determinism_coverage_audit_receipt;
+use crate::function_address::{function_address_hash, function_address_receipt_value};
 use crate::mcp::mcp_agent_smoke_receipt;
 use crate::native::cairn_validation_receipt;
 use crate::preserves_corpus::preserves_corpus_freshness_receipt;
@@ -38,15 +39,29 @@ pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Err
     let stack_provenance = read_string_option(&args, "--stack-provenance").map(PathBuf::from);
     let stack_provenance_graph =
         read_string_option(&args, "--stack-provenance-graph").map(PathBuf::from);
+    let function_address_valence =
+        read_string_option(&args, "--function-address-valence").map(PathBuf::from);
+    let function_address_mantle =
+        read_string_option(&args, "--function-address-mantle").map(PathBuf::from);
+    let function_address_kamacite =
+        read_string_option(&args, "--function-address-kamacite").map(PathBuf::from);
+    let function_address_graph =
+        read_string_option(&args, "--function-address-graph").map(PathBuf::from);
     let workspace_contract_matrix_receipt =
         read_string_option(&args, "--workspace-contract-matrix-receipt").map(PathBuf::from);
-    print_json(release_readiness_receipt_with_review_ledger_and_stack(
-        root,
-        policy_path,
-        review_ledger,
-        stack_provenance,
-        stack_provenance_graph,
-        workspace_contract_matrix_receipt,
+    print_json(release_readiness_receipt_with_inputs(
+        ReleaseReadinessInputs {
+            root,
+            policy_path,
+            review_ledger,
+            stack_provenance,
+            stack_provenance_graph,
+            function_address_valence,
+            function_address_mantle,
+            function_address_kamacite,
+            function_address_graph,
+            workspace_contract_matrix_receipt,
+        },
     ))
 }
 
@@ -60,24 +75,46 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
     policy_path: PathBuf,
     review_ledger: Option<PathBuf>,
 ) -> Value {
-    release_readiness_receipt_with_review_ledger_and_stack(
+    release_readiness_receipt_with_inputs(ReleaseReadinessInputs {
         root,
         policy_path,
         review_ledger,
-        None,
-        None,
-        None,
-    )
+        stack_provenance: None,
+        stack_provenance_graph: None,
+        function_address_valence: None,
+        function_address_mantle: None,
+        function_address_kamacite: None,
+        function_address_graph: None,
+        workspace_contract_matrix_receipt: None,
+    })
 }
 
-fn release_readiness_receipt_with_review_ledger_and_stack(
+struct ReleaseReadinessInputs {
     root: PathBuf,
     policy_path: PathBuf,
     review_ledger: Option<PathBuf>,
     stack_provenance: Option<PathBuf>,
     stack_provenance_graph: Option<PathBuf>,
+    function_address_valence: Option<PathBuf>,
+    function_address_mantle: Option<PathBuf>,
+    function_address_kamacite: Option<PathBuf>,
+    function_address_graph: Option<PathBuf>,
     workspace_contract_matrix_receipt: Option<PathBuf>,
-) -> Value {
+}
+
+fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Value {
+    let ReleaseReadinessInputs {
+        root,
+        policy_path,
+        review_ledger,
+        stack_provenance,
+        stack_provenance_graph,
+        function_address_valence,
+        function_address_mantle,
+        function_address_kamacite,
+        function_address_graph,
+        workspace_contract_matrix_receipt,
+    } = inputs;
     // r[impl cairn.supersede.release_readiness_bundle]
     // r[impl cairn.supersede.release_readiness_bundle.schema]
     // r[impl cairn.supersede.release_readiness_bundle.local]
@@ -105,6 +142,13 @@ fn release_readiness_receipt_with_review_ledger_and_stack(
         stack_provenance,
         stack_provenance_graph,
     );
+    let function_address = function_address_component(
+        policy_path.clone(),
+        function_address_valence,
+        function_address_mantle,
+        function_address_kamacite,
+        function_address_graph,
+    );
     let workspace_contract_matrix = workspace_contract_matrix_component(
         root.clone(),
         policy.as_ref().map(|value| &value.raw),
@@ -127,6 +171,7 @@ fn release_readiness_receipt_with_review_ledger_and_stack(
         preserves_corpus.check,
         semantic_review_ledger.check,
         stack_provenance.check,
+        function_address.check,
         workspace_contract_matrix.check,
     ];
     checks.push(json!({
@@ -157,6 +202,8 @@ fn release_readiness_receipt_with_review_ledger_and_stack(
             "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
             "stack_provenance_hash": stack_provenance.receipt_hash,
             "stack_provenance": stack_provenance.value,
+            "function_address_hash": function_address.receipt_hash,
+            "function_address": function_address.value,
             "workspace_contract_matrix_hash": workspace_contract_matrix.receipt_hash,
             "workspace_contract_matrix": workspace_contract_matrix.value,
             "repository_gate_summary": repository_gate_summary,
@@ -232,6 +279,41 @@ fn stack_provenance_component(
         check["skipped"] = Value::Bool(true);
     }
     StackProvenanceComponent {
+        check,
+        receipt_hash,
+        value,
+    }
+}
+
+fn function_address_component(
+    policy_path: PathBuf,
+    valence_receipt_path: Option<PathBuf>,
+    mantle_binding_path: Option<PathBuf>,
+    kamacite_receipt_path: Option<PathBuf>,
+    graph_summary_path: Option<PathBuf>,
+) -> FunctionAddressComponent {
+    // r[impl cairn.function_address_gates.policy]
+    // r[impl cairn.function_address_gates.receipt_validation]
+    // r[impl cairn.function_address_gates.graph_summary]
+    let value = function_address_receipt_value(
+        policy_path,
+        valence_receipt_path,
+        mantle_binding_path,
+        kamacite_receipt_path,
+        graph_summary_path,
+    );
+    let receipt_hash = function_address_hash(&value);
+    let mut check = json!({
+        "name": "function_address",
+        "passed": value["passed"].as_bool().unwrap_or(false),
+        "source": component_source("function_address"),
+        "receipt_hash": receipt_hash,
+        "disposition": value["disposition"].clone(),
+    });
+    if value["skipped"].as_bool() == Some(true) {
+        check["skipped"] = Value::Bool(true);
+    }
+    FunctionAddressComponent {
         check,
         receipt_hash,
         value,
@@ -360,6 +442,12 @@ struct StackProvenanceComponent {
     value: Value,
 }
 
+struct FunctionAddressComponent {
+    check: Value,
+    receipt_hash: String,
+    value: Value,
+}
+
 struct WorkspaceContractMatrixComponent {
     check: Value,
     receipt_hash: String,
@@ -418,6 +506,9 @@ fn component_source(name: &str) -> &'static str {
         }
         "stack_provenance" => {
             "cairn release-readiness --root <root> --stack-provenance <valence-receipt.json> --stack-provenance-graph <graph-summary.json>"
+        }
+        "function_address" => {
+            "cairn release-readiness --root <root> --function-address-valence <valence-receipt.json> --function-address-mantle <mantle-binding.json> --function-address-kamacite <kamacite-receipt.json> --function-address-graph <graph-summary.json>"
         }
         "workspace_contract_matrix" => {
             "cairn release-readiness --root <root> --workspace-contract-matrix-receipt <receipt.json>"

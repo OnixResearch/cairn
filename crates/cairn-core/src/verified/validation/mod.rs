@@ -22,6 +22,10 @@ mod tests {
     use serde_json::json;
 
     use super::*;
+    use crate::verified::function_address_gates::{
+        FunctionAddressPolicy, FUNCTION_ADDRESS_BOUNDARY, FUNCTION_ADDRESS_CLAIM_SCOPE_LIFECYCLE,
+        FUNCTION_ADDRESS_MODE_DISABLED,
+    };
     use crate::verified::policy::{
         ExemptionMarkerPolicy, Policy, ReceiptSchema, SteelOrchestrationPolicy, TaskMarker,
         TraceabilityPolicy,
@@ -113,6 +117,14 @@ mod tests {
                 allowed_claim_scopes: vec![STACK_PROVENANCE_CLAIM_SCOPE_LIFECYCLE.to_string()],
                 accepted_valence_policy_hashes: Vec::new(),
                 required_boundary: STACK_PROVENANCE_BOUNDARY.to_string(),
+            },
+            function_address_policy: FunctionAddressPolicy {
+                mode: FUNCTION_ADDRESS_MODE_DISABLED.to_string(),
+                allowed_claim_scopes: vec![FUNCTION_ADDRESS_CLAIM_SCOPE_LIFECYCLE.to_string()],
+                accepted_valence_policy_hashes: Vec::new(),
+                required_roles: vec!["function-address-evidence-sidecar".to_string()],
+                required_schemas: vec!["valence.function-address-evidence.v1".to_string()],
+                required_boundary: FUNCTION_ADDRESS_BOUNDARY.to_string(),
             },
             runtime_evidence_policy: RuntimeEvidencePolicy {
                 allowed_capture_origins: vec![

@@ -5,6 +5,7 @@ use super::{
         change_metadata_fields, exemption_marker_policy, gate_fields, mutation_policy_fields,
         receipt_schemas, require_nonempty_array, task_marker_fields, task_markers, version_field,
     },
+    function_address::function_address_policy,
     runtime_evidence::runtime_evidence_policy,
     schema_compatibility::{policy_schema_metadata, POLICY_SCHEMA_METADATA_FIELD},
     stack_provenance::stack_provenance_policy,
@@ -43,6 +44,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
     let steel_orchestration_policy = steel_orchestration_policy(&value)?;
     let traceability_policy = traceability_policy(&value)?;
     let stack_provenance_policy = stack_provenance_policy(&value)?;
+    let function_address_policy = function_address_policy(&value)?;
     let runtime_evidence_policy = runtime_evidence_policy(&value)?;
     let policy_schema_compatibility = policy_schema_metadata(&value)?
         .ok_or(PolicyError::MissingField(POLICY_SCHEMA_METADATA_FIELD))?;
@@ -69,6 +71,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         steel_orchestration_policy,
         traceability_policy,
         stack_provenance_policy,
+        function_address_policy,
         runtime_evidence_policy,
         policy_schema_compatibility: Some(policy_schema_compatibility),
         raw: value,

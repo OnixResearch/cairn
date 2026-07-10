@@ -1,5 +1,6 @@
 mod error;
 mod fields;
+mod function_address;
 mod parser;
 mod runtime_evidence;
 mod schema_compatibility;

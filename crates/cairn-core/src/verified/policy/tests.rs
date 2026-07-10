@@ -49,6 +49,15 @@ fn parses_generated_default_policy_text() {
         .stack_provenance_policy
         .allowed_claim_scopes
         .contains(&"stack_provenance.v1.lifecycle_policy_conformance".to_string()));
+    assert_eq!(policy.function_address_policy.mode, "optional");
+    assert!(policy
+        .function_address_policy
+        .allowed_claim_scopes
+        .contains(&"function_address.v1.lifecycle_policy_conformance".to_string()));
+    assert!(policy
+        .function_address_policy
+        .required_roles
+        .contains(&"kamacite-function-address-receipt".to_string()));
     let metadata = policy
         .policy_schema_compatibility
         .expect("generated policy includes schema compatibility metadata");
@@ -69,6 +78,9 @@ fn policy_module_split_preserves_public_api_exports() {
     let _traceability_policy: Option<TraceabilityPolicy> = None;
     let _stack_provenance_policy: Option<crate::verified::stack_provenance::StackProvenancePolicy> =
         None;
+    let _function_address_policy: Option<
+        crate::verified::function_address_gates::FunctionAddressPolicy,
+    > = None;
     assert_eq!(SUPPORTED_POLICY_VERSION, 1);
 }
 
@@ -212,6 +224,56 @@ fn rejects_stale_stack_provenance_policy_hash_shape() {
         validate_policy_json(value),
         Err(PolicyError::InvalidField(
             "stack_provenance_gate.accepted_valence_policy_hashes"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_unknown_function_address_mode() {
+    // r[verify cairn.function_address_gates.policy]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["function_address_gate"]["mode"] = Value::String("ambient".to_string());
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField("function_address_gate.mode"))
+    ));
+}
+
+#[test]
+fn rejects_stale_function_address_policy_hash_shape() {
+    // r[verify cairn.function_address_gates.policy]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["function_address_gate"]["accepted_valence_policy_hashes"] =
+        serde_json::json!(["not-a-hash"]);
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "function_address_gate.accepted_valence_policy_hashes"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_empty_function_address_required_roles() {
+    // r[verify cairn.function_address_gates.policy]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["function_address_gate"]["required_roles"] = serde_json::json!([]);
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "function_address_gate.required_roles"
         ))
     ));
 }
