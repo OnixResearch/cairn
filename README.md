@@ -301,7 +301,11 @@ nix run path:$PWD#cairn -- template apply agent-workflow --root /path/to/repo --
 nix run path:$PWD#cairn -- scaffold change first-change --root /path/to/repo --request "Add the first reviewed capability" --execute
 nix run path:$PWD#cairn -- discover-specs --root /path/to/repo --include src --include docs --out target/reverse-spec-draft.md
 nix run path:$PWD#cairn -- change list --root fixtures/basic
-nix run path:$PWD#cairn -- change graph --root fixtures/basic
+nix run path:$PWD#cairn -- change depend list demo --root fixtures/basic
+nix run path:$PWD#cairn -- change depend add demo prerequisite --root fixtures/basic
+nix run path:$PWD#cairn -- change graph --root fixtures/basic --format json
+nix run path:$PWD#cairn -- change graph --root fixtures/basic --format mermaid
+nix run path:$PWD#cairn -- change next --root fixtures/basic
 nix run path:$PWD#cairn -- change show demo --root fixtures/basic
 nix run path:$PWD#cairn -- spec list --root fixtures/basic
 nix run path:$PWD#cairn -- spec show demo --root fixtures/basic
@@ -319,6 +323,22 @@ nix run path:$PWD#cairn -- migrate openspec --root fixtures/basic
 nix run path:$PWD#cairn -- agent-receipt preserves-hash fixtures/agent-receipts/positive.json
 nix run path:$PWD#cairn -- preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json
 ```
+
+Local change dependencies use the optional `depends_on` array in a change's
+`metadata.json` to order active changes inside one repository. `cairn change
+depend add <change> <dependency>` and `cairn change depend remove <change>
+<dependency>` preview metadata edits by default and write only with `--execute`.
+The authoring commands reject invalid ids, unknown changes, duplicate edges,
+self-dependencies, and cycle-forming edits before mutation. `cairn change
+graph --format json|mermaid|dot` renders the same local DAG for automation or
+review, and `cairn change next` reports the first dependency-ready active change
+from the drain order. Archived dependencies are treated as satisfied; active
+dependencies block sync/archive execution until the dependency archives. These
+same-repo ordering dependencies are separate from cross-repo receipt/evidence
+dependencies, which require explicit evidence inputs and do not add remote nodes
+to the local graph. r[impl cairn.change_dependency_graph.docs.discoverability]
+r[verify cairn.change_dependency_graph.docs.discoverability.local]
+r[verify cairn.change_dependency_graph.docs.discoverability.boundary]
 
 For the Preserves receipt/hash operator workflow, including the JSON receipt boundary, read-only inspection, corpus update rail, and CI drift guards, see [`docs/preserves-receipts.md`](docs/preserves-receipts.md). For Preserves dependency upgrades, use [`docs/preserves-dependency-bumps.md`](docs/preserves-dependency-bumps.md).
 

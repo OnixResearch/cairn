@@ -27,8 +27,14 @@ pub use verified::ai_spec_draft::{
 };
 pub use verified::change_dependencies::{
     build_change_dependency_graph, change_dependency_issue_messages,
-    dependency_blockers_for_change, ChangeDependencyEdge, ChangeDependencyGraph,
-    ChangeDependencyIssue, ChangeDependencyNode, DEPENDENCY_BLOCKER_UNSATISFIED,
+    change_metadata_with_dependencies, dependency_blockers_for_change, next_ready_change,
+    normalized_change_dependencies, plan_change_dependency_edit,
+    render_change_dependency_graph_dot, render_change_dependency_graph_mermaid,
+    render_change_metadata_json, ChangeDependencyBlockedChange, ChangeDependencyEdge,
+    ChangeDependencyEditAction, ChangeDependencyEditPlan, ChangeDependencyGraph,
+    ChangeDependencyIssue, ChangeDependencyNextReady, ChangeDependencyNode,
+    DEPENDENCY_BLOCKER_UNSATISFIED, DEPENDENCY_EDIT_ISSUE_CHANGE_UNKNOWN,
+    DEPENDENCY_EDIT_ISSUE_METADATA_INVALID, DEPENDENCY_EDIT_ISSUE_NOT_DECLARED,
     DEPENDENCY_ISSUE_CYCLE, DEPENDENCY_ISSUE_DUPLICATE, DEPENDENCY_ISSUE_EMPTY_ID,
     DEPENDENCY_ISSUE_INVALID_ID, DEPENDENCY_ISSUE_INVALID_ITEM, DEPENDENCY_ISSUE_INVALID_TYPE,
     DEPENDENCY_ISSUE_SELF, DEPENDENCY_ISSUE_UNKNOWN,

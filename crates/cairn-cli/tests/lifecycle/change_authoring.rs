@@ -356,3 +356,169 @@ fn change_dependency_metadata_is_validated_and_reported() -> Result<(), Box<dyn 
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
+
+#[test]
+fn change_dependency_authoring_preview_execute_and_remove_are_safe() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.change_dependency_graph.authoring_cli]
+    // r[verify cairn.change_dependency_graph.authoring_cli.list]
+    // r[verify cairn.change_dependency_graph.authoring_cli.preview]
+    // r[verify cairn.change_dependency_graph.authoring_cli.execute]
+    // r[verify cairn.change_dependency_graph.authoring_cli.remove]
+    // r[verify cairn.change_dependency_graph.authoring_cli.tests.positive]
+    // r[verify cairn.change_dependency_graph.authoring_cli.validation]
+    let fixture = temp_fixture("change-dependency-authoring", "fixtures/basic")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    run_json(&["change", "create", "prereq", "--root", root])?;
+
+    let preview = run_json(&["change", "depend", "add", "demo", "prereq", "--root", root])?;
+    assert_eq!(preview["valid"], true);
+    assert_eq!(preview["dry_run"], true);
+    assert_eq!(preview["mutated"], false);
+    assert!(!fixture.join("cairn/changes/demo/metadata.json").exists());
+
+    let executed = run_json(&[
+        "change",
+        "depend",
+        "add",
+        "demo",
+        "prereq",
+        "--root",
+        root,
+        "--execute",
+    ])?;
+    assert_eq!(executed["valid"], true);
+    assert_eq!(executed["mutated"], true);
+    assert_eq!(executed["after"][0], "prereq");
+    let metadata = fs::read_to_string(fixture.join("cairn/changes/demo/metadata.json"))?;
+    assert!(metadata.contains("depends_on"));
+    assert!(metadata.contains("prereq"));
+
+    let listed = run_json(&["change", "depend", "list", "demo", "--root", root])?;
+    assert_eq!(listed["dependencies"][0], "prereq");
+    let next = run_json(&["change", "next", "--root", root])?;
+    assert_eq!(next["ready_change"], "prereq");
+
+    let removed = run_json(&[
+        "change",
+        "depend",
+        "remove",
+        "demo",
+        "prereq",
+        "--root",
+        root,
+        "--execute",
+    ])?;
+    assert_eq!(removed["valid"], true);
+    assert_eq!(removed["mutated"], true);
+    let metadata = fs::read_to_string(fixture.join("cairn/changes/demo/metadata.json"))?;
+    assert!(!metadata.contains("depends_on"));
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn change_dependency_graph_human_formats_are_stable() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.change_dependency_graph.render_formats]
+    // r[verify cairn.change_dependency_graph.render_formats.json_default]
+    // r[verify cairn.change_dependency_graph.render_formats.human]
+    // r[verify cairn.change_dependency_graph.authoring_cli.tests.positive]
+    let fixture = temp_fixture("change-dependency-render", "fixtures/basic")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    run_json(&["change", "create", "prereq", "--root", root])?;
+    run_json(&[
+        "change",
+        "depend",
+        "add",
+        "demo",
+        "prereq",
+        "--root",
+        root,
+        "--execute",
+    ])?;
+
+    let json_graph = run_json(&["change", "graph", "--root", root])?;
+    assert_eq!(json_graph["command"], "change graph");
+
+    let mermaid = cairn()
+        .args(["change", "graph", "--root", root, "--format", "mermaid"])
+        .output()?;
+    assert!(mermaid.status.success());
+    let mermaid_stdout = String::from_utf8_lossy(&mermaid.stdout);
+    assert!(mermaid_stdout.contains("flowchart TD"), "{mermaid_stdout}");
+    assert!(
+        mermaid_stdout.contains("active blocker"),
+        "{mermaid_stdout}"
+    );
+
+    let dot = cairn()
+        .args(["change", "graph", "--root", root, "--format", "dot"])
+        .output()?;
+    assert!(dot.status.success());
+    let dot_stdout = String::from_utf8_lossy(&dot.stdout);
+    assert!(
+        dot_stdout.contains("digraph change_dependencies"),
+        "{dot_stdout}"
+    );
+    assert!(dot_stdout.contains("active blocker"), "{dot_stdout}");
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn change_dependency_authoring_rejects_bad_edits_without_mutation() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.change_dependency_graph.authoring_cli.invalid]
+    // r[verify cairn.change_dependency_graph.render_formats.invalid]
+    // r[verify cairn.change_dependency_graph.authoring_cli.tests.negative]
+    let fixture = temp_fixture("change-dependency-authoring-negative", "fixtures/basic")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    run_json(&["change", "create", "prereq", "--root", root])?;
+    run_json(&[
+        "change",
+        "depend",
+        "add",
+        "demo",
+        "prereq",
+        "--root",
+        root,
+        "--execute",
+    ])?;
+
+    let duplicate = cairn()
+        .args([
+            "change",
+            "depend",
+            "add",
+            "demo",
+            "prereq",
+            "--root",
+            root,
+            "--execute",
+        ])
+        .output()?;
+    assert!(!duplicate.status.success());
+    let duplicate_receipt: serde_json::Value = serde_json::from_slice(&duplicate.stdout)?;
+    assert_eq!(duplicate_receipt["valid"], false);
+    assert!(serde_json::to_string(&duplicate_receipt["issues"])?
+        .contains("change_dependency.duplicate_dependency"));
+
+    let invalid = cairn()
+        .args([
+            "change", "depend", "add", "demo", "bad/name", "--root", root,
+        ])
+        .output()?;
+    assert!(!invalid.status.success());
+    let invalid_receipt: serde_json::Value = serde_json::from_slice(&invalid.stdout)?;
+    assert!(serde_json::to_string(&invalid_receipt["issues"])?
+        .contains("change_dependency.metadata.depends_on.invalid_id"));
+
+    let unknown_format = cairn()
+        .args(["change", "graph", "--root", root, "--format", "svg"])
+        .output()?;
+    assert!(!unknown_format.status.success());
+    assert!(String::from_utf8_lossy(&unknown_format.stderr).contains("unknown change graph format"));
+
+    let metadata = fs::read_to_string(fixture.join("cairn/changes/demo/metadata.json"))?;
+    assert_eq!(metadata.matches("prereq").count(), 1);
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}

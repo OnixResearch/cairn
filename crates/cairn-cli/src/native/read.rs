@@ -3,14 +3,17 @@ use std::error::Error;
 use cairn_core::{
     archive_dir, build_change_dependency_graph, build_change_detail, build_change_list,
     build_doctor_report, build_spec_detail, build_spec_list, changes_dir,
-    filter_changes_by_metadata, layout_root, specs_dir, validate_changes_with_archives,
-    validate_spec_sources, DoctorSnapshot, LifecycleLayout,
+    filter_changes_by_metadata, layout_root, next_ready_change, render_change_dependency_graph_dot,
+    render_change_dependency_graph_mermaid, specs_dir, validate_changes_with_archives,
+    validate_spec_sources, ChangeDependencyNextReady, DoctorSnapshot, LifecycleLayout,
 };
+use serde_json::json;
 
 use crate::support::{
     collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
     default_policy_path, detect_layout, find_change, find_spec_source, load_policy_file,
     path_string, print_json, read_option, read_string_option, scan_repo,
+    with_portable_receipt_hash,
 };
 
 use super::json::{
@@ -94,17 +97,65 @@ pub(super) fn run_change_show(args: Vec<String>, change: &str) -> Result<(), Box
 
 pub(super) fn run_change_graph(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.change_dependency_graph.drain_order]
+    // r[impl cairn.change_dependency_graph.render_formats]
+    let root = read_option(args.clone(), "--root", ".");
+    let format = read_string_option(&args, "--format").unwrap_or_else(|| "json".to_string());
+    let selected = detect_layout(&root);
+    let status = scan_repo(root.clone(), selected.layout)?;
+    let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
+    let graph = build_change_dependency_graph(&status.changes, &archived_changes);
+    match format.as_str() {
+        "json" => print_json(change_dependency_graph_json(
+            &path_string(root),
+            selected.layout,
+            &archived_changes,
+            &graph,
+        )),
+        "mermaid" => {
+            print!("{}", render_change_dependency_graph_mermaid(&graph));
+            Ok(())
+        }
+        "dot" => {
+            print!("{}", render_change_dependency_graph_dot(&graph));
+            Ok(())
+        }
+        unknown => Err(format!("unknown change graph format: {unknown}").into()),
+    }
+}
+
+pub(super) fn run_change_next(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.change_dependency_graph.next_ready]
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
     let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
     let graph = build_change_dependency_graph(&status.changes, &archived_changes);
-    print_json(change_dependency_graph_json(
-        &path_string(root),
-        selected.layout,
-        &archived_changes,
-        &graph,
-    ))
+    let summary = next_ready_change(&graph);
+    let receipt = change_next_receipt(&path_string(&root), selected.layout, &summary, &graph);
+    print_json(with_portable_receipt_hash(&root, receipt))
+}
+
+fn change_next_receipt(
+    root: &str,
+    layout: LifecycleLayout,
+    summary: &ChangeDependencyNextReady,
+    graph: &cairn_core::ChangeDependencyGraph,
+) -> serde_json::Value {
+    json!({
+        "command": "change next",
+        "root": root,
+        "layout": cairn_core::layout_name(layout),
+        "valid": graph.valid,
+        "ready_change": summary.ready,
+        "blocked": summary.blocked.iter().map(|blocked| {
+            json!({
+                "change": blocked.change,
+                "blockers": blocked.blockers,
+            })
+        }).collect::<Vec<_>>(),
+        "issues": graph.issues.iter().map(super::json::change_dependency_issue_json).collect::<Vec<_>>(),
+        "drain_order": graph.drain_order,
+    })
 }
 
 pub(super) fn run_spec_list(args: Vec<String>) -> Result<(), Box<dyn Error>> {

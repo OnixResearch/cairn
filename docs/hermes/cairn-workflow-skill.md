@@ -82,11 +82,16 @@ Expected result: no matches.
 - Native lifecycle/read commands:
   - `cairn init --root PATH`
   - `cairn change create <name> --root PATH`
+  - `cairn change depend list <name> --root PATH`
+  - `cairn change depend add <name> <dependency> --root PATH [--execute]`
+  - `cairn change depend remove <name> <dependency> --root PATH [--execute]`
   - `cairn change list --root PATH`
-  - `cairn change graph --root PATH`
+  - `cairn change graph --root PATH [--format json|mermaid|dot]`
+  - `cairn change next --root PATH`
   - `cairn change show <name> --root PATH`
   - `cairn spec list --root PATH`
   - `cairn spec show <id> --root PATH`
+  - local `depends_on` ordering dependencies are authored through preview-by-default `change depend add/remove`; archived dependencies satisfy blockers, active dependencies block sync/archive, and cross-repo receipt/evidence dependencies remain a separate evidence-input concept.
   - native `cairn/` layout is used for normal runtime commands; legacy layouts are migration-only and are not implicit fallbacks.
 - Diagnostics:
   - `cairn doctor --root PATH [--policy PATH]`

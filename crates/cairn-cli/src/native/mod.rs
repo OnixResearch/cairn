@@ -32,7 +32,9 @@ pub(crate) fn run_doctor(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 pub(crate) fn run_change(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
     let Some(subcommand) = iter.next() else {
-        return Err("change requires a subcommand: create, graph, list, or show".into());
+        return Err(
+            "change requires a subcommand: create, depend, graph, list, next, or show".into(),
+        );
     };
     match subcommand.as_str() {
         "create" => {
@@ -41,8 +43,10 @@ pub(crate) fn run_change(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             };
             authoring::run_change_create(iter.collect(), &change)
         }
+        "depend" => authoring::run_change_depend(iter.collect()),
         "list" => read::run_change_list(iter.collect()),
         "graph" => read::run_change_graph(iter.collect()),
+        "next" => read::run_change_next(iter.collect()),
         "show" => {
             let Some(change) = iter.next() else {
                 return Err("change show requires a change name".into());

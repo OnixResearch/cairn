@@ -1,6 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::verified::repo::ChangeStatus;
+use crate::verified::{
+    lifecycle::validate_change_name,
+    repo::{ChangeMetadata, ChangeStatus},
+};
 
 pub const DEPENDENCY_ISSUE_DUPLICATE: &str = "change_dependency.duplicate_dependency";
 pub const DEPENDENCY_ISSUE_UNKNOWN: &str = "change_dependency.unknown_dependency";
@@ -13,6 +16,49 @@ pub const DEPENDENCY_ISSUE_INVALID_ITEM: &str =
 pub const DEPENDENCY_ISSUE_EMPTY_ID: &str = "change_dependency.metadata.depends_on.empty_id";
 pub const DEPENDENCY_ISSUE_INVALID_ID: &str = "change_dependency.metadata.depends_on.invalid_id";
 pub const DEPENDENCY_BLOCKER_UNSATISFIED: &str = "change_dependency.unsatisfied_dependency";
+pub const DEPENDENCY_EDIT_ISSUE_CHANGE_UNKNOWN: &str = "change_dependency.authoring.unknown_change";
+pub const DEPENDENCY_EDIT_ISSUE_METADATA_INVALID: &str =
+    "change_dependency.authoring.invalid_metadata";
+pub const DEPENDENCY_EDIT_ISSUE_NOT_DECLARED: &str = "change_dependency.authoring.not_declared";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChangeDependencyEditAction {
+    Add,
+    Remove,
+}
+
+impl ChangeDependencyEditAction {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Add => "add",
+            Self::Remove => "remove",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChangeDependencyEditPlan {
+    pub action: ChangeDependencyEditAction,
+    pub change: String,
+    pub dependency: String,
+    pub valid: bool,
+    pub changed: bool,
+    pub before: Vec<String>,
+    pub after: Vec<String>,
+    pub issues: Vec<ChangeDependencyIssue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChangeDependencyBlockedChange {
+    pub change: String,
+    pub blockers: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChangeDependencyNextReady {
+    pub ready: Option<String>,
+    pub blocked: Vec<ChangeDependencyBlockedChange>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChangeDependencyGraph {
@@ -62,6 +108,373 @@ struct GraphBuildContext {
     edges: Vec<ChangeDependencyEdge>,
     topological_edges: Vec<(String, String)>,
     issues: Vec<ChangeDependencyIssue>,
+}
+
+pub fn normalized_change_dependencies(change: &ChangeStatus) -> Vec<String> {
+    let mut dependencies = change.metadata.depends_on.clone();
+    dependencies.sort();
+    dependencies.dedup();
+    dependencies
+}
+
+pub fn plan_change_dependency_edit(
+    changes: &[ChangeStatus],
+    archived_changes: &[String],
+    change_name: &str,
+    dependency: &str,
+    action: ChangeDependencyEditAction,
+) -> ChangeDependencyEditPlan {
+    // r[impl cairn.change_dependency_graph.authoring_cli]
+    // r[impl cairn.change_dependency_graph.authoring_cli.invalid]
+    let mut issues = Vec::new();
+    let Some(change) = changes
+        .iter()
+        .find(|candidate| candidate.name == change_name)
+    else {
+        issues.push(ChangeDependencyIssue {
+            change: change_name.to_string(),
+            code: DEPENDENCY_EDIT_ISSUE_CHANGE_UNKNOWN.to_string(),
+            dependency: None,
+            message: format!("change {change_name} is not active"),
+        });
+        return dependency_edit_plan(
+            action,
+            change_name,
+            dependency,
+            Vec::new(),
+            Vec::new(),
+            issues,
+        );
+    };
+
+    let before = normalized_change_dependencies(change);
+    for metadata_issue in &change.metadata_issues {
+        issues.push(ChangeDependencyIssue {
+            change: change_name.to_string(),
+            code: DEPENDENCY_EDIT_ISSUE_METADATA_INVALID.to_string(),
+            dependency: None,
+            message: metadata_issue.clone(),
+        });
+    }
+    if let Err(error) = validate_change_name(dependency) {
+        issues.push(ChangeDependencyIssue {
+            change: change_name.to_string(),
+            code: DEPENDENCY_ISSUE_INVALID_ID.to_string(),
+            dependency: Some(dependency.to_string()),
+            message: format!("invalid dependency id {dependency}: {error}"),
+        });
+    }
+    if dependency == change_name {
+        issues.push(ChangeDependencyIssue {
+            change: change_name.to_string(),
+            code: DEPENDENCY_ISSUE_SELF.to_string(),
+            dependency: Some(dependency.to_string()),
+            message: format!("change {change_name} depends on itself"),
+        });
+    }
+
+    let known_changes = known_change_names_for_status(changes, archived_changes);
+    if !known_changes.contains(dependency) {
+        issues.push(ChangeDependencyIssue {
+            change: change_name.to_string(),
+            code: DEPENDENCY_ISSUE_UNKNOWN.to_string(),
+            dependency: Some(dependency.to_string()),
+            message: format!("dependency {dependency} is not active or archived"),
+        });
+    }
+
+    match action {
+        ChangeDependencyEditAction::Add => {
+            if before.iter().any(|existing| existing == dependency) {
+                issues.push(ChangeDependencyIssue {
+                    change: change_name.to_string(),
+                    code: DEPENDENCY_ISSUE_DUPLICATE.to_string(),
+                    dependency: Some(dependency.to_string()),
+                    message: format!("dependency {dependency} is already declared"),
+                });
+            }
+        }
+        ChangeDependencyEditAction::Remove => {
+            if !before.iter().any(|existing| existing == dependency) {
+                issues.push(ChangeDependencyIssue {
+                    change: change_name.to_string(),
+                    code: DEPENDENCY_EDIT_ISSUE_NOT_DECLARED.to_string(),
+                    dependency: Some(dependency.to_string()),
+                    message: format!("dependency {dependency} is not declared"),
+                });
+            }
+        }
+    }
+
+    let current_graph = build_change_dependency_graph(changes, archived_changes);
+    issues.extend(
+        current_graph
+            .issues
+            .into_iter()
+            .filter(|issue| issue.change == change_name),
+    );
+
+    issues.sort_by(|left, right| {
+        left.change
+            .cmp(&right.change)
+            .then(left.code.cmp(&right.code))
+            .then(left.dependency.cmp(&right.dependency))
+    });
+    issues.dedup_by(|left, right| {
+        left.change == right.change
+            && left.code == right.code
+            && left.dependency == right.dependency
+    });
+    if !issues.is_empty() {
+        return dependency_edit_plan(
+            action,
+            change_name,
+            dependency,
+            before.clone(),
+            before,
+            issues,
+        );
+    }
+
+    let after = apply_dependency_edit(&before, dependency, action);
+    let candidate_changes = changes_with_dependency_update(changes, change_name, &after);
+    let candidate_graph = build_change_dependency_graph(&candidate_changes, archived_changes);
+    let mut candidate_issues = candidate_graph
+        .issues
+        .into_iter()
+        .filter(|issue| issue.change == change_name)
+        .collect::<Vec<_>>();
+    candidate_issues.sort_by(|left, right| {
+        left.change
+            .cmp(&right.change)
+            .then(left.code.cmp(&right.code))
+            .then(left.dependency.cmp(&right.dependency))
+    });
+    if !candidate_issues.is_empty() {
+        return dependency_edit_plan(
+            action,
+            change_name,
+            dependency,
+            before.clone(),
+            before,
+            candidate_issues,
+        );
+    }
+
+    dependency_edit_plan(action, change_name, dependency, before, after, Vec::new())
+}
+
+pub fn change_metadata_with_dependencies(
+    change: &ChangeStatus,
+    depends_on: Vec<String>,
+) -> ChangeMetadata {
+    let mut dependencies = depends_on;
+    dependencies.sort();
+    dependencies.dedup();
+    ChangeMetadata {
+        groups: change.metadata.groups.clone(),
+        target_date: change.metadata.target_date.clone(),
+        status: change.metadata.status.clone(),
+        depends_on: dependencies,
+    }
+}
+
+pub fn render_change_metadata_json(metadata: &ChangeMetadata) -> Result<String, serde_json::Error> {
+    // r[impl cairn.change_dependency_graph.authoring_cli]
+    let mut object = serde_json::Map::new();
+    if !metadata.groups.is_empty() {
+        object.insert("groups".to_string(), serde_json::json!(metadata.groups));
+    }
+    if let Some(target_date) = &metadata.target_date {
+        object.insert("target_date".to_string(), serde_json::json!(target_date));
+    }
+    if let Some(status) = &metadata.status {
+        object.insert("status".to_string(), serde_json::json!(status));
+    }
+    if !metadata.depends_on.is_empty() {
+        object.insert(
+            "depends_on".to_string(),
+            serde_json::json!(metadata.depends_on),
+        );
+    }
+    let mut text = serde_json::to_string_pretty(&serde_json::Value::Object(object))?;
+    text.push('\n');
+    Ok(text)
+}
+
+pub fn next_ready_change(graph: &ChangeDependencyGraph) -> ChangeDependencyNextReady {
+    // r[impl cairn.change_dependency_graph.next_ready]
+    let ready = graph
+        .drain_order
+        .iter()
+        .filter_map(|name| graph.node(name))
+        .find(|node| node.dependency_ready)
+        .map(|node| node.name.clone());
+    let blocked = graph
+        .nodes
+        .iter()
+        .filter(|node| !node.dependency_ready)
+        .map(|node| ChangeDependencyBlockedChange {
+            change: node.name.clone(),
+            blockers: dependency_blockers_for_change(graph, &node.name),
+        })
+        .collect();
+    ChangeDependencyNextReady { ready, blocked }
+}
+
+pub fn render_change_dependency_graph_mermaid(graph: &ChangeDependencyGraph) -> String {
+    // r[impl cairn.change_dependency_graph.render_formats]
+    let names = graph_render_names(graph);
+    let ids = graph_node_ids(&names);
+    let mut lines = vec!["flowchart TD".to_string()];
+    for name in &names {
+        if let Some(id) = ids.get(name) {
+            lines.push(format!("  {id}[\"{}\"]", escape_graph_label(name)));
+        }
+    }
+    for edge in sorted_graph_edges(graph) {
+        if let (Some(dependency_id), Some(dependent_id)) =
+            (ids.get(&edge.dependency), ids.get(&edge.dependent))
+        {
+            let label = if edge.satisfied {
+                "satisfied archived"
+            } else {
+                "active blocker"
+            };
+            lines.push(format!("  {dependency_id} -->|\"{label}\"| {dependent_id}"));
+        }
+    }
+    render_lines(lines)
+}
+
+pub fn render_change_dependency_graph_dot(graph: &ChangeDependencyGraph) -> String {
+    // r[impl cairn.change_dependency_graph.render_formats]
+    let mut lines = vec!["digraph change_dependencies {".to_string()];
+    for name in graph_render_names(graph) {
+        lines.push(format!("  \"{}\";", escape_graph_label(&name)));
+    }
+    for edge in sorted_graph_edges(graph) {
+        let label = if edge.satisfied {
+            "satisfied archived"
+        } else {
+            "active blocker"
+        };
+        lines.push(format!(
+            "  \"{}\" -> \"{}\" [label=\"{label}\"];",
+            escape_graph_label(&edge.dependency),
+            escape_graph_label(&edge.dependent)
+        ));
+    }
+    lines.push("}".to_string());
+    render_lines(lines)
+}
+
+fn dependency_edit_plan(
+    action: ChangeDependencyEditAction,
+    change: &str,
+    dependency: &str,
+    before: Vec<String>,
+    after: Vec<String>,
+    issues: Vec<ChangeDependencyIssue>,
+) -> ChangeDependencyEditPlan {
+    ChangeDependencyEditPlan {
+        action,
+        change: change.to_string(),
+        dependency: dependency.to_string(),
+        valid: issues.is_empty(),
+        changed: before != after,
+        before,
+        after,
+        issues,
+    }
+}
+
+fn known_change_names_for_status(
+    changes: &[ChangeStatus],
+    archived_changes: &[String],
+) -> BTreeSet<String> {
+    let active_set = sorted_active_names(changes)
+        .into_iter()
+        .collect::<BTreeSet<_>>();
+    let archived_set = sorted_archived_names(archived_changes)
+        .into_iter()
+        .collect::<BTreeSet<_>>();
+    known_change_names(&active_set, &archived_set)
+}
+
+fn apply_dependency_edit(
+    before: &[String],
+    dependency: &str,
+    action: ChangeDependencyEditAction,
+) -> Vec<String> {
+    let mut dependencies = before.to_vec();
+    match action {
+        ChangeDependencyEditAction::Add => dependencies.push(dependency.to_string()),
+        ChangeDependencyEditAction::Remove => {
+            dependencies.retain(|existing| existing != dependency);
+        }
+    }
+    dependencies.sort();
+    dependencies.dedup();
+    dependencies
+}
+
+fn changes_with_dependency_update(
+    changes: &[ChangeStatus],
+    change_name: &str,
+    dependencies: &[String],
+) -> Vec<ChangeStatus> {
+    changes
+        .iter()
+        .map(|change| {
+            let mut updated = change.clone();
+            if updated.name == change_name {
+                updated.metadata.depends_on = dependencies.to_vec();
+            }
+            updated
+        })
+        .collect()
+}
+
+fn graph_render_names(graph: &ChangeDependencyGraph) -> Vec<String> {
+    let mut names = BTreeSet::new();
+    for node in &graph.nodes {
+        names.insert(node.name.clone());
+    }
+    for edge in &graph.edges {
+        names.insert(edge.dependent.clone());
+        names.insert(edge.dependency.clone());
+    }
+    names.into_iter().collect()
+}
+
+fn graph_node_ids(names: &[String]) -> BTreeMap<String, String> {
+    names
+        .iter()
+        .enumerate()
+        .map(|(index, name)| (name.clone(), format!("n{index}")))
+        .collect()
+}
+
+fn sorted_graph_edges(graph: &ChangeDependencyGraph) -> Vec<ChangeDependencyEdge> {
+    let mut edges = graph.edges.clone();
+    edges.sort_by(|left, right| {
+        left.dependency
+            .cmp(&right.dependency)
+            .then(left.dependent.cmp(&right.dependent))
+            .then(left.satisfied.cmp(&right.satisfied))
+    });
+    edges
+}
+
+fn escape_graph_label(value: &str) -> String {
+    value.replace('"', "\\\"")
+}
+
+fn render_lines(lines: Vec<String>) -> String {
+    let mut text = lines.join("\n");
+    text.push('\n');
+    text
 }
 
 pub fn build_change_dependency_graph(
@@ -513,5 +926,138 @@ mod tests {
         assert!(graph
             .node("alpha")
             .is_some_and(|node| !node.dependency_ready));
+    }
+
+    #[test]
+    fn dependency_edit_add_and_remove_are_sorted_and_metadata_safe() {
+        // r[verify cairn.change_dependency_graph.authoring_cli.tests.positive]
+        // r[verify cairn.change_dependency_graph.authoring_cli]
+        // r[verify cairn.change_dependency_graph.authoring_cli.execute]
+        // r[verify cairn.change_dependency_graph.authoring_cli.remove]
+        let changes = [
+            change("gamma", &[]),
+            change("alpha", &[]),
+            change("beta", &[]),
+        ];
+        let add = plan_change_dependency_edit(
+            &changes,
+            &[],
+            "gamma",
+            "alpha",
+            ChangeDependencyEditAction::Add,
+        );
+
+        assert!(add.valid, "{:?}", add.issues);
+        assert!(add.changed);
+        assert_eq!(add.after, vec!["alpha".to_string()]);
+
+        let metadata = change_metadata_with_dependencies(&changes[0], add.after);
+        let rendered = render_change_metadata_json(&metadata).expect("metadata renders");
+        assert!(rendered.contains("depends_on"));
+        assert!(!rendered.contains("[]"));
+
+        let changes = [change("gamma", &["alpha"]), change("alpha", &[])];
+        let remove = plan_change_dependency_edit(
+            &changes,
+            &[],
+            "gamma",
+            "alpha",
+            ChangeDependencyEditAction::Remove,
+        );
+        assert!(remove.valid, "{:?}", remove.issues);
+        assert!(remove.changed);
+        assert!(remove.after.is_empty());
+        let metadata = change_metadata_with_dependencies(&changes[0], remove.after);
+        let rendered = render_change_metadata_json(&metadata).expect("metadata renders");
+        assert!(!rendered.contains("depends_on"));
+    }
+
+    #[test]
+    fn dependency_edit_rejects_duplicate_unknown_self_and_cycles() {
+        // r[verify cairn.change_dependency_graph.authoring_cli.tests.negative]
+        // r[verify cairn.change_dependency_graph.authoring_cli.invalid]
+        let changes = [change("alpha", &["beta"]), change("beta", &[])];
+        let duplicate = plan_change_dependency_edit(
+            &changes,
+            &[],
+            "alpha",
+            "beta",
+            ChangeDependencyEditAction::Add,
+        );
+        assert!(!duplicate.valid);
+        assert!(duplicate
+            .issues
+            .iter()
+            .any(|issue| issue.code == DEPENDENCY_ISSUE_DUPLICATE));
+
+        let unknown = plan_change_dependency_edit(
+            &changes,
+            &[],
+            "alpha",
+            "missing",
+            ChangeDependencyEditAction::Add,
+        );
+        assert!(!unknown.valid);
+        assert!(unknown
+            .issues
+            .iter()
+            .any(|issue| issue.code == DEPENDENCY_ISSUE_UNKNOWN));
+
+        let self_dependency = plan_change_dependency_edit(
+            &changes,
+            &[],
+            "alpha",
+            "alpha",
+            ChangeDependencyEditAction::Add,
+        );
+        assert!(!self_dependency.valid);
+        assert!(self_dependency
+            .issues
+            .iter()
+            .any(|issue| issue.code == DEPENDENCY_ISSUE_SELF));
+
+        let cycle = plan_change_dependency_edit(
+            &changes,
+            &[],
+            "beta",
+            "alpha",
+            ChangeDependencyEditAction::Add,
+        );
+        assert!(!cycle.valid);
+        assert!(cycle
+            .issues
+            .iter()
+            .any(|issue| issue.code == DEPENDENCY_ISSUE_CYCLE));
+    }
+
+    #[test]
+    fn graph_rendering_and_next_ready_are_deterministic() {
+        // r[verify cairn.change_dependency_graph.authoring_cli.tests.positive]
+        // r[verify cairn.change_dependency_graph.render_formats]
+        // r[verify cairn.change_dependency_graph.render_formats.human]
+        // r[verify cairn.change_dependency_graph.next_ready]
+        // r[verify cairn.change_dependency_graph.next_ready.ready]
+        let graph =
+            build_change_dependency_graph(&[change("beta", &["alpha"]), change("alpha", &[])], &[]);
+        let mermaid = render_change_dependency_graph_mermaid(&graph);
+        let dot = render_change_dependency_graph_dot(&graph);
+        assert!(mermaid.contains("flowchart TD"));
+        assert!(mermaid.contains("active blocker"));
+        assert!(dot.contains("digraph change_dependencies"));
+        assert!(dot.contains("active blocker"));
+
+        let next = next_ready_change(&graph);
+        assert_eq!(next.ready, Some("alpha".to_string()));
+        assert_eq!(next.blocked[0].change, "beta");
+        assert!(next.blocked[0].blockers[0].contains("alpha"));
+
+        // r[verify cairn.change_dependency_graph.next_ready.blocked]
+        let cycle = build_change_dependency_graph(
+            &[change("alpha", &["beta"]), change("beta", &["alpha"])],
+            &[],
+        );
+        let blocked = next_ready_change(&cycle);
+        assert_eq!(blocked.ready, None);
+        assert_eq!(blocked.blocked.len(), 2);
     }
 }

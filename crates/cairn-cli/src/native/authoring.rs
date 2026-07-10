@@ -1,12 +1,18 @@
 use std::{error::Error, fs, path::Path};
 
 use cairn_core::{
-    build_change_skeleton, design_template, init_artifacts, layout_name, proposal_template,
-    tasks_template, LifecycleArtifactKind, LifecycleLayout,
+    build_change_skeleton, change_metadata_with_dependencies, changes_dir, design_template,
+    init_artifacts, layout_name, normalized_change_dependencies, plan_change_dependency_edit,
+    proposal_template, render_change_metadata_json, tasks_template, ChangeDependencyEditAction,
+    LifecycleArtifactKind, LifecycleLayout,
 };
-use serde_json::json;
+use serde_json::{json, Value};
 
-use crate::support::{path_string, print_json, read_option};
+use crate::support::{
+    collect_archived_change_ids, detect_layout, file_content_manifest, has_flag, path_string,
+    portable_json_hash, print_json, read_option, safe_relative_path, scan_repo,
+    with_portable_receipt_hash,
+};
 
 pub(crate) fn run_init(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let root = read_option(args, "--root", ".");
@@ -63,6 +69,194 @@ pub(super) fn run_change_create(args: Vec<String>, change: &str) -> Result<(), B
         "created": created,
         "existing": existing,
     }))
+}
+
+pub(super) fn run_change_depend(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let mut iter = args.into_iter();
+    let Some(subcommand) = iter.next() else {
+        return Err("change depend requires a subcommand: list, add, or remove".into());
+    };
+    match subcommand.as_str() {
+        "list" => {
+            let Some(change) = iter.next() else {
+                return Err("change depend list requires a change name".into());
+            };
+            run_change_depend_list(iter.collect(), &change)
+        }
+        "add" => {
+            let Some(change) = iter.next() else {
+                return Err("change depend add requires a change name".into());
+            };
+            let Some(dependency) = iter.next() else {
+                return Err("change depend add requires a dependency name".into());
+            };
+            run_change_depend_edit(
+                iter.collect(),
+                &change,
+                &dependency,
+                ChangeDependencyEditAction::Add,
+            )
+        }
+        "remove" => {
+            let Some(change) = iter.next() else {
+                return Err("change depend remove requires a change name".into());
+            };
+            let Some(dependency) = iter.next() else {
+                return Err("change depend remove requires a dependency name".into());
+            };
+            run_change_depend_edit(
+                iter.collect(),
+                &change,
+                &dependency,
+                ChangeDependencyEditAction::Remove,
+            )
+        }
+        unknown => Err(format!("unknown change depend subcommand: {unknown}").into()),
+    }
+}
+
+fn run_change_depend_list(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.change_dependency_graph.authoring_cli]
+    let root = read_option(args, "--root", ".");
+    let selected = detect_layout(&root);
+    let status = scan_repo(root.clone(), selected.layout)?;
+    let Some(change_status) = status
+        .changes
+        .iter()
+        .find(|candidate| candidate.name == change)
+    else {
+        return Err(format!("change not found: {change}").into());
+    };
+    let dependencies = normalized_change_dependencies(change_status);
+    let valid = change_status.metadata_issues.is_empty();
+    let receipt = with_portable_receipt_hash(
+        &root,
+        json!({
+            "command": "change depend list",
+            "root": path_string(&root),
+            "layout": layout_name(selected.layout),
+            "change": change,
+            "valid": valid,
+            "mutated": false,
+            "dependencies": dependencies,
+            "issues": change_status.metadata_issues,
+        }),
+    );
+    print_json(receipt)?;
+    if valid {
+        Ok(())
+    } else {
+        Err("change dependency metadata invalid".into())
+    }
+}
+
+fn run_change_depend_edit(
+    args: Vec<String>,
+    change: &str,
+    dependency: &str,
+    action: ChangeDependencyEditAction,
+) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.change_dependency_graph.authoring_cli.preview]
+    // r[impl cairn.change_dependency_graph.authoring_cli.invalid]
+    let root = read_option(args.clone(), "--root", ".");
+    let execute = has_flag(&args, "--execute");
+    let selected = detect_layout(&root);
+    let status = scan_repo(root.clone(), selected.layout)?;
+    let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
+    let plan = plan_change_dependency_edit(
+        &status.changes,
+        &archived_changes,
+        change,
+        dependency,
+        action,
+    );
+    let metadata_path = root
+        .join(changes_dir(selected.layout))
+        .join(change)
+        .join("metadata.json");
+    let before_manifest = file_content_manifest(&root, &[metadata_path.clone()]);
+    let after_metadata_text = status
+        .changes
+        .iter()
+        .find(|candidate| candidate.name == change)
+        .map(|change_status| {
+            let metadata = change_metadata_with_dependencies(change_status, plan.after.clone());
+            render_change_metadata_json(&metadata)
+        })
+        .transpose()?;
+
+    let mut mutated = false;
+    if plan.valid && execute && plan.changed {
+        let Some(text) = &after_metadata_text else {
+            return Err("valid dependency edit missing rendered metadata".into());
+        };
+        if let Some(parent) = metadata_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(&metadata_path, text)?;
+        mutated = true;
+    }
+
+    let mutation_manifest = if execute && plan.valid {
+        let after_manifest = file_content_manifest(&root, &[metadata_path.clone()]);
+        json!({
+            "kind": "change_dependency_metadata",
+            "before": before_manifest,
+            "after": after_manifest,
+            "manifest_hash": portable_json_hash(&root, &json!({"before": before_manifest, "after": after_manifest})),
+        })
+    } else {
+        Value::Null
+    };
+    let receipt = dependency_edit_receipt(
+        &root,
+        selected.layout,
+        &metadata_path,
+        &plan,
+        execute,
+        mutated,
+        after_metadata_text,
+        mutation_manifest,
+    );
+    let valid = plan.valid;
+    print_json(receipt)?;
+    if valid {
+        Ok(())
+    } else {
+        Err("change dependency edit invalid".into())
+    }
+}
+
+fn dependency_edit_receipt(
+    root: &Path,
+    layout: LifecycleLayout,
+    metadata_path: &Path,
+    plan: &cairn_core::ChangeDependencyEditPlan,
+    execute: bool,
+    mutated: bool,
+    after_metadata_text: Option<String>,
+    mutation_manifest: Value,
+) -> Value {
+    with_portable_receipt_hash(
+        root,
+        json!({
+            "command": format!("change depend {}", plan.action.as_str()),
+            "root": path_string(root),
+            "layout": layout_name(layout),
+            "change": plan.change,
+            "dependency": plan.dependency,
+            "metadata_path": safe_relative_path(root, metadata_path),
+            "valid": plan.valid,
+            "dry_run": !execute,
+            "mutated": mutated,
+            "changed": plan.changed,
+            "before": plan.before,
+            "after": plan.after,
+            "after_metadata": after_metadata_text,
+            "issues": plan.issues.iter().map(super::json::change_dependency_issue_json).collect::<Vec<_>>(),
+            "mutation_manifest": mutation_manifest,
+        }),
+    )
 }
 
 pub(crate) fn change_template(change: &str, artifact_path: &str) -> String {
