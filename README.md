@@ -121,6 +121,18 @@ the external Tracey binary or daemon. External Tracey commands such as
 `tracey query status`, `tracey query uncovered`, and `tracey query untested` are
 optional developer diagnostics only.
 
+The reusable traceability marker core parses in-memory marker strings such as
+`r[...]`, `r[impl ...]`, `r[verify ...]`, `r[depends ...]`, and `r[related ...]`
+into typed link DTOs, checks a declared verb vocabulary, optionally resolves
+links against in-memory requirement registry rows, and reports deterministic
+syntax/linkage diagnostics. Repository file walking, source span capture, policy
+profile selection, stdout/stderr, and release-readiness interpretation remain in
+the consuming shell. Passing marker validation proves only marker syntax,
+vocabulary conformance, and declared linkage health; it does not prove
+requirement satisfaction, implementation correctness, verification coverage,
+proof soundness, release eligibility, lifecycle readiness, or downstream
+behavioral correctness.
+
 ## Runtime evidence and external witnesses
 
 `cairn runtime-evidence verify --chain <chain.json> [--checkpoint <checkpoint.json>]`

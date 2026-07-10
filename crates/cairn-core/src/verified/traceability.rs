@@ -1,19 +1,42 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use crate::verified::requirement_id_registry::{
+    validate_requirement_id_registry, RequirementIdRegistry, RequirementReference,
+};
+
 pub const TRACEABILITY_PROFILE_CAIRN_DEFAULT: &str = "cairn-default";
 pub const TRACEABILITY_PROFILE_TRELLIS_RUST: &str = "trellis-rust";
 pub const TRACEABILITY_VERB_IMPL: &str = "impl";
 pub const TRACEABILITY_VERB_VERIFY: &str = "verify";
 pub const TRACEABILITY_VERB_DEPENDS: &str = "depends";
 pub const TRACEABILITY_VERB_RELATED: &str = "related";
+pub const TRACEABILITY_MARKER_VERB_REQUIREMENT: &str = "requirement";
 pub const TRACEABILITY_COVERAGE_VERBS: &[&str] =
     &[TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_VERIFY];
+pub const TRACEABILITY_MARKER_CORE_BOUNDARY: &str = "traceability marker validation proves only marker syntax, vocabulary conformance, and declared linkage health; it does not prove requirement satisfaction, implementation correctness, verification coverage, proof soundness, release eligibility, lifecycle readiness, or downstream behavioral correctness";
+pub const TRACEABILITY_MARKER_NON_CLAIMS: &[&str] = &[
+    "not requirement satisfaction",
+    "not implementation correctness",
+    "not verification coverage",
+    "not proof soundness",
+    "not release eligibility",
+];
 
 const TRACEABILITY_MARKER_PREFIX: &str = "r[";
 const TRACEABILITY_MARKER_SUFFIX: char = ']';
 const TRACEABILITY_ID_EXTENSION_SEPARATOR: char = '+';
 const TRACEABILITY_LINE_NUMBER_ORIGIN: usize = 1;
 const TRACEABILITY_PLACEHOLDER_ID: &str = "...";
+const TRACEABILITY_MARKER_BODY_MAX_PARTS: usize = 2;
+const TRACEABILITY_MARKER_REGISTRY_HASH: &str = "in-memory-traceability-marker-registry";
+const TRACEABILITY_MARKER_ISSUE_MISSING: &str = "traceability_marker.missing_marker";
+const TRACEABILITY_MARKER_ISSUE_MALFORMED: &str = "traceability_marker.malformed";
+const TRACEABILITY_MARKER_ISSUE_UNSUPPORTED_VERB: &str = "traceability_marker.unsupported_verb";
+const TRACEABILITY_MARKER_ISSUE_MALFORMED_ID: &str = "traceability_marker.malformed_id";
+const TRACEABILITY_MARKER_ISSUE_WRONG_NAMESPACE: &str = "traceability_marker.wrong_namespace";
+const TRACEABILITY_MARKER_ISSUE_DUPLICATE: &str = "traceability_marker.duplicate_link";
+const TRACEABILITY_MARKER_ISSUE_MISSING_REGISTRY: &str = "traceability_marker.missing_registry";
+const TRACEABILITY_MARKER_ISSUE_OVERCLAIM: &str = "traceability_marker.overclaim";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TraceabilityProfile {
@@ -56,6 +79,43 @@ pub struct TraceabilityReferenceMarker {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraceabilityMarkerLink {
+    pub raw: String,
+    pub verb: String,
+    pub requirement_id: String,
+    pub consumer: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraceabilityMarkerIssue {
+    pub code: String,
+    pub field_path: String,
+    pub marker: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraceabilityMarkerValidationInput {
+    pub marker_strings: Vec<String>,
+    pub vocabulary: Vec<String>,
+    pub allowed_namespaces: Vec<String>,
+    pub registry: Option<RequirementIdRegistry>,
+    pub consumer: String,
+    pub expected_owner: String,
+    pub require_registry: bool,
+    pub allow_duplicate_links: bool,
+    pub non_claims: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraceabilityMarkerValidationReport {
+    pub valid: bool,
+    pub links: Vec<TraceabilityMarkerLink>,
+    pub issues: Vec<TraceabilityMarkerIssue>,
+    pub boundary: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TraceabilityCoverageReport {
     pub requirements: BTreeMap<String, Vec<TraceabilityRequirementOccurrence>>,
     pub coverage_references: BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
@@ -94,6 +154,116 @@ pub fn classify_traceability_coverage(
         referenced_count,
         valid,
     }
+}
+
+pub fn default_traceability_marker_vocabulary() -> Vec<String> {
+    vec![
+        TRACEABILITY_MARKER_VERB_REQUIREMENT.to_string(),
+        TRACEABILITY_VERB_IMPL.to_string(),
+        TRACEABILITY_VERB_VERIFY.to_string(),
+        TRACEABILITY_VERB_DEPENDS.to_string(),
+        TRACEABILITY_VERB_RELATED.to_string(),
+    ]
+}
+
+pub fn validate_traceability_marker_links(
+    input: &TraceabilityMarkerValidationInput,
+) -> TraceabilityMarkerValidationReport {
+    // r[impl cairn.requirement_id_registry.traceability_marker_core.contract]
+    // r[impl cairn.requirement_id_registry.traceability_marker_core.validation]
+    let mut issues = Vec::new();
+    let mut links = Vec::new();
+    for (source_index, marker_string) in input.marker_strings.iter().enumerate() {
+        let extracted = extract_marker_bodies(marker_string);
+        if extracted.is_empty() {
+            push_marker_issue(
+                &mut issues,
+                TRACEABILITY_MARKER_ISSUE_MISSING,
+                &format!("markers[{source_index}]"),
+                marker_string,
+                "marker string must contain at least one r[...] marker",
+            );
+            continue;
+        }
+        for (marker_index, (raw, body)) in extracted.into_iter().enumerate() {
+            if let Some(link) = parse_traceability_marker_body(
+                &raw,
+                &body,
+                source_index,
+                marker_index,
+                input,
+                &mut issues,
+            ) {
+                links.push(link);
+            }
+        }
+    }
+    validate_marker_non_claims(&input.non_claims, &mut issues);
+    validate_duplicate_links(&links, input.allow_duplicate_links, &mut issues);
+    validate_registry_links(input, &links, &mut issues);
+    sort_marker_issues(&mut issues);
+    TraceabilityMarkerValidationReport {
+        valid: issues.is_empty(),
+        links,
+        issues,
+        boundary: TRACEABILITY_MARKER_CORE_BOUNDARY.to_string(),
+    }
+}
+
+pub fn adapt_cairn_traceability_markers(markers: &[String]) -> TraceabilityMarkerValidationReport {
+    // r[impl cairn.requirement_id_registry.traceability_marker_core.adapters]
+    validate_traceability_marker_links(&TraceabilityMarkerValidationInput {
+        marker_strings: markers.to_vec(),
+        vocabulary: default_traceability_marker_vocabulary(),
+        allowed_namespaces: vec!["cairn".to_string()],
+        registry: None,
+        consumer: "cairn".to_string(),
+        expected_owner: "cairn".to_string(),
+        require_registry: false,
+        allow_duplicate_links: true,
+        non_claims: TRACEABILITY_MARKER_NON_CLAIMS
+            .iter()
+            .map(|claim| (*claim).to_string())
+            .collect(),
+    })
+}
+
+pub fn adapt_octet_traceability_markers(markers: &[String]) -> TraceabilityMarkerValidationReport {
+    // r[impl cairn.requirement_id_registry.traceability_marker_core.adapters]
+    validate_traceability_marker_links(&TraceabilityMarkerValidationInput {
+        marker_strings: markers.to_vec(),
+        vocabulary: default_traceability_marker_vocabulary(),
+        allowed_namespaces: vec!["octet".to_string(), "cairn".to_string()],
+        registry: None,
+        consumer: "octet".to_string(),
+        expected_owner: String::new(),
+        require_registry: false,
+        allow_duplicate_links: true,
+        non_claims: TRACEABILITY_MARKER_NON_CLAIMS
+            .iter()
+            .map(|claim| (*claim).to_string())
+            .collect(),
+    })
+}
+
+pub fn adapt_valence_traceability_markers(
+    markers: &[String],
+) -> TraceabilityMarkerValidationReport {
+    // r[impl cairn.requirement_id_registry.traceability_marker_core.adapters]
+    validate_traceability_marker_links(&TraceabilityMarkerValidationInput {
+        marker_strings: markers.to_vec(),
+        vocabulary: default_traceability_marker_vocabulary(),
+        allowed_namespaces: vec!["valence".to_string(), "cairn".to_string()],
+        registry: None,
+        consumer: "valence".to_string(),
+        expected_owner: String::new(),
+        require_registry: false,
+        allow_duplicate_links: true,
+        non_claims: TRACEABILITY_MARKER_NON_CLAIMS
+            .iter()
+            .map(|claim| (*claim).to_string())
+            .collect(),
+    })
 }
 
 pub fn traceability_spec_marker(line: &str) -> Option<String> {
@@ -149,6 +319,215 @@ pub fn traceability_id_is_valid(value: &str) -> bool {
         && value
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.' | b'-'))
+}
+
+fn extract_marker_bodies(marker_string: &str) -> Vec<(String, String)> {
+    let mut markers = Vec::new();
+    let mut start = 0usize;
+    while let Some(offset) = marker_string[start..].find(TRACEABILITY_MARKER_PREFIX) {
+        let raw_start = start + offset;
+        let body_start = raw_start + TRACEABILITY_MARKER_PREFIX.len();
+        let Some(end_offset) = marker_string[body_start..].find(TRACEABILITY_MARKER_SUFFIX) else {
+            break;
+        };
+        let body_end = body_start + end_offset;
+        let raw_end = body_end + TRACEABILITY_MARKER_SUFFIX.len_utf8();
+        markers.push((
+            marker_string[raw_start..raw_end].to_string(),
+            marker_string[body_start..body_end].to_string(),
+        ));
+        start = raw_end;
+    }
+    markers
+}
+
+fn parse_traceability_marker_body(
+    raw: &str,
+    body: &str,
+    source_index: usize,
+    marker_index: usize,
+    input: &TraceabilityMarkerValidationInput,
+    issues: &mut Vec<TraceabilityMarkerIssue>,
+) -> Option<TraceabilityMarkerLink> {
+    let field_path = format!("markers[{source_index}].links[{marker_index}]");
+    let parts = body.split_whitespace().collect::<Vec<_>>();
+    if parts.is_empty() || parts.len() > TRACEABILITY_MARKER_BODY_MAX_PARTS {
+        push_marker_issue(
+            issues,
+            TRACEABILITY_MARKER_ISSUE_MALFORMED,
+            &field_path,
+            raw,
+            "marker must be r[id] or r[verb id]",
+        );
+        return None;
+    }
+    let (verb, raw_id) = if parts.len() == TRACEABILITY_MARKER_BODY_MAX_PARTS {
+        (parts[0], parts[1])
+    } else {
+        (TRACEABILITY_MARKER_VERB_REQUIREMENT, parts[0])
+    };
+    if !input.vocabulary.iter().any(|allowed| allowed == verb) {
+        push_marker_issue(
+            issues,
+            TRACEABILITY_MARKER_ISSUE_UNSUPPORTED_VERB,
+            &format!("{field_path}.verb"),
+            raw,
+            "marker verb is not in the declared vocabulary",
+        );
+        return None;
+    }
+    let requirement_id = raw_id
+        .split(TRACEABILITY_ID_EXTENSION_SEPARATOR)
+        .next()
+        .unwrap_or(raw_id);
+    if requirement_id == TRACEABILITY_PLACEHOLDER_ID || !traceability_id_is_valid(requirement_id) {
+        push_marker_issue(
+            issues,
+            TRACEABILITY_MARKER_ISSUE_MALFORMED_ID,
+            &format!("{field_path}.requirement_id"),
+            raw,
+            "marker requirement id is malformed",
+        );
+        return None;
+    }
+    if !namespace_is_allowed(requirement_id, &input.allowed_namespaces) {
+        push_marker_issue(
+            issues,
+            TRACEABILITY_MARKER_ISSUE_WRONG_NAMESPACE,
+            &format!("{field_path}.requirement_id"),
+            raw,
+            "marker requirement id is outside the allowed namespaces",
+        );
+        return None;
+    }
+    Some(TraceabilityMarkerLink {
+        raw: raw.to_string(),
+        verb: verb.to_string(),
+        requirement_id: requirement_id.to_string(),
+        consumer: input.consumer.clone(),
+    })
+}
+
+fn namespace_is_allowed(requirement_id: &str, namespaces: &[String]) -> bool {
+    if namespaces.is_empty() {
+        return true;
+    }
+    namespaces.iter().any(|namespace| {
+        requirement_id == namespace || requirement_id.starts_with(&format!("{namespace}."))
+    })
+}
+
+fn validate_marker_non_claims(non_claims: &[String], issues: &mut Vec<TraceabilityMarkerIssue>) {
+    if non_claims.is_empty() {
+        push_marker_issue(
+            issues,
+            TRACEABILITY_MARKER_ISSUE_OVERCLAIM,
+            "non_claims",
+            "",
+            "traceability marker validation requires explicit non-claims",
+        );
+        return;
+    }
+    let joined = non_claims.join("; ").to_ascii_lowercase();
+    for required in TRACEABILITY_MARKER_NON_CLAIMS {
+        if !joined.contains(required) {
+            push_marker_issue(
+                issues,
+                TRACEABILITY_MARKER_ISSUE_OVERCLAIM,
+                "non_claims",
+                "",
+                &format!("traceability marker non-claims must mention `{required}`"),
+            );
+        }
+    }
+}
+
+fn validate_duplicate_links(
+    links: &[TraceabilityMarkerLink],
+    allow_duplicate_links: bool,
+    issues: &mut Vec<TraceabilityMarkerIssue>,
+) {
+    if allow_duplicate_links {
+        return;
+    }
+    let mut seen = BTreeSet::new();
+    for link in links {
+        let key = format!("{}:{}", link.verb, link.requirement_id);
+        if !seen.insert(key) {
+            push_marker_issue(
+                issues,
+                TRACEABILITY_MARKER_ISSUE_DUPLICATE,
+                "links",
+                &link.raw,
+                "duplicate traceability marker link is disallowed by policy",
+            );
+        }
+    }
+}
+
+fn validate_registry_links(
+    input: &TraceabilityMarkerValidationInput,
+    links: &[TraceabilityMarkerLink],
+    issues: &mut Vec<TraceabilityMarkerIssue>,
+) {
+    let Some(registry) = &input.registry else {
+        if input.require_registry && !links.is_empty() {
+            push_marker_issue(
+                issues,
+                TRACEABILITY_MARKER_ISSUE_MISSING_REGISTRY,
+                "registry",
+                "",
+                "marker validation policy requires registry rows",
+            );
+        }
+        return;
+    };
+    let references = links
+        .iter()
+        .map(|link| RequirementReference {
+            requirement_id: link.requirement_id.clone(),
+            consumer: input.consumer.clone(),
+            expected_owner: input.expected_owner.clone(),
+        })
+        .collect::<Vec<_>>();
+    let report = validate_requirement_id_registry(
+        registry,
+        &references,
+        TRACEABILITY_MARKER_REGISTRY_HASH.to_string(),
+    );
+    for registry_issue in report.issues {
+        push_marker_issue(
+            issues,
+            &format!("traceability_marker.registry.{}", registry_issue.code),
+            &registry_issue.field_path,
+            "",
+            &registry_issue.message,
+        );
+    }
+}
+
+fn push_marker_issue(
+    issues: &mut Vec<TraceabilityMarkerIssue>,
+    code: &str,
+    field_path: &str,
+    marker: &str,
+    message: &str,
+) {
+    issues.push(TraceabilityMarkerIssue {
+        code: code.to_string(),
+        field_path: field_path.to_string(),
+        marker: marker.to_string(),
+        message: message.to_string(),
+    });
+}
+
+fn sort_marker_issues(issues: &mut [TraceabilityMarkerIssue]) {
+    issues.sort_by(|left, right| {
+        left.field_path
+            .cmp(&right.field_path)
+            .then(left.code.cmp(&right.code))
+            .then(left.marker.cmp(&right.marker))
+    });
 }
 
 fn collect_requirement_markers(
@@ -246,6 +625,11 @@ pub fn unique_sorted_strings(values: &[String]) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
+    use crate::verified::requirement_id_registry::{
+        RequirementIdAlias, RequirementIdRegistry, RequirementRegistryRow,
+        REQUIREMENT_ID_REGISTRY_BOUNDARY, REQUIREMENT_ID_REGISTRY_SCHEMA_V1,
+    };
+
     use super::*;
 
     fn profile() -> TraceabilityProfile {
@@ -277,8 +661,186 @@ mod tests {
         }
     }
 
+    fn raw_marker(body: &str) -> String {
+        format!("{}{}{}]", "r", "[", body)
+    }
+
+    fn bare_marker(requirement_id: &str) -> String {
+        raw_marker(requirement_id)
+    }
+
+    fn role_marker(verb: &str, requirement_id: &str) -> String {
+        raw_marker(&format!("{verb} {requirement_id}"))
+    }
+
     fn ref_marker(verb: &str, requirement_id: &str) -> String {
-        format!("// r[{verb} {requirement_id}]")
+        format!("// {}", role_marker(verb, requirement_id))
+    }
+
+    fn marker_input(markers: Vec<String>) -> TraceabilityMarkerValidationInput {
+        TraceabilityMarkerValidationInput {
+            marker_strings: markers,
+            vocabulary: default_traceability_marker_vocabulary(),
+            allowed_namespaces: vec!["cairn".to_string()],
+            registry: None,
+            consumer: "cairn".to_string(),
+            expected_owner: "cairn".to_string(),
+            require_registry: false,
+            allow_duplicate_links: false,
+            non_claims: TRACEABILITY_MARKER_NON_CLAIMS
+                .iter()
+                .map(|claim| (*claim).to_string())
+                .collect(),
+        }
+    }
+
+    fn marker_registry() -> RequirementIdRegistry {
+        RequirementIdRegistry {
+            schema_version: REQUIREMENT_ID_REGISTRY_SCHEMA_V1.to_string(),
+            boundary: REQUIREMENT_ID_REGISTRY_BOUNDARY.to_string(),
+            rows: vec![RequirementRegistryRow {
+                requirement_id: "cairn.marker.contract".to_string(),
+                namespace: "cairn.marker".to_string(),
+                owner_repo: "cairn".to_string(),
+                accepted_spec: "cairn/specs/requirement-id-registry/spec.md".to_string(),
+                status: "active".to_string(),
+                aliases: vec![RequirementIdAlias {
+                    id: "cairn.marker.compat".to_string(),
+                    status: "active".to_string(),
+                    reason: "compatibility spelling".to_string(),
+                }],
+                allowed_consumers: vec!["cairn".to_string()],
+            }],
+            non_claims: vec![
+                "not requirement satisfaction".to_string(),
+                "not implementation correctness".to_string(),
+                "not test coverage".to_string(),
+                "not release eligibility".to_string(),
+            ],
+        }
+    }
+
+    fn marker_issue_codes(report: &TraceabilityMarkerValidationReport) -> Vec<String> {
+        report
+            .issues
+            .iter()
+            .map(|issue| issue.code.clone())
+            .collect()
+    }
+
+    #[test]
+    fn traceability_marker_core_accepts_supported_links_and_registry_rows() {
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.fixtures.positive]
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.contract]
+        let mut input = marker_input(vec![
+            bare_marker("cairn.marker.contract"),
+            format!(
+                "// {} {}",
+                role_marker(TRACEABILITY_VERB_IMPL, "cairn.marker.contract"),
+                role_marker(TRACEABILITY_VERB_VERIFY, "cairn.marker.compat")
+            ),
+            format!(
+                "// {} {}",
+                role_marker(TRACEABILITY_VERB_DEPENDS, "cairn.marker.contract"),
+                role_marker(TRACEABILITY_VERB_RELATED, "cairn.marker.compat")
+            ),
+        ]);
+        input.registry = Some(marker_registry());
+        let report = validate_traceability_marker_links(&input);
+
+        assert!(report.valid, "unexpected issues: {:?}", report.issues);
+        assert_eq!(report.links.len(), 5);
+        assert!(report
+            .links
+            .iter()
+            .any(|link| link.raw == role_marker(TRACEABILITY_VERB_VERIFY, "cairn.marker.compat")));
+        assert!(report.boundary.contains("declared linkage health"));
+    }
+
+    #[test]
+    fn traceability_marker_core_rejects_bad_markers_and_overclaims() {
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.fixtures.negative]
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.verbs]
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.verbs.unsupported]
+        let mut input = marker_input(vec![
+            role_marker("prove", "cairn.marker.contract"),
+            role_marker(TRACEABILITY_VERB_IMPL, "bad/name"),
+            role_marker(TRACEABILITY_VERB_IMPL, "valence.marker.contract"),
+            role_marker(TRACEABILITY_VERB_VERIFY, "cairn.marker.contract"),
+            role_marker(TRACEABILITY_VERB_VERIFY, "cairn.marker.contract"),
+        ]);
+        input.registry = Some(marker_registry());
+        input.non_claims = vec!["proves requirement satisfaction".to_string()];
+        let report = validate_traceability_marker_links(&input);
+        let codes = marker_issue_codes(&report);
+
+        assert!(!report.valid);
+        assert!(codes.contains(&TRACEABILITY_MARKER_ISSUE_UNSUPPORTED_VERB.to_string()));
+        assert!(codes.contains(&TRACEABILITY_MARKER_ISSUE_MALFORMED_ID.to_string()));
+        assert!(codes.contains(&TRACEABILITY_MARKER_ISSUE_WRONG_NAMESPACE.to_string()));
+        assert!(codes.contains(&TRACEABILITY_MARKER_ISSUE_DUPLICATE.to_string()));
+        assert!(codes.contains(&TRACEABILITY_MARKER_ISSUE_OVERCLAIM.to_string()));
+    }
+
+    #[test]
+    fn traceability_marker_core_reports_registry_and_boundary_failures() {
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.validation]
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.validation.shell]
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.docs]
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.final_validation]
+        let mut missing_registry = marker_input(vec![role_marker(
+            TRACEABILITY_VERB_IMPL,
+            "cairn.marker.contract",
+        )]);
+        missing_registry.require_registry = true;
+        let missing_registry_report = validate_traceability_marker_links(&missing_registry);
+        assert!(!missing_registry_report.valid);
+        assert!(marker_issue_codes(&missing_registry_report)
+            .contains(&TRACEABILITY_MARKER_ISSUE_MISSING_REGISTRY.to_string()));
+
+        let mut dangling = marker_input(vec![role_marker(
+            TRACEABILITY_VERB_IMPL,
+            "cairn.marker.missing",
+        )]);
+        dangling.registry = Some(marker_registry());
+        let dangling_report = validate_traceability_marker_links(&dangling);
+        assert!(!dangling_report.valid);
+        assert!(marker_issue_codes(&dangling_report)
+            .iter()
+            .any(|code| code.contains("requirement_registry.unknown_requirement")));
+        assert!(dangling_report
+            .boundary
+            .contains("does not prove requirement satisfaction"));
+        assert!(dangling_report.boundary.contains("proof soundness"));
+    }
+
+    #[test]
+    fn traceability_marker_adapters_preserve_current_spellings() {
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.adapters]
+        // r[verify cairn.requirement_id_registry.traceability_marker_core.adapters.shape]
+        let cairn = adapt_cairn_traceability_markers(&[ref_marker(
+            TRACEABILITY_VERB_IMPL,
+            "cairn.demo.alpha",
+        )]);
+        assert!(cairn.valid, "unexpected issues: {:?}", cairn.issues);
+        assert_eq!(
+            cairn.links[0].raw,
+            role_marker(TRACEABILITY_VERB_IMPL, "cairn.demo.alpha")
+        );
+
+        let octet = adapt_octet_traceability_markers(&[ref_marker(
+            TRACEABILITY_VERB_VERIFY,
+            "octet.policy.lint",
+        )]);
+        assert!(octet.valid, "unexpected issues: {:?}", octet.issues);
+        assert_eq!(octet.links[0].consumer, "octet");
+
+        let valence = adapt_valence_traceability_markers(&[ref_marker(
+            TRACEABILITY_VERB_RELATED,
+            "valence.evidence.id",
+        )]);
+        assert!(valence.valid, "unexpected issues: {:?}", valence.issues);
+        assert_eq!(valence.links[0].consumer, "valence");
     }
 
     #[test]

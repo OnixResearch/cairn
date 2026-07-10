@@ -167,13 +167,18 @@ pub use verified::toolchain_profile_matrix::{
     TOOLCHAIN_PROFILE_MATRIX_SCHEMA_V1,
 };
 pub use verified::traceability::{
-    classify_traceability_coverage, traceability_id_is_valid, traceability_ref_markers,
-    traceability_spec_marker, unique_sorted_strings, TraceabilityCoverageReport, TraceabilityFile,
-    TraceabilityProfile, TraceabilityReferenceMarker, TraceabilityReferenceOccurrence,
+    adapt_cairn_traceability_markers, adapt_octet_traceability_markers,
+    adapt_valence_traceability_markers, classify_traceability_coverage,
+    default_traceability_marker_vocabulary, traceability_id_is_valid, traceability_ref_markers,
+    traceability_spec_marker, unique_sorted_strings, validate_traceability_marker_links,
+    TraceabilityCoverageReport, TraceabilityFile, TraceabilityMarkerIssue, TraceabilityMarkerLink,
+    TraceabilityMarkerValidationInput, TraceabilityMarkerValidationReport, TraceabilityProfile,
+    TraceabilityReferenceMarker, TraceabilityReferenceOccurrence,
     TraceabilityRequirementOccurrence, TraceabilitySource, TRACEABILITY_COVERAGE_VERBS,
-    TRACEABILITY_PROFILE_CAIRN_DEFAULT, TRACEABILITY_PROFILE_TRELLIS_RUST,
-    TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_RELATED,
-    TRACEABILITY_VERB_VERIFY,
+    TRACEABILITY_MARKER_CORE_BOUNDARY, TRACEABILITY_MARKER_NON_CLAIMS,
+    TRACEABILITY_MARKER_VERB_REQUIREMENT, TRACEABILITY_PROFILE_CAIRN_DEFAULT,
+    TRACEABILITY_PROFILE_TRELLIS_RUST, TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL,
+    TRACEABILITY_VERB_RELATED, TRACEABILITY_VERB_VERIFY,
 };
 pub use verified::validation::{
     change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, validate_changes,
