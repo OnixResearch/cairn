@@ -89,6 +89,8 @@ Expected result: no matches.
   - `cairn change graph --root PATH [--format json|mermaid|dot]`
   - `cairn change next --root PATH`
   - `cairn change show <name> --root PATH`
+  - `cairn view kanban|mindmap|graph --root PATH [--format json|markdown|mermaid|dot] [--interactive]`
+  - lifecycle views are read-only projections over one deterministic semantic model; JSON is the automation default, Subwayrat-backed graph canvases are opt-in display shells, and visual layout state is excluded from receipt hashes.
   - `cairn spec list --root PATH`
   - `cairn spec show <id> --root PATH`
   - local `depends_on` ordering dependencies are authored through preview-by-default `change depend add/remove`; archived dependencies satisfy blockers, active dependencies block sync/archive, and cross-repo receipt/evidence dependencies remain a separate evidence-input concept.

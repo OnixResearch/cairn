@@ -13,7 +13,10 @@ version = "0.1.0"
 
 [workspace.dependencies]
 blake3 = "1.5"
+crossterm = "0.28"
 preserves = "4.996.0"
+rat-nodegraph = { git = "https://github.com/brittonr/subwayrat.git", rev = "9d68c69f13ad5c4385e8c96ff727bd6a7a1f8dd2" }
+ratatui = "0.30"
 serde_json = "1.0"
 
 [workspace.metadata.slotcar]

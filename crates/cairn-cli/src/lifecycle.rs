@@ -134,6 +134,7 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
 }
 
 pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
+    // r[impl cairn.lifecycle_views.verification.archive]
     let root = read_option(args.clone(), "--root", ".");
     let is_execute = has_flag(&args, "--execute");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());

@@ -8,13 +8,20 @@
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       eachSystem = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+      rustCargoLock = {
+        lockFile = ./Cargo.lock;
+        outputHashes = {
+          "rat-canvas-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
+          "rat-nodegraph-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
+        };
+      };
     in {
       packages = eachSystem (pkgs: {
         cairn = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn";
           version = "0.1.0";
           src = self;
-          cargoLock.lockFile = ./Cargo.lock;
+          cargoLock = rustCargoLock;
           cargoBuildFlags = [ "-p" "cairn-cli" ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           postInstall = ''
@@ -139,7 +146,7 @@
           pname = "cairn-tests";
           version = "0.1.0";
           src = self;
-          cargoLock.lockFile = ./Cargo.lock;
+          cargoLock = rustCargoLock;
           cargoBuildFlags = [ "--workspace" "--all-targets" ];
           cargoTestFlags = [ "--workspace" ];
           nativeCheckInputs = [ pkgs.git pkgs.nickel ];
@@ -183,7 +190,7 @@
           pname = "cairn-self-dogfood";
           version = "0.1.0";
           src = self;
-          cargoLock.lockFile = ./Cargo.lock;
+          cargoLock = rustCargoLock;
           cargoBuildFlags = [ "-p" "cairn-cli" ];
           nativeCheckInputs = [ pkgs.nickel ];
           doCheck = true;
@@ -234,7 +241,7 @@
           pname = "cairn-clippy";
           version = "0.1.0";
           src = self;
-          cargoLock.lockFile = ./Cargo.lock;
+          cargoLock = rustCargoLock;
           nativeBuildInputs = [ pkgs.clippy ];
           buildPhase = ''
             runHook preBuild

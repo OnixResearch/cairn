@@ -15,6 +15,7 @@ pub(super) enum ReplayCaseKind {
     Status,
     SyncDryRun,
     Validate,
+    View { view: String },
 }
 
 #[derive(Clone)]

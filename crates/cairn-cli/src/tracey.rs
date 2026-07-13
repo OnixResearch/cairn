@@ -24,6 +24,23 @@ pub(crate) fn traceability_coverage_receipt(
     traceability_coverage_report(&root, &policy_path, None)
 }
 
+pub(crate) fn load_traceability_coverage_model(
+    root: &Path,
+    policy_path: &Path,
+) -> Result<TraceabilityCoverageReport, Box<dyn Error>> {
+    // r[impl cairn.lifecycle_views.knowledge_graph]
+    let policy = load_policy_file(policy_path.to_path_buf())?;
+    let selected_profile = selected_traceability_profile(&policy, None)?;
+    let requirement_files =
+        collect_traceability_files(root, &selected_profile.requirement_sources)?;
+    let evidence_files = collect_traceability_files(root, &selected_profile.evidence_sources)?;
+    Ok(classify_traceability_coverage(
+        &selected_profile,
+        &requirement_files,
+        &evidence_files,
+    ))
+}
+
 pub(crate) fn repository_gate_summary() -> Value {
     // r[impl cairn.supersede.traceability_ownership.optional_tracey]
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.gates]

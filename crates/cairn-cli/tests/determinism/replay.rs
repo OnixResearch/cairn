@@ -33,6 +33,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     // r[verify cairn.determinism.preserves_corpus_policy_inventory.replay_case]
     // r[verify cairn.determinism.preserves_corpus_policy_inventory.tests]
     // r[verify cairn.determinism.preserves_corpus_policy_inventory.validation]
+    // r[verify cairn.lifecycle_views.determinism]
     let first = run_json(&["determinism", "replay", "--root", "."])?;
     let second = run_json(&["determinism", "replay", "--root", "."])?;
     assert_eq!(first["valid"], true);
@@ -43,7 +44,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         0
     );
     assert_eq!(first["receipt_hash"], second["receipt_hash"]);
-    assert_eq!(first["summary"]["total_cases"], 15);
+    assert_eq!(first["summary"]["total_cases"], 18);
     assert_eq!(first["summary"]["mismatch_count"], 0);
     assert_eq!(first["available_cases"], first["selected_cases"]);
     assert_eq!(
@@ -136,7 +137,10 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
             "release_readiness",
             "status",
             "sync_dry_run",
-            "validate"
+            "validate",
+            "view_graph",
+            "view_kanban",
+            "view_mindmap"
         ]
     );
     let policy_case_count = policy["determinism_replay_policy"]["cases"]

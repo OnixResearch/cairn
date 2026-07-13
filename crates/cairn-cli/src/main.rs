@@ -31,6 +31,7 @@ mod support;
 mod test_harness;
 mod toolchain_profile_matrix;
 mod tracey;
+mod view;
 mod workspace_contract_matrix;
 
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules]
@@ -53,6 +54,7 @@ use semantic_review::run_review;
 use support::{print_usage, usage_text};
 use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
+use view::run_view;
 use workspace_contract_matrix::run_workspace_contract;
 
 fn main() {
@@ -84,6 +86,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "status" => run_status(args.collect())?,
         "doctor" => run_doctor(args.collect())?,
         "validate" => run_validate(args.collect())?,
+        "view" => run_view(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-evidence" => release_evidence::run_release_evidence(args.collect())?,
         "lifecycle" => lifecycle_data::run_lifecycle_data(args.collect())?,

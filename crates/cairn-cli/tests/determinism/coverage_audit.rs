@@ -64,7 +64,10 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
             "release_readiness",
             "status",
             "sync_dry_run",
-            "validate"
+            "validate",
+            "view_graph",
+            "view_kanban",
+            "view_mindmap"
         ]
     );
     let schema = receipt_schema("determinism coverage-audit")?;

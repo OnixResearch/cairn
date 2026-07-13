@@ -15,6 +15,7 @@ pub mod kani_receipt;
 pub mod lifecycle;
 pub mod lifecycle_orchestration;
 pub mod lifecycle_receipt;
+pub mod lifecycle_views;
 pub mod plan;
 pub mod policy;
 pub mod preserves_evidence_ingest;

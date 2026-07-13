@@ -251,6 +251,10 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
         ReplayCaseKind::Validate => {
             cairn_validation_receipt(root.to_path_buf(), default_policy_path().into())
         }
+        ReplayCaseKind::View { view } => {
+            // r[impl cairn.lifecycle_views.determinism]
+            crate::view::lifecycle_view_receipt_for_replay(root, view)
+        }
     }
 }
 

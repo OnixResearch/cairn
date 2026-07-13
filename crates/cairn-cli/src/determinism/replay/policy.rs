@@ -249,6 +249,16 @@ fn replay_case_kind(command_kind: &str, args: &[String]) -> Result<ReplayCaseKin
         "status" => Ok(ReplayCaseKind::Status),
         "sync_dry_run" => Ok(ReplayCaseKind::SyncDryRun),
         "validate" => Ok(ReplayCaseKind::Validate),
+        "view" => {
+            let view = args
+                .get(1)
+                .ok_or("policy view replay case missing view argument")?
+                .clone();
+            if !matches!(view.as_str(), "kanban" | "mindmap" | "graph") {
+                return Err(format!("unsupported policy replay view: {view}").into());
+            }
+            Ok(ReplayCaseKind::View { view })
+        }
         unknown => Err(format!("unknown replay command kind in policy: {unknown}").into()),
     }
 }
