@@ -174,7 +174,7 @@ fn run_change_depend_edit(
         .join(changes_dir(selected.layout))
         .join(change)
         .join("metadata.json");
-    let before_manifest = file_content_manifest(&root, &[metadata_path.clone()]);
+    let before_manifest = file_content_manifest(&root, std::slice::from_ref(&metadata_path));
     let after_metadata_text = status
         .changes
         .iter()
@@ -198,7 +198,7 @@ fn run_change_depend_edit(
     }
 
     let mutation_manifest = if execute && plan.valid {
-        let after_manifest = file_content_manifest(&root, &[metadata_path.clone()]);
+        let after_manifest = file_content_manifest(&root, std::slice::from_ref(&metadata_path));
         json!({
             "kind": "change_dependency_metadata",
             "before": before_manifest,
@@ -208,16 +208,16 @@ fn run_change_depend_edit(
     } else {
         Value::Null
     };
-    let receipt = dependency_edit_receipt(
-        &root,
-        selected.layout,
-        &metadata_path,
-        &plan,
+    let receipt = dependency_edit_receipt(DependencyEditReceiptInput {
+        root: &root,
+        layout: selected.layout,
+        metadata_path: &metadata_path,
+        plan: &plan,
         execute,
         mutated,
         after_metadata_text,
         mutation_manifest,
-    );
+    });
     let valid = plan.valid;
     print_json(receipt)?;
     if valid {
@@ -227,34 +227,36 @@ fn run_change_depend_edit(
     }
 }
 
-fn dependency_edit_receipt(
-    root: &Path,
+struct DependencyEditReceiptInput<'a> {
+    root: &'a Path,
     layout: LifecycleLayout,
-    metadata_path: &Path,
-    plan: &cairn_core::ChangeDependencyEditPlan,
+    metadata_path: &'a Path,
+    plan: &'a cairn_core::ChangeDependencyEditPlan,
     execute: bool,
     mutated: bool,
     after_metadata_text: Option<String>,
     mutation_manifest: Value,
-) -> Value {
+}
+
+fn dependency_edit_receipt(input: DependencyEditReceiptInput<'_>) -> Value {
     with_portable_receipt_hash(
-        root,
+        input.root,
         json!({
-            "command": format!("change depend {}", plan.action.as_str()),
-            "root": path_string(root),
-            "layout": layout_name(layout),
-            "change": plan.change,
-            "dependency": plan.dependency,
-            "metadata_path": safe_relative_path(root, metadata_path),
-            "valid": plan.valid,
-            "dry_run": !execute,
-            "mutated": mutated,
-            "changed": plan.changed,
-            "before": plan.before,
-            "after": plan.after,
-            "after_metadata": after_metadata_text,
-            "issues": plan.issues.iter().map(super::json::change_dependency_issue_json).collect::<Vec<_>>(),
-            "mutation_manifest": mutation_manifest,
+            "command": format!("change depend {}", input.plan.action.as_str()),
+            "root": path_string(input.root),
+            "layout": layout_name(input.layout),
+            "change": input.plan.change,
+            "dependency": input.plan.dependency,
+            "metadata_path": safe_relative_path(input.root, input.metadata_path),
+            "valid": input.plan.valid,
+            "dry_run": !input.execute,
+            "mutated": input.mutated,
+            "changed": input.plan.changed,
+            "before": input.plan.before,
+            "after": input.plan.after,
+            "after_metadata": input.after_metadata_text,
+            "issues": input.plan.issues.iter().map(super::json::change_dependency_issue_json).collect::<Vec<_>>(),
+            "mutation_manifest": input.mutation_manifest,
         }),
     )
 }
