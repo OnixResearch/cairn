@@ -17,6 +17,7 @@ pub mod lifecycle_orchestration;
 pub mod lifecycle_receipt;
 pub mod plan;
 pub mod policy;
+pub mod preserves_evidence_ingest;
 pub mod probe;
 pub mod receipt_drift;
 pub mod repo;

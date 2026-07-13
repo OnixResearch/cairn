@@ -273,6 +273,16 @@ presence only; it does not prove release eligibility, lifecycle readiness,
 policy satisfaction, evidence truth, source-code correctness, verifier soundness,
 or downstream behavioral correctness. r[verify cairn.release_evidence.lifecycle_receipt_core.docs]
 
+The Preserves evidence ingest core validates imported `.preserves` carriers by
+schema label, producer repo, canonical BLAKE3 identity, evidence role, claim
+scope, payload opacity, optional Cairn adapter ID, and non-claim text. Opaque
+payloads stay opaque: Cairn records carrier identity and declared role/scope only
+unless a Cairn-owned adapter is registered for the declared schema and role. A
+passing ingest report does not prove evidence truth, runtime correctness,
+transport correctness, producer authorization, source-code correctness, verifier
+soundness, or release eligibility. r[verify cairn.preserves_evidence_ingest.docs]
+r[verify cairn.preserves_evidence_ingest.docs.non_claims]
+
 The ast-grep lifecycle gate validates parsed scan/test receipts rather than
 running ast-grep from pure code. Repositories or CLI shells own command
 execution, file discovery, stdout/stderr capture, and raw report loading; the
@@ -321,6 +331,17 @@ r[verify cairn.structured_lifecycle.format_strategy.preserves_candidate]
 r[verify cairn.structured_lifecycle.format_strategy.steel_not_source]
 r[verify cairn.structured_lifecycle.format_strategy.steel_probe_dsl]
 
+## Lifecycle views
+
+Cairn can project the same reviewed lifecycle facts as a kanban board, containment
+mindmap, or typed knowledge graph. JSON is the deterministic default; Markdown,
+Mermaid, and DOT are explicit static formats, and `--interactive` opens a
+read-only terminal viewer. Graph canvases use the pinned Subwayrat
+`rat-nodegraph` component without making `../rats/` a runtime checkout
+dependency. Visual coordinates, selection, pan, and zoom remain display-only and
+never enter Cairn receipt hashes. See [`docs/lifecycle-views.md`](docs/lifecycle-views.md).
+r[impl cairn.lifecycle_views.docs] r[verify cairn.lifecycle_views.docs.boundary]
+
 ## Running with Nix
 
 For a full first-use flow, start with the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md)
@@ -338,6 +359,9 @@ nix run path:$PWD#cairn -- change depend list demo --root fixtures/basic
 nix run path:$PWD#cairn -- change depend add demo prerequisite --root fixtures/basic
 nix run path:$PWD#cairn -- change graph --root fixtures/basic --format json
 nix run path:$PWD#cairn -- change graph --root fixtures/basic --format mermaid
+nix run path:$PWD#cairn -- view kanban --root . --format markdown
+nix run path:$PWD#cairn -- view mindmap --root . --format mermaid
+nix run path:$PWD#cairn -- view graph --root . --interactive
 nix run path:$PWD#cairn -- change next --root fixtures/basic
 nix run path:$PWD#cairn -- change show demo --root fixtures/basic
 nix run path:$PWD#cairn -- spec list --root fixtures/basic
@@ -693,6 +717,10 @@ named `cairn-workflow` when updating agent workflow knowledge.
 
 ## References
 
+- [`../rats/subwayrat/`](https://github.com/brittonr/subwayrat) — maintained
+  Ratatui canvas and node-graph components used by the opt-in read-only lifecycle
+  viewer; Cairn pins a public revision and excludes visual layout from evidence
+  hashes.
 - `../trellis/`: local verified-primitive reference for graph,
   cycle-detection, topological-order, and dependency-readiness model shapes used
   when designing Cairn dependency graph work.
