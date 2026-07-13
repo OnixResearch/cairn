@@ -1,12 +1,9 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use serde_json::{json, Value};
 
-use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
-use crate::support::{path_string, with_portable_receipt_hash};
+use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
+use crate::support::{path_string, with_portable_receipt_hash, CapabilityRoot, CapabilityRootKind};
 use cairn_core::{blake3_hex, canonical_json_hash};
 
 use super::common::evidence_registry_issue;
@@ -24,18 +21,25 @@ pub(super) fn evidence_registry_fetch_execute_receipt(
     let source = options.source.clone().unwrap_or_else(|| PathBuf::from("."));
     let out = options.out.clone().unwrap_or_else(|| PathBuf::from("."));
     let mut issues = Vec::new();
-    let plan = match read_json_artifact(&plan_path, AGENT_RECEIPT_MAX_BYTES) {
-        Ok(value) => value,
-        Err(_) => {
-            issues.push(evidence_registry_issue(
-                "evidence_registry_fetch_execute.plan_unreadable",
-                "plan",
-                "readable fetch plan receipt",
-                "unreadable",
-            ));
-            Value::Null
-        }
-    };
+    let plan =
+        match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &plan_path, false)
+            .and_then(|(plan_root, relative)| {
+                plan_root.read_bounded(&relative, AGENT_RECEIPT_MAX_BYTES)
+            })
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        {
+            Some(value) => value,
+            None => {
+                issues.push(evidence_registry_issue(
+                    "evidence_registry_fetch_execute.plan_unreadable",
+                    "plan",
+                    "readable fetch plan receipt",
+                    "unreadable",
+                ));
+                Value::Null
+            }
+        };
     if plan.get("valid").and_then(Value::as_bool) != Some(true)
         || plan.get("command").and_then(Value::as_str) != Some("evidence registry fetch-plan")
         || plan.get("receipt_hash").and_then(Value::as_str).is_none()
@@ -48,7 +52,26 @@ pub(super) fn evidence_registry_fetch_execute_receipt(
         ));
     }
     let mut materialized = Vec::new();
-    if issues.is_empty() {
+    let source_root = CapabilityRoot::open(CapabilityRootKind::Registry, &source);
+    let output_root = CapabilityRoot::open_or_create(CapabilityRootKind::Registry, &out);
+    if source_root.is_err() {
+        issues.push(evidence_registry_issue(
+            "evidence_registry_fetch_execute.source_unreadable",
+            "source",
+            "readable local source root",
+            "unreadable",
+        ));
+    }
+    if output_root.is_err() {
+        issues.push(evidence_registry_issue(
+            "evidence_registry_fetch_execute.output_create_failed",
+            "out",
+            "writable output root",
+            "failed",
+        ));
+    }
+    if let (true, Ok(source_root), Ok(output_root)) = (issues.is_empty(), source_root, output_root)
+    {
         let entries = plan
             .get("entries")
             .and_then(Value::as_array)
@@ -81,8 +104,7 @@ pub(super) fn evidence_registry_fetch_execute_receipt(
                     continue;
                 };
                 let expected_hash = artifact.get("hash").and_then(Value::as_str).unwrap_or("");
-                let source_path = source.join(safe_relative);
-                let bytes = match fs::read(&source_path) {
+                let bytes = match source_root.read(safe_relative) {
                     Ok(bytes) => bytes,
                     Err(_) => {
                         issues.push(evidence_registry_issue(
@@ -104,9 +126,11 @@ pub(super) fn evidence_registry_fetch_execute_receipt(
                     ));
                     continue;
                 }
-                let destination = out.join(safe_relative);
-                if let Some(parent) = destination.parent() {
-                    if fs::create_dir_all(parent).is_err() {
+                if let Some(parent) = safe_relative
+                    .parent()
+                    .filter(|parent| !parent.as_os_str().is_empty())
+                {
+                    if output_root.create_dir_all(parent).is_err() {
                         issues.push(evidence_registry_issue(
                             "evidence_registry_fetch_execute.output_create_failed",
                             "out",
@@ -116,7 +140,7 @@ pub(super) fn evidence_registry_fetch_execute_receipt(
                         continue;
                     }
                 }
-                if fs::write(&destination, &bytes).is_err() {
+                if output_root.write(safe_relative, &bytes).is_err() {
                     issues.push(evidence_registry_issue(
                         "evidence_registry_fetch_execute.output_write_failed",
                         "out",
@@ -125,7 +149,7 @@ pub(super) fn evidence_registry_fetch_execute_receipt(
                     ));
                     continue;
                 }
-                let materialized_hash = match fs::read(&destination) {
+                let materialized_hash = match output_root.read(safe_relative) {
                     Ok(saved) => blake3_hex(&saved),
                     Err(_) => "missing".to_string(),
                 };

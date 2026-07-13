@@ -2,8 +2,10 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{json, Value};
 
-use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
-use crate::support::{path_string, portable_json_hash, with_portable_receipt_hash};
+use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
+use crate::support::{
+    path_string, portable_json_hash, with_portable_receipt_hash, CapabilityRoot, CapabilityRootKind,
+};
 use cairn_core::canonical_json_hash;
 
 use super::build_verify::evidence_registry_verify_receipt;
@@ -26,24 +28,43 @@ pub(super) fn evidence_registry_mirror_verify_receipt(
         .clone()
         .unwrap_or_else(|| PathBuf::from("."));
     let mirror = options.mirror.clone().unwrap_or_else(|| PathBuf::from("."));
-    let registry = match read_json_artifact(&registry_path, AGENT_RECEIPT_MAX_BYTES) {
-        Ok(value) => value,
+    let registry: Value =
+        match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &registry_path, false)
+            .and_then(|(registry_root, relative)| {
+                registry_root.read_bounded(&relative, AGENT_RECEIPT_MAX_BYTES)
+            })
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        {
+            Some(value) => value,
+            None => {
+                return evidence_registry_mirror_verify_final_receipt(
+                    &root,
+                    vec![evidence_registry_issue(
+                        "evidence_registry_mirror_verify.registry_unreadable",
+                        "registry",
+                        "readable registry",
+                        "unreadable",
+                    )],
+                    Value::Null,
+                    Value::Null,
+                    Vec::new(),
+                )
+            }
+        };
+    let mut issues = Vec::new();
+    let mirror_root = match CapabilityRoot::open(CapabilityRootKind::Registry, &mirror) {
+        Ok(capability) => Some(capability),
         Err(_) => {
-            return evidence_registry_mirror_verify_final_receipt(
-                &root,
-                vec![evidence_registry_issue(
-                    "evidence_registry_mirror_verify.registry_unreadable",
-                    "registry",
-                    "readable registry",
-                    "unreadable",
-                )],
-                Value::Null,
-                Value::Null,
-                Vec::new(),
-            )
+            issues.push(evidence_registry_issue(
+                "evidence_registry_mirror_verify.mirror_unreadable",
+                "mirror",
+                "readable mirror root",
+                "unreadable",
+            ));
+            None
         }
     };
-    let mut issues = Vec::new();
     let registry_hash = registry.get("receipt_hash").cloned().unwrap_or(Value::Null);
     if let Some(hash) = registry_hash.as_str() {
         let mut hash_input = registry.clone();
@@ -96,11 +117,15 @@ pub(super) fn evidence_registry_mirror_verify_receipt(
             ));
             continue;
         };
-        if !index_path.exists() {
+        let index_is_regular = mirror_root
+            .as_ref()
+            .and_then(|capability| capability.symlink_metadata_path(&index_path).ok())
+            .is_some_and(|metadata| metadata.is_file() && !metadata.file_type().is_symlink());
+        if !index_is_regular {
             issues.push(evidence_registry_issue(
                 "evidence_registry_mirror_verify.index_missing",
                 "entries.index_relative",
-                "mirrored index file",
+                "mirrored regular index file",
                 "missing",
             ));
             continue;

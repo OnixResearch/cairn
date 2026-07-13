@@ -1,13 +1,10 @@
 use cairn_core::{blake3_hex, canonical_json_hash};
 use serde_json::{json, Value};
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use crate::{
-    agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES},
-    support::portable_json_hash,
+    agent_receipt::AGENT_RECEIPT_MAX_BYTES,
+    support::{portable_json_hash, CapabilityRoot, CapabilityRootKind},
 };
 
 use super::issue::evidence_index_issue;
@@ -29,10 +26,22 @@ pub(super) fn evidence_index_bundle_relative(bundle: &Path, out: &Path) -> Value
 
 pub(super) fn evidence_index_verify_bundle_path(index_path: &Path, index: &Value) -> PathBuf {
     let parent = index_path.parent().unwrap_or_else(|| Path::new("."));
-    if parent.join("evidence-republish-receipt.json").exists()
-        || parent.join("evidence-import-receipt.json").exists()
-        || parent.join("evidence-export-receipt.json").exists()
-    {
+    let parent_is_bundle = CapabilityRoot::open(CapabilityRootKind::EvidenceBundle, parent)
+        .ok()
+        .is_some_and(|bundle_root| {
+            [
+                "evidence-republish-receipt.json",
+                "evidence-import-receipt.json",
+                "evidence-export-receipt.json",
+            ]
+            .iter()
+            .any(|relative| {
+                bundle_root
+                    .symlink_metadata(Path::new(relative))
+                    .is_ok_and(|metadata| metadata.is_file() && !metadata.file_type().is_symlink())
+            })
+        });
+    if parent_is_bundle {
         return parent.to_path_buf();
     }
     if let Some(relative) = index.get("bundle_relative").and_then(Value::as_str) {
@@ -45,6 +54,7 @@ pub(super) fn evidence_index_verify_bundle_path(index_path: &Path, index: &Value
 
 pub(super) fn evidence_index_bundle_summary(
     root: &Path,
+    bundle_root: &CapabilityRoot,
     bundle: &Path,
     prefix: &'static str,
     issues: &mut Vec<Value>,
@@ -56,7 +66,10 @@ pub(super) fn evidence_index_bundle_summary(
     ];
     let mut present = Vec::new();
     for (kind, file) in receipt_files {
-        if bundle.join(file).exists() {
+        if bundle_root
+            .symlink_metadata(Path::new(file))
+            .is_ok_and(|metadata| metadata.is_file() && !metadata.file_type().is_symlink())
+        {
             present.push((kind, file));
         }
     }
@@ -70,10 +83,13 @@ pub(super) fn evidence_index_bundle_summary(
         return None;
     }
     let (kind, receipt_file) = present[0];
-    let receipt_path = bundle.join(receipt_file);
-    let receipt = match read_json_artifact(&receipt_path, AGENT_RECEIPT_MAX_BYTES) {
-        Ok(value) => value,
-        Err(_) => {
+    let receipt: Value = match bundle_root
+        .read_bounded(Path::new(receipt_file), AGENT_RECEIPT_MAX_BYTES)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+    {
+        Some(value) => value,
+        None => {
             issues.push(evidence_index_issue(
                 &format!("{prefix}.bundle_receipt_unreadable"),
                 receipt_file,
@@ -98,7 +114,7 @@ pub(super) fn evidence_index_bundle_summary(
         .unwrap_or_default();
     artifacts.sort_by_key(canonical_json_hash);
     for artifact in artifacts.iter() {
-        validate_artifact(prefix, issues, bundle, artifact);
+        validate_artifact(prefix, issues, bundle_root, bundle, artifact);
     }
     Some(json!({
         "bundle_kind": kind,
@@ -114,6 +130,7 @@ pub(super) fn evidence_index_bundle_summary(
 fn validate_artifact(
     prefix: &'static str,
     issues: &mut Vec<Value>,
+    bundle_root: &CapabilityRoot,
     bundle: &Path,
     artifact: &Value,
 ) {
@@ -123,7 +140,7 @@ fn validate_artifact(
         .unwrap_or("<missing>");
     let relative = artifact.get("path").and_then(Value::as_str).unwrap_or("");
     let declared_hash = artifact.get("hash").and_then(Value::as_str).unwrap_or("");
-    let Some(path) = super::super::safe_bundle_artifact_path(bundle, relative) else {
+    if super::super::safe_bundle_artifact_path(bundle, relative).is_none() {
         issues.push(evidence_index_issue(
             &format!("{prefix}.artifact_path_unsafe"),
             role,
@@ -131,8 +148,8 @@ fn validate_artifact(
             "unsafe",
         ));
         return;
-    };
-    match fs::read(&path) {
+    }
+    match bundle_root.read(Path::new(relative)) {
         Ok(bytes) => {
             if blake3_hex(&bytes) != declared_hash {
                 issues.push(evidence_index_issue(

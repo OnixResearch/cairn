@@ -187,6 +187,30 @@ pub(crate) fn verify(
     assert!(import_issue_codes.contains(&"evidence_import.undeclared_bundle_file"));
     fs::remove_file(export_dir.join("undeclared-extra.json"))?;
 
+    let outside_artifact = dir.join("outside-artifact.json");
+    fs::write(&outside_artifact, "{}\n")?;
+    let escape_link = export_dir.join("escape-link.json");
+    std::os::unix::fs::symlink(&outside_artifact, &escape_link)?;
+    let symlink_import_failure = run_json_failure_strings(&[
+        "evidence".into(),
+        "import".into(),
+        "--root".into(),
+        ".".into(),
+        "--bundle".into(),
+        export_dir.display().to_string(),
+        "--into".into(),
+        dir.join("symlink-import").display().to_string(),
+    ])?;
+    assert_eq!(symlink_import_failure["valid"], false);
+    let symlink_import_issue_codes = symlink_import_failure["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(symlink_import_issue_codes.contains(&"evidence_import.bundle_read_failed"));
+    fs::remove_file(escape_link)?;
+
     fs::write(export_dir.join("coverage-audit.json"), "{}\n")?;
     let verify_failure = run_json_failure_strings(&[
         "evidence".into(),

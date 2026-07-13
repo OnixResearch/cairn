@@ -5,12 +5,13 @@
 // r[verify release_evidence.current_head_snapshot.validation]
 // r[verify release_evidence.current_head_staleness_guard.operator_docs]
 // r[verify release_evidence.current_head_staleness_guard.archive_ready]
-use std::{error::Error, fs, path::PathBuf, process::Command};
+use std::{error::Error, path::PathBuf, process::Command};
 
 use serde_json::{json, Value};
 
 use crate::support::{
     path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
+    CapabilityRoot, CapabilityRootKind,
 };
 
 use super::common::release_evidence_issue;
@@ -79,19 +80,27 @@ pub(crate) fn release_evidence_check_index_receipt_for_path(
     })
 }
 
+const RELEASE_EVIDENCE_INDEX_MAX_BYTES: u64 = 4 * 1024 * 1024;
+
 pub(super) fn release_evidence_check_index_receipt(
     options: &ReleaseEvidenceCheckIndexOptions,
 ) -> Value {
     let root = options.root.clone();
     let index = options.index.clone();
     let mut issues = Vec::new();
-    let mode = options.mode.unwrap_or_else(|| {
-        infer_check_index_mode(&index, fs::read_to_string(&index).ok().as_deref())
-    });
+    let markdown = CapabilityRoot::open_file_parent(CapabilityRootKind::Release, &index, false)
+        .and_then(|(index_root, relative)| {
+            index_root.read_bounded(&relative, RELEASE_EVIDENCE_INDEX_MAX_BYTES)
+        })
+        .ok()
+        .and_then(|bytes| String::from_utf8(bytes).ok());
+    let mode = options
+        .mode
+        .unwrap_or_else(|| infer_check_index_mode(&index, markdown.as_deref()));
 
-    let parsed = match fs::read_to_string(&index) {
-        Ok(markdown) => parse_release_evidence_index_payload(&markdown, &mut issues),
-        Err(_) => {
+    let parsed = match markdown {
+        Some(markdown) => parse_release_evidence_index_payload(&markdown, &mut issues),
+        None => {
             issues.push(release_evidence_issue(
                 "release_evidence.check_index.unreadable",
                 "index",

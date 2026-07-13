@@ -1,4 +1,5 @@
 use super::*;
+use crate::support::{CapabilityRoot, CapabilityRootKind};
 
 pub(crate) struct EvidenceVerifyOptions {
     pub(crate) root: PathBuf,
@@ -59,51 +60,32 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
     let root = options.root.clone();
     let bundle_dir = options.bundle.clone().unwrap_or_else(|| PathBuf::from("."));
     let mut issues = Vec::new();
-    let export_receipt_path = bundle_dir.join("evidence-export-receipt.json");
-    let export_receipt = match read_json_artifact(&export_receipt_path, AGENT_RECEIPT_MAX_BYTES) {
-        Ok(receipt) => receipt,
+    let bundle_root = match CapabilityRoot::open(CapabilityRootKind::EvidenceBundle, &bundle_dir) {
+        Ok(capability) => capability,
         Err(_) => {
             issues.push(evidence_verify_issue(
-                "evidence_verify.export_receipt_missing",
-                "evidence-export-receipt.json",
-                "readable export receipt",
-                "missing",
+                "evidence_verify.bundle_root_unreadable",
+                "bundle",
+                "readable evidence bundle root",
+                "unreadable",
             ));
-            return evidence_verify_final_receipt(
-                &root,
-                EvidenceVerifyFinalReceiptParts {
-                    issues,
-                    artifacts: Vec::new(),
-                    export_receipt_hash: Value::Null,
-                    manifest_hash: Value::Null,
-                    manifest_verification_receipt_hash: Value::Null,
-                    stack_provenance: serde_json::json!({
-                        "name": "stack_provenance",
-                        "mode": "unknown",
-                        "required": false,
-                        "passed": true,
-                        "skipped": true,
-                        "disposition": "not-evaluated",
-                        "issues": [],
-                        "valence_receipt_hash": null,
-                        "claim_scope": null,
-                        "graph_summary": null,
-                        "boundary": cairn_core::verified::stack_provenance::STACK_PROVENANCE_BOUNDARY,
-                    }),
-                    stack_provenance_hash: Value::Null,
-                    verification_role_summary: serde_json::json!({
-                        "property_count": 0,
-                        "recorded_only_count": 0,
-                        "boundary_count": 0,
-                        "unknown_count": 0,
-                        "total": 0,
-                        "verified_count": 0,
-                        "boundary": cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY,
-                    }),
-                },
-            );
+            return evidence_verify_final_receipt(&root, empty_evidence_verify_parts(issues));
         }
     };
+    let export_receipt =
+        match read_json_artifact_from_root(&bundle_root, Path::new("evidence-export-receipt.json"))
+        {
+            Ok(receipt) => receipt,
+            Err(_) => {
+                issues.push(evidence_verify_issue(
+                    "evidence_verify.export_receipt_missing",
+                    "evidence-export-receipt.json",
+                    "readable export receipt",
+                    "missing",
+                ));
+                return evidence_verify_final_receipt(&root, empty_evidence_verify_parts(issues));
+            }
+        };
 
     if export_receipt.get("command").and_then(Value::as_str) != Some("evidence export") {
         issues.push(evidence_verify_issue(
@@ -144,7 +126,7 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
                 ));
             }
             let relative = artifact.get("path").and_then(Value::as_str).unwrap_or("");
-            let Some(path) = safe_bundle_artifact_path(&bundle_dir, relative) else {
+            if safe_bundle_artifact_path(&bundle_dir, relative).is_none() {
                 issues.push(evidence_verify_issue(
                     "evidence_verify.artifact_path_unsafe",
                     role,
@@ -152,13 +134,13 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
                     "unsafe",
                 ));
                 continue;
-            };
+            }
             let declared_hash = artifact.get("hash").and_then(Value::as_str).unwrap_or("");
             let required = artifact
                 .get("required")
                 .and_then(Value::as_bool)
                 .unwrap_or(true);
-            let actual_hash = match fs::read(&path) {
+            let actual_hash = match bundle_root.read(Path::new(relative)) {
                 Ok(bytes) => blake3_hex(&bytes),
                 Err(_) => {
                     if required {
@@ -209,35 +191,35 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
     }
 
     verify_saved_receipt_valid(
-        &bundle_dir,
+        &bundle_root,
         "coverage_audit",
         "coverage-audit.json",
         "evidence_verify.coverage_audit_invalid",
         &mut issues,
     );
     verify_saved_receipt_valid(
-        &bundle_dir,
+        &bundle_root,
         "replay_verification",
         "replay-verification.json",
         "evidence_verify.replay_verification_invalid",
         &mut issues,
     );
     verify_saved_receipt_valid(
-        &bundle_dir,
+        &bundle_root,
         "release_readiness",
         "release-readiness.json",
         "evidence_verify.release_readiness_invalid",
         &mut issues,
     );
     verify_saved_receipt_valid(
-        &bundle_dir,
+        &bundle_root,
         "agent_evidence_bundle_verification",
         "agent-evidence-bundle-verification.json",
         "evidence_verify.bundle_verification_invalid",
         &mut issues,
     );
     verify_saved_receipt_valid(
-        &bundle_dir,
+        &bundle_root,
         "evidence_manifest_verification",
         "evidence-manifest-verification.json",
         "evidence_verify.manifest_verification_invalid",
@@ -317,15 +299,26 @@ const EVIDENCE_EXPORT_REQUIRED_ROLES: &[&str] = &[
     "replay_verification",
 ];
 
+fn read_json_artifact_from_root(
+    bundle_root: &CapabilityRoot,
+    relative: &Path,
+) -> Result<Value, Box<dyn Error>> {
+    let bytes = bundle_root.read(relative)?;
+    let byte_count = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+    if byte_count > AGENT_RECEIPT_MAX_BYTES {
+        return Err("JSON artifact exceeds the byte limit".into());
+    }
+    Ok(serde_json::from_slice(&bytes)?)
+}
+
 fn verify_saved_receipt_valid(
-    bundle_dir: &Path,
+    bundle_root: &CapabilityRoot,
     role: &str,
     relative: &str,
     code: &str,
     issues: &mut Vec<Value>,
 ) {
-    let path = bundle_dir.join(relative);
-    match read_json_artifact(&path, AGENT_RECEIPT_MAX_BYTES) {
+    match read_json_artifact_from_root(bundle_root, Path::new(relative)) {
         Ok(receipt) => {
             if receipt.get("valid").and_then(Value::as_bool) != Some(true) {
                 issues.push(evidence_verify_issue(
@@ -342,6 +335,39 @@ fn verify_saved_receipt_valid(
             "readable JSON receipt",
             "unreadable",
         )),
+    }
+}
+
+fn empty_evidence_verify_parts(issues: Vec<Value>) -> EvidenceVerifyFinalReceiptParts {
+    EvidenceVerifyFinalReceiptParts {
+        issues,
+        artifacts: Vec::new(),
+        export_receipt_hash: Value::Null,
+        manifest_hash: Value::Null,
+        manifest_verification_receipt_hash: Value::Null,
+        stack_provenance: serde_json::json!({
+            "name": "stack_provenance",
+            "mode": "unknown",
+            "required": false,
+            "passed": true,
+            "skipped": true,
+            "disposition": "not-evaluated",
+            "issues": [],
+            "valence_receipt_hash": null,
+            "claim_scope": null,
+            "graph_summary": null,
+            "boundary": cairn_core::verified::stack_provenance::STACK_PROVENANCE_BOUNDARY,
+        }),
+        stack_provenance_hash: Value::Null,
+        verification_role_summary: serde_json::json!({
+            "property_count": 0,
+            "recorded_only_count": 0,
+            "boundary_count": 0,
+            "unknown_count": 0,
+            "total": 0,
+            "verified_count": 0,
+            "boundary": cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY,
+        }),
     }
 }
 

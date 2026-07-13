@@ -2,16 +2,27 @@ use serde_json::Value;
 use std::path::Path;
 
 use crate::{
-    agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES},
-    support::portable_json_hash,
+    agent_receipt::AGENT_RECEIPT_MAX_BYTES,
+    support::{portable_json_hash, CapabilityRoot},
 };
 
 use super::issue::evidence_republish_issue;
 
-pub(super) fn read_import_receipt(path: &Path, issues: &mut Vec<Value>) -> Option<Value> {
-    match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
-        Ok(receipt) => Some(receipt),
-        Err(_) => {
+pub(super) fn read_import_receipt(
+    imported_root: &CapabilityRoot,
+    relative: &Path,
+    issues: &mut Vec<Value>,
+) -> Option<Value> {
+    let receipt = imported_root.read(relative).ok().and_then(|bytes| {
+        let byte_count = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+        if byte_count > AGENT_RECEIPT_MAX_BYTES {
+            return None;
+        }
+        serde_json::from_slice(&bytes).ok()
+    });
+    match receipt {
+        Some(receipt) => Some(receipt),
+        None => {
             issues.push(evidence_republish_issue(
                 "evidence_republish.import_receipt_missing",
                 "evidence-import-receipt.json",

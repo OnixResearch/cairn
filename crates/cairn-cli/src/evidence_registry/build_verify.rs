@@ -1,12 +1,9 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
-use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
-use crate::support::portable_json_hash;
+use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
+use crate::support::{portable_json_hash, CapabilityRoot, CapabilityRootKind};
 use cairn_core::canonical_json_hash;
 
 use super::common::*;
@@ -59,8 +56,31 @@ pub(super) fn evidence_registry_receipt(options: &EvidenceRegistryOptions) -> Va
         Value::Null,
     );
     if receipt.get("valid").and_then(Value::as_bool) == Some(true) {
-        if let Some(parent) = out.parent() {
-            if fs::create_dir_all(parent).is_err() {
+        match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &out, true) {
+            Ok((output_root, relative)) => {
+                if output_root
+                    .write(
+                        &relative,
+                        &serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
+                    )
+                    .is_err()
+                {
+                    receipt = evidence_registry_final_receipt(
+                        &root,
+                        "evidence registry build",
+                        vec![evidence_registry_issue(
+                            "evidence_registry.receipt_write_failed",
+                            "out",
+                            "writable registry receipt",
+                            "failed",
+                        )],
+                        Vec::new(),
+                        "<out>",
+                        Value::Null,
+                    );
+                }
+            }
+            Err(_) => {
                 receipt = evidence_registry_final_receipt(
                     &root,
                     "evidence registry build",
@@ -76,27 +96,6 @@ pub(super) fn evidence_registry_receipt(options: &EvidenceRegistryOptions) -> Va
                 );
             }
         }
-        if receipt.get("valid").and_then(Value::as_bool) == Some(true)
-            && fs::write(
-                &out,
-                serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
-            )
-            .is_err()
-        {
-            receipt = evidence_registry_final_receipt(
-                &root,
-                "evidence registry build",
-                vec![evidence_registry_issue(
-                    "evidence_registry.receipt_write_failed",
-                    "out",
-                    "writable registry receipt",
-                    "failed",
-                )],
-                Vec::new(),
-                "<out>",
-                Value::Null,
-            );
-        }
     }
     receipt
 }
@@ -109,22 +108,29 @@ pub(crate) fn evidence_registry_verify_receipt(options: &EvidenceRegistryVerifyO
         .registry
         .clone()
         .unwrap_or_else(|| PathBuf::from("."));
-    let registry = match read_json_artifact(&registry_path, AGENT_RECEIPT_MAX_BYTES) {
-        Ok(value) => value,
-        Err(_) => {
-            return evidence_registry_verify_final_receipt(
-                &root,
-                vec![evidence_registry_issue(
-                    "evidence_registry_verify.registry_unreadable",
-                    "registry",
-                    "readable registry",
-                    "unreadable",
-                )],
-                Value::Null,
-                Vec::new(),
-            )
-        }
-    };
+    let registry: Value =
+        match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &registry_path, false)
+            .and_then(|(registry_root, relative)| {
+                registry_root.read_bounded(&relative, AGENT_RECEIPT_MAX_BYTES)
+            })
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        {
+            Some(value) => value,
+            None => {
+                return evidence_registry_verify_final_receipt(
+                    &root,
+                    vec![evidence_registry_issue(
+                        "evidence_registry_verify.registry_unreadable",
+                        "registry",
+                        "readable registry",
+                        "unreadable",
+                    )],
+                    Value::Null,
+                    Vec::new(),
+                )
+            }
+        };
     let mut issues = Vec::new();
     let stated_hash = registry.get("receipt_hash").cloned().unwrap_or(Value::Null);
     if let Some(hash) = stated_hash.as_str() {

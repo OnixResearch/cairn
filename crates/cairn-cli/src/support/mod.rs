@@ -18,6 +18,7 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 mod args;
+mod capability;
 mod layout;
 mod mutation;
 mod paths;
@@ -26,6 +27,7 @@ mod scan;
 mod usage;
 
 pub(crate) use args::{has_flag, read_option, read_string_option};
+pub(crate) use capability::{CapabilityRoot, CapabilityRootKind};
 pub(crate) use layout::{default_policy_path, detect_layout, load_policy_file};
 pub(crate) use mutation::{
     archive_mutation_manifest, execute_archive_plan, execute_sync_plan, sync_mutation_manifest,

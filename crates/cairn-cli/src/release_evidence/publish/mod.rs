@@ -4,9 +4,9 @@ use std::error::Error;
 use cairn_core::canonical_json_hash;
 use serde_json::Value;
 
-use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
+use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
 use crate::evidence::{evidence_index_verify_receipt, EvidenceIndexVerifyOptions};
-use crate::support::print_json;
+use crate::support::{print_json, CapabilityRoot, CapabilityRootKind};
 
 use super::common::{collect_invalid_receipt, git_head_state, read_file_hash};
 
@@ -62,8 +62,13 @@ fn release_evidence_publish_receipt(options: &ReleaseEvidencePublishOptions) -> 
     let mut issues = Vec::new();
     let source_index_hash = read_file_hash(&options.index, &mut issues, "index", "source_index");
     let index_receipt_path = options.artifact_dir.join("release-evidence-index.json");
-    let source_index_receipt =
-        read_json_artifact(&index_receipt_path, AGENT_RECEIPT_MAX_BYTES).ok();
+    let source_index_receipt: Option<Value> =
+        CapabilityRoot::open_file_parent(CapabilityRootKind::Release, &index_receipt_path, false)
+            .and_then(|(index_root, relative)| {
+                index_root.read_bounded(&relative, AGENT_RECEIPT_MAX_BYTES)
+            })
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok());
     if source_index_receipt.is_none() {
         issues.push(super::common::release_evidence_issue(
             "release_evidence_publish.source_index_receipt_unreadable",

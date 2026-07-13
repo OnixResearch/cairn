@@ -1,5 +1,6 @@
 use super::verify::{evidence_verify_receipt, EvidenceVerifyOptions};
 use super::*;
+use crate::support::{CapabilityRoot, CapabilityRootKind};
 
 pub(crate) struct EvidenceImportOptions {
     pub(crate) root: PathBuf,
@@ -64,13 +65,53 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
         return evidence_import_final_receipt(&root, issues, Vec::new(), verification_receipt_hash);
     }
 
-    let export_receipt_path = bundle_dir.join("evidence-export-receipt.json");
-    let export_receipt = match read_json_artifact(&export_receipt_path, AGENT_RECEIPT_MAX_BYTES) {
+    let bundle_root = match CapabilityRoot::open(CapabilityRootKind::EvidenceBundle, &bundle_dir) {
+        Ok(capability) => capability,
+        Err(_) => {
+            issues.push(evidence_import_issue(
+                "evidence_import.bundle_read_failed",
+                "bundle",
+                "readable evidence bundle root",
+                "unreadable",
+            ));
+            return evidence_import_final_receipt(
+                &root,
+                issues,
+                Vec::new(),
+                verification_receipt_hash,
+            );
+        }
+    };
+    let into_root =
+        match CapabilityRoot::open_or_create(CapabilityRootKind::EvidenceBundle, &into_dir) {
+            Ok(capability) => capability,
+            Err(_) => {
+                issues.push(evidence_import_issue(
+                    "evidence_import.destination_create_failed",
+                    "into",
+                    "writable import directory",
+                    "failed",
+                ));
+                return evidence_import_final_receipt(
+                    &root,
+                    issues,
+                    Vec::new(),
+                    verification_receipt_hash,
+                );
+            }
+        };
+
+    const EXPORT_RECEIPT_PATH: &str = "evidence-export-receipt.json";
+    let export_receipt = match read_json_artifact_from_root(
+        &bundle_root,
+        Path::new(EXPORT_RECEIPT_PATH),
+        AGENT_RECEIPT_MAX_BYTES,
+    ) {
         Ok(receipt) => receipt,
         Err(_) => {
             issues.push(evidence_import_issue(
                 "evidence_import.export_receipt_unreadable",
-                "evidence-export-receipt.json",
+                EXPORT_RECEIPT_PATH,
                 "readable export receipt",
                 "unreadable",
             ));
@@ -102,7 +143,7 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
             .and_then(Value::as_str)
             .unwrap_or("<missing>");
         let relative = artifact.get("path").and_then(Value::as_str).unwrap_or("");
-        let Some(source_path) = safe_bundle_artifact_path(&bundle_dir, relative) else {
+        if safe_bundle_artifact_path(&bundle_dir, relative).is_none() {
             issues.push(evidence_import_issue(
                 "evidence_import.artifact_path_unsafe",
                 role,
@@ -110,8 +151,8 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
                 "unsafe",
             ));
             continue;
-        };
-        let Some(destination_path) = safe_bundle_artifact_path(&into_dir, relative) else {
+        }
+        if safe_bundle_artifact_path(&into_dir, relative).is_none() {
             issues.push(evidence_import_issue(
                 "evidence_import.destination_path_unsafe",
                 role,
@@ -119,10 +160,11 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
                 "unsafe",
             ));
             continue;
-        };
+        }
+        let relative_path = Path::new(relative);
         declared_files.insert(relative.to_string());
         let declared_hash = artifact.get("hash").and_then(Value::as_str).unwrap_or("");
-        let source_bytes = match fs::read(&source_path) {
+        let source_bytes = match bundle_root.read(relative_path) {
             Ok(bytes) => bytes,
             Err(_) => {
                 issues.push(evidence_import_issue(
@@ -144,8 +186,11 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
             ));
             continue;
         }
-        if let Some(parent) = destination_path.parent() {
-            if fs::create_dir_all(parent).is_err() {
+        if let Some(parent) = relative_path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+        {
+            if into_root.create_dir_all(parent).is_err() {
                 issues.push(evidence_import_issue(
                     "evidence_import.destination_create_failed",
                     role,
@@ -155,7 +200,7 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
                 continue;
             }
         }
-        if fs::write(&destination_path, &source_bytes).is_err() {
+        if into_root.write(relative_path, &source_bytes).is_err() {
             issues.push(evidence_import_issue(
                 "evidence_import.artifact_copy_failed",
                 role,
@@ -164,7 +209,7 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
             ));
             continue;
         }
-        let destination_hash = match fs::read(&destination_path) {
+        let destination_hash = match into_root.read(relative_path) {
             Ok(bytes) => blake3_hex(&bytes),
             Err(_) => String::new(),
         };
@@ -184,7 +229,7 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
         }));
     }
 
-    match bundle_regular_files(&bundle_dir) {
+    match bundle_regular_files(&bundle_root) {
         Ok(files) => {
             for relative in files {
                 if !declared_files.contains(&relative) {
@@ -207,84 +252,81 @@ pub(crate) fn evidence_import_receipt(options: &EvidenceImportOptions) -> Value 
 
     let mut receipt =
         evidence_import_final_receipt(&root, issues, copied, verification_receipt_hash);
-    if receipt.get("valid").and_then(Value::as_bool) == Some(true) {
-        if fs::create_dir_all(&into_dir).is_err() {
-            let mut issues = vec![evidence_import_issue(
-                "evidence_import.destination_create_failed",
-                "into",
-                "writable import directory",
+    if receipt.get("valid").and_then(Value::as_bool) == Some(true)
+        && into_root
+            .write(
+                Path::new("evidence-import-receipt.json"),
+                &serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
+            )
+            .is_err()
+    {
+        receipt = evidence_import_final_receipt(
+            &root,
+            vec![evidence_import_issue(
+                "evidence_import.receipt_write_failed",
+                "evidence-import-receipt.json",
+                "writable import receipt",
                 "failed",
-            )];
-            receipt = evidence_import_final_receipt(
-                &root,
-                std::mem::take(&mut issues),
-                Vec::new(),
-                receipt
-                    .get("verification_receipt_hash")
-                    .cloned()
-                    .unwrap_or(Value::Null),
-            );
-        } else if fs::write(
-            into_dir.join("evidence-import-receipt.json"),
-            serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
-        )
-        .is_err()
-        {
-            receipt = evidence_import_final_receipt(
-                &root,
-                vec![evidence_import_issue(
-                    "evidence_import.receipt_write_failed",
-                    "evidence-import-receipt.json",
-                    "writable import receipt",
-                    "failed",
-                )],
-                Vec::new(),
-                receipt
-                    .get("verification_receipt_hash")
-                    .cloned()
-                    .unwrap_or(Value::Null),
-            );
-        }
+            )],
+            Vec::new(),
+            receipt
+                .get("verification_receipt_hash")
+                .cloned()
+                .unwrap_or(Value::Null),
+        );
     }
     receipt
 }
 
 pub(super) const EVIDENCE_IMPORT_MAX_FILES: usize = 64;
 
+fn read_json_artifact_from_root(
+    root: &CapabilityRoot,
+    relative: &Path,
+    max_bytes: u64,
+) -> Result<Value, Box<dyn Error>> {
+    let bytes = root.read(relative)?;
+    let byte_count = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+    if byte_count > max_bytes {
+        return Err("JSON artifact exceeds the byte limit".into());
+    }
+    Ok(serde_json::from_slice(&bytes)?)
+}
+
 fn bundle_regular_files(
-    bundle_dir: &Path,
+    bundle_root: &CapabilityRoot,
 ) -> Result<std::collections::BTreeSet<String>, &'static str> {
     let mut out = std::collections::BTreeSet::new();
-    collect_bundle_regular_files(bundle_dir, bundle_dir, &mut out)?;
+    collect_bundle_regular_files(bundle_root, Path::new("."), &mut out)?;
     Ok(out)
 }
 
 fn collect_bundle_regular_files(
-    root: &Path,
-    dir: &Path,
+    bundle_root: &CapabilityRoot,
+    relative_dir: &Path,
     out: &mut std::collections::BTreeSet<String>,
 ) -> Result<(), &'static str> {
-    let entries = fs::read_dir(dir).map_err(|_| "evidence_import.bundle_read_failed")?;
-    let mut paths = Vec::new();
+    let entries = bundle_root
+        .entries(relative_dir)
+        .map_err(|_| "evidence_import.bundle_read_failed")?;
+    let mut entries = entries;
+    entries.sort_by(|left, right| left.file_name().cmp(right.file_name()));
     for entry in entries {
-        let entry = entry.map_err(|_| "evidence_import.bundle_read_failed")?;
-        paths.push(entry.path());
-    }
-    paths.sort();
-    for path in paths {
-        let metadata = fs::metadata(&path).map_err(|_| "evidence_import.bundle_read_failed")?;
-        if metadata.is_dir() {
-            collect_bundle_regular_files(root, &path, out)?;
-        } else if metadata.is_file() {
+        let relative = if relative_dir == Path::new(".") {
+            PathBuf::from(entry.file_name())
+        } else {
+            relative_dir.join(entry.file_name())
+        };
+        if entry.file_type().is_symlink() {
+            return Err("evidence_import.bundle_read_failed");
+        }
+        if entry.file_type().is_dir() {
+            collect_bundle_regular_files(bundle_root, &relative, out)?;
+        } else if entry.file_type().is_file() {
             if out.len() >= EVIDENCE_IMPORT_MAX_FILES {
                 return Err("evidence_import.bundle_file_limit_exceeded");
             }
-            let relative = path
-                .strip_prefix(root)
-                .map_err(|_| "evidence_import.bundle_read_failed")?
-                .to_string_lossy()
-                .replace('\\', "/");
-            out.insert(relative);
+            out.insert(relative.to_string_lossy().replace('\\', "/"));
         }
     }
     Ok(())
@@ -328,4 +370,61 @@ fn evidence_import_final_receipt(
             "verification_receipt_hash": verification_receipt_hash,
         }),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    const TEST_FILE_CONTENT: &[u8] = b"evidence\n";
+    const TEST_DIRECTORY_PREFIX: &str = "cairn-evidence-import-capability";
+
+    fn test_directory(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "{TEST_DIRECTORY_PREFIX}-{name}-{}",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn bundle_regular_files_collects_relative_files() -> Result<(), Box<dyn Error>> {
+        let directory = test_directory("positive");
+        let nested = directory.join("nested");
+        fs::create_dir_all(&nested)?;
+        fs::write(directory.join("root.json"), TEST_FILE_CONTENT)?;
+        fs::write(nested.join("child.json"), TEST_FILE_CONTENT)?;
+        let capability = CapabilityRoot::open(CapabilityRootKind::EvidenceBundle, &directory)?;
+
+        let files = bundle_regular_files(&capability)?;
+
+        assert_eq!(
+            files,
+            std::collections::BTreeSet::from([
+                "nested/child.json".to_string(),
+                "root.json".to_string(),
+            ])
+        );
+        fs::remove_dir_all(directory)?;
+        Ok(())
+    }
+
+    #[test]
+    fn bundle_regular_files_rejects_symlink_escape() -> Result<(), Box<dyn Error>> {
+        let directory = test_directory("symlink-negative");
+        let outside = test_directory("outside");
+        fs::create_dir_all(&directory)?;
+        fs::create_dir_all(&outside)?;
+        let outside_file = outside.join("outside.json");
+        fs::write(&outside_file, TEST_FILE_CONTENT)?;
+        std::os::unix::fs::symlink(&outside_file, directory.join("escape.json"))?;
+        let capability = CapabilityRoot::open(CapabilityRootKind::EvidenceBundle, &directory)?;
+
+        let result = bundle_regular_files(&capability);
+
+        assert_eq!(result, Err("evidence_import.bundle_read_failed"));
+        fs::remove_dir_all(directory)?;
+        fs::remove_dir_all(outside)?;
+        Ok(())
+    }
 }

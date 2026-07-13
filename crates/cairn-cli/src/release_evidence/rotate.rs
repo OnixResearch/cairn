@@ -1,12 +1,13 @@
 // r[impl release_evidence.cli_source_split.rotate_module]
-use std::{error::Error, fs, path::PathBuf};
+use std::{error::Error, path::PathBuf};
 
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
-use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
+use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
 use crate::support::{
     path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
+    CapabilityRoot, CapabilityRootKind,
 };
 
 use super::common::{
@@ -54,7 +55,13 @@ pub(super) fn release_evidence_rotate_receipt(options: &ReleaseEvidenceRotateOpt
     let mut issues = Vec::new();
     let plan_hash =
         read_file_hash(&options.plan, &mut issues, "plan", "rotation_plan").unwrap_or_default();
-    let plan = read_json_artifact(&options.plan, AGENT_RECEIPT_MAX_BYTES).ok();
+    let plan: Option<Value> =
+        CapabilityRoot::open_file_parent(CapabilityRootKind::Release, &options.plan, false)
+            .and_then(|(plan_root, relative)| {
+                plan_root.read_bounded(&relative, AGENT_RECEIPT_MAX_BYTES)
+            })
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok());
     if plan.is_none() {
         issues.push(release_evidence_issue(
             "release_evidence_rotation.plan_unreadable",
@@ -69,6 +76,15 @@ pub(super) fn release_evidence_rotate_receipt(options: &ReleaseEvidenceRotateOpt
         .and_then(Value::as_str)
         .map(PathBuf::from)
         .unwrap_or_default();
+    let publish_capability = CapabilityRoot::open(CapabilityRootKind::Release, &publish_root);
+    if options.execute && publish_capability.is_err() {
+        issues.push(release_evidence_issue(
+            "release_evidence_rotation.publish_root_unreadable",
+            "publish_root",
+            "readable publication root",
+            "unreadable",
+        ));
+    }
     let mut mutations = Vec::new();
     if let Some(plan) = &plan {
         for decision in plan
@@ -92,13 +108,23 @@ pub(super) fn release_evidence_rotate_receipt(options: &ReleaseEvidenceRotateOpt
             }
             let target = publish_root.join(relative);
             let before_hash = directory_manifest_hash(&target).unwrap_or_default();
-            if options.execute && issues.is_empty() && fs::remove_dir_all(&target).is_err() {
-                issues.push(release_evidence_issue(
-                    "release_evidence_rotation.remove_failed",
-                    relative,
-                    "removable local publication tree",
-                    "failed",
-                ));
+            if options.execute && issues.is_empty() {
+                let remove_result = publish_capability
+                    .as_ref()
+                    .map_err(|error| error.kind())
+                    .and_then(|capability| {
+                        capability
+                            .remove_dir_all(PathBuf::from(relative).as_path())
+                            .map_err(|error| error.kind())
+                    });
+                if remove_result.is_err() {
+                    issues.push(release_evidence_issue(
+                        "release_evidence_rotation.remove_failed",
+                        relative,
+                        "removable local publication tree",
+                        "failed",
+                    ));
+                }
             }
             let after_hash = directory_manifest_hash(&target).unwrap_or_default();
             mutations.push(json!({

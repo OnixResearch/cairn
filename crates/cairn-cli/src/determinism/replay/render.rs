@@ -8,16 +8,20 @@ pub(super) fn render_replay_receipt(
 ) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.determinism_replay.ci_output_modes]
     if let Some(path) = out {
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(
-            path,
+        let parent = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
+        let file_name = path.file_name().ok_or("replay output must name a file")?;
+        let output_root = CapabilityRoot::open_or_create(CapabilityRootKind::Replay, parent)?;
+        output_root.write(
+            Path::new(file_name),
             format!(
                 "{}
 ",
                 serde_json::to_string_pretty(receipt)?
-            ),
+            )
+            .as_bytes(),
         )?;
     }
     match format {

@@ -1,21 +1,20 @@
 // r[impl release_evidence.cli_source_split.retention_module]
 use std::{
     error::Error,
-    fs,
     path::{Path, PathBuf},
 };
 
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
-use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
+use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
 use crate::support::{
     path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
+    CapabilityRoot, CapabilityRootKind,
 };
 
 use super::common::{
-    publish_relative_path, read_file_hash, release_evidence_issue, safe_relative_path_text,
-    write_json_file,
+    read_file_hash, release_evidence_issue, safe_relative_path_text, write_json_file,
 };
 use super::publish::validate_publish_label;
 
@@ -231,28 +230,26 @@ fn retention_candidates(
     options: &ReleaseEvidenceRetentionOptions,
     issues: &mut Vec<Value>,
 ) -> Vec<Value> {
-    if fs::read_dir(&options.publish_root).is_err() {
-        issues.push(release_evidence_issue(
-            "release_evidence_retention.publish_root_unreadable",
-            "publish_root",
-            "readable publication root",
-            "unreadable",
-        ));
-        return Vec::new();
-    };
+    let publish_root =
+        match CapabilityRoot::open(CapabilityRootKind::Release, &options.publish_root) {
+            Ok(capability) => capability,
+            Err(_) => {
+                issues.push(release_evidence_issue(
+                    "release_evidence_retention.publish_root_unreadable",
+                    "publish_root",
+                    "readable publication root",
+                    "unreadable",
+                ));
+                return Vec::new();
+            }
+        };
     let mut candidates = Vec::new();
-    collect_retention_candidates(
-        &options.publish_root,
-        &options.publish_root,
-        0,
-        &mut candidates,
-        issues,
-    );
+    collect_retention_candidates(&publish_root, Path::new("."), 0, &mut candidates, issues);
     candidates
 }
 
 fn collect_retention_candidates(
-    publish_root: &Path,
+    publish_root: &CapabilityRoot,
     current: &Path,
     depth: usize,
     candidates: &mut Vec<Value>,
@@ -267,18 +264,23 @@ fn collect_retention_candidates(
         ));
         return;
     }
-    let Ok(entries) = fs::read_dir(current) else {
+    let Ok(mut entries) = publish_root.entries(current) else {
         issues.push(release_evidence_issue(
             "release_evidence_retention.directory_unreadable",
-            &publish_relative_path(publish_root, current),
+            &current.to_string_lossy().replace('\\', "/"),
             "readable publication directory",
             "unreadable",
         ));
         return;
     };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        let relative = publish_relative_path(publish_root, &path);
+    entries.sort_by(|left, right| left.file_name().cmp(right.file_name()));
+    for entry in entries {
+        let relative_path = if current == Path::new(".") {
+            PathBuf::from(entry.file_name())
+        } else {
+            current.join(entry.file_name())
+        };
+        let relative = relative_path.to_string_lossy().replace('\\', "/");
         if !safe_relative_path_text(&relative) {
             issues.push(release_evidence_issue(
                 "release_evidence_retention.path_unsafe",
@@ -288,10 +290,7 @@ fn collect_retention_candidates(
             ));
             continue;
         }
-        let Ok(meta) = fs::symlink_metadata(&path) else {
-            continue;
-        };
-        if meta.file_type().is_symlink() {
+        if entry.file_type().is_symlink() {
             issues.push(release_evidence_issue(
                 "release_evidence_retention.symlink_rejected",
                 &relative,
@@ -300,28 +299,63 @@ fn collect_retention_candidates(
             ));
             continue;
         }
-        if !meta.is_dir() {
+        if !entry.file_type().is_dir() {
             continue;
         }
-        let has_manifest = path.join("manifest.json").exists();
-        let has_receipt = path.join("receipt.json").exists();
+        let manifest_path = relative_path.join("manifest.json");
+        let receipt_path = relative_path.join("receipt.json");
+        let has_manifest = capability_regular_file_exists(publish_root, &manifest_path);
+        let has_receipt = capability_regular_file_exists(publish_root, &receipt_path);
         if has_manifest || has_receipt {
-            candidates.push(read_retention_candidate(&path, &relative, issues));
+            candidates.push(read_retention_candidate(
+                publish_root,
+                &relative_path,
+                &relative,
+                issues,
+            ));
         } else {
-            collect_retention_candidates(publish_root, &path, depth + 1, candidates, issues);
+            collect_retention_candidates(
+                publish_root,
+                &relative_path,
+                depth + 1,
+                candidates,
+                issues,
+            );
         }
     }
 }
 
-fn read_retention_candidate(path: &Path, relative: &str, issues: &mut Vec<Value>) -> Value {
-    let manifest_path = path.join("manifest.json");
-    let receipt_path = path.join("receipt.json");
+fn capability_regular_file_exists(root: &CapabilityRoot, relative: &Path) -> bool {
+    root.symlink_metadata(relative)
+        .is_ok_and(|metadata| metadata.is_file() && !metadata.file_type().is_symlink())
+}
+
+fn read_retention_candidate(
+    publish_root: &CapabilityRoot,
+    relative_directory: &Path,
+    relative: &str,
+    issues: &mut Vec<Value>,
+) -> Value {
+    let manifest_relative = relative_directory.join("manifest.json");
+    let receipt_relative = relative_directory.join("receipt.json");
+    let manifest_path = publish_root
+        .display_path(&manifest_relative)
+        .unwrap_or_else(|_| publish_root.path().join(&manifest_relative));
+    let receipt_path = publish_root
+        .display_path(&receipt_relative)
+        .unwrap_or_else(|_| publish_root.path().join(&receipt_relative));
     let manifest_hash =
         read_file_hash(&manifest_path, issues, relative, "retention_manifest").unwrap_or_default();
     let receipt_hash =
         read_file_hash(&receipt_path, issues, relative, "retention_receipt").unwrap_or_default();
-    let manifest = read_json_artifact(&manifest_path, AGENT_RECEIPT_MAX_BYTES).ok();
-    let receipt = read_json_artifact(&receipt_path, AGENT_RECEIPT_MAX_BYTES).ok();
+    let manifest: Option<Value> = publish_root
+        .read_bounded(&manifest_relative, AGENT_RECEIPT_MAX_BYTES)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok());
+    let receipt: Option<Value> = publish_root
+        .read_bounded(&receipt_relative, AGENT_RECEIPT_MAX_BYTES)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok());
     let mut valid = true;
     if manifest.is_none() || receipt.is_none() {
         valid = false;

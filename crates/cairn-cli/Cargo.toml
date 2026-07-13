@@ -15,6 +15,7 @@ path = "src/ironspec.rs"
 
 [dependencies]
 cairn-core = { path = "../cairn-core" }
+cap-std.workspace = true
 crossterm.workspace = true
 rat-nodegraph.workspace = true
 ratatui.workspace = true

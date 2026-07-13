@@ -1,5 +1,4 @@
 use std::{
-    fs,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -7,7 +6,10 @@ use std::{
 use cairn_core::{blake3_hex, canonical_json_hash};
 use serde_json::{json, Value};
 
-use crate::evidence::write_evidence_json;
+use crate::{
+    evidence::write_evidence_json,
+    support::{CapabilityRoot, CapabilityRootKind},
+};
 
 pub(super) fn git_head_state(root: &Path, issues: &mut Vec<Value>) -> Value {
     let head = git_output(root, &["rev-parse", "--short", "HEAD"]);
@@ -82,23 +84,28 @@ pub(super) fn collect_invalid_receipt(role: &str, receipt: &Value, issues: &mut 
     }
 }
 
-pub(super) fn write_json_artifact(path: &Path, value: &Value, issues: &mut Vec<Value>, role: &str) {
-    write_evidence_json(path, value, issues, role);
+pub(super) fn write_json_artifact(
+    output_root: &CapabilityRoot,
+    path: &Path,
+    value: &Value,
+    issues: &mut Vec<Value>,
+    role: &str,
+) {
+    write_evidence_json(output_root, path, value, issues, role);
 }
 
 pub(super) fn write_markdown_artifact(path: &Path, markdown: &str, issues: &mut Vec<Value>) {
-    if let Some(parent) = path.parent() {
-        if fs::create_dir_all(parent).is_err() {
-            issues.push(release_evidence_issue(
-                "release_evidence.index_parent_create_failed",
-                "out",
-                "writable output parent",
-                "failed",
-            ));
-            return;
-        }
-    }
-    if fs::write(path, markdown).is_err() {
+    let output = CapabilityRoot::open_file_parent(CapabilityRootKind::Release, path, true);
+    let Ok((output_root, relative)) = output else {
+        issues.push(release_evidence_issue(
+            "release_evidence.index_parent_create_failed",
+            "out",
+            "writable output parent",
+            "failed",
+        ));
+        return;
+    };
+    if output_root.write(&relative, markdown.as_bytes()).is_err() {
         issues.push(release_evidence_issue(
             "release_evidence.index_write_failed",
             "out",
@@ -128,7 +135,9 @@ pub(super) fn read_file_hash(
     role: &str,
     field: &str,
 ) -> Option<String> {
-    match fs::read(path) {
+    match CapabilityRoot::open_file_parent(CapabilityRootKind::Release, path, false)
+        .and_then(|(file_root, relative)| file_root.read(&relative))
+    {
         Ok(bytes) => Some(blake3_hex(&bytes)),
         Err(_) => {
             issues.push(release_evidence_issue(
@@ -143,17 +152,16 @@ pub(super) fn read_file_hash(
 }
 
 pub(super) fn write_json_file(path: &Path, value: &Value, issues: &mut Vec<Value>, role: &str) {
-    if let Some(parent) = path.parent() {
-        if fs::create_dir_all(parent).is_err() {
-            issues.push(release_evidence_issue(
-                "release_evidence_publish.json_parent_create_failed",
-                role,
-                "writable JSON parent",
-                "failed",
-            ));
-            return;
-        }
-    }
+    let output = CapabilityRoot::open_file_parent(CapabilityRootKind::Release, path, true);
+    let Ok((output_root, relative)) = output else {
+        issues.push(release_evidence_issue(
+            "release_evidence_publish.json_parent_create_failed",
+            role,
+            "writable JSON parent",
+            "failed",
+        ));
+        return;
+    };
     let Ok(bytes) = serde_json::to_vec_pretty(value) else {
         issues.push(release_evidence_issue(
             "release_evidence_publish.json_serialize_failed",
@@ -163,7 +171,7 @@ pub(super) fn write_json_file(path: &Path, value: &Value, issues: &mut Vec<Value
         ));
         return;
     };
-    if fs::write(path, bytes).is_err() {
+    if output_root.write(&relative, &bytes).is_err() {
         issues.push(release_evidence_issue(
             "release_evidence_publish.json_write_failed",
             role,
@@ -182,41 +190,35 @@ pub(super) fn safe_relative_path_text(relative: &str) -> bool {
             .any(|component| matches!(component, std::path::Component::ParentDir))
 }
 
-pub(super) fn publish_relative_path(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/")
-}
-
 pub(super) fn directory_manifest_hash(path: &Path) -> Option<String> {
-    if !path.exists() {
-        return None;
-    }
+    let directory_root = CapabilityRoot::open(CapabilityRootKind::Release, path).ok()?;
     let mut entries = Vec::new();
-    collect_directory_hashes(path, path, &mut entries).ok()?;
+    collect_directory_hashes(&directory_root, Path::new("."), &mut entries).ok()?;
     Some(canonical_json_hash(&json!(entries)))
 }
 
 fn collect_directory_hashes(
-    root: &Path,
-    path: &Path,
+    directory_root: &CapabilityRoot,
+    relative_directory: &Path,
     entries: &mut Vec<Value>,
 ) -> std::io::Result<()> {
-    let mut children = fs::read_dir(path)?.collect::<Result<Vec<_>, _>>()?;
-    children.sort_by_key(|entry| entry.path());
+    let mut children = directory_root.entries(relative_directory)?;
+    children.sort_by(|left, right| left.file_name().cmp(right.file_name()));
     for child in children {
-        let child_path = child.path();
-        let meta = fs::symlink_metadata(&child_path)?;
-        if meta.file_type().is_symlink() {
+        let relative = if relative_directory == Path::new(".") {
+            PathBuf::from(child.file_name())
+        } else {
+            relative_directory.join(child.file_name())
+        };
+        if child.file_type().is_symlink() {
             continue;
         }
-        if meta.is_dir() {
-            collect_directory_hashes(root, &child_path, entries)?;
-        } else if meta.is_file() {
-            let relative = publish_relative_path(root, &child_path);
-            let bytes = fs::read(&child_path)?;
-            entries.push(json!({"path": relative, "hash": blake3_hex(&bytes)}));
+        if child.file_type().is_dir() {
+            collect_directory_hashes(directory_root, &relative, entries)?;
+        } else if child.file_type().is_file() {
+            let bytes = directory_root.read(&relative)?;
+            let path = relative.to_string_lossy().replace('\\', "/");
+            entries.push(json!({"path": path, "hash": blake3_hex(&bytes)}));
         }
     }
     Ok(())

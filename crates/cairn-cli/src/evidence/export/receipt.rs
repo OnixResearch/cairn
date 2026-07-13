@@ -1,9 +1,16 @@
 use super::issue::evidence_export_issue;
 use super::*;
+use crate::support::CapabilityRoot;
 
-pub(crate) fn write_evidence_json(path: &Path, value: &Value, issues: &mut Vec<Value>, role: &str) {
+pub(crate) fn write_evidence_json(
+    output_root: &CapabilityRoot,
+    path: &Path,
+    value: &Value,
+    issues: &mut Vec<Value>,
+    role: &str,
+) {
     if let Some(parent) = path.parent() {
-        if fs::create_dir_all(parent).is_err() {
+        if output_root.create_dir_all_path(parent).is_err() {
             issues.push(evidence_export_issue(
                 "export.artifact_parent_create_failed",
                 role,
@@ -13,14 +20,16 @@ pub(crate) fn write_evidence_json(path: &Path, value: &Value, issues: &mut Vec<V
             return;
         }
     }
-    if fs::write(
-        path,
-        format!(
-            "{}\n",
-            serde_json::to_string_pretty(value).unwrap_or_default()
-        ),
-    )
-    .is_err()
+    if output_root
+        .write_path(
+            path,
+            format!(
+                "{}\n",
+                serde_json::to_string_pretty(value).unwrap_or_default()
+            )
+            .as_bytes(),
+        )
+        .is_err()
     {
         issues.push(evidence_export_issue(
             "export.artifact_write_failed",

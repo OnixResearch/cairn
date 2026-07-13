@@ -591,7 +591,17 @@ are `command`, `root`, `valid`, `verdict`, `issues`,
 `replay_receipt_hash`, `replay_verification_receipt_hash`,
 `environment_attestation_hash`, `release_readiness_receipt_hash`,
 `coverage_audit_receipt_hash`, and
-`receipt_hash`. The first-class publication path is
+`receipt_hash`.
+
+Cairn opens operator-declared repository, evidence-bundle, registry, release,
+replay, and scan roots as typed capability directories before shell code reads,
+writes, copies, traverses, or removes relative paths. Traversal, absolute-path,
+and symlink escape attempts fail before access outside the selected root. This
+bounds local filesystem authority only: it does not prove artifact truth, replay
+completeness, lifecycle correctness, verifier soundness, or release readiness.
+r[verify cairn.release_evidence.cap_std_boundary.docs]
+
+The first-class publication path is
 `cairn evidence export --root . --out target/cairn-evidence/`, which materializes
 coverage audit, replay, replay verification, release-readiness, agent bundle,
 bundle verification, evidence manifest, and manifest verification artifacts in a

@@ -55,25 +55,30 @@ pub(crate) fn evidence_registry_select_receipt(options: &EvidenceRegistrySelectO
                 Value::Null,
             );
         };
-        match fs::read(&index_path) {
+        let source_bytes =
+            CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &index_path, false)
+                .and_then(|(index_root, relative)| {
+                    index_root.read_bounded(&relative, AGENT_RECEIPT_MAX_BYTES)
+                });
+        match source_bytes {
             Ok(bytes) => {
-                if let Some(parent) = out.parent() {
-                    if fs::create_dir_all(parent).is_err() {
-                        issues.push(evidence_registry_issue(
-                            "evidence_registry_select.output_create_failed",
-                            "out",
-                            "writable output parent",
-                            "failed",
-                        ));
+                match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &out, true) {
+                    Ok((output_root, relative)) => {
+                        if output_root.write(&relative, &bytes).is_err() {
+                            issues.push(evidence_registry_issue(
+                                "evidence_registry_select.output_write_failed",
+                                "out",
+                                "writable selected index artifact",
+                                "failed",
+                            ));
+                        }
                     }
-                }
-                if issues.is_empty() && fs::write(&out, bytes).is_err() {
-                    issues.push(evidence_registry_issue(
-                        "evidence_registry_select.output_write_failed",
+                    Err(_) => issues.push(evidence_registry_issue(
+                        "evidence_registry_select.output_create_failed",
                         "out",
-                        "writable selected index artifact",
+                        "writable output parent",
                         "failed",
-                    ));
+                    )),
                 }
             }
             Err(_) => issues.push(evidence_registry_issue(

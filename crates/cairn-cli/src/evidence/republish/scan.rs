@@ -1,36 +1,36 @@
 use serde_json::Value;
-use std::{collections::BTreeSet, fs, path::Path};
+use std::{collections::BTreeSet, path::Path};
+
+use crate::support::CapabilityRoot;
 
 use super::issue::evidence_republish_issue;
 
-pub(super) fn detect_output_conflicts(out_dir: &Path, issues: &mut Vec<Value>) {
-    if out_dir.exists() {
-        match bundle_regular_files_with_prefix(out_dir, "evidence_republish") {
-            Ok(files) if !files.is_empty() => issues.push(evidence_republish_issue(
-                "evidence_republish.output_not_empty",
-                "out",
-                "empty output directory",
-                "non_empty",
-            )),
-            Err(code) => issues.push(evidence_republish_issue(
-                code,
-                "out",
-                "bounded readable output files",
-                "failed",
-            )),
-            _ => {}
-        }
+pub(super) fn detect_output_conflicts(out_root: &CapabilityRoot, issues: &mut Vec<Value>) {
+    match bundle_regular_files_with_prefix(out_root, "evidence_republish") {
+        Ok(files) if !files.is_empty() => issues.push(evidence_republish_issue(
+            "evidence_republish.output_not_empty",
+            "out",
+            "empty output directory",
+            "non_empty",
+        )),
+        Err(code) => issues.push(evidence_republish_issue(
+            code,
+            "out",
+            "bounded readable output files",
+            "failed",
+        )),
+        _ => {}
     }
 }
 
 pub(super) fn reject_undeclared_imported_files(
-    imported_dir: &Path,
+    imported_root: &CapabilityRoot,
     artifacts: &[Value],
     issues: &mut Vec<Value>,
 ) {
     let mut declared_files = BTreeSet::new();
     declared_files.insert("evidence-import-receipt.json".to_string());
-    match bundle_regular_files_with_prefix(imported_dir, "evidence_republish") {
+    match bundle_regular_files_with_prefix(imported_root, "evidence_republish") {
         Ok(files) => {
             for relative in files {
                 if !declared_files.contains(&relative)
@@ -57,56 +57,47 @@ pub(super) fn reject_undeclared_imported_files(
 }
 
 pub(super) fn bundle_regular_files_with_prefix(
-    bundle_dir: &Path,
+    bundle_root: &CapabilityRoot,
     prefix: &'static str,
 ) -> Result<BTreeSet<String>, &'static str> {
     let mut out = BTreeSet::new();
-    collect_bundle_regular_files_with_prefix(bundle_dir, bundle_dir, &mut out, prefix)?;
+    collect_bundle_regular_files_with_prefix(bundle_root, Path::new("."), &mut out, prefix)?;
     Ok(out)
 }
 
 fn collect_bundle_regular_files_with_prefix(
-    root: &Path,
-    dir: &Path,
+    bundle_root: &CapabilityRoot,
+    relative_dir: &Path,
     out: &mut BTreeSet<String>,
     prefix: &'static str,
 ) -> Result<(), &'static str> {
-    let entries = fs::read_dir(dir).map_err(|_| match prefix {
+    let read_failure = || match prefix {
         "evidence_republish" => "evidence_republish.bundle_read_failed",
         _ => "evidence_import.bundle_read_failed",
-    })?;
-    let mut paths = Vec::new();
+    };
+    let mut entries = bundle_root
+        .entries(relative_dir)
+        .map_err(|_| read_failure())?;
+    entries.sort_by(|left, right| left.file_name().cmp(right.file_name()));
     for entry in entries {
-        let entry = entry.map_err(|_| match prefix {
-            "evidence_republish" => "evidence_republish.bundle_read_failed",
-            _ => "evidence_import.bundle_read_failed",
-        })?;
-        paths.push(entry.path());
-    }
-    paths.sort();
-    for path in paths {
-        let metadata = fs::metadata(&path).map_err(|_| match prefix {
-            "evidence_republish" => "evidence_republish.bundle_read_failed",
-            _ => "evidence_import.bundle_read_failed",
-        })?;
-        if metadata.is_dir() {
-            collect_bundle_regular_files_with_prefix(root, &path, out, prefix)?;
-        } else if metadata.is_file() {
+        let relative = if relative_dir == Path::new(".") {
+            entry.file_name().into()
+        } else {
+            relative_dir.join(entry.file_name())
+        };
+        if entry.file_type().is_symlink() {
+            return Err(read_failure());
+        }
+        if entry.file_type().is_dir() {
+            collect_bundle_regular_files_with_prefix(bundle_root, &relative, out, prefix)?;
+        } else if entry.file_type().is_file() {
             if out.len() >= super::super::import::EVIDENCE_IMPORT_MAX_FILES {
                 return Err(match prefix {
                     "evidence_republish" => "evidence_republish.bundle_file_limit_exceeded",
                     _ => "evidence_import.bundle_file_limit_exceeded",
                 });
             }
-            let relative = path
-                .strip_prefix(root)
-                .map_err(|_| match prefix {
-                    "evidence_republish" => "evidence_republish.bundle_read_failed",
-                    _ => "evidence_import.bundle_read_failed",
-                })?
-                .to_string_lossy()
-                .replace('\\', "/");
-            out.insert(relative);
+            out.insert(relative.to_string_lossy().replace('\\', "/"));
         }
     }
     Ok(())

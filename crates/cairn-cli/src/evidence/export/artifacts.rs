@@ -1,7 +1,12 @@
 use super::issue::evidence_export_issue;
 use super::*;
+use crate::support::CapabilityRoot;
 
-pub(super) fn evidence_export_artifacts(out_dir: &Path, issues: &mut Vec<Value>) -> Vec<Value> {
+pub(super) fn evidence_export_artifacts(
+    output_root: &CapabilityRoot,
+    out_dir: &Path,
+    issues: &mut Vec<Value>,
+) -> Vec<Value> {
     let roles = [
         ("agent_evidence_bundle", "agent-evidence-bundle.json", true),
         (
@@ -28,7 +33,7 @@ pub(super) fn evidence_export_artifacts(out_dir: &Path, issues: &mut Vec<Value>)
         .iter()
         .filter_map(|(role, relative, required)| {
             let path = out_dir.join(relative);
-            let hash = match fs::read(&path) {
+            let hash = match output_root.read_path(&path) {
                 Ok(bytes) => Value::String(blake3_hex(&bytes)),
                 Err(_) => {
                     if *required {

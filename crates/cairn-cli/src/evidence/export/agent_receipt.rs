@@ -1,12 +1,20 @@
 use super::*;
+use crate::support::CapabilityRoot;
 
 pub(super) fn export_agent_receipt_bound_to_replay(
+    repository_root: &CapabilityRoot,
+    output_root: &CapabilityRoot,
     template_path: &Path,
     output_path: &Path,
     replay_verification: &Value,
     policy: &Policy,
 ) -> Result<Value, Box<dyn Error>> {
-    let mut receipt = read_json_artifact(template_path, AGENT_RECEIPT_MAX_BYTES)?;
+    let template_bytes = repository_root.read_path(template_path)?;
+    let template_byte_count = u64::try_from(template_bytes.len()).unwrap_or(u64::MAX);
+    if template_byte_count > AGENT_RECEIPT_MAX_BYTES {
+        return Err("agent receipt template exceeds the byte limit".into());
+    }
+    let mut receipt: Value = serde_json::from_slice(&template_bytes)?;
     let evidence = json!({
         "replay_artifact_path": "replay-agent.json",
         "replay_receipt_hash": replay_verification
@@ -56,6 +64,12 @@ pub(super) fn export_agent_receipt_bound_to_replay(
     if final_validation.get("valid").and_then(Value::as_bool) != Some(true) {
         return Err("generated agent receipt failed validation".into());
     }
-    write_evidence_json(output_path, &receipt, &mut Vec::new(), "agent_receipt");
+    write_evidence_json(
+        output_root,
+        output_path,
+        &receipt,
+        &mut Vec::new(),
+        "agent_receipt",
+    );
     Ok(receipt)
 }

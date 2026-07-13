@@ -11,9 +11,9 @@ mod receipt;
 mod verify;
 
 use serde_json::{json, Value};
-use std::{error::Error, fs, path::PathBuf};
+use std::{error::Error, path::PathBuf};
 
-use crate::support::print_json;
+use crate::support::{print_json, CapabilityRoot, CapabilityRootKind};
 
 use bundle::{evidence_index_bundle_relative, evidence_index_bundle_summary};
 use issue::evidence_index_issue;
@@ -67,8 +67,21 @@ pub(crate) fn evidence_index_receipt(options: &EvidenceIndexOptions) -> Value {
     let bundle = options.bundle.clone().unwrap_or_else(|| PathBuf::from("."));
     let out = options.out.clone().unwrap_or_else(|| PathBuf::from("."));
     let mut issues = Vec::new();
-    let bundle_summary =
-        evidence_index_bundle_summary(&root, &bundle, "evidence_index", &mut issues);
+    let bundle_root = match CapabilityRoot::open(CapabilityRootKind::EvidenceBundle, &bundle) {
+        Ok(capability) => Some(capability),
+        Err(_) => {
+            issues.push(evidence_index_issue(
+                "evidence_index.bundle_unreadable",
+                "bundle",
+                "readable evidence bundle root",
+                "unreadable",
+            ));
+            None
+        }
+    };
+    let bundle_summary = bundle_root.as_ref().and_then(|bundle_root| {
+        evidence_index_bundle_summary(&root, bundle_root, &bundle, "evidence_index", &mut issues)
+    });
     let bundle_relative = evidence_index_bundle_relative(&bundle, &out);
     let mut receipt = evidence_index_final_receipt(
         &root,
@@ -79,8 +92,31 @@ pub(crate) fn evidence_index_receipt(options: &EvidenceIndexOptions) -> Value {
         json!({}),
     );
     if receipt.get("valid").and_then(Value::as_bool) == Some(true) {
-        if let Some(parent) = out.parent() {
-            if fs::create_dir_all(parent).is_err() {
+        match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &out, true) {
+            Ok((output_root, relative)) => {
+                if output_root
+                    .write(
+                        &relative,
+                        &serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
+                    )
+                    .is_err()
+                {
+                    receipt = evidence_index_final_receipt(
+                        &root,
+                        "evidence index",
+                        vec![evidence_index_issue(
+                            "evidence_index.receipt_write_failed",
+                            "out",
+                            "writable index receipt",
+                            "failed",
+                        )],
+                        None,
+                        Value::Null,
+                        json!({}),
+                    );
+                }
+            }
+            Err(_) => {
                 receipt = evidence_index_final_receipt(
                     &root,
                     "evidence index",
@@ -95,27 +131,6 @@ pub(crate) fn evidence_index_receipt(options: &EvidenceIndexOptions) -> Value {
                     json!({}),
                 );
             }
-        }
-        if receipt.get("valid").and_then(Value::as_bool) == Some(true)
-            && fs::write(
-                &out,
-                serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
-            )
-            .is_err()
-        {
-            receipt = evidence_index_final_receipt(
-                &root,
-                "evidence index",
-                vec![evidence_index_issue(
-                    "evidence_index.receipt_write_failed",
-                    "out",
-                    "writable index receipt",
-                    "failed",
-                )],
-                None,
-                Value::Null,
-                json!({}),
-            );
         }
     }
     receipt

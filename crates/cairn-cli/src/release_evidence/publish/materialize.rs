@@ -1,10 +1,13 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use cairn_core::blake3_hex;
 use serde_json::{json, Value};
 
 use super::paths::{publish_relative_path, safe_relative_path_text};
-use crate::release_evidence::common::release_evidence_issue;
+use crate::{
+    release_evidence::common::release_evidence_issue,
+    support::{CapabilityRoot, CapabilityRootKind},
+};
 
 pub(in crate::release_evidence) fn copy_publish_artifact(
     artifact: &Value,
@@ -50,8 +53,19 @@ pub(super) fn copy_publish_file(
     materialized: &mut Vec<Value>,
     issues: &mut Vec<Value>,
 ) {
-    if source
-        .symlink_metadata()
+    let source_capability =
+        CapabilityRoot::open_file_parent(CapabilityRootKind::Release, source, false);
+    let Ok((source_root, source_relative)) = source_capability else {
+        issues.push(release_evidence_issue(
+            "release_evidence_publish.source_unreadable",
+            role,
+            "readable source file",
+            "unreadable",
+        ));
+        return;
+    };
+    if source_root
+        .symlink_metadata(&source_relative)
         .map(|meta| meta.file_type().is_symlink())
         .unwrap_or(false)
     {
@@ -63,7 +77,7 @@ pub(super) fn copy_publish_file(
         ));
         return;
     }
-    let Ok(bytes) = fs::read(source) else {
+    let Ok(bytes) = source_root.read(&source_relative) else {
         issues.push(release_evidence_issue(
             "release_evidence_publish.source_unreadable",
             role,
@@ -84,18 +98,21 @@ pub(super) fn copy_publish_file(
             return;
         }
     }
-    if let Some(parent) = destination.parent() {
-        if fs::create_dir_all(parent).is_err() {
-            issues.push(release_evidence_issue(
-                "release_evidence_publish.destination_parent_create_failed",
-                role,
-                "writable destination parent",
-                "failed",
-            ));
-            return;
-        }
-    }
-    if fs::write(destination, &bytes).is_err() {
+    let destination_capability =
+        CapabilityRoot::open_file_parent(CapabilityRootKind::Release, destination, true);
+    let Ok((destination_root, destination_relative)) = destination_capability else {
+        issues.push(release_evidence_issue(
+            "release_evidence_publish.destination_parent_create_failed",
+            role,
+            "writable destination parent",
+            "failed",
+        ));
+        return;
+    };
+    if destination_root
+        .write(&destination_relative, &bytes)
+        .is_err()
+    {
         issues.push(release_evidence_issue(
             "release_evidence_publish.destination_write_failed",
             role,
@@ -104,7 +121,7 @@ pub(super) fn copy_publish_file(
         ));
         return;
     }
-    let copied_hash = match fs::read(destination) {
+    let copied_hash = match destination_root.read(&destination_relative) {
         Ok(copied) => blake3_hex(&copied),
         Err(_) => {
             issues.push(release_evidence_issue(

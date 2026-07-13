@@ -3,8 +3,11 @@ use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
 use crate::{
-    agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES},
-    support::{path_string, portable_json_hash, with_portable_content_hash_receipt},
+    agent_receipt::AGENT_RECEIPT_MAX_BYTES,
+    support::{
+        path_string, portable_json_hash, with_portable_content_hash_receipt, CapabilityRoot,
+        CapabilityRootKind,
+    },
 };
 
 use super::{
@@ -22,22 +25,48 @@ pub(crate) fn evidence_index_verify_receipt(options: &EvidenceIndexVerifyOptions
     let root = options.root.clone();
     let index_path = options.index.clone().unwrap_or_else(|| PathBuf::from("."));
     let mut issues = Vec::new();
-    let index = match read_json_artifact(&index_path, AGENT_RECEIPT_MAX_BYTES) {
-        Ok(value) => value,
-        Err(_) => {
-            return evidence_index_verify_final_receipt(
-                &root,
-                issues_with_index_missing(),
-                Value::Null,
-                None,
-            );
-        }
-    };
+    let index: Value =
+        match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &index_path, false)
+            .and_then(|(index_root, relative)| {
+                index_root.read_bounded(&relative, AGENT_RECEIPT_MAX_BYTES)
+            })
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        {
+            Some(value) => value,
+            None => {
+                return evidence_index_verify_final_receipt(
+                    &root,
+                    issues_with_index_missing(),
+                    Value::Null,
+                    None,
+                );
+            }
+        };
     let index_receipt_hash = index.get("receipt_hash").cloned().unwrap_or(Value::Null);
     verify_stated_index_hash(&root, &index, &mut issues);
     let bundle = evidence_index_verify_bundle_path(&index_path, &index);
-    let current_summary =
-        evidence_index_bundle_summary(&root, &bundle, "evidence_index_verify", &mut issues);
+    let bundle_root = match CapabilityRoot::open(CapabilityRootKind::EvidenceBundle, &bundle) {
+        Ok(capability) => Some(capability),
+        Err(_) => {
+            issues.push(evidence_index_issue(
+                "evidence_index_verify.bundle_unreadable",
+                "bundle",
+                "readable evidence bundle root",
+                "unreadable",
+            ));
+            None
+        }
+    };
+    let current_summary = bundle_root.as_ref().and_then(|bundle_root| {
+        evidence_index_bundle_summary(
+            &root,
+            bundle_root,
+            &bundle,
+            "evidence_index_verify",
+            &mut issues,
+        )
+    });
     if let Some(summary) = current_summary.as_ref() {
         evidence_index_compare_summary(&mut issues, &index, summary);
     }

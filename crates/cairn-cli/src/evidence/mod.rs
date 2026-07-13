@@ -1,6 +1,5 @@
 use std::{
     error::Error,
-    fs,
     path::{Path, PathBuf},
 };
 
@@ -11,8 +10,7 @@ use serde_json::{json, Value};
 
 use crate::agent_receipt::{
     agent_evidence_bundle_verification_receipt, agent_receipt_validation_receipt,
-    read_json_artifact, receipt_stated_or_computed_hash, AGENT_RECEIPT_MAX_BYTES,
-    REQUIRED_AGENT_REPLAY_GROUP,
+    receipt_stated_or_computed_hash, AGENT_RECEIPT_MAX_BYTES, REQUIRED_AGENT_REPLAY_GROUP,
 };
 use crate::content_addressed_evidence::{
     run_evidence_circuit_primitive, run_evidence_downstream_pilot,

@@ -1,9 +1,9 @@
-use std::fs;
-
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
-use crate::support::{path_string, with_portable_content_hash_receipt};
+use crate::support::{
+    path_string, with_portable_content_hash_receipt, CapabilityRoot, CapabilityRootKind,
+};
 
 use super::labels::release_evidence_publish_labels;
 use super::options::ReleaseEvidencePublishOptions;
@@ -17,20 +17,19 @@ pub(super) fn write_release_evidence_publish_receipt(
         return receipt;
     }
     let receipt_path = options.publish_dir.join("receipt.json");
-    if let Some(parent) = receipt_path.parent() {
-        if fs::create_dir_all(parent).is_err() {
-            let mut issues = vec![release_evidence_issue(
-                "release_evidence_publish.receipt_parent_create_failed",
-                "publish_dir/receipt.json",
-                "writable receipt parent",
-                "failed",
-            )];
-            issues.sort_by_key(canonical_json_hash);
-            return publish_receipt_with_replaced_issues(options, receipt, issues);
-        }
-    }
+    let output = CapabilityRoot::open_file_parent(CapabilityRootKind::Release, &receipt_path, true);
+    let Ok((output_root, relative)) = output else {
+        let mut issues = vec![release_evidence_issue(
+            "release_evidence_publish.receipt_parent_create_failed",
+            "publish_dir/receipt.json",
+            "writable receipt parent",
+            "failed",
+        )];
+        issues.sort_by_key(canonical_json_hash);
+        return publish_receipt_with_replaced_issues(options, receipt, issues);
+    };
     let bytes = serde_json::to_vec_pretty(&receipt).unwrap_or_default();
-    if fs::write(&receipt_path, bytes).is_err() {
+    if output_root.write(&relative, &bytes).is_err() {
         let mut issues = vec![release_evidence_issue(
             "release_evidence_publish.receipt_write_failed",
             "publish_dir/receipt.json",

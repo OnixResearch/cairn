@@ -1,12 +1,14 @@
 use cairn_core::blake3_hex;
 use serde_json::{json, Value};
-use std::{collections::BTreeSet, fs, path::Path};
+use std::{collections::BTreeSet, io::ErrorKind, path::Path};
+
+use crate::support::CapabilityRoot;
 
 use super::{issue::evidence_republish_issue, receipt::evidence_republish_final_receipt};
 
 pub(super) fn materialize_declared_artifacts(
-    imported_dir: &Path,
-    out_dir: &Path,
+    imported_root: &CapabilityRoot,
+    out_root: &CapabilityRoot,
     artifacts: &[Value],
     issues: &mut Vec<Value>,
 ) -> Vec<Value> {
@@ -27,8 +29,7 @@ pub(super) fn materialize_declared_artifacts(
             ));
             continue;
         }
-        let Some(source_path) = super::super::safe_bundle_artifact_path(imported_dir, relative)
-        else {
+        if super::super::safe_bundle_artifact_path(imported_root.path(), relative).is_none() {
             issues.push(evidence_republish_issue(
                 "evidence_republish.artifact_path_unsafe",
                 role,
@@ -36,9 +37,8 @@ pub(super) fn materialize_declared_artifacts(
                 "unsafe",
             ));
             continue;
-        };
-        let Some(destination_path) = super::super::safe_bundle_artifact_path(out_dir, relative)
-        else {
+        }
+        if super::super::safe_bundle_artifact_path(out_root.path(), relative).is_none() {
             issues.push(evidence_republish_issue(
                 "evidence_republish.destination_path_unsafe",
                 role,
@@ -46,9 +46,10 @@ pub(super) fn materialize_declared_artifacts(
                 "unsafe",
             ));
             continue;
-        };
+        }
+        let relative_path = Path::new(relative);
         let declared_hash = artifact.get("hash").and_then(Value::as_str).unwrap_or("");
-        let source_bytes = match fs::read(&source_path) {
+        let source_bytes = match imported_root.read(relative_path) {
             Ok(bytes) => bytes,
             Err(_) => {
                 issues.push(evidence_republish_issue(
@@ -71,8 +72,11 @@ pub(super) fn materialize_declared_artifacts(
             continue;
         }
         if issues.is_empty() {
-            if let Some(parent) = destination_path.parent() {
-                if fs::create_dir_all(parent).is_err() {
+            if let Some(parent) = relative_path
+                .parent()
+                .filter(|parent| !parent.as_os_str().is_empty())
+            {
+                if out_root.create_dir_all(parent).is_err() {
                     issues.push(evidence_republish_issue(
                         "evidence_republish.destination_create_failed",
                         role,
@@ -82,16 +86,28 @@ pub(super) fn materialize_declared_artifacts(
                     continue;
                 }
             }
-            if destination_path.exists() {
-                issues.push(evidence_republish_issue(
-                    "evidence_republish.destination_collision",
-                    role,
-                    "absent destination artifact",
-                    "exists",
-                ));
-                continue;
+            match out_root.symlink_metadata(relative_path) {
+                Ok(_) => {
+                    issues.push(evidence_republish_issue(
+                        "evidence_republish.destination_collision",
+                        role,
+                        "absent destination artifact",
+                        "exists",
+                    ));
+                    continue;
+                }
+                Err(error) if error.kind() == ErrorKind::NotFound => {}
+                Err(_) => {
+                    issues.push(evidence_republish_issue(
+                        "evidence_republish.destination_collision",
+                        role,
+                        "inspectable destination artifact",
+                        "unreadable",
+                    ));
+                    continue;
+                }
             }
-            if fs::write(&destination_path, &source_bytes).is_err() {
+            if out_root.write(relative_path, &source_bytes).is_err() {
                 issues.push(evidence_republish_issue(
                     "evidence_republish.artifact_copy_failed",
                     role,
@@ -112,32 +128,17 @@ pub(super) fn materialize_declared_artifacts(
 
 pub(super) fn copy_import_receipt_and_republish_receipt(
     root: &Path,
-    out_dir: &Path,
+    out_root: &CapabilityRoot,
     import_receipt: &Value,
     receipt: Value,
 ) -> Value {
-    if fs::create_dir_all(out_dir).is_err() {
-        return evidence_republish_final_receipt(
-            root,
-            vec![evidence_republish_issue(
-                "evidence_republish.output_create_failed",
-                "out",
-                "writable output directory",
-                "failed",
-            )],
-            Vec::new(),
-            receipt
-                .get("import_receipt_hash")
-                .cloned()
-                .unwrap_or(Value::Null),
-        );
-    }
     let import_receipt_bytes = serde_json::to_vec_pretty(import_receipt).unwrap_or_default();
-    if fs::write(
-        out_dir.join("evidence-import-receipt.json"),
-        import_receipt_bytes,
-    )
-    .is_err()
+    if out_root
+        .write(
+            Path::new("evidence-import-receipt.json"),
+            &import_receipt_bytes,
+        )
+        .is_err()
     {
         return evidence_republish_final_receipt(
             root,
@@ -154,11 +155,12 @@ pub(super) fn copy_import_receipt_and_republish_receipt(
                 .unwrap_or(Value::Null),
         );
     }
-    if fs::write(
-        out_dir.join("evidence-republish-receipt.json"),
-        serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
-    )
-    .is_err()
+    if out_root
+        .write(
+            Path::new("evidence-republish-receipt.json"),
+            &serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
+        )
+        .is_err()
     {
         return evidence_republish_final_receipt(
             root,

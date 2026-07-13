@@ -1,4 +1,5 @@
 use super::*;
+use crate::support::{CapabilityRoot, CapabilityRootKind};
 
 mod agent_receipt;
 mod artifacts;
@@ -45,22 +46,45 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
     let root = options.root.clone();
     let out_dir = options.out.clone().unwrap_or_else(|| PathBuf::from("."));
     let mut issues = Vec::new();
-    if fs::create_dir_all(&out_dir).is_err() {
-        issues.push(evidence_export_issue(
-            "export.out_dir_create_failed",
-            "out_dir",
-            "writable output directory",
-            "failed",
-        ));
-        return evidence_export_final_receipt(
-            &root,
-            &out_dir,
-            issues,
-            Vec::new(),
-            Value::Null,
-            Value::Null,
-        );
-    }
+    let output_root =
+        match CapabilityRoot::open_or_create(CapabilityRootKind::EvidenceBundle, &out_dir) {
+            Ok(capability) => capability,
+            Err(_) => {
+                issues.push(evidence_export_issue(
+                    "export.out_dir_create_failed",
+                    "out_dir",
+                    "writable output directory",
+                    "failed",
+                ));
+                return evidence_export_final_receipt(
+                    &root,
+                    &out_dir,
+                    issues,
+                    Vec::new(),
+                    Value::Null,
+                    Value::Null,
+                );
+            }
+        };
+    let repository_root = match CapabilityRoot::open(CapabilityRootKind::Repository, &root) {
+        Ok(capability) => capability,
+        Err(_) => {
+            issues.push(evidence_export_issue(
+                "export.repository_root_open_failed",
+                "root",
+                "readable repository root",
+                "failed",
+            ));
+            return evidence_export_final_receipt(
+                &root,
+                &out_dir,
+                issues,
+                Vec::new(),
+                Value::Null,
+                Value::Null,
+            );
+        }
+    };
 
     let policy = match load_policy_file(default_policy_path().into()) {
         Ok(policy) => policy,
@@ -100,7 +124,13 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
     let manifest_verification_path = out_dir.join("evidence-manifest-verification.json");
 
     let coverage = determinism_coverage_audit_receipt(&root, &policy);
-    write_evidence_json(&coverage_path, &coverage, &mut issues, "coverage_audit");
+    write_evidence_json(
+        &output_root,
+        &coverage_path,
+        &coverage,
+        &mut issues,
+        "coverage_audit",
+    );
 
     let replay =
         match determinism_replay_receipt(root.clone(), None, Some(REQUIRED_AGENT_REPLAY_GROUP)) {
@@ -116,17 +146,30 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
             }
         };
     if replay.is_object() {
-        write_evidence_json(&replay_path, &replay, &mut issues, "replay_receipt");
+        write_evidence_json(
+            &output_root,
+            &replay_path,
+            &replay,
+            &mut issues,
+            "replay_receipt",
+        );
     }
 
     let replay_verification = if replay.is_object() {
-        write_evidence_json(&replay_path, &replay, &mut issues, "replay_receipt");
+        write_evidence_json(
+            &output_root,
+            &replay_path,
+            &replay,
+            &mut issues,
+            "replay_receipt",
+        );
         determinism_verify_replay_receipt(&root, &replay_path)
     } else {
         Value::Null
     };
     if replay_verification.is_object() {
         write_evidence_json(
+            &output_root,
             &replay_verification_path,
             &replay_verification,
             &mut issues,
@@ -135,15 +178,25 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
     }
 
     let release = release_readiness_receipt(root.clone(), default_policy_path().into());
-    write_evidence_json(&release_path, &release, &mut issues, "release_readiness");
+    write_evidence_json(
+        &output_root,
+        &release_path,
+        &release,
+        &mut issues,
+        "release_readiness",
+    );
 
     let exported_runtime_chain = copy_optional_runtime_artifact(
+        &repository_root,
+        &output_root,
         options.runtime_chain.as_ref(),
         &runtime_chain_path,
         &mut issues,
         "runtime_chain",
     );
     let exported_witness_checkpoint = copy_optional_runtime_artifact(
+        &repository_root,
+        &output_root,
         options.witness_checkpoint.as_ref(),
         &witness_checkpoint_path,
         &mut issues,
@@ -159,6 +212,7 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
                 .map(|_| witness_checkpoint_path.clone()),
         });
         write_evidence_json(
+            &output_root,
             &runtime_evidence_path,
             &receipt,
             &mut issues,
@@ -170,8 +224,14 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
     };
 
     let exported_agent_receipt = if options.agent_receipt.is_some() {
-        match fs::copy(&agent_path, &exported_agent_path) {
-            Ok(_) => read_json_artifact(&exported_agent_path, AGENT_RECEIPT_MAX_BYTES)
+        match repository_root.copy_path_to(&agent_path, &output_root, &exported_agent_path) {
+            Ok(_) => output_root
+                .read_path(&exported_agent_path)
+                .ok()
+                .filter(|bytes| {
+                    u64::try_from(bytes.len()).unwrap_or(u64::MAX) <= AGENT_RECEIPT_MAX_BYTES
+                })
+                .and_then(|bytes| serde_json::from_slice(&bytes).ok())
                 .unwrap_or(Value::Null),
             Err(_) => {
                 issues.push(evidence_export_issue(
@@ -185,6 +245,8 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         }
     } else {
         match export_agent_receipt_bound_to_replay(
+            &repository_root,
+            &output_root,
             &agent_path,
             &exported_agent_path,
             &replay_verification,
@@ -220,10 +282,17 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         bundle["runtime_evidence_receipt_hash"] =
             receipt_stated_or_computed_hash(&root, &runtime_evidence);
     }
-    write_evidence_json(&bundle_path, &bundle, &mut issues, "agent_evidence_bundle");
+    write_evidence_json(
+        &output_root,
+        &bundle_path,
+        &bundle,
+        &mut issues,
+        "agent_evidence_bundle",
+    );
 
     let bundle_verification = agent_evidence_bundle_verification_receipt(&root, &bundle_path);
     write_evidence_json(
+        &output_root,
         &bundle_verification_path,
         &bundle_verification,
         &mut issues,
@@ -265,6 +334,7 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
     if manifest.is_object() {
         let relative_manifest = evidence_manifest_with_relative_paths(&manifest, &out_dir);
         write_evidence_json(
+            &output_root,
             &manifest_path,
             &relative_manifest,
             &mut issues,
@@ -274,6 +344,7 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
 
     let manifest_verification = evidence_manifest_verification_receipt(&root, &manifest_path);
     write_evidence_json(
+        &output_root,
         &manifest_verification_path,
         &manifest_verification,
         &mut issues,
@@ -297,7 +368,7 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         ));
     }
 
-    let mut artifacts = evidence_export_artifacts(&out_dir, &mut issues);
+    let mut artifacts = evidence_export_artifacts(&output_root, &out_dir, &mut issues);
     artifacts.sort_by_key(|artifact| {
         artifact
             .get("role")
@@ -319,6 +390,7 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         manifest_verification_hash,
     );
     write_evidence_json(
+        &output_root,
         &out_dir.join("evidence-export-receipt.json"),
         &receipt,
         &mut Vec::new(),
@@ -328,13 +400,15 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
 }
 
 fn copy_optional_runtime_artifact(
+    repository_root: &CapabilityRoot,
+    output_root: &CapabilityRoot,
     source: Option<&PathBuf>,
     destination: &Path,
     issues: &mut Vec<Value>,
     role: &str,
 ) -> Option<()> {
     let source = source?;
-    match fs::copy(source, destination) {
+    match repository_root.copy_path_to(source, output_root, destination) {
         Ok(_) => Some(()),
         Err(_) => {
             issues.push(evidence_export_issue(

@@ -31,8 +31,30 @@ pub(crate) fn evidence_registry_fetch_plan_receipt(
         plan_entries,
     );
     if receipt.get("valid").and_then(Value::as_bool) == Some(true) {
-        if let Some(parent) = out.parent() {
-            if fs::create_dir_all(parent).is_err() {
+        match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, &out, true) {
+            Ok((output_root, relative)) => {
+                if output_root
+                    .write(
+                        &relative,
+                        &serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
+                    )
+                    .is_err()
+                {
+                    receipt = evidence_registry_fetch_plan_final_receipt(
+                        &root,
+                        vec![evidence_registry_issue(
+                            "evidence_registry_fetch_plan.output_write_failed",
+                            "out",
+                            "writable fetch plan receipt",
+                            "failed",
+                        )],
+                        &options.selectors,
+                        Value::Null,
+                        Vec::new(),
+                    );
+                }
+            }
+            Err(_) => {
                 receipt = evidence_registry_fetch_plan_final_receipt(
                     &root,
                     vec![evidence_registry_issue(
@@ -46,26 +68,6 @@ pub(crate) fn evidence_registry_fetch_plan_receipt(
                     Vec::new(),
                 );
             }
-        }
-        if receipt.get("valid").and_then(Value::as_bool) == Some(true)
-            && fs::write(
-                &out,
-                serde_json::to_vec_pretty(&receipt).unwrap_or_default(),
-            )
-            .is_err()
-        {
-            receipt = evidence_registry_fetch_plan_final_receipt(
-                &root,
-                vec![evidence_registry_issue(
-                    "evidence_registry_fetch_plan.output_write_failed",
-                    "out",
-                    "writable fetch plan receipt",
-                    "failed",
-                )],
-                &options.selectors,
-                Value::Null,
-                Vec::new(),
-            );
         }
     }
     receipt

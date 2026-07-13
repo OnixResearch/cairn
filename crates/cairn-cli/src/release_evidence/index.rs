@@ -9,9 +9,7 @@ use std::{
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
-use crate::agent_receipt::{
-    read_json_artifact, receipt_stated_or_computed_hash, AGENT_RECEIPT_MAX_BYTES,
-};
+use crate::agent_receipt::{receipt_stated_or_computed_hash, AGENT_RECEIPT_MAX_BYTES};
 
 use crate::evidence::{
     evidence_export_receipt, evidence_import_receipt, evidence_index_receipt,
@@ -21,11 +19,12 @@ use crate::evidence::{
 };
 use crate::support::{
     default_policy_path, path_string, print_json, read_option, read_string_option,
-    with_portable_content_hash_receipt,
+    with_portable_content_hash_receipt, CapabilityRoot, CapabilityRootKind,
 };
 
 use super::common::{
-    collect_invalid_receipt, git_head_state, write_json_artifact, write_markdown_artifact,
+    collect_invalid_receipt, git_head_state, release_evidence_issue, write_json_artifact,
+    write_markdown_artifact,
 };
 
 pub(super) fn run_release_evidence_index(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -82,6 +81,28 @@ fn release_evidence_index_receipt(options: &ReleaseEvidenceIndexOptions) -> Valu
         );
     }
 
+    let artifact_root =
+        match CapabilityRoot::open_or_create(CapabilityRootKind::Release, &options.artifact_dir) {
+            Ok(capability) => capability,
+            Err(_) => {
+                issues.push(release_evidence_issue(
+                    "release_evidence.artifact_dir_create_failed",
+                    "artifact_dir",
+                    "writable release evidence artifact directory",
+                    "failed",
+                ));
+                return release_evidence_index_final_receipt(
+                    &root,
+                    &options.out,
+                    &options.artifact_dir,
+                    issues,
+                    git_state,
+                    Vec::new(),
+                    Vec::new(),
+                );
+            }
+        };
+
     let export_dir = options.artifact_dir.join("exported");
     let imported_dir = options.artifact_dir.join("imported");
     let republished_dir = options.artifact_dir.join("republished");
@@ -107,7 +128,13 @@ fn release_evidence_index_receipt(options: &ReleaseEvidenceIndexOptions) -> Valu
         stack_provenance: None,
         stack_provenance_graph: None,
     });
-    write_json_artifact(&verify_path, &verify, &mut issues, "evidence_verify");
+    write_json_artifact(
+        &artifact_root,
+        &verify_path,
+        &verify,
+        &mut issues,
+        "evidence_verify",
+    );
     collect_invalid_receipt("evidence_verify", &verify, &mut issues);
 
     let import = evidence_import_receipt(&EvidenceImportOptions {
@@ -136,6 +163,7 @@ fn release_evidence_index_receipt(options: &ReleaseEvidenceIndexOptions) -> Valu
         index: Some(index_path.clone()),
     });
     write_json_artifact(
+        &artifact_root,
         &index_verify_path,
         &index_verify,
         &mut issues,
@@ -145,6 +173,7 @@ fn release_evidence_index_receipt(options: &ReleaseEvidenceIndexOptions) -> Valu
 
     let receipt_table = release_evidence_receipt_table(
         &root,
+        &artifact_root,
         &export_dir,
         &[
             ("evidence_export", &export),
@@ -173,15 +202,16 @@ fn release_evidence_index_receipt(options: &ReleaseEvidenceIndexOptions) -> Valu
 }
 fn release_evidence_receipt_table(
     root: &Path,
+    artifact_root: &CapabilityRoot,
     export_dir: &Path,
     receipts: &[(&str, &Value)],
 ) -> Vec<Value> {
     let mut table = Vec::with_capacity(receipts.len() + 1);
-    if let Ok(release) = read_json_artifact(
-        &export_dir.join("release-readiness.json"),
-        AGENT_RECEIPT_MAX_BYTES,
-    ) {
-        table.push(receipt_row(root, "release_readiness", &release));
+    let release_path = export_dir.join("release-readiness.json");
+    if let Ok(bytes) = artifact_root.read_bounded_path(&release_path, AGENT_RECEIPT_MAX_BYTES) {
+        if let Ok(release) = serde_json::from_slice(&bytes) {
+            table.push(receipt_row(root, "release_readiness", &release));
+        }
     }
     for (role, receipt) in receipts {
         table.push(receipt_row(root, role, receipt));

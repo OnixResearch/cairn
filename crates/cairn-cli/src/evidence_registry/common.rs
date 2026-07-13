@@ -2,9 +2,9 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{json, Value};
 
-use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
+use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
 use crate::evidence::{evidence_index_verify_receipt, EvidenceIndexVerifyOptions};
-use crate::support::{path_string, with_portable_receipt_hash};
+use crate::support::{path_string, with_portable_receipt_hash, CapabilityRoot, CapabilityRootKind};
 use cairn_core::canonical_json_hash;
 
 use super::labels::{evidence_registry_labels_json, EvidenceRegistryLabels};
@@ -18,18 +18,25 @@ pub(super) fn evidence_registry_entry_from_index(
     labels: Option<&EvidenceRegistryLabels>,
     issues: &mut Vec<Value>,
 ) -> Option<Value> {
-    let index = match read_json_artifact(index_path, AGENT_RECEIPT_MAX_BYTES) {
-        Ok(value) => value,
-        Err(_) => {
-            issues.push(evidence_registry_issue(
-                &format!("{prefix}.index_unreadable"),
-                "index",
-                "readable evidence index",
-                "unreadable",
-            ));
-            return None;
-        }
-    };
+    let index: Value =
+        match CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, index_path, false)
+            .and_then(|(index_root, relative)| {
+                index_root.read_bounded(&relative, AGENT_RECEIPT_MAX_BYTES)
+            })
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        {
+            Some(value) => value,
+            None => {
+                issues.push(evidence_registry_issue(
+                    &format!("{prefix}.index_unreadable"),
+                    "index",
+                    "readable evidence index",
+                    "unreadable",
+                ));
+                return None;
+            }
+        };
     if index.get("valid").and_then(Value::as_bool) != Some(true) {
         issues.push(evidence_registry_issue(
             &format!("{prefix}.index_invalid"),
