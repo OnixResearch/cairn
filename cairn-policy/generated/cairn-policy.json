@@ -397,6 +397,87 @@
       },
       {
         "args": [
+          "view",
+          "graph",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "view",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "root"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/lifecycle-views/positive",
+        "hash_fields": [
+          "input_hash",
+          "receipt_hash"
+        ],
+        "id": "view_graph",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "view",
+          "kanban",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "view",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "root"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/lifecycle-views/positive",
+        "hash_fields": [
+          "input_hash",
+          "receipt_hash"
+        ],
+        "id": "view_kanban",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "view",
+          "mindmap",
+          "--root",
+          "<root>"
+        ],
+        "command_kind": "view",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "root"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "fixtures/lifecycle-views/positive",
+        "hash_fields": [
+          "input_hash",
+          "receipt_hash"
+        ],
+        "id": "view_mindmap",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
           "receipt-preserves-diff",
           "--baseline",
           "fixtures/receipt-preserves-diff/baseline.json",
@@ -562,7 +643,10 @@
           "release_readiness",
           "status",
           "sync_dry_run",
-          "validate"
+          "validate",
+          "view_graph",
+          "view_kanban",
+          "view_mindmap"
         ],
         "description": "All policy-owned replay cases",
         "id": "full"
@@ -876,6 +960,45 @@
         "full",
         "release",
         "smoke"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "view graph --root <root>",
+      "determinism_claim": "lifecycle_view_graph_stability",
+      "id": "view_graph",
+      "receipt_command": "view graph",
+      "required_replay_cases": [
+        "view_graph"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "view kanban --root <root>",
+      "determinism_claim": "lifecycle_view_kanban_stability",
+      "id": "view_kanban",
+      "receipt_command": "view kanban",
+      "required_replay_cases": [
+        "view_kanban"
+      ],
+      "required_replay_groups": [
+        "full"
+      ],
+      "surface_kind": "cli"
+    },
+    {
+      "command": "view mindmap --root <root>",
+      "determinism_claim": "lifecycle_view_mindmap_stability",
+      "id": "view_mindmap",
+      "receipt_command": "view mindmap",
+      "required_replay_cases": [
+        "view_mindmap"
+      ],
+      "required_replay_groups": [
+        "full"
       ],
       "surface_kind": "cli"
     }
