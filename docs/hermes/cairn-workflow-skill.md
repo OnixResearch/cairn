@@ -121,6 +121,12 @@ Expected result: no matches.
   - `--execute` refuses mutation when the configured gate adds blockers to an otherwise unblocked plan.
   - blocked plans must not mutate, even with `--execute`.
   - For real archives, set `CAIRN_ARCHIVE_DATE=$(date +%F)` before `cairn archive <change> --execute`.
+- Lossless archive compaction:
+  - `cairn compact archive --root PATH --profile lossless-pack --out FILE` emits a deterministic saved plan without mutating lifecycle storage.
+  - `cairn compact archive --root PATH --plan FILE --execute` rechecks the saved plan, writes and verifies content-addressed pack artifacts, appends the receipt chain, then prunes expanded archives.
+  - `cairn compact verify --root PATH` checks ledger continuity, manifests, objects, pointers, mutation linkage, and interrupted/orphaned artifacts.
+  - `cairn compact unpack --root PATH --archive ID [--execute]` previews or restores exact archived bytes; only the lossless profile is executable.
+  - Merkle-style roots bind represented content; chain hashes bind observed operation order. Passing verification proves local representation integrity only, not archived correctness, release readiness, remote trust, or semantic review completeness.
 - Structured lifecycle/probes:
   - `cairn lifecycle check --source PATH`
   - `cairn lifecycle export --source PATH --output PATH [--check]`

@@ -25,6 +25,23 @@ pub use verified::ai_spec_draft::{
     ai_spec_draft_hash, validate_ai_spec_draft, AiSpecDraftIssue, AiSpecDraftProvenance,
     AiSpecDraftReport, AI_SPEC_DRAFT_SCHEMA_V1,
 };
+pub use verified::archive_compaction::{
+    append_compaction_receipt, build_archive_manifest, build_compaction_plan,
+    build_compaction_receipt, build_unpack_plan, build_verification_receipt, compaction_chain_hash,
+    compaction_genesis_hash, compaction_ledger_hash, compaction_plan_hash, compaction_receipt_hash,
+    empty_compaction_ledger, ledger_path, mutation_manifest_path, object_path, pack_manifest_path,
+    pointer_path, prepared_pointer_path, receipt_path, safe_archive_id, safe_relative_path,
+    unpack_plan_hash, validate_compaction_ledger, validate_compaction_plan,
+    validate_compaction_receipt, validate_pack_manifest, verification_receipt_hash,
+    verify_pack_objects, ArchiveFileInput, ArchiveInput, ArchiveManifest, ArchiveManifestEntry,
+    ArchivePointer, CompactionIssue, CompactionLedger, CompactionLedgerEntry, CompactionPlan,
+    CompactionReceipt, CompactionVerificationReceipt, MutationAction, PackManifest,
+    PackObjectDescriptor, PackObjectInput, UnpackFile, UnpackPlan, COMPACTION_LEDGER_SCHEMA_V1,
+    COMPACTION_NON_CLAIM, COMPACTION_PACK_SCHEMA_V1, COMPACTION_PLAN_SCHEMA_V1,
+    COMPACTION_POINTER_SCHEMA_V1, COMPACTION_RECEIPT_SCHEMA_V1, COMPACTION_ROOT,
+    COMPACTION_UNPACK_SCHEMA_V1, COMPACTION_VERIFY_SCHEMA_V1, HASH_HEX_LENGTH,
+    LOSSLESS_PACK_PROFILE, LOSSY_SUMMARY_PROFILE,
+};
 pub use verified::ast_grep_gate::{
     ast_grep_receipt_hash, ast_grep_receipt_hash_material, default_ast_grep_gate_policy,
     is_ast_grep_gate_mode, validate_ast_grep_receipt, AstGrepGateIssue, AstGrepGatePolicy,

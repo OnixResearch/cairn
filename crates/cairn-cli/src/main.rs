@@ -1,6 +1,7 @@
 use std::{env, error::Error};
 
 mod agent_receipt;
+mod archive_compaction;
 mod determinism;
 mod developer_experience;
 mod evidence;
@@ -79,6 +80,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "--help" | "-h" | "help" => print_usage(),
         "init" => run_init(args.collect())?,
         "change" => run_change(args.collect())?,
+        "compact" => archive_compaction::run_compact(args.collect())?,
         "template" => developer_experience::run_template(args.collect())?,
         "scaffold" => developer_experience::run_scaffold(args.collect())?,
         "discover-specs" => developer_experience::run_discover_specs(args.collect())?,

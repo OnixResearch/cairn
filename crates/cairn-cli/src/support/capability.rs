@@ -145,6 +145,23 @@ impl CapabilityRoot {
         self.dir.remove_dir_all(relative)
     }
 
+    pub(crate) fn remove_file(&self, relative: &Path) -> io::Result<()> {
+        let relative = self.relative(relative)?;
+        self.dir.remove_file(relative)
+    }
+
+    pub(crate) fn rename(
+        &self,
+        source_relative: &Path,
+        destination: &Self,
+        destination_relative: &Path,
+    ) -> io::Result<()> {
+        let source_relative = self.relative(source_relative)?;
+        let destination_relative = destination.relative(destination_relative)?;
+        self.dir
+            .rename(source_relative, &destination.dir, destination_relative)
+    }
+
     pub(crate) fn copy_to(
         &self,
         source_relative: &Path,

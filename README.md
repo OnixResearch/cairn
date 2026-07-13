@@ -494,6 +494,60 @@ nix run path:$PWD#cairn -- sync ready --root /path/to/repo --execute
 nix run path:$PWD#cairn -- archive ready --root /path/to/repo --execute
 ```
 
+## Lossless archive compaction
+
+Archive compaction is separately dry-run-first. Generate and review a deterministic
+plan, execute that exact saved plan, verify the resulting local representation,
+and restore one archive when expanded bytes are needed again:
+
+```bash
+nix run path:$PWD#cairn -- compact archive --root . --profile lossless-pack --out target/compact-plan.json
+nix run path:$PWD#cairn -- compact archive --root . --plan target/compact-plan.json --execute
+nix run path:$PWD#cairn -- compact verify --root .
+nix run path:$PWD#cairn -- compact unpack --root . --archive 2026-05-18-example-change
+nix run path:$PWD#cairn -- compact unpack --root . --archive 2026-05-18-example-change --execute
+```
+
+The lossless pack stores raw file objects under BLAKE3 identities, a canonical
+sorted manifest for each archive, a pack manifest, and one retained pointer per
+compacted archive. Merkle-style `archive_root`, `packed_archives_root`, and
+`pack_root` values prove which content the local representation includes and
+allow a pack or object to be checked independently. The compaction ledger is a
+different structure: every receipt binds `prev_chain_hash`, `receipt_hash`, and
+`chain_hash`, so chain verification detects removed, modified, inserted, or
+reordered operations within the observed ledger. Genesis is explicitly derived
+from the policy hash that created the ledger; each later receipt binds the policy
+used for that operation, so policy updates do not discard prior history. Each
+operation receipt also binds `pre_state_root`, `post_state_root`,
+`packed_archives_root`, `retained_manifest_root`, `lossiness`, `policy_hash`,
+`plan_hash`, and `mutation_manifest_hash` in addition to the predecessor,
+receipt, and chain hashes.
+
+Execution rechecks `policy_hash`, `input_hash`, and `plan_hash`; writes and
+verifies objects, manifests, prepared pointers, the mutation manifest, receipt,
+and ledger before pruning expanded archives; then finalizes retained pointers.
+`compact verify` checks ledger continuity, receipt hashes, pack roots, object
+bytes, pointer safety, mutation-manifest linkage, and orphaned or prepared
+artifacts left by interrupted execution. `compact unpack` verifies the whole
+state before restoring files to a prepared directory, checks every restored
+BLAKE3 hash and byte length, and only then renames the exact-byte tree into
+`cairn/archive/`. Retained pointers and packs remain after unpack so the prior
+compaction receipt stays auditable. Re-running unpack against identical restored
+bytes is a no-op.
+
+Only `lossless-pack` is executable. `lossy-summary` is rejected unless a future
+reviewed policy and receipt contract explicitly enables irreversible tombstones
+and visible non-claims. A passing verification proves local representation
+integrity only: it does **not** prove archived change correctness, release
+readiness, remote trust, semantic review completeness, or that an unanchored
+final ledger suffix was never removed. Preserve verification receipts or ledger
+tips in separately controlled evidence when that stronger audit property is
+required.
+
+r[impl cairn.sync_archive.compaction.docs]
+r[impl cairn.sync_archive.compaction.docs.chain_merkle]
+r[impl cairn.sync_archive.compaction.docs.non_claims]
+
 ## Agent/CI determinism replay
 
 `cairn determinism replay --root <fixture-or-repo>` is a read-only workspace
