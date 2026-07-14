@@ -4,7 +4,7 @@
 
 Commit reproducible positive and negative stack smoke fixtures for function-address evidence exchange.
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Stack smoke fixture is reproducible
 r[cairn.release_evidence.function_address_stack_smoke.fixture] Cairn MUST provide or reference a reproducible function-address stack smoke fixture that exercises Octet, Kamacite, Valence, Mantle, and Cairn evidence exchange.

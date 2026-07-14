@@ -148,6 +148,10 @@ pub use verified::function_address_preserves_readiness::{
     FUNCTION_ADDRESS_PRESERVES_ROLE, FUNCTION_ADDRESS_PRESERVES_SCHEMA_V1,
     FUNCTION_ADDRESS_VALENCE_POLICY_KIND,
 };
+pub use verified::function_address_stack_smoke::{
+    evaluate_function_address_stack_smoke, FunctionAddressStackSmokeInput,
+    FunctionAddressStackSmokeIssue, FunctionAddressStackSmokeReport,
+};
 pub use verified::hash_algorithm_policy::{
     hash_algorithm_policy_issues_json, validate_hash_algorithm_policy,
     validate_hash_algorithm_policy_value, HashAlgorithmException, HashAlgorithmPolicy,
