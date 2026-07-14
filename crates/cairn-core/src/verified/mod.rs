@@ -9,6 +9,7 @@ pub mod developer_experience;
 pub mod doctor;
 pub mod ears_property_vocabulary;
 pub mod evidence;
+pub mod evidence_chain_readiness;
 pub mod formal_proof_readiness_fixture;
 pub mod function_address_gates;
 pub mod hash_algorithm_policy;

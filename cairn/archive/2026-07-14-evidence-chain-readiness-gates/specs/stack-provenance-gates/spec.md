@@ -4,7 +4,7 @@
 
 Add generic evidence-chain readiness gates for stack evidence profiles.
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Cairn supports generic evidence-chain readiness inputs
 r[cairn.stack_provenance_gates.evidence_chain_readiness.contract] Cairn MUST support typed evidence-chain readiness inputs with evidence kind, profile version, canonical envelope hash, Valence validation hash, Mantle binding hash, source/binary linkage, policy hashes, claim scope, compatibility projections, and non-claim boundaries.

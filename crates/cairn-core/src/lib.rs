@@ -93,6 +93,18 @@ pub use verified::evidence::{
     blake3_hex, canonical_json, canonical_json_hash, canonical_preserves_bytes,
     canonical_preserves_hash, preserves_content_hash,
 };
+pub use verified::evidence_chain_readiness::{
+    evaluate_evidence_chain_readiness, evidence_chain_readiness_hash,
+    function_address_evidence_chain_profile, EvidenceChainMantleLink, EvidenceChainPolicy,
+    EvidenceChainPolicyIdentity, EvidenceChainProfile, EvidenceChainProjection,
+    EvidenceChainReadiness, EvidenceChainReadinessInput, EvidenceChainReadinessIssue,
+    EvidenceChainValenceLink, EVIDENCE_CHAIN_DISPOSITION_ABSENT,
+    EVIDENCE_CHAIN_DISPOSITION_INVALID, EVIDENCE_CHAIN_DISPOSITION_PRESENT,
+    EVIDENCE_CHAIN_FUNCTION_ADDRESS_CLAIM_SCOPE, EVIDENCE_CHAIN_FUNCTION_ADDRESS_KIND,
+    EVIDENCE_CHAIN_FUNCTION_ADDRESS_PROFILE_V1, EVIDENCE_CHAIN_MODE_OPTIONAL,
+    EVIDENCE_CHAIN_MODE_REQUIRED, EVIDENCE_CHAIN_READINESS_BOUNDARY,
+    EVIDENCE_CHAIN_REQUIRED_NON_CLAIM,
+};
 pub use verified::formal_proof_readiness_fixture::{
     validate_formal_proof_readiness_fixture, FormalProofReadinessFixture,
     FormalProofReadinessIssue, FormalProofReadinessReport, FORMAL_PROOF_READINESS_BOUNDARY,
