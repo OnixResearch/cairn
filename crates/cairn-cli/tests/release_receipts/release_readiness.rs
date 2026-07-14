@@ -243,7 +243,14 @@ fn function_address_fixture_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
         serde_json::to_vec_pretty(&json!({
             "schema_version": "kamacite.function-address-receipt.v1",
             "valid": true,
-            "receipt_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+            "receipt_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+            "canonical_preserves_receipt_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "evidence_role": "kamacite-function-address-receipt",
+            "claim_scope": "function_address.v1.lifecycle_policy_conformance",
+            "projection_authority": "non-authoritative",
+            "non_claims": [
+                "evidence-chain readiness does not prove evidence truth or release eligibility"
+            ]
         }))?,
     )?;
     fs::write(
@@ -354,13 +361,33 @@ fn release_readiness_accepts_required_function_address_fixture() -> Result<(), B
         "--function-address-graph".into(),
         fixture.join("graph.json").display().to_string(),
     ])?;
-    assert_eq!(receipt["valid"], true);
-    assert_eq!(receipt["function_address"]["passed"], true);
-    assert_eq!(receipt["function_address"]["disposition"], "present");
+    assert_eq!(
+        receipt["valid"], true,
+        "{:?}",
+        receipt["function_address"]["issues"]
+    );
+    assert_eq!(
+        receipt["function_address"]["passed"], true,
+        "{:?}",
+        receipt["function_address"]["issues"]
+    );
+    assert_eq!(
+        receipt["function_address"]["disposition"], "present",
+        "{receipt:#}"
+    );
     assert_hash_field(&receipt, "function_address_hash")?;
     assert_hash_field(&receipt["function_address"], "valence_receipt_hash")?;
     assert_hash_field(&receipt["function_address"], "mantle_binding_hash")?;
     assert_hash_field(&receipt["function_address"], "kamacite_receipt_hash")?;
+    assert_hash_field(
+        &receipt["function_address"],
+        "canonical_preserves_receipt_hash",
+    )?;
+    assert_hash_field(&receipt["function_address"], "evidence_chain_hash")?;
+    assert_eq!(
+        receipt["function_address"]["json_projection_authority"],
+        "non-authoritative"
+    );
     assert_hash_field(&receipt["function_address"]["graph_summary"], "report_hash")?;
     assert!(receipt["function_address"]["boundary"]
         .as_str()
@@ -380,6 +407,10 @@ fn release_readiness_accepts_function_address_b3_digest_spellings() -> Result<()
     prefix_function_address_digest(fixture.join("mantle.json"), "valence_receipt_digest")?;
     prefix_function_address_digest(fixture.join("mantle.json"), "sidecar_digest")?;
     prefix_function_address_digest(fixture.join("kamacite.json"), "receipt_hash")?;
+    prefix_function_address_digest(
+        fixture.join("kamacite.json"),
+        "canonical_preserves_receipt_hash",
+    )?;
     prefix_function_address_digest(fixture.join("graph.json"), "report_hash")?;
 
     let receipt = run_json_strings(&[
@@ -398,14 +429,86 @@ fn release_readiness_accepts_function_address_b3_digest_spellings() -> Result<()
         fixture.join("graph.json").display().to_string(),
     ])?;
 
-    assert_eq!(receipt["valid"], true);
-    assert_eq!(receipt["function_address"]["passed"], true);
+    assert_eq!(
+        receipt["valid"], true,
+        "{:?}",
+        receipt["function_address"]["issues"]
+    );
+    assert_eq!(
+        receipt["function_address"]["passed"], true,
+        "{:?}",
+        receipt["function_address"]["issues"]
+    );
     assert_eq!(
         receipt["function_address"]["valence_receipt_hash"],
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
     );
     assert_hash_field(&receipt["function_address"], "mantle_binding_hash")?;
     assert_hash_field(&receipt["function_address"]["graph_summary"], "report_hash")?;
+    Ok(())
+}
+
+#[test]
+fn release_readiness_rejects_authoritative_function_address_json_projection(
+) -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.stack_provenance_gates.function_address_preserves_readiness.negative]
+    // r[verify cairn.stack_provenance_gates.function_address_preserves_readiness.json_projection]
+    let policy = function_address_policy_path("function-address-projection-negative", "required")?;
+    let fixture = function_address_fixture_dir("function-address-projection-negative-fixtures")?;
+    let kamacite_path = fixture.join("kamacite.json");
+    let mut kamacite: Value = serde_json::from_slice(&fs::read(&kamacite_path)?)?;
+    kamacite["projection_authority"] = json!("authoritative");
+    fs::write(&kamacite_path, serde_json::to_vec_pretty(&kamacite)?)?;
+
+    let receipt = run_json_strings(&[
+        "release-readiness".into(),
+        "--root".into(),
+        ".".into(),
+        "--policy".into(),
+        policy.display().to_string(),
+        "--function-address-valence".into(),
+        fixture.join("valence.json").display().to_string(),
+        "--function-address-mantle".into(),
+        fixture.join("mantle.json").display().to_string(),
+        "--function-address-kamacite".into(),
+        kamacite_path.display().to_string(),
+        "--function-address-graph".into(),
+        fixture.join("graph.json").display().to_string(),
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert!(function_address_issue_codes(&receipt)
+        .contains(&"function_address_preserves.json_projection_authoritative".to_string()));
+    Ok(())
+}
+
+#[test]
+fn release_readiness_clears_function_address_chain_hash_after_shell_failure(
+) -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.stack_provenance_gates.function_address_preserves_readiness.negative]
+    let policy = function_address_policy_path("function-address-shell-negative", "required")?;
+    let fixture = function_address_fixture_dir("function-address-shell-negative-fixtures")?;
+    let receipt = run_json_strings(&[
+        "release-readiness".into(),
+        "--root".into(),
+        ".".into(),
+        "--policy".into(),
+        policy.display().to_string(),
+        "--function-address-valence".into(),
+        fixture.join("valence.json").display().to_string(),
+        "--function-address-mantle".into(),
+        fixture.join("mantle.json").display().to_string(),
+        "--function-address-kamacite".into(),
+        fixture.join("kamacite.json").display().to_string(),
+        "--function-address-graph".into(),
+        fixture.join("missing-graph.json").display().to_string(),
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert!(function_address_issue_codes(&receipt)
+        .contains(&"function_address.input_unreadable".to_string()));
+    assert_eq!(
+        receipt["function_address"]["evidence_chain_hash"],
+        Value::Null
+    );
     Ok(())
 }
 

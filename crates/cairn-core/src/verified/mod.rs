@@ -12,6 +12,7 @@ pub mod evidence;
 pub mod evidence_chain_readiness;
 pub mod formal_proof_readiness_fixture;
 pub mod function_address_gates;
+pub mod function_address_preserves_readiness;
 pub mod hash_algorithm_policy;
 pub mod kani_receipt;
 pub mod lifecycle;

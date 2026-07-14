@@ -98,6 +98,7 @@ fn append_optional_function_address_issue(value: &mut Value, issue: Option<Value
     value["passed"] = Value::Bool(false);
     value["skipped"] = Value::Bool(false);
     value["disposition"] = Value::String("failed".to_string());
+    value["evidence_chain_hash"] = Value::Null;
 }
 
 fn function_address_error_value(
@@ -122,6 +123,9 @@ fn function_address_error_value(
         "valence_receipt_hash": null,
         "mantle_binding_hash": null,
         "kamacite_receipt_hash": null,
+        "canonical_preserves_receipt_hash": null,
+        "evidence_chain_hash": null,
+        "json_projection_authority": null,
         "claim_scope": null,
         "graph_summary": null,
         "boundary": FUNCTION_ADDRESS_BOUNDARY,

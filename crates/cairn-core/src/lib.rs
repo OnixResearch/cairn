@@ -125,6 +125,14 @@ pub use verified::function_address_gates::{
     FUNCTION_ADDRESS_MODE_OPTIONAL, FUNCTION_ADDRESS_MODE_REQUIRED,
     FUNCTION_ADDRESS_VALENCE_SCHEMA_V1,
 };
+pub use verified::function_address_preserves_readiness::{
+    evaluate_function_address_preserves_readiness, function_address_preserves_policy,
+    FunctionAddressJsonProjection, FunctionAddressPreservesInput,
+    FUNCTION_ADDRESS_JSON_PROJECTION_AUTHORITY, FUNCTION_ADDRESS_JSON_PROJECTION_ROLE,
+    FUNCTION_ADDRESS_MANTLE_DISPOSITION_PRESENT, FUNCTION_ADDRESS_PRESERVES_BOUNDARY,
+    FUNCTION_ADDRESS_PRESERVES_ROLE, FUNCTION_ADDRESS_PRESERVES_SCHEMA_V1,
+    FUNCTION_ADDRESS_VALENCE_POLICY_KIND,
+};
 pub use verified::hash_algorithm_policy::{
     hash_algorithm_policy_issues_json, validate_hash_algorithm_policy,
     validate_hash_algorithm_policy_value, HashAlgorithmException, HashAlgorithmPolicy,
