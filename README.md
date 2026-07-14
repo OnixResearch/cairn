@@ -1,6 +1,6 @@
 # cairn
 
-<img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/5f3ecfb2-0abb-42c8-b03c-8cd35afa7b77" />
+<img width="400" height="400" alt="Cairn project logo" src="https://github.com/user-attachments/assets/5f3ecfb2-0abb-42c8-b03c-8cd35afa7b77" />
 
 `cairn` is a Rust lifecycle engine for native repository lifecycle work.
 Repositories use a `cairn/` lifecycle layout; legacy `openspec/` trees remain
@@ -21,6 +21,14 @@ Boundaries:
   presentation.
 - Runtime commands consume checked-in generated policy JSON by default; Nickel
   evaluation is a development/export step.
+
+## Project status
+
+Cairn is under active development. Receipt fields explicitly documented as
+stable are compatibility surfaces; other commands, schemas, and policies may
+evolve. A passing lifecycle gate establishes conformance to the selected Cairn
+policy and inputs, not source-code correctness, proof transfer, artifact truth,
+or release eligibility.
 
 ## Layout
 
@@ -50,7 +58,16 @@ create` create native layout artifacts.
 
 ## Make a Cairn
 
-From a Cairn source checkout:
+Once the repository is public, the flake can be run without a local install:
+
+```bash
+export REPO=/path/to/your/repo
+nix run github:OnixResearch/cairn#cairn -- init --root "$REPO"
+nix run github:OnixResearch/cairn#cairn -- validate --root "$REPO"
+```
+
+Pin a tag or commit instead of `main` for repeatable automation. For local
+Cairn development, run the same workflow from a source checkout:
 
 ```bash
 export CAIRN_SOURCE=$PWD
