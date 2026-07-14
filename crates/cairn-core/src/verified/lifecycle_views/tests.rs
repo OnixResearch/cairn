@@ -211,6 +211,7 @@ fn change(
                     .iter()
                     .map(|dependency| (*dependency).to_string())
                     .collect(),
+                cross_repo_dependencies: Vec::new(),
             },
             metadata_issues: Vec::new(),
         },

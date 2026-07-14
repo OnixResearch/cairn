@@ -5,6 +5,7 @@ pub mod ast_grep_gate;
 pub mod authenticated_inputs;
 pub mod change_dependencies;
 pub mod content_addressed;
+pub mod cross_repo_dependencies;
 pub mod delta_merge;
 pub mod developer_experience;
 pub mod doctor;

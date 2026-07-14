@@ -8,6 +8,10 @@ let NonEmptyArray = std.contract.from_predicate (fun value =>
   std.is_array value && std.array.length value > 0
 ) in
 
+let PositiveNumber = std.contract.from_predicate (fun value =>
+  std.is_number value && value > 0
+) in
+
 let SupportedPolicyVersion = std.contract.from_predicate (fun value =>
   std.is_number value && value == 1
 ) in
@@ -411,6 +415,16 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
     preserves_receipt_source_map | PreservesReceiptSourceMap | default = {},
   },
 
+  CrossRepoDependencyPolicy = {
+    schema | NonEmptyString,
+    supported_receipt_kinds | NonEmptyArray | Array NonEmptyString,
+    passing_status | NonEmptyString,
+    non_passing_statuses | NonEmptyArray | Array NonEmptyString,
+    max_evidence_file_bytes | PositiveNumber,
+    max_evidence_files | PositiveNumber,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
   Policy = {
     name | NonEmptyString,
     version | SupportedPolicyVersion,
@@ -423,6 +437,7 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
     report_contract | ReportContract,
     registry_label_policy | RegistryLabelPolicy,
     change_metadata_policy | ChangeMetadataPolicy,
+    cross_repo_dependency_policy | CrossRepoDependencyPolicy,
     steel_orchestration_policy | SteelOrchestrationPolicy,
     traceability_policy | TraceabilityPolicy,
     stack_provenance_gate | StackProvenancePolicy,

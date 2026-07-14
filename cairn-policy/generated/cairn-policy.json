@@ -38,6 +38,39 @@
       "deferred"
     ]
   },
+  "cross_repo_dependency_policy": {
+    "max_evidence_file_bytes": 65536,
+    "max_evidence_files": 64,
+    "non_passing_statuses": [
+      "failed",
+      "blocked",
+      "skipped",
+      "deferred",
+      "timed_out",
+      "dry_run",
+      "cancelled",
+      "infrastructure_failed",
+      "malformed",
+      "unsupported",
+      "unknown",
+      "stale"
+    ],
+    "passing_status": "pass",
+    "required_non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "schema": "cairn.cross-repo-dependency.v1",
+    "supported_receipt_kinds": [
+      "proposal_gate",
+      "design_gate",
+      "tasks_gate",
+      "validation_receipt",
+      "sync_receipt",
+      "archive_receipt"
+    ]
+  },
   "determinism_replay_policy": {
     "cases": [
       {
@@ -1464,6 +1497,8 @@
         "actions",
         "blocked",
         "change",
+        "cross_repo_dependencies",
+        "cross_repo_evidence_issues",
         "delta_specs",
         "dry_run",
         "input_hash",
@@ -1500,6 +1535,8 @@
         "actions",
         "blocked",
         "change",
+        "cross_repo_dependencies",
+        "cross_repo_evidence_issues",
         "dry_run",
         "input_hash",
         "layout",

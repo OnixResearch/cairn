@@ -276,6 +276,7 @@ pub fn change_metadata_with_dependencies(
         target_date: change.metadata.target_date.clone(),
         status: change.metadata.status.clone(),
         depends_on: dependencies,
+        cross_repo_dependencies: change.metadata.cross_repo_dependencies.clone(),
     }
 }
 
@@ -295,6 +296,12 @@ pub fn render_change_metadata_json(metadata: &ChangeMetadata) -> Result<String, 
         object.insert(
             "depends_on".to_string(),
             serde_json::json!(metadata.depends_on),
+        );
+    }
+    if !metadata.cross_repo_dependencies.is_empty() {
+        object.insert(
+            "cross_repo_dependencies".to_string(),
+            serde_json::json!(metadata.cross_repo_dependencies),
         );
     }
     let mut text = serde_json::to_string_pretty(&serde_json::Value::Object(object))?;
@@ -832,6 +839,7 @@ mod tests {
                     .iter()
                     .map(|dependency| (*dependency).to_string())
                     .collect(),
+                cross_repo_dependencies: Vec::new(),
             },
             metadata_issues: Vec::new(),
         }

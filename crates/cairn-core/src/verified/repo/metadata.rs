@@ -2,7 +2,9 @@ use crate::verified::change_dependencies::{
     DEPENDENCY_ISSUE_EMPTY_ID, DEPENDENCY_ISSUE_INVALID_ID, DEPENDENCY_ISSUE_INVALID_ITEM,
     DEPENDENCY_ISSUE_INVALID_TYPE,
 };
-use crate::verified::lifecycle::validate_change_name;
+use crate::verified::{
+    cross_repo_dependencies::parse_cross_repo_dependencies, lifecycle::validate_change_name,
+};
 
 use super::{ChangeMetadata, ChangeStatus};
 
@@ -45,6 +47,13 @@ pub(super) fn parse_change_metadata(
     issues.extend(status.1);
     let status = status.0;
     let depends_on = parse_dependency_metadata(object.get("depends_on"), change_name, &mut issues);
+    let (cross_repo_dependencies, cross_repo_issues) =
+        parse_cross_repo_dependencies(object.get("cross_repo_dependencies"));
+    issues.extend(
+        cross_repo_issues
+            .into_iter()
+            .map(|issue| format!("{change_name}: {issue}")),
+    );
     let mut sorted_groups = groups;
     sorted_groups.sort();
     let has_duplicates = sorted_groups
@@ -60,6 +69,7 @@ pub(super) fn parse_change_metadata(
             target_date,
             status,
             depends_on,
+            cross_repo_dependencies,
         },
         issues,
     )

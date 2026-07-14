@@ -7,6 +7,9 @@ use cairn_core::{
 };
 use serde_json::{json, Value};
 
+use crate::cross_repo_dependencies::{
+    cross_repo_blockers, evaluate_change_cross_repo_dependencies, load_cross_repo_evidence,
+};
 use crate::native::change_status_json;
 use crate::plan_receipts::{archive_plan_json, gate_input_json, gate_report_json, sync_plan_json};
 use crate::probe::observe_gate_probes;
@@ -14,9 +17,9 @@ use crate::support::{
     archive_mutation_manifest, default_policy_path, detect_layout, execute_archive_plan,
     execute_sync_snapshots, file_content_manifest, find_change, has_flag, load_policy_file,
     load_sync_merge_snapshots, mutation_gate_blockers, path_string, portable_json_hash, print_json,
-    read_change_dependency_graph, read_gate_snapshot, read_option, sync_changed_paths,
-    sync_merge_bindings, sync_merge_blockers, sync_mutation_manifest, tree_content_paths,
-    with_portable_receipt_hash,
+    read_change_dependency_graph, read_gate_snapshot, read_option, read_repeated_path_options,
+    sync_changed_paths, sync_merge_bindings, sync_merge_blockers, sync_mutation_manifest,
+    tree_content_paths, with_portable_receipt_hash,
 };
 
 pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -96,7 +99,23 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
-    let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    let evidence_inputs = read_repeated_path_options(&args, "--cross-repo-evidence");
+    let loaded_evidence = load_cross_repo_evidence(&root, &evidence_inputs);
+    let policy_hash = canonical_json_hash(&policy.raw);
+    let cross_repo_report = evaluate_change_cross_repo_dependencies(
+        &change_status,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    );
+    let mut dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    dependency_blockers.extend(cross_repo_blockers(
+        &change_status,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    ));
+    dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+    dependency_blockers.sort();
+    dependency_blockers.dedup();
     let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
     let base_plan_unblocked = !plan.blocked;
 
@@ -136,8 +155,10 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
             "change": change_status_json(&change_status),
             "merge_preflight": merge_bindings,
             "probe_evidence": probe_binding,
+            "cross_repo_dependencies": cross_repo_report.to_json(),
+            "cross_repo_evidence_issues": loaded_evidence.issues,
             "policy": policy.name,
-            "policy_hash": canonical_json_hash(&policy.raw),
+            "policy_hash": policy_hash,
         }),
     );
     let changed_paths = sync_changed_paths(&merge_snapshots);
@@ -146,6 +167,24 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
 
     if is_execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_evidence = load_cross_repo_evidence(&root, &evidence_inputs);
+            let current_report = evaluate_change_cross_repo_dependencies(
+                &change_status,
+                &current_evidence.summaries,
+                &policy_hash,
+            );
+            if !current_evidence.issues.is_empty()
+                || current_report.receipt_hash != cross_repo_report.receipt_hash
+                || !current_report.valid
+            {
+                plan.blocked = true;
+                plan.reasons.push(
+                    "cross-repo dependency evidence changed or failed after preflight".to_string(),
+                );
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let current_probe = observe_gate_probes(&root, selected.layout, change, &policy);
             if !current_probe.issues.is_empty() || current_probe.binding != probe_binding {
@@ -165,18 +204,18 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
             }
         }
     }
-    print_json(with_portable_receipt_hash(
+    let mut value = sync_plan_json(
         &root,
-        sync_plan_json(
-            &root,
-            selected.layout,
-            &policy,
-            &plan,
-            &input_hash,
-            &merge_bindings,
-            mutation_manifest,
-        ),
-    ))
+        selected.layout,
+        &policy,
+        &plan,
+        &input_hash,
+        &merge_bindings,
+        mutation_manifest,
+    );
+    value["cross_repo_dependencies"] = cross_repo_report.to_json();
+    value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
+    print_json(with_portable_receipt_hash(&root, value))
 }
 
 pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
@@ -187,17 +226,35 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     let policy = load_policy_file(policy_path)?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
+    let evidence_inputs = read_repeated_path_options(&args, "--cross-repo-evidence");
+    let loaded_evidence = load_cross_repo_evidence(&root, &evidence_inputs);
+    let policy_hash = canonical_json_hash(&policy.raw);
+    let cross_repo_report = evaluate_change_cross_repo_dependencies(
+        &change_status,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    );
     let probe_binding = observe_gate_probes(&root, selected.layout, change, &policy).binding;
     let input_hash = portable_json_hash(
         &root,
         &json!({
             "change": change_status_json(&change_status),
             "probe_evidence": probe_binding,
-            "policy_hash": canonical_json_hash(&policy.raw),
+            "cross_repo_dependencies": cross_repo_report.to_json(),
+            "cross_repo_evidence_issues": loaded_evidence.issues,
+            "policy_hash": policy_hash,
         }),
     );
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
-    let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    let mut dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    dependency_blockers.extend(cross_repo_blockers(
+        &change_status,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    ));
+    dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+    dependency_blockers.sort();
+    dependency_blockers.dedup();
     let mut plan =
         build_archive_plan_with_dependency_blockers(&change_status, &dependency_blockers);
     let archive_source = PathBuf::from(&change_status.path);
@@ -223,6 +280,24 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     if is_execute {
         plan.dry_run = false;
         if !plan.blocked {
+            let current_evidence = load_cross_repo_evidence(&root, &evidence_inputs);
+            let current_report = evaluate_change_cross_repo_dependencies(
+                &change_status,
+                &current_evidence.summaries,
+                &policy_hash,
+            );
+            if !current_evidence.issues.is_empty()
+                || current_report.receipt_hash != cross_repo_report.receipt_hash
+                || !current_report.valid
+            {
+                plan.blocked = true;
+                plan.reasons.push(
+                    "cross-repo dependency evidence changed or failed after preflight".to_string(),
+                );
+                plan.actions.clear();
+            }
+        }
+        if !plan.blocked {
             let current_probe = observe_gate_probes(&root, selected.layout, change, &policy);
             if !current_probe.issues.is_empty() || current_probe.binding != probe_binding {
                 plan.blocked = true;
@@ -245,15 +320,15 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
             plan.mutated = true;
         }
     }
-    print_json(with_portable_receipt_hash(
+    let mut value = archive_plan_json(
         &root,
-        archive_plan_json(
-            &root,
-            selected.layout,
-            &policy,
-            &plan,
-            &input_hash,
-            mutation_manifest,
-        ),
-    ))
+        selected.layout,
+        &policy,
+        &plan,
+        &input_hash,
+        mutation_manifest,
+    );
+    value["cross_repo_dependencies"] = cross_repo_report.to_json();
+    value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
+    print_json(with_portable_receipt_hash(&root, value))
 }

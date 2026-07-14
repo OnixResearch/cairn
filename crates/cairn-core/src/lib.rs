@@ -91,6 +91,13 @@ pub use verified::content_addressed::{
     NamePointerReport, CIRCUIT_PRIMITIVE_SCHEMA_V1, DOWNSTREAM_PILOT_SCHEMA_V1,
     EXPORT_BUNDLE_SCHEMA_V1, FUNCTION_OBJECT_SCHEMA_V1, NAME_POINTER_SCHEMA_V1,
 };
+pub use verified::cross_repo_dependencies::{
+    cross_repo_dependency_contract, dependency_blocker_messages, evaluate_cross_repo_dependencies,
+    parse_cross_repo_dependencies, summaries_by_identity, CrossRepoDependency,
+    CrossRepoDependencyDiagnostic, CrossRepoDependencyReport, CrossRepoDependencyRowResult,
+    CrossRepoReceiptSummary, CROSS_REPO_DEPENDENCY_SCHEMA_V1, CROSS_REPO_NON_CLAIM_DOWNSTREAM,
+    CROSS_REPO_NON_CLAIM_LINKAGE, CROSS_REPO_NON_CLAIM_UPSTREAM, CROSS_REPO_RECEIPT_SCHEMA_V1,
+};
 pub use verified::delta_merge::{
     merge_delta_spec, DeltaMerge, DeltaMergeDiagnostic, DeltaOperation, DeltaOperationKind,
     DeltaOperationOutcome, DeltaOperationState,

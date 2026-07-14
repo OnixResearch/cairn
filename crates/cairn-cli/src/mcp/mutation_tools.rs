@@ -11,8 +11,25 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
     let policy = load_policy_file(mcp_policy(input))?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
+    let evidence_inputs = crate::cross_repo_dependencies::evidence_paths_from_json(input)?;
+    let loaded_evidence =
+        crate::cross_repo_dependencies::load_cross_repo_evidence(&root, &evidence_inputs);
+    let policy_hash = canonical_json_hash(&policy.raw);
+    let cross_repo_report = crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
+        &change_status,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    );
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
-    let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    let mut dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    dependency_blockers.extend(crate::cross_repo_dependencies::cross_repo_blockers(
+        &change_status,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    ));
+    dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+    dependency_blockers.sort();
+    dependency_blockers.dedup();
     let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
     let base_plan_unblocked = !plan.blocked;
     let merge_snapshots = load_sync_merge_snapshots(&root, selected.layout, change, &plan)?;
@@ -48,8 +65,10 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
             "change": change_status_json(&change_status),
             "merge_preflight": merge_bindings,
             "probe_evidence": probe_binding,
+            "cross_repo_dependencies": cross_repo_report.to_json(),
+            "cross_repo_evidence_issues": loaded_evidence.issues,
             "policy": policy.name,
-            "policy_hash": canonical_json_hash(&policy.raw),
+            "policy_hash": policy_hash,
         }),
     );
     let changed_paths = sync_changed_paths(&merge_snapshots);
@@ -57,6 +76,26 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
     let mut mutation_manifest = Value::Null;
     if execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_evidence =
+                crate::cross_repo_dependencies::load_cross_repo_evidence(&root, &evidence_inputs);
+            let current_report =
+                crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
+                    &change_status,
+                    &current_evidence.summaries,
+                    &policy_hash,
+                );
+            if !current_evidence.issues.is_empty()
+                || current_report.receipt_hash != cross_repo_report.receipt_hash
+                || !current_report.valid
+            {
+                plan.blocked = true;
+                plan.reasons.push(
+                    "cross-repo dependency evidence changed or failed after preflight".to_string(),
+                );
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let current_probe =
                 crate::probe::observe_gate_probes(&root, selected.layout, change, &policy);
@@ -86,6 +125,8 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
         &merge_bindings,
         mutation_manifest,
     );
+    value["cross_repo_dependencies"] = cross_repo_report.to_json();
+    value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
     value["mcp"] = json!({"read_only": !execute, "destructive": execute});
     Ok(with_portable_receipt_hash(&root, value))
 }
@@ -97,6 +138,15 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
     let policy = load_policy_file(mcp_policy(input))?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
+    let evidence_inputs = crate::cross_repo_dependencies::evidence_paths_from_json(input)?;
+    let loaded_evidence =
+        crate::cross_repo_dependencies::load_cross_repo_evidence(&root, &evidence_inputs);
+    let policy_hash = canonical_json_hash(&policy.raw);
+    let cross_repo_report = crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
+        &change_status,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    );
     let probe_binding =
         crate::probe::observe_gate_probes(&root, selected.layout, change, &policy).binding;
     let input_hash = portable_json_hash(
@@ -104,11 +154,21 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
         &json!({
             "change": change_status_json(&change_status),
             "probe_evidence": probe_binding,
-            "policy_hash": canonical_json_hash(&policy.raw),
+            "cross_repo_dependencies": cross_repo_report.to_json(),
+            "cross_repo_evidence_issues": loaded_evidence.issues,
+            "policy_hash": policy_hash,
         }),
     );
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
-    let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    let mut dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
+    dependency_blockers.extend(crate::cross_repo_dependencies::cross_repo_blockers(
+        &change_status,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    ));
+    dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+    dependency_blockers.sort();
+    dependency_blockers.dedup();
     let mut plan =
         build_archive_plan_with_dependency_blockers(&change_status, &dependency_blockers);
     if policy.archive_require_gate && !plan.blocked {
@@ -128,6 +188,26 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
     }
     if execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_evidence =
+                crate::cross_repo_dependencies::load_cross_repo_evidence(&root, &evidence_inputs);
+            let current_report =
+                crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
+                    &change_status,
+                    &current_evidence.summaries,
+                    &policy_hash,
+                );
+            if !current_evidence.issues.is_empty()
+                || current_report.receipt_hash != cross_repo_report.receipt_hash
+                || !current_report.valid
+            {
+                plan.blocked = true;
+                plan.reasons.push(
+                    "cross-repo dependency evidence changed or failed after preflight".to_string(),
+                );
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let current_probe =
                 crate::probe::observe_gate_probes(&root, selected.layout, change, &policy);
@@ -158,6 +238,8 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
         &input_hash,
         Value::Null,
     );
+    value["cross_repo_dependencies"] = cross_repo_report.to_json();
+    value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
     value["mcp"] = json!({"read_only": !execute, "destructive": execute});
     Ok(with_portable_receipt_hash(&root, value))
 }

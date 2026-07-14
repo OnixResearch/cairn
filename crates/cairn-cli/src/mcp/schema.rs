@@ -160,9 +160,20 @@ pub(super) fn is_mutating_mcp_tool(name: &str) -> bool {
 fn mcp_input_schema(name: &str) -> Value {
     match name {
         "cairn_status" | "cairn_list_content" => mcp_object_schema(&[], &["root"]),
-        "cairn_doctor" | "cairn_validate" | "cairn_init" | "cairn_drain_plan" => {
-            mcp_object_schema(&[], &["root", "policy"])
-        }
+        "cairn_doctor" | "cairn_init" => mcp_object_schema(&[], &["root", "policy"]),
+        "cairn_validate" | "cairn_drain_plan" => json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "root": {"type": "string", "description": mcp_argument_description("root")},
+                "policy": {"type": "string", "description": mcp_argument_description("policy")},
+                "cross_repo_evidence": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Explicit receipt files or evidence bundle directories"
+                }
+            }
+        }),
         "cairn_change_graph" => mcp_object_schema(&[], &["root"]),
         "cairn_read_spec" => mcp_object_schema(&["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" | "cairn_change_create" => {
@@ -177,7 +188,7 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_sync_plan"
         | "cairn_archive_plan"
         | "cairn_sync_execute"
-        | "cairn_archive_execute" => mcp_object_schema(&["change"], &["root", "policy"]),
+        | "cairn_archive_execute" => mcp_schema_with_evidence(&["change"], &["root", "policy"]),
         "cairn_migrate_plan" | "cairn_migrate_execute" => mcp_schema_with_enum(
             &["source"],
             &["root", "policy"],
@@ -209,6 +220,18 @@ fn mcp_object_schema(required: &[&str], optional: &[&str]) -> Value {
     json!({"type": "object", "additionalProperties": false, "properties": properties, "required": required})
 }
 
+fn mcp_schema_with_evidence(required: &[&str], optional: &[&str]) -> Value {
+    let mut extended_optional = optional.to_vec();
+    extended_optional.push("cross_repo_evidence");
+    let mut schema = mcp_object_schema(required, &extended_optional);
+    schema["properties"]["cross_repo_evidence"] = json!({
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "Explicit receipt files or evidence bundle directories"
+    });
+    schema
+}
+
 fn mcp_schema_with_enum(
     required: &[&str],
     optional: &[&str],
@@ -238,9 +261,10 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
     };
     match name {
         "cairn_status" | "cairn_list_content" => validate_string_args(name, object, &[], &["root"]),
-        "cairn_doctor" | "cairn_validate" | "cairn_init" | "cairn_drain_plan" => {
+        "cairn_doctor" | "cairn_init" => {
             validate_string_args(name, object, &[], &["root", "policy"])
         }
+        "cairn_validate" | "cairn_drain_plan" => validate_mcp_validate_args(name, object),
         "cairn_change_graph" => validate_string_args(name, object, &[], &["root"]),
         "cairn_read_spec" => validate_string_args(name, object, &["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" | "cairn_change_create" => {
@@ -253,9 +277,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_sync_plan"
         | "cairn_archive_plan"
         | "cairn_sync_execute"
-        | "cairn_archive_execute" => {
-            validate_string_args(name, object, &["change"], &["root", "policy"])
-        }
+        | "cairn_archive_execute" => validate_lifecycle_mutation_args(name, object),
         "cairn_migrate_plan" | "cairn_migrate_execute" => {
             validate_string_args(name, object, &["source"], &["root", "policy"])?;
             validate_enum_arg(name, object, "source", &["openspec", "ironspec"])
@@ -263,6 +285,69 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_agent_receipt_validate" => validate_agent_receipt_args(name, object),
         unknown => Err(format!("unknown MCP tool: {unknown}").into()),
     }
+}
+
+fn validate_lifecycle_mutation_args(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    for key in object.keys() {
+        if !["change", "root", "policy", "cross_repo_evidence"].contains(&key.as_str()) {
+            return Err(format!("invalid arguments for {tool}: unknown argument {key}").into());
+        }
+    }
+    let Some(change) = object.get("change") else {
+        return Err(
+            format!("invalid arguments for {tool}: missing required argument change").into(),
+        );
+    };
+    if !change.is_string() {
+        return Err(format!("invalid arguments for {tool}: change must be a string").into());
+    }
+    for key in ["root", "policy"] {
+        if object.get(key).is_some_and(|value| !value.is_string()) {
+            return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+        }
+    }
+    validate_evidence_array(tool, object)
+}
+
+fn validate_evidence_array(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    if let Some(value) = object.get("cross_repo_evidence") {
+        let Some(items) = value.as_array() else {
+            return Err(format!(
+                "invalid arguments for {tool}: cross_repo_evidence must be an array"
+            )
+            .into());
+        };
+        if items.iter().any(|item| !item.is_string()) {
+            return Err(format!(
+                "invalid arguments for {tool}: cross_repo_evidence entries must be strings"
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+
+fn validate_mcp_validate_args(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    for key in object.keys() {
+        if !["root", "policy", "cross_repo_evidence"].contains(&key.as_str()) {
+            return Err(format!("invalid arguments for {tool}: unknown argument {key}").into());
+        }
+    }
+    for key in ["root", "policy"] {
+        if object.get(key).is_some_and(|value| !value.is_string()) {
+            return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+        }
+    }
+    validate_evidence_array(tool, object)
 }
 
 fn validate_string_args(

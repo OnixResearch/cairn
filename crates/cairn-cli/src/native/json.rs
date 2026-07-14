@@ -159,6 +159,9 @@ fn change_metadata_json(change: &ChangeStatus) -> Value {
     if !change.metadata.depends_on.is_empty() {
         value["depends_on"] = json!(change.metadata.depends_on);
     }
+    if !change.metadata.cross_repo_dependencies.is_empty() {
+        value["cross_repo_dependencies"] = json!(change.metadata.cross_repo_dependencies);
+    }
     value
 }
 

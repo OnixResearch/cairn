@@ -120,7 +120,27 @@ pub(super) fn mcp_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
     let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
-    let change_issues = validate_changes_with_archives(&status.changes, &archived_changes, &policy);
+    let mut change_issues =
+        validate_changes_with_archives(&status.changes, &archived_changes, &policy);
+    let evidence_paths = crate::cross_repo_dependencies::evidence_paths_from_json(input)?;
+    let loaded_evidence =
+        crate::cross_repo_dependencies::load_cross_repo_evidence(&root, &evidence_paths);
+    let policy_hash = canonical_json_hash(&policy.raw);
+    let cross_repo_reports = crate::cross_repo_dependencies::cross_repo_reports(
+        &status.changes,
+        &loaded_evidence.summaries,
+        &policy_hash,
+    );
+    for (change, report) in &cross_repo_reports {
+        change_issues.extend(
+            cairn_core::dependency_blocker_messages(report)
+                .into_iter()
+                .map(|blocker| format!("{change}: {blocker}")),
+        );
+    }
+    change_issues.extend(loaded_evidence.issues.iter().cloned());
+    change_issues.sort();
+    change_issues.dedup();
     let spec_sources = collect_validation_spec_sources(&root, selected.layout)?;
     let mut spec_issues = Vec::new();
     let mut spec_substance = Vec::new();
@@ -152,7 +172,7 @@ pub(super) fn mcp_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
     issues.sort();
     issues.dedup();
     Ok(with_receipt_hash(
-        json!({"valid": issues.is_empty(), "findings": validation_findings_json(&issues), "issues": issues, "change_issues": change_issues, "spec_findings": validation_findings_json(&spec_issues), "spec_issues": spec_issues, "spec_substance": spec_substance_inventory_json(&spec_substance), "substance_findings": validation_findings_json(&substance_issues), "substance_issues": substance_issues, "substance": substance_inventory_json(&substance), "changes": status.changes.len(), "specs_validated": spec_sources.len(), "policy": policy.name, "layout": layout_name(selected.layout), "mcp": {"read_only": true, "destructive": false}}),
+        json!({"valid": issues.is_empty(), "findings": validation_findings_json(&issues), "issues": issues, "change_issues": change_issues, "cross_repo_dependencies": crate::cross_repo_dependencies::reports_json(&cross_repo_reports), "cross_repo_evidence_issues": loaded_evidence.issues, "spec_findings": validation_findings_json(&spec_issues), "spec_issues": spec_issues, "spec_substance": spec_substance_inventory_json(&spec_substance), "substance_findings": validation_findings_json(&substance_issues), "substance_issues": substance_issues, "substance": substance_inventory_json(&substance), "changes": status.changes.len(), "specs_validated": spec_sources.len(), "policy": policy.name, "layout": layout_name(selected.layout), "mcp": {"read_only": true, "destructive": false}}),
     ))
 }
 
@@ -226,6 +246,10 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
     let status = scan_repo(root.clone(), selected.layout)?;
     let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
     let dependency_graph = build_change_dependency_graph(&status.changes, &archived_changes);
+    let evidence_paths = crate::cross_repo_dependencies::evidence_paths_from_json(input)?;
+    let loaded_evidence =
+        crate::cross_repo_dependencies::load_cross_repo_evidence(&root, &evidence_paths);
+    let policy_hash = canonical_json_hash(&policy.raw);
     let ordered_change_names = drain_order_with_remaining(&status.changes, &dependency_graph);
     let mut changes = Vec::with_capacity(status.changes.len());
     let mut next_actions = Vec::new();
@@ -251,8 +275,26 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
             blockers.push(json!({"class": "unfinished_tasks", "message": "all task checkboxes must be completed before archive"}));
         }
 
-        let dependency_blockers = dependency_blockers_for_change(&dependency_graph, &change.name);
+        let cross_repo_report =
+            crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
+                change,
+                &loaded_evidence.summaries,
+                &policy_hash,
+            );
+        let mut dependency_blockers =
+            dependency_blockers_for_change(&dependency_graph, &change.name);
         append_dependency_blockers(&mut blockers, &dependency_graph, &change.name);
+        let cross_repo_blockers = cairn_core::dependency_blocker_messages(&cross_repo_report);
+        for message in &cross_repo_blockers {
+            blockers.push(json!({
+                "class": "cross_repo_dependency",
+                "message": message,
+            }));
+        }
+        dependency_blockers.extend(cross_repo_blockers);
+        dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+        dependency_blockers.sort();
+        dependency_blockers.dedup();
 
         let mut sync_plan = build_sync_plan_with_dependency_blockers(change, &dependency_blockers);
         if policy.sync_require_gate && !sync_plan.blocked {
@@ -302,6 +344,8 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
             "blocks": dependency_node.map(|node| node.blocks.clone()).unwrap_or_default(),
             "dependency_ready": dependency_node.is_some_and(|node| node.dependency_ready),
             "dependency_issues": dependency_issues,
+            "cross_repo_dependencies": cross_repo_report.to_json(),
+            "cross_repo_evidence_issues": loaded_evidence.issues,
             "task_counts": change.task_counts.map(|counts| json!({
                 "total": counts.total,
                 "done": counts.done,

@@ -86,6 +86,40 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
     statuses = ["current", "planned", "blocked", "deferred"],
   },
 
+  cross_repo_dependency_policy = {
+    schema = "cairn.cross-repo-dependency.v1",
+    supported_receipt_kinds = [
+      "proposal_gate",
+      "design_gate",
+      "tasks_gate",
+      "validation_receipt",
+      "sync_receipt",
+      "archive_receipt",
+    ],
+    passing_status = "pass",
+    non_passing_statuses = [
+      "failed",
+      "blocked",
+      "skipped",
+      "deferred",
+      "timed_out",
+      "dry_run",
+      "cancelled",
+      "infrastructure_failed",
+      "malformed",
+      "unsupported",
+      "unknown",
+      "stale",
+    ],
+    max_evidence_file_bytes = 65536,
+    max_evidence_files = 64,
+    required_non_claims = [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility",
+    ],
+  },
+
   steel_orchestration_policy = {
     enabled = false,
     profiles = [{
@@ -241,13 +275,13 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
     },
     {
       command = "sync",
-      top_level_keys = ["actions", "blocked", "change", "delta_specs", "dry_run", "input_hash", "layout", "merge_preflight", "mutated", "mutation_manifest", "plan_hash", "policy", "policy_hash", "reasons", "receipt_hash"],
+      top_level_keys = ["actions", "blocked", "change", "cross_repo_dependencies", "cross_repo_evidence_issues", "delta_specs", "dry_run", "input_hash", "layout", "merge_preflight", "mutated", "mutation_manifest", "plan_hash", "policy", "policy_hash", "reasons", "receipt_hash"],
       action_keys = ["description", "kind", "path"],
       hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"],
     },
     {
       command = "archive",
-      top_level_keys = ["actions", "blocked", "change", "dry_run", "input_hash", "layout", "mutated", "mutation_manifest", "plan_hash", "policy", "policy_hash", "reasons", "receipt_hash"],
+      top_level_keys = ["actions", "blocked", "change", "cross_repo_dependencies", "cross_repo_evidence_issues", "dry_run", "input_hash", "layout", "mutated", "mutation_manifest", "plan_hash", "policy", "policy_hash", "reasons", "receipt_hash"],
       action_keys = ["description", "kind", "path"],
       hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"],
     },

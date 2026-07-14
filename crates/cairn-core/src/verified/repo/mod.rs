@@ -79,6 +79,7 @@ mod tests {
                 target_date: Some("2026-06-01".to_string()),
                 status: Some("planned".to_string()),
                 depends_on: Vec::new(),
+                cross_repo_dependencies: Vec::new(),
             },
             metadata_issues: Vec::new(),
         };
@@ -89,6 +90,7 @@ mod tests {
                 target_date: None,
                 status: None,
                 depends_on: Vec::new(),
+                cross_repo_dependencies: Vec::new(),
             },
             ..matching.clone()
         };

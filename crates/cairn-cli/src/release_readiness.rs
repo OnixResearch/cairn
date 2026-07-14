@@ -27,13 +27,14 @@ use crate::authenticated_inputs::{
 use crate::determinism::determinism_coverage_audit_receipt;
 use crate::function_address::{function_address_hash, function_address_receipt_value};
 use crate::mcp::mcp_agent_smoke_receipt;
-use crate::native::cairn_validation_receipt;
+use crate::native::cairn_validation_receipt_with_cross_repo_evidence;
 use crate::preserves_corpus::preserves_corpus_freshness_receipt;
 use crate::release_evidence::release_evidence_check_index_receipt_for_path;
 use crate::stack_provenance::{stack_provenance_hash, stack_provenance_receipt_value};
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
-    read_string_option, safe_relative_path, with_portable_content_hash_receipt,
+    read_repeated_path_options, read_string_option, safe_relative_path,
+    with_portable_content_hash_receipt,
 };
 use crate::tracey::{repository_gate_summary, traceability_coverage_receipt};
 
@@ -58,6 +59,7 @@ pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Err
         read_string_option(&args, "--function-address-authentication").map(PathBuf::from);
     let workspace_contract_matrix_receipt =
         read_string_option(&args, "--workspace-contract-matrix-receipt").map(PathBuf::from);
+    let cross_repo_evidence = read_repeated_path_options(&args, "--cross-repo-evidence");
     print_json(release_readiness_receipt_with_inputs(
         ReleaseReadinessInputs {
             root,
@@ -72,6 +74,7 @@ pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Err
             function_address_graph,
             function_address_authentication,
             workspace_contract_matrix_receipt,
+            cross_repo_evidence,
         },
     ))
 }
@@ -99,6 +102,7 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
         function_address_graph: None,
         function_address_authentication: None,
         workspace_contract_matrix_receipt: None,
+        cross_repo_evidence: Vec::new(),
     })
 }
 
@@ -115,6 +119,7 @@ struct ReleaseReadinessInputs {
     function_address_graph: Option<PathBuf>,
     function_address_authentication: Option<PathBuf>,
     workspace_contract_matrix_receipt: Option<PathBuf>,
+    cross_repo_evidence: Vec<PathBuf>,
 }
 
 fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Value {
@@ -131,6 +136,7 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         function_address_graph,
         function_address_authentication,
         workspace_contract_matrix_receipt,
+        cross_repo_evidence,
     } = inputs;
     // r[impl cairn.supersede.release_readiness_bundle]
     // r[impl cairn.supersede.release_readiness_bundle.schema]
@@ -139,7 +145,11 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     // r[impl cairn.supersede.release_readiness_bundle.failure]
     let root_text = path_string(root.clone());
     let validation = readiness_component("cairn_validate", || {
-        cairn_validation_receipt(root.clone(), policy_path.clone())
+        cairn_validation_receipt_with_cross_repo_evidence(
+            root.clone(),
+            policy_path.clone(),
+            &cross_repo_evidence,
+        )
     });
     let traceability = readiness_component("traceability_coverage", || {
         traceability_coverage_receipt(root.clone(), policy_path.clone())
@@ -232,6 +242,8 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         "reason": "workspace replay may copy fixtures and is an explicit operator/CI preflight",
     });
     let coverage_audit_valid = coverage_audit.check["passed"].clone();
+    let cross_repo_dependencies = validation.value["cross_repo_dependencies"].clone();
+    let cross_repo_evidence_issues = validation.value["cross_repo_evidence_issues"].clone();
     let mut checks = vec![
         validation.check,
         traceability.check,
@@ -270,6 +282,8 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
             "onix_release_ready": onix_release_ready,
             "checks": checks,
             "cairn_validation_hash": validation.receipt_hash,
+            "cross_repo_dependencies": cross_repo_dependencies,
+            "cross_repo_evidence_issues": cross_repo_evidence_issues,
             "traceability_coverage_hash": traceability.receipt_hash,
             "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
             "coverage_audit_valid": coverage_audit_valid,
@@ -496,6 +510,7 @@ fn semantic_review_ledger_component(
                 "receipt_hash": receipt_hash,
             }),
             receipt_hash,
+            value: receipt,
         };
     };
 
@@ -523,6 +538,7 @@ fn semantic_review_ledger_component(
                     "verdict": receipt["verdict"].clone(),
                 }),
                 receipt_hash,
+                value: receipt,
             }
         }
         Err(issue) => ReadinessComponent {
@@ -534,6 +550,7 @@ fn semantic_review_ledger_component(
                 "issue": issue,
             }),
             receipt_hash: String::new(),
+            value: Value::Null,
         },
     }
 }
@@ -562,6 +579,7 @@ fn conventional_release_evidence_index_component(root: PathBuf) -> ReadinessComp
                 "receipt_hash": canonical_json_hash(&receipt),
             }),
             receipt_hash: canonical_json_hash(&receipt),
+            value: receipt,
         }
     }
 }
@@ -569,6 +587,7 @@ fn conventional_release_evidence_index_component(root: PathBuf) -> ReadinessComp
 struct ReadinessComponent {
     check: Value,
     receipt_hash: String,
+    value: Value,
 }
 
 struct StackProvenanceComponent {
@@ -615,17 +634,22 @@ where
                     "receipt_hash": receipt_hash,
                 }),
                 receipt_hash,
+                value: receipt,
             }
         }
-        Err(error) => ReadinessComponent {
-            check: json!({
-                "name": name,
-                "passed": false,
-                "source": component_source(name),
-                "issue": error.to_string(),
-            }),
-            receipt_hash: String::new(),
-        },
+        Err(error) => {
+            let issue = error.to_string();
+            ReadinessComponent {
+                check: json!({
+                    "name": name,
+                    "passed": false,
+                    "source": component_source(name),
+                    "issue": issue,
+                }),
+                receipt_hash: String::new(),
+                value: json!({"valid": false, "issues": [issue]}),
+            }
+        }
     }
 }
 
