@@ -1,0 +1,9 @@
+{
+  "depends_on": [
+    "evidence-chain-readiness-gates",
+    "function-address-preserves-readiness",
+    "preserves-evidence-envelope-ingest"
+  ],
+  "groups": ["current"],
+  "status": "blocked"
+}

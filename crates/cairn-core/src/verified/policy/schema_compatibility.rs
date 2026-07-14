@@ -5,7 +5,7 @@ use super::PolicyError;
 pub const POLICY_SCHEMA_METADATA_FIELD: &str = "policy_schema_compatibility";
 pub const CURRENT_POLICY_SCHEMA_VERSION: &str = "cairn.policy-schema.v1";
 pub const CURRENT_POLICY_FIELD_SET_DIGEST: &str =
-    "c5b71f15de4175d9ff01f7cb4b82eed898a71e55f6d1fa5e24a9a0e2bb909b42";
+    "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e0860bf9793a2f0";
 pub const DEFAULT_POLICY_REFRESH_COMMAND: &str =
     "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json";
 
@@ -31,6 +31,7 @@ const REQUIRED_METADATA_FIELDS: &[&str] = &[
 ];
 
 const REFRESH_REQUIRED_FIELDS: &[&str] = &[
+    "authenticated_evidence_policy",
     "policy_schema_compatibility",
     "runtime_evidence_policy",
     "steel_orchestration_policy",

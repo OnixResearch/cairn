@@ -211,6 +211,32 @@ let PositiveNumber = std.contract.from_predicate (fun value =>
     required_boundary | NonEmptyString,
   },
 
+  AuthenticatedPolicyExport = {
+    evidence_kind | NonEmptyString,
+    path | NonEmptyString,
+    digest_blake3 | Blake3HexContract,
+    signature_purpose | NonEmptyString,
+  },
+
+  AuthenticatedTrustedProducer = {
+    producer | NonEmptyString,
+    key_id | NonEmptyString,
+    algorithm | NonEmptyString,
+    public_key_hex | Blake3HexContract,
+    allowed_purposes | NonEmptyArray | Array NonEmptyString,
+    revoked | Bool,
+  },
+
+  AuthenticatedEvidencePolicy = {
+    schema_version | NonEmptyString,
+    release_profile | NonEmptyString,
+    accepted_canonicalization_profiles | NonEmptyArray | Array NonEmptyString,
+    accepted_valence_integrity_receipt_path | NonEmptyString,
+    accepted_valence_integrity_receipt_hash | Blake3HexContract,
+    policy_exports | NonEmptyArray | Array AuthenticatedPolicyExport,
+    trusted_producers | Array AuthenticatedTrustedProducer | default = [],
+  },
+
   WorkspaceContractMatrixGate = {
     mode | StackProvenanceGateMode,
     accepted_matrix_hashes | Array Blake3HexContract | default = [],
@@ -385,6 +411,7 @@ let PositiveNumber = std.contract.from_predicate (fun value =>
     traceability_policy | TraceabilityPolicy,
     stack_provenance_gate | StackProvenancePolicy,
     function_address_gate | FunctionAddressPolicy,
+    authenticated_evidence_policy | AuthenticatedEvidencePolicy,
     workspace_contract_matrix_gate | WorkspaceContractMatrixGate | default = {
       mode = "disabled",
       accepted_matrix_hashes = [],

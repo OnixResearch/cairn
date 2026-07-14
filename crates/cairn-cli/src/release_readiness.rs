@@ -14,11 +14,16 @@ use std::{error::Error, fs, path::PathBuf};
 
 use cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY;
 use cairn_core::{
-    canonical_json_hash, evaluate_workspace_contract_matrix_readiness,
+    authenticated_evidence_policy_from_value, canonical_json_hash,
+    evaluate_authenticated_release_gate, evaluate_workspace_contract_matrix_readiness,
     workspace_contract_readiness_issues_json, workspace_contract_readiness_policy_from_value,
+    AuthenticatedReleaseGateInput,
 };
 use serde_json::{json, Value};
 
+use crate::authenticated_inputs::{
+    authentication_component, AuthenticationArtifact, AuthenticationComponent,
+};
 use crate::determinism::determinism_coverage_audit_receipt;
 use crate::function_address::{function_address_hash, function_address_receipt_value};
 use crate::mcp::mcp_agent_smoke_receipt;
@@ -39,6 +44,8 @@ pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Err
     let stack_provenance = read_string_option(&args, "--stack-provenance").map(PathBuf::from);
     let stack_provenance_graph =
         read_string_option(&args, "--stack-provenance-graph").map(PathBuf::from);
+    let stack_provenance_authentication =
+        read_string_option(&args, "--stack-provenance-authentication").map(PathBuf::from);
     let function_address_valence =
         read_string_option(&args, "--function-address-valence").map(PathBuf::from);
     let function_address_mantle =
@@ -47,6 +54,8 @@ pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Err
         read_string_option(&args, "--function-address-kamacite").map(PathBuf::from);
     let function_address_graph =
         read_string_option(&args, "--function-address-graph").map(PathBuf::from);
+    let function_address_authentication =
+        read_string_option(&args, "--function-address-authentication").map(PathBuf::from);
     let workspace_contract_matrix_receipt =
         read_string_option(&args, "--workspace-contract-matrix-receipt").map(PathBuf::from);
     print_json(release_readiness_receipt_with_inputs(
@@ -56,10 +65,12 @@ pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Err
             review_ledger,
             stack_provenance,
             stack_provenance_graph,
+            stack_provenance_authentication,
             function_address_valence,
             function_address_mantle,
             function_address_kamacite,
             function_address_graph,
+            function_address_authentication,
             workspace_contract_matrix_receipt,
         },
     ))
@@ -81,10 +92,12 @@ pub(crate) fn release_readiness_receipt_with_review_ledger(
         review_ledger,
         stack_provenance: None,
         stack_provenance_graph: None,
+        stack_provenance_authentication: None,
         function_address_valence: None,
         function_address_mantle: None,
         function_address_kamacite: None,
         function_address_graph: None,
+        function_address_authentication: None,
         workspace_contract_matrix_receipt: None,
     })
 }
@@ -95,10 +108,12 @@ struct ReleaseReadinessInputs {
     review_ledger: Option<PathBuf>,
     stack_provenance: Option<PathBuf>,
     stack_provenance_graph: Option<PathBuf>,
+    stack_provenance_authentication: Option<PathBuf>,
     function_address_valence: Option<PathBuf>,
     function_address_mantle: Option<PathBuf>,
     function_address_kamacite: Option<PathBuf>,
     function_address_graph: Option<PathBuf>,
+    function_address_authentication: Option<PathBuf>,
     workspace_contract_matrix_receipt: Option<PathBuf>,
 }
 
@@ -109,10 +124,12 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         review_ledger,
         stack_provenance,
         stack_provenance_graph,
+        stack_provenance_authentication,
         function_address_valence,
         function_address_mantle,
         function_address_kamacite,
         function_address_graph,
+        function_address_authentication,
         workspace_contract_matrix_receipt,
     } = inputs;
     // r[impl cairn.supersede.release_readiness_bundle]
@@ -137,17 +154,70 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     let preserves_corpus = preserves_corpus_component(root.clone());
     let semantic_review_ledger = semantic_review_ledger_component(root.clone(), review_ledger);
     let policy = load_policy_file(policy_path.clone()).ok();
-    let stack_provenance = stack_provenance_component(
+    let stack_provenance_component_value = stack_provenance_component(
         policy_path.clone(),
-        stack_provenance,
-        stack_provenance_graph,
+        stack_provenance.clone(),
+        stack_provenance_graph.clone(),
     );
-    let function_address = function_address_component(
+    let function_address_component_value = function_address_component(
         policy_path.clone(),
-        function_address_valence,
-        function_address_mantle,
-        function_address_kamacite,
-        function_address_graph,
+        function_address_valence.clone(),
+        function_address_mantle.clone(),
+        function_address_kamacite.clone(),
+        function_address_graph.clone(),
+    );
+    let stack_provenance_authentication = authentication_component(
+        &root,
+        policy.as_ref().map(|value| &value.raw),
+        "stack-provenance",
+        stack_provenance_authentication,
+        vec![
+            AuthenticationArtifact {
+                role: "receipt",
+                path: stack_provenance,
+            },
+            AuthenticationArtifact {
+                role: "graph",
+                path: stack_provenance_graph,
+            },
+        ],
+        "receipt",
+    );
+    let function_address_authentication = authentication_component(
+        &root,
+        policy.as_ref().map(|value| &value.raw),
+        "function-address",
+        function_address_authentication,
+        vec![
+            AuthenticationArtifact {
+                role: "valence_receipt",
+                path: function_address_valence,
+            },
+            AuthenticationArtifact {
+                role: "mantle_binding",
+                path: function_address_mantle,
+            },
+            AuthenticationArtifact {
+                role: "kamacite_receipt",
+                path: function_address_kamacite,
+            },
+            AuthenticationArtifact {
+                role: "graph",
+                path: function_address_graph,
+            },
+        ],
+        "valence_receipt",
+    );
+    let authenticated_release = authenticated_release_component(
+        policy.as_ref().map(|value| &value.raw),
+        stack_provenance_component_value.value["mode"]
+            .as_str()
+            .unwrap_or(""),
+        function_address_component_value.value["mode"]
+            .as_str()
+            .unwrap_or(""),
+        &stack_provenance_authentication,
+        &function_address_authentication,
     );
     let workspace_contract_matrix = workspace_contract_matrix_component(
         root.clone(),
@@ -170,8 +240,11 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         release_evidence_index.check,
         preserves_corpus.check,
         semantic_review_ledger.check,
-        stack_provenance.check,
-        function_address.check,
+        stack_provenance_component_value.check,
+        function_address_component_value.check,
+        stack_provenance_authentication.check,
+        function_address_authentication.check,
+        authenticated_release.check,
         workspace_contract_matrix.check,
     ];
     checks.push(json!({
@@ -184,6 +257,9 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     let is_valid = checks
         .iter()
         .all(|check| check["passed"].as_bool().unwrap_or(false));
+    let onix_release_ready = is_valid
+        && authenticated_release.value["required"].as_bool() == Some(true)
+        && authenticated_release.value["passed"].as_bool() == Some(true);
     with_portable_content_hash_receipt(
         &root,
         json!({
@@ -191,6 +267,7 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
             "root": root_text,
             "valid": is_valid,
             "verdict": if is_valid { "pass" } else { "fail" },
+            "onix_release_ready": onix_release_ready,
             "checks": checks,
             "cairn_validation_hash": validation.receipt_hash,
             "traceability_coverage_hash": traceability.receipt_hash,
@@ -200,10 +277,13 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
             "release_evidence_index_check_hash": release_evidence_index.receipt_hash,
             "preserves_corpus_freshness_hash": preserves_corpus.receipt_hash,
             "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
-            "stack_provenance_hash": stack_provenance.receipt_hash,
-            "stack_provenance": stack_provenance.value,
-            "function_address_hash": function_address.receipt_hash,
-            "function_address": function_address.value,
+            "stack_provenance_hash": stack_provenance_component_value.receipt_hash,
+            "stack_provenance": stack_provenance_component_value.value,
+            "function_address_hash": function_address_component_value.receipt_hash,
+            "function_address": function_address_component_value.value,
+            "stack_provenance_authentication": stack_provenance_authentication.value,
+            "function_address_authentication": function_address_authentication.value,
+            "authenticated_release_gate": authenticated_release.value,
             "workspace_contract_matrix_hash": workspace_contract_matrix.receipt_hash,
             "workspace_contract_matrix": workspace_contract_matrix.value,
             "repository_gate_summary": repository_gate_summary,
@@ -212,6 +292,61 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
             "verification_role_boundary": VERIFICATION_ROLE_BOUNDARY,
         }),
     )
+}
+
+fn authenticated_release_component(
+    policy_value: Option<&Value>,
+    stack_provenance_mode: &str,
+    function_address_mode: &str,
+    stack_provenance: &AuthenticationComponent,
+    function_address: &AuthenticationComponent,
+) -> AuthenticatedReleaseComponent {
+    let result = policy_value
+        .ok_or_else(|| "policy could not be loaded".to_string())
+        .and_then(authenticated_evidence_policy_from_value)
+        .map(|policy| {
+            evaluate_authenticated_release_gate(
+                &policy,
+                &AuthenticatedReleaseGateInput {
+                    stack_provenance_mode,
+                    function_address_mode,
+                    stack_provenance: stack_provenance.report.as_ref(),
+                    function_address: function_address.report.as_ref(),
+                },
+            )
+        });
+    match result {
+        Ok(report) => {
+            let value = serde_json::to_value(&report).unwrap_or_else(|error| {
+                json!({
+                    "passed": false,
+                    "issue": error.to_string(),
+                })
+            });
+            AuthenticatedReleaseComponent {
+                check: json!({
+                    "name": "authenticated_evidence_release_profile",
+                    "passed": report.passed,
+                    "required": report.required,
+                    "source": "cairn authenticated evidence policy",
+                }),
+                value,
+            }
+        }
+        Err(error) => AuthenticatedReleaseComponent {
+            check: json!({
+                "name": "authenticated_evidence_release_profile",
+                "passed": false,
+                "source": "cairn authenticated evidence policy",
+                "issue": error,
+            }),
+            value: json!({
+                "required": false,
+                "passed": false,
+                "issue": error,
+            }),
+        },
+    }
 }
 
 fn workspace_contract_matrix_component(
@@ -445,6 +580,11 @@ struct StackProvenanceComponent {
 struct FunctionAddressComponent {
     check: Value,
     receipt_hash: String,
+    value: Value,
+}
+
+struct AuthenticatedReleaseComponent {
+    check: Value,
     value: Value,
 }
 

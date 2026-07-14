@@ -44,6 +44,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "root",
             "valid",
             "verdict",
+            "onix_release_ready",
             "checks",
             "cairn_validation_hash",
             "traceability_coverage_hash",
@@ -57,6 +58,9 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "stack_provenance",
             "function_address_hash",
             "function_address",
+            "stack_provenance_authentication",
+            "function_address_authentication",
+            "authenticated_release_gate",
             "workspace_contract_matrix_hash",
             "workspace_contract_matrix",
             "repository_gate_summary",
@@ -70,6 +74,7 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert_eq!(receipt["command"], "release-readiness");
     assert_eq!(receipt["valid"], true);
     assert_eq!(receipt["verdict"], "pass");
+    assert_eq!(receipt["onix_release_ready"], false);
     assert_hash_field(&receipt, "receipt_hash")?;
     assert_hash_field(&receipt, "cairn_validation_hash")?;
     assert_hash_field(&receipt, "traceability_coverage_hash")?;
@@ -97,6 +102,9 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
     assert!(check_names.contains(&"semantic_review_ledger"));
     assert!(check_names.contains(&"stack_provenance"));
     assert!(check_names.contains(&"function_address"));
+    assert!(check_names.contains(&"stack-provenance_authentication"));
+    assert!(check_names.contains(&"function-address_authentication"));
+    assert!(check_names.contains(&"authenticated_evidence_release_profile"));
     assert!(check_names.contains(&"workspace_contract_matrix"));
     assert!(check_names.contains(&"repository_gate_policy_listed"));
     assert_eq!(receipt["mcp"]["read_only"], true);
@@ -202,7 +210,7 @@ fn function_address_fixture_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
             "valid": true,
             "verdict": "PASS",
             "receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-            "valence_policy_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "valence_policy_hash": "62c88a0263720dea4c37a48ef46921c46e5dd3e4924fff096b84a65d5738a412",
             "claim_scope": "function_address.v1.lifecycle_policy_conformance",
             "kamacite_receipt_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
             "roles": [
@@ -289,6 +297,35 @@ fn prefix_function_address_digest(path: PathBuf, field: &str) -> Result<(), Box<
         .to_string();
     value[field] = json!(format!("b3:{digest}"));
     fs::write(path, serde_json::to_vec_pretty(&value)?)?;
+    Ok(())
+}
+
+#[test]
+fn onix_release_profile_fails_without_authenticated_evidence() -> Result<(), Box<dyn Error>> {
+    let path = temp_project("onix-release-authentication-required")?.join("policy.json");
+    let mut policy = policy_json()?;
+    policy["authenticated_evidence_policy"]["release_profile"] = json!("onix-release");
+    policy["stack_provenance_gate"]["mode"] = json!("required");
+    policy["function_address_gate"]["mode"] = json!("required");
+    fs::write(&path, serde_json::to_vec_pretty(&policy)?)?;
+    let receipt = run_json_strings(&[
+        "release-readiness".into(),
+        "--root".into(),
+        ".".into(),
+        "--policy".into(),
+        path.display().to_string(),
+    ])?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["authenticated_release_gate"]["required"], true);
+    assert_eq!(receipt["authenticated_release_gate"]["passed"], false);
+    assert_eq!(receipt["onix_release_ready"], false);
+    let issue_codes = receipt["authenticated_release_gate"]["issues"]
+        .as_array()
+        .ok_or("authenticated release issues")?
+        .iter()
+        .filter_map(|issue| issue["code"].as_str())
+        .collect::<Vec<_>>();
+    assert!(issue_codes.contains(&"authenticated_inputs.release_gate_missing"));
     Ok(())
 }
 

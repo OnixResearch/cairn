@@ -14,9 +14,11 @@ name = "ironspec"
 path = "src/ironspec.rs"
 
 [dependencies]
+blake3.workspace = true
 cairn-core = { path = "../cairn-core" }
 cap-std.workspace = true
 crossterm.workspace = true
+ed25519-dalek.workspace = true
 rat-nodegraph.workspace = true
 ratatui.workspace = true
 serde.workspace = true

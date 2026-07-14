@@ -2,6 +2,7 @@ pub mod agent_receipt;
 pub mod ai_spec_draft;
 pub mod archive_compaction;
 pub mod ast_grep_gate;
+pub mod authenticated_inputs;
 pub mod change_dependencies;
 pub mod content_addressed;
 pub mod delta_merge;

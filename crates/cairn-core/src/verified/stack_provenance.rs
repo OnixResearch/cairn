@@ -475,7 +475,7 @@ mod tests {
     use super::*;
 
     const ACCEPTED_POLICY_HASH: &str =
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        "93993e99e87206d232b64efcc8631611aad3b5b0c4b81855e7e1a0cdcc391cff";
     const COMPLETE_RECEIPT: &str =
         include_str!("../../../../fixtures/stack-provenance/positive/required-complete.json");
     const GRAPH_SUMMARY: &str =

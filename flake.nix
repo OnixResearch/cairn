@@ -63,6 +63,20 @@
           touch $out
         '';
 
+        authenticated-policy-profiles-fresh = pkgs.runCommand "cairn-authenticated-policy-profiles-fresh" {
+          nativeBuildInputs = [ pkgs.nickel ];
+        } ''
+          cp -r ${self} source
+          chmod -R u+w source
+          cd source
+          # r[verify cairn.stack_provenance_gates.authenticated_inputs.policy_identity]
+          nickel export --format json cairn-policy/stack-provenance-authentication-profile.ncl > stack-profile.json
+          nickel export --format json cairn-policy/function-address-authentication-profile.ncl > function-profile.json
+          cmp stack-profile.json cairn-policy/generated/stack-provenance-authentication-profile.json
+          cmp function-profile.json cairn-policy/generated/function-address-authentication-profile.json
+          touch $out
+        '';
+
         policy-stale-detects-drift = pkgs.runCommand "cairn-policy-stale-detects-drift" {
           nativeBuildInputs = [ pkgs.nickel ];
         } ''

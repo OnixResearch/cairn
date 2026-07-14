@@ -2,6 +2,7 @@ use std::{env, error::Error};
 
 mod agent_receipt;
 mod archive_compaction;
+mod authenticated_inputs;
 mod determinism;
 mod developer_experience;
 mod evidence;

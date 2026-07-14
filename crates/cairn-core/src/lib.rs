@@ -53,6 +53,18 @@ pub use verified::ast_grep_gate::{
     AST_GREP_GATE_ISSUE_WEAK_NON_CLAIM, AST_GREP_GATE_MODE_ADVISORY, AST_GREP_GATE_MODE_BLOCKING,
     AST_GREP_GATE_MODE_CODEMOD_REVIEW, AST_GREP_GATE_MODE_INVENTORY,
 };
+pub use verified::authenticated_inputs::{
+    authenticated_evidence_policy_from_value, authenticated_signature_message,
+    evaluate_authenticated_evidence, evaluate_authenticated_release_gate,
+    AuthenticatedEvidenceInput, AuthenticatedEvidenceIssue, AuthenticatedEvidencePolicy,
+    AuthenticatedEvidenceReport, AuthenticatedPolicyExport, AuthenticatedReleaseGateInput,
+    AuthenticatedReleaseGateReport, AuthenticatedTrustedProducer, CanonicalReceiptObservation,
+    MeasuredEvidenceInput, PolicyExportObservation, SignatureVerificationObservation,
+    AUTHENTICATED_EVIDENCE_BOUNDARY, AUTHENTICATED_EVIDENCE_CANONICALIZATION_CORRECTED_V1,
+    AUTHENTICATED_EVIDENCE_KIND_FUNCTION_ADDRESS, AUTHENTICATED_EVIDENCE_KIND_STACK_PROVENANCE,
+    AUTHENTICATED_EVIDENCE_PROFILE_DIAGNOSTIC, AUTHENTICATED_EVIDENCE_PROFILE_ONIX_RELEASE,
+    AUTHENTICATED_EVIDENCE_SCHEMA_V1, AUTHENTICATED_EVIDENCE_SIGNATURE_ALGORITHM_ED25519,
+};
 pub use verified::change_dependencies::{
     build_change_dependency_graph, change_dependency_issue_messages,
     change_metadata_with_dependencies, dependency_blockers_for_change, next_ready_change,
