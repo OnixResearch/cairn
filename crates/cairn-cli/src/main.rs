@@ -23,11 +23,13 @@ mod receipt_preserves_diff;
 mod receipt_verify_content_hash;
 mod release_evidence;
 mod release_readiness;
+mod release_run;
 mod rename_classification;
 mod requirement_id_registry;
 mod runtime_evidence;
 mod semantic_review;
 mod stack_provenance;
+mod state_machine_receipt;
 mod steel_orchestration;
 mod support;
 mod test_harness;
@@ -53,6 +55,7 @@ use receipt_verify_content_hash::run_receipt_verify_content_hash;
 use requirement_id_registry::run_requirement_registry;
 use runtime_evidence::run_runtime_evidence;
 use semantic_review::run_review;
+use state_machine_receipt::run_state_machine_receipt;
 use support::{print_usage, usage_text};
 use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
@@ -92,6 +95,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "view" => run_view(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-evidence" => release_evidence::run_release_evidence(args.collect())?,
+        "release-run" => release_run::run_release_run(args.collect())?,
         "lifecycle" => lifecycle_data::run_lifecycle_data(args.collect())?,
         "determinism" => run_determinism(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
@@ -103,6 +107,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "probe" => probe::run_probe(args.collect())?,
         "runtime-evidence" => run_runtime_evidence(args.collect())?,
+        "state-machine-receipt" => run_state_machine_receipt(args.collect())?,
         "traceability" => run_traceability(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
         "review" => run_review(args.collect())?,

@@ -1,5 +1,6 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
+use iddqd::{id_upcast, IdOrdItem, IdOrdMap};
 use serde_json::Value;
 
 use crate::verified::evidence::canonical_json_hash;
@@ -43,6 +44,7 @@ const ISSUE_INVALID_IDENTITY: &str = "workspace_contract.invalid_artifact_identi
 const ISSUE_MISSING_NEGATIVE: &str = "workspace_contract.missing_negative_coverage";
 const ISSUE_NON_CLAIM: &str = "workspace_contract.weakened_non_claims";
 const ISSUE_AMBIGUOUS: &str = "workspace_contract.ambiguous_edge";
+const ISSUE_DUPLICATE_OBSERVATION: &str = "workspace_contract.duplicate_observation";
 const ISSUE_READINESS_MODE: &str = "workspace_contract.readiness_unsupported_mode";
 const ISSUE_READINESS_MISSING: &str = "workspace_contract.readiness_missing_receipt";
 const ISSUE_READINESS_INVALID: &str = "workspace_contract.readiness_invalid_receipt";
@@ -86,6 +88,26 @@ pub struct WorkspaceArtifactObservation {
     pub edge_id: String,
     pub artifact_path: String,
     pub artifact_identity: String,
+}
+
+impl IdOrdItem for WorkspaceContractEdge {
+    type Key<'a> = &'a str;
+
+    fn key(&self) -> Self::Key<'_> {
+        &self.edge_id
+    }
+
+    id_upcast!();
+}
+
+impl IdOrdItem for WorkspaceArtifactObservation {
+    type Key<'a> = &'a str;
+
+    fn key(&self) -> Self::Key<'_> {
+        &self.edge_id
+    }
+
+    id_upcast!();
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -171,18 +193,13 @@ pub fn validate_workspace_contract_matrix(
             "matrix must contain at least one edge",
         );
     }
-    let observed = observations_by_edge(observations);
-    let mut seen_edges = BTreeSet::new();
+    // r[impl cairn.workspace_contract_matrix.iddqd_indexes.contract]
+    // r[impl cairn.workspace_contract_matrix.iddqd_indexes.validation]
+    let _declared = edges_by_id(&matrix.edges, &mut issues);
+    let observed = observations_by_edge(observations, &mut issues);
     let mut stale_edges = BTreeSet::new();
     for (index, edge) in matrix.edges.iter().enumerate() {
-        validate_edge(
-            index,
-            edge,
-            &observed,
-            &mut seen_edges,
-            &mut stale_edges,
-            &mut issues,
-        );
+        validate_edge(index, edge, &observed, &mut stale_edges, &mut issues);
     }
     issues.sort_by(|left, right| {
         left.field_path
@@ -357,8 +374,7 @@ fn readiness(
 fn validate_edge(
     index: usize,
     edge: &WorkspaceContractEdge,
-    observed: &BTreeMap<String, WorkspaceArtifactObservation>,
-    seen_edges: &mut BTreeSet<String>,
+    observed: &IdOrdMap<WorkspaceArtifactObservation>,
     stale_edges: &mut BTreeSet<String>,
     issues: &mut Vec<WorkspaceContractIssue>,
 ) {
@@ -459,16 +475,7 @@ fn validate_edge(
         &edge.non_claims,
         issues,
     );
-    if !edge.edge_id.is_empty() && !seen_edges.insert(edge.edge_id.clone()) {
-        push_issue(
-            issues,
-            ISSUE_AMBIGUOUS,
-            edge_id.clone(),
-            &format!("{path}.{FIELD_EDGE_ID}"),
-            "edge ID must be unique",
-        );
-    }
-    match observed.get(&edge.edge_id) {
+    match observed.get(edge.edge_id.as_str()) {
         Some(observation) if observation.artifact_identity == edge.artifact_identity => {}
         Some(_) | None => {
             stale_edges.insert(edge.edge_id.clone());
@@ -581,13 +588,44 @@ fn validate_non_claims(
     }
 }
 
+fn edges_by_id(
+    edges: &[WorkspaceContractEdge],
+    issues: &mut Vec<WorkspaceContractIssue>,
+) -> IdOrdMap<WorkspaceContractEdge> {
+    let mut indexed = IdOrdMap::with_capacity(edges.len());
+    for (index, edge) in edges.iter().cloned().enumerate() {
+        let edge_id = edge.edge_id.clone();
+        if indexed.insert_unique(edge).is_err() {
+            push_issue(
+                issues,
+                ISSUE_AMBIGUOUS,
+                Some(edge_id),
+                &format!("{FIELD_EDGES}[{index}].{FIELD_EDGE_ID}"),
+                "edge ID must be unique",
+            );
+        }
+    }
+    indexed
+}
+
 fn observations_by_edge(
     observations: &[WorkspaceArtifactObservation],
-) -> BTreeMap<String, WorkspaceArtifactObservation> {
-    observations
-        .iter()
-        .map(|observation| (observation.edge_id.clone(), observation.clone()))
-        .collect()
+    issues: &mut Vec<WorkspaceContractIssue>,
+) -> IdOrdMap<WorkspaceArtifactObservation> {
+    let mut indexed = IdOrdMap::with_capacity(observations.len());
+    for (index, observation) in observations.iter().cloned().enumerate() {
+        let edge_id = observation.edge_id.clone();
+        if indexed.insert_unique(observation).is_err() {
+            push_issue(
+                issues,
+                ISSUE_DUPLICATE_OBSERVATION,
+                Some(edge_id),
+                &format!("{FIELD_OBSERVED_ARTIFACTS}[{index}].{FIELD_EDGE_ID}"),
+                "observed artifact edge ID must be unique",
+            );
+        }
+    }
+    indexed
 }
 
 fn parse_workspace_contract_input(
@@ -881,6 +919,38 @@ mod tests {
         );
         assert!(!report.valid);
         assert!(codes(&report).contains(&ISSUE_NON_CLAIM.to_string()));
+    }
+
+    #[test]
+    fn duplicate_declared_and_observed_identities_fail_without_overwrite() {
+        // r[verify cairn.workspace_contract_matrix.iddqd_indexes.fixtures.negative]
+        let mut matrix = matrix();
+        matrix.edges.push(matrix.edges[0].clone());
+        let mut observed = observations();
+        observed.push(observed[0].clone());
+        let report =
+            validate_workspace_contract_matrix(&matrix, &observed, TEST_MATRIX_HASH.to_string());
+        let codes = codes(&report);
+        assert!(!report.valid);
+        assert!(codes.contains(&ISSUE_AMBIGUOUS.to_string()));
+        assert!(codes.contains(&ISSUE_DUPLICATE_OBSERVATION.to_string()));
+    }
+
+    #[test]
+    fn unique_identity_indexes_preserve_public_report_shape() {
+        // r[verify cairn.workspace_contract_matrix.iddqd_indexes.fixtures.positive]
+        // r[verify cairn.workspace_contract_matrix.iddqd_indexes.receipt_compatibility]
+        // r[verify cairn.workspace_contract_matrix.iddqd_indexes.final_validation]
+        // r[verify cairn.workspace_contract_matrix.iddqd_indexes.final_validation.fixtures]
+        let report = validate_workspace_contract_matrix(
+            &matrix(),
+            &observations(),
+            TEST_MATRIX_HASH.to_string(),
+        );
+        assert!(report.valid, "unexpected issues: {:?}", report.issues);
+        assert_eq!(report.matrix_hash, TEST_MATRIX_HASH);
+        assert_eq!(report.stale_edge_count, EMPTY_COUNT);
+        assert_eq!(report.checked_edges.len(), report.edge_count);
     }
 
     #[test]

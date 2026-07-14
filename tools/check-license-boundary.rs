@@ -4,6 +4,11 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+// r[verify cairn.license_boundary.package_split]
+// r[verify cairn.license_boundary.artifacts]
+// r[verify cairn.license_boundary.consumer_boundary]
+// r[verify cairn.license_boundary.validation]
+// r[verify cairn.license_boundary.final_validation]
 const POLICY_FILE: &str = "license-policy.tsv";
 const POLICY_FIELD_COUNT: usize = 3;
 const PACKAGE_RULE: &str = "package";

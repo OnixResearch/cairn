@@ -222,6 +222,16 @@ pub use verified::probe::{
     ProbeIssue, PROBE_DECLARATION_SCHEMA_V1, PROBE_RECEIPT_SCHEMA_V1,
 };
 pub use verified::receipt_drift::{receipt_field_drift, DriftClass, DriftEntry, DriftReport};
+pub use verified::release_run_ledger::{
+    positive_release_run_ledger_fixture, release_run_explain, release_run_identity,
+    release_run_ledger_hash, release_run_status, validate_release_run_ledger_value,
+    ReleaseRunArtifact, ReleaseRunBlocker, ReleaseRunCommandIdentity, ReleaseRunDiagnostic,
+    ReleaseRunExplainProjection, ReleaseRunLedger, ReleaseRunLedgerIssue, ReleaseRunLedgerReport,
+    ReleaseRunResumeHint, ReleaseRunStatusProjection, ReleaseRunStep, RELEASE_RUN_LEDGER_BOUNDARY,
+    RELEASE_RUN_LEDGER_SCHEMA_V1, RELEASE_RUN_STATE_BLOCKED, RELEASE_RUN_STATE_FAILED,
+    RELEASE_RUN_STATE_PASSED, RELEASE_RUN_STATE_PENDING, RELEASE_RUN_STATE_RUNNING_OBSERVED,
+    RELEASE_RUN_STATE_SKIPPED, RELEASE_RUN_STATE_SUPERSEDED,
+};
 pub use verified::repo::{
     build_change_detail, build_change_list, build_change_status, build_repo_status,
     build_spec_detail, build_spec_list, count_tasks, filter_changes_by_metadata, spec_title,
@@ -262,6 +272,13 @@ pub use verified::stack_provenance::{
     STACK_PROVENANCE_BOUNDARY, STACK_PROVENANCE_CLAIM_SCOPE_LIFECYCLE,
     STACK_PROVENANCE_MODE_DISABLED, STACK_PROVENANCE_MODE_OPTIONAL, STACK_PROVENANCE_MODE_REQUIRED,
 };
+pub use verified::state_machine_receipt::{
+    positive_state_machine_receipt_fixture, state_machine_receipt_hash,
+    validate_state_machine_receipt_value, StateMachineArtifact, StateMachineChecker,
+    StateMachineDiagnostic, StateMachineNamedHash, StateMachineReceipt, StateMachineReceiptIssue,
+    StateMachineReceiptReport, STATE_MACHINE_RECEIPT_BOUNDARY, STATE_MACHINE_RECEIPT_SCHEMA_V1,
+    STATE_MACHINE_RESULT_PASSED, STATE_MACHINE_VERIFICATION_ROLE_BOUNDED_WITNESS,
+};
 pub use verified::structured_lifecycle::{
     structured_lifecycle_bundle_hash, structured_lifecycle_issue_json,
     validate_structured_lifecycle_bundle, StructuredLifecycleIssue, StructuredLifecycleReport,
@@ -286,6 +303,15 @@ pub use verified::traceability::{
     TRACEABILITY_MARKER_VERB_REQUIREMENT, TRACEABILITY_PROFILE_CAIRN_DEFAULT,
     TRACEABILITY_PROFILE_TRELLIS_RUST, TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL,
     TRACEABILITY_VERB_RELATED, TRACEABILITY_VERB_VERIFY,
+};
+pub use verified::trellis_proof_readiness::{
+    evaluate_trellis_proof_readiness, trellis_proof_evidence_chain_profile,
+    trellis_proof_readiness_hash, TrellisProofInput, TrellisProofIssue, TrellisProofPolicy,
+    TrellisProofReadiness, TRELLIS_PROOF_CLAIM_SCOPE, TRELLIS_PROOF_EVIDENCE_KIND,
+    TRELLIS_PROOF_MODE_OPTIONAL, TRELLIS_PROOF_MODE_REQUIRED_FORMAL,
+    TRELLIS_PROOF_MODE_REQUIRED_RECORDED, TRELLIS_PROOF_PROFILE_V1,
+    TRELLIS_PROOF_REQUIRED_NON_CLAIM, TRELLIS_PROOF_ROLE_ACCEPTED_FORMAL,
+    TRELLIS_PROOF_ROLE_RECORDED,
 };
 pub use verified::validation::{
     change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, validate_changes,

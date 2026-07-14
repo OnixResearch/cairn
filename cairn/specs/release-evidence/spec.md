@@ -684,3 +684,71 @@ r[cairn.release_evidence.cap_std_boundary.validation]
 - GIVEN the cap-std evidence-boundary change is ready to archive
 - WHEN focused evidence, registry, release, replay, scan, Cairn validation, Tracey coverage, and gate checks run
 - THEN the evidence MUST include positive and negative filesystem-boundary coverage and visible non-claim documentation.
+
+### Requirement: Durable release-run ledger model
+r[cairn.release_evidence.durable_run_ledger.model] Cairn MUST define a pure durable release-run ledger model with run identity, lifecycle root identity, policy hash, command identity, profile, step rows, artifact references, diagnostics, blockers, resume hints, and non-claim boundaries.
+
+#### Scenario: Complete run ledger validates
+r[cairn.release_evidence.durable_run_ledger.fixtures.positive]
+- GIVEN a release-run ledger records a complete local release-readiness workflow with matching policy hash, command identity, step rows, artifact references, diagnostics, and non-claims
+- WHEN ledger validation runs
+- THEN Cairn MUST accept the ledger and preserve the run identity as a local evidence artifact.
+
+### Requirement: Ledger validation fails closed
+r[cairn.release_evidence.durable_run_ledger.validation] Cairn MUST reject release-run ledgers with stale identity, malformed state transitions, missing command identity, missing artifact references, or weakened boundaries.
+
+#### Scenario: Invalid ledger is rejected
+r[cairn.release_evidence.durable_run_ledger.fixtures.negative]
+- GIVEN a release-run ledger has a stale policy hash, missing command identity, impossible step transition, weakened non-claim, cross-run artifact substitution, or remote publish overclaim
+- WHEN ledger validation runs
+- THEN Cairn MUST fail with deterministic diagnostics naming the rejected ledger field.
+
+### Requirement: Status and explain projections are deterministic
+r[cairn.release_evidence.durable_run_ledger.status_explain] Cairn SHOULD expose deterministic status and explain projections over already-loaded release-run ledgers.
+
+#### Scenario: Blocked run explains next action
+r[cairn.release_evidence.durable_run_ledger.shell]
+- GIVEN a release-run ledger has blocked or resumable steps
+- WHEN an operator asks for status or explain output
+- THEN Cairn SHOULD report blockers, stale inputs, missing evidence, resumable steps, terminal verdict, and next recommended local action without mutating remote services.
+
+### Requirement: Ledger validation remains local evidence only
+r[cairn.release_evidence.durable_run_ledger.final_validation] Cairn MUST state that passing release-run ledger validation proves only ledger syntax, identity linkage, transition validity, and non-claim preservation.
+
+#### Scenario: Ledger does not publish or promote
+- GIVEN a release-run ledger validates
+- WHEN release-readiness or evidence export consumes it
+- THEN the ledger MUST NOT by itself publish artifacts, create tags, create GitHub releases, upload registry packages, sign artifacts, prove release eligibility, prove evidence truth, or trust external services.
+
+### Requirement: Workspace contract identity maps
+r[cairn.workspace_contract_matrix.iddqd_indexes.contract] Cairn MUST index workspace contract edges and observed artifacts by ids derived from the values rather than by duplicated external map keys.
+
+#### Scenario: Unique edge observations pass
+r[cairn.workspace_contract_matrix.iddqd_indexes.fixtures.positive]
+- GIVEN each declared workspace contract edge id is unique and each observed artifact record names a matching unique edge id
+- WHEN workspace contract validation builds identity indexes
+- THEN validation MUST compare observed and declared artifact identities without changing public receipt shape.
+
+#### Scenario: Duplicate identity fails closed
+r[cairn.workspace_contract_matrix.iddqd_indexes.fixtures.negative]
+- GIVEN declared edges or observed artifact records contain duplicate edge ids, missing observations, stale artifact identities, unsafe paths, or weakened non-claims
+- WHEN workspace contract validation builds identity indexes
+- THEN validation MUST fail closed with deterministic diagnostics and MUST NOT silently overwrite a prior record.
+
+### Requirement: Receipt schema compatibility
+r[cairn.workspace_contract_matrix.iddqd_indexes.receipt_compatibility] Cairn MUST preserve the existing workspace contract matrix, validation receipt, and release-readiness receipt schemas while using iddqd only inside the pure validation core.
+
+#### Scenario: Public receipt fields remain stable
+r[cairn.workspace_contract_matrix.iddqd_indexes.validation]
+- GIVEN a valid workspace contract matrix and matching observed artifact identities
+- WHEN validation emits a receipt
+- THEN the receipt MUST keep the existing public fields, matrix hash behavior, checked edge list, stale edge count, and non-claim boundary.
+
+### Requirement: Identity-map final validation evidence
+r[cairn.workspace_contract_matrix.iddqd_indexes.final_validation] The change MUST include positive and negative workspace contract coverage plus focused Cairn validation evidence before archive.
+
+#### Scenario: Identity-index fixtures cover duplicate handling
+r[cairn.workspace_contract_matrix.iddqd_indexes.final_validation.fixtures]
+- GIVEN valid and invalid workspace contract matrix fixtures
+- WHEN focused workspace contract tests and Cairn gates run
+- THEN unique edge identities MUST pass and duplicate or stale identities MUST fail closed.
