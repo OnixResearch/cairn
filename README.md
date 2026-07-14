@@ -779,6 +779,12 @@ Slotcar/Nix verification rails, command contracts, and known pitfalls without
 transient session state or secrets. Copy or patch it into a local Hermes skill
 named `cairn-workflow` when updating agent workflow knowledge.
 
+## License
+
+Cairn uses a package boundary: `cairn-core` and reusable lifecycle templates are `MIT OR Apache-2.0`; the `cairn-cli` executable shell is `AGPL-3.0-or-later`. Complete texts are in [LICENSES](LICENSES), and the authoritative map is [docs/licensing.md](docs/licensing.md).
+
+The split does not relicense dependencies, revoke prior grants, or turn lifecycle conformance into source-correctness or release-eligibility evidence.
+
 ## References
 
 - [`../rats/subwayrat/`](https://github.com/brittonr/subwayrat) — maintained

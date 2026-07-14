@@ -2,7 +2,7 @@
 name = "cairn-cli"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "AGPL-3.0-or-later"
 repository.workspace = true
 
 [[bin]]
