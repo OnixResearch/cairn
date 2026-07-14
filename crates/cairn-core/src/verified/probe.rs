@@ -99,6 +99,35 @@ pub fn validate_probe_receipt(
     issues
 }
 
+pub fn validate_probe_completion_status(receipt: &Value) -> Vec<ProbeIssue> {
+    // r[impl cairn.probe_execution_boundary.authoritative_status]
+    let mut issues = Vec::new();
+    if receipt.get("status_class").and_then(Value::as_str) != Some("success") {
+        issues.push(issue(
+            "probe.status.not_passing",
+            "saved probe status_class must be success",
+            "status_class",
+        ));
+    }
+    if receipt.get("status_matches").and_then(Value::as_bool) != Some(true) {
+        issues.push(issue(
+            "probe.status.mismatch",
+            "saved probe status must match the declared expected status",
+            "status_matches",
+        ));
+    }
+    if receipt.get("valid").and_then(Value::as_bool) != Some(true)
+        || receipt.get("verdict").and_then(Value::as_str) != Some("PASS")
+    {
+        issues.push(issue(
+            "probe.status.verdict_not_passing",
+            "saved probe receipt must carry valid=true and verdict=PASS",
+            "verdict",
+        ));
+    }
+    issues
+}
+
 pub fn probe_issue_json(issue: &ProbeIssue) -> Value {
     json!({
         "code": issue.code,
@@ -518,6 +547,33 @@ mod tests {
         let failed = evaluate_probe_assertions(&json!({"valid": false}), &assertions);
         assert!(all_probe_assertions_passed(&passed));
         assert!(!all_probe_assertions_passed(&failed));
+    }
+
+    #[test]
+    fn authoritative_status_accepts_only_an_explicit_current_pass() {
+        // r[verify cairn.probe_execution_boundary.authoritative_status]
+        let passing = json!({
+            "status_class": "success",
+            "status_matches": true,
+            "valid": true,
+            "verdict": "PASS",
+        });
+        assert!(validate_probe_completion_status(&passing).is_empty());
+        for status in [
+            "blocked",
+            "skipped",
+            "deferred",
+            "timed-out",
+            "dry-run",
+            "cancelled",
+            "cleanup-failed",
+            "infrastructure-failed",
+            "unsupported",
+        ] {
+            let mut non_passing = passing.clone();
+            non_passing["status_class"] = Value::String(status.to_string());
+            assert!(!validate_probe_completion_status(&non_passing).is_empty());
+        }
     }
 
     #[test]

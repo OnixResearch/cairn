@@ -1434,6 +1434,7 @@
         "layout",
         "policy",
         "policy_hash",
+        "probe_evidence",
         "receipt_hash",
         "stage",
         "substance",

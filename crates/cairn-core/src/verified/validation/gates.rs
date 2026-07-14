@@ -176,6 +176,31 @@ fn required_artifact_issues(
     issues
 }
 
+pub fn finalize_gate_report(
+    mut report: GateReport,
+    mut external_issues: Vec<GateIssue>,
+) -> GateReport {
+    // r[impl cairn.probe_execution_boundary.authoritative_gate_composition]
+    // r[impl cairn.probe_execution_boundary.authoritative_gate_composition.passing]
+    // r[impl cairn.probe_execution_boundary.authoritative_gate_composition.shell_finding]
+    external_issues.sort_by(|left, right| {
+        left.code
+            .cmp(&right.code)
+            .then(left.message.cmp(&right.message))
+    });
+    external_issues
+        .dedup_by(|left, right| left.code == right.code && left.message == right.message);
+    report.issues.extend(external_issues);
+    report.verdict = if report.issues.is_empty() {
+        "PASS"
+    } else {
+        "FAIL"
+    }
+    .to_string();
+    assert_eq!(report.verdict == "PASS", report.issues.is_empty());
+    report
+}
+
 pub fn validation_issue_code(message: &str) -> String {
     const LIFECYCLE_DIAGNOSTIC_PREFIX: &str = "lifecycle_validation.";
     const GENERIC_GATE_ISSUE_CODE: &str = "cairn.gate.validation";

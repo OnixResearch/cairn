@@ -365,6 +365,10 @@ pub(crate) fn mutation_gate_blockers(
     // r[impl cairn.supersede.deterministic_gates] r[impl cairn.supersede.deterministic_gates.pre_sync]
     // r[impl cairn.supersede.deterministic_gates.pre_archive] r[impl cairn.supersede.deterministic_gates.stage]
     // r[impl cairn.supersede.deterministic_gates.traceability]
+    // r[impl cairn.probe_execution_boundary.authoritative_mutation_block]
+    // r[impl cairn.probe_execution_boundary.authoritative_mutation_block.missing]
+    // r[impl cairn.probe_execution_boundary.authoritative_mutation_block.tampered]
+    // r[impl cairn.probe_execution_boundary.authoritative_mutation_block.valid]
     root: &Path,
     layout: LifecycleLayout,
     change_status: &ChangeStatus,
@@ -378,6 +382,14 @@ pub(crate) fn mutation_gate_blockers(
         .into_iter()
         .map(|issue| format!("gate {}: {}", stage.as_str(), issue.message))
         .collect::<Vec<_>>();
+    if matches!(stage, GateStage::Tasks) {
+        blockers.extend(
+            crate::probe::observe_gate_probes(root, layout, &change_status.name, policy)
+                .issues
+                .into_iter()
+                .map(|issue| format!("gate {}: {}: {}", stage.as_str(), issue.code, issue.message)),
+        );
+    }
     let mut validation_sources = collect_spec_sources(&root.join(specs_dir(layout)))?;
     for source in collect_delta_spec_sources(root, layout)? {
         if source

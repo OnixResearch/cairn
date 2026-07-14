@@ -3,13 +3,13 @@ use std::{error::Error, path::PathBuf};
 use cairn_core::{
     build_archive_plan_with_dependency_blockers, build_sync_plan_with_dependency_blockers,
     canonical_json_hash, classify_gate_evidence, dependency_blockers_for_change,
-    evaluate_gate_snapshot, GateIssue, GateStage, PlanAction, PlanActionKind,
+    evaluate_gate_snapshot, finalize_gate_report, GateIssue, GateStage, PlanAction, PlanActionKind,
 };
 use serde_json::{json, Value};
 
 use crate::native::change_status_json;
 use crate::plan_receipts::{archive_plan_json, gate_input_json, gate_report_json, sync_plan_json};
-use crate::probe::gate_probe_issues;
+use crate::probe::observe_gate_probes;
 use crate::support::{
     archive_mutation_manifest, default_policy_path, detect_layout, execute_archive_plan,
     execute_sync_snapshots, file_content_manifest, find_change, has_flag, load_policy_file,
@@ -36,25 +36,29 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, &change)?;
     let snapshot = read_gate_snapshot(&root, selected.layout, change_status)?;
-    let mut report = evaluate_gate_snapshot(&snapshot, stage, &policy);
+    let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
+    let mut external_issues = Vec::new();
     if run_probes_requested {
-        report.issues.push(GateIssue {
+        external_issues.push(GateIssue {
             code: "cairn.gate.inline_probe_disabled".to_string(),
             message: "inline probe execution is disabled by policy".to_string(),
             scope: policy.gate_finding_scope.clone(),
             promoted: policy.gate_finding_promoted.clone(),
         });
     }
-    if matches!(stage, GateStage::Tasks) {
-        report
-            .issues
-            .extend(gate_probe_issues(&root, selected.layout, &change, &policy)?);
-    }
-    let input_hash = portable_json_hash(
-        &root,
-        &gate_input_json(selected.layout, stage, &policy, &snapshot),
-    );
+    let probe_evidence = if matches!(stage, GateStage::Tasks) {
+        let observation = observe_gate_probes(&root, selected.layout, &change, &policy);
+        external_issues.extend(observation.issues);
+        observation.binding
+    } else {
+        Value::Null
+    };
+    let report = finalize_gate_report(report, external_issues);
+    let mut gate_input = gate_input_json(selected.layout, stage, &policy, &snapshot);
+    gate_input["probe_evidence"] = probe_evidence;
+    let input_hash = portable_json_hash(&root, &gate_input);
     let mut receipt = gate_report_json(selected.layout, &policy, &report, &input_hash);
+    receipt["probe_evidence"] = gate_input["probe_evidence"].clone();
     let evidence = classify_gate_evidence(&snapshot);
     receipt["evidence_summary"] = serde_json::json!({
         "mode": "advisory",
@@ -125,11 +129,13 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
     }
 
     let merge_bindings = sync_merge_bindings(&root, &merge_snapshots);
+    let probe_binding = observe_gate_probes(&root, selected.layout, change, &policy).binding;
     let input_hash = portable_json_hash(
         &root,
         &json!({
             "change": change_status_json(&change_status),
             "merge_preflight": merge_bindings,
+            "probe_evidence": probe_binding,
             "policy": policy.name,
             "policy_hash": canonical_json_hash(&policy.raw),
         }),
@@ -140,6 +146,16 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
 
     if is_execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_probe = observe_gate_probes(&root, selected.layout, change, &policy);
+            if !current_probe.issues.is_empty() || current_probe.binding != probe_binding {
+                plan.blocked = true;
+                plan.reasons.push(
+                    "gate tasks: probe evidence changed or failed after preflight".to_string(),
+                );
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let changed_files = execute_sync_snapshots(&merge_snapshots)?;
             plan.mutated = changed_files > 0;
@@ -171,7 +187,15 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     let policy = load_policy_file(policy_path)?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
+    let probe_binding = observe_gate_probes(&root, selected.layout, change, &policy).binding;
+    let input_hash = portable_json_hash(
+        &root,
+        &json!({
+            "change": change_status_json(&change_status),
+            "probe_evidence": probe_binding,
+            "policy_hash": canonical_json_hash(&policy.raw),
+        }),
+    );
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
     let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
     let mut plan =
@@ -198,6 +222,16 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     }
     if is_execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_probe = observe_gate_probes(&root, selected.layout, change, &policy);
+            if !current_probe.issues.is_empty() || current_probe.binding != probe_binding {
+                plan.blocked = true;
+                plan.reasons.push(
+                    "gate tasks: probe evidence changed or failed after preflight".to_string(),
+                );
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let archive_path =
                 execute_archive_plan(&root, selected.layout, change, &change_status.path)?;

@@ -227,8 +227,9 @@ pub use verified::preserves_evidence_ingest::{
 };
 pub use verified::probe::{
     all_probe_assertions_passed, evaluate_probe_assertions, probe_declaration_hash,
-    probe_issue_json, probe_receipt_hash, validate_probe_declaration, validate_probe_receipt,
-    ProbeIssue, PROBE_DECLARATION_SCHEMA_V1, PROBE_RECEIPT_SCHEMA_V1,
+    probe_issue_json, probe_receipt_hash, validate_probe_completion_status,
+    validate_probe_declaration, validate_probe_receipt, ProbeIssue, PROBE_DECLARATION_SCHEMA_V1,
+    PROBE_RECEIPT_SCHEMA_V1,
 };
 pub use verified::receipt_drift::{receipt_field_drift, DriftClass, DriftEntry, DriftReport};
 pub use verified::release_run_ledger::{
@@ -324,11 +325,12 @@ pub use verified::trellis_proof_readiness::{
 };
 pub use verified::validation::{
     change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot,
-    evaluate_lifecycle_substance, lifecycle_substance_issues, validate_changes,
-    validate_changes_with_archives, validate_spec_source, validate_spec_source_with_policy,
-    validate_spec_sources, validate_spec_sources_with_policy, validation_issue_code,
-    ArtifactSubstanceInventory, EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport,
-    GateSnapshot, GateStage, LifecycleSubstanceReport, SpecSubstanceInventory,
+    evaluate_lifecycle_substance, finalize_gate_report, lifecycle_substance_issues,
+    validate_changes, validate_changes_with_archives, validate_spec_source,
+    validate_spec_source_with_policy, validate_spec_sources, validate_spec_sources_with_policy,
+    validation_issue_code, ArtifactSubstanceInventory, EvidenceStrengthSummary, GateArtifact,
+    GateIssue, GateReport, GateSnapshot, GateStage, LifecycleSubstanceReport,
+    SpecSubstanceInventory,
 };
 pub use verified::workspace_contract_matrix::{
     evaluate_workspace_contract_matrix_readiness, is_workspace_contract_mode,

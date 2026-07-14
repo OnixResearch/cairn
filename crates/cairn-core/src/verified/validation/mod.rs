@@ -13,8 +13,9 @@ mod substance;
 
 pub use changes::{change_issues, validate_changes, validate_changes_with_archives};
 pub use gates::{
-    classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, validation_issue_code,
-    EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
+    classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, finalize_gate_report,
+    validation_issue_code, EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport,
+    GateSnapshot, GateStage,
 };
 pub use spec::{
     validate_spec_source, validate_spec_source_with_policy, validate_spec_sources,
@@ -242,6 +243,24 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec!["demo: missing delta specs", "demo: missing design.md"]
         );
+    }
+
+    #[test]
+    fn authoritative_gate_finalizer_cannot_emit_a_contradictory_outcome() {
+        // r[verify cairn.probe_execution_boundary.authoritative_gate_composition]
+        let report = evaluate_gate(&change(), GateStage::Proposal, &policy(true, "strict"));
+        assert_eq!(report.verdict, "PASS");
+        let finalized = finalize_gate_report(
+            report,
+            vec![GateIssue {
+                code: "probe.saved_receipt.missing".to_string(),
+                message: "saved probe receipt is missing".to_string(),
+                scope: "tasks".to_string(),
+                promoted: "no".to_string(),
+            }],
+        );
+        assert_eq!(finalized.verdict, "FAIL");
+        assert!(!finalized.issues.is_empty());
     }
 
     #[test]

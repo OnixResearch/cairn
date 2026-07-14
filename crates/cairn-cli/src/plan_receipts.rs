@@ -149,7 +149,7 @@ pub(crate) fn gate_report_json(
     json!({
         "change": report.change,
         "stage": report.stage,
-        "verdict": report.verdict,
+        "verdict": if report.issues.is_empty() { "PASS" } else { "FAIL" },
         "valid": report.issues.is_empty(),
         "issues": report.issues.iter().map(|issue| {
             json!({

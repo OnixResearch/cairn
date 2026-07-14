@@ -6,7 +6,7 @@
     "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "a2a7d736015bedaaa1f289aaab0ce9cebcd941cb0a41ba4b8e96558c62d6e4da",
+  "input_hash": "cb924c3536402c3d7ff73613a1260113df6f3efd5bba699725347b281e1f8839",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -40,12 +40,12 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "616ad9c3cd07176a87bc1fc80a5bfaac362cc010bb4c9afd5b79421da8a83b57",
+  "plan_hash": "41822b0d505f15fb7fc1e69085c64b7178f0c8af26b49d3f6aaba5f04a82111c",
   "policy": "cairn-default",
-  "policy_hash": "00c4eb27d64a7507e6aa34780f7ad921f2cb79d9377721c5a7a829fb7b2e3cbf",
+  "policy_hash": "ff3169e928a6480fe160d3921c5302111bcf964aebfda4ed777dfbebbd30c322",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "c3938bbfe47f36cd519f4691326243a8f0af0b62bfe9c79615b02cc0023e8b15"
+  "receipt_hash": "9d22717169e7521679b9eb4812b81eaadd14f54788a6a10f667319fd2e9cef30"
 }

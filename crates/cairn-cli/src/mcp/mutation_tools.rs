@@ -40,11 +40,14 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
         }
     }
     let merge_bindings = sync_merge_bindings(&root, &merge_snapshots);
+    let probe_binding =
+        crate::probe::observe_gate_probes(&root, selected.layout, change, &policy).binding;
     let input_hash = portable_json_hash(
         &root,
         &json!({
             "change": change_status_json(&change_status),
             "merge_preflight": merge_bindings,
+            "probe_evidence": probe_binding,
             "policy": policy.name,
             "policy_hash": canonical_json_hash(&policy.raw),
         }),
@@ -54,6 +57,17 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
     let mut mutation_manifest = Value::Null;
     if execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_probe =
+                crate::probe::observe_gate_probes(&root, selected.layout, change, &policy);
+            if !current_probe.issues.is_empty() || current_probe.binding != probe_binding {
+                plan.blocked = true;
+                plan.reasons.push(
+                    "gate tasks: probe evidence changed or failed after preflight".to_string(),
+                );
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let changed_files = execute_sync_snapshots(&merge_snapshots)?;
             plan.mutated = changed_files > 0;
@@ -83,7 +97,16 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
     let policy = load_policy_file(mcp_policy(input))?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
+    let probe_binding =
+        crate::probe::observe_gate_probes(&root, selected.layout, change, &policy).binding;
+    let input_hash = portable_json_hash(
+        &root,
+        &json!({
+            "change": change_status_json(&change_status),
+            "probe_evidence": probe_binding,
+            "policy_hash": canonical_json_hash(&policy.raw),
+        }),
+    );
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
     let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
     let mut plan =
@@ -105,6 +128,17 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
     }
     if execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_probe =
+                crate::probe::observe_gate_probes(&root, selected.layout, change, &policy);
+            if !current_probe.issues.is_empty() || current_probe.binding != probe_binding {
+                plan.blocked = true;
+                plan.reasons.push(
+                    "gate tasks: probe evidence changed or failed after preflight".to_string(),
+                );
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let archive_path =
                 execute_archive_plan(&root, selected.layout, change, &change_status.path)?;

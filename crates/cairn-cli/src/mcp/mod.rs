@@ -16,7 +16,7 @@ use cairn_core::{
     build_change_detail, build_change_skeleton, build_doctor_report, build_ironspec_migration_plan,
     build_openspec_migration_plan, build_spec_detail, build_sync_plan_with_dependency_blockers,
     canonical_json_hash, changes_dir, dependency_blockers_for_change, evaluate_gate_snapshot,
-    evaluate_lifecycle_substance, init_artifacts, layout_name, layout_root,
+    evaluate_lifecycle_substance, finalize_gate_report, init_artifacts, layout_name, layout_root,
     lifecycle_substance_issues, specs_dir, validate_changes_with_archives,
     validate_spec_source_with_policy, validate_spec_sources_with_policy, ChangeDependencyGraph,
     ChangeStatus, DoctorSnapshot, GateStage, LifecycleArtifactKind, LifecycleLayout, PlanAction,

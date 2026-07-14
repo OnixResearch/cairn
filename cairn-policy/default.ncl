@@ -235,7 +235,7 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
     },
     {
       command = "gate",
-      top_level_keys = ["change", "evidence_summary", "input_hash", "issues", "layout", "policy", "policy_hash", "receipt_hash", "stage", "substance", "valid", "verdict"],
+      top_level_keys = ["change", "evidence_summary", "input_hash", "issues", "layout", "policy", "policy_hash", "probe_evidence", "receipt_hash", "stage", "substance", "valid", "verdict"],
       issue_keys = ["code", "message", "promoted", "scope"],
       hash_fields = ["input_hash", "policy_hash", "receipt_hash"],
     },

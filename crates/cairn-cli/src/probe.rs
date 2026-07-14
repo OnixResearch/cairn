@@ -30,8 +30,8 @@ use std::{
 use cairn_core::{
     all_probe_assertions_passed, blake3_hex, canonical_json_hash, changes_dir,
     evaluate_probe_assertions, layout_name, probe_declaration_hash, probe_issue_json,
-    probe_receipt_hash, validate_probe_declaration, validate_probe_receipt, validation_issue_code,
-    GateIssue, LifecycleLayout, Policy, PROBE_RECEIPT_SCHEMA_V1,
+    probe_receipt_hash, validate_probe_completion_status, validate_probe_declaration,
+    validate_probe_receipt, GateIssue, LifecycleLayout, Policy, PROBE_RECEIPT_SCHEMA_V1,
 };
 use serde_json::{json, Value};
 
@@ -43,6 +43,7 @@ use crate::support::{
 const PROBE_DECLARATIONS_PATH: &str = "probes/probes.json";
 const SUCCESS_STATUS_CLASS: &str = "success";
 const FAILURE_STATUS_CLASS: &str = "failure";
+const MAX_SAVED_PROBE_BYTES: usize = 64 * 1024;
 const DEFAULT_EXPECTED_STATUS_CLASS: &str = SUCCESS_STATUS_CLASS;
 const CAIRN_LOCAL_PROFILE: &str = "cairn-local";
 const READ_ONLY_COMMANDS: &[&str] = &[
@@ -199,44 +200,173 @@ fn run_probe_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     })))
 }
 
-pub(crate) fn gate_probe_issues(
+#[derive(Debug, Clone)]
+pub(crate) struct ProbeGateEvidence {
+    pub issues: Vec<GateIssue>,
+    pub binding: Value,
+}
+
+pub(crate) fn observe_gate_probes(
     root: &Path,
     layout: LifecycleLayout,
     change: &str,
     policy: &Policy,
-) -> Result<Vec<GateIssue>, Box<dyn Error>> {
-    // r[impl cairn.probe_execution_boundary.default_gate_no_execution]
-    // r[impl cairn.probe_execution_boundary.default_gate_no_execution.existing_data_only]
-    // r[impl cairn.probe_execution_boundary.default_gate_no_execution.missing_evidence]
-    // r[impl cairn.probe_execution_boundary.gates_verify_receipts]
-    // r[impl cairn.probe_execution_boundary.fail_closed]
+) -> ProbeGateEvidence {
+    // r[impl cairn.probe_execution_boundary.authoritative_evidence_binding]
+    // r[impl cairn.probe_execution_boundary.authoritative_evidence_binding.changed]
+    // r[impl cairn.probe_execution_boundary.authoritative_evidence_binding.private]
+    // r[impl cairn.probe_execution_boundary.authoritative_status]
+    // r[impl cairn.probe_execution_boundary.authoritative_status.passed]
+    // r[impl cairn.probe_execution_boundary.authoritative_status.non_pass]
+    // r[impl cairn.probe_execution_boundary.authoritative_status.unknown]
+    // r[impl cairn.probe_execution_boundary.authoritative_diagnostics]
+    // r[impl cairn.probe_execution_boundary.authoritative_diagnostics.actionable]
+    // r[impl cairn.probe_execution_boundary.authoritative_diagnostics.safe]
+    // r[impl cairn.probe_execution_boundary.authoritative_boundary]
+    // r[impl cairn.probe_execution_boundary.authoritative_boundary.no_execution]
+    // r[impl cairn.probe_execution_boundary.authoritative_boundary.pure_core]
     let declarations_path = root
         .join(changes_dir(layout))
         .join(change)
         .join(PROBE_DECLARATIONS_PATH);
     if !declarations_path.exists() {
-        return Ok(Vec::new());
+        return ProbeGateEvidence {
+            issues: Vec::new(),
+            binding: json!({"declarations_present": false, "probes": []}),
+        };
     }
-    let declarations = read_json_file(&declarations_path)?;
+    let declaration_bytes = match read_bounded_probe_bytes(&declarations_path) {
+        Ok(bytes) => bytes,
+        Err(message) => {
+            return probe_observation_failure(
+                policy,
+                "probe.declarations.unreadable",
+                message,
+                json!({"declarations_present": true, "probes": []}),
+            );
+        }
+    };
+    let declarations: Value = match serde_json::from_slice(&declaration_bytes) {
+        Ok(value) => value,
+        Err(_) => {
+            return probe_observation_failure(
+                policy,
+                "probe.declarations.malformed",
+                "saved probe declarations are not valid JSON".to_string(),
+                json!({
+                    "declarations_present": true,
+                    "declarations_hash": blake3_hex(&declaration_bytes),
+                    "probes": [],
+                }),
+            );
+        }
+    };
     let probes = probes_array(&declarations);
-    let mut issues = Vec::new();
+    let mut messages = Vec::with_capacity(probes.len());
+    let mut bindings = Vec::with_capacity(probes.len());
     for probe in probes {
-        issues.extend(gate_probe_declaration_issues(
-            root,
-            &declarations_path,
-            &probe,
-            policy,
-        )?);
+        let probe_messages =
+            gate_probe_declaration_issues(root, &declarations_path, &probe, policy).unwrap_or_else(
+                |_| {
+                    vec![format!(
+                        "probe {}: saved receipt is unreadable or malformed",
+                        display_probe_id(&probe)
+                    )]
+                },
+            );
+        messages.extend(probe_messages);
+        bindings.push(probe_evidence_binding(root, &probe));
     }
-    Ok(issues
-        .into_iter()
-        .map(|message| GateIssue {
-            code: validation_issue_code(&message),
+    ProbeGateEvidence {
+        issues: messages
+            .into_iter()
+            .map(|message| probe_gate_issue(message, policy))
+            .collect(),
+        binding: json!({
+            "declarations_present": true,
+            "declarations_path": safe_relative_path(root, &declarations_path),
+            "declarations_hash": blake3_hex(&declaration_bytes),
+            "probes": bindings,
+            "non_claim": "saved probe evidence is bounded to the declared command, assertions, policy, and receipt identity",
+        }),
+    }
+}
+
+fn read_bounded_probe_bytes(path: &Path) -> Result<Vec<u8>, String> {
+    let metadata =
+        fs::metadata(path).map_err(|_| "saved probe evidence is unreadable".to_string())?;
+    if metadata.len() > MAX_SAVED_PROBE_BYTES as u64 {
+        return Err(format!(
+            "saved probe evidence exceeds the {MAX_SAVED_PROBE_BYTES}-byte limit"
+        ));
+    }
+    fs::read(path).map_err(|_| "saved probe evidence is unreadable".to_string())
+}
+
+fn probe_observation_failure(
+    policy: &Policy,
+    code: &str,
+    message: String,
+    binding: Value,
+) -> ProbeGateEvidence {
+    ProbeGateEvidence {
+        issues: vec![GateIssue {
+            code: code.to_string(),
             message,
             scope: policy.gate_finding_scope.clone(),
             promoted: policy.gate_finding_promoted.clone(),
-        })
-        .collect())
+        }],
+        binding,
+    }
+}
+
+fn probe_gate_issue(message: String, policy: &Policy) -> GateIssue {
+    let code = message
+        .strip_prefix("probe ")
+        .and_then(|rest| rest.split(':').next())
+        .filter(|candidate| candidate.contains('.'))
+        .map_or_else(
+            || "probe.saved_evidence.invalid".to_string(),
+            |candidate| candidate.to_string(),
+        );
+    GateIssue {
+        code,
+        message,
+        scope: policy.gate_finding_scope.clone(),
+        promoted: policy.gate_finding_promoted.clone(),
+    }
+}
+
+fn probe_evidence_binding(root: &Path, declaration: &Value) -> Value {
+    let probe_id = display_probe_id(declaration);
+    let declaration_hash = probe_declaration_hash(declaration);
+    let receipt_path = declaration
+        .get("receipt_path")
+        .and_then(Value::as_str)
+        .filter(|path| repo_relative_path(root, path).is_some());
+    let receipt_bytes = receipt_path
+        .and_then(|path| repo_relative_path(root, path))
+        .and_then(|path| read_bounded_probe_bytes(&path).ok());
+    let receipt_hash = receipt_bytes.as_ref().map(|bytes| blake3_hex(bytes));
+    let status_class = receipt_bytes
+        .as_deref()
+        .and_then(|bytes| serde_json::from_slice::<Value>(bytes).ok())
+        .and_then(|receipt| receipt.get("status_class").cloned());
+    let reproduction_argv = declaration
+        .get("command")
+        .and_then(|command| command.get("argv"))
+        .cloned()
+        .unwrap_or(Value::Array(Vec::new()));
+    json!({
+        "probe_id": probe_id,
+        "declaration_hash": declaration_hash,
+        "receipt_path": receipt_path,
+        "receipt_hash": receipt_hash,
+        "status_class": status_class,
+        "reproduction_argv": reproduction_argv,
+        "remediation": "run the declared probe explicitly and save a current passing receipt",
+        "severity": "blocking",
+    })
 }
 
 fn gate_probe_declaration_issues(
@@ -277,14 +407,19 @@ fn gate_probe_declaration_issues(
         &probe_declaration_hash(declaration),
         Some(&canonical_json_hash(&policy.raw)),
     );
-    messages.extend(receipt_issues.into_iter().map(|issue| {
-        format!(
-            "probe {} in {}: {}",
-            issue.code,
-            path_string(declarations_path),
-            issue.message
-        )
-    }));
+    messages.extend(
+        receipt_issues
+            .into_iter()
+            .chain(validate_probe_completion_status(&receipt))
+            .map(|issue| {
+                format!(
+                    "probe {} in {}: {}",
+                    issue.code,
+                    path_string(declarations_path),
+                    issue.message
+                )
+            }),
+    );
     Ok(messages)
 }
 

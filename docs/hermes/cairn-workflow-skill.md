@@ -112,6 +112,7 @@ Expected result: no matches.
   - AgentKit/OpenGate is a policy-shape reference only; Cairn owns the Nickel policy under `cairn-policy/` and does not depend on AgentKit at runtime.
   - Nickel owns generated receipt/action/hash schema declarations, marker vocabulary, exemption marker required/date fields, and semantic policy invariants. Runtime Rust consumes `cairn-policy/generated/cairn-policy.json`; do not add runtime Nickel execution.
   - Gates read proposal/design/tasks/delta specs in the CLI, pass a pure snapshot to core, and fail on unknown `r[...]` references, unlinked tasks at the tasks gate, or malformed `gate-exempt[...]` markers that do not match the generated exemption marker contract.
+  - Task gates also observe bounded saved probe declarations/receipts without execution. Only current explicit passing evidence satisfies a declaration; the final issue set derives one coherent verdict and blocks CLI/MCP sync/archive mutation.
 - Sync/archive:
   - `sync <change>` and `archive <change>` are dry-run by default.
   - `--execute` is required for mutation.

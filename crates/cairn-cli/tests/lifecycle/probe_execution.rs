@@ -41,6 +41,7 @@ fn probe_run_emits_receipt_and_gate_verifies_saved_receipt() -> Result<(), Box<d
     // r[verify cairn.probe_execution_boundary.explicit_probe_run.authorized_local_command]
     // r[verify cairn.probe_execution_boundary.gates_verify_receipts]
     // r[verify cairn.probe_execution_boundary.gates_verify_receipts.valid_saved_receipt]
+    // r[verify cairn.probe_execution_boundary.authoritative_tests.positive]
     // r[verify cairn.probe_execution_boundary.gates_verify_receipts.coverage_class]
     let fixture = temp_fixture("probe-run-gate-valid", "fixtures/basic")?;
     let fixture_file = "cairn/specs/demo/spec.md";

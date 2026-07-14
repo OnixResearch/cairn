@@ -169,11 +169,20 @@ pub(super) fn mcp_gate(input: &Value) -> Result<Value, Box<dyn Error>> {
         find_change(root.clone(), selected.layout, change)?,
     )?;
     let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
-    let input_hash = portable_json_hash(
-        &root,
-        &gate_input_json(selected.layout, stage, &policy, &snapshot),
-    );
+    let probe_evidence = if matches!(stage, GateStage::Tasks) {
+        crate::probe::observe_gate_probes(&root, selected.layout, change, &policy)
+    } else {
+        crate::probe::ProbeGateEvidence {
+            issues: Vec::new(),
+            binding: Value::Null,
+        }
+    };
+    let report = finalize_gate_report(report, probe_evidence.issues);
+    let mut gate_input = gate_input_json(selected.layout, stage, &policy, &snapshot);
+    gate_input["probe_evidence"] = probe_evidence.binding;
+    let input_hash = portable_json_hash(&root, &gate_input);
     let mut value = gate_report_json(selected.layout, &policy, &report, &input_hash);
+    value["probe_evidence"] = gate_input["probe_evidence"].clone();
     value["mcp"] = json!({"read_only": true, "destructive": false});
     Ok(with_portable_receipt_hash(&root, value))
 }

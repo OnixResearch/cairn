@@ -25,7 +25,7 @@
   "replay_evidence": {
     "replay_artifact_path": "replay-agent.json",
     "replay_environment_attestation_hash": "d1437b51b44f89cff696db1e8b3db744e69c54a2705756f01f38b8554b741502",
-    "replay_policy_hash": "00c4eb27d64a7507e6aa34780f7ad921f2cb79d9377721c5a7a829fb7b2e3cbf",
+    "replay_policy_hash": "ff3169e928a6480fe160d3921c5302111bcf964aebfda4ed777dfbebbd30c322",
     "replay_receipt_hash": "c3eba42d557c8d178e4227e94cc152970c577d8ba388f174405337595263b060",
     "replay_selected_cases": [
       "agent_receipt_validate",
@@ -58,5 +58,5 @@
       }
     ]
   },
-  "receipt_hash": "7d0cb8766b6f8c6cdee92d181817e9cab0d62f84a2a1bf75c0a86fe665322394"
+  "receipt_hash": "ee8644c5969b2b0ab4b87b4eedd45293032784f8982137ec700f5bd86e7f6dd1"
 }

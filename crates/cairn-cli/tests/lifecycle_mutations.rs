@@ -1,5 +1,7 @@
 use std::{error::Error, fs};
 
+use serde_json::json;
+
 // r[impl cli_maintainability.lifecycle_tests.focused_modules.visible_boundaries]
 // r[verify cli_maintainability.lifecycle_tests.behavior_preserved.focused_checks]
 #[path = "lifecycle/support.rs"]
@@ -367,6 +369,54 @@ fn sync_duplicate_accepted_identity_fails_closed() -> Result<(), Box<dyn Error>>
             .unwrap_or_default()
             .contains("delta_merge.duplicate_accepted_id")));
     assert_eq!(fs::read_to_string(accepted_path)?, accepted);
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn missing_saved_probe_blocks_sync_and_binds_probe_evidence_without_writes(
+) -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.probe_execution_boundary.authoritative_mutation_block]
+    // r[verify cairn.probe_execution_boundary.authoritative_tests]
+    // r[verify cairn.probe_execution_boundary.authoritative_tests.negative]
+    // r[verify cairn.probe_execution_boundary.authoritative_evidence_binding]
+    let fixture = temp_fixture("authoritative-probe-sync", "fixtures/basic")?;
+    let probes_dir = fixture.join("cairn/changes/demo/probes");
+    fs::create_dir_all(&probes_dir)?;
+    let receipt_path = "target/probes/missing.json";
+    fs::write(
+        probes_dir.join("probes.json"),
+        serde_json::to_string_pretty(&json!({"probes": [{
+            "schema": "cairn.probe.v1",
+            "id": "validate-basic",
+            "requirements": ["demo.behavior"],
+            "coverage_class": "positive",
+            "command": {"profile": "cairn-local", "identity": "cairn validate", "argv": ["validate", "--root", "."]},
+            "expected_status_class": "success",
+            "assertions": [{"id": "valid", "path": "valid", "equals": true}],
+            "receipt_path": receipt_path,
+        }] }))?,
+    )?;
+    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_before = fs::read_to_string(&accepted_path)?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let missing = run_json(&["sync", "demo", "--root", root, "--execute"])?;
+    assert_eq!(missing["blocked"], true);
+    assert_eq!(missing["mutated"], false);
+    assert!(missing["reasons"]
+        .as_array()
+        .ok_or("reasons")?
+        .iter()
+        .any(|reason| reason
+            .as_str()
+            .unwrap_or_default()
+            .contains("saved probe receipt missing")));
+    fs::create_dir_all(fixture.join("target/probes"))?;
+    fs::write(fixture.join(receipt_path), "not-json")?;
+    let malformed = run_json(&["sync", "demo", "--root", root])?;
+    assert_eq!(malformed["blocked"], true);
+    assert_ne!(missing["input_hash"], malformed["input_hash"]);
+    assert_eq!(fs::read_to_string(accepted_path)?, accepted_before);
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
