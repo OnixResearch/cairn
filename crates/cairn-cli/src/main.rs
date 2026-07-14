@@ -15,6 +15,7 @@ mod lifecycle_data;
 mod mcp;
 mod migration;
 mod native;
+mod nickel_export_boundary;
 mod oxide_lifecycle_patterns;
 mod plan_receipts;
 mod policy;

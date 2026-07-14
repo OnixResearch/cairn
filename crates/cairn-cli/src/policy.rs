@@ -11,6 +11,7 @@ use serde_json::Value;
 use crate::determinism::{
     determinism_surfaces_from_policy, replay_cases_from_policy, replay_groups_from_policy,
 };
+use crate::nickel_export_boundary::export_json_dual_run;
 use crate::support::{default_policy_path, has_flag, load_policy_file, print_json, read_option};
 
 pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -35,7 +36,7 @@ fn run_policy_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             .unwrap_or("cairn-policy/default.ncl"),
     );
     let output = read_option(args, "--output", default_policy_path());
-    let rendered = export_policy_from_nickel(&source)?;
+    let rendered = export_policy_from_nickel(&source, &output)?;
     check_invalid_policy_fixtures(source.parent().unwrap_or(Path::new(".")).join("fixtures"))?;
     if is_check {
         let existing = fs::read_to_string(&output).unwrap_or_default();
@@ -57,24 +58,12 @@ fn default_policy_source_path() -> PathBuf {
     PathBuf::from("cairn-policy/default.ncl")
 }
 
-fn export_policy_from_nickel(source: &Path) -> Result<String, Box<dyn Error>> {
+fn export_policy_from_nickel(source: &Path, destination: &Path) -> Result<String, Box<dyn Error>> {
     // r[verify cairn.supersede.rust_nickel_only_gates.no_python_scripts]
-    let output = Command::new("nickel")
-        .arg("export")
-        .arg("--format")
-        .arg("json")
-        .arg(source)
-        .output()?;
-    if !output.status.success() {
-        return Err(format!(
-            "nickel export failed for {}: {}{}",
-            source.display(),
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        )
-        .into());
-    }
-    let value: Value = serde_json::from_slice(&output.stdout)?;
+    // r[impl cairn.nickel_export_cutover.boundary]
+    // r[impl cairn.nickel_export_cutover.dual_run]
+    let export = export_json_dual_run("cairn.policy", source, destination, true)?;
+    let value: Value = serde_json::from_slice(&export.bytes)?;
     validate_exported_policy(&value)?;
     Ok(serde_json::to_string_pretty(&value)?
         + "

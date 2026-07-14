@@ -2,15 +2,20 @@
   description = "Rust/Nickel Cairn lifecycle engine";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.nickel-export = {
+    url = "github:OnixResearch/nickel-export/257fafc1c746f1faf156207043a4c826bfb16d49";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
   inputs.slotcar.url = "github:OnixResearch/slotcar";
 
-  outputs = { self, nixpkgs, slotcar }:
+  outputs = { self, nixpkgs, nickel-export, slotcar }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       eachSystem = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
       rustCargoLock = {
         lockFile = ./Cargo.lock;
         outputHashes = {
+          "nickel-export-core-0.1.0" = "sha256-dV4+/jghpJ89F5DHprdjxyru8kllMAurS2DsBGn/ibA=";
           "rat-canvas-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
           "rat-nodegraph-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
         };
@@ -27,9 +32,9 @@
           postInstall = ''
             # r[impl cairn.supersede.policy_export_packaged_runtime.wrapper]
             wrapProgram $out/bin/cairn \
-              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nickel ]}
+              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nickel nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export ]}
             wrapProgram $out/bin/ironspec \
-              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nickel ]}
+              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nickel nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export ]}
           '';
           doCheck = false;
         };
@@ -107,6 +112,24 @@
             ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn \
             policy export --check >packaged-policy-export.out
           grep -q "policy fresh: cairn-policy/generated/cairn-policy.json" packaged-policy-export.out
+          touch $out
+        '';
+
+        nickel-export-cutover = pkgs.runCommand "cairn-nickel-export-cutover" {
+          nativeBuildInputs = [ pkgs.nickel nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export ];
+        } ''
+          cp -r ${self} source
+          chmod -R u+w source
+          cd source
+          # r[verify cairn.nickel_export_cutover.source]
+          grep -q '257fafc1c746f1faf156207043a4c826bfb16d49' Cargo.lock
+          grep -q '257fafc1c746f1faf156207043a4c826bfb16d49' flake.lock
+          command -v nickel-export >/dev/null
+          # r[verify cairn.nickel_export_cutover.dual_run]
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
+          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn lifecycle check \
+            --source fixtures/structured-lifecycle/positive-bundle.ncl > lifecycle-check.json
+          grep -q '"verdict": "PASS"' lifecycle-check.json
           touch $out
         '';
 
@@ -287,6 +310,7 @@
             pkgs.rustfmt
             pkgs.clippy
             pkgs.nickel
+            nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
             slotcar.packages.${pkgs.stdenv.hostPlatform.system}.cargo-tigerstyle
           ];
         };

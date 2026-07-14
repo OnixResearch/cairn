@@ -1,8 +1,8 @@
-# Cairn Standalone Nickel Export Shell Specification
+# Nickel Export Infrastructure Specification
 
 ## Purpose
 
-Adopt the immutable standalone external Nickel export shell while preserving Cairn lifecycle semantics, generated-policy ownership, gate authority, replay, and release-readiness decisions.
+Defines the `nickel-export-infrastructure` capability.
 
 ## Requirements
 

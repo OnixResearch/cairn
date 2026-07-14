@@ -23,7 +23,6 @@ use std::{
     error::Error,
     fs,
     path::{Path, PathBuf},
-    process::Command,
 };
 
 use cairn_core::{
@@ -32,6 +31,7 @@ use cairn_core::{
 };
 use serde_json::{json, Value};
 
+use crate::nickel_export_boundary::export_json_dual_run;
 use crate::support::{
     collect_validation_spec_sources, detect_layout, has_flag, print_json, read_option,
     read_string_option, with_receipt_hash,
@@ -233,22 +233,15 @@ fn lifecycle_check_receipt(
 
 fn load_lifecycle_bundle(source: &Path) -> Result<Value, Box<dyn Error>> {
     let output = if source.extension().and_then(|value| value.to_str()) == Some("ncl") {
-        let output = Command::new("nickel")
-            .arg("export")
-            .arg("--format")
-            .arg("json")
-            .arg(source)
-            .output()?;
-        if !output.status.success() {
-            return Err(format!(
-                "nickel export failed for {}: {}{}",
-                source.display(),
-                String::from_utf8_lossy(&output.stdout),
-                String::from_utf8_lossy(&output.stderr)
-            )
-            .into());
-        }
-        output.stdout
+        // r[impl cairn.nickel_export_cutover.boundary]
+        // r[impl cairn.nickel_export_cutover.dual_run]
+        export_json_dual_run(
+            "cairn.structured-lifecycle",
+            source,
+            Path::new("target/cairn-lifecycle-export.json"),
+            false,
+        )?
+        .bytes
     } else {
         fs::read(source)?
     };

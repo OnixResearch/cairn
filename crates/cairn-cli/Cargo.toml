@@ -19,6 +19,7 @@ cairn-core = { path = "../cairn-core" }
 cap-std.workspace = true
 crossterm.workspace = true
 ed25519-dalek.workspace = true
+nickel-export-core.workspace = true
 rat-nodegraph.workspace = true
 ratatui.workspace = true
 serde.workspace = true

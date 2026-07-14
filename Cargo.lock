@@ -160,6 +160,7 @@ dependencies = [
  "cap-std",
  "crossterm 0.28.1",
  "ed25519-dalek",
+ "nickel-export-core",
  "rat-nodegraph",
  "ratatui",
  "serde",
@@ -954,6 +955,16 @@ dependencies = [
  "log",
  "wasi",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "nickel-export-core"
+version = "0.1.0"
+source = "git+https://github.com/OnixResearch/nickel-export?rev=257fafc1c746f1faf156207043a4c826bfb16d49#257fafc1c746f1faf156207043a4c826bfb16d49"
+dependencies = [
+ "blake3",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
