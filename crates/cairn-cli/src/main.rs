@@ -15,6 +15,7 @@ mod lifecycle_data;
 mod mcp;
 mod migration;
 mod native;
+mod oxide_lifecycle_patterns;
 mod plan_receipts;
 mod policy;
 mod preserves_corpus;
@@ -97,6 +98,9 @@ fn run() -> Result<(), Box<dyn Error>> {
         "release-evidence" => release_evidence::run_release_evidence(args.collect())?,
         "release-run" => release_run::run_release_run(args.collect())?,
         "lifecycle" => lifecycle_data::run_lifecycle_data(args.collect())?,
+        "lifecycle-patterns" => {
+            oxide_lifecycle_patterns::run_oxide_lifecycle_patterns(args.collect())?
+        }
         "determinism" => run_determinism(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,

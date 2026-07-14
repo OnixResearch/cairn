@@ -185,6 +185,12 @@ pub use verified::lifecycle_receipt::{
     LIFECYCLE_RECEIPT_ISSUE_SELF_HASH, LIFECYCLE_RECEIPT_ISSUE_STALE_HASH,
     LIFECYCLE_RECEIPT_ISSUE_UNSUPPORTED_VERDICT, LIFECYCLE_RECEIPT_ISSUE_WEAK_NON_CLAIM,
 };
+pub use verified::oxide_lifecycle_patterns::{
+    positive_oxide_lifecycle_patterns_fixture, validate_oxide_lifecycle_patterns_value,
+    EvidenceBundleMember, GoldenSnapshotPlan, LifecycleDocumentPlan, LifecycleSagaStep,
+    OxideLifecyclePatternBundle, OxideLifecyclePatternIssue, OxideLifecyclePatternReport,
+    OxideReferenceRow, OXIDE_LIFECYCLE_PATTERN_BOUNDARY, OXIDE_LIFECYCLE_PATTERN_SCHEMA_V1,
+};
 pub use verified::plan::{
     build_archive_plan, build_archive_plan_with_dependency_blockers, build_sync_plan,
     build_sync_plan_with_dependency_blockers, ArchivePlan, PlanAction, PlanActionKind, SyncPlan,
