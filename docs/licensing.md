@@ -10,6 +10,6 @@
 
 The permissive core must not depend on `cairn-cli`. The CLI may depend on the core. Copying a reusable template does not by itself apply the CLI license to the generated project.
 
-Complete texts are in `LICENSES/MIT.txt`, `LICENSES/Apache-2.0.txt`, and `LICENSES/AGPL-3.0-or-later.txt`.
+Complete texts are in `LICENSES/MIT.txt`, `LICENSES/Apache-2.0.txt`, and `LICENSES/AGPL-3.0-or-later.txt`. Each Cargo package directory carries the applicable text so package archives are self-contained.
 
 Prior grants remain valid. This map is distribution metadata; it does not establish contributor authority, legal compliance, source correctness, lifecycle acceptance, or release eligibility.
