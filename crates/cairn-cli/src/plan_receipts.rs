@@ -153,11 +153,26 @@ pub(crate) fn gate_report_json(
         "valid": report.issues.is_empty(),
         "issues": report.issues.iter().map(|issue| {
             json!({
+                "code": issue.code,
                 "message": issue.message,
                 "scope": issue.scope,
                 "promoted": issue.promoted,
             })
         }).collect::<Vec<_>>(),
+        "substance": report.substance.iter().map(|inventory| json!({
+            "kind": inventory.kind,
+            "path": inventory.path,
+            "substantive_lines": inventory.substantive_lines,
+            "requirement_blocks": inventory.requirement_blocks,
+            "substantive_requirement_blocks": inventory.substantive_requirement_blocks,
+            "scenario_blocks": inventory.scenario_blocks,
+            "checkbox_tasks": inventory.checkbox_tasks,
+            "substantive_tasks": inventory.substantive_tasks,
+            "task_done": inventory.task_done,
+            "task_in_progress": inventory.task_in_progress,
+            "task_todo": inventory.task_todo,
+            "malformed_dependency_markers": inventory.malformed_dependency_markers,
+        })).collect::<Vec<_>>(),
         "policy": policy.name,
         "policy_hash": canonical_json_hash(&policy.raw),
         "input_hash": input_hash,

@@ -12,7 +12,7 @@
     "fixtures/basic/cairn/changes/demo/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "5641429b26823d76dc0d70ca02beb90596990a9133cffe415a9db894d5784b65",
+  "input_hash": "dcc2118270dc945ff99e62f2d0d2d7d33d4ec671d096f68b79008ef296426788",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -46,9 +46,9 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "7b0b0abf9b8392ecbf7d1c89110b873f58ef4c7ee918c7a2e9fdfe8523d92c75",
+  "plan_hash": "b50fac4efa32e0216b3807c637aab3300a96b9f7fe8f755db7264d503ecaf8cd",
   "policy": "cairn-default",
-  "policy_hash": "f909aa28d81f894804da60b202a40538021e12ebf99f44ec757bd487bc4525d2",
+  "policy_hash": "00c4eb27d64a7507e6aa34780f7ad921f2cb79d9377721c5a7a829fb7b2e3cbf",
   "reasons": [],
-  "receipt_hash": "dad9e474aaae30c7e0dcf370cbaceeda4da9d32b120cdb081ed2d46c80e38938"
+  "receipt_hash": "ea4c979684b7442246b83110fe00bc45b6e6d6c6898e25ed28ee527d0d3075c3"
 }

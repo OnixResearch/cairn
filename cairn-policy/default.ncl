@@ -55,6 +55,16 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
       route = "auto-fix",
       promoted = "no",
     },
+    substance = {
+      proposal_minimum_substantive_lines = 1,
+      design_minimum_substantive_lines = 1,
+      minimum_requirement_blocks = 1,
+      minimum_substantive_tasks = 1,
+      placeholder_tokens = ["cairn_placeholder", "tbd", "describe why", "describe the user-visible", "describe the current state", "implement the change", "verify and archive the change"],
+      normative_tokens = ["MUST", "SHALL", "SHOULD", "MAY"],
+      dependency_marker_id = "depends",
+      dependency_target_class = "lifecycle-id",
+    },
   },
 
   report_contract = {
@@ -225,8 +235,8 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
     },
     {
       command = "gate",
-      top_level_keys = ["change", "evidence_summary", "input_hash", "issues", "layout", "policy", "policy_hash", "receipt_hash", "stage", "valid", "verdict"],
-      issue_keys = ["message", "promoted", "scope"],
+      top_level_keys = ["change", "evidence_summary", "input_hash", "issues", "layout", "policy", "policy_hash", "receipt_hash", "stage", "substance", "valid", "verdict"],
+      issue_keys = ["code", "message", "promoted", "scope"],
       hash_fields = ["input_hash", "policy_hash", "receipt_hash"],
     },
     {

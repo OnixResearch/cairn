@@ -16,9 +16,11 @@ use cairn_core::{
     build_change_detail, build_change_skeleton, build_doctor_report, build_ironspec_migration_plan,
     build_openspec_migration_plan, build_spec_detail, build_sync_plan_with_dependency_blockers,
     canonical_json_hash, changes_dir, dependency_blockers_for_change, evaluate_gate_snapshot,
-    init_artifacts, layout_name, layout_root, specs_dir, validate_changes_with_archives,
-    validate_spec_sources, ChangeDependencyGraph, ChangeStatus, DoctorSnapshot, GateStage,
-    LifecycleArtifactKind, LifecycleLayout, PlanAction, PlanActionKind,
+    evaluate_lifecycle_substance, init_artifacts, layout_name, layout_root,
+    lifecycle_substance_issues, specs_dir, validate_changes_with_archives,
+    validate_spec_source_with_policy, validate_spec_sources_with_policy, ChangeDependencyGraph,
+    ChangeStatus, DoctorSnapshot, GateStage, LifecycleArtifactKind, LifecycleLayout, PlanAction,
+    PlanActionKind,
 };
 use serde_json::{json, Value};
 
@@ -43,8 +45,9 @@ use crate::support::{
     detect_layout, execute_archive_plan, execute_sync_snapshots, file_content_manifest,
     find_change, find_spec_source, has_flag, load_policy_file, load_sync_merge_snapshots,
     mutation_gate_blockers, path_string, portable_json_hash, print_json,
-    read_change_dependency_graph, read_gate_snapshot, scan_repo, sync_changed_paths,
-    sync_merge_bindings, sync_merge_blockers, sync_mutation_manifest, with_portable_receipt_hash,
+    read_change_dependency_graph, read_gate_snapshot, scan_repo, spec_substance_inventory_json,
+    substance_inventory_json, sync_changed_paths, sync_merge_bindings, sync_merge_blockers,
+    sync_mutation_manifest, validation_findings_json, with_portable_receipt_hash,
     with_receipt_hash,
 };
 

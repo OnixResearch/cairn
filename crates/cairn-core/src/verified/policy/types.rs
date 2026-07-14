@@ -20,6 +20,7 @@ pub struct Policy {
     pub gate_ignore_archives: bool,
     pub gate_finding_scope: String,
     pub gate_finding_promoted: String,
+    pub artifact_substance_policy: ArtifactSubstancePolicy,
     pub sync_require_gate: bool,
     pub archive_require_gate: bool,
     pub migrate_require_manifest: bool,
@@ -36,6 +37,18 @@ pub struct Policy {
     pub runtime_evidence_policy: RuntimeEvidencePolicy,
     pub policy_schema_compatibility: Option<PolicySchemaCompatibilityMetadata>,
     pub raw: Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArtifactSubstancePolicy {
+    pub proposal_minimum_substantive_lines: usize,
+    pub design_minimum_substantive_lines: usize,
+    pub minimum_requirement_blocks: usize,
+    pub minimum_substantive_tasks: usize,
+    pub placeholder_tokens: Vec<String>,
+    pub normative_tokens: Vec<String>,
+    pub dependency_marker_id: String,
+    pub dependency_target_class: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

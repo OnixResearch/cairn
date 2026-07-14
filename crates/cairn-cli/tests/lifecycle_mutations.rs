@@ -372,6 +372,61 @@ fn sync_duplicate_accepted_identity_fails_closed() -> Result<(), Box<dyn Error>>
 }
 
 #[test]
+fn vacuous_lifecycle_package_blocks_sync_and_archive_without_writes() -> Result<(), Box<dyn Error>>
+{
+    // r[verify cairn.lifecycle_validation.mutation_block]
+    // r[verify cairn.lifecycle_validation.mutation_block.boundary]
+    // r[verify cairn.lifecycle_validation.task_substance.archive]
+    // r[verify cairn.lifecycle_validation.tests.negative]
+    let fixture = temp_fixture("vacuous-mutation", "fixtures/archive-ready")?;
+    let change = fixture.join("cairn/changes/ready");
+    fs::write(change.join("proposal.md"), "   \n")?;
+    fs::write(change.join("design.md"), "CAIRN_PLACEHOLDER\n")?;
+    fs::write(
+        change.join("tasks.md"),
+        "- [x] [depends:] CAIRN_PLACEHOLDER\n",
+    )?;
+    fs::write(change.join("specs/demo/spec.md"), "\n")?;
+    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_before = fs::read_to_string(&accepted_path)?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+
+    for stage in ["proposal", "design", "tasks"] {
+        let gate = run_json(&["gate", stage, "ready", "--root", root])?;
+        assert_eq!(gate["verdict"], "FAIL", "{stage}");
+        assert!(gate["issues"]
+            .as_array()
+            .ok_or("gate issues")?
+            .iter()
+            .any(|issue| issue["message"]
+                .as_str()
+                .unwrap_or_default()
+                .contains("lifecycle_validation")));
+    }
+
+    let sync = run_json(&["sync", "ready", "--root", root, "--execute"])?;
+    assert_eq!(sync["blocked"], true);
+    assert_eq!(sync["mutated"], false);
+    assert!(sync["reasons"]
+        .as_array()
+        .ok_or("sync reasons")?
+        .iter()
+        .any(|reason| reason
+            .as_str()
+            .unwrap_or_default()
+            .contains("lifecycle_validation")));
+    assert_eq!(fs::read_to_string(&accepted_path)?, accepted_before);
+
+    let archive = run_json(&["archive", "ready", "--root", root, "--execute"])?;
+    assert_eq!(archive["blocked"], true);
+    assert_eq!(archive["mutated"], false);
+    assert!(change.exists());
+    assert!(!fixture.join("cairn/archive/1970-01-01-ready").exists());
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
 fn sync_and_archive_block_unsatisfied_change_dependencies() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.change_dependency_graph.mutation_block]
     // r[verify cairn.change_dependency_graph.mutation_block.dry_run]

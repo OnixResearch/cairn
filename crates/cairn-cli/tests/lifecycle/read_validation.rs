@@ -129,6 +129,21 @@ fn validate_accepts_fixture_repo() -> Result<(), Box<dyn Error>> {
         .ok_or("spec issues array")?
         .is_empty());
     assert_eq!(value["specs_validated"], 2);
+    assert_eq!(
+        value["spec_substance"]
+            .as_array()
+            .ok_or("spec substance")?
+            .len(),
+        2
+    );
+    let task_inventory = value["substance"]
+        .as_array()
+        .ok_or("substance")?
+        .iter()
+        .find(|inventory| inventory["kind"] == "tasks")
+        .ok_or("task inventory")?;
+    assert_eq!(task_inventory["substantive_tasks"], 2);
+    assert_eq!(task_inventory["task_todo"], 2);
     Ok(())
 }
 
@@ -136,6 +151,8 @@ fn validate_accepts_fixture_repo() -> Result<(), Box<dyn Error>> {
 fn validate_rejects_weak_ears_style_specs() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.validate_ears.weak_requirement]
     // r[verify cairn.supersede.validate_ears.incomplete_scenario]
+    // r[verify cairn.lifecycle_validation.spec_substance.borrowed_strength]
+    // r[verify cairn.lifecycle_validation.spec_substance.identity]
     let root = temp_project("weak-ears")?;
     let spec_dir = root.join("cairn/specs/weak");
     fs::create_dir_all(&spec_dir)?;
@@ -147,15 +164,20 @@ fn validate_rejects_weak_ears_style_specs() -> Result<(), Box<dyn Error>> {
     let value = run_json(&["validate", "--root", root_text])?;
     assert_eq!(value["valid"], false);
     let issues = value["spec_issues"].as_array().ok_or("spec issues")?;
-    assert_eq!(issues.len(), 2);
-    assert!(issues[0]
-        .as_str()
-        .ok_or("issue text")?
-        .contains("Requirement: Weak prose missing requirement strength"));
-    assert!(issues[1]
-        .as_str()
-        .ok_or("issue text")?
-        .contains("Scenario: Missing when missing WHEN clause"));
+    assert_eq!(issues.len(), 4);
+    for expected in [
+        "Requirement: Weak prose missing requirement strength",
+        "Scenario: Missing when missing WHEN clause",
+        "lifecycle_validation.spec_substance.identity",
+        "lifecycle_validation.spec_substance.minimum_requirements",
+    ] {
+        assert!(
+            issues
+                .iter()
+                .any(|issue| issue.as_str().unwrap_or_default().contains(expected)),
+            "missing {expected}: {issues:?}"
+        );
+    }
     fs::remove_dir_all(root)?;
     Ok(())
 }

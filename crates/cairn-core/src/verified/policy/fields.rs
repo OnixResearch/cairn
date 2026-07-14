@@ -1,7 +1,8 @@
 use serde_json::Value;
 
 use super::{
-    ExemptionMarkerPolicy, PolicyError, ReceiptSchema, TaskMarker, SUPPORTED_POLICY_VERSION,
+    ArtifactSubstancePolicy, ExemptionMarkerPolicy, PolicyError, ReceiptSchema, TaskMarker,
+    SUPPORTED_POLICY_VERSION,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,6 +17,7 @@ pub(super) struct GateFields {
     pub(super) ignore_archives: bool,
     pub(super) finding_scope: String,
     pub(super) finding_promoted: String,
+    pub(super) substance: ArtifactSubstancePolicy,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -108,11 +110,48 @@ pub(super) fn gate_fields(value: &Value) -> Result<GateFields, PolicyError> {
     let gate_finding = gate_policy
         .get("finding")
         .ok_or(PolicyError::MissingField("gate_policy.finding"))?;
+    let substance = gate_policy
+        .get("substance")
+        .ok_or(PolicyError::MissingField("gate_policy.substance"))?;
     Ok(GateFields {
         stages,
         ignore_archives: is_gate_ignore_archives,
         finding_scope: string_field(gate_finding, "gate_policy.finding.scope")?,
         finding_promoted: string_field(gate_finding, "gate_policy.finding.promoted")?,
+        substance: ArtifactSubstancePolicy {
+            proposal_minimum_substantive_lines: usize_field(
+                substance,
+                "gate_policy.substance.proposal_minimum_substantive_lines",
+            )?,
+            design_minimum_substantive_lines: usize_field(
+                substance,
+                "gate_policy.substance.design_minimum_substantive_lines",
+            )?,
+            minimum_requirement_blocks: usize_field(
+                substance,
+                "gate_policy.substance.minimum_requirement_blocks",
+            )?,
+            minimum_substantive_tasks: usize_field(
+                substance,
+                "gate_policy.substance.minimum_substantive_tasks",
+            )?,
+            placeholder_tokens: string_array_field(
+                substance,
+                "gate_policy.substance.placeholder_tokens",
+            )?,
+            normative_tokens: string_array_field(
+                substance,
+                "gate_policy.substance.normative_tokens",
+            )?,
+            dependency_marker_id: string_field(
+                substance,
+                "gate_policy.substance.dependency_marker_id",
+            )?,
+            dependency_target_class: string_field(
+                substance,
+                "gate_policy.substance.dependency_target_class",
+            )?,
+        },
     })
 }
 
@@ -134,6 +173,18 @@ pub(super) fn mutation_policy_fields(value: &Value) -> Result<MutationPolicyFiel
         archive_require_gate: bool_field(archive, "mutation_policy.archive.require_passing_gate")?,
         migrate_require_manifest: bool_field(migrate, "mutation_policy.migrate.require_manifest")?,
     })
+}
+
+fn usize_field(value: &Value, field: &'static str) -> Result<usize, PolicyError> {
+    let lookup = field.rsplit('.').next().unwrap_or(field);
+    let raw = value
+        .get(lookup)
+        .and_then(Value::as_u64)
+        .ok_or(PolicyError::MissingField(field))?;
+    if raw == 0 {
+        return Err(PolicyError::InvalidField(field));
+    }
+    usize::try_from(raw).map_err(|_| PolicyError::InvalidField(field))
 }
 
 pub(super) fn bool_field(value: &Value, field: &'static str) -> Result<bool, PolicyError> {

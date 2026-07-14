@@ -11,9 +11,10 @@ use std::{
 use cairn_core::{
     archive_dir, blake3_hex, build_change_dependency_graph, build_repo_status, canonical_json_hash,
     changes_dir, evaluate_gate_snapshot, merge_delta_spec, policy_schema_compatibility_diagnostic,
-    preserves_content_hash, specs_dir, validate_policy_json, validate_spec_sources,
-    ChangeDependencyGraph, ChangeSource, ChangeStatus, DeltaMerge, GateArtifact, GateSnapshot,
-    GateStage, LifecycleLayout, Policy, RepoStatus, SpecSource, SyncPlan,
+    preserves_content_hash, specs_dir, validate_policy_json, validate_spec_sources_with_policy,
+    validation_issue_code, ArtifactSubstanceInventory, ChangeDependencyGraph, ChangeSource,
+    ChangeStatus, DeltaMerge, GateArtifact, GateSnapshot, GateStage, LifecycleLayout, Policy,
+    RepoStatus, SpecSource, SpecSubstanceInventory, SyncPlan,
 };
 use serde_json::{json, Value};
 
@@ -25,6 +26,54 @@ mod paths;
 mod receipts;
 mod scan;
 mod usage;
+
+pub(crate) fn validation_findings_json(issues: &[String]) -> Vec<Value> {
+    issues
+        .iter()
+        .map(|message| {
+            json!({
+                "code": validation_issue_code(message),
+                "message": message,
+            })
+        })
+        .collect()
+}
+
+pub(crate) fn spec_substance_inventory_json(inventories: &[SpecSubstanceInventory]) -> Vec<Value> {
+    inventories
+        .iter()
+        .map(|inventory| {
+            json!({
+                "path": inventory.path,
+                "requirement_blocks": inventory.requirement_blocks,
+                "substantive_requirement_blocks": inventory.substantive_requirement_blocks,
+                "scenario_blocks": inventory.scenario_blocks,
+            })
+        })
+        .collect()
+}
+
+pub(crate) fn substance_inventory_json(inventories: &[ArtifactSubstanceInventory]) -> Vec<Value> {
+    inventories
+        .iter()
+        .map(|inventory| {
+            json!({
+                "kind": inventory.kind,
+                "path": inventory.path,
+                "substantive_lines": inventory.substantive_lines,
+                "requirement_blocks": inventory.requirement_blocks,
+                "substantive_requirement_blocks": inventory.substantive_requirement_blocks,
+                "scenario_blocks": inventory.scenario_blocks,
+                "checkbox_tasks": inventory.checkbox_tasks,
+                "substantive_tasks": inventory.substantive_tasks,
+                "task_done": inventory.task_done,
+                "task_in_progress": inventory.task_in_progress,
+                "task_todo": inventory.task_todo,
+                "malformed_dependency_markers": inventory.malformed_dependency_markers,
+            })
+        })
+        .collect()
+}
 
 pub(crate) use args::{has_flag, read_option, read_string_option};
 pub(crate) use capability::{CapabilityRoot, CapabilityRootKind};

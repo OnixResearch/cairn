@@ -14,6 +14,7 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
     let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
     let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
+    let base_plan_unblocked = !plan.blocked;
     let merge_snapshots = load_sync_merge_snapshots(&root, selected.layout, change, &plan)?;
     plan.reasons
         .extend(sync_merge_blockers(&root, &merge_snapshots));
@@ -23,7 +24,7 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
     if plan.blocked {
         plan.actions.clear();
     }
-    if policy.sync_require_gate && !plan.blocked {
+    if policy.sync_require_gate && base_plan_unblocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
             selected.layout,

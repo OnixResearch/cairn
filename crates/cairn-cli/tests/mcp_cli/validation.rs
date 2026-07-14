@@ -1,6 +1,6 @@
-use std::error::Error;
+use std::{env, error::Error, fs};
 
-use super::common::{cairn, run_json};
+use super::common::{cairn, copy_dir_recursive, repo_root, run_json};
 
 #[test]
 fn mcp_rejects_invalid_arguments_before_dispatch() -> Result<(), Box<dyn Error>> {
@@ -66,6 +66,73 @@ fn mcp_rejects_invalid_arguments_before_dispatch() -> Result<(), Box<dyn Error>>
         stderr.contains("invalid arguments for cairn_migrate_plan: argument source must be one of openspec, ironspec"),
         "{stderr}"
     );
+    Ok(())
+}
+
+#[test]
+fn mcp_vacuous_validation_and_mutation_share_fail_closed_diagnostics() -> Result<(), Box<dyn Error>>
+{
+    // r[verify cairn.lifecycle_validation.mutation_block.consistent]
+    // r[verify cairn.lifecycle_validation.tests.negative]
+    let fixture = env::temp_dir().join(format!("cairn-mcp-vacuous-{}", std::process::id()));
+    if fixture.exists() {
+        fs::remove_dir_all(&fixture)?;
+    }
+    copy_dir_recursive(&repo_root().join("fixtures/archive-ready"), &fixture)?;
+    let change = fixture.join("cairn/changes/ready");
+    fs::write(change.join("proposal.md"), "\n")?;
+    fs::write(change.join("design.md"), "CAIRN_PLACEHOLDER\n")?;
+    fs::write(
+        change.join("tasks.md"),
+        "- [x] [depends:] CAIRN_PLACEHOLDER\n",
+    )?;
+    fs::write(change.join("specs/demo/spec.md"), "\n")?;
+    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_before = fs::read_to_string(&accepted_path)?;
+    let root = fixture.display().to_string();
+
+    let validate_input = serde_json::json!({"root": &root}).to_string();
+    let validate = run_json(&["mcp", "--call", "cairn_validate", &validate_input])?;
+    let validation_receipt = &validate["structuredContent"];
+    assert_eq!(validation_receipt["valid"], false);
+    assert!(validation_receipt["substance_findings"]
+        .as_array()
+        .ok_or("substance findings")?
+        .iter()
+        .any(|finding| finding["code"]
+            .as_str()
+            .unwrap_or_default()
+            .starts_with("lifecycle_validation.")));
+    assert!(validation_receipt["substance_issues"]
+        .as_array()
+        .ok_or("substance issues")?
+        .iter()
+        .any(|issue| issue
+            .as_str()
+            .unwrap_or_default()
+            .contains("lifecycle_validation")));
+
+    let mutation_input = serde_json::json!({"change": "ready", "root": &root}).to_string();
+    let mutation = run_json(&[
+        "mcp",
+        "--allow-mutations",
+        "--call",
+        "cairn_sync_execute",
+        &mutation_input,
+    ])?;
+    let mutation_receipt = &mutation["structuredContent"];
+    assert_eq!(mutation_receipt["blocked"], true);
+    assert_eq!(mutation_receipt["mutated"], false);
+    assert!(mutation_receipt["reasons"]
+        .as_array()
+        .ok_or("mutation reasons")?
+        .iter()
+        .any(|reason| reason
+            .as_str()
+            .unwrap_or_default()
+            .contains("lifecycle_validation")));
+    assert_eq!(fs::read_to_string(accepted_path)?, accepted_before);
+    fs::remove_dir_all(fixture)?;
     Ok(())
 }
 

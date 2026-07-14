@@ -58,7 +58,7 @@ nix run path:$PWD#cairn -- gate design <slug> --root .
 nix run path:$PWD#cairn -- gate tasks <slug> --root .
 ```
 
-Task markers must reference requirement IDs present in that change delta or use explicit dependency markers. Cross-spec refs to already-accepted IDs can fail the tasks gate.
+Replace every generated `CAIRN_PLACEHOLDER` before gating. Requirement blocks need exactly one bare `r[...]` ID and normative requirement-body prose. Checkbox tasks need a substantive label plus a delta requirement reference or a structurally valid dependency marker; checked state does not override substance failures. Cross-spec refs to already-accepted IDs can fail the tasks gate.
 
 ## FCIS boundary
 
@@ -101,14 +101,14 @@ Expected result: no matches.
   - policy read/parse failures are reported as JSON checks rather than process failures.
 - Validation:
   - `cairn validate --root PATH`
-  - receipt fields include `issues`, `change_issues`, `spec_issues`, and `specs_validated`.
-  - accepted specs and active delta specs are checked for EARS-style quality.
+  - receipt fields include machine-readable `findings`, `spec_findings`, and `substance_findings` alongside compatibility `issues`, `change_issues`, `spec_issues`, `spec_substance`, `substance_issues`, `substance`, and `specs_validated`.
+  - accepted specs and active delta specs are checked for EARS-style quality and policy-backed structural substance.
 - Gate policy:
   - `cairn gate proposal <change> --root PATH`
   - `cairn gate design <change> --root PATH`
   - `cairn gate tasks <change> --root PATH`
   - `cairn gate tasks <change> --root PATH --run-probes` is denied by default unless policy later enables inline probe execution.
-  - stable public receipt fields are `change`, `stage`, `verdict`, `valid`, `issues`, `policy`, `layout`, `policy_hash`, `input_hash`, and `receipt_hash`.
+  - stable public receipt fields are `change`, `stage`, `verdict`, `valid`, `issues`, `substance`, `policy`, `layout`, `policy_hash`, `input_hash`, and `receipt_hash`; each gate issue includes a stable `code`.
   - AgentKit/OpenGate is a policy-shape reference only; Cairn owns the Nickel policy under `cairn-policy/` and does not depend on AgentKit at runtime.
   - Nickel owns generated receipt/action/hash schema declarations, marker vocabulary, exemption marker required/date fields, and semantic policy invariants. Runtime Rust consumes `cairn-policy/generated/cairn-policy.json`; do not add runtime Nickel execution.
   - Gates read proposal/design/tasks/delta specs in the CLI, pass a pure snapshot to core, and fail on unknown `r[...]` references, unlinked tasks at the tasks gate, or malformed `gate-exempt[...]` markers that do not match the generated exemption marker contract.

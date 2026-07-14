@@ -130,6 +130,7 @@ fn gate_reports_stage_verdicts() -> Result<(), Box<dyn Error>> {
     assert_eq!(pass["verdict"], "PASS");
     assert_eq!(pass["valid"], true);
     assert_eq!(pass["policy"], "cairn-default");
+    assert_eq!(pass["substance"].as_array().ok_or("substance")?.len(), 4);
     assert_eq!(pass["evidence_summary"]["mode"], "advisory");
     assert!(pass["evidence_summary"].get("docs_only").is_some());
 
@@ -151,6 +152,7 @@ fn gate_reports_stage_verdicts() -> Result<(), Box<dyn Error>> {
         messages,
         vec!["missing: missing proposal.md", "missing: missing design.md"]
     );
+    assert_eq!(fail["issues"][0]["code"], "cairn.gate.validation");
     assert_eq!(fail["issues"][0]["scope"], "tasks");
     assert_eq!(fail["issues"][0]["promoted"], "no");
     Ok(())
@@ -203,7 +205,7 @@ fn gate_accepts_bounded_exemptions_and_dependency_tasks() -> Result<(), Box<dyn 
     let change_dir = fixture.join("cairn/changes/demo");
     fs::write(
         change_dir.join("proposal.md"),
-        "## Why\n\ngate-exempt[reason=test owner=agent until=2026-12-31]\n",
+        "## Why\n\nThis proposal has reviewed content. gate-exempt[reason=test owner=agent until=2026-12-31]\n",
     )?;
     fs::write(
         change_dir.join("tasks.md"),

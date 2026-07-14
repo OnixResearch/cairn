@@ -65,20 +65,31 @@ pub(super) fn mcp_doctor(input: &Value) -> Result<Value, Box<dyn Error>> {
     let policy_path = mcp_policy(input);
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
-    let spec_issues =
-        validate_spec_sources(&collect_validation_spec_sources(&root, selected.layout)?);
     let policy_result = load_policy_file(policy_path.clone());
-    let (policy_name, policy_error, change_issue_count) = match policy_result {
-        Ok(policy) => (
-            Some(policy.name.clone()),
-            None,
-            validate_changes_with_archives(
+    let (policy_name, policy_error, validation_issue_count) = match policy_result {
+        Ok(policy) => {
+            let change_issue_count = validate_changes_with_archives(
                 &status.changes,
                 &collect_archived_change_ids(&root, selected.layout)?,
                 &policy,
             )
-            .len(),
-        ),
+            .len();
+            let spec_issue_count = validate_spec_sources_with_policy(
+                &collect_validation_spec_sources(&root, selected.layout)?,
+                &policy.artifact_substance_policy,
+            )
+            .len();
+            let mut substance_issue_count = 0;
+            for change in &status.changes {
+                let snapshot = read_gate_snapshot(&root, selected.layout, change.clone())?;
+                substance_issue_count += lifecycle_substance_issues(&snapshot, &policy).len();
+            }
+            (
+                Some(policy.name.clone()),
+                None,
+                change_issue_count + spec_issue_count + substance_issue_count,
+            )
+        }
         Err(error) => (None, Some(error.to_string()), 0),
     };
     let report = build_doctor_report(DoctorSnapshot {
@@ -96,7 +107,7 @@ pub(super) fn mcp_doctor(input: &Value) -> Result<Value, Box<dyn Error>> {
         policy_error,
         spec_count: status.specs.len(),
         change_count: status.changes.len(),
-        validation_issue_count: spec_issues.len() + change_issue_count,
+        validation_issue_count,
     });
     let mut value = doctor_report_json(&report);
     value["mcp"] = json!({"read_only": true, "destructive": false});
@@ -111,12 +122,37 @@ pub(super) fn mcp_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
     let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
     let change_issues = validate_changes_with_archives(&status.changes, &archived_changes, &policy);
     let spec_sources = collect_validation_spec_sources(&root, selected.layout)?;
-    let spec_issues = validate_spec_sources(&spec_sources);
-    let mut issues = Vec::with_capacity(change_issues.len() + spec_issues.len());
+    let mut spec_issues = Vec::new();
+    let mut spec_substance = Vec::new();
+    for source in &spec_sources {
+        let (inventory, source_issues) =
+            validate_spec_source_with_policy(source, &policy.artifact_substance_policy);
+        spec_substance.push(inventory);
+        spec_issues.extend(source_issues);
+    }
+    spec_issues.sort();
+    spec_issues.dedup();
+    spec_substance.sort_by(|left, right| left.path.cmp(&right.path));
+    let mut substance_issues = Vec::new();
+    let mut substance = Vec::new();
+    for change in &status.changes {
+        let snapshot = read_gate_snapshot(&root, selected.layout, change.clone())?;
+        let report = evaluate_lifecycle_substance(&snapshot, &policy);
+        substance_issues.extend(report.issues);
+        substance.extend(report.artifacts);
+    }
+    substance_issues.sort();
+    substance_issues.dedup();
+    substance.sort_by(|left, right| left.path.cmp(&right.path).then(left.kind.cmp(&right.kind)));
+    let mut issues =
+        Vec::with_capacity(change_issues.len() + spec_issues.len() + substance_issues.len());
     issues.extend(change_issues.iter().cloned());
     issues.extend(spec_issues.iter().cloned());
+    issues.extend(substance_issues.iter().cloned());
+    issues.sort();
+    issues.dedup();
     Ok(with_receipt_hash(
-        json!({"valid": issues.is_empty(), "issues": issues, "change_issues": change_issues, "spec_issues": spec_issues, "changes": status.changes.len(), "specs_validated": spec_sources.len(), "policy": policy.name, "layout": layout_name(selected.layout), "mcp": {"read_only": true, "destructive": false}}),
+        json!({"valid": issues.is_empty(), "findings": validation_findings_json(&issues), "issues": issues, "change_issues": change_issues, "spec_findings": validation_findings_json(&spec_issues), "spec_issues": spec_issues, "spec_substance": spec_substance_inventory_json(&spec_substance), "substance_findings": validation_findings_json(&substance_issues), "substance_issues": substance_issues, "substance": substance_inventory_json(&substance), "changes": status.changes.len(), "specs_validated": spec_sources.len(), "policy": policy.name, "layout": layout_name(selected.layout), "mcp": {"read_only": true, "destructive": false}}),
     ))
 }
 

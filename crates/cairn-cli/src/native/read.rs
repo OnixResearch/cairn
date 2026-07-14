@@ -3,16 +3,17 @@ use std::error::Error;
 use cairn_core::{
     archive_dir, build_change_dependency_graph, build_change_detail, build_change_list,
     build_doctor_report, build_spec_detail, build_spec_list, changes_dir,
-    filter_changes_by_metadata, layout_root, next_ready_change, render_change_dependency_graph_dot,
-    render_change_dependency_graph_mermaid, specs_dir, validate_changes_with_archives,
-    validate_spec_sources, ChangeDependencyNextReady, DoctorSnapshot, LifecycleLayout,
+    filter_changes_by_metadata, layout_root, lifecycle_substance_issues, next_ready_change,
+    render_change_dependency_graph_dot, render_change_dependency_graph_mermaid, specs_dir,
+    validate_changes_with_archives, validate_spec_sources_with_policy, ChangeDependencyNextReady,
+    DoctorSnapshot, LifecycleLayout,
 };
 use serde_json::json;
 
 use crate::support::{
     collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
     default_policy_path, detect_layout, find_change, find_spec_source, load_policy_file,
-    path_string, print_json, read_option, read_string_option, scan_repo,
+    path_string, print_json, read_gate_snapshot, read_option, read_string_option, scan_repo,
     with_portable_receipt_hash,
 };
 
@@ -33,15 +34,27 @@ pub(crate) fn run_doctor(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let policy_path = read_option(args, "--policy", default_policy_path());
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
-    let spec_sources = collect_validation_spec_sources(&root, selected.layout)?;
-    let spec_issues = validate_spec_sources(&spec_sources);
     let policy_result = load_policy_file(policy_path.clone());
-    let (policy_name, policy_error, change_issue_count) = match policy_result {
+    let (policy_name, policy_error, validation_issue_count) = match policy_result {
         Ok(policy) => {
             let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
-            let change_issues =
-                validate_changes_with_archives(&status.changes, &archived_changes, &policy);
-            (Some(policy.name), None, change_issues.len())
+            let change_issue_count =
+                validate_changes_with_archives(&status.changes, &archived_changes, &policy).len();
+            let spec_issue_count = validate_spec_sources_with_policy(
+                &collect_validation_spec_sources(&root, selected.layout)?,
+                &policy.artifact_substance_policy,
+            )
+            .len();
+            let mut substance_issue_count = 0;
+            for change in &status.changes {
+                let snapshot = read_gate_snapshot(&root, selected.layout, change.clone())?;
+                substance_issue_count += lifecycle_substance_issues(&snapshot, &policy).len();
+            }
+            (
+                Some(policy.name),
+                None,
+                change_issue_count + spec_issue_count + substance_issue_count,
+            )
         }
         Err(error) => (None, Some(error.to_string()), 0),
     };
@@ -60,7 +73,7 @@ pub(crate) fn run_doctor(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         policy_error,
         spec_count: status.specs.len(),
         change_count: status.changes.len(),
-        validation_issue_count: spec_issues.len() + change_issue_count,
+        validation_issue_count,
     };
     let report = build_doctor_report(snapshot);
     print_json(doctor_report_json(&report))

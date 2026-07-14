@@ -17,6 +17,20 @@ fn parses_generated_default_policy_text() {
     assert_eq!(policy.gate_finding_promoted, "no");
     assert!(policy.sync_require_gate);
     assert!(policy.archive_require_gate);
+    assert_eq!(
+        policy
+            .artifact_substance_policy
+            .proposal_minimum_substantive_lines,
+        1
+    );
+    assert_eq!(
+        policy.artifact_substance_policy.dependency_marker_id,
+        "depends"
+    );
+    assert_eq!(
+        policy.artifact_substance_policy.dependency_target_class,
+        "lifecycle-id"
+    );
     assert!(policy.migrate_require_manifest);
     assert!(policy.require_receipt_hashes);
     assert!(policy
@@ -63,6 +77,41 @@ fn parses_generated_default_policy_text() {
         .expect("generated policy includes schema compatibility metadata");
     assert_eq!(metadata.schema_version, CURRENT_POLICY_SCHEMA_VERSION);
     assert_eq!(metadata.field_set_digest, CURRENT_POLICY_FIELD_SET_DIGEST);
+}
+
+#[test]
+fn rejects_invalid_artifact_substance_policy() {
+    // r[verify cairn.lifecycle_validation.tests.negative]
+    let source = include_str!("../../../../../cairn-policy/generated/cairn-policy.json");
+
+    let mut zero_threshold: Value = serde_json::from_str(source).expect("policy JSON");
+    zero_threshold["gate_policy"]["substance"]["minimum_substantive_tasks"] = Value::from(0);
+    assert!(matches!(
+        validate_policy_json(zero_threshold),
+        Err(PolicyError::InvalidField(
+            "gate_policy.substance.minimum_substantive_tasks"
+        ))
+    ));
+
+    let mut missing_marker: Value = serde_json::from_str(source).expect("policy JSON");
+    missing_marker["gate_policy"]["substance"]["dependency_marker_id"] =
+        Value::String("unknown-marker".to_string());
+    assert!(matches!(
+        validate_policy_json(missing_marker),
+        Err(PolicyError::InvalidField(
+            "gate_policy.substance.dependency_marker_id"
+        ))
+    ));
+
+    let mut unsupported_target: Value = serde_json::from_str(source).expect("policy JSON");
+    unsupported_target["gate_policy"]["substance"]["dependency_target_class"] =
+        Value::String("ambient-path".to_string());
+    assert!(matches!(
+        validate_policy_json(unsupported_target),
+        Err(PolicyError::InvalidField(
+            "gate_policy.substance.dependency_target_class"
+        ))
+    ));
 }
 
 #[test]

@@ -169,7 +169,7 @@ fn unlinked_task_issues(
     let mut issues = Vec::with_capacity(artifact.markdown.lines().count());
     for (line_number, line) in artifact.markdown.lines().enumerate() {
         let trimmed = line.trim_start();
-        if !is_checkbox_task(trimmed) || has_dependency_marker(trimmed, policy) {
+        if !is_checkbox_task(trimmed) || has_valid_dependency_marker(trimmed, policy) {
             continue;
         }
         let refs = reference_markers(trimmed);
@@ -195,19 +195,36 @@ fn is_checkbox_task(trimmed: &str) -> bool {
         || trimmed.starts_with("- [~]")
 }
 
-fn has_dependency_marker(trimmed: &str, policy: &Policy) -> bool {
+fn has_valid_dependency_marker(trimmed: &str, policy: &Policy) -> bool {
     policy.task_marker_tokens.iter().any(|marker| {
-        if marker.id != "depends" {
+        if marker.id != policy.artifact_substance_policy.dependency_marker_id {
             return false;
         }
         match marker.kind.as_str() {
             "prefix" | "depends-prefix" => {
-                trimmed.contains(dependency_marker_prefix(&marker.token))
+                valid_dependency_target(trimmed, dependency_marker_prefix(&marker.token))
             }
             "literal" => trimmed.contains(&marker.token),
             _ => false,
         }
     })
+}
+
+fn valid_dependency_target(line: &str, prefix: &str) -> bool {
+    let Some(start) = line.find(prefix) else {
+        return false;
+    };
+    let after_prefix = &line[start + prefix.len()..];
+    let Some(end) = after_prefix.find(']') else {
+        return false;
+    };
+    let target = after_prefix[..end].trim();
+    let bytes = target.as_bytes();
+    bytes.first().is_some_and(u8::is_ascii_alphanumeric)
+        && bytes.last().is_some_and(u8::is_ascii_alphanumeric)
+        && bytes
+            .iter()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
 }
 
 fn dependency_marker_prefix(token: &str) -> &str {

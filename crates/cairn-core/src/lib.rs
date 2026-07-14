@@ -200,11 +200,11 @@ pub use verified::plan::{
 };
 pub use verified::policy::{
     classify_policy_schema_compatibility, default_policy_schema_metadata, parse_policy_json,
-    policy_schema_compatibility_diagnostic, policy_schema_metadata, validate_policy_json, Policy,
-    PolicyError, PolicySchemaCompatibilityMetadata, PolicySchemaCompatibilityReport,
-    SteelOrchestrationPolicy, SteelOrchestrationProfile, TraceabilityPolicy,
-    CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_SCHEMA_VERSION, DEFAULT_POLICY_REFRESH_COMMAND,
-    POLICY_SCHEMA_METADATA_FIELD, SUPPORTED_POLICY_VERSION,
+    policy_schema_compatibility_diagnostic, policy_schema_metadata, validate_policy_json,
+    ArtifactSubstancePolicy, Policy, PolicyError, PolicySchemaCompatibilityMetadata,
+    PolicySchemaCompatibilityReport, SteelOrchestrationPolicy, SteelOrchestrationProfile,
+    TraceabilityPolicy, CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_SCHEMA_VERSION,
+    DEFAULT_POLICY_REFRESH_COMMAND, POLICY_SCHEMA_METADATA_FIELD, SUPPORTED_POLICY_VERSION,
 };
 pub use verified::preserves_evidence_ingest::{
     default_preserves_evidence_non_claims, measure_preserves_evidence_envelope_bytes,
@@ -323,9 +323,12 @@ pub use verified::trellis_proof_readiness::{
     TRELLIS_PROOF_ROLE_RECORDED,
 };
 pub use verified::validation::{
-    change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, validate_changes,
-    validate_changes_with_archives, validate_spec_source, validate_spec_sources,
-    EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
+    change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot,
+    evaluate_lifecycle_substance, lifecycle_substance_issues, validate_changes,
+    validate_changes_with_archives, validate_spec_source, validate_spec_source_with_policy,
+    validate_spec_sources, validate_spec_sources_with_policy, validation_issue_code,
+    ArtifactSubstanceInventory, EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport,
+    GateSnapshot, GateStage, LifecycleSubstanceReport, SpecSubstanceInventory,
 };
 pub use verified::workspace_contract_matrix::{
     evaluate_workspace_contract_matrix_readiness, is_workspace_contract_mode,

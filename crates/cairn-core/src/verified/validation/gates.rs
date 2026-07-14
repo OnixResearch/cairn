@@ -1,7 +1,10 @@
 use crate::verified::{policy::Policy, repo::ChangeStatus};
 
 use super::changes::change_issues;
-use super::references::reference_hygiene_issues;
+use super::{
+    references::reference_hygiene_issues,
+    substance::{artifact_substance_issues, ArtifactSubstanceInventory},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GateStage {
@@ -22,6 +25,7 @@ impl GateStage {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GateIssue {
+    pub code: String,
     pub message: String,
     pub scope: String,
     pub promoted: String,
@@ -33,6 +37,7 @@ pub struct GateReport {
     pub stage: String,
     pub verdict: String,
     pub issues: Vec<GateIssue>,
+    pub substance: Vec<ArtifactSubstanceInventory>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -125,6 +130,8 @@ pub fn evaluate_gate_snapshot(
                 .map(|message| gate_issue(message, policy)),
         );
     }
+    let (substance_issues, substance) = artifact_substance_issues(snapshot, stage, policy);
+    issues.extend(substance_issues);
     issues.extend(reference_hygiene_issues(snapshot, stage, policy));
     let verdict = if issues.is_empty() { "PASS" } else { "FAIL" }.to_string();
     GateReport {
@@ -132,6 +139,7 @@ pub fn evaluate_gate_snapshot(
         stage: stage.as_str().to_string(),
         verdict,
         issues,
+        substance,
     }
 }
 
@@ -168,8 +176,23 @@ fn required_artifact_issues(
     issues
 }
 
+pub fn validation_issue_code(message: &str) -> String {
+    const LIFECYCLE_DIAGNOSTIC_PREFIX: &str = "lifecycle_validation.";
+    const GENERIC_GATE_ISSUE_CODE: &str = "cairn.gate.validation";
+    let Some(start) = message.find(LIFECYCLE_DIAGNOSTIC_PREFIX) else {
+        return GENERIC_GATE_ISSUE_CODE.to_string();
+    };
+    message[start..]
+        .chars()
+        .take_while(|character| {
+            character.is_ascii_alphanumeric() || matches!(character, '.' | '_' | '-')
+        })
+        .collect()
+}
+
 pub(super) fn gate_issue(message: String, policy: &Policy) -> GateIssue {
     GateIssue {
+        code: validation_issue_code(&message),
         message,
         scope: policy.gate_finding_scope.clone(),
         promoted: policy.gate_finding_promoted.clone(),

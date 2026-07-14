@@ -896,6 +896,7 @@ r[cairn.supersede.release_readiness.determinism_replay]
 
 ### Requirement: Agent-run receipts
 
+r[cairn.supersede.agent_receipt_replay_evidence.schema]
 Cairn SHALL validate deterministic agent-run receipts that bind agent completion evidence to replay-checked Cairn surfaces.
 
 #### Scenario: Replay evidence schema
@@ -1098,49 +1099,9 @@ r[cairn.supersede.determinism_replay.groups.docs]
 - WHEN Cairn changes group policy, selection, receipts, or failure semantics
 - THEN tests, public schema checks, and operator docs SHALL cover the stable group behavior
 
-### Requirement: Agent-run receipts
-
-Cairn SHALL validate deterministic agent-run receipts that bind agent completion evidence to replay-checked Cairn surfaces.
-
-#### Scenario: Replay evidence schema
-
-- **GIVEN** an agent wrapper records completion evidence for a Cairn task
-- **WHEN** an agent-run receipt is produced
-- **THEN** it SHALL include a `replay_evidence` object containing `replay_receipt_hash`, `replay_policy_hash`, `replay_selected_cases`, and `replay_verdict`
-- **AND** the receipt MAY include a display-only `replay_artifact_path`
-- **AND** the agent receipt hash SHALL remain the canonical BLAKE3 hash of receipt content excluding only `receipt_hash`
-r[cairn.supersede.agent_receipt_replay_evidence.schema]
-
-#### Scenario: Replay evidence validation
-
-- **GIVEN** an agent-run receipt cites deterministic replay evidence
-- **WHEN** `agent-receipt validate` or the MCP validation tool validates an agent-run receipt
-- **THEN** Cairn SHALL verify that replay evidence cites a passing replay verdict, a BLAKE3-shaped replay receipt hash, the current generated policy hash, and the required replay case coverage
-- **AND** the validation receipt SHALL expose the current replay policy hash and required replay cases used for that decision
-r[cairn.supersede.agent_receipt_replay_evidence.validation]
-
-#### Scenario: Deterministic replay evidence failures
-
-- **GIVEN** an agent-run receipt has absent, stale, failed, or incomplete replay evidence
-- **WHEN** Cairn validates the receipt
-- **THEN** agent receipt validation SHALL fail deterministically with stable issue codes and messages
-r[cairn.supersede.agent_receipt_replay_evidence.failures]
-
-#### Scenario: Replay oracle covers receipt validation
-
-- **GIVEN** the policy-owned replay plan includes agent receipt validation
-- **WHEN** `cairn determinism replay` runs the policy-owned replay plan
-- **THEN** the replay oracle SHALL continue to cover `agent-receipt validate` using a replay-evidence-positive receipt fixture
-r[cairn.supersede.agent_receipt_replay_evidence.replay]
-
-#### Scenario: Operator documentation and schema
-
-- **GIVEN** operators inspect Cairn public docs or generated policy schemas
-- **WHEN** they review agent receipt validation requirements
-- **THEN** the stable replay-evidence fields and validation failure semantics SHALL be documented and tested
-r[cairn.supersede.agent_receipt_replay_evidence.docs]
-
 ### Requirement: Determinism replay oracle
+
+r[cairn.supersede.determinism_replay.groups.policy]
 
 Cairn SHALL provide a deterministic replay oracle for policy-owned read-only and dry-run surfaces.
 
@@ -1182,6 +1143,7 @@ r[cairn.supersede.determinism_replay.groups.docs]
 
 ### Requirement: Agent-run receipt replay evidence
 
+r[cairn.supersede.agent_receipt_replay_group_coverage.validation]
 Agent-run receipt validation MUST derive required replay evidence coverage from the generated policy `determinism_replay_policy.groups["agent"]` instead of a hidden Rust case list, while preserving deterministic machine-readable validation receipts.
 
 #### Scenario: Policy-derived agent group coverage
@@ -1227,6 +1189,7 @@ r[cairn.supersede.agent_receipt_replay_group_coverage.replay]
 
 ### Requirement: Determinism replay entropy inventory
 
+r[cairn.supersede.determinism_entropy_inventory.policy]
 The system MUST disclose, normalize, or reject replay-relevant entropy through a policy-owned inventory that agents and CI can verify without seeing secret values.
 
 #### Scenario: Policy-owned entropy inventory
@@ -1283,6 +1246,7 @@ r[cairn.supersede.determinism_entropy_inventory.archive]
 
 ### Requirement: Determinism replay oracle
 
+r[cairn.supersede.replay_environment_attestation.policy]
 The system MUST emit a stable, policy-owned environment attestation in replay receipts so agents and CI can prove which reviewed execution facts shaped replay without leaking host-specific paths, raw environment values, or secrets.
 
 #### Scenario: Replay receipt includes environment attestation
@@ -1313,6 +1277,7 @@ r[cairn.supersede.replay_environment_attestation.secret_safe]
 
 ### Requirement: Agent receipt replay evidence
 
+r[cairn.supersede.replay_environment_attestation.agent]
 Agent receipt validation SHOULD accept optional replay environment attestation hash evidence and report or reject malformed attestation evidence deterministically without making the field mandatory for older wrappers.
 
 #### Scenario: Agent receipt binds optional replay attestation hash
@@ -1347,6 +1312,7 @@ r[cairn.supersede.replay_environment_attestation.archive]
 
 ### Requirement: Determinism replay oracle
 
+r[cairn.supersede.replay_receipt_verification.contract]
 The system MUST provide a read-only replay receipt verification command so saved replay evidence can be validated later by agents, CI, and release gates without rerunning replay cases.
 
 #### Scenario: Saved replay receipt verifies successfully

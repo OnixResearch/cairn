@@ -194,18 +194,18 @@ pub fn validate_change_name(name: &str) -> Result<(), String> {
 
 pub fn proposal_template(name: &str) -> String {
     format!(
-        "## Why\n\nDescribe why `{name}` is needed.\n\n## What Changes\n\n- Describe the user-visible or operator-visible change.\n\n## Impact\n\n- **Files**: TBD\n- **Testing**: TBD\n"
+        "## Why\n\nCAIRN_PLACEHOLDER: Describe why `{name}` is needed.\n\n## What Changes\n\n- CAIRN_PLACEHOLDER: Describe the user-visible or operator-visible change.\n\n## Impact\n\n- **Files**: CAIRN_PLACEHOLDER: list affected files\n- **Testing**: CAIRN_PLACEHOLDER: list required checks\n"
     )
 }
 
 pub fn design_template(name: &str) -> String {
     format!(
-        "## Context\n\nDescribe the current state for `{name}`.\n\n## Decisions\n\n### 1. TBD\n\n**Choice:** TBD\n\n**Rationale:** TBD\n\n## Risks / Trade-offs\n\n- TBD\n"
+        "## Context\n\nCAIRN_PLACEHOLDER: Describe the current state for `{name}`.\n\n## Decisions\n\n### Decision: CAIRN_PLACEHOLDER\n\n**Choice:** CAIRN_PLACEHOLDER: replace with the reviewed choice\n\n**Rationale:** CAIRN_PLACEHOLDER: replace with the rationale\n\n## Risks / Trade-offs\n\n- CAIRN_PLACEHOLDER: replace with a bounded risk or `None identified`\n"
     )
 }
 
 pub fn tasks_template() -> String {
-    "## Phase 1: Implementation\n\n- [ ] [serial] Implement the change.\n- [ ] [serial] Verify and archive the change.\n".to_string()
+    "## Phase 1: Implementation\n\n- [ ] [serial] CAIRN_PLACEHOLDER: replace with a task linked to r[requirement.id].\n- [ ] [serial] CAIRN_PLACEHOLDER: replace with verification and archive work linked to r[requirement.id].\n".to_string()
 }
 
 fn dir(path: &str) -> LifecycleArtifact {

@@ -139,11 +139,7 @@ fn collect_spec_sources_from_root(
     let mut specs = Vec::with_capacity(spec_paths.len());
     for relative_path in spec_paths {
         let markdown = capability.read_to_string(&relative_path)?;
-        let path = if relative_dir == Path::new(".") {
-            display_root.join(&relative_path)
-        } else {
-            display_root.join(relative_dir).join(&relative_path)
-        };
+        let path = display_root.join(&relative_path);
         specs.push(SpecSource {
             id: spec_id(spec_id_root, &path),
             path: path_string(path),
@@ -392,7 +388,7 @@ pub(crate) fn mutation_gate_blockers(
         }
     }
     blockers.extend(
-        validate_spec_sources(&validation_sources)
+        validate_spec_sources_with_policy(&validation_sources, &policy.artifact_substance_policy)
             .into_iter()
             .map(|issue| format!("validation: {issue}")),
     );

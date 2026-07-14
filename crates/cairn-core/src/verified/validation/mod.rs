@@ -9,13 +9,21 @@ mod gates;
 mod markdown;
 mod references;
 mod spec;
+mod substance;
 
 pub use changes::{change_issues, validate_changes, validate_changes_with_archives};
 pub use gates::{
-    classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, EvidenceStrengthSummary,
-    GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
+    classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, validation_issue_code,
+    EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
 };
-pub use spec::{validate_spec_source, validate_spec_sources};
+pub use spec::{
+    validate_spec_source, validate_spec_source_with_policy, validate_spec_sources,
+    validate_spec_sources_with_policy, SpecSubstanceInventory,
+};
+pub use substance::{
+    evaluate_lifecycle_substance, lifecycle_substance_issues, ArtifactSubstanceInventory,
+    LifecycleSubstanceReport,
+};
 
 #[cfg(test)]
 mod tests {
@@ -27,8 +35,8 @@ mod tests {
         FUNCTION_ADDRESS_MODE_DISABLED,
     };
     use crate::verified::policy::{
-        ExemptionMarkerPolicy, Policy, ReceiptSchema, SteelOrchestrationPolicy, TaskMarker,
-        TraceabilityPolicy,
+        ArtifactSubstancePolicy, ExemptionMarkerPolicy, Policy, ReceiptSchema,
+        SteelOrchestrationPolicy, TaskMarker, TraceabilityPolicy,
     };
     use crate::verified::repo::{ChangeStatus, SpecSource, TaskCounts};
     use crate::verified::runtime_evidence::{
@@ -72,6 +80,21 @@ mod tests {
             gate_ignore_archives: true,
             gate_finding_scope: "tasks".to_string(),
             gate_finding_promoted: "no".to_string(),
+            artifact_substance_policy: ArtifactSubstancePolicy {
+                proposal_minimum_substantive_lines: 1,
+                design_minimum_substantive_lines: 1,
+                minimum_requirement_blocks: 1,
+                minimum_substantive_tasks: 1,
+                placeholder_tokens: vec!["cairn_placeholder".to_string()],
+                normative_tokens: vec![
+                    "MUST".to_string(),
+                    "SHALL".to_string(),
+                    "SHOULD".to_string(),
+                    "MAY".to_string(),
+                ],
+                dependency_marker_id: "depends".to_string(),
+                dependency_target_class: "lifecycle-id".to_string(),
+            },
             sync_require_gate: true,
             archive_require_gate: true,
             migrate_require_manifest: true,
@@ -267,6 +290,9 @@ mod tests {
 
     #[test]
     fn gate_snapshot_accepts_known_refs_dependencies_and_bounded_exemptions() {
+        // r[verify cairn.lifecycle_validation.artifact_substance.positive]
+        // r[verify cairn.lifecycle_validation.task_substance]
+        // r[verify cairn.lifecycle_validation.dependency_marker_shape.valid]
         let mut change = change();
         change.has_design = true;
         change.delta_specs = vec!["openspec/changes/demo/specs/demo/spec.md".to_string()];
@@ -274,11 +300,12 @@ mod tests {
             change,
             proposal: Some(GateArtifact {
                 path: "proposal.md".to_string(),
-                markdown: "gate-exempt[reason=test owner=agent until=2026-12-31]".to_string(),
+                markdown: "This proposal defines bounded behavior. gate-exempt[reason=test owner=agent until=2026-12-31]".to_string(),
             }),
             design: Some(GateArtifact {
                 path: "design.md".to_string(),
-                markdown: "r[demo.behavior]".to_string(),
+                markdown: "r[demo.behavior] The design chooses an explicit implementation."
+                    .to_string(),
             }),
             tasks: Some(GateArtifact {
                 path: "tasks.md".to_string(),
@@ -286,7 +313,8 @@ mod tests {
             }),
             delta_specs: vec![GateArtifact {
                 path: "spec.md".to_string(),
-                markdown: "r[demo.behavior] The system MUST behave.".to_string(),
+                markdown: "### Requirement: Demo behavior\nr[demo.behavior] The system MUST behave."
+                    .to_string(),
             }],
         };
 
@@ -319,5 +347,181 @@ mod tests {
                 "openspec/specs/demo/spec.md: Scenario: Missing when missing WHEN clause(s)".to_string(),
             ]
         );
+    }
+
+    #[test]
+    fn policy_aware_spec_substance_accepts_a_well_formed_requirement() {
+        // r[verify cairn.lifecycle_validation.spec_substance]
+        // r[verify cairn.lifecycle_validation.tests]
+        // r[verify cairn.lifecycle_validation.tests.positive]
+        let source = SpecSource {
+            id: "demo".to_string(),
+            path: "spec.md".to_string(),
+            markdown: include_str!("../../../../../fixtures/lifecycle-substance/positive-spec.md")
+                .to_string(),
+        };
+        let (inventory, issues) = validate_spec_source_with_policy(
+            &source,
+            &policy(true, "strict").artifact_substance_policy,
+        );
+        assert!(issues.is_empty(), "{issues:?}");
+        assert_eq!(inventory.requirement_blocks, 1);
+        assert_eq!(inventory.substantive_requirement_blocks, 1);
+        assert_eq!(inventory.scenario_blocks, 1);
+    }
+
+    #[test]
+    fn policy_aware_spec_substance_rejects_vacuity_borrowed_strength_and_bad_identity() {
+        // r[verify cairn.lifecycle_validation.spec_substance.empty]
+        // r[verify cairn.lifecycle_validation.spec_substance.borrowed_strength]
+        // r[verify cairn.lifecycle_validation.spec_substance.identity]
+        // r[verify cairn.lifecycle_validation.tests.negative]
+        let fixtures = [
+            (
+                "empty",
+                include_str!("../../../../../fixtures/lifecycle-substance/negative-empty-spec.md"),
+            ),
+            (
+                "fenced",
+                include_str!("../../../../../fixtures/lifecycle-substance/negative-fenced-spec.md"),
+            ),
+            (
+                "commented",
+                include_str!(
+                    "../../../../../fixtures/lifecycle-substance/negative-commented-spec.md"
+                ),
+            ),
+            (
+                "borrowed",
+                include_str!(
+                    "../../../../../fixtures/lifecycle-substance/negative-borrowed-strength.md"
+                ),
+            ),
+            (
+                "multiple",
+                include_str!(
+                    "../../../../../fixtures/lifecycle-substance/negative-multiple-ids.md"
+                ),
+            ),
+        ];
+        let substance_policy = policy(true, "strict").artifact_substance_policy;
+        for (id, markdown) in fixtures {
+            let source = SpecSource {
+                id: id.to_string(),
+                path: format!("{id}.md"),
+                markdown: markdown.to_string(),
+            };
+            let (inventory, issues) = validate_spec_source_with_policy(&source, &substance_policy);
+            assert!(!issues.is_empty(), "{id}: {inventory:?}");
+            assert_eq!(inventory.substantive_requirement_blocks, 0, "{id}");
+        }
+    }
+
+    #[test]
+    fn vacuous_artifacts_and_malformed_dependencies_fail_the_tasks_gate() {
+        // r[verify cairn.lifecycle_validation.artifact_substance.empty]
+        // r[verify cairn.lifecycle_validation.spec_substance.empty]
+        // r[verify cairn.lifecycle_validation.task_substance.empty]
+        // r[verify cairn.lifecycle_validation.task_substance.placeholder]
+        // r[verify cairn.lifecycle_validation.dependency_marker_shape.invalid]
+        // r[verify cairn.lifecycle_validation.mutation_block.consistent]
+        let mut vacuous_change = change();
+        vacuous_change.has_design = true;
+        vacuous_change.delta_specs = vec!["spec.md".to_string()];
+        vacuous_change.task_counts = Some(TaskCounts {
+            total: 1,
+            done: 1,
+            in_progress: 0,
+            todo: 0,
+            unmarked: 0,
+        });
+        let snapshot = GateSnapshot {
+            change: vacuous_change,
+            proposal: Some(GateArtifact {
+                path: "proposal.md".to_string(),
+                markdown: "CAIRN_PLACEHOLDER".to_string(),
+            }),
+            design: Some(GateArtifact {
+                path: "design.md".to_string(),
+                markdown: "   \n".to_string(),
+            }),
+            tasks: Some(GateArtifact {
+                path: "tasks.md".to_string(),
+                markdown: "```markdown\n- [x] [depends:ignored] fenced example\n```\n<!-- - [x] [depends:ignored] commented example -->\n- [x] [depends:] CAIRN_PLACEHOLDER\n- [x] [depends:unclosed task\n- [x] [depends:../unsupported] invalid target"
+                    .to_string(),
+            }),
+            delta_specs: vec![GateArtifact {
+                path: "spec.md".to_string(),
+                markdown: String::new(),
+            }],
+        };
+        let report = evaluate_gate_snapshot(&snapshot, GateStage::Tasks, &policy(true, "strict"));
+        assert_eq!(report.verdict, "FAIL");
+        let messages = report
+            .issues
+            .iter()
+            .map(|issue| issue.message.as_str())
+            .collect::<Vec<_>>();
+        for code in [
+            "lifecycle_validation.artifact_substance.proposal",
+            "lifecycle_validation.artifact_substance.design",
+            "lifecycle_validation.spec_substance.zero_requirements",
+            "lifecycle_validation.task_substance.minimum",
+            "lifecycle_validation.dependency_marker_shape.invalid",
+        ] {
+            assert!(
+                messages.iter().any(|message| message.contains(code)),
+                "missing {code}: {messages:?}"
+            );
+        }
+        assert_eq!(report.substance.len(), 4);
+    }
+
+    #[test]
+    fn checked_task_progress_cannot_override_a_substance_blocker() {
+        // r[verify cairn.lifecycle_validation.task_progress_non_authority.reduced]
+        // r[verify cairn.lifecycle_validation.task_progress_non_authority.blocked]
+        let mut blocked_change = change();
+        blocked_change.has_design = true;
+        blocked_change.delta_specs = vec!["spec.md".to_string()];
+        blocked_change.task_counts = Some(TaskCounts {
+            total: 1,
+            done: 1,
+            in_progress: 0,
+            todo: 0,
+            unmarked: 0,
+        });
+        let snapshot = GateSnapshot {
+            change: blocked_change,
+            proposal: Some(GateArtifact {
+                path: "proposal.md".to_string(),
+                markdown: "Substantive proposal".to_string(),
+            }),
+            design: Some(GateArtifact {
+                path: "design.md".to_string(),
+                markdown: "Substantive design".to_string(),
+            }),
+            tasks: Some(GateArtifact {
+                path: "tasks.md".to_string(),
+                markdown: "- [x] [serial] CAIRN_PLACEHOLDER r[demo.behavior]".to_string(),
+            }),
+            delta_specs: vec![GateArtifact {
+                path: "spec.md".to_string(),
+                markdown: "### Requirement: Demo\nr[demo.behavior] The system MUST behave."
+                    .to_string(),
+            }],
+        };
+        let report = evaluate_gate_snapshot(&snapshot, GateStage::Tasks, &policy(true, "strict"));
+        assert_eq!(report.verdict, "FAIL");
+        assert!(report.issues.iter().any(|issue| issue
+            .message
+            .contains("lifecycle_validation.task_substance")));
+        let tasks = report
+            .substance
+            .iter()
+            .find(|inventory| inventory.kind == "tasks")
+            .expect("tasks inventory");
+        assert_eq!(tasks.task_done, 1);
+        assert_eq!(tasks.substantive_tasks, 0);
     }
 }

@@ -30,8 +30,8 @@ use std::{
 use cairn_core::{
     all_probe_assertions_passed, blake3_hex, canonical_json_hash, changes_dir,
     evaluate_probe_assertions, layout_name, probe_declaration_hash, probe_issue_json,
-    probe_receipt_hash, validate_probe_declaration, validate_probe_receipt, GateIssue,
-    LifecycleLayout, Policy, PROBE_RECEIPT_SCHEMA_V1,
+    probe_receipt_hash, validate_probe_declaration, validate_probe_receipt, validation_issue_code,
+    GateIssue, LifecycleLayout, Policy, PROBE_RECEIPT_SCHEMA_V1,
 };
 use serde_json::{json, Value};
 
@@ -231,6 +231,7 @@ pub(crate) fn gate_probe_issues(
     Ok(issues
         .into_iter()
         .map(|message| GateIssue {
+            code: validation_issue_code(&message),
             message,
             scope: policy.gate_finding_scope.clone(),
             promoted: policy.gate_finding_promoted.clone(),

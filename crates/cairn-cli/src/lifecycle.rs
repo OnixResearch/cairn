@@ -39,6 +39,7 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut report = evaluate_gate_snapshot(&snapshot, stage, &policy);
     if run_probes_requested {
         report.issues.push(GateIssue {
+            code: "cairn.gate.inline_probe_disabled".to_string(),
             message: "inline probe execution is disabled by policy".to_string(),
             scope: policy.gate_finding_scope.clone(),
             promoted: policy.gate_finding_promoted.clone(),
@@ -93,6 +94,7 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
     let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
     let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
+    let base_plan_unblocked = !plan.blocked;
 
     // Load and compute every destination before the first possible write.
     // Semantic blockers are all-or-nothing across a multi-spec change.
@@ -106,7 +108,7 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
         plan.actions.clear();
     }
 
-    if policy.sync_require_gate && !plan.blocked {
+    if policy.sync_require_gate && base_plan_unblocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
             selected.layout,

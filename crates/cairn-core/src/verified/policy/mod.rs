@@ -19,8 +19,9 @@ pub use schema_compatibility::{
     POLICY_SCHEMA_METADATA_FIELD,
 };
 pub use types::{
-    ExemptionMarkerPolicy, Policy, ReceiptSchema, SteelOrchestrationPolicy,
-    SteelOrchestrationProfile, TaskMarker, TraceabilityPolicy, SUPPORTED_POLICY_VERSION,
+    ArtifactSubstancePolicy, ExemptionMarkerPolicy, Policy, ReceiptSchema,
+    SteelOrchestrationPolicy, SteelOrchestrationProfile, TaskMarker, TraceabilityPolicy,
+    SUPPORTED_POLICY_VERSION,
 };
 
 #[cfg(test)]

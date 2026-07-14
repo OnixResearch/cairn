@@ -52,6 +52,7 @@ r[cairn.determinism.preserves_receipt_canonicalization.validation.focused]
 
 ### Requirement: Preserves receipt canonicalization
 
+r[cairn.determinism.preserves_receipt_consumer.agent_run_internal_hash]
 Cairn SHALL keep Preserves receipt canonicalization additive and internal until a specific public/stored surface is explicitly promoted.
 
 #### Scenario: Agent-run fixture has an internal Preserves hash consumer

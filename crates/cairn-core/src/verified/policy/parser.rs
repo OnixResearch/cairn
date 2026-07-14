@@ -31,6 +31,19 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
     let task_marker = task_marker_fields(&value)?;
     let task_marker_tokens = task_markers(&value)?;
     let gate = gate_fields(&value)?;
+    if !task_marker_tokens
+        .iter()
+        .any(|marker| marker.id == gate.substance.dependency_marker_id)
+    {
+        return Err(PolicyError::InvalidField(
+            "gate_policy.substance.dependency_marker_id",
+        ));
+    }
+    if gate.substance.dependency_target_class != "lifecycle-id" {
+        return Err(PolicyError::InvalidField(
+            "gate_policy.substance.dependency_target_class",
+        ));
+    }
     let mutation = mutation_policy_fields(&value)?;
     let should_require_receipt_hashes = super::fields::bool_field(
         value
@@ -59,6 +72,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         gate_ignore_archives: gate.ignore_archives,
         gate_finding_scope: gate.finding_scope,
         gate_finding_promoted: gate.finding_promoted,
+        artifact_substance_policy: gate.substance,
         sync_require_gate: mutation.sync_require_gate,
         archive_require_gate: mutation.archive_require_gate,
         migrate_require_manifest: mutation.migrate_require_manifest,
