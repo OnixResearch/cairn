@@ -115,8 +115,8 @@ Expected result: no matches.
 - Sync/archive:
   - `sync <change>` and `archive <change>` are dry-run by default.
   - `--execute` is required for mutation.
-  - executed sync merges delta requirement sections into accepted specs and preserves accepted title/purpose/`## Requirements` wrapper content; do not expect partial delta docs to replace accepted spec files.
-  - stable public plan receipt fields are `actions`, `blocked`, `change`, `dry_run`, `input_hash`, `layout`, `mutated`, `plan_hash`, `policy`, `policy_hash`, `reasons`, and `receipt_hash`; sync receipts also include `delta_specs`.
+  - executed sync merges explicit ADDED/MODIFIED/REMOVED requirement sections into accepted specs by stable `r[...]` ID and preserves accepted title/purpose/`## Requirements` wrapper content; full-spec-shaped, empty, ambiguous, conflicting, or malformed deltas fail closed before any write.
+  - stable public plan receipt fields are `actions`, `blocked`, `change`, `dry_run`, `input_hash`, `layout`, `mutated`, `plan_hash`, `policy`, `policy_hash`, `reasons`, and `receipt_hash`; sync receipts also include `delta_specs` and `merge_preflight` source/pre-state/operation/result bindings.
   - sync/archive action entries expose stable `kind`, `path`, and `description` fields.
   - `--execute` refuses mutation when the configured gate adds blockers to an otherwise unblocked plan.
   - blocked plans must not mutate, even with `--execute`.
@@ -204,7 +204,7 @@ Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix c
 
 - Direct host `cargo` may be unavailable; use `nix develop -c ...`.
 - Nix flakes snapshot tracked/staged files. Stage new source/doc files before `nix flake check` if the check needs them.
-- `cairn sync <change> --execute` can report success without promoting a direct/full spec-shaped change body when the change spec lacks explicit delta headings. Before archive commit, search accepted specs for new `r[...]` IDs; if absent, manually append/merge the archived requirement text, rerun Cairn validation and traceability coverage, then commit the repair with the archive.
+- `cairn sync <change>` requires explicit `## ADDED Requirements`, `## MODIFIED Requirements`, or `## REMOVED Requirements` operations with one stable bare requirement ID per block. If `merge_preflight` reports blockers, repair the delta shape or identity conflict and rerun the dry-run; never substitute a manual post-sync accepted-spec patch for a blocked semantic plan. See `docs/sync-delta-merge.md`.
 - Historical archives and compatibility code may mention legacy lifecycle names; do not churn those unless the task is explicitly a migration/rename cleanup.
 - Slotcar Nix checks need a C compiler/linker; keep `pkgs.stdenv.cc` in check inputs.
 - The canonical repo at `/home/brittonr/git/cairn` has origin `onixresearch/cairn`; after verified slices, commit and push `main`.

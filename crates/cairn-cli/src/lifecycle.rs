@@ -2,20 +2,21 @@ use std::{error::Error, path::PathBuf};
 
 use cairn_core::{
     build_archive_plan_with_dependency_blockers, build_sync_plan_with_dependency_blockers,
-    classify_gate_evidence, dependency_blockers_for_change, evaluate_gate_snapshot, GateIssue,
-    GateStage, PlanAction, PlanActionKind,
+    canonical_json_hash, classify_gate_evidence, dependency_blockers_for_change,
+    evaluate_gate_snapshot, GateIssue, GateStage, PlanAction, PlanActionKind,
 };
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::native::change_status_json;
 use crate::plan_receipts::{archive_plan_json, gate_input_json, gate_report_json, sync_plan_json};
 use crate::probe::gate_probe_issues;
 use crate::support::{
     archive_mutation_manifest, default_policy_path, detect_layout, execute_archive_plan,
-    execute_sync_plan, file_content_manifest, find_change, has_flag, load_policy_file,
-    mutation_gate_blockers, path_string, portable_json_hash, print_json,
-    read_change_dependency_graph, read_gate_snapshot, read_option, sync_mutation_manifest,
-    sync_mutation_paths, tree_content_paths, with_portable_receipt_hash,
+    execute_sync_snapshots, file_content_manifest, find_change, has_flag, load_policy_file,
+    load_sync_merge_snapshots, mutation_gate_blockers, path_string, portable_json_hash, print_json,
+    read_change_dependency_graph, read_gate_snapshot, read_option, sync_changed_paths,
+    sync_merge_bindings, sync_merge_blockers, sync_mutation_manifest, tree_content_paths,
+    with_portable_receipt_hash,
 };
 
 pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -89,13 +90,22 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
     let policy = load_policy_file(policy_path)?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
     let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
     let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
-    let sync_paths = sync_mutation_paths(&root, selected.layout, change, &plan);
-    let before_manifest = file_content_manifest(&root, &sync_paths);
-    let mut mutation_manifest = Value::Null;
+
+    // Load and compute every destination before the first possible write.
+    // Semantic blockers are all-or-nothing across a multi-spec change.
+    let merge_snapshots = load_sync_merge_snapshots(&root, selected.layout, change, &plan)?;
+    plan.reasons
+        .extend(sync_merge_blockers(&root, &merge_snapshots));
+    plan.reasons.sort();
+    plan.reasons.dedup();
+    plan.blocked = !plan.reasons.is_empty();
+    if plan.blocked {
+        plan.actions.clear();
+    }
+
     if policy.sync_require_gate && !plan.blocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
@@ -111,13 +121,30 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
             plan.actions.clear();
         }
     }
+
+    let merge_bindings = sync_merge_bindings(&root, &merge_snapshots);
+    let input_hash = portable_json_hash(
+        &root,
+        &json!({
+            "change": change_status_json(&change_status),
+            "merge_preflight": merge_bindings,
+            "policy": policy.name,
+            "policy_hash": canonical_json_hash(&policy.raw),
+        }),
+    );
+    let changed_paths = sync_changed_paths(&merge_snapshots);
+    let before_manifest = file_content_manifest(&root, &changed_paths);
+    let mut mutation_manifest = Value::Null;
+
     if is_execute {
         plan.dry_run = false;
         if !plan.blocked {
-            execute_sync_plan(&root, selected.layout, change, &plan)?;
-            plan.mutated = true;
-            mutation_manifest =
-                sync_mutation_manifest(&root, selected.layout, change, &plan, &before_manifest);
+            let changed_files = execute_sync_snapshots(&merge_snapshots)?;
+            plan.mutated = changed_files > 0;
+            if plan.mutated {
+                mutation_manifest =
+                    sync_mutation_manifest(&root, &merge_snapshots, &before_manifest);
+            }
         }
     }
     print_json(with_portable_receipt_hash(
@@ -128,6 +155,7 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
             &policy,
             &plan,
             &input_hash,
+            &merge_bindings,
             mutation_manifest,
         ),
     ))

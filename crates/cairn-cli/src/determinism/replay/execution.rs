@@ -237,8 +237,16 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
             let change = replay_change_arg(case, "sync")?;
             let policy = load_policy_file(default_policy_path().into())?;
             let change_status = find_change(root.to_path_buf(), selected.layout, change)?;
-            let input_hash = portable_json_hash(root, &change_status_json(&change_status));
             let mut plan = build_sync_plan(&change_status);
+            let merge_snapshots = load_sync_merge_snapshots(root, selected.layout, change, &plan)?;
+            plan.reasons
+                .extend(sync_merge_blockers(root, &merge_snapshots));
+            plan.reasons.sort();
+            plan.reasons.dedup();
+            plan.blocked = !plan.reasons.is_empty();
+            if plan.blocked {
+                plan.actions.clear();
+            }
             if policy.sync_require_gate && !plan.blocked {
                 plan.reasons.extend(mutation_gate_blockers(
                     root,
@@ -254,6 +262,16 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
                     plan.actions.clear();
                 }
             }
+            let merge_bindings = sync_merge_bindings(root, &merge_snapshots);
+            let input_hash = portable_json_hash(
+                root,
+                &json!({
+                    "change": change_status_json(&change_status),
+                    "merge_preflight": merge_bindings,
+                    "policy": policy.name,
+                    "policy_hash": canonical_json_hash(&policy.raw),
+                }),
+            );
             Ok(with_portable_receipt_hash(
                 root,
                 sync_plan_json(
@@ -262,6 +280,7 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
                     &policy,
                     &plan,
                     &input_hash,
+                    &merge_bindings,
                     Value::Null,
                 ),
             ))

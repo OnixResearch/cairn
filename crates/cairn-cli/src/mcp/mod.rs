@@ -40,10 +40,12 @@ use crate::plan_receipts::{
 };
 use crate::support::{
     collect_archived_change_ids, collect_validation_spec_sources, default_policy_path,
-    detect_layout, execute_archive_plan, execute_sync_plan, find_change, find_spec_source,
-    has_flag, load_policy_file, mutation_gate_blockers, path_string, portable_json_hash,
-    print_json, read_change_dependency_graph, read_gate_snapshot, scan_repo,
-    with_portable_receipt_hash, with_receipt_hash,
+    detect_layout, execute_archive_plan, execute_sync_snapshots, file_content_manifest,
+    find_change, find_spec_source, has_flag, load_policy_file, load_sync_merge_snapshots,
+    mutation_gate_blockers, path_string, portable_json_hash, print_json,
+    read_change_dependency_graph, read_gate_snapshot, scan_repo, sync_changed_paths,
+    sync_merge_bindings, sync_merge_blockers, sync_mutation_manifest, with_portable_receipt_hash,
+    with_receipt_hash,
 };
 
 const MCP_PROTOCOL_VERSION: &str = "2024-11-05";

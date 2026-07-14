@@ -1,15 +1,26 @@
 use super::*;
 
-pub(crate) fn execute_sync_plan(
+#[derive(Debug, Clone)]
+pub(crate) struct SyncMergeSnapshot {
+    pub source: PathBuf,
+    pub destination: PathBuf,
+    pub delta_markdown: String,
+    pub accepted_markdown: Option<String>,
+    pub merge: DeltaMerge,
+}
+
+pub(crate) fn load_sync_merge_snapshots(
     root: &Path,
     layout: LifecycleLayout,
     change: &str,
     plan: &SyncPlan,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<Vec<SyncMergeSnapshot>, Box<dyn Error>> {
+    // r[impl cairn.sync_archive.delta_merge.mutation_truth]
     let delta_root = root.join(changes_dir(layout)).join(change).join("specs");
     let specs_root = root.join(specs_dir(layout));
-    for action in &plan.actions {
-        let source = PathBuf::from(&action.path);
+    let mut snapshots = Vec::with_capacity(plan.delta_specs.len());
+    for source_path in &plan.delta_specs {
+        let source = PathBuf::from(source_path);
         let relative = source.strip_prefix(&delta_root).map_err(|_| {
             format!(
                 "delta spec {} is outside expected change specs root {}",
@@ -18,9 +29,6 @@ pub(crate) fn execute_sync_plan(
             )
         })?;
         let destination = specs_root.join(relative);
-        if let Some(parent) = destination.parent() {
-            fs::create_dir_all(parent)?;
-        }
         let delta_markdown = fs::read_to_string(&source).map_err(|source_error| {
             format!(
                 "failed to read delta spec {}: {source_error}",
@@ -41,16 +49,107 @@ pub(crate) fn execute_sync_plan(
             .parent()
             .map(path_string)
             .unwrap_or_else(|| path_string(relative));
-        let merged = merge_delta_spec(accepted_markdown.as_deref(), &delta_markdown, &spec_id);
-        fs::write(&destination, merged.markdown).map_err(|source_error| {
+        let merge = merge_delta_spec(accepted_markdown.as_deref(), &delta_markdown, &spec_id);
+        snapshots.push(SyncMergeSnapshot {
+            source,
+            destination,
+            delta_markdown,
+            accepted_markdown,
+            merge,
+        });
+    }
+    Ok(snapshots)
+}
+
+pub(crate) fn sync_merge_blockers(root: &Path, snapshots: &[SyncMergeSnapshot]) -> Vec<String> {
+    let mut blockers = snapshots
+        .iter()
+        .flat_map(|snapshot| {
+            let source = safe_relative_path(root, &snapshot.source);
+            snapshot.merge.diagnostics.iter().map(move |diagnostic| {
+                format!("{source}: {}: {}", diagnostic.code, diagnostic.message)
+            })
+        })
+        .collect::<Vec<_>>();
+    blockers.sort();
+    blockers.dedup();
+    blockers
+}
+
+pub(crate) fn sync_merge_bindings(root: &Path, snapshots: &[SyncMergeSnapshot]) -> Value {
+    // r[impl cairn.sync_archive.delta_merge.receipt_binding]
+    json!({
+        "documents": snapshots.iter().map(|snapshot| json!({
+            "source": safe_relative_path(root, &snapshot.source),
+            "destination": safe_relative_path(root, &snapshot.destination),
+            "delta_hash": snapshot.merge.delta_hash,
+            "accepted_before_exists": snapshot.accepted_markdown.is_some(),
+            "accepted_before_hash": snapshot.merge.accepted_hash,
+            "expected_after_hash": snapshot.merge.result_hash,
+            "changed": snapshot.merge.changed,
+            "blocked": snapshot.merge.blocked,
+            "operations": snapshot.merge.operations,
+            "outcomes": snapshot.merge.outcomes,
+            "diagnostics": snapshot.merge.diagnostics,
+        })).collect::<Vec<_>>(),
+    })
+}
+
+pub(crate) fn execute_sync_snapshots(
+    snapshots: &[SyncMergeSnapshot],
+) -> Result<usize, Box<dyn Error>> {
+    // Recheck every source and destination before the first write so a stale
+    // semantic preflight cannot authorize a partially drifted operation set.
+    for snapshot in snapshots {
+        let current_delta = fs::read_to_string(&snapshot.source).map_err(|source_error| {
             format!(
-                "failed to sync {} to {}: {source_error}",
-                source.display(),
-                destination.display()
+                "failed to re-read delta spec {}: {source_error}",
+                snapshot.source.display()
             )
         })?;
+        if current_delta != snapshot.delta_markdown {
+            return Err(format!(
+                "delta spec changed after sync preflight: {}",
+                snapshot.source.display()
+            )
+            .into());
+        }
+        let current_accepted = if snapshot.destination.exists() {
+            Some(
+                fs::read_to_string(&snapshot.destination).map_err(|source_error| {
+                    format!(
+                        "failed to re-read accepted spec {}: {source_error}",
+                        snapshot.destination.display()
+                    )
+                })?,
+            )
+        } else {
+            None
+        };
+        if current_accepted != snapshot.accepted_markdown {
+            return Err(format!(
+                "accepted spec changed after sync preflight: {}",
+                snapshot.destination.display()
+            )
+            .into());
+        }
     }
-    Ok(())
+
+    let mut changed_files = 0;
+    for snapshot in snapshots.iter().filter(|snapshot| snapshot.merge.changed) {
+        if let Some(parent) = snapshot.destination.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(&snapshot.destination, &snapshot.merge.markdown).map_err(|source_error| {
+            format!(
+                "failed to sync {} to {}: {source_error}",
+                snapshot.source.display(),
+                snapshot.destination.display()
+            )
+        })?;
+        changed_files += 1;
+    }
+    Ok(changed_files)
 }
 
 pub(crate) fn execute_archive_plan(
@@ -109,34 +208,20 @@ fn is_archive_date(date: &str) -> bool {
             .all(|(index, byte)| index == 4 || index == 7 || byte.is_ascii_digit())
 }
 
-pub(crate) fn sync_mutation_paths(
-    root: &Path,
-    layout: LifecycleLayout,
-    change: &str,
-    plan: &SyncPlan,
-) -> Vec<PathBuf> {
-    let delta_root = root.join(changes_dir(layout)).join(change).join("specs");
-    let specs_root = root.join(specs_dir(layout));
-    plan.actions
+pub(crate) fn sync_changed_paths(snapshots: &[SyncMergeSnapshot]) -> Vec<PathBuf> {
+    snapshots
         .iter()
-        .filter_map(|action| {
-            let source = PathBuf::from(&action.path);
-            source
-                .strip_prefix(&delta_root)
-                .ok()
-                .map(|relative| specs_root.join(relative))
-        })
+        .filter(|snapshot| snapshot.merge.changed)
+        .map(|snapshot| snapshot.destination.clone())
         .collect()
 }
 
 pub(crate) fn sync_mutation_manifest(
     root: &Path,
-    layout: LifecycleLayout,
-    change: &str,
-    plan: &SyncPlan,
+    snapshots: &[SyncMergeSnapshot],
     before: &Value,
 ) -> Value {
-    let paths = sync_mutation_paths(root, layout, change, plan);
+    let paths = sync_changed_paths(snapshots);
     let after = file_content_manifest(root, &paths);
     json!({
         "kind": "sync",

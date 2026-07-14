@@ -91,7 +91,10 @@ pub use verified::content_addressed::{
     NamePointerReport, CIRCUIT_PRIMITIVE_SCHEMA_V1, DOWNSTREAM_PILOT_SCHEMA_V1,
     EXPORT_BUNDLE_SCHEMA_V1, FUNCTION_OBJECT_SCHEMA_V1, NAME_POINTER_SCHEMA_V1,
 };
-pub use verified::delta_merge::{merge_delta_spec, DeltaMerge};
+pub use verified::delta_merge::{
+    merge_delta_spec, DeltaMerge, DeltaMergeDiagnostic, DeltaOperation, DeltaOperationKind,
+    DeltaOperationOutcome, DeltaOperationState,
+};
 pub use verified::developer_experience::{
     onboarding_templates, plan_prompt_scaffold, plan_reverse_spec_discovery,
     plan_template_application, DiscoveryCandidate, DiscoveryPlan, DiscoverySnapshot, FilePlan,

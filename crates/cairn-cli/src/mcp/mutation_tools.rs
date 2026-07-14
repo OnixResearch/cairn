@@ -4,16 +4,25 @@ use super::*;
 pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.mcp_server.plan_tools.lifecycle]
     // r[impl cairn.supersede.mcp_server.mutation_guard.enabled]
+    // r[impl cairn.sync_archive.delta_merge.mutation_truth]
     let root = mcp_root(input);
     let change = mcp_required_string(input, "change")?;
     reject_selector_escape(change)?;
     let policy = load_policy_file(mcp_policy(input))?;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
-    let input_hash = portable_json_hash(&root, &change_status_json(&change_status));
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
     let dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
     let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
+    let merge_snapshots = load_sync_merge_snapshots(&root, selected.layout, change, &plan)?;
+    plan.reasons
+        .extend(sync_merge_blockers(&root, &merge_snapshots));
+    plan.reasons.sort();
+    plan.reasons.dedup();
+    plan.blocked = !plan.reasons.is_empty();
+    if plan.blocked {
+        plan.actions.clear();
+    }
     if policy.sync_require_gate && !plan.blocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
@@ -29,11 +38,28 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
             plan.actions.clear();
         }
     }
+    let merge_bindings = sync_merge_bindings(&root, &merge_snapshots);
+    let input_hash = portable_json_hash(
+        &root,
+        &json!({
+            "change": change_status_json(&change_status),
+            "merge_preflight": merge_bindings,
+            "policy": policy.name,
+            "policy_hash": canonical_json_hash(&policy.raw),
+        }),
+    );
+    let changed_paths = sync_changed_paths(&merge_snapshots);
+    let before_manifest = file_content_manifest(&root, &changed_paths);
+    let mut mutation_manifest = Value::Null;
     if execute {
         plan.dry_run = false;
         if !plan.blocked {
-            execute_sync_plan(&root, selected.layout, change, &plan)?;
-            plan.mutated = true;
+            let changed_files = execute_sync_snapshots(&merge_snapshots)?;
+            plan.mutated = changed_files > 0;
+            if plan.mutated {
+                mutation_manifest =
+                    sync_mutation_manifest(&root, &merge_snapshots, &before_manifest);
+            }
         }
     }
     let mut value = sync_plan_json(
@@ -42,7 +68,8 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
         &policy,
         &plan,
         &input_hash,
-        Value::Null,
+        &merge_bindings,
+        mutation_manifest,
     );
     value["mcp"] = json!({"read_only": !execute, "destructive": execute});
     Ok(with_portable_receipt_hash(&root, value))

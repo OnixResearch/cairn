@@ -6,16 +6,46 @@
     "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "07e89adaa910b0e70903cbd02b7c51dfa6e3952f28022015542d0e9156a0550c",
+  "input_hash": "27ec2b0a903a60723cc262625d2f7d87feef0976419363a3b2122bcf2b3bff9f",
   "layout": "cairn",
+  "merge_preflight": {
+    "documents": [
+      {
+        "accepted_before_exists": true,
+        "accepted_before_hash": "d692bb2f563c6a8bceb6f8bf2e996b5ca83f606e4561045acef183e1006402d5",
+        "blocked": false,
+        "changed": true,
+        "delta_hash": "955cf3001768246f8a989dcd7792271b38d849dae791e484a93b4b2e00d10b76",
+        "destination": "cairn/specs/demo/spec.md",
+        "diagnostics": [],
+        "expected_after_hash": "f374c9bb541461cb167851b2e670e1ff641ccb5b7f573431bdd692d4c679fb04",
+        "operations": [
+          {
+            "block_hash": "48b1b97426e4f7cda988d3af0d1c6ebf0d3edf4a84f0e24c474a30158420c035",
+            "heading": "### Requirement: Missing-artifact behavior",
+            "kind": "added",
+            "requirement_id": "demo.missing_artifact"
+          }
+        ],
+        "outcomes": [
+          {
+            "kind": "added",
+            "requirement_id": "demo.missing_artifact",
+            "state": "applied"
+          }
+        ],
+        "source": "cairn/changes/missing/specs/demo/spec.md"
+      }
+    ]
+  },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "00d0b684a3cfc986c849ef449d56bcc121c5712c34f2e37a21fa9573c9499566",
+  "plan_hash": "2bf3f02dfec513791432582e911fec7e70cb0d914494e91af5eae1a7650d459f",
   "policy": "cairn-default",
-  "policy_hash": "10d913848c62452412777811f7013ff33e54afaed56fac5a70ee174c67e95ab4",
+  "policy_hash": "f909aa28d81f894804da60b202a40538021e12ebf99f44ec757bd487bc4525d2",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "b8059e8d4c7b0712bd081011a16a1814788f00baca805597e287ade610e96509"
+  "receipt_hash": "c45592c9f983d53bf3b5107b9298e070db927bcff4f55c929f3d557b23ac4d01"
 }

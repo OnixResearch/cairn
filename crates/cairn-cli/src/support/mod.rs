@@ -12,8 +12,8 @@ use cairn_core::{
     archive_dir, blake3_hex, build_change_dependency_graph, build_repo_status, canonical_json_hash,
     changes_dir, evaluate_gate_snapshot, merge_delta_spec, policy_schema_compatibility_diagnostic,
     preserves_content_hash, specs_dir, validate_policy_json, validate_spec_sources,
-    ChangeDependencyGraph, ChangeSource, ChangeStatus, GateArtifact, GateSnapshot, GateStage,
-    LifecycleLayout, Policy, RepoStatus, SpecSource, SyncPlan,
+    ChangeDependencyGraph, ChangeSource, ChangeStatus, DeltaMerge, GateArtifact, GateSnapshot,
+    GateStage, LifecycleLayout, Policy, RepoStatus, SpecSource, SyncPlan,
 };
 use serde_json::{json, Value};
 
@@ -30,8 +30,9 @@ pub(crate) use args::{has_flag, read_option, read_string_option};
 pub(crate) use capability::{CapabilityRoot, CapabilityRootKind};
 pub(crate) use layout::{default_policy_path, detect_layout, load_policy_file};
 pub(crate) use mutation::{
-    archive_mutation_manifest, execute_archive_plan, execute_sync_plan, sync_mutation_manifest,
-    sync_mutation_paths,
+    archive_mutation_manifest, execute_archive_plan, execute_sync_snapshots,
+    load_sync_merge_snapshots, sync_changed_paths, sync_merge_bindings, sync_merge_blockers,
+    sync_mutation_manifest,
 };
 pub(crate) use paths::{
     collect_files, file_content_manifest, path_string, portable_json_hash, portable_text,

@@ -12,13 +12,43 @@
     "fixtures/basic/cairn/changes/demo/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "0d5c469dd74aa54c559b340c5cc851d2097dcff0dca9cbd0e087c7c0deb60491",
+  "input_hash": "5641429b26823d76dc0d70ca02beb90596990a9133cffe415a9db894d5784b65",
   "layout": "cairn",
+  "merge_preflight": {
+    "documents": [
+      {
+        "accepted_before_exists": true,
+        "accepted_before_hash": "89bbfc267aa6e363ab1a8eeef964ef628519557fbc874c9acaf3c46288b98600",
+        "blocked": false,
+        "changed": true,
+        "delta_hash": "0597e17429f8fff8a325226eae381542e2cc357a702e1e1ece9c768a9ef1a9db",
+        "destination": "cairn/specs/demo/spec.md",
+        "diagnostics": [],
+        "expected_after_hash": "fdb7614934331d4cb17973fc0fee6b121d2e7d2695bf372ddc8bed0f933a7b3f",
+        "operations": [
+          {
+            "block_hash": "075ec81b5693c5d44734aee4a28e3fad8e0cd5a67c684430aa3d18ac465b0050",
+            "heading": "### Requirement: Demo behavior",
+            "kind": "added",
+            "requirement_id": "demo.behavior"
+          }
+        ],
+        "outcomes": [
+          {
+            "kind": "added",
+            "requirement_id": "demo.behavior",
+            "state": "applied"
+          }
+        ],
+        "source": "cairn/changes/demo/specs/demo/spec.md"
+      }
+    ]
+  },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "ec4df0b0d9779dc86e3d2500245380fc00b9c12068784f62fce18baf5174fff5",
+  "plan_hash": "7b0b0abf9b8392ecbf7d1c89110b873f58ef4c7ee918c7a2e9fdfe8523d92c75",
   "policy": "cairn-default",
-  "policy_hash": "10d913848c62452412777811f7013ff33e54afaed56fac5a70ee174c67e95ab4",
+  "policy_hash": "f909aa28d81f894804da60b202a40538021e12ebf99f44ec757bd487bc4525d2",
   "reasons": [],
-  "receipt_hash": "6b205b07a4f91f50426ef3b83b97ee100e5c724479bd8eaff4b701fde8913bbb"
+  "receipt_hash": "dad9e474aaae30c7e0dcf370cbaceeda4da9d32b120cdb081ed2d46c80e38938"
 }

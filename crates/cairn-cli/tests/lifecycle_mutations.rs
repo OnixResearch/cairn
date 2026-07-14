@@ -99,7 +99,10 @@ fn sync_execute_blocks_invalid_delta_specs() -> Result<(), Box<dyn Error>> {
         .as_array()
         .ok_or("reasons")?
         .iter()
-        .any(|reason| reason.as_str().unwrap_or_default().contains("validation:")));
+        .any(|reason| reason
+            .as_str()
+            .unwrap_or_default()
+            .contains("delta_merge.no_operations")));
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
@@ -236,6 +239,134 @@ fn sync_execute_creates_wrapped_spec_for_new_domain() -> Result<(), Box<dyn Erro
     assert!(accepted.contains("## Requirements"), "{accepted}");
     assert!(accepted.contains("r[new.domain.behavior]"), "{accepted}");
     assert!(!accepted.contains("## ADDED Requirements"), "{accepted}");
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn sync_replaces_a_renamed_requirement_by_stable_id() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.sync_archive.delta_merge.identity.rename]
+    // r[verify cairn.sync_archive.delta_merge.tests.positive]
+    let fixture = temp_fixture("sync-rename", "fixtures/archive-ready")?;
+    let delta = fixture.join("cairn/changes/ready/specs/demo/spec.md");
+    fs::write(
+        &delta,
+        "## MODIFIED Requirements\n\n### Requirement: Renamed existing behavior\n\nr[demo.existing] The system MUST expose renamed fixture behavior.\n\n#### Scenario: Renamed demo scenario\n\nr[demo.existing.scenario]\n- GIVEN an accepted fixture spec\n- WHEN Cairn sync executes\n- THEN it replaces the requirement by stable ID\n\n## ADDED Requirements\n\n### Requirement: Ready behavior\n\nr[demo.ready] The system MUST parse archive-ready fixture delta specs.\n\n#### Scenario: Ready scenario\n\nr[demo.ready.scenario]\n- GIVEN a completed fixture change\n- WHEN Cairn plans archive\n- THEN it reports an archive action\n",
+    )?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let value = run_json(&["sync", "ready", "--root", root, "--execute"])?;
+    assert_eq!(value["blocked"], false);
+    assert_eq!(value["mutated"], true);
+    let accepted = fs::read_to_string(fixture.join("cairn/specs/demo/spec.md"))?;
+    assert!(accepted.contains("### Requirement: Renamed existing behavior"));
+    assert!(!accepted.contains("### Requirement: Existing demo behavior"));
+    assert_eq!(accepted.matches("r[demo.existing]").count(), 1);
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn sync_idempotent_replay_reports_no_mutation_or_manifest() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.sync_archive.delta_merge.operations.idempotent]
+    // r[verify cairn.sync_archive.delta_merge.mutation_truth.identical]
+    let fixture = temp_fixture("sync-idempotent", "fixtures/archive-ready")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let first = run_json(&["sync", "ready", "--root", root, "--execute"])?;
+    assert_eq!(first["mutated"], true);
+    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let after_first = fs::read_to_string(&accepted_path)?;
+
+    let replay = run_json(&["sync", "ready", "--root", root, "--execute"])?;
+    assert_eq!(replay["blocked"], false);
+    assert_eq!(replay["mutated"], false);
+    assert!(replay["mutation_manifest"].is_null());
+    assert_eq!(
+        replay["merge_preflight"]["documents"][0]["outcomes"][0]["state"],
+        "already_applied"
+    );
+    assert_eq!(fs::read_to_string(accepted_path)?, after_first);
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn sync_semantic_blocker_preserves_every_destination() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.sync_archive.delta_merge.mutation_truth.blocked]
+    // r[verify cairn.sync_archive.delta_merge.tests.negative]
+    let fixture = temp_fixture("sync-all-or-nothing", "fixtures/archive-ready")?;
+    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_before = fs::read_to_string(&accepted_path)?;
+    let malformed_dir = fixture.join("cairn/changes/ready/specs/other");
+    fs::create_dir_all(&malformed_dir)?;
+    fs::write(
+        malformed_dir.join("spec.md"),
+        "# Other Specification\n\n## Requirements\n\n### Requirement: Full spec only\n\nr[other.full] The system MUST fail closed.\n\n#### Scenario: No delta section\n\n- GIVEN a full spec projection\n- WHEN sync preflight runs\n- THEN no destination is written\n",
+    )?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let value = run_json(&["sync", "ready", "--root", root, "--execute"])?;
+    assert_eq!(value["blocked"], true);
+    assert_eq!(value["mutated"], false);
+    assert!(value["actions"].as_array().ok_or("actions")?.is_empty());
+    assert_eq!(fs::read_to_string(accepted_path)?, accepted_before);
+    assert!(!fixture.join("cairn/specs/other/spec.md").exists());
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn sync_plan_identity_binds_delta_and_accepted_bytes() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.sync_archive.delta_merge.receipt_binding.delta]
+    // r[verify cairn.sync_archive.delta_merge.receipt_binding.pre_state]
+    let fixture = temp_fixture("sync-hash-binding", "fixtures/archive-ready")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let first = run_json(&["sync", "ready", "--root", root])?;
+
+    let delta_path = fixture.join("cairn/changes/ready/specs/demo/spec.md");
+    let delta = fs::read_to_string(&delta_path)?;
+    fs::write(
+        &delta_path,
+        delta.replace("parse archive-ready", "validate archive-ready"),
+    )?;
+    let changed_delta = run_json(&["sync", "ready", "--root", root])?;
+    assert_ne!(first["input_hash"], changed_delta["input_hash"]);
+    assert_ne!(first["plan_hash"], changed_delta["plan_hash"]);
+
+    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted = fs::read_to_string(&accepted_path)?;
+    fs::write(
+        accepted_path,
+        accepted.replace("Fixture accepted spec", "Changed accepted fixture"),
+    )?;
+    let changed_accepted = run_json(&["sync", "ready", "--root", root])?;
+    assert_ne!(changed_delta["input_hash"], changed_accepted["input_hash"]);
+    assert_ne!(changed_delta["plan_hash"], changed_accepted["plan_hash"]);
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn sync_duplicate_accepted_identity_fails_closed() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.sync_archive.delta_merge.identity.duplicate]
+    let fixture = temp_fixture("sync-duplicate-accepted", "fixtures/archive-ready")?;
+    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let mut accepted = fs::read_to_string(&accepted_path)?;
+    accepted.push_str(
+        "\n### Requirement: Duplicate existing\n\nr[demo.existing] The system MUST expose conflicting fixture behavior.\n",
+    );
+    fs::write(&accepted_path, &accepted)?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let value = run_json(&["sync", "ready", "--root", root, "--execute"])?;
+    assert_eq!(value["blocked"], true);
+    assert_eq!(value["mutated"], false);
+    assert!(value["reasons"]
+        .as_array()
+        .ok_or("reasons")?
+        .iter()
+        .any(|reason| reason
+            .as_str()
+            .unwrap_or_default()
+            .contains("delta_merge.duplicate_accepted_id")));
+    assert_eq!(fs::read_to_string(accepted_path)?, accepted);
     fs::remove_dir_all(fixture)?;
     Ok(())
 }

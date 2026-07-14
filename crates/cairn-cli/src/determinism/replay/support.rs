@@ -24,8 +24,8 @@ pub(super) use crate::preserves_corpus::preserves_corpus_freshness_receipt;
 pub(super) use crate::release_readiness::release_readiness_receipt;
 pub(super) use crate::support::{
     collect_files, default_policy_path, detect_layout, file_content_manifest, find_change,
-    has_flag, load_policy_file, mutation_gate_blockers, path_string, portable_json_hash,
-    print_json, read_gate_snapshot, read_option, read_string_option, scan_repo,
-    with_portable_content_hash_receipt, with_portable_receipt_hash, CapabilityRoot,
-    CapabilityRootKind,
+    has_flag, load_policy_file, load_sync_merge_snapshots, mutation_gate_blockers, path_string,
+    portable_json_hash, print_json, read_gate_snapshot, read_option, read_string_option, scan_repo,
+    sync_merge_bindings, sync_merge_blockers, with_portable_content_hash_receipt,
+    with_portable_receipt_hash, CapabilityRoot, CapabilityRootKind,
 };

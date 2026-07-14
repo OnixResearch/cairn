@@ -1442,6 +1442,7 @@
         "dry_run",
         "input_hash",
         "layout",
+        "merge_preflight",
         "mutated",
         "mutation_manifest",
         "plan_hash",

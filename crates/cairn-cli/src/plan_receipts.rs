@@ -91,6 +91,7 @@ pub(crate) fn sync_plan_json(
     policy: &Policy,
     plan: &SyncPlan,
     input_hash: &str,
+    merge_preflight: &Value,
     mutation_manifest: Value,
 ) -> Value {
     let mut value = json!({
@@ -105,6 +106,7 @@ pub(crate) fn sync_plan_json(
         "policy": policy.name,
         "policy_hash": canonical_json_hash(&policy.raw),
         "input_hash": input_hash,
+        "merge_preflight": merge_preflight,
         "mutation_manifest": mutation_manifest,
     });
     let plan_hash = portable_json_hash(root, &value);
