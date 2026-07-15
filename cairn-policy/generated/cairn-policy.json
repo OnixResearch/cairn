@@ -1227,6 +1227,203 @@
       "proposal_minimum_substantive_lines": 1
     }
   },
+  "global_registry_policy": {
+    "adapters": [
+      {
+        "capabilities": [
+          "read"
+        ],
+        "id": "cairn.canonical-records.v1",
+        "kind": "ingest",
+        "record_families": [
+          "canonical-records"
+        ],
+        "schema": "cairn.registry-adapter.v1"
+      },
+      {
+        "capabilities": [
+          "read"
+        ],
+        "id": "cairn.evidence-index.v1",
+        "kind": "ingest",
+        "record_families": [
+          "evidence-index",
+          "evidence-labels"
+        ],
+        "schema": "cairn.registry-adapter.v1"
+      },
+      {
+        "capabilities": [
+          "read"
+        ],
+        "id": "cairn.requirement-registry.v1",
+        "kind": "ingest",
+        "record_families": [
+          "requirement-registry"
+        ],
+        "schema": "cairn.registry-adapter.v1"
+      },
+      {
+        "capabilities": [
+          "read"
+        ],
+        "id": "cairn.change-graph.v1",
+        "kind": "ingest",
+        "record_families": [
+          "change-graph"
+        ],
+        "schema": "cairn.registry-adapter.v1"
+      },
+      {
+        "capabilities": [
+          "read"
+        ],
+        "id": "cairn.cross-repo-dependencies.v1",
+        "kind": "ingest",
+        "record_families": [
+          "cross-repo-dependencies"
+        ],
+        "schema": "cairn.registry-adapter.v1"
+      },
+      {
+        "capabilities": [
+          "read"
+        ],
+        "id": "valence.evidence-ir.v1",
+        "kind": "ingest",
+        "record_families": [
+          "valence-evidence-ir"
+        ],
+        "schema": "cairn.registry-adapter.v1"
+      },
+      {
+        "capabilities": [
+          "load",
+          "commit",
+          "export"
+        ],
+        "id": "memory.v1",
+        "kind": "storage",
+        "record_families": [
+          "canonical-snapshot"
+        ],
+        "schema": "cairn.global-registry-storage.v1"
+      },
+      {
+        "capabilities": [
+          "load",
+          "commit",
+          "export"
+        ],
+        "id": "portable-json.v1",
+        "kind": "storage",
+        "record_families": [
+          "canonical-snapshot"
+        ],
+        "schema": "cairn.global-registry-storage.v1"
+      },
+      {
+        "capabilities": [
+          "load",
+          "commit",
+          "export",
+          "migrate"
+        ],
+        "id": "redb.v1",
+        "kind": "storage",
+        "record_families": [
+          "canonical-snapshot",
+          "node-index",
+          "tag-index",
+          "forward-adjacency",
+          "reverse-adjacency",
+          "source-index"
+        ],
+        "schema": "cairn.global-registry-storage.v1"
+      }
+    ],
+    "allowed_vocabulary_owners": [
+      "cairn",
+      "valence"
+    ],
+    "graph_profiles": [
+      {
+        "allowed_edge_kinds": [
+          "change_dependency",
+          "cross_repo_dependency"
+        ],
+        "allowed_node_kinds": [
+          "change"
+        ],
+        "id": "change-dependencies",
+        "require_dag": true
+      },
+      {
+        "allowed_edge_kinds": [
+          "requirement_dependency",
+          "supersedes"
+        ],
+        "allowed_node_kinds": [
+          "requirement"
+        ],
+        "id": "requirement-dependencies",
+        "require_dag": true
+      },
+      {
+        "allowed_edge_kinds": [
+          "derived_from",
+          "contains"
+        ],
+        "allowed_node_kinds": [
+          "evidence",
+          "artifact"
+        ],
+        "id": "evidence-derivations",
+        "require_dag": true
+      },
+      {
+        "allowed_edge_kinds": [
+          "reference",
+          "alias",
+          "related_to"
+        ],
+        "allowed_node_kinds": [
+          "change",
+          "requirement",
+          "evidence",
+          "artifact"
+        ],
+        "id": "references",
+        "require_dag": false
+      }
+    ],
+    "max_artifact_bytes": 4194304,
+    "required_non_claims": [
+      "registry membership proves cataloged identity only",
+      "registry tags and graph reachability prove declared metadata and bounded linkage only",
+      "registry storage and query success do not prove evidence truth, requirement satisfaction, implementation correctness, verifier soundness, social trust, runtime authority, lifecycle readiness, or release eligibility"
+    ],
+    "schema": "cairn.global-registry-snapshot.v1",
+    "storage_schema": "cairn.global-registry-storage.v1",
+    "tag_namespaces": [
+      {
+        "authority": "annotation-only",
+        "id": "operator"
+      },
+      {
+        "authority": "source-preserving",
+        "id": "evidence"
+      },
+      {
+        "authority": "reserved-policy",
+        "id": "cairn.policy"
+      },
+      {
+        "authority": "reserved-system",
+        "id": "cairn.system"
+      }
+    ]
+  },
   "lifecycle_stages": [
     "proposal",
     "design",
@@ -1247,7 +1444,7 @@
   },
   "name": "cairn-default",
   "policy_schema_compatibility": {
-    "field_set_digest": "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e0860bf9793a2f0",
+    "field_set_digest": "cdbe3adf5778872343f8576e0304e3748dcaf7fb58f59c489599ea9dbac425ef",
     "producer": "cairn policy export",
     "refresh_command": "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json",
     "schema_version": "cairn.policy-schema.v1"
@@ -1558,6 +1755,139 @@
         "max_content_bytes",
         "receipt_hash",
         "results_path",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "registry import",
+      "hash_fields": [
+        "expected_snapshot_hash",
+        "input_hash",
+        "observed_snapshot_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [
+        "actual",
+        "code",
+        "expected",
+        "field",
+        "message",
+        "record_kind",
+        "stable_id"
+      ],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "adapter",
+        "blocked",
+        "candidate_snapshot",
+        "command",
+        "dry_run",
+        "expected_snapshot_hash",
+        "ingest_adapter",
+        "input_hash",
+        "issues",
+        "mutated",
+        "observed_snapshot_hash",
+        "receipt_hash",
+        "scope_id",
+        "store",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "registry query",
+      "hash_fields": [
+        "receipt_hash",
+        "snapshot_hash"
+      ],
+      "issue_keys": [],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "adapter",
+        "command",
+        "query",
+        "receipt_hash",
+        "registry",
+        "snapshot_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "registry graph",
+      "hash_fields": [
+        "receipt_hash",
+        "snapshot_hash"
+      ],
+      "issue_keys": [],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "adapter",
+        "command",
+        "graph",
+        "receipt_hash",
+        "registry",
+        "snapshot_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "registry export",
+      "hash_fields": [
+        "receipt_hash",
+        "snapshot_hash"
+      ],
+      "issue_keys": [],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "adapter",
+        "command",
+        "dry_run",
+        "mutated",
+        "output",
+        "receipt_hash",
+        "registry",
+        "snapshot_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "registry verify",
+      "hash_fields": [
+        "receipt_hash"
+      ],
+      "issue_keys": [],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "command",
+        "max_artifact_bytes",
+        "receipt_hash",
+        "registry",
+        "report",
         "valid",
         "verdict"
       ]

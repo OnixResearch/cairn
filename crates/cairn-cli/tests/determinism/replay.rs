@@ -44,7 +44,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
         0
     );
     assert_eq!(first["receipt_hash"], second["receipt_hash"]);
-    assert_eq!(first["summary"]["total_cases"], 18);
+    assert_eq!(first["summary"]["total_cases"], 19);
     assert_eq!(first["summary"]["mismatch_count"], 0);
     assert_eq!(first["available_cases"], first["selected_cases"]);
     assert_eq!(

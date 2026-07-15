@@ -8,9 +8,18 @@
   };
   inputs.slotcar.url = "github:OnixResearch/slotcar";
 
-  outputs = { self, nixpkgs, nickel-export, slotcar }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nickel-export,
+      slotcar,
+    }:
     let
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
       eachSystem = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
       rustCargoLock = {
         lockFile = ./Cargo.lock;
@@ -20,21 +29,37 @@
           "rat-nodegraph-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
         };
       };
-    in {
+    in
+    {
       packages = eachSystem (pkgs: {
         cairn = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn";
           version = "0.1.0";
           src = self;
           cargoLock = rustCargoLock;
-          cargoBuildFlags = [ "-p" "cairn-cli" ];
+          cargoBuildFlags = [
+            "-p"
+            "cairn-cli"
+            "--features"
+            "redb-registry"
+          ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           postInstall = ''
             # r[impl cairn.supersede.policy_export_packaged_runtime.wrapper]
             wrapProgram $out/bin/cairn \
-              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nickel nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export ]}
+              --prefix PATH : ${
+                pkgs.lib.makeBinPath [
+                  pkgs.nickel
+                  nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
+                ]
+              }
             wrapProgram $out/bin/ironspec \
-              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nickel nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export ]}
+              --prefix PATH : ${
+                pkgs.lib.makeBinPath [
+                  pkgs.nickel
+                  nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
+                ]
+              }
           '';
           doCheck = false;
         };
@@ -58,177 +83,243 @@
 
       checks = eachSystem (pkgs: {
         # r[verify cairn.supersede.rust_nickel_only_gates.no_python_scripts]
-        policy-fresh = pkgs.runCommand "cairn-policy-fresh" {
-          nativeBuildInputs = [ pkgs.nickel ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
-          touch $out
-        '';
+        policy-fresh =
+          pkgs.runCommand "cairn-policy-fresh"
+            {
+              nativeBuildInputs = [ pkgs.nickel ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
+              touch $out
+            '';
 
-        authenticated-policy-profiles-fresh = pkgs.runCommand "cairn-authenticated-policy-profiles-fresh" {
-          nativeBuildInputs = [ pkgs.nickel ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          # r[verify cairn.stack_provenance_gates.authenticated_inputs.policy_identity]
-          nickel export --format json cairn-policy/stack-provenance-authentication-profile.ncl > stack-profile.json
-          nickel export --format json cairn-policy/function-address-authentication-profile.ncl > function-profile.json
-          cmp stack-profile.json cairn-policy/generated/stack-provenance-authentication-profile.json
-          cmp function-profile.json cairn-policy/generated/function-address-authentication-profile.json
-          touch $out
-        '';
+        authenticated-policy-profiles-fresh =
+          pkgs.runCommand "cairn-authenticated-policy-profiles-fresh"
+            {
+              nativeBuildInputs = [ pkgs.nickel ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              # r[verify cairn.stack_provenance_gates.authenticated_inputs.policy_identity]
+              nickel export --format json cairn-policy/stack-provenance-authentication-profile.ncl > stack-profile.json
+              nickel export --format json cairn-policy/function-address-authentication-profile.ncl > function-profile.json
+              cmp stack-profile.json cairn-policy/generated/stack-provenance-authentication-profile.json
+              cmp function-profile.json cairn-policy/generated/function-address-authentication-profile.json
+              touch $out
+            '';
 
-        policy-stale-detects-drift = pkgs.runCommand "cairn-policy-stale-detects-drift" {
-          nativeBuildInputs = [ pkgs.nickel ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          # r[verify cairn.supersede.deterministic_gates.policy_freshness]
-          substituteInPlace cairn-policy/default.ncl \
-            --replace-fail 'name = "cairn-default"' 'name = "cairn-default-stale-probe"'
-          if ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check >policy-check.out 2>policy-check.err; then
-            echo "expected stale generated policy check to fail" >&2
-            exit 1
-          fi
-          grep -q "generated policy is stale" policy-check.err
-          touch $out
-        '';
+        policy-stale-detects-drift =
+          pkgs.runCommand "cairn-policy-stale-detects-drift"
+            {
+              nativeBuildInputs = [ pkgs.nickel ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              # r[verify cairn.supersede.deterministic_gates.policy_freshness]
+              substituteInPlace cairn-policy/default.ncl \
+                --replace-fail 'name = "cairn-default"' 'name = "cairn-default-stale-probe"'
+              if ${
+                self.packages.${pkgs.stdenv.hostPlatform.system}.cairn
+              }/bin/cairn policy export --check >policy-check.out 2>policy-check.err; then
+                echo "expected stale generated policy check to fail" >&2
+                exit 1
+              fi
+              grep -q "generated policy is stale" policy-check.err
+              touch $out
+            '';
 
-        packaged-policy-export-runtime = pkgs.runCommand "cairn-packaged-policy-export-runtime" {
-          nativeBuildInputs = [ ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          # r[verify cairn.supersede.policy_export_packaged_runtime.check]
-          ${pkgs.coreutils}/bin/env -i \
-            HOME="$TMPDIR" \
-            PATH=${pkgs.coreutils}/bin \
-            ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn \
-            policy export --check >packaged-policy-export.out
-          grep -q "policy fresh: cairn-policy/generated/cairn-policy.json" packaged-policy-export.out
-          touch $out
-        '';
+        packaged-policy-export-runtime =
+          pkgs.runCommand "cairn-packaged-policy-export-runtime"
+            {
+              nativeBuildInputs = [ ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              # r[verify cairn.supersede.policy_export_packaged_runtime.check]
+              ${pkgs.coreutils}/bin/env -i \
+                HOME="$TMPDIR" \
+                PATH=${pkgs.coreutils}/bin \
+                ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn \
+                policy export --check >packaged-policy-export.out
+              grep -q "policy fresh: cairn-policy/generated/cairn-policy.json" packaged-policy-export.out
+              touch $out
+            '';
 
-        nickel-export-cutover = pkgs.runCommand "cairn-nickel-export-cutover" {
-          nativeBuildInputs = [ pkgs.nickel nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          # r[verify cairn.nickel_export_cutover.source]
-          grep -q '257fafc1c746f1faf156207043a4c826bfb16d49' Cargo.lock
-          grep -q '257fafc1c746f1faf156207043a4c826bfb16d49' flake.lock
-          command -v nickel-export >/dev/null
-          # r[verify cairn.nickel_export_cutover.dual_run]
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn lifecycle check \
-            --source fixtures/structured-lifecycle/positive-bundle.ncl > lifecycle-check.json
-          grep -q '"verdict": "PASS"' lifecycle-check.json
-          touch $out
-        '';
+        nickel-export-cutover =
+          pkgs.runCommand "cairn-nickel-export-cutover"
+            {
+              nativeBuildInputs = [
+                pkgs.nickel
+                nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
+              ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              # r[verify cairn.nickel_export_cutover.source]
+              grep -q '257fafc1c746f1faf156207043a4c826bfb16d49' Cargo.lock
+              grep -q '257fafc1c746f1faf156207043a4c826bfb16d49' flake.lock
+              command -v nickel-export >/dev/null
+              # r[verify cairn.nickel_export_cutover.dual_run]
+              ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
+              ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn lifecycle check \
+                --source fixtures/structured-lifecycle/positive-bundle.ncl > lifecycle-check.json
+              grep -q '"verdict": "PASS"' lifecycle-check.json
+              touch $out
+            '';
 
-        preserves-corpus-fresh = pkgs.runCommand "cairn-preserves-corpus-fresh" {
-          nativeBuildInputs = [ ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          # r[impl cairn.determinism.preserves_corpus_ci_guard.clean_check]
-          # r[verify cairn.determinism.preserves_corpus_ci_guard.clean_check]
-          # r[verify cairn.determinism.preserves_corpus_ci_guard.validation]
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json >preserves-corpus-fresh.json
-          grep -q '"valid": true' preserves-corpus-fresh.json
-          grep -q '"stale_count": 0' preserves-corpus-fresh.json
-          touch $out
-        '';
+        preserves-corpus-fresh =
+          pkgs.runCommand "cairn-preserves-corpus-fresh"
+            {
+              nativeBuildInputs = [ ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              # r[impl cairn.determinism.preserves_corpus_ci_guard.clean_check]
+              # r[verify cairn.determinism.preserves_corpus_ci_guard.clean_check]
+              # r[verify cairn.determinism.preserves_corpus_ci_guard.validation]
+              ${
+                self.packages.${pkgs.stdenv.hostPlatform.system}.cairn
+              }/bin/cairn preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json >preserves-corpus-fresh.json
+              grep -q '"valid": true' preserves-corpus-fresh.json
+              grep -q '"stale_count": 0' preserves-corpus-fresh.json
+              touch $out
+            '';
 
-        preserves-corpus-stale-detects-drift = pkgs.runCommand "cairn-preserves-corpus-stale-detects-drift" {
-          nativeBuildInputs = [ ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          # r[impl cairn.determinism.preserves_corpus_ci_guard.stale_detection]
-          # r[verify cairn.determinism.preserves_corpus_ci_guard.stale_detection]
-          substituteInPlace fixtures/preserves-canonicalization/corpus.json \
-            --replace-fail '4111d2d01cd6f342ffbf86955fa72cd2af2e4cbb38d4db96bb3c28f77eb9661a' \
-                           '0000000000000000000000000000000000000000000000000000000000000000'
-          if ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json >preserves-corpus-stale.json 2>preserves-corpus-stale.err; then
-            echo "expected stale Preserves corpus check to fail" >&2
-            exit 1
-          fi
-          grep -q '"valid": false' preserves-corpus-stale.json
-          grep -q '"stale_count": 1' preserves-corpus-stale.json
-          grep -q '"mutated": false' preserves-corpus-stale.json
-          touch $out
-        '';
+        preserves-corpus-stale-detects-drift =
+          pkgs.runCommand "cairn-preserves-corpus-stale-detects-drift"
+            {
+              nativeBuildInputs = [ ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              # r[impl cairn.determinism.preserves_corpus_ci_guard.stale_detection]
+              # r[verify cairn.determinism.preserves_corpus_ci_guard.stale_detection]
+              substituteInPlace fixtures/preserves-canonicalization/corpus.json \
+                --replace-fail '4111d2d01cd6f342ffbf86955fa72cd2af2e4cbb38d4db96bb3c28f77eb9661a' \
+                               '0000000000000000000000000000000000000000000000000000000000000000'
+              if ${
+                self.packages.${pkgs.stdenv.hostPlatform.system}.cairn
+              }/bin/cairn preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json >preserves-corpus-stale.json 2>preserves-corpus-stale.err; then
+                echo "expected stale Preserves corpus check to fail" >&2
+                exit 1
+              fi
+              grep -q '"valid": false' preserves-corpus-stale.json
+              grep -q '"stale_count": 1' preserves-corpus-stale.json
+              grep -q '"mutated": false' preserves-corpus-stale.json
+              touch $out
+            '';
 
-        rustfmt = pkgs.runCommand "cairn-rustfmt-check" {
-          nativeBuildInputs = [ pkgs.cargo pkgs.rustfmt ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          cargo fmt --check
-          touch $out
-        '';
+        rustfmt =
+          pkgs.runCommand "cairn-rustfmt-check"
+            {
+              nativeBuildInputs = [
+                pkgs.cargo
+                pkgs.rustfmt
+              ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              cargo fmt --check
+              touch $out
+            '';
 
         rust-tests = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn-tests";
           version = "0.1.0";
           src = self;
           cargoLock = rustCargoLock;
-          cargoBuildFlags = [ "--workspace" "--all-targets" ];
-          cargoTestFlags = [ "--workspace" ];
-          nativeCheckInputs = [ pkgs.git pkgs.nickel ];
+          cargoBuildFlags = [
+            "--workspace"
+            "--all-targets"
+            "--features"
+            "redb-registry"
+          ];
+          cargoTestFlags = [
+            "--workspace"
+            "--features"
+            "redb-registry"
+          ];
+          nativeCheckInputs = [
+            pkgs.git
+            pkgs.nickel
+          ];
           preCheck = ''
             ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check
           '';
         };
 
-        cairn-validate = pkgs.runCommand "cairn-validate" {
-          nativeBuildInputs = [ ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          # r[verify cairn.supersede.repo_native_labels.check]
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn validate --root . --strict > /tmp/cairn-validate.json
-          touch $out
-        '';
+        cairn-validate =
+          pkgs.runCommand "cairn-validate"
+            {
+              nativeBuildInputs = [ ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              # r[verify cairn.supersede.repo_native_labels.check]
+              ${
+                self.packages.${pkgs.stdenv.hostPlatform.system}.cairn
+              }/bin/cairn validate --root . --strict > /tmp/cairn-validate.json
+              touch $out
+            '';
 
-        tracey-coverage = pkgs.runCommand "cairn-traceability-coverage" {
-          nativeBuildInputs = [ ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn traceability coverage --root .
-          touch $out
-        '';
+        tracey-coverage =
+          pkgs.runCommand "cairn-traceability-coverage"
+            {
+              nativeBuildInputs = [ ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn traceability coverage --root .
+              touch $out
+            '';
 
-        rename-classification = pkgs.runCommand "cairn-rename-classification" {
-          nativeBuildInputs = [ ];
-        } ''
-          cp -r ${self} source
-          chmod -R u+w source
-          cd source
-          ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn rename-classification >/tmp/cairn-rename-classification.json
-          touch $out
-        '';
+        rename-classification =
+          pkgs.runCommand "cairn-rename-classification"
+            {
+              nativeBuildInputs = [ ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              ${
+                self.packages.${pkgs.stdenv.hostPlatform.system}.cairn
+              }/bin/cairn rename-classification >/tmp/cairn-rename-classification.json
+              touch $out
+            '';
 
         self-dogfood = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn-self-dogfood";
           version = "0.1.0";
           src = self;
           cargoLock = rustCargoLock;
-          cargoBuildFlags = [ "-p" "cairn-cli" ];
+          cargoBuildFlags = [
+            "-p"
+            "cairn-cli"
+            "--features"
+            "redb-registry"
+          ];
           nativeCheckInputs = [ pkgs.nickel ];
           doCheck = true;
           checkPhase = ''
@@ -247,6 +338,13 @@
             $cairn status --root . >/tmp/cairn-status.json
             $cairn validate --root . --strict >/tmp/cairn-validate.json
             $cairn status --root fixtures/basic >/tmp/cairn-fixture-status.json
+            registry_store=$(mktemp --suffix=.redb)
+            rm -f "$registry_store"
+            $cairn registry import --scope workspace:self-dogfood --adapter redb.v1 --store "$registry_store" --ingest cairn.canonical-records.v1 --input fixtures/global-registry/canonical-records.json --execute >/tmp/cairn-registry-import.json
+            $cairn registry query --scope workspace:self-dogfood --adapter redb.v1 --registry "$registry_store" --tag operator:channel=dev >/tmp/cairn-registry-query.json
+            $cairn registry graph --scope workspace:self-dogfood --adapter redb.v1 --registry "$registry_store" --profile change-dependencies >/tmp/cairn-registry-graph.json
+            $cairn registry export --scope workspace:self-dogfood --adapter redb.v1 --registry "$registry_store" --output /tmp/cairn-registry-export.json --execute >/tmp/cairn-registry-export-receipt.json
+            $cairn registry verify --registry /tmp/cairn-registry-export.json >/tmp/cairn-registry-verify.json
             legacy=$(mktemp -d)
             cp -R fixtures/basic/. "$legacy"/
             rm -rf "$legacy/cairn"
@@ -282,7 +380,7 @@
           nativeBuildInputs = [ pkgs.clippy ];
           buildPhase = ''
             runHook preBuild
-            cargo clippy --workspace --all-targets -- -D warnings
+            cargo clippy --workspace --all-targets --features redb-registry -- -D warnings
             runHook postBuild
           '';
           installPhase = ''
@@ -297,7 +395,7 @@
           system = pkgs.stdenv.hostPlatform.system;
           src = self;
           cargoLock = ./Cargo.lock;
-          cargoExtraArgs = "--all-targets";
+          cargoExtraArgs = "--all-targets --features redb-registry";
           nativeBuildInputs = [ pkgs.stdenv.cc ];
         };
       });

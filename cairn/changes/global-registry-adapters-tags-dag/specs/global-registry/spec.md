@@ -4,7 +4,7 @@
 
 Defines an explicit, rebuildable Cairn registry for cross-repository discovery, typed tags, and policy-constrained graph traversal without making mutable global state authoritative for lifecycle or release decisions.
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Global registry scope is explicit and bounded
 

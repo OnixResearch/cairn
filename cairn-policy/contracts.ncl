@@ -437,6 +437,37 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
     required_non_claims | NonEmptyArray | Array NonEmptyString,
   },
 
+  GlobalRegistryAdapterProfile = {
+    id | NonEmptyString,
+    kind | NonEmptyString,
+    schema | NonEmptyString,
+    capabilities | NonEmptyArray | Array NonEmptyString,
+    record_families | NonEmptyArray | Array NonEmptyString,
+  },
+
+  GlobalRegistryTagNamespace = {
+    id | NonEmptyString,
+    authority | NonEmptyString,
+  },
+
+  GlobalRegistryGraphProfile = {
+    id | NonEmptyString,
+    allowed_node_kinds | NonEmptyArray | Array NonEmptyString,
+    allowed_edge_kinds | NonEmptyArray | Array NonEmptyString,
+    require_dag | Bool,
+  },
+
+  GlobalRegistryPolicy = {
+    schema | NonEmptyString,
+    storage_schema | NonEmptyString,
+    max_artifact_bytes | PositiveNumber,
+    adapters | NonEmptyArray | Array GlobalRegistryAdapterProfile,
+    tag_namespaces | NonEmptyArray | Array GlobalRegistryTagNamespace,
+    graph_profiles | NonEmptyArray | Array GlobalRegistryGraphProfile,
+    allowed_vocabulary_owners | NonEmptyArray | Array NonEmptyString,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
   Policy = {
     name | NonEmptyString,
     version | SupportedPolicyVersion,
@@ -451,6 +482,7 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
     change_metadata_policy | ChangeMetadataPolicy,
     cross_repo_dependency_policy | CrossRepoDependencyPolicy,
     agent_completion_policy | AgentCompletionPolicy,
+    global_registry_policy | GlobalRegistryPolicy,
     steel_orchestration_policy | SteelOrchestrationPolicy,
     traceability_policy | TraceabilityPolicy,
     stack_provenance_gate | StackProvenancePolicy,

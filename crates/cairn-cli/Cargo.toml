@@ -13,6 +13,10 @@ path = "src/main.rs"
 name = "ironspec"
 path = "src/ironspec.rs"
 
+[features]
+default = []
+redb-registry = ["dep:redb"]
+
 [dependencies]
 blake3.workspace = true
 cairn-core = { path = "../cairn-core" }
@@ -22,5 +26,6 @@ ed25519-dalek.workspace = true
 nickel-export-core.workspace = true
 rat-nodegraph.workspace = true
 ratatui.workspace = true
+redb = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true

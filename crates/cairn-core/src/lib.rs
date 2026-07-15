@@ -163,6 +163,15 @@ pub use verified::function_address_stack_smoke::{
     evaluate_function_address_stack_smoke, FunctionAddressStackSmokeInput,
     FunctionAddressStackSmokeIssue, FunctionAddressStackSmokeReport,
 };
+pub use verified::global_registry::{
+    build_global_registry_snapshot, empty_global_registry_snapshot, evaluate_registry_graph,
+    global_registry_snapshot_hash, merge_global_registry_snapshot, query_registry_exact_id,
+    query_registry_tags, verify_global_registry_snapshot, GlobalRegistrySnapshot,
+    RegistryAdapterMetadata, RegistryCandidateRecords, RegistryCorePolicy, RegistryEdge,
+    RegistryGraphDirection, RegistryGraphProfile, RegistryGraphReport, RegistryIssue, RegistryNode,
+    RegistryQueryReport, RegistrySnapshotReport, RegistrySourceRecord, RegistryTagAssignment,
+    EMPTY_REGISTRY_SNAPSHOT_HASH, GLOBAL_REGISTRY_SCHEMA,
+};
 pub use verified::hash_algorithm_policy::{
     hash_algorithm_policy_issues_json, validate_hash_algorithm_policy,
     validate_hash_algorithm_policy_value, HashAlgorithmException, HashAlgorithmPolicy,

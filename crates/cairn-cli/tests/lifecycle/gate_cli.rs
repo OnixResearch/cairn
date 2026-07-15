@@ -89,11 +89,11 @@ fn help_lists_commands() -> Result<(), Box<dyn Error>> {
         "{stdout}"
     );
     assert!(
-        stdout.contains("sync <change> [--root PATH] [--policy PATH] [--execute]"),
+        stdout.contains("sync <change> [--root PATH] [--policy PATH] [--cross-repo-evidence FILE|DIR ...] [--execute]"),
         "{stdout}"
     );
     assert!(
-        stdout.contains("archive <change> [--root PATH] [--policy PATH] [--execute]"),
+        stdout.contains("archive <change> [--root PATH] [--policy PATH] [--cross-repo-evidence FILE|DIR ...] [--execute]"),
         "{stdout}"
     );
     Ok(())

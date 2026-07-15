@@ -10,6 +10,7 @@ mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
 mod function_address;
+mod global_registry;
 mod hash_algorithm_policy;
 mod lifecycle;
 mod lifecycle_data;
@@ -108,6 +109,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "evidence" => run_evidence(args.collect())?,
         "evidence-manifest" => run_evidence_manifest(args.collect())?,
         "hash-policy" => run_hash_policy(args.collect())?,
+        "registry" => global_registry::run_global_registry(args.collect())?,
         "requirement-registry" => run_requirement_registry(args.collect())?,
         "policy" => run_policy(args.collect())?,
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,

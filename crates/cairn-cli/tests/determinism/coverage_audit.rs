@@ -44,6 +44,7 @@ fn determinism_coverage_audit_reports_policy_surface_coverage() -> Result<(), Bo
     assert_eq!(
         covered_ids,
         vec![
+            "agent_completion_validate",
             "agent_receipt_preserves_hash",
             "agent_receipt_validate",
             "archive_dry_run",

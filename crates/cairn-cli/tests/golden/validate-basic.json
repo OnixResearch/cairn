@@ -1,6 +1,8 @@
 {
   "change_issues": [],
   "changes": 1,
+  "cross_repo_dependencies": [],
+  "cross_repo_evidence_issues": [],
   "findings": [],
   "issues": [],
   "layout": "cairn",

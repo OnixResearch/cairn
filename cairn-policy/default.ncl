@@ -1,6 +1,6 @@
 let Contracts = import "contracts.ncl" in
 let PolicySchemaVersion = "cairn.policy-schema.v1" in
-let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e0860bf9793a2f0" in
+let PolicyFieldSetDigest = "cdbe3adf5778872343f8576e0304e3748dcaf7fb58f59c489599ea9dbac425ef" in
 {
   name = "cairn-default",
   version = 1,
@@ -158,6 +158,41 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
     ],
   },
 
+  global_registry_policy = {
+    schema = "cairn.global-registry-snapshot.v1",
+    storage_schema = "cairn.global-registry-storage.v1",
+    max_artifact_bytes = 4194304,
+    adapters = [
+      { id = "cairn.canonical-records.v1", kind = "ingest", schema = "cairn.registry-adapter.v1", capabilities = ["read"], record_families = ["canonical-records"] },
+      { id = "cairn.evidence-index.v1", kind = "ingest", schema = "cairn.registry-adapter.v1", capabilities = ["read"], record_families = ["evidence-index", "evidence-labels"] },
+      { id = "cairn.requirement-registry.v1", kind = "ingest", schema = "cairn.registry-adapter.v1", capabilities = ["read"], record_families = ["requirement-registry"] },
+      { id = "cairn.change-graph.v1", kind = "ingest", schema = "cairn.registry-adapter.v1", capabilities = ["read"], record_families = ["change-graph"] },
+      { id = "cairn.cross-repo-dependencies.v1", kind = "ingest", schema = "cairn.registry-adapter.v1", capabilities = ["read"], record_families = ["cross-repo-dependencies"] },
+      { id = "valence.evidence-ir.v1", kind = "ingest", schema = "cairn.registry-adapter.v1", capabilities = ["read"], record_families = ["valence-evidence-ir"] },
+      { id = "memory.v1", kind = "storage", schema = "cairn.global-registry-storage.v1", capabilities = ["load", "commit", "export"], record_families = ["canonical-snapshot"] },
+      { id = "portable-json.v1", kind = "storage", schema = "cairn.global-registry-storage.v1", capabilities = ["load", "commit", "export"], record_families = ["canonical-snapshot"] },
+      { id = "redb.v1", kind = "storage", schema = "cairn.global-registry-storage.v1", capabilities = ["load", "commit", "export", "migrate"], record_families = ["canonical-snapshot", "node-index", "tag-index", "forward-adjacency", "reverse-adjacency", "source-index"] },
+    ],
+    tag_namespaces = [
+      { id = "operator", authority = "annotation-only" },
+      { id = "evidence", authority = "source-preserving" },
+      { id = "cairn.policy", authority = "reserved-policy" },
+      { id = "cairn.system", authority = "reserved-system" },
+    ],
+    graph_profiles = [
+      { id = "change-dependencies", allowed_node_kinds = ["change"], allowed_edge_kinds = ["change_dependency", "cross_repo_dependency"], require_dag = true },
+      { id = "requirement-dependencies", allowed_node_kinds = ["requirement"], allowed_edge_kinds = ["requirement_dependency", "supersedes"], require_dag = true },
+      { id = "evidence-derivations", allowed_node_kinds = ["evidence", "artifact"], allowed_edge_kinds = ["derived_from", "contains"], require_dag = true },
+      { id = "references", allowed_node_kinds = ["change", "requirement", "evidence", "artifact"], allowed_edge_kinds = ["reference", "alias", "related_to"], require_dag = false },
+    ],
+    allowed_vocabulary_owners = ["cairn", "valence"],
+    required_non_claims = [
+      "registry membership proves cataloged identity only",
+      "registry tags and graph reachability prove declared metadata and bounded linkage only",
+      "registry storage and query success do not prove evidence truth, requirement satisfaction, implementation correctness, verifier soundness, social trust, runtime authority, lifecycle readiness, or release eligibility",
+    ],
+  },
+
   steel_orchestration_policy = {
     enabled = false,
     profiles = [{
@@ -309,6 +344,32 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
       command = "agent-receipt complete",
       top_level_keys = ["checks_executed", "classification", "command", "completion", "completion_receipt_hash", "contract_path", "current_policy_hash", "current_subject_hash", "input_kind", "max_content_bytes", "receipt_hash", "results_path", "valid", "verdict"],
       hash_fields = ["completion_receipt_hash", "current_policy_hash", "current_subject_hash", "receipt_hash"],
+    },
+    {
+      command = "registry import",
+      top_level_keys = ["adapter", "blocked", "candidate_snapshot", "command", "dry_run", "expected_snapshot_hash", "ingest_adapter", "input_hash", "issues", "mutated", "observed_snapshot_hash", "receipt_hash", "scope_id", "store", "valid", "verdict"],
+      issue_keys = ["actual", "code", "expected", "field", "message", "record_kind", "stable_id"],
+      hash_fields = ["expected_snapshot_hash", "input_hash", "observed_snapshot_hash", "receipt_hash"],
+    },
+    {
+      command = "registry query",
+      top_level_keys = ["adapter", "command", "query", "receipt_hash", "registry", "snapshot_hash", "valid", "verdict"],
+      hash_fields = ["receipt_hash", "snapshot_hash"],
+    },
+    {
+      command = "registry graph",
+      top_level_keys = ["adapter", "command", "graph", "receipt_hash", "registry", "snapshot_hash", "valid", "verdict"],
+      hash_fields = ["receipt_hash", "snapshot_hash"],
+    },
+    {
+      command = "registry export",
+      top_level_keys = ["adapter", "command", "dry_run", "mutated", "output", "receipt_hash", "registry", "snapshot_hash", "valid", "verdict"],
+      hash_fields = ["receipt_hash", "snapshot_hash"],
+    },
+    {
+      command = "registry verify",
+      top_level_keys = ["command", "max_artifact_bytes", "receipt_hash", "registry", "report", "valid", "verdict"],
+      hash_fields = ["receipt_hash"],
     },
     {
       command = "gate",
