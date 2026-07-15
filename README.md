@@ -300,6 +300,15 @@ transport correctness, producer authorization, source-code correctness, verifier
 soundness, or release eligibility. r[verify cairn.preserves_evidence_ingest.docs]
 r[verify cairn.preserves_evidence_ingest.docs.non_claims]
 
+The generic evidence-chain readiness core validates typed canonical-envelope,
+Valence, Mantle, source, binary, policy, projection, claim-scope, and non-claim
+links through an explicit profile registry. Optional absent evidence is skipped;
+optional present and required evidence fail closed when invalid. Passing emits a
+BLAKE3 chain identity bound to Cairn gate policy, but does not establish measured
+bytes, producer authorization, payload truth, or release eligibility. See
+[`docs/evidence-chain-readiness.md`](docs/evidence-chain-readiness.md).
+r[verify cairn.stack_provenance_gates.evidence_chain_readiness.validation]
+
 The ast-grep lifecycle gate validates parsed scan/test receipts rather than
 running ast-grep from pure code. Repositories or CLI shells own command
 execution, file discovery, stdout/stderr capture, and raw report loading; the
