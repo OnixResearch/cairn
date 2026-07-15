@@ -11,7 +11,9 @@ pub(super) use cairn_core::{
 pub(super) use serde_json::{json, Value};
 
 pub(super) use crate::agent_receipt::{
-    agent_preserves_hash_receipt, agent_receipt_validation_receipt, read_agent_receipt_file,
+    agent_completion_validation_receipt, agent_preserves_hash_receipt,
+    agent_receipt_validation_receipt, read_agent_receipt_file, read_json_artifact,
+    AgentCompletionValidationInput, AGENT_RECEIPT_MAX_BYTES,
 };
 pub(super) use crate::lifecycle::parse_gate_stage;
 pub(super) use crate::mcp::{mcp_call_tool, mcp_tool_catalog};

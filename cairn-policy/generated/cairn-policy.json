@@ -1,4 +1,41 @@
 {
+  "agent_completion_policy": {
+    "forbidden_diagnostic_fields": [
+      "raw_prompt",
+      "model_output",
+      "credentials",
+      "environment",
+      "stdout",
+      "stderr",
+      "pty_bytes"
+    ],
+    "legacy_classification": "legacy_unscoped",
+    "max_diagnostic_summary_bytes": 512,
+    "max_input_file_bytes": 65536,
+    "max_reproduction_args": 32,
+    "non_passing_statuses": [
+      "failed",
+      "blocked",
+      "skipped",
+      "deferred",
+      "timed_out",
+      "cancelled",
+      "dry_run",
+      "cleanup_failed",
+      "infrastructure_error",
+      "not_selected",
+      "unknown"
+    ],
+    "passing_status": "passed",
+    "required_non_claims": [
+      "completion validation does not prove check-oracle soundness",
+      "completion validation does not prove honest command execution beyond supplied evidence",
+      "completion validation does not prove model correctness",
+      "completion validation does not prove whole-product correctness",
+      "completion validation does not prove release eligibility outside the selected contract"
+    ],
+    "schema": "cairn.agent-completion.v2"
+  },
   "authenticated_evidence_policy": {
     "accepted_canonicalization_profiles": [
       "valence.preserves-integrity.corrected.v1"
@@ -119,6 +156,39 @@
           "agent_receipt_hash"
         ],
         "id": "agent_receipt_validate",
+        "normalization_rules": [
+          "portable_root_paths",
+          "canonical_json"
+        ]
+      },
+      {
+        "args": [
+          "agent-receipt",
+          "complete",
+          "--contract",
+          "fixtures/agent-completion/contract.json",
+          "--results",
+          "fixtures/agent-completion/results.json",
+          "--subject-hash",
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "command_kind": "agent_completion_validate",
+        "comparison_modes": [
+          "repeated",
+          "cross_root"
+        ],
+        "display_only_paths": [
+          "contract_path",
+          "results_path"
+        ],
+        "expected_mutability": "read_only_or_dry_run",
+        "fixture_root": "<root>",
+        "hash_fields": [
+          "completion_receipt_hash",
+          "current_policy_hash",
+          "current_subject_hash"
+        ],
+        "id": "agent_completion_validate",
         "normalization_rules": [
           "portable_root_paths",
           "canonical_json"
@@ -676,6 +746,7 @@
     "groups": [
       {
         "cases": [
+          "agent_completion_validate",
           "agent_receipt_validate",
           "mcp_describe",
           "status",
@@ -686,6 +757,7 @@
       },
       {
         "cases": [
+          "agent_completion_validate",
           "agent_receipt_preserves_hash",
           "agent_receipt_validate",
           "archive_dry_run",
@@ -710,6 +782,7 @@
       },
       {
         "cases": [
+          "agent_completion_validate",
           "agent_receipt_validate",
           "mcp_describe",
           "release_readiness",
@@ -730,6 +803,21 @@
     ]
   },
   "determinism_surface_inventory": [
+    {
+      "command": "agent-receipt complete --contract fixtures/agent-completion/contract.json --results fixtures/agent-completion/results.json --subject-hash <hash>",
+      "determinism_claim": "authoritative_agent_completion_stability",
+      "id": "agent_completion_validate",
+      "receipt_command": "agent-receipt complete",
+      "required_replay_cases": [
+        "agent_completion_validate"
+      ],
+      "required_replay_groups": [
+        "agent",
+        "full",
+        "release"
+      ],
+      "surface_kind": "cli"
+    },
     {
       "command": "agent-receipt preserves-hash fixtures/agent-receipts/positive.json",
       "determinism_claim": "agent_receipt_preserves_hash_stability",
@@ -1425,6 +1513,8 @@
       ],
       "top_level_keys": [
         "agent_receipt_hash",
+        "authoritative_completion",
+        "classification",
         "command",
         "current_replay_policy_hash",
         "input_hash",
@@ -1437,6 +1527,37 @@
         "required_replay_cases",
         "required_replay_group",
         "stated_agent_receipt_hash",
+        "valid",
+        "verdict"
+      ]
+    },
+    {
+      "action_keys": [],
+      "artifact_keys": [],
+      "case_keys": [],
+      "command": "agent-receipt complete",
+      "hash_fields": [
+        "completion_receipt_hash",
+        "current_policy_hash",
+        "current_subject_hash",
+        "receipt_hash"
+      ],
+      "issue_keys": [],
+      "mismatch_keys": [],
+      "replay_evidence_keys": [],
+      "top_level_keys": [
+        "checks_executed",
+        "classification",
+        "command",
+        "completion",
+        "completion_receipt_hash",
+        "contract_path",
+        "current_policy_hash",
+        "current_subject_hash",
+        "input_kind",
+        "max_content_bytes",
+        "receipt_hash",
+        "results_path",
         "valid",
         "verdict"
       ]

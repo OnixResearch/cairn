@@ -51,6 +51,8 @@ fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Erro
             "mcp_smoke_receipt_hash",
             "coverage_audit_valid",
             "coverage_audit_receipt_hash",
+            "cross_repo_dependencies",
+            "cross_repo_evidence_issues",
             "release_evidence_index_check_hash",
             "preserves_corpus_freshness_hash",
             "semantic_review_ledger_hash",

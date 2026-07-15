@@ -1,5 +1,6 @@
 use serde_json::Value;
 
+mod authoritative;
 mod common;
 mod constants;
 mod fixture;
@@ -11,6 +12,13 @@ mod schema;
 mod types;
 mod verification;
 
+pub use authoritative::{
+    authoritative_command_hash, authoritative_selection_hash,
+    evaluate_authoritative_agent_completion, AgentArtifactReference,
+    AgentAuthoritativeCompletionReport, AgentCompletionDiagnostic, AgentDiagnosticEvidence,
+    AgentExecutionResult, AgentNonPassingCheck, AgentRequiredCheck, AgentSourceSpan,
+    AgentVerificationContract,
+};
 pub use constants::{AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH};
 pub use fixture::positive_agent_run_fixture;
 pub use hash::{agent_run_preserves_receipt_hash, agent_run_receipt_hash};
@@ -36,6 +44,7 @@ pub fn evaluate_agent_run_completion(receipt: &Value) -> AgentRunGateReport {
     let is_valid = issues.is_empty();
     let verdict = if is_valid { "PASS" } else { "FAIL" }.to_string();
     AgentRunGateReport {
+        classification: "legacy_unscoped".to_string(),
         verdict,
         valid: is_valid,
         issues,
@@ -91,7 +100,7 @@ mod tests {
             .expect("checked-in positive fixture Preserves hash");
         assert_eq!(
             hash,
-            "efbcad82651cf8975399e0ac4135bab00f15ec243828ec1beb97bd3baeb3eb93"
+            "5cccc0afb6cb71af9cea7f778abf9df7913a2bb553c57d74683e7cba4b2f34a9"
         );
     }
 
@@ -132,24 +141,17 @@ mod tests {
     }
 
     #[test]
-    fn completion_gate_passes_verified_fixture() {
-        // r[verify cli_maintainability.agent_receipt_core_modules.behavior_preserved.focused_checks]
+    // r[verify cairn.supersede.agent_run_receipts.schema_migration.legacy]
+    // r[verify cairn.supersede.agent_run_receipts.replay.negative]
+    // r[verify cli_maintainability.agent_receipt_core_modules.behavior_preserved.focused_checks]
+    // r[verify cairn.supersede.agent_run_receipts.completion_authority.model_text]
+    // r[verify cairn.supersede.agent_run_receipts.completion_authority.observations]
+    fn legacy_success_fixture_is_inspectable_but_not_completion_authority() {
         let report = evaluate_agent_run_completion(&positive_agent_run_fixture());
-        assert!(report.valid);
-        assert_eq!(report.verdict, "PASS");
-        assert!(report.issues.is_empty());
-    }
-
-    #[test]
-    fn completion_gate_fails_missing_verification() {
-        // r[verify cairn.supersede.agent_run_receipts.replay.negative]
-        let mut receipt = positive_agent_run_fixture();
-        receipt["verification_manifest"] = json!({"checks": []});
-        let hash = agent_run_receipt_hash(&receipt);
-        receipt["receipt_hash"] = Value::String(hash);
-        let report = evaluate_agent_run_completion(&receipt);
         assert!(!report.valid);
-        assert_eq!(report.issues[0].code, "verification.missing_evidence");
+        assert_eq!(report.classification, "legacy_unscoped");
+        assert_eq!(report.verdict, "FAIL");
+        assert_eq!(report.issues[0].code, "verification.missing_contract");
     }
 
     #[test]

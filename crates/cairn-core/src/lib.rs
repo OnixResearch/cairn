@@ -18,8 +18,12 @@ pub mod verified;
 
 pub use verified::agent_receipt::{
     agent_run_preserves_receipt_hash, agent_run_receipt_hash, agent_run_receipt_issues,
-    evaluate_agent_run_completion, positive_agent_run_fixture, AgentRunGateIssue,
-    AgentRunGateReport, AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
+    authoritative_command_hash, authoritative_selection_hash, evaluate_agent_run_completion,
+    evaluate_authoritative_agent_completion, positive_agent_run_fixture, AgentArtifactReference,
+    AgentAuthoritativeCompletionReport, AgentCompletionDiagnostic, AgentDiagnosticEvidence,
+    AgentExecutionResult, AgentNonPassingCheck, AgentRequiredCheck, AgentRunGateIssue,
+    AgentRunGateReport, AgentSourceSpan, AgentVerificationContract,
+    AGENT_RUN_RECEIPT_SCHEMA_VERSION, NO_MUTATION_PLAN_HASH,
 };
 pub use verified::ai_spec_draft::{
     ai_spec_draft_hash, validate_ai_spec_draft, AiSpecDraftIssue, AiSpecDraftProvenance,

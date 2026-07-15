@@ -579,3 +579,38 @@ pub(super) fn mcp_agent_receipt_validate(input: &Value) -> Result<Value, Box<dyn
     value["mcp"] = json!({"read_only": true, "destructive": false, "max_content_bytes": AGENT_RECEIPT_MAX_BYTES});
     Ok(with_portable_receipt_hash(&root, value))
 }
+
+pub(super) fn mcp_agent_completion_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.supersede.agent_run_receipts.schema_migration.parity]
+    // r[impl cairn.supersede.agent_run_receipts.execution_boundary.no_execution]
+    let root = mcp_root(input);
+    let contract = input
+        .get("contract")
+        .cloned()
+        .ok_or("contract is required")?;
+    let results = input
+        .get("results")
+        .cloned()
+        .ok_or("results are required")?;
+    ensure_inline_receipt_is_bounded(&contract)?;
+    ensure_inline_receipt_is_bounded(&results)?;
+    let subject_hash = mcp_required_string(input, "subject_hash")?;
+    let policy = load_policy_file(mcp_policy(input))?;
+    let mut value = agent_completion_validation_receipt(AgentCompletionValidationInput {
+        command: "mcp cairn_agent_completion_validate",
+        contract_path: None,
+        results_path: None,
+        contract: &contract,
+        results: &results,
+        current_subject_hash: subject_hash,
+        policy: &policy,
+        input_kind: "inline",
+    });
+    value["mcp"] = json!({
+        "read_only": true,
+        "destructive": false,
+        "checks_executed": false,
+        "max_content_bytes": AGENT_RECEIPT_MAX_BYTES,
+    });
+    Ok(with_portable_receipt_hash(&root, value))
+}

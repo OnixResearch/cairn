@@ -25,7 +25,8 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 use crate::agent_receipt::{
-    agent_receipt_validation_receipt, ensure_inline_receipt_is_bounded, read_agent_receipt_file,
+    agent_completion_validation_receipt, agent_receipt_validation_receipt,
+    ensure_inline_receipt_is_bounded, read_agent_receipt_file, AgentCompletionValidationInput,
     AGENT_RECEIPT_MAX_BYTES,
 };
 use crate::lifecycle::parse_gate_stage;
@@ -98,7 +99,15 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
     // r[impl cairn.supersede.mcp_agent_smoke_receipts.evidence]
     // r[impl cairn.supersede.mcp_agent_smoke_receipts.read_only]
     // r[verify cairn.determinism.preserves_content_hash_binding_readiness.mcp_smoke]
-    let fixture = "fixtures/agent-receipts/positive.json";
+    let fixture = "fixtures/agent-completion";
+    let contract: Value =
+        serde_json::from_slice(&fs::read(root.join(fixture).join("contract.json"))?)?;
+    let results: Value =
+        serde_json::from_slice(&fs::read(root.join(fixture).join("results.json"))?)?;
+    let subject_hash = contract["final_subject_hash"]
+        .as_str()
+        .ok_or("agent completion fixture missing final_subject_hash")?
+        .to_string();
     let root_string = path_string(root.clone());
     let catalog = mcp_tool_catalog(false);
     let tools = catalog["tools"]
@@ -106,12 +115,17 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
         .ok_or("MCP catalog missing tools")?;
     let receipt_tool = tools
         .iter()
-        .find(|tool| tool["name"] == "cairn_agent_receipt_validate")
-        .ok_or("MCP catalog missing cairn_agent_receipt_validate")?;
+        .find(|tool| tool["name"] == "cairn_agent_completion_validate")
+        .ok_or("MCP catalog missing cairn_agent_completion_validate")?;
     let receipt_schema = receipt_tool["inputSchema"].clone();
     let receipt_call = mcp_call_tool(
-        "cairn_agent_receipt_validate",
-        &json!({"root": root_string, "path": fixture}),
+        "cairn_agent_completion_validate",
+        &json!({
+            "root": root_string,
+            "contract": contract,
+            "results": results,
+            "subject_hash": subject_hash,
+        }),
         false,
     )?;
     let validation = &receipt_call["structuredContent"];
@@ -131,8 +145,8 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
     let mutation_receipt = &mutation_denial["structuredContent"];
     let checks = vec![
         json!({"name": "catalog_lists_receipt_tool", "passed": true}),
-        json!({"name": "receipt_tool_schema_is_strict", "passed": receipt_schema["additionalProperties"] == false && receipt_schema["anyOf"].is_array()}),
-        json!({"name": "receipt_validation_is_structured", "passed": validation["valid"] == true && validation["mcp"]["read_only"] == true && validation["receipt_hash"].is_string()}),
+        json!({"name": "receipt_tool_schema_is_strict", "passed": receipt_schema["additionalProperties"] == false && receipt_schema["required"].is_array()}),
+        json!({"name": "receipt_validation_is_structured", "passed": validation["valid"] == true && validation["mcp"]["read_only"] == true && validation["checks_executed"] == false && validation["completion_receipt_hash"].is_string()}),
         json!({"name": "invalid_arguments_rejected_before_dispatch", "passed": invalid_argument_error.contains("invalid arguments for cairn_gate")}),
         json!({"name": "default_mutation_denied_without_mutation", "passed": mutation_receipt["allowed"] == false && mutation_receipt["mutated"] == false}),
     ];
@@ -149,7 +163,7 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
         "catalog_tool_count": tools.len(),
         "receipt_tool_schema_hash": canonical_json_hash(&receipt_schema),
         "agent_receipt_validation_hash": validation["receipt_hash"].as_str().unwrap_or_default(),
-        "agent_receipt_hash": validation["agent_receipt_hash"].as_str().unwrap_or_default(),
+        "agent_receipt_hash": validation["completion_receipt_hash"].as_str().unwrap_or_default(),
         "invalid_argument_error": invalid_argument_error,
         "mutation_denial": {
             "allowed": mutation_receipt["allowed"].clone(),
@@ -182,6 +196,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_gate_context" => mcp_gate_context(input)?,
             "cairn_change_graph" => mcp_change_graph(input)?,
             "cairn_agent_receipt_validate" => mcp_agent_receipt_validate(input)?,
+            "cairn_agent_completion_validate" => mcp_agent_completion_validate(input)?,
             "cairn_drain_plan" => mcp_drain_plan(input)?,
             "cairn_sync_plan" => mcp_sync(input, false)?,
             "cairn_archive_plan" => mcp_archive(input, false)?,

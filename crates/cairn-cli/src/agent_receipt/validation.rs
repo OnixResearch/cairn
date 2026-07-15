@@ -2,12 +2,52 @@ use std::path::PathBuf;
 
 use cairn_core::{
     agent_run_preserves_receipt_hash, canonical_json_hash, evaluate_agent_run_completion,
-    preserves_content_hash, AgentRunGateIssue, Policy,
+    evaluate_authoritative_agent_completion, preserves_content_hash, AgentRunGateIssue, Policy,
 };
 use serde_json::{json, Value};
 
 use crate::determinism::replay_groups_from_policy;
 use crate::support::{path_string, with_receipt_hash};
+
+pub(crate) struct AgentCompletionValidationInput<'a> {
+    pub command: &'a str,
+    pub contract_path: Option<PathBuf>,
+    pub results_path: Option<PathBuf>,
+    pub contract: &'a Value,
+    pub results: &'a Value,
+    pub current_subject_hash: &'a str,
+    pub policy: &'a Policy,
+    pub input_kind: &'a str,
+}
+
+pub(crate) fn agent_completion_validation_receipt(
+    input: AgentCompletionValidationInput<'_>,
+) -> Value {
+    // r[impl cairn.supersede.agent_run_receipts.execution_boundary.no_execution]
+    // r[impl cairn.supersede.agent_run_receipts.completion_authority.citation]
+    let current_policy_hash = canonical_json_hash(&input.policy.raw);
+    let report = evaluate_authoritative_agent_completion(
+        input.contract,
+        input.results,
+        input.current_subject_hash,
+        &current_policy_hash,
+    );
+    with_receipt_hash(json!({
+        "command": input.command,
+        "classification": report.classification,
+        "input_kind": input.input_kind,
+        "contract_path": input.contract_path.map(path_string),
+        "results_path": input.results_path.map(path_string),
+        "current_subject_hash": input.current_subject_hash,
+        "current_policy_hash": current_policy_hash,
+        "valid": report.valid,
+        "verdict": report.verdict,
+        "completion_receipt_hash": report.receipt_hash,
+        "completion": report,
+        "max_content_bytes": AGENT_RECEIPT_MAX_BYTES,
+        "checks_executed": false,
+    }))
+}
 
 use super::{AGENT_RECEIPT_MAX_BYTES, REQUIRED_AGENT_REPLAY_GROUP};
 
@@ -39,7 +79,19 @@ pub(crate) fn agent_receipt_validation_receipt(
         .collect::<Vec<_>>();
     issues.extend(replay_issues.iter().map(agent_gate_issue_json));
     issues.sort_by_key(canonical_json_hash);
-    let is_valid = report.valid && replay_issues.is_empty();
+    let is_legacy_inspection = report.classification == "legacy_unscoped"
+        && report
+            .issues
+            .iter()
+            .all(|issue| issue.code == "verification.missing_contract");
+    let is_valid = (report.valid || is_legacy_inspection) && replay_issues.is_empty();
+    let verdict = if report.valid && replay_issues.is_empty() {
+        "PASS"
+    } else if is_valid {
+        "INSPECTED"
+    } else {
+        "FAIL"
+    };
     let input_kind = if is_mcp && path.is_none() {
         "inline"
     } else {
@@ -49,8 +101,10 @@ pub(crate) fn agent_receipt_validation_receipt(
         "command": command,
         "path": path.map(path_string),
         "input_kind": input_kind,
+        "classification": report.classification,
+        "authoritative_completion": false,
         "valid": is_valid,
-        "verdict": if is_valid { "PASS" } else { "FAIL" },
+        "verdict": verdict,
         "issues": issues,
         "agent_receipt_hash": report.receipt_hash,
         "input_hash": canonical_json_hash(receipt),

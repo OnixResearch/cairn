@@ -13,7 +13,7 @@ fn mcp_agent_smoke_receipt_proves_operator_flow() -> Result<(), Box<dyn Error>> 
     assert_eq!(receipt["command"], "agent-receipt smoke-mcp");
     assert_eq!(receipt["valid"], true);
     assert_eq!(receipt["verdict"], "pass");
-    assert_eq!(receipt["fixture"], "fixtures/agent-receipts/positive.json");
+    assert_eq!(receipt["fixture"], "fixtures/agent-completion");
     assert_eq!(receipt["mcp"]["read_only"], true);
     assert_eq!(receipt["mutation_denial"]["allowed"], false);
     assert_eq!(receipt["mutation_denial"]["mutated"], false);
@@ -55,6 +55,9 @@ fn mcp_agent_receipt_validation_is_read_only_and_bounded() -> Result<(), Box<dyn
     ])?;
     let receipt = &by_path["structuredContent"];
     assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["verdict"], "INSPECTED");
+    assert_eq!(receipt["classification"], "legacy_unscoped");
+    assert_eq!(receipt["authoritative_completion"], false);
     assert_eq!(receipt["mcp"]["read_only"], true);
     assert_hash_field(receipt, "agent_receipt_hash")?;
     assert_hash_field(receipt, "receipt_hash")?;
@@ -70,6 +73,10 @@ fn mcp_agent_receipt_validation_is_read_only_and_bounded() -> Result<(), Box<dyn
     ])?;
     assert_eq!(inline["structuredContent"]["input_kind"], "inline");
     assert_eq!(inline["structuredContent"]["valid"], true);
+    assert_eq!(
+        inline["structuredContent"]["classification"],
+        "legacy_unscoped"
+    );
 
     let traversal = cairn()
         .args([

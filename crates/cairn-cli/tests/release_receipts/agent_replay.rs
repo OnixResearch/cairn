@@ -40,7 +40,7 @@ fn agent_receipt_preserves_hash_cli_is_deterministic() -> Result<(), Box<dyn Err
     assert_eq!(receipt["max_content_bytes"], 64 * 1024);
     assert_eq!(
         receipt["agent_receipt_preserves_hash"],
-        "28b8d35f6fb0280efec7c658982e02307b41e3add02899ed52787331ccd17730"
+        "5cccc0afb6cb71af9cea7f778abf9df7913a2bb553c57d74683e7cba4b2f34a9"
     );
     Ok(())
 }
@@ -87,6 +87,8 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
         &positive,
         &[
             "agent_receipt_hash",
+            "authoritative_completion",
+            "classification",
             "command",
             "current_replay_policy_hash",
             "input_hash",
@@ -104,8 +106,14 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
         ],
     )?;
     assert_eq!(positive["valid"], true);
-    assert_eq!(positive["verdict"], "PASS");
-    assert_eq!(positive["issues"].as_array().ok_or("issues")?.len(), 0);
+    assert_eq!(positive["verdict"], "INSPECTED");
+    assert_eq!(positive["classification"], "legacy_unscoped");
+    assert_eq!(positive["authoritative_completion"], false);
+    assert!(positive["issues"]
+        .as_array()
+        .ok_or("issues")?
+        .iter()
+        .any(|issue| issue["code"] == "verification.missing_contract"));
     assert_hash_field(&positive, "current_replay_policy_hash")?;
     assert_hash_field(&positive["replay_evidence"], "replay_receipt_hash")?;
     assert_hash_field(&positive["replay_evidence"], "replay_policy_hash")?;
@@ -132,7 +140,7 @@ fn agent_receipt_validate_replays_fixtures_deterministically() -> Result<(), Box
     let issues = negative["issues"].as_array().ok_or("negative issues")?;
     assert!(issues
         .iter()
-        .any(|issue| issue["code"] == "verification.missing_evidence"));
+        .any(|issue| issue["code"] == "verification.missing_contract"));
     Ok(())
 }
 

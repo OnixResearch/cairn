@@ -74,7 +74,13 @@ fn mcp_read_tools() -> Vec<Value> {
             "cairn_agent_receipt_validate",
             true,
             false,
-            "Validate an agent-run receipt without mutation",
+            "Inspect a legacy agent-run receipt without granting completion",
+        ),
+        mcp_tool(
+            "cairn_agent_completion_validate",
+            true,
+            false,
+            "Validate repository-owned completion evidence without executing checks",
         ),
         mcp_tool(
             "cairn_drain_plan",
@@ -205,6 +211,18 @@ fn mcp_input_schema(name: &str) -> Value {
             },
             "anyOf": [{"required": ["path"]}, {"required": ["receipt"]}]
         }),
+        "cairn_agent_completion_validate" => json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "root": {"type": "string"},
+                "policy": {"type": "string"},
+                "contract": {"type": "object"},
+                "results": {"type": "array"},
+                "subject_hash": {"type": "string"}
+            },
+            "required": ["contract", "results", "subject_hash"]
+        }),
         _ => json!({"type": "object", "additionalProperties": false, "properties": {}}),
     }
 }
@@ -283,6 +301,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
             validate_enum_arg(name, object, "source", &["openspec", "ironspec"])
         }
         "cairn_agent_receipt_validate" => validate_agent_receipt_args(name, object),
+        "cairn_agent_completion_validate" => validate_agent_completion_args(name, object),
         unknown => Err(format!("unknown MCP tool: {unknown}").into()),
     }
 }
@@ -436,6 +455,37 @@ fn validate_agent_receipt_args(
             )
             .into());
         }
+    }
+    Ok(())
+}
+
+fn validate_agent_completion_args(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    for key in object.keys() {
+        if !matches!(
+            key.as_str(),
+            "root" | "policy" | "contract" | "results" | "subject_hash"
+        ) {
+            return Err(format!("invalid arguments for {tool}: unknown argument {key}").into());
+        }
+    }
+    for key in ["root", "policy", "subject_hash"] {
+        if object.get(key).is_some_and(|value| !value.is_string()) {
+            return Err(
+                format!("invalid arguments for {tool}: argument {key} must be a string").into(),
+            );
+        }
+    }
+    if !object.get("contract").is_some_and(Value::is_object)
+        || !object.get("results").is_some_and(Value::is_array)
+        || !object.get("subject_hash").is_some_and(Value::is_string)
+    {
+        return Err(format!(
+            "invalid arguments for {tool}: contract object, results array, and subject_hash string are required"
+        )
+        .into());
     }
     Ok(())
 }

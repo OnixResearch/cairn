@@ -425,6 +425,18 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
     required_non_claims | NonEmptyArray | Array NonEmptyString,
   },
 
+  AgentCompletionPolicy = {
+    schema | NonEmptyString,
+    legacy_classification | NonEmptyString,
+    passing_status | NonEmptyString,
+    non_passing_statuses | NonEmptyArray | Array NonEmptyString,
+    max_input_file_bytes | PositiveNumber,
+    max_diagnostic_summary_bytes | PositiveNumber,
+    max_reproduction_args | PositiveNumber,
+    forbidden_diagnostic_fields | NonEmptyArray | Array NonEmptyString,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
   Policy = {
     name | NonEmptyString,
     version | SupportedPolicyVersion,
@@ -438,6 +450,7 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
     registry_label_policy | RegistryLabelPolicy,
     change_metadata_policy | ChangeMetadataPolicy,
     cross_repo_dependency_policy | CrossRepoDependencyPolicy,
+    agent_completion_policy | AgentCompletionPolicy,
     steel_orchestration_policy | SteelOrchestrationPolicy,
     traceability_policy | TraceabilityPolicy,
     stack_provenance_gate | StackProvenancePolicy,

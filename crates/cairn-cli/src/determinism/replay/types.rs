@@ -2,6 +2,7 @@ use cairn_core::GateStage;
 
 #[derive(Clone)]
 pub(super) enum ReplayCaseKind {
+    AgentCompletionValidate,
     AgentReceiptPreservesHash,
     AgentReceiptValidate,
     ArchiveDryRun,

@@ -224,6 +224,7 @@ pub(in crate::determinism) fn required_string_array(
 
 fn replay_case_kind(command_kind: &str, args: &[String]) -> Result<ReplayCaseKind, Box<dyn Error>> {
     match command_kind {
+        "agent_completion_validate" => Ok(ReplayCaseKind::AgentCompletionValidate),
         "agent_receipt_preserves_hash" => Ok(ReplayCaseKind::AgentReceiptPreservesHash),
         "agent_receipt_validate" => Ok(ReplayCaseKind::AgentReceiptValidate),
         "archive_dry_run" => Ok(ReplayCaseKind::ArchiveDryRun),

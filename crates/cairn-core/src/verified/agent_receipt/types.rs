@@ -6,6 +6,7 @@ pub struct AgentRunGateIssue {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AgentRunGateReport {
+    pub classification: String,
     pub verdict: String,
     pub valid: bool,
     pub issues: Vec<AgentRunGateIssue>,

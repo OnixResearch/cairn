@@ -57,6 +57,39 @@ pub(super) fn replay_manifest_for_case(
 
 pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, Box<dyn Error>> {
     match &case.kind {
+        ReplayCaseKind::AgentCompletionValidate => {
+            let contract_selector = case
+                .args
+                .get(3)
+                .ok_or("agent completion replay case missing contract path")?;
+            let results_selector = case
+                .args
+                .get(5)
+                .ok_or("agent completion replay case missing results path")?;
+            let subject_hash = case
+                .args
+                .get(7)
+                .ok_or("agent completion replay case missing subject hash")?;
+            let contract_path = replay_fixture_path(root, contract_selector)?;
+            let results_path = replay_fixture_path(root, results_selector)?;
+            let contract = read_json_artifact(&contract_path, AGENT_RECEIPT_MAX_BYTES)?;
+            let results = read_json_artifact(&results_path, AGENT_RECEIPT_MAX_BYTES)?;
+            let policy = load_policy_file(default_policy_path().into())?;
+            let mut value = agent_completion_validation_receipt(AgentCompletionValidationInput {
+                command: "agent-receipt complete",
+                contract_path: Some(contract_path),
+                results_path: Some(results_path),
+                contract: &contract,
+                results: &results,
+                current_subject_hash: subject_hash,
+                policy: &policy,
+                input_kind: "path",
+            });
+            value
+                .as_object_mut()
+                .map(|object| object.remove("receipt_hash"));
+            Ok(with_portable_receipt_hash(root, value))
+        }
         ReplayCaseKind::AgentReceiptPreservesHash => {
             // r[impl cairn.determinism.preserves_hash_cli.replay_execution]
             let Some(path) = case.args.get(2) else {

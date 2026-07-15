@@ -120,6 +120,44 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
     ],
   },
 
+  agent_completion_policy = {
+    schema = "cairn.agent-completion.v2",
+    legacy_classification = "legacy_unscoped",
+    passing_status = "passed",
+    non_passing_statuses = [
+      "failed",
+      "blocked",
+      "skipped",
+      "deferred",
+      "timed_out",
+      "cancelled",
+      "dry_run",
+      "cleanup_failed",
+      "infrastructure_error",
+      "not_selected",
+      "unknown",
+    ],
+    max_input_file_bytes = 65536,
+    max_diagnostic_summary_bytes = 512,
+    max_reproduction_args = 32,
+    forbidden_diagnostic_fields = [
+      "raw_prompt",
+      "model_output",
+      "credentials",
+      "environment",
+      "stdout",
+      "stderr",
+      "pty_bytes",
+    ],
+    required_non_claims = [
+      "completion validation does not prove check-oracle soundness",
+      "completion validation does not prove honest command execution beyond supplied evidence",
+      "completion validation does not prove model correctness",
+      "completion validation does not prove whole-product correctness",
+      "completion validation does not prove release eligibility outside the selected contract",
+    ],
+  },
+
   steel_orchestration_policy = {
     enabled = false,
     profiles = [{
@@ -262,10 +300,15 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
     },
     {
       command = "agent-receipt validate",
-      top_level_keys = ["agent_receipt_hash", "command", "current_replay_policy_hash", "input_hash", "input_kind", "issues", "max_content_bytes", "path", "receipt_hash", "replay_evidence", "required_replay_cases", "required_replay_group", "stated_agent_receipt_hash", "valid", "verdict"],
+      top_level_keys = ["agent_receipt_hash", "authoritative_completion", "classification", "command", "current_replay_policy_hash", "input_hash", "input_kind", "issues", "max_content_bytes", "path", "receipt_hash", "replay_evidence", "required_replay_cases", "required_replay_group", "stated_agent_receipt_hash", "valid", "verdict"],
       issue_keys = ["code", "message"],
       replay_evidence_keys = ["replay_artifact_path", "replay_environment_attestation_hash", "replay_policy_hash", "replay_receipt_hash", "replay_selected_cases", "replay_selected_groups", "replay_verdict"],
       hash_fields = ["agent_receipt_hash", "current_replay_policy_hash", "input_hash", "receipt_hash", "stated_agent_receipt_hash"],
+    },
+    {
+      command = "agent-receipt complete",
+      top_level_keys = ["checks_executed", "classification", "command", "completion", "completion_receipt_hash", "contract_path", "current_policy_hash", "current_subject_hash", "input_kind", "max_content_bytes", "receipt_hash", "results_path", "valid", "verdict"],
+      hash_fields = ["completion_receipt_hash", "current_policy_hash", "current_subject_hash", "receipt_hash"],
     },
     {
       command = "gate",
@@ -516,6 +559,7 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
     cases = [
       { id = "agent_receipt_preserves_hash", command_kind = "agent_receipt_preserves_hash", args = ["agent-receipt", "preserves-hash", "fixtures/agent-receipts/positive.json"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["path"], hash_fields = ["agent_receipt_preserves_hash", "input_hash", "preserves_content_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "agent_receipt_validate", command_kind = "agent_receipt_validate", args = ["agent-receipt", "validate", "fixtures/agent-receipts/positive.json"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["path"], hash_fields = ["agent_receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
+      { id = "agent_completion_validate", command_kind = "agent_completion_validate", args = ["agent-receipt", "complete", "--contract", "fixtures/agent-completion/contract.json", "--results", "fixtures/agent-completion/results.json", "--subject-hash", "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["contract_path", "results_path"], hash_fields = ["completion_receipt_hash", "current_policy_hash", "current_subject_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "archive_dry_run", command_kind = "archive_dry_run", args = ["archive", "ready", "--root", "<root>"], fixture_root = "fixtures/archive-ready", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = ["actions.path", "delta_specs"], hash_fields = ["input_hash", "plan_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "preserves_corpus_freshness", command_kind = "preserves_corpus_freshness", args = ["preserves-corpus", "update", "--path", "fixtures/preserves-canonicalization/corpus.json"], fixture_root = "<root>", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["path"], hash_fields = ["corpus_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
       { id = "gate_design", command_kind = "gate", args = ["gate", "design", "demo", "--root", "<root>"], fixture_root = "fixtures/basic", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated", "cross_root"], display_only_paths = [], hash_fields = ["input_hash", "policy_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
@@ -534,9 +578,9 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
       { id = "receipt_preserves_diff", command_kind = "receipt_preserves_diff", args = ["receipt-preserves-diff", "--baseline", "fixtures/receipt-preserves-diff/baseline.json", "--candidate", "fixtures/receipt-preserves-diff/candidate.json"], fixture_root = ".", expected_mutability = "read_only_or_dry_run", comparison_modes = ["repeated"], display_only_paths = ["baseline_path", "candidate_path"], hash_fields = ["baseline_json_hash", "candidate_json_hash", "baseline_preserves_hash", "candidate_preserves_hash", "receipt_hash"], normalization_rules = ["portable_root_paths", "canonical_json"], },
     ],
     groups = [
-      { id = "agent", description = "Agent receipt replay evidence preflight", cases = ["agent_receipt_validate", "mcp_describe", "status", "validate"], },
-      { id = "full", description = "All policy-owned replay cases", cases = ["agent_receipt_preserves_hash", "agent_receipt_validate", "archive_dry_run", "preserves_corpus_freshness", "gate_design", "gate_proposal", "gate_tasks", "mcp_describe", "mcp_status", "migrate_dry_run", "receipt_preserves_diff", "release_readiness", "status", "sync_dry_run", "validate", "view_graph", "view_kanban", "view_mindmap"], },
-      { id = "release", description = "Release-readiness replay preflight", cases = ["agent_receipt_validate", "mcp_describe", "release_readiness", "status", "validate"], },
+      { id = "agent", description = "Agent receipt replay evidence preflight", cases = ["agent_completion_validate", "agent_receipt_validate", "mcp_describe", "status", "validate"], },
+      { id = "full", description = "All policy-owned replay cases", cases = ["agent_completion_validate", "agent_receipt_preserves_hash", "agent_receipt_validate", "archive_dry_run", "preserves_corpus_freshness", "gate_design", "gate_proposal", "gate_tasks", "mcp_describe", "mcp_status", "migrate_dry_run", "receipt_preserves_diff", "release_readiness", "status", "sync_dry_run", "validate", "view_graph", "view_kanban", "view_mindmap"], },
+      { id = "release", description = "Release-readiness replay preflight", cases = ["agent_completion_validate", "agent_receipt_validate", "mcp_describe", "release_readiness", "status", "validate"], },
       { id = "smoke", description = "Cheap status and validation replay preflight", cases = ["status", "validate"], },
     ],
     entropy_inventory = [
@@ -559,6 +603,7 @@ let PolicyFieldSetDigest = "5b6ca8c021d47eb08c98e6dedd16ebced68c13fdb7e58d1c1e08
   },
 
   determinism_surface_inventory = [
+    { id = "agent_completion_validate", command = "agent-receipt complete --contract fixtures/agent-completion/contract.json --results fixtures/agent-completion/results.json --subject-hash <hash>", surface_kind = "cli", receipt_command = "agent-receipt complete", required_replay_cases = ["agent_completion_validate"], required_replay_groups = ["agent", "full", "release"], determinism_claim = "authoritative_agent_completion_stability" },
     { id = "agent_receipt_preserves_hash", command = "agent-receipt preserves-hash fixtures/agent-receipts/positive.json", surface_kind = "cli", receipt_command = "agent-receipt preserves-hash", required_replay_cases = ["agent_receipt_preserves_hash"], required_replay_groups = ["full"], determinism_claim = "agent_receipt_preserves_hash_stability" },
     { id = "agent_receipt_validate", command = "agent-receipt validate fixtures/agent-receipts/positive.json", surface_kind = "cli", receipt_command = "agent-receipt validate", required_replay_cases = ["agent_receipt_validate"], required_replay_groups = ["agent", "full", "release"], determinism_claim = "agent_receipt_stability" },
     { id = "archive_dry_run", command = "archive ready --root <root>", surface_kind = "cli", receipt_command = "archive", required_replay_cases = ["archive_dry_run"], required_replay_groups = ["full"], determinism_claim = "lifecycle_dry_run_stability" },

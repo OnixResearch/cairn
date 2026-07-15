@@ -6,7 +6,9 @@
 // r[verify cli_maintainability.agent_receipt_cli_source.behavior_preserved.repository_checks]
 use std::{error::Error, path::PathBuf};
 
-use crate::support::{default_policy_path, load_policy_file, print_json, read_option};
+use crate::support::{
+    default_policy_path, load_policy_file, print_json, read_option, read_string_option,
+};
 
 mod bundle;
 mod io;
@@ -19,7 +21,8 @@ pub(crate) use io::{
     ensure_inline_receipt_is_bounded, read_agent_receipt_file, read_json_artifact,
 };
 pub(crate) use validation::{
-    agent_preserves_hash_receipt, agent_receipt_validation_receipt, is_blake3_hex_text,
+    agent_completion_validation_receipt, agent_preserves_hash_receipt,
+    agent_receipt_validation_receipt, is_blake3_hex_text, AgentCompletionValidationInput,
 };
 
 pub(crate) const AGENT_RECEIPT_MAX_BYTES: u64 = 64 * 1024;
@@ -44,6 +47,35 @@ pub(crate) fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>>
                 &receipt,
                 false,
                 &policy,
+            ))
+        }
+        "complete" => {
+            let rest = iter.collect::<Vec<_>>();
+            let contract_path = read_string_option(&rest, "--contract")
+                .map(PathBuf::from)
+                .ok_or("agent-receipt complete requires --contract FILE")?;
+            let results_path = read_string_option(&rest, "--results")
+                .map(PathBuf::from)
+                .ok_or("agent-receipt complete requires --results FILE")?;
+            let subject_hash = read_string_option(&rest, "--subject-hash")
+                .ok_or("agent-receipt complete requires --subject-hash HASH")?;
+            let policy_path = read_string_option(&rest, "--policy")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| default_policy_path().into());
+            let contract = read_json_artifact(&contract_path, AGENT_RECEIPT_MAX_BYTES)?;
+            let results = read_json_artifact(&results_path, AGENT_RECEIPT_MAX_BYTES)?;
+            let policy = load_policy_file(policy_path)?;
+            print_json(agent_completion_validation_receipt(
+                AgentCompletionValidationInput {
+                    command: "agent-receipt complete",
+                    contract_path: Some(contract_path),
+                    results_path: Some(results_path),
+                    contract: &contract,
+                    results: &results,
+                    current_subject_hash: &subject_hash,
+                    policy: &policy,
+                    input_kind: "path",
+                },
             ))
         }
         "preserves-hash" => {
