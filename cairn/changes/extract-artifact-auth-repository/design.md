@@ -4,7 +4,7 @@ Cairn's authenticated-evidence path already demonstrates the desired functional-
 
 Mantle has several overlapping but product-specific trust paths, including release witnesses and OCI signature companions. Molten has purpose-separated key generations, rotation, revocation, and canonical payload-reference signatures. Valence verifies Radicle entry signatures while keeping Evidence IR identity and authorization separate. The overlap is large enough to justify one authenticity owner, but no product schema can be adopted wholesale without importing product authority or creating a dependency cycle.
 
-Licensing constrains the source route. Cairn's reusable core is `MIT OR Apache-2.0`, while Mantle repository-owned implementation is AGPL. A permissively licensed standalone core must be implemented from the reviewed neutral contract and permissively licensed source provenance; Mantle contributes conformance behavior and fixtures, not copied implementation.
+The Mantle owner has authorized reuse, modification, and relicensing of Mantle code for this extraction. Mantle's current AGPL repository label is therefore not an architectural blocker. Any selected Mantle source still needs durable file-level provenance, preserved attribution, an explicit owner-approved standalone license grant, and review that product authority has been removed. Implementation source is selected by semantic fit and purity rather than by repository of origin.
 
 ## Decisions
 
@@ -19,6 +19,12 @@ Licensing constrains the source route. Cairn's reusable core is `MIT OR Apache-2
 **Choice:** Record exact source revisions and map Cairn, Mantle, Molten, and Valence fields and decisions into shared semantics, consumer extensions, retained authority, interoperability metadata, or blockers. Freeze positive and negative vectors before selecting final standalone schemas.
 
 **Rationale:** Similar names such as subject, signer, purpose, revocation, or threshold do not prove identical semantics. The inventory prevents one implementation from becoming canonical by accident and gives the extraction a measurable loss oracle.
+
+### Decision: select source by semantic fit with explicit relicense provenance
+
+**Choice:** Cairn and Mantle implementations are both eligible source material. After the compatibility corpus is frozen, the standalone implementation may refactor whichever pure pieces best match the neutral contract. Every imported source unit records its original repository and revision, material changes, attribution, owner authorization, and MIT/Apache grant. Product-specific shell or policy code is not imported merely because relicensing is possible.
+
+**Rationale:** Sole-owner authorization removes the prior license blocker, but it does not make product semantics neutral. Separating rights clearance from semantic selection permits reuse without turning Mantle's build, OCI, registry, release, signing, or trust decisions into shared authority.
 
 ### Decision: authenticate typed references, not arbitrary ambient payload bytes
 
@@ -80,11 +86,11 @@ Rejected because UCAN signs delegated capability tokens with proof-chain and aut
 
 ### Keep the neutral core in Cairn
 
-Rejected because Mantle, Molten, and Valence should not depend on lifecycle and readiness packages to verify generic artifact statements. Cairn remains the initial permissive source and first consumer, not the final owner.
+Rejected because Mantle, Molten, and Valence should not depend on lifecycle and readiness packages to verify generic artifact statements. Cairn remains one eligible implementation source and the first planned consumer, not the final owner.
 
 ### Extract Mantle's attestation crate directly
 
-Rejected for the neutral baseline because Mantle's crate carries release/build concepts and AGPL source. Mantle remains a conformance consumer unless the standalone repository deliberately chooses AGPL, which would defeat permissive reuse by current consumers.
+Rejected as an unmodified move because Mantle's crate carries release, build, OCI, registry, signing, and trust concepts that are outside the neutral boundary. Owner-authorized Mantle code may still be relicensed and refactored into the standalone packages when provenance is exact and the compatibility corpus proves semantic fit.
 
 ### Canonicalize and sign each product payload format directly
 
@@ -95,5 +101,6 @@ Rejected because it would require the standalone repository to own or equate JSO
 - A narrow typed-reference statement may not remove every product-local signature helper. Product-specific payload construction and trust decisions intentionally remain local.
 - A new cryptographic dependency concentrates failure impact. Mitigation requires fixed vectors, malformed-input tests, cross-implementation verification where available, and explicit upgrade Cairns.
 - Consumer semantics may prove incompatible. The inventory may validly block or split profiles rather than forcing a union.
+- Owner authorization permits Mantle reuse but does not replace durable provenance, attribution, and per-source license evidence; missing records block release.
 - Independent releases add pin/update work. Exact source checks and consumer-owned upgrade packages are required to keep that coordination visible.
 - A valid signature can be socially misleading. Required non-claims and separate authorization/readiness decisions remain release blockers.

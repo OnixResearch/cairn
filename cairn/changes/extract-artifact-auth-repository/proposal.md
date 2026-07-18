@@ -8,7 +8,7 @@ The shared boundary is authenticity of an exact typed artifact reference under e
 
 - Record a reviewed inventory of Cairn, Mantle, Molten, and Valence statement, subject, signer, key-purpose, generation, revocation, threshold, canonicalization, outcome, and retained-authority semantics.
 - Create `OnixResearch/artifact-auth` as the independent owner of product-neutral artifact-authentication DTOs, canonical statement preimages, pure policy evaluation, Ed25519 verification, mapping profiles, and positive and negative conformance fixtures.
-- Build the standalone implementation from the MIT-or-Apache Cairn core boundary and a product-neutral specification; do not copy AGPL Mantle shell or core code into a permissively licensed package.
+- Select and refactor the strongest product-neutral implementation pieces from Cairn and Mantle after the compatibility inventory; Mantle's owner-authorized reuse, modification, and relicensing make its code eligible when exact provenance, attribution, and standalone license grants are recorded.
 - Split the standalone implementation into an authority-free `artifact-auth-core` functional core and a pure `artifact-auth-ed25519` verifier; signing services, private-key handling, key generation, persistence, clocks, network access, and trust discovery remain outside both packages.
 - Define a versioned statement that binds domain, purpose, profile, producer, key identity, subject reference, optional parent references, and verifier-supplied currentness facts without depending on JSON, Preserves, OCI, Valence, Cairn, Mantle, Molten, or UCAN semantics.
 - Preserve BLAKE3 as the default stack-owned identity algorithm while carrying protocol-required digest algorithms, such as OCI SHA-256, as explicit interoperability references.
@@ -19,6 +19,7 @@ The shared boundary is authenticity of an exact typed artifact reference under e
 
 - **New repository**: `OnixResearch/artifact-auth`, with Rust core and Ed25519 packages, typed Nickel review profiles, generated conformance data, native Cairn lifecycle, documentation, MIT/Apache licenses, and release evidence.
 - **Cairn**: `crates/cairn-core/src/verified/authenticated_inputs.rs`, `crates/cairn-cli/src/authenticated_inputs.rs`, authenticated-evidence policy and fixtures, exact dependency pins, compatibility adapters, tests, docs, and evidence may be touched during implementation; Cairn keeps evidence measurement, lifecycle profiles, readiness gates, and release decisions.
+- **Mantle source contribution**: reviewed neutral code may be refactored into the standalone repository under an explicit owner-authorized MIT/Apache grant with exact source provenance and preserved attribution; Mantle build, OCI, release, registry, signing, and trust authority remain local.
 - **Downstream handoff**: Mantle, Molten, and Valence receive mapping profiles and later consumer-owned lifecycle packages rather than workspace-relative dependencies.
 - **Testing**: host and `wasm32-unknown-unknown` checks, canonical-preimage vectors, positive and negative Ed25519/policy fixtures, cross-consumer mapping-loss tests, Cairn dual-run parity, exact-source checks, dependency-isolation checks, policy freshness, workspace tests, Cairn validation/gates, Traceability coverage, Slotcar, and Nix checks.
 

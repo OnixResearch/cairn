@@ -36,12 +36,12 @@ r[cairn.artifact_auth.repository_extraction.repository.neutral]
 - GIVEN the standalone repository is prepared for review
 - WHEN its package graph, source tree, and release metadata are inspected
 - THEN it MUST have no runtime dependency on Cairn, Mantle, Molten, Valence, Kamacite, UCAN, Basalt, OCI, Radicle, or a sibling checkout
-- AND its reusable source MUST NOT contain copied AGPL Mantle implementation code.
+- AND every reused product source unit MUST record exact provenance, preserved attribution, material changes, explicit owner authorization, and a standalone-compatible license grant.
 
 #### Scenario: Product-coupled package is rejected
 
 r[cairn.artifact_auth.repository_extraction.repository.product_dependency]
-- GIVEN a candidate standalone package imports a product crate, depends on a workspace-relative sibling path, or copies license-incompatible source
+- GIVEN a candidate standalone package imports a product crate, depends on a workspace-relative sibling path, or reuses source without exact provenance, attribution, owner authorization, and a compatible standalone license grant
 - WHEN repository admission runs
 - THEN the candidate MUST be rejected before publication or consumer pinning.
 
