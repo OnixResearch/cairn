@@ -35,13 +35,14 @@ All baseline commands passed. The Mantle signing filter ran fifteen tests with n
 
 Local repository: `../artifact-auth`
 
-Current immutable local Git revision: `e08e2c5d3bf1e510c57496bdb1407746f40f43d5`
+Current immutable local Git revision: `799459346d5416fbd7b9f55840a7371441b55afa`
 
 The repository contains:
 
 - `artifact-auth-core`: `#![no_std]` plus `alloc`, versioned length-delimited statements, typed BLAKE3/SHA-256 references, deterministic policy/currentness/threshold decisions, and required non-claims;
 - `artifact-auth-ed25519`: pure raw-key Ed25519 verification and a composed verify-and-evaluate path;
-- typed Nickel repository and release profiles with checked JSON exports;
+- typed Nickel repository, release, and per-consumer mapping profiles with checked JSON exports and mapping-loss rejection;
+- frozen legacy Cairn/Mantle canonical statement bytes and BLAKE3 comparison identities, verified by the conformance suite;
 - native Cairn policy/spec lifecycle and traceability evidence;
 - source grant, exact provenance, preserved attribution, consumer mappings, migration guidance, and positive/negative conformance fixtures;
 - generated Cargo and Nix lockfiles produced by their owning tools.
