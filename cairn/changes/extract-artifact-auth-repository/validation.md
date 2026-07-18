@@ -35,7 +35,7 @@ All baseline commands passed. The Mantle signing filter ran fifteen tests with n
 
 Local repository: `../artifact-auth`
 
-Current immutable local Git revision: `d7f77787fa8a88e843ddde7161c981175badb4b4`
+Current immutable local Git revision: `e08e2c5d3bf1e510c57496bdb1407746f40f43d5`
 
 The repository contains:
 
@@ -57,7 +57,7 @@ Passing focused checks:
 - Nickel typecheck/export freshness for repository and release profiles
 - Cairn validation and traceability coverage: six requirements, six referenced, verdict `pass`
 
-The full `nix flake check --option secret-key-files '' -L` result must be recorded before marking the standalone release/conformance task complete.
+`nix flake check --option secret-key-files '' -L` passed all ten checks. The default signing-key option was cleared because this host configuration references an absent `/run/secrets/vars/nix-signing-key/key`; the repository checks themselves passed. The flake covered Cargo tests, Clippy, formatting, host and Wasm `no_std` builds, Nickel export freshness, Cairn validation/traceability, and the authority audit. Negative Nickel fixtures reject invalid standalone licensing, absent or false owner authorization, mismatched fixed source provenance, and weakened non-claims; the authority audit also rejects product dependencies and verifies package-license metadata plus the recorded fixed source cohort.
 
 ## Adversarial audit
 
