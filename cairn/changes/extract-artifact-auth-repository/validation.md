@@ -35,7 +35,9 @@ All baseline commands passed. The Mantle signing filter ran fifteen tests with n
 
 Local repository: `../artifact-auth`
 
-Current immutable local Git revision: `799459346d5416fbd7b9f55840a7371441b55afa`
+Published immutable Git revision: `799459346d5416fbd7b9f55840a7371441b55afa`
+
+Remote source: `https://github.com/OnixResearch/artifact-auth` at `refs/heads/main`; `main@origin` and `git ls-remote` both resolve to the exact revision above.
 
 The repository contains:
 
@@ -66,13 +68,18 @@ The secondary reviewer proposed collision, order, duplicate-threshold, stale-gen
 
 The observation-forgery hypothesis identified a useful misuse boundary. `artifact-auth-ed25519::verify_and_evaluate` was added as the normal path so policy admission is composed directly with canonical-byte verification. Protocol adapters may still supply an observation to the core, but verifier correctness and observation provenance are now explicit non-claims. Statement bytes are public and make no confidentiality claim.
 
-## Exact blocker
+## Published release identities
 
-`git ls-remote git@github.com:OnixResearch/artifact-auth.git HEAD` reports `Repository not found`. Push behavior requires an explicit user request, so the local repository has not been created or pushed remotely. Until a remote immutable revision exists:
+The reviewed standalone source is published at immutable Git revision `799459346d5416fbd7b9f55840a7371441b55afa`. Distribution remains Git/Nix only: both Cargo packages set `publish = false`, so no crates.io registry-name claim is made.
 
-- standalone publication task I9 remains open;
-- Cairn Cargo/Nix pinning and cutover tasks I10-I12 remain open;
-- consumer adoption handoff I13 remains open;
-- final Cairn compatibility/full-rail and archive tasks remain open.
+- Cargo packages: `artifact-auth-core@0.1.0` and `artifact-auth-ed25519@0.1.0`; workspace manifest BLAKE3 SRI `blake3-SDBr9Q2T52DaPDvyhu1Qoy/IyzT2ZQpMCSXJSQI3sP8=`; core manifest `blake3-aQ+q76b7WemahBOFfPrl3+jBqXe7rLBwbTUhdjmRLTs=`; Ed25519 manifest `blake3-Ad05hGHX4sYWUR4bwpzbBm/622j0IiNhEeYEgXqTA0c=`; Cargo lock `blake3-ccVDoXb4N88xE/rua84Ezm+zuLRZs7FpCa8pSdFaDj4=`.
+- Nix source: `github:OnixResearch/artifact-auth/799459346d5416fbd7b9f55840a7371441b55afa`; Nix-prefetched source hash `sha256-nEgz2FtVuDesX95yyxidp0vhjxL4INB6Ve8rkpLyJk0=`. SHA-256 is retained here because Nix source addressing requires its SRI hash; repository-owned file identities remain BLAKE3. Flake source BLAKE3 SRI is `blake3-bV5MHa5FlGde3D4yada/AV/k1tkHjTvx5eZJOuVcxiQ=` and flake lock BLAKE3 SRI is `blake3-S9ksqG51Huqkw/joT9z8ncVHTCy2rkuoe/cDApqA8Go=`.
+- License and provenance: `MIT OR Apache-2.0`; MIT text `blake3-SDK+A1UmXBhOt6L8fyTk0i01O8oqg/YwQW6pxU+ZQmI=`; Apache-2.0 text `blake3-g8s6L8+Cm2E44JWwgwFsNN3N+ge2jTh4JyLBT8+FrOY=`; owner grant `blake3-0e8U9uP546z7UqjDOFJJwsjuXL7lRBxZMnXxw1qB/is=`; source inventory `blake3-t1wWzYhnjo/BZMs3hrmZc24f3yNpfgYKIoaLyU+dzbg=`.
+- Release profile: typed Nickel source `blake3-28d/KoqVm4WUnpT+m2jyqhER9sMvCfklrJMYo/PRWAc=`; checked JSON projection `blake3-XkAoYxjPfwKNs8i/KT4Km0+3xvXudd2pfbYTD8nl804=`.
+- Conformance corpus: positive and negative cases `blake3-kZahH760kdhvPAsEUrmS7WyCYq8X8H5ROSYDPJdxCvI=`.
 
-The next discriminating action is remote repository creation followed by an explicitly authorized push of local bookmark `main`, then pinning the resulting revision without sibling paths.
+These identities bind the published source and reviewed release inputs; they do not add artifact truth, authorization, verifier-correctness, or downstream release claims.
+
+## Next cutover boundary
+
+Standalone publication task I9 is complete. Cairn Cargo/Nix pinning and cutover tasks I10-I12, consumer-owned adoption handoff I13, final full-rail verification, accepted-spec sync, and archive remain open. The next discriminating action is to pin the exact published revision in Cairn without a sibling path, verify Cargo and Nix source parity, and reject floating or mismatched inputs.
