@@ -218,6 +218,8 @@ Two environmental/build-closure discriminators were resolved rather than suppres
 
 The operator guide now records the exact SSH revision, distinct legacy/standalone signatures, diagnostic compatibility fields, source update procedure, runtime/dependency rollback, retained Cairn authority, and mandatory non-claims. These passing rails establish current source, test, lifecycle, and build evidence only; they do not admit standalone release authority or widen authentication claims.
 
-## Next cutover boundary
+## Archive completion
 
-Standalone publication I9, exact source pinning I10, pure Cairn adapter I11, dual-run compatibility I12, consumer-owned handoff I13, accepted-spec sync, operator documentation, and final full-rail verification are complete. Only V4 archive mutation remains. The change may be archived after marking the closeout task complete, confirming a clean current tasks gate and archive dry run, executing the native Cairn archive, and committing the resulting archive state.
+All 17 tasks were complete before mutation. The final validation, tasks gate, and 1,577/1,577 Traceability check passed. The native dry-run archive plan was unblocked with plan hash `eae98bced018939f018c9e8ef90936c2ba5809fc0a77a5a0e641310c31b47335` and receipt hash `16a7130d3169e3702425786fab09763725b26c27ea7ebb39cdc3f9ce124be42b`. Executed archive mutation on `2026-07-19` produced plan hash `cbc76fd27405b074e4a6c7bacaad46ed13e54708b3755e37d7046dbf50873275` and receipt hash `a78d0a30c02e66adc8f33b1f2f1e8a03dd4b2bac4ce484461620daca108b20ad`.
+
+Post-archive Cairn validation passes across 33 accepted specifications, and Traceability remains complete at 1,577/1,577 with no missing or dangling IDs. The extraction lifecycle is closed, while runtime compatibility continues to report `legacy_authoritative = true` and `standalone_authority_admitted = false`; any future authority admission requires its own reviewed Cairn change.
