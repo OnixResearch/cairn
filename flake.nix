@@ -299,6 +299,7 @@
           nativeCheckInputs = [
             pkgs.git
             pkgs.nickel
+            nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
           ];
           preCheck = ''
             ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn policy export --check

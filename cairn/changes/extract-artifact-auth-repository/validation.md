@@ -196,6 +196,28 @@ Cairn's current extraction package is its own consumer-owned adoption change. Ev
 
 Only the four lifecycle files in each new package were committed. No downstream Cargo/Nix dependency, lock, runtime, policy, source, readiness, or release implementation was changed. Pre-existing Mantle bootstrap work and Molten's untracked eBPF lifecycle package were left unstaged and untouched. SSH credentials remain retrieval authority only.
 
+## Final Cairn verification
+
+Executed sync promoted all 30 extraction requirement/scenario IDs into `cairn/specs/artifact-auth-repository/spec.md`. The first post-sync Traceability run correctly rejected 23 standalone-owned IDs that had no accepted evidence link. `crates/cairn-core/src/verified/artifact_auth/mod.rs` now records those as `verify` links to the exact standalone release/source-pin/conformance rail and explicitly states that linkage is not Cairn-local proof. Traceability then passed with 1,577/1,577 accepted IDs referenced and no missing or dangling IDs.
+
+The complete V3 rail passes:
+
+- `cargo fmt --all --check` in the repository dev shell;
+- full `cargo test --workspace`, including all authenticated-input, compatibility, determinism, release-receipt, lifecycle, and negative tests;
+- strict `cargo clippy --workspace --all-targets -- -D warnings`;
+- first-party `cargo tigerstyle check --output-format json --artifact-dir artifacts/slotcar-run`;
+- policy export freshness;
+- Cairn validation plus proposal, design, and tasks gates;
+- Traceability coverage at 1,577/1,577;
+- exact `artifact-auth-source-pin`, including synthetic floating/revision/duplicate/license/workspace-relative negative mutations;
+- Slotcar consumer validation;
+- `nix build path:$PWD#cairn --no-link -L`; and
+- full `nix flake check path:$PWD -L`, including self-dogfood, with `all checks passed` on the supported `x86_64-linux` system.
+
+Two environmental/build-closure discriminators were resolved rather than suppressed. First, the initial full Cargo run filled a stale per-user `/tmp` tree (235.18 GiB apparent) and three receipt tests failed only with `Disk quota exceeded`; after deleting that completed job's disposable tree, rerunning with a home-scoped temporary directory passed the entire workspace. A targeted Nix build also created the conventional ignored `result` symlink; the determinism suite rejected it as intended, and removing only that generated symlink restored the passing run. Second, the first full flake check found three structured-lifecycle tests unable to spawn the separately pinned `nickel-export` executable: host tests inherited it from the dev shell, while `rust-tests.nativeCheckInputs` named only Git and Nickel. Adding the exact `nickel-export` package to that Nix test closure made the isolated `rust-tests` derivation and full flake rail pass. No lockfile was edited for either repair.
+
+The operator guide now records the exact SSH revision, distinct legacy/standalone signatures, diagnostic compatibility fields, source update procedure, runtime/dependency rollback, retained Cairn authority, and mandatory non-claims. These passing rails establish current source, test, lifecycle, and build evidence only; they do not admit standalone release authority or widen authentication claims.
+
 ## Next cutover boundary
 
-Standalone publication I9, exact source pinning I10, pure Cairn adapter I11, dual-run compatibility I12, and consumer-owned handoff I13 are complete. Final full-rail verification, accepted-spec sync, documentation/rollback review, and archive remain open. The next discriminating action is to sync the accepted artifact-auth requirements so Traceability can resolve the seven active implementation IDs, then rerun the full V3 rail and archive only after current evidence passes.
+Standalone publication I9, exact source pinning I10, pure Cairn adapter I11, dual-run compatibility I12, consumer-owned handoff I13, accepted-spec sync, operator documentation, and final full-rail verification are complete. Only V4 archive mutation remains. The change may be archived after marking the closeout task complete, confirming a clean current tasks gate and archive dry run, executing the native Cairn archive, and committing the resulting archive state.

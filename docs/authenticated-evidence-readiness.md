@@ -48,3 +48,32 @@ Each authentication manifest uses schema `cairn.authenticated-evidence.v1` and d
 Cairn removes only the root `receipt_hash` self-hash field before recomputing canonical receipt identity. The signature message is canonical JSON under the `cairn.authenticated-evidence.v1` domain and binds the evidence kind, sorted measurements, measured policy export, producer, key ID, purpose, canonicalization profile, recomputed subject identity, sorted parent identities, and Valence integrity receipt identity. Signature verification uses only the public key selected by the configured producer/key pair.
 
 Missing files, mismatched byte identities, unsupported profiles, stale policy exports, missing or revoked keys, wrong purposes, changed subjects, changed parents, and malformed signatures all fail closed. Diagnostic mode may omit manifests, but it never emits authenticated Onix release-ready status.
+
+## Standalone artifact-auth dual run
+
+r[cairn.artifact_auth.repository_extraction.consumer_authority.cairn] Cairn consumes `artifact-auth-core` and `artifact-auth-ed25519` from `ssh://git@github.com/OnixResearch/artifact-auth.git` at reviewed revision `799459346d5416fbd7b9f55840a7371441b55afa`. Cargo and the non-flake Nix input resolve that same immutable revision. SSH credentials authorize retrieval only; they do not change source identity, policy, trust, or verification semantics.
+
+The existing `signature.signature_hex` continues to authenticate Cairn's historical `cairn.authenticated-evidence.v1` canonical JSON. It cannot authenticate the distinct `artifact-auth.statement.v1` preimage. During dual run, a producer may add `signature.artifact_auth_signature_hex`, containing a separate Ed25519 signature over the mapped standalone statement bytes. Omitting this optional field preserves legacy operation and reports a standalone cutover blocker; it does not make the standalone path authoritative.
+
+Release-readiness output retains the legacy report as the only value passed to Cairn's release gate. The diagnostic value also exposes:
+
+- `artifact_auth_standalone`: the bounded standalone projection, when mapping succeeds;
+- `artifact_auth_compatibility`: classified preimage, identity, decision, issue, and non-claim drift; and
+- `check.artifact_auth_case_explained`: whether the observed case is admissible compatibility evidence.
+
+`artifact_auth_case_explained` is not release readiness. The compatibility report fixes `legacy_authoritative = true`, `standalone_authority_admitted = false`, and `rollback_available = true`. Missing/malformed dedicated signatures, same or malformed preimages, unknown issues, identity/decision drift, unrelated-failure false parity, and weakened non-claims block cutover without bypassing current policy.
+
+### Dependency update procedure
+
+r[cairn.artifact_auth.repository_extraction.cutover] Review the candidate standalone commit, its Cairn profile under `config/consumers/cairn.ncl`, checked projection under `fixtures/consumers/cairn.json`, release evidence, package graph, and license before changing pins. Then:
+
+1. Set the exact SSH URL and full commit in root `Cargo.toml` and the exact matching non-flake input revision in `flake.nix`; never use a branch, tag, sibling path, abbreviated revision, or duplicate source.
+2. Regenerate `Cargo.lock` with Cargo and `flake.lock` with `nix flake lock`/`nix flake update`; never edit either lock manually.
+3. Run `nix build .#checks.x86_64-linux.artifact-auth-source-pin -L`. It rejects Cargo/Nix revision drift, duplicate packages, floating or workspace-relative sources, incompatible licensing, profile/publication mismatch, and its synthetic negative mutations.
+4. Run positive and tamper dual-run fixtures, strict Cargo checks, Slotcar, Cairn lifecycle validation/traceability, and the full Nix rail. Keep the old path authoritative until all drift is explained and a separate lifecycle change explicitly admits authority.
+
+### Rollback procedure
+
+r[cairn.artifact_auth.repository_extraction.cutover.negative] Runtime rollback is immediate: omit `artifact_auth_signature_hex` and continue using the legacy signature/report; standalone absence remains visible as a cutover blocker. For a dependency rollback, restore the last reviewed Cargo/Nix source declarations and adapter revision as one reviewed VCS change, regenerate both lockfiles with their owning tools, rerun the source-pin and full verification rails, and retain the compatibility evidence explaining why rollback occurred. Do not delete or reinterpret receipts to manufacture parity.
+
+r[cairn.artifact_auth.repository_extraction.non_claims] A passing standalone result proves only that supplied public-key material verifies the exact standalone canonical statement and that supplied policy observations satisfy the selected bounded profile. It does **not** prove artifact truth, producer authorization, trust-root correctness, revocation freshness, provenance correctness, lifecycle conformance, build correctness, semantic equivalence, deployment safety, or release eligibility. Cairn continues to own filesystem measurement, canonical receipt reconstruction, trust/currentness collection, lifecycle profile selection, readiness composition, JSON presentation, and process exits.
