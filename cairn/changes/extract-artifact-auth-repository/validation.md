@@ -100,6 +100,41 @@ Passing checks:
 
 SSH credentials are retrieval authority only. They do not change the reviewed source revision, package license, release profile, authentication semantics, or bounded non-claims, and these checks do not prove credential availability for another operator.
 
+## Pure Cairn adapter
+
+`crates/cairn-core/src/verified/artifact_auth/adapter/` now owns a pure two-step compatibility adapter:
+
+1. `map_cairn_artifact_auth` converts already measured Cairn policy/input observations into an `artifact-auth-core` policy, scope, signer-specific statement, raw public-key bytes, and compatibility identities.
+2. The Cairn shell must verify the new statement bytes explicitly, normally with `artifact_auth_ed25519::verify_statement`; `evaluate_cairn_artifact_auth` accepts that standalone cryptographic observation and projects the bounded decision into a distinct `CairnArtifactAuthReport`.
+
+The selected mapping binds `cairn.authenticated-evidence.v1/<evidence-kind>` as the domain, the existing purpose, recomputed receipt profile and BLAKE3 identity as subject, required parent BLAKE3 identities as typed parents, and the measured Valence integrity receipt as verifier/currentness context. Cairn's one-key behavior maps to threshold one and generation one; a non-revoked or revoked Cairn policy observation maps to `Current` or `Revoked` without claiming freshness beyond the supplied context.
+
+The adapter decodes configured public-key hex and dual-records Cairn's legacy BLAKE3-of-lowercase-hex identity beside the standalone BLAKE3-of-raw-key identity. Unsupported Cairn source schemas or signature/key algorithms, malformed keys, missing configured signers, and legacy-key-identity mismatch fail mapping with stable diagnostics that exclude raw key material.
+
+### Approach and adversarial audit
+
+| Family | Result |
+| --- | --- |
+| Reuse the legacy `signature.verified` boolean for the new statement | Rejected: it authenticates Cairn's historical canonical JSON, not `artifact-auth.statement.v1`, and would widen the cryptographic claim. |
+| Put filesystem/canonicalization/verification orchestration in `cairn-core` | Rejected: it would move consumer authority and break the existing functional-core / imperative-shell boundary. |
+| Pure map plus explicit exact-statement cryptographic observation | Selected: the adapter owns deterministic translation/projection while the shell retains measurement and verifier provenance. |
+
+A secondary local-model review was attempted but unavailable (`fetch failed`), so deterministic source and test evidence remains authoritative. Independent audit found a promotion hazard in an initial projection that embedded the legacy `AuthenticatedEvidenceReport`: callers could have passed it directly to `evaluate_authenticated_release_gate`. The final `CairnArtifactAuthReport` is a distinct DTO with `decision_passed`, standalone identities, stable issues, mandatory non-claims, and an explicit boundary; it is not accepted by the legacy release-gate API.
+
+Positive and negative adapter tests prove field mapping, explicit-observation control independent of the legacy boolean, passing decision identity/non-claims, malformed-key redaction, legacy/standalone key-identity separation, invalid standalone signature rejection, and revoked-key rejection. The module tree contains no filesystem, environment, process, clock, path, JSON, or presentation APIs.
+
+Passing focused checks:
+
+- pre-change `cairn-core` and `cairn-cli` authenticated-input baselines;
+- four adapter positive/negative tests;
+- all 347 `cairn-core` tests;
+- strict `cairn-core` all-target Clippy;
+- `cargo fmt --all --check`;
+- Slotcar consumer check over the tracked adapter source;
+- `nix build .#cairn --no-link -L`.
+
+These checks establish deterministic translation and a bounded report only. They do not establish dual-run parity, verifier correctness, currentness freshness, lifecycle conformance, authorization, readiness, or release eligibility.
+
 ## Next cutover boundary
 
-Standalone publication I9 and exact source pinning I10 are complete. The pure Cairn adapter I11, dual-run classification I12, consumer-owned handoff I13, final full-rail verification, accepted-spec sync, and archive remain open. The next discriminating action is to map existing measured lifecycle observations into the standalone contract without moving filesystem, JSON, CLI, lifecycle-policy, or readiness authority into the shared packages.
+Standalone publication I9, exact source pinning I10, and the pure Cairn adapter I11 are complete. Dual-run classification I12, consumer-owned handoff I13, final full-rail verification, accepted-spec sync, and archive remain open. The next discriminating action is to run legacy and standalone paths over identical baseline and tamper observations, classify every preimage/identity/decision/issue/non-claim difference, and keep unexplained drift fail-closed.
