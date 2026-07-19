@@ -80,6 +80,26 @@ The reviewed standalone source is published at immutable Git revision `799459346
 
 These identities bind the published source and reviewed release inputs; they do not add artifact truth, authorization, verifier-correctness, or downstream release claims.
 
+## Cairn Cargo/Nix source cutover
+
+Cairn now selects both standalone packages and the Nix source through the exact SSH repository `ssh://git@github.com/OnixResearch/artifact-auth.git` at revision `799459346d5416fbd7b9f55840a7371441b55afa`.
+
+- `Cargo.toml` pins `artifact-auth-core` and `artifact-auth-ed25519` to the same revision; `Cargo.lock` contains exactly one `0.1.0` record for each package with the complete immutable Git source identity.
+- `flake.nix` declares the same revision as a non-flake source input, avoiding the standalone repository's validation-only transitive inputs and any product dependency cycle. Nix-generated `flake.lock` binds that source to `sha256-nEgz2FtVuDesX95yyxidp0vhjxL4INB6Ve8rkpLyJk0=`.
+- `nix/artifact-auth-source-pin.nix` is a pure validator over parsed Cargo manifests, Cargo lock data, Nix lock data, resolved Nix source identity, standalone manifests, and the checked release profile. `flake.nix` is the thin shell that supplies those inputs and turns issues into a failing check.
+- Positive validation requires exact Cargo/Nix revision parity, one lock record per package, explicit Cairn workspace wiring, `MIT OR Apache-2.0`, `publish = false`, the reviewed package set, the immutable Git distribution channel, and no sibling-path or floating source declarations.
+- Negative self-tests reject a floating Cargo branch, mismatched Nix revision, duplicate Cargo package record, incompatible standalone package/profile license, and workspace-relative Cargo source.
+
+Passing checks:
+
+- pre-change and post-change focused `cairn-core` and `cairn-cli` authenticated-input test filters;
+- `cargo check -p cairn-core -p cairn-cli` after Cargo generated the lock update;
+- `cargo fmt --check`;
+- `nix build .#checks.x86_64-linux.artifact-auth-source-pin --no-link -L`;
+- `nix build .#cairn --no-link -L`.
+
+SSH credentials are retrieval authority only. They do not change the reviewed source revision, package license, release profile, authentication semantics, or bounded non-claims, and these checks do not prove credential availability for another operator.
+
 ## Next cutover boundary
 
-Standalone publication task I9 is complete. Cairn Cargo/Nix pinning and cutover tasks I10-I12, consumer-owned adoption handoff I13, final full-rail verification, accepted-spec sync, and archive remain open. The next discriminating action is to pin the exact published revision in Cairn without a sibling path, verify Cargo and Nix source parity, and reject floating or mismatched inputs.
+Standalone publication I9 and exact source pinning I10 are complete. The pure Cairn adapter I11, dual-run classification I12, consumer-owned handoff I13, final full-rail verification, accepted-spec sync, and archive remain open. The next discriminating action is to map existing measured lifecycle observations into the standalone contract without moving filesystem, JSON, CLI, lifecycle-policy, or readiness authority into the shared packages.

@@ -2,6 +2,10 @@
   description = "Rust/Nickel Cairn lifecycle engine";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.artifact-auth = {
+    url = "git+ssh://git@github.com/OnixResearch/artifact-auth.git?rev=799459346d5416fbd7b9f55840a7371441b55afa";
+    flake = false;
+  };
   inputs.nickel-export = {
     url = "github:OnixResearch/nickel-export/257fafc1c746f1faf156207043a4c826bfb16d49";
     inputs.nixpkgs.follows = "nixpkgs";
@@ -12,6 +16,7 @@
     {
       self,
       nixpkgs,
+      artifact-auth,
       nickel-export,
       slotcar,
     }:
@@ -23,11 +28,32 @@
       eachSystem = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
       rustCargoLock = {
         lockFile = ./Cargo.lock;
+        allowBuiltinFetchGit = true;
         outputHashes = {
           "nickel-export-core-0.1.0" = "sha256-dV4+/jghpJ89F5DHprdjxyru8kllMAurS2DsBGn/ibA=";
           "rat-canvas-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
           "rat-nodegraph-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
         };
+      };
+      artifactAuthSourcePin = import ./nix/artifact-auth-source-pin.nix {
+        lib = nixpkgs.lib;
+      };
+      artifactAuthSourcePinInput = {
+        cargoWorkspace = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+        coreManifest = builtins.fromTOML (builtins.readFile ./crates/cairn-core/Cargo.toml);
+        cliManifest = builtins.fromTOML (builtins.readFile ./crates/cairn-cli/Cargo.toml);
+        cargoLock = builtins.fromTOML (builtins.readFile ./Cargo.lock);
+        flakeLock = builtins.fromJSON (builtins.readFile ./flake.lock);
+        releaseProfile = builtins.fromJSON (builtins.readFile "${artifact-auth}/release/profile.json");
+        standaloneWorkspaceManifest = builtins.fromTOML (builtins.readFile "${artifact-auth}/Cargo.toml");
+        standaloneCoreManifest = builtins.fromTOML (
+          builtins.readFile "${artifact-auth}/crates/artifact-auth-core/Cargo.toml"
+        );
+        standaloneEd25519Manifest = builtins.fromTOML (
+          builtins.readFile "${artifact-auth}/crates/artifact-auth-ed25519/Cargo.toml"
+        );
+        resolvedNixRevision = artifact-auth.rev or null;
+        resolvedNixNarHash = artifact-auth.narHash or null;
       };
     in
     {
@@ -82,6 +108,20 @@
       });
 
       checks = eachSystem (pkgs: {
+        artifact-auth-source-pin =
+          let
+            validation = artifactAuthSourcePin.validate artifactAuthSourcePinInput;
+            selfTestIssues = artifactAuthSourcePin.selfTest artifactAuthSourcePinInput;
+            issues = validation.issues ++ selfTestIssues;
+          in
+          if issues != [ ] then
+            throw "artifact-auth source pin invalid:\n${nixpkgs.lib.concatStringsSep "\n" issues}"
+          else
+            pkgs.runCommand "cairn-artifact-auth-source-pin" { } ''
+              # r[verify cairn.artifact_auth.repository_extraction.cutover]
+              printf '%s\n' '${validation.revision}' > "$out"
+            '';
+
         # r[verify cairn.supersede.rust_nickel_only_gates.no_python_scripts]
         policy-fresh =
           pkgs.runCommand "cairn-policy-fresh"

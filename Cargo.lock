@@ -51,6 +51,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
+name = "artifact-auth-core"
+version = "0.1.0"
+source = "git+ssh://git@github.com/OnixResearch/artifact-auth.git?rev=799459346d5416fbd7b9f55840a7371441b55afa#799459346d5416fbd7b9f55840a7371441b55afa"
+dependencies = [
+ "blake3",
+]
+
+[[package]]
+name = "artifact-auth-ed25519"
+version = "0.1.0"
+source = "git+ssh://git@github.com/OnixResearch/artifact-auth.git?rev=799459346d5416fbd7b9f55840a7371441b55afa#799459346d5416fbd7b9f55840a7371441b55afa"
+dependencies = [
+ "artifact-auth-core",
+ "blake3",
+ "ed25519-dalek",
+]
+
+[[package]]
 name = "atomic"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -155,6 +173,7 @@ checksum = "d6aedf8ae72766347502cf3cb4f41cf5e9cc37d28bee90f1fdaaae15f9cf9424"
 name = "cairn-cli"
 version = "0.1.0"
 dependencies = [
+ "artifact-auth-ed25519",
  "blake3",
  "cairn-core",
  "cap-std",
@@ -172,6 +191,7 @@ dependencies = [
 name = "cairn-core"
 version = "0.1.0"
 dependencies = [
+ "artifact-auth-core",
  "blake3",
  "iddqd",
  "preserves",

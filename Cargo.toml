@@ -12,6 +12,8 @@ repository = "https://github.com/onixresearch/cairn"
 version = "0.1.0"
 
 [workspace.dependencies]
+artifact-auth-core = { git = "ssh://git@github.com/OnixResearch/artifact-auth.git", rev = "799459346d5416fbd7b9f55840a7371441b55afa", default-features = false }
+artifact-auth-ed25519 = { git = "ssh://git@github.com/OnixResearch/artifact-auth.git", rev = "799459346d5416fbd7b9f55840a7371441b55afa", default-features = false }
 blake3 = "1.5"
 cap-std = "4.0.2"
 crossterm = "0.28"
