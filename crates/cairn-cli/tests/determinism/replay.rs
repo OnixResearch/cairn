@@ -123,6 +123,7 @@ fn determinism_replay_oracle_is_stable_and_non_mutating() -> Result<(), Box<dyn 
     assert_eq!(
         case_ids,
         vec![
+            "agent_completion_validate",
             "agent_receipt_preserves_hash",
             "agent_receipt_validate",
             "archive_dry_run",

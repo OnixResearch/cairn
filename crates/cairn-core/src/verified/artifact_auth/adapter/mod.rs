@@ -1,6 +1,9 @@
+mod compatibility;
 mod mapping;
 mod projection;
 
+#[cfg(test)]
+mod compatibility_tests;
 #[cfg(test)]
 mod tests;
 
@@ -10,6 +13,12 @@ use serde::Serialize;
 
 use crate::AuthenticatedEvidenceIssue;
 
+pub use compatibility::{
+    compare_cairn_artifact_auth, CairnArtifactAuthCompatibilityClassification,
+    CairnArtifactAuthCompatibilityDimension, CairnArtifactAuthCompatibilityDisposition,
+    CairnArtifactAuthCompatibilityReport, CAIRN_ARTIFACT_AUTH_COMPATIBILITY_BOUNDARY,
+    CAIRN_ARTIFACT_AUTH_COMPATIBILITY_SCHEMA_V1,
+};
 pub use mapping::map_cairn_artifact_auth;
 pub use projection::evaluate_cairn_artifact_auth;
 

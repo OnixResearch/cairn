@@ -47,9 +47,13 @@ pub use verified::archive_compaction::{
     LOSSLESS_PACK_PROFILE, LOSSY_SUMMARY_PROFILE,
 };
 pub use verified::artifact_auth::adapter::{
-    evaluate_cairn_artifact_auth, map_cairn_artifact_auth, CairnArtifactAuthInput,
-    CairnArtifactAuthReport, CAIRN_ARTIFACT_AUTH_BOUNDARY, CAIRN_ARTIFACT_AUTH_PARENT_PROFILE_V1,
-    CAIRN_ARTIFACT_AUTH_PROFILE_V1, CAIRN_ARTIFACT_AUTH_VERIFIER_CONTEXT_PROFILE_V1,
+    compare_cairn_artifact_auth, evaluate_cairn_artifact_auth, map_cairn_artifact_auth,
+    CairnArtifactAuthCompatibilityClassification, CairnArtifactAuthCompatibilityDimension,
+    CairnArtifactAuthCompatibilityDisposition, CairnArtifactAuthCompatibilityReport,
+    CairnArtifactAuthInput, CairnArtifactAuthReport, CAIRN_ARTIFACT_AUTH_BOUNDARY,
+    CAIRN_ARTIFACT_AUTH_COMPATIBILITY_BOUNDARY, CAIRN_ARTIFACT_AUTH_COMPATIBILITY_SCHEMA_V1,
+    CAIRN_ARTIFACT_AUTH_PARENT_PROFILE_V1, CAIRN_ARTIFACT_AUTH_PROFILE_V1,
+    CAIRN_ARTIFACT_AUTH_VERIFIER_CONTEXT_PROFILE_V1,
 };
 pub use verified::ast_grep_gate::{
     ast_grep_receipt_hash, ast_grep_receipt_hash_material, default_ast_grep_gate_policy,

@@ -135,6 +135,51 @@ Passing focused checks:
 
 These checks establish deterministic translation and a bounded report only. They do not establish dual-run parity, verifier correctness, currentness freshness, lifecycle conformance, authorization, readiness, or release eligibility.
 
+## Dual-run compatibility and rollback
+
+Cairn now dual-runs legacy and standalone authentication in `crates/cairn-cli/src/authenticated_inputs/dual_run.rs` from one measured `AuthenticatedEvidenceInput`. The existing `signature_hex` continues to verify Cairn's historical canonical JSON, while the optional `artifact_auth_signature_hex` verifies only the standalone length-delimited statement through `artifact_auth_ed25519::verify_statement`. The signatures share measured subject, parents, producer, key, purpose, trust, and currentness observations but cannot be reused across intentionally distinct preimages.
+
+The pure comparator under `crates/cairn-core/src/verified/artifact_auth/adapter/compatibility/` emits an ordered classification for every observed dimension using `equal`, `intentionally_mapped`, or `blocking` dispositions:
+
+- **preimage:** both BLAKE3 identities must be valid and distinct, recording the intentional schema/domain transition;
+- **identity:** subject, producer, and key label must remain equal; legacy text-key and standalone raw-key identities plus decision-schema identities are explicitly mapped; standalone statement/policy/scope/decision/key identities must be internally consistent;
+- **decision:** outcomes must match, reports must be internally well formed, and a rejected pair requires a shared measured, parent, purpose, or currentness cause rather than two unrelated generic signature failures;
+- **issue:** reviewed legacy/standalone issue pairs, consumer-retained measurement/parent checks, and standalone cryptographic/threshold enrichment are explicit; every other issue is blocking;
+- **non-claim:** the exact legacy boundary, Cairn adapter boundary, and all eleven standalone required non-claims must remain present without additions, omissions, or substitutions.
+
+`AuthenticationComponent.report` remains `Option<AuthenticatedEvidenceReport>`, so the standalone report and compatibility DTO cannot enter `evaluate_authenticated_release_gate`. The shell exposes both under `artifact_auth_standalone` and `artifact_auth_compatibility`, but `check.passed` continues to follow the legacy result. Every compatibility report fixes `legacy_authoritative = true`, `standalone_authority_admitted = false`, and `rollback_available = true`; an absent/malformed dedicated signature, adapter failure, decision mismatch, unknown issue, malformed/same preimage, identity drift, or weakened non-claim makes `case_explained = false` with stable blockers.
+
+### Approach registry and adversarial audit
+
+| Family | Result |
+| --- | --- |
+| Test-only comparison corpus | Rejected: runtime manifests would expose neither drift nor rollback state. |
+| Reuse one signature across both canonical preimages | Rejected: one signature cannot authenticate two intentionally distinct byte contracts, and treating it as reusable would widen the verification claim. |
+| Require a replacement standalone signature immediately | Rejected: existing manifests would fail before the legacy rollback could operate. |
+| Optional dedicated standalone signature plus pure comparator | Selected: positive parity is cryptographically demonstrable, old manifests retain legacy authority, and missing or unexplained evidence blocks only cutover admission. |
+
+A secondary local-model review was attempted but unavailable (`fetch failed`). Independent audit then falsified an initial rule under which two unrelated invalid signatures could appear compatible because both produced generic rejection classes. The final decision classifier requires a shared rejection context; a dedicated negative test proves unrelated generic failures remain blocking.
+
+The compatibility corpus covers a passing pair of independently signed preimages, graph-byte tampering observed by both paths, missing standalone carrier, a valid-length signature over the wrong preimage, same/malformed preimage identity, producer drift, unknown standalone issue, weakened non-claims, unavailable standalone evaluation, and unrelated rejection causes. The graph tamper case remains explained while both decisions reject; missing or wrong standalone signatures leave the passing legacy report authoritative but produce cutover blockers.
+
+Passing focused checks:
+
+- pre-change adapter and CLI authenticated-input baselines;
+- nine pure adapter/compatibility positive and negative tests;
+- CLI dual-run baseline, rollback, wrong-preimage, and graph-tamper assertions;
+- strict `cairn-core` and `cairn-cli` all-target Clippy;
+- `cargo fmt --all --check`;
+- pure-core I/O smoke;
+- exact artifact-auth source-pin check;
+- Slotcar consumer check over the tracked source;
+- `nix build .#cairn --no-link -L`.
+
+All 352 `cairn-core` unit tests pass. The seven-test CLI determinism suite also passes after repairing a pre-existing stale expected-order vector: policy, total-count, and coverage fixtures already included `agent_completion_validate`, while one vector still listed only the other eighteen cases.
+
+The first broader CLI run exhausted the per-user `/tmp` quota through stale `nix-shell.*` trees; removing only completed owned shell temporaries reduced apparent `/tmp` use from 23.37 GiB to 1.63 GiB. After recovery, the full CLI suite advances to `evidence_export_materializes_complete_portable_chain` and fails for the expected mid-change Traceability boundary: `cairn-default` reads requirements only from `cairn/specs`, so the seven active-change implementation markers under `cairn.artifact_auth.repository_extraction.*` are dangling until accepted-spec sync in V4. That makes generated release-readiness and its bundle/manifest verification invalid. The exact dangling IDs are `conformance`, `consumer_authority`, `consumer_authority.cairn`, `consumer_authority.no_promotion`, `cutover`, `cutover.negative`, and `cutover.positive` under the `cairn.artifact_auth.repository_extraction` prefix; this is not an I12 authentication mismatch. V3 and V4 remain open and MUST rerun the full suite after accepted-spec sync.
+
+These results classify the checked corpus and preserve rollback; they do not admit standalone authority, prove corpus completeness, prove verifier correctness, replace consumer lifecycle checks, or establish readiness/release eligibility.
+
 ## Next cutover boundary
 
-Standalone publication I9, exact source pinning I10, and the pure Cairn adapter I11 are complete. Dual-run classification I12, consumer-owned handoff I13, final full-rail verification, accepted-spec sync, and archive remain open. The next discriminating action is to run legacy and standalone paths over identical baseline and tamper observations, classify every preimage/identity/decision/issue/non-claim difference, and keep unexplained drift fail-closed.
+Standalone publication I9, exact source pinning I10, pure Cairn adapter I11, and dual-run compatibility I12 are complete. Consumer-owned handoff I13, final full-rail verification, accepted-spec sync, and archive remain open. The next discriminating action is to publish the reviewed consumer mapping profiles and create downstream adoption packages without editing consumer implementations as a producer-side side effect.
