@@ -180,6 +180,22 @@ The first broader CLI run exhausted the per-user `/tmp` quota through stale `nix
 
 These results classify the checked corpus and preserve rollback; they do not admit standalone authority, prove corpus completeness, prove verifier correctness, replace consumer lifecycle checks, or establish readiness/release eligibility.
 
+## Consumer-owned adoption handoff
+
+The immutable standalone revision `799459346d5416fbd7b9f55840a7371441b55afa` publishes typed Nickel profiles and checked JSON projections for Cairn, Mantle, Molten, and Valence under `config/consumers/` and `fixtures/consumers/`. The remote `refs/heads/main`, local standalone checkout, release profile, Cargo/Nix pins, and consumer paths all identify that same reviewed revision. Each profile records the frozen consumer source baseline, shared fields, explicit extensions, and retained product authority; it is review input rather than proof that a later consumer checkout remains compatible.
+
+Consumer-owned active Cairn packages now exist without producer-side implementation edits:
+
+| Consumer | Commit | Package | Retained boundary |
+| --- | --- | --- | --- |
+| Mantle | `52a0c657` | `cairn/changes/adopt-artifact-auth` | OCI/action-result semantics, repository/registry/credential/signing, cache/build/release authority |
+| Molten | `e406b84` | `cairn/changes/adopt-artifact-auth` | entropy, keys/rotation, capability/federation authority, Preserves/Iroh, runtime/evidence authority |
+| Valence | `bbcc5a10` | `cairn/changes/adopt-artifact-auth` | Radicle verification, actor authorization, Evidence IR/COB/Git/SSH, lifecycle/release interpretation |
+
+Cairn's current extraction package is its own consumer-owned adoption change. Every downstream package records exact standalone source/profile identity, requires a current local baseline, keeps effects in the consumer shell, mandates positive and negative mapping-loss fixtures, rejects unrelated-failure false parity, and preserves a bounded legacy rollback. All three downstream repositories pass native Cairn validation and proposal/design/tasks gates for the new package; each package intentionally has seven unchecked implementation tasks.
+
+Only the four lifecycle files in each new package were committed. No downstream Cargo/Nix dependency, lock, runtime, policy, source, readiness, or release implementation was changed. Pre-existing Mantle bootstrap work and Molten's untracked eBPF lifecycle package were left unstaged and untouched. SSH credentials remain retrieval authority only.
+
 ## Next cutover boundary
 
-Standalone publication I9, exact source pinning I10, pure Cairn adapter I11, and dual-run compatibility I12 are complete. Consumer-owned handoff I13, final full-rail verification, accepted-spec sync, and archive remain open. The next discriminating action is to publish the reviewed consumer mapping profiles and create downstream adoption packages without editing consumer implementations as a producer-side side effect.
+Standalone publication I9, exact source pinning I10, pure Cairn adapter I11, dual-run compatibility I12, and consumer-owned handoff I13 are complete. Final full-rail verification, accepted-spec sync, documentation/rollback review, and archive remain open. The next discriminating action is to sync the accepted artifact-auth requirements so Traceability can resolve the seven active implementation IDs, then rerun the full V3 rail and archive only after current evidence passes.
