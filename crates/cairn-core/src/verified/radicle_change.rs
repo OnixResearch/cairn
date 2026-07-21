@@ -11,8 +11,10 @@ use crate::verified::{evidence::canonical_json_hash, lifecycle::validate_change_
 // r[impl cairn.radicle_change_cob.evidence_boundary]
 // r[impl cairn.radicle_change_cob.materialized_view]
 
+pub const CHANGE_COLLABORATION_SCHEMA_V1: &str = "cairn.change-collaboration.v1";
 pub const RADICLE_CHANGE_COB_SCHEMA_V1: &str = "cairn.radicle-change-cob.v1";
 pub const RADICLE_CHANGE_COB_TYPE_NAME: &str = "xyz.onixresearch.cairn-change";
+pub const BASE_REVISION_SEPARATOR: char = ':';
 pub const ARTIFACT_PROPOSAL: &str = "proposal";
 pub const ARTIFACT_DESIGN: &str = "design";
 pub const ARTIFACT_TASKS: &str = "tasks";
@@ -21,6 +23,9 @@ pub const ARTIFACT_SPEC_PREFIX: &str = "spec:";
 
 pub const MAX_CHANGE_ID_BYTES: usize = 128;
 pub const MAX_REPOSITORY_ID_BYTES: usize = 512;
+pub const MAX_WORKSPACE_ID_BYTES: usize = MAX_REPOSITORY_ID_BYTES;
+pub const MAX_BASE_REVISION_KIND_BYTES: usize = 64;
+pub const MAX_BASE_REVISION_VALUE_BYTES: usize = 4_096;
 pub const MAX_OPERATION_ID_BYTES: usize = 128;
 pub const MAX_ACTOR_ID_BYTES: usize = 256;
 pub const MAX_ARTIFACT_ID_BYTES: usize = 256;
@@ -470,20 +475,47 @@ pub fn change_cob_content_root(state: &ChangeCobState) -> Result<String, ChangeC
         .into_iter()
         .filter_map(|(artifact, content)| content.map(|content| (artifact, content)))
         .collect();
-    let identity = ChangeContentIdentity {
+    if state.schema == RADICLE_CHANGE_COB_SCHEMA_V1 {
+        return hash_serializable(&LegacyChangeContentIdentity {
+            schema: &state.schema,
+            change_id: &state.change_id,
+            repository_id: &state.repository_id,
+            base_git_oid: &state.base_git_oid,
+            policy_hash: &state.policy_hash,
+            creator: &state.creator,
+            artifacts,
+        });
+    }
+    let base_revision = decode_base_revision(&state.base_git_oid)?;
+    hash_serializable(&ChangeContentIdentity {
         schema: &state.schema,
         change_id: &state.change_id,
-        repository_id: &state.repository_id,
-        base_git_oid: &state.base_git_oid,
+        workspace_id: &state.repository_id,
+        base_revision,
         policy_hash: &state.policy_hash,
         creator: &state.creator,
         artifacts,
-    };
-    hash_serializable(&identity)
+    })
 }
 
 pub fn change_cob_state_hash(state: &ChangeCobState) -> Result<String, ChangeCobError> {
-    hash_serializable(state)
+    validate_state_schema(state)?;
+    if state.schema == RADICLE_CHANGE_COB_SCHEMA_V1 {
+        return hash_serializable(state);
+    }
+    let base_revision = decode_base_revision(&state.base_git_oid)?;
+    hash_serializable(&ChangeStateIdentity {
+        schema: &state.schema,
+        change_id: &state.change_id,
+        workspace_id: &state.repository_id,
+        base_revision,
+        policy_hash: &state.policy_hash,
+        creator: &state.creator,
+        artifacts: &state.artifacts,
+        evidence: &state.evidence,
+        lifecycle: &state.lifecycle,
+        operations: &state.operations,
+    })
 }
 
 pub fn materialize_change_cob(
@@ -753,7 +785,10 @@ fn validate_operation_action_set(actions: &[ChangeCobAction]) -> Result<(), Chan
 }
 
 pub fn validate_change_cob_init(init: &ChangeCobInit) -> Result<(), ChangeCobError> {
-    if init.schema != RADICLE_CHANGE_COB_SCHEMA_V1 {
+    if !matches!(
+        init.schema.as_str(),
+        CHANGE_COLLABORATION_SCHEMA_V1 | RADICLE_CHANGE_COB_SCHEMA_V1
+    ) {
         return Err(ChangeCobError::UnsupportedSchema {
             schema: init.schema.clone(),
         });
@@ -763,12 +798,12 @@ pub fn validate_change_cob_init(init: &ChangeCobInit) -> Result<(), ChangeCobErr
         field: "change_id".to_string(),
         reason,
     })?;
-    validate_text_limit(
-        "repository_id",
-        &init.repository_id,
-        MAX_REPOSITORY_ID_BYTES,
-    )?;
-    validate_git_oid("base_git_oid", &init.base_git_oid)?;
+    validate_text_limit("workspace_id", &init.repository_id, MAX_WORKSPACE_ID_BYTES)?;
+    if init.schema == RADICLE_CHANGE_COB_SCHEMA_V1 {
+        validate_git_oid("base_git_oid", &init.base_git_oid)?;
+    } else {
+        let _base_revision = decode_base_revision(&init.base_git_oid)?;
+    }
     validate_blake3("policy_hash", &init.policy_hash)?;
     validate_count_limit("artifacts", init.artifacts.len(), MAX_ARTIFACTS)?;
     for (artifact, content) in &init.artifacts {
@@ -778,8 +813,134 @@ pub fn validate_change_cob_init(init: &ChangeCobInit) -> Result<(), ChangeCobErr
     Ok(())
 }
 
+pub fn validate_change_cob_state(state: &ChangeCobState) -> Result<(), ChangeCobError> {
+    validate_state_schema(state)?;
+    validate_change_cob_init(&ChangeCobInit {
+        schema: state.schema.clone(),
+        change_id: state.change_id.clone(),
+        repository_id: state.repository_id.clone(),
+        base_git_oid: state.base_git_oid.clone(),
+        policy_hash: state.policy_hash.clone(),
+        artifacts: BTreeMap::new(),
+    })?;
+    validate_text_limit("creator", &state.creator, MAX_ACTOR_ID_BYTES)?;
+    validate_count_limit("operations", state.operations.len(), MAX_OPERATIONS)?;
+    if state.operations.is_empty() {
+        return Err(ChangeCobError::InvalidField {
+            field: "operations".to_string(),
+            reason: "must contain at least one operation".to_string(),
+        });
+    }
+    for operation_id in &state.operations {
+        validate_text_limit("operation_id", operation_id, MAX_OPERATION_ID_BYTES)?;
+    }
+
+    validate_count_limit("artifacts", state.artifacts.len(), MAX_ARTIFACTS)?;
+    for (artifact, history) in &state.artifacts {
+        artifact.validate()?;
+        validate_revision_history(
+            artifact.as_str(),
+            history,
+            &state.operations,
+            MAX_REVISIONS_PER_ARTIFACT,
+            |content| {
+                if let Some(content) = content {
+                    validate_artifact_content(content)?;
+                }
+                Ok(())
+            },
+        )?;
+    }
+
+    validate_count_limit("evidence", state.evidence.len(), MAX_EVIDENCE_RECORDS)?;
+    for (evidence_id, evidence) in &state.evidence {
+        validate_evidence(evidence)?;
+        if evidence_id != &evidence.blake3 {
+            return Err(ChangeCobError::InvalidField {
+                field: "evidence".to_string(),
+                reason: format!(
+                    "evidence map key {evidence_id} does not match declared hash {}",
+                    evidence.blake3
+                ),
+            });
+        }
+    }
+
+    validate_revision_history(
+        "lifecycle",
+        &state.lifecycle,
+        &state.operations,
+        MAX_LIFECYCLE_REVISIONS,
+        |record| {
+            validate_blake3("lifecycle.subject_root", &record.subject_root)?;
+            validate_count_limit(
+                "lifecycle.evidence",
+                record.evidence.len(),
+                MAX_LIFECYCLE_EVIDENCE_IDS,
+            )?;
+            for evidence_id in &record.evidence {
+                validate_blake3("lifecycle.evidence_id", evidence_id)?;
+                if !state.evidence.contains_key(evidence_id) {
+                    return Err(ChangeCobError::MissingEvidence {
+                        blake3: evidence_id.clone(),
+                    });
+                }
+            }
+            Ok(())
+        },
+    )?;
+    Ok(())
+}
+
+fn validate_revision_history<T, F>(
+    field: &str,
+    history: &ChangeRevisionSet<T>,
+    operations: &BTreeSet<String>,
+    revision_limit: usize,
+    mut validate_value: F,
+) -> Result<(), ChangeCobError>
+where
+    F: FnMut(&T) -> Result<(), ChangeCobError>,
+{
+    if history.revisions.is_empty() {
+        return Err(ChangeCobError::InvalidField {
+            field: field.to_string(),
+            reason: "revision history must not be empty".to_string(),
+        });
+    }
+    validate_count_limit(field, history.revisions.len(), revision_limit)?;
+    for (revision_id, revision) in &history.revisions {
+        validate_text_limit("revision_id", revision_id, MAX_OPERATION_ID_BYTES)?;
+        if !operations.contains(revision_id) {
+            return Err(ChangeCobError::InvalidField {
+                field: field.to_string(),
+                reason: format!("revision {revision_id} is absent from operation inventory"),
+            });
+        }
+        validate_text_limit("revision.actor", &revision.actor, MAX_ACTOR_ID_BYTES)?;
+        validate_count_limit(
+            "revision.basis",
+            revision.basis.len(),
+            MAX_REVISION_BASIS_IDS,
+        )?;
+        for basis in &revision.basis {
+            if !history.revisions.contains_key(basis) {
+                return Err(ChangeCobError::UnknownBasis {
+                    field: field.to_string(),
+                    revision: basis.clone(),
+                });
+            }
+        }
+        validate_value(&revision.value)?;
+    }
+    Ok(())
+}
+
 fn validate_state_schema(state: &ChangeCobState) -> Result<(), ChangeCobError> {
-    if state.schema != RADICLE_CHANGE_COB_SCHEMA_V1 {
+    if !matches!(
+        state.schema.as_str(),
+        CHANGE_COLLABORATION_SCHEMA_V1 | RADICLE_CHANGE_COB_SCHEMA_V1
+    ) {
         return Err(ChangeCobError::UnsupportedSchema {
             schema: state.schema.clone(),
         });
@@ -972,7 +1133,7 @@ fn hash_serializable<T: Serialize>(value: &T) -> Result<String, ChangeCobError> 
 }
 
 #[derive(Serialize)]
-struct ChangeContentIdentity<'a> {
+struct LegacyChangeContentIdentity<'a> {
     schema: &'a str,
     change_id: &'a str,
     repository_id: &'a str,
@@ -980,6 +1141,87 @@ struct ChangeContentIdentity<'a> {
     policy_hash: &'a str,
     creator: &'a str,
     artifacts: BTreeMap<ChangeArtifactId, String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ChangeBaseRevision {
+    pub kind: String,
+    pub value: String,
+}
+
+impl ChangeBaseRevision {
+    pub fn new(kind: impl Into<String>, value: impl Into<String>) -> Result<Self, ChangeCobError> {
+        let revision = Self {
+            kind: kind.into(),
+            value: value.into(),
+        };
+        revision.validate()?;
+        Ok(revision)
+    }
+
+    pub fn encode(&self) -> Result<String, ChangeCobError> {
+        self.validate()?;
+        Ok(format!(
+            "{}{BASE_REVISION_SEPARATOR}{}",
+            self.kind, self.value
+        ))
+    }
+
+    fn validate(&self) -> Result<(), ChangeCobError> {
+        validate_text_limit(
+            "base_revision.kind",
+            &self.kind,
+            MAX_BASE_REVISION_KIND_BYTES,
+        )?;
+        validate_stable_id("base_revision.kind", &self.kind)?;
+        validate_text_limit(
+            "base_revision.value",
+            &self.value,
+            MAX_BASE_REVISION_VALUE_BYTES,
+        )?;
+        if self.value.contains('\0') {
+            return Err(ChangeCobError::InvalidField {
+                field: "base_revision.value".to_string(),
+                reason: "NUL bytes are not valid in a revision identity".to_string(),
+            });
+        }
+        Ok(())
+    }
+}
+
+pub fn decode_base_revision(value: &str) -> Result<ChangeBaseRevision, ChangeCobError> {
+    let Some((kind, revision_value)) = value.split_once(BASE_REVISION_SEPARATOR) else {
+        return Err(ChangeCobError::InvalidField {
+            field: "base_revision".to_string(),
+            reason: format!("must contain a kind and value separated by {BASE_REVISION_SEPARATOR}"),
+        });
+    };
+    ChangeBaseRevision::new(kind, revision_value)
+}
+
+#[derive(Serialize)]
+struct ChangeContentIdentity<'a> {
+    schema: &'a str,
+    change_id: &'a str,
+    workspace_id: &'a str,
+    base_revision: ChangeBaseRevision,
+    policy_hash: &'a str,
+    creator: &'a str,
+    artifacts: BTreeMap<ChangeArtifactId, String>,
+}
+
+#[derive(Serialize)]
+struct ChangeStateIdentity<'a> {
+    schema: &'a str,
+    change_id: &'a str,
+    workspace_id: &'a str,
+    base_revision: ChangeBaseRevision,
+    policy_hash: &'a str,
+    creator: &'a str,
+    artifacts: &'a BTreeMap<ChangeArtifactId, ChangeRevisionSet<Option<String>>>,
+    evidence: &'a BTreeMap<String, ChangeCobEvidence>,
+    lifecycle: &'a ChangeRevisionSet<ChangeLifecycleRecord>,
+    operations: &'a BTreeSet<String>,
 }
 
 pub fn change_cob_action_json(action: &ChangeCobAction) -> Result<Value, ChangeCobError> {

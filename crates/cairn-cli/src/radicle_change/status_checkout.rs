@@ -16,9 +16,12 @@ use onix_cairn_radicle::{
 };
 use serde_json::{json, Value};
 
-use crate::support::{
-    default_policy_path, load_policy_file, path_string, print_json, with_portable_receipt_hash,
-    CapabilityRoot, CapabilityRootKind,
+use crate::{
+    collaboration::materialize::RepositoryCheckoutLock,
+    support::{
+        default_policy_path, load_policy_file, path_string, print_json, with_portable_receipt_hash,
+        CapabilityRoot, CapabilityRootKind,
+    },
 };
 
 use super::{read_unique_option_value, OPTION_TOKEN_WIDTH};
@@ -165,22 +168,40 @@ fn execute_guarded_checkout(
     preview: &ChangeCobCheckoutPlan,
     inspection: &ChangeStatusInspection,
 ) -> Result<CheckoutExecutionOutcome, Box<dyn Error>> {
-    let current_local = read_local_change_snapshot(&options.root, &options.change)?;
-    let current = plan_change_cob_checkout(&inspection.state, current_local)?;
-    if &current != preview {
-        return Ok(CheckoutExecutionOutcome {
-            mutated: false,
-            signer_possession_proved: false,
-            final_destination: None,
-            blockers: vec![BLOCKER_INPUT_DRIFT.to_string()],
-        });
+    let repository_guard = match RepositoryCheckoutLock::acquire(&options.root, &options.change) {
+        Ok(guard) => guard,
+        Err(error) => return Ok(blocked_execution(&error.to_string())),
+    };
+    let execution = (|| {
+        let current_local = read_local_change_snapshot(&options.root, &options.change)?;
+        let current = plan_change_cob_checkout(&inspection.state, current_local)?;
+        if &current != preview {
+            return Ok(CheckoutExecutionOutcome {
+                mutated: false,
+                signer_possession_proved: false,
+                final_destination: None,
+                blockers: vec![BLOCKER_INPUT_DRIFT.to_string()],
+            });
+        }
+        materialize_checkout(
+            &options.root,
+            &inspection.repository_id,
+            &inspection.state,
+            &current,
+        )
+    })();
+    match execution {
+        Ok(mut outcome) => {
+            if let Err(error) = repository_guard.release() {
+                outcome.blockers.push(error.to_string());
+            }
+            Ok(outcome)
+        }
+        Err(error) => {
+            let _ = repository_guard.release();
+            Err(error)
+        }
     }
-    materialize_checkout(
-        &options.root,
-        &inspection.repository_id,
-        &inspection.state,
-        &current,
-    )
 }
 
 fn materialize_checkout(
@@ -357,7 +378,7 @@ fn parse_object_options(
     })
 }
 
-fn read_local_change_snapshot(
+pub(crate) fn read_local_change_snapshot(
     root: &Path,
     change: &str,
 ) -> Result<ChangeCobLocalSnapshot, Box<dyn Error>> {
@@ -745,7 +766,7 @@ fn lifecycle_value(view: &ChangeLifecycleView) -> Value {
     }
 }
 
-fn safe_existing_directory(
+pub(crate) fn safe_existing_directory(
     repository: &CapabilityRoot,
     relative: &Path,
 ) -> Result<bool, io::Error> {
@@ -756,7 +777,7 @@ fn safe_existing_directory(
     }
 }
 
-fn path_exists(repository: &CapabilityRoot, relative: &Path) -> Result<bool, io::Error> {
+pub(crate) fn path_exists(repository: &CapabilityRoot, relative: &Path) -> Result<bool, io::Error> {
     match repository.symlink_metadata(relative) {
         Ok(_) => Ok(true),
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(false),

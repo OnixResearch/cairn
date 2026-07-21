@@ -1,4 +1,4 @@
-mod status_checkout;
+pub(crate) mod status_checkout;
 
 use std::{
     collections::BTreeMap,

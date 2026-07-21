@@ -1,7 +1,7 @@
 use std::{
     ffi::OsString,
     fs, io,
-    io::Read,
+    io::{Read, Write},
     path::{Component, Path, PathBuf},
 };
 
@@ -129,6 +129,15 @@ impl CapabilityRoot {
     pub(crate) fn write(&self, relative: &Path, contents: &[u8]) -> io::Result<()> {
         let relative = self.relative(relative)?;
         self.dir.write(relative, contents)
+    }
+
+    pub(crate) fn write_new(&self, relative: &Path, contents: &[u8]) -> io::Result<()> {
+        let relative = self.relative(relative)?;
+        let mut options = cap_std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        let mut file = self.dir.open_with(relative, &options)?;
+        file.write_all(contents)?;
+        file.sync_all()
     }
 
     pub(crate) fn create_dir(&self, relative: &Path) -> io::Result<()> {

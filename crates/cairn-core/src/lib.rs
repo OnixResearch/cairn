@@ -92,6 +92,29 @@ pub use verified::change_dependencies::{
     DEPENDENCY_ISSUE_INVALID_ID, DEPENDENCY_ISSUE_INVALID_ITEM, DEPENDENCY_ISSUE_INVALID_TYPE,
     DEPENDENCY_ISSUE_SELF, DEPENDENCY_ISSUE_UNKNOWN,
 };
+pub use verified::collaboration_change::{
+    apply_change_collaboration_operation, change_collaboration_action_json,
+    change_collaboration_content_root, change_collaboration_lifecycle_view,
+    change_collaboration_state_hash, current_change_collaboration_evidence,
+    initialize_change_collaboration, materialize_change_collaboration,
+    validate_change_collaboration_init, validate_change_collaboration_state,
+    ChangeCollaborationAction, ChangeCollaborationError, ChangeCollaborationEvidence,
+    ChangeCollaborationInit, ChangeCollaborationOperation, ChangeCollaborationState,
+    BASE_REVISION_KIND_GIT_OID,
+};
+pub use verified::collaboration_checkout::{
+    plan_change_collaboration_checkout, ChangeCollaborationCheckoutPlan,
+    ChangeCollaborationLocalSnapshot,
+};
+pub use verified::collaboration_import::{
+    change_collaboration_import_operation_id, initialize_change_collaboration_import,
+    plan_change_collaboration_import, ChangeCollaborationImportSnapshot,
+};
+pub use verified::collaboration_portable::{
+    build_portable_change_collaboration, validate_portable_change_collaboration,
+    PortableChangeCollaboration, PortableChangeCollaborationError,
+    PORTABLE_COLLABORATION_BACKEND_V1, PORTABLE_COLLABORATION_SCHEMA_V1,
+};
 pub use verified::content_addressed::{
     circuit_primitive_graph_hash, circuit_primitive_hash_material, downstream_pilot_hash,
     downstream_pilot_hash_material, export_bundle_hash, export_bundle_hash_material,
@@ -267,16 +290,18 @@ pub use verified::probe::{
 pub use verified::radicle_change::{
     apply_change_cob_operation, change_cob_action_json, change_cob_content_root,
     change_cob_lifecycle_view, change_cob_state_hash, current_change_cob_evidence,
-    initialize_change_cob, materialize_change_cob, validate_change_cob_init, ChangeArtifactId,
-    ChangeCobAction, ChangeCobError, ChangeCobEvidence, ChangeCobInit, ChangeCobOperation,
-    ChangeCobState, ChangeLifecycleRecord, ChangeLifecycleStatus, ChangeLifecycleView,
-    ChangeMaterializedFile, ChangeRevision, ChangeRevisionSet, ARTIFACT_DESIGN, ARTIFACT_METADATA,
-    ARTIFACT_PROPOSAL, ARTIFACT_SPEC_PREFIX, ARTIFACT_TASKS, BLAKE3_HEX_LENGTH,
+    decode_base_revision, initialize_change_cob, materialize_change_cob, validate_change_cob_init,
+    validate_change_cob_state, ChangeArtifactId, ChangeBaseRevision, ChangeCobAction,
+    ChangeCobError, ChangeCobEvidence, ChangeCobInit, ChangeCobOperation, ChangeCobState,
+    ChangeLifecycleRecord, ChangeLifecycleStatus, ChangeLifecycleView, ChangeMaterializedFile,
+    ChangeRevision, ChangeRevisionSet, ARTIFACT_DESIGN, ARTIFACT_METADATA, ARTIFACT_PROPOSAL,
+    ARTIFACT_SPEC_PREFIX, ARTIFACT_TASKS, BLAKE3_HEX_LENGTH, CHANGE_COLLABORATION_SCHEMA_V1,
     GIT_SHA1_HEX_LENGTH, GIT_SHA256_HEX_LENGTH, MAX_ACTIONS_PER_OPERATION, MAX_ACTOR_ID_BYTES,
-    MAX_ARTIFACTS, MAX_ARTIFACT_BYTES, MAX_ARTIFACT_ID_BYTES, MAX_CHANGE_ID_BYTES,
-    MAX_EVIDENCE_NON_CLAIMS, MAX_EVIDENCE_RECORDS, MAX_EVIDENCE_TEXT_BYTES,
-    MAX_LIFECYCLE_EVIDENCE_IDS, MAX_LIFECYCLE_REVISIONS, MAX_OPERATIONS, MAX_OPERATION_ID_BYTES,
-    MAX_REPOSITORY_ID_BYTES, MAX_REVISIONS_PER_ARTIFACT, MAX_REVISION_BASIS_IDS,
+    MAX_ARTIFACTS, MAX_ARTIFACT_BYTES, MAX_ARTIFACT_ID_BYTES, MAX_BASE_REVISION_KIND_BYTES,
+    MAX_BASE_REVISION_VALUE_BYTES, MAX_CHANGE_ID_BYTES, MAX_EVIDENCE_NON_CLAIMS,
+    MAX_EVIDENCE_RECORDS, MAX_EVIDENCE_TEXT_BYTES, MAX_LIFECYCLE_EVIDENCE_IDS,
+    MAX_LIFECYCLE_REVISIONS, MAX_OPERATIONS, MAX_OPERATION_ID_BYTES, MAX_REPOSITORY_ID_BYTES,
+    MAX_REVISIONS_PER_ARTIFACT, MAX_REVISION_BASIS_IDS, MAX_WORKSPACE_ID_BYTES,
     RADICLE_CHANGE_COB_SCHEMA_V1, RADICLE_CHANGE_COB_TYPE_NAME,
 };
 pub use verified::radicle_checkout::{

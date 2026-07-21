@@ -135,13 +135,13 @@ Expected result: no matches.
   - `cairn lifecycle import-markdown --root PATH --out PATH [--execute]`
   - `cairn probe run --root PATH --probe-file PATH [--out PATH]`
   - `cairn probe validate --root PATH --probe-file PATH --receipt PATH`
-- Radicle collaboration:
-  - `cairn radicle import <change> --root PATH --rad-home PATH --rid RID [--policy PATH] [--execute]` imports supported native active-change artifacts into `xyz.onixresearch.cairn-change`.
-  - `cairn radicle status <change> --root PATH --rad-home PATH --rid RID [--policy PATH]` typed-loads the unique matching object without a signer and reports identities, conflicts, lifecycle/evidence condition, current profile authority, policy observation, and exact local materialization status.
-  - `cairn radicle checkout <change> --root PATH --rad-home PATH --rid RID [--policy PATH] [--execute]` is preview-first; execution requires a current delegate, signer-possession proof, a serialized drift-free typed state, an absent destination, verified prepared bytes, and atomic directory exposure. Exact destinations are no-ops; divergent or unsupported destinations fail closed with no force option.
-  - Every command requires explicit Radicle home/repository context; Cairn does not infer `RAD_HOME` or invoke an external `rad` helper.
-  - Import and checkout locks serialize cooperating local Cairn processes. Stale locks/prepared state require deliberate recovery, and the authority observation is point-in-time rather than a lease.
-  - Local import/status/checkout do not prove gate validity, evidence truth, dependency readiness, network publication, peer availability, future authority, archive execution, release eligibility, or resistance to unrelated processes with equivalent host authority.
+- Change collaboration:
+  - The semantic state is backend-neutral: workspace and typed base-revision identities, exact artifacts, conflicts, lifecycle, and evidence reduce independently of provider object IDs.
+  - `cairn collaboration import <change> --backend portable-json.v1 --store PATH --workspace ID --base-revision KIND:VALUE --actor ID --root PATH [--policy PATH] [--execute]` creates a validated portable state without Radicle; actor/workspace inputs are declarations, not cryptographic authority.
+  - `cairn collaboration status <change> --backend portable-json.v1 --store PATH --root PATH [--policy PATH]` is bounded and read-only; `collaboration checkout ... [--execute]` is preview-first and refuses conflicts, unsafe stores, changed state, and divergent local work.
+  - `--backend radicle.v1` routes the neutral command to the Radicle adapter with explicit `--rad-home`/`--rid`; `cairn radicle ...` remains a compatibility entry point.
+  - Existing `cairn.radicle-change-cob.v1` state retains legacy content/state hashes. New Radicle imports use the neutral schema while Radicle alone owns identity documents, delegate checks, signatures, COB/Git IDs, and adapter locks.
+  - Portable and Radicle locks serialize cooperating local Cairn processes. Stale locks/prepared state require deliberate recovery; no backend receipt proves gate validity, evidence truth, dependency readiness, network publication, peer synchronization, future authority, archive execution, release eligibility, or resistance to unrelated processes with equivalent host authority.
 - Migration:
   - Cairn migration commands emit dry-run copy plans from legacy lifecycle layouts to native `cairn/`.
   - `--execute` copies accepted specs, active changes, and archives; it never deletes legacy content.

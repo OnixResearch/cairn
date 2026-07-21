@@ -46,8 +46,10 @@ mod workspace_contract_matrix;
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules]
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules.visible_boundaries]
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules.narrow_bridges]
+mod collaboration;
 mod content_addressed_evidence;
 
+use collaboration::run_collaboration;
 use determinism::run_determinism;
 use evidence::run_evidence;
 use evidence_manifest::run_evidence_manifest;
@@ -117,6 +119,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "probe" => probe::run_probe(args.collect())?,
         "runtime-evidence" => run_runtime_evidence(args.collect())?,
+        "collaboration" => run_collaboration(args.collect())?,
         "radicle" => run_radicle(args.collect())?,
         "state-machine-receipt" => run_state_machine_receipt(args.collect())?,
         "traceability" => run_traceability(args.collect())?,

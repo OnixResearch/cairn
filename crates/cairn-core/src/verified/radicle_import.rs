@@ -1,9 +1,12 @@
 use std::collections::BTreeMap;
 
-use super::radicle_change::{
-    change_cob_content_root, initialize_change_cob, validate_change_cob_init, ChangeArtifactId,
-    ChangeCobAction, ChangeCobError, ChangeCobInit, ChangeCobOperation,
-    RADICLE_CHANGE_COB_SCHEMA_V1,
+use super::{
+    collaboration_change::BASE_REVISION_KIND_GIT_OID,
+    radicle_change::{
+        change_cob_content_root, initialize_change_cob, validate_change_cob_init, ChangeArtifactId,
+        ChangeBaseRevision, ChangeCobAction, ChangeCobError, ChangeCobInit, ChangeCobOperation,
+        CHANGE_COLLABORATION_SCHEMA_V1,
+    },
 };
 
 const IMPORT_PREVIEW_OPERATION_ID: &str = "cairn-radicle-import-preview";
@@ -42,11 +45,13 @@ pub fn plan_change_cob_import(
     for (spec_id, content) in snapshot.delta_specs {
         artifacts.insert(ChangeArtifactId::delta_spec(&spec_id)?, content);
     }
+    let base_revision =
+        ChangeBaseRevision::new(BASE_REVISION_KIND_GIT_OID, snapshot.base_git_oid)?.encode()?;
     let init = ChangeCobInit {
-        schema: RADICLE_CHANGE_COB_SCHEMA_V1.to_string(),
+        schema: CHANGE_COLLABORATION_SCHEMA_V1.to_string(),
         change_id: snapshot.change_id,
         repository_id: snapshot.repository_id,
-        base_git_oid: snapshot.base_git_oid,
+        base_git_oid: base_revision,
         policy_hash: snapshot.policy_hash,
         artifacts,
     };

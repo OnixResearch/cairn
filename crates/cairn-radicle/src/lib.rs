@@ -19,8 +19,9 @@ pub use import::{
 use std::{ops::Deref, str::FromStr, sync::LazyLock};
 
 use cairn_core::{
-    apply_change_cob_operation, initialize_change_cob, ChangeCobAction, ChangeCobError,
-    ChangeCobOperation, ChangeCobState, RADICLE_CHANGE_COB_TYPE_NAME,
+    apply_change_cob_operation, decode_base_revision, initialize_change_cob, ChangeCobAction,
+    ChangeCobError, ChangeCobInit, ChangeCobOperation, ChangeCobState, BASE_REVISION_KIND_GIT_OID,
+    RADICLE_CHANGE_COB_SCHEMA_V1, RADICLE_CHANGE_COB_TYPE_NAME,
 };
 use radicle::{
     cob::{
@@ -168,6 +169,8 @@ pub enum Error {
     VersionMismatch { expected: usize, actual: usize },
     #[error("root action base Git object {base} is missing from related objects")]
     MissingRelatedBase { base: String },
+    #[error("Radicle collaboration requires a git_oid base revision, observed {kind}")]
+    UnsupportedBaseRevisionKind { kind: String },
     #[error("root repository identity {declared} does not match Radicle repository {actual}")]
     RepositoryMismatch { declared: String, actual: String },
 }
@@ -206,13 +209,13 @@ fn validate_root_relations(op: &ChangeOp) -> Result<(), Error> {
         let ChangeCobAction::Init { state } = action.as_core() else {
             continue;
         };
-        let Ok(base) = git::Oid::from_str(&state.base_git_oid) else {
-            continue;
-        };
+        let base_value = radicle_base_git_oid(state)?;
+        let base = git::Oid::from_str(&base_value).map_err(|_| ChangeCobError::InvalidField {
+            field: "base_revision.value".to_string(),
+            reason: "Radicle base revision must be a Git object ID".to_string(),
+        })?;
         if !op.related.contains(&base) {
-            return Err(Error::MissingRelatedBase {
-                base: state.base_git_oid.clone(),
-            });
+            return Err(Error::MissingRelatedBase { base: base_value });
         }
     }
     Ok(())
@@ -220,7 +223,9 @@ fn validate_root_relations(op: &ChangeOp) -> Result<(), Error> {
 
 fn action_parent_oids(action: &ChangeCobAction) -> Vec<git::Oid> {
     match action {
-        ChangeCobAction::Init { state } => parse_parent_oid(&state.base_git_oid),
+        ChangeCobAction::Init { state } => radicle_base_git_oid(state)
+            .map(|base| parse_parent_oid(&base))
+            .unwrap_or_default(),
         ChangeCobAction::SetArtifact { .. }
         | ChangeCobAction::AttachEvidence { .. }
         | ChangeCobAction::SetLifecycle { .. } => Vec::new(),
@@ -231,13 +236,27 @@ fn parse_parent_oid(value: &str) -> Vec<git::Oid> {
     git::Oid::from_str(value).map_or_else(|_| Vec::new(), |oid| vec![oid])
 }
 
+pub(crate) fn radicle_base_git_oid(state: &ChangeCobInit) -> Result<String, Error> {
+    if state.schema == RADICLE_CHANGE_COB_SCHEMA_V1 {
+        return Ok(state.base_git_oid.clone());
+    }
+    let revision = decode_base_revision(&state.base_git_oid)?;
+    if revision.kind != BASE_REVISION_KIND_GIT_OID {
+        return Err(Error::UnsupportedBaseRevisionKind {
+            kind: revision.kind,
+        });
+    }
+    Ok(revision.value)
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
     use std::collections::{BTreeMap, BTreeSet};
 
     use cairn_core::{
-        ChangeArtifactId, ChangeCobInit, ChangeCobOperation, RADICLE_CHANGE_COB_SCHEMA_V1,
+        plan_change_cob_import, ChangeArtifactId, ChangeCobImportSnapshot, ChangeCobInit,
+        ChangeCobOperation, CHANGE_COLLABORATION_SCHEMA_V1, RADICLE_CHANGE_COB_SCHEMA_V1,
     };
     use nonempty::NonEmpty;
     use radicle::{
@@ -260,6 +279,21 @@ mod tests {
 
     fn init_action() -> Action {
         init_action_for("rad:z3example", BASE_GIT_OID)
+    }
+
+    fn neutral_init_for(repository_id: &str, base_git_oid: &str) -> ChangeCobInit {
+        plan_change_cob_import(ChangeCobImportSnapshot {
+            change_id: "radicle-change-cob".to_string(),
+            repository_id: repository_id.to_string(),
+            base_git_oid: base_git_oid.to_string(),
+            policy_hash: POLICY_HASH.to_string(),
+            proposal: Some("# Proposal\n".to_string()),
+            design: None,
+            tasks: None,
+            metadata: None,
+            delta_specs: BTreeMap::new(),
+        })
+        .unwrap()
     }
 
     fn init_action_for(repository_id: &str, base_git_oid: &str) -> Action {
@@ -442,10 +476,8 @@ mod tests {
         let repository_id = repo.id().to_string();
         let base_git_oid = repo.head().unwrap().1.to_string();
         let change_id = "radicle-change-cob";
-        let init = match init_action_for(&repository_id, &base_git_oid).into_core() {
-            ChangeCobAction::Init { state } => state,
-            _ => panic!("test helper must produce an init action"),
-        };
+        let init = neutral_init_for(&repository_id, &base_git_oid);
+        assert_eq!(init.schema, CHANGE_COLLABORATION_SCHEMA_V1);
         let inspection = inspect_change_import(&repo, node.signer.public_key(), change_id).unwrap();
         assert!(inspection.authority.is_delegate);
         assert!(inspection.existing_object_id.is_none());
@@ -486,10 +518,7 @@ mod tests {
         let outsider = Device::<MockSigner>::default();
         let outsider_repo_id = second.repo.id().to_string();
         let outsider_base = second.repo.head().unwrap().1.to_string();
-        let denied_init = match init_action_for(&outsider_repo_id, &outsider_base).into_core() {
-            ChangeCobAction::Init { state } => state,
-            _ => panic!("test helper must produce an init action"),
-        };
+        let denied_init = neutral_init_for(&outsider_repo_id, &outsider_base);
         let denied = inspect_change_import(&second.repo, outsider.public_key(), change_id).unwrap();
         let denied_root =
             cairn_core::change_cob_import_content_root(&denied_init, &denied.authority.actor)

@@ -77,6 +77,8 @@ pub enum ChangeImportError {
     InvalidCobObjectId { object_id: String, reason: String },
     #[error("Cairn rejected the import state: {0}")]
     Core(#[from] ChangeCobError),
+    #[error("Radicle adapter rejected the import state: {0}")]
+    Adapter(#[from] crate::Error),
     #[error("failed to load the explicit Radicle home: {0}")]
     ProfileIo(#[from] io::Error),
     #[error("failed to load the explicit Radicle profile key: {0}")]
@@ -209,9 +211,10 @@ where
             current: current.repository_id,
         });
     }
-    if init.base_git_oid != current.base_git_oid {
+    let planned_base_git_oid = crate::radicle_base_git_oid(&init)?;
+    if planned_base_git_oid != current.base_git_oid {
         return Err(ChangeImportError::BaseGitObjectMismatch {
-            planned: init.base_git_oid,
+            planned: planned_base_git_oid,
             current: current.base_git_oid,
         });
     }
