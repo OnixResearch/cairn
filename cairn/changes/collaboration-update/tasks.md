@@ -2,8 +2,8 @@
 
 ## Phase 1: Pure Update Planning
 
-- [ ] [serial] Add deterministic backend-neutral artifact update planning, explicit complete revision bases, no-op classification, and exact result identities. r[cairn.collaboration_update.plan]
-- [ ] [serial] Add positive and negative core tests for add/change/remove, no-op, authorization, stale policy/change identity, content and lifecycle conflicts, malformed artifacts, and protocol limits. r[cairn.collaboration_update.plan]
+- [x] [serial] Add deterministic backend-neutral artifact update planning, explicit complete revision bases, no-op classification, and exact result identities. r[cairn.collaboration_update.plan]
+- [x] [serial] Add positive and negative core tests for add/change/remove, no-op, authorization, stale policy/change identity, content and lifecycle conflicts, malformed artifacts, and protocol limits. r[cairn.collaboration_update.plan]
 
 ## Phase 2: Provider Execution
 

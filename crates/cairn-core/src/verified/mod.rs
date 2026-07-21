@@ -9,6 +9,7 @@ pub mod collaboration_change;
 pub mod collaboration_checkout;
 pub mod collaboration_import;
 pub mod collaboration_portable;
+pub mod collaboration_update;
 pub mod content_addressed;
 pub mod cross_repo_dependencies;
 pub mod delta_merge;

@@ -215,7 +215,7 @@ fn operation_into_compatibility(
     })
 }
 
-fn action_into_compatibility(
+pub(crate) fn action_into_compatibility(
     action: ChangeCollaborationAction,
 ) -> Result<ChangeCobAction, ChangeCollaborationError> {
     Ok(match action {
