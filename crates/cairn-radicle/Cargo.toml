@@ -7,11 +7,11 @@ repository.workspace = true
 
 [dependencies]
 cairn-core = { path = "../cairn-core" }
+nonempty.workspace = true
 radicle.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
-nonempty = "0.9"
 radicle = { workspace = true, features = ["test"] }
 serde_json.workspace = true

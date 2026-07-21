@@ -386,7 +386,7 @@ pub fn initialize_change_cob(
     let Some(ChangeCobAction::Init { state: init }) = actions.pop() else {
         return Err(ChangeCobError::InvalidRootShape);
     };
-    validate_init(&init)?;
+    validate_change_cob_init(&init)?;
 
     let artifacts = init
         .artifacts
@@ -752,7 +752,7 @@ fn validate_operation_action_set(actions: &[ChangeCobAction]) -> Result<(), Chan
     Ok(())
 }
 
-fn validate_init(init: &ChangeCobInit) -> Result<(), ChangeCobError> {
+pub fn validate_change_cob_init(init: &ChangeCobInit) -> Result<(), ChangeCobError> {
     if init.schema != RADICLE_CHANGE_COB_SCHEMA_V1 {
         return Err(ChangeCobError::UnsupportedSchema {
             schema: init.schema.clone(),

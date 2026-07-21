@@ -1,5 +1,16 @@
 #![deny(clippy::unwrap_used)]
 
+mod authority;
+mod import;
+
+pub use authority::{
+    inspect_current_delegate_authority, CurrentAuthorityError, CurrentDelegateAuthority,
+};
+pub use import::{
+    create_change_import, execute_profile_import, inspect_change_import, inspect_profile_import,
+    ChangeImportError, ChangeImportInspection, ChangeImportOutcome,
+};
+
 use std::{ops::Deref, str::FromStr, sync::LazyLock};
 
 use cairn_core::{
@@ -397,6 +408,95 @@ mod tests {
             RadicleChangeCob::from_root(op, &*repo),
             Err(Error::MissingIdentity)
         ));
+    }
+
+    // r[verify cairn.radicle_import_cli.current_authority.allowed]
+    // r[verify cairn.radicle_import_cli.current_authority.denied]
+    #[test]
+    fn current_authority_uses_the_canonical_identity_document() {
+        let NodeWithRepo { node, repo } = NodeWithRepo::default();
+        let allowed = inspect_current_delegate_authority(&repo, node.signer.public_key()).unwrap();
+        assert!(allowed.is_delegate);
+        assert_eq!(allowed.actor, node.signer.public_key().to_string());
+        assert_eq!(
+            allowed.identity_oid,
+            repo.canonical_identity_head().unwrap().to_string()
+        );
+
+        let outsider = Device::<MockSigner>::default();
+        let denied = inspect_current_delegate_authority(&repo, outsider.public_key()).unwrap();
+        assert!(!denied.is_delegate);
+        assert_eq!(denied.identity_oid, allowed.identity_oid);
+    }
+
+    // r[verify cairn.radicle_import_cli.signed_creation.match]
+    // r[verify cairn.radicle_import_cli.receipt.blocked]
+    #[test]
+    fn typed_import_creates_once_and_rejects_a_non_delegate_before_mutation() {
+        let NodeWithRepo { node, repo } = NodeWithRepo::default();
+        let repository_id = repo.id().to_string();
+        let base_git_oid = repo.head().unwrap().1.to_string();
+        let change_id = "radicle-change-cob";
+        let init = match init_action_for(&repository_id, &base_git_oid).into_core() {
+            ChangeCobAction::Init { state } => state,
+            _ => panic!("test helper must produce an init action"),
+        };
+        let inspection = inspect_change_import(&repo, node.signer.public_key(), change_id).unwrap();
+        assert!(inspection.authority.is_delegate);
+        assert!(inspection.existing_object_id.is_none());
+        let expected_root =
+            cairn_core::change_cob_import_content_root(&init, &inspection.authority.actor).unwrap();
+
+        let outcome = create_change_import(
+            &repo,
+            &node.signer,
+            init.clone(),
+            &inspection,
+            &expected_root,
+        )
+        .unwrap();
+        assert_eq!(outcome.content_root, expected_root);
+        let after = inspect_change_import(&repo, node.signer.public_key(), change_id).unwrap();
+        let refs = repo
+            .backend
+            .references()
+            .unwrap()
+            .filter_map(|reference| {
+                reference
+                    .ok()
+                    .and_then(|reference| reference.name().map(str::to_string))
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            after.existing_object_id.as_deref(),
+            Some(outcome.object_id.as_str()),
+            "repository refs: {refs:?}"
+        );
+        assert!(matches!(
+            create_change_import(&repo, &node.signer, init, &after, &expected_root),
+            Err(ChangeImportError::ExistingChangeObject { .. })
+        ));
+
+        let second = NodeWithRepo::default();
+        let outsider = Device::<MockSigner>::default();
+        let outsider_repo_id = second.repo.id().to_string();
+        let outsider_base = second.repo.head().unwrap().1.to_string();
+        let denied_init = match init_action_for(&outsider_repo_id, &outsider_base).into_core() {
+            ChangeCobAction::Init { state } => state,
+            _ => panic!("test helper must produce an init action"),
+        };
+        let denied = inspect_change_import(&second.repo, outsider.public_key(), change_id).unwrap();
+        let denied_root =
+            cairn_core::change_cob_import_content_root(&denied_init, &denied.authority.actor)
+                .unwrap();
+        assert!(matches!(
+            create_change_import(&second.repo, &outsider, denied_init, &denied, &denied_root,),
+            Err(ChangeImportError::CurrentDelegateRequired { .. })
+        ));
+        let unchanged =
+            inspect_change_import(&second.repo, second.node.signer.public_key(), change_id)
+                .unwrap();
+        assert!(unchanged.existing_object_id.is_none());
     }
 
     #[test]

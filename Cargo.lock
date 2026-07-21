@@ -347,6 +347,7 @@ dependencies = [
  "crossterm 0.28.1",
  "ed25519-dalek",
  "nickel-export-core",
+ "onix-cairn-radicle",
  "rat-nodegraph",
  "ratatui",
  "redb",

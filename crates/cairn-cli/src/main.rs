@@ -23,6 +23,7 @@ mod plan_receipts;
 mod policy;
 mod preserves_corpus;
 mod probe;
+mod radicle_change;
 mod receipt_preserves_diff;
 mod receipt_verify_content_hash;
 mod release_evidence;
@@ -54,6 +55,7 @@ use hash_algorithm_policy::run_hash_policy;
 use mcp::run_mcp;
 use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
+use radicle_change::run_radicle;
 use receipt_preserves_diff::run_receipt_preserves_diff;
 use receipt_verify_content_hash::run_receipt_verify_content_hash;
 use requirement_id_registry::run_requirement_registry;
@@ -115,6 +117,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "probe" => probe::run_probe(args.collect())?,
         "runtime-evidence" => run_runtime_evidence(args.collect())?,
+        "radicle" => run_radicle(args.collect())?,
         "state-machine-receipt" => run_state_machine_receipt(args.collect())?,
         "traceability" => run_traceability(args.collect())?,
         "tracey" => run_tracey(args.collect())?,

@@ -1,6 +1,7 @@
 use std::{
     ffi::OsString,
     fs, io,
+    io::Read,
     path::{Component, Path, PathBuf},
 };
 
@@ -107,12 +108,17 @@ impl CapabilityRoot {
             return Err(capability_path_error());
         }
         if metadata.len() > max_bytes {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "file exceeds the bounded read limit",
-            ));
+            return Err(bounded_read_limit_error());
         }
-        self.dir.read(relative)
+        let read_limit = max_bytes.saturating_add(1);
+        let mut reader = self.dir.open(&relative)?.take(read_limit);
+        let mut bytes = Vec::new();
+        reader.read_to_end(&mut bytes)?;
+        let byte_count = u64::try_from(bytes.len()).map_err(|_| bounded_read_limit_error())?;
+        if byte_count > max_bytes {
+            return Err(bounded_read_limit_error());
+        }
+        Ok(bytes)
     }
 
     pub(crate) fn read_to_string(&self, relative: &Path) -> io::Result<String> {
@@ -281,6 +287,13 @@ fn validate_relative_path(path: &Path) -> io::Result<PathBuf> {
     Ok(relative)
 }
 
+fn bounded_read_limit_error() -> io::Error {
+    io::Error::new(
+        io::ErrorKind::InvalidData,
+        "file exceeds the bounded read limit",
+    )
+}
+
 fn capability_path_error() -> io::Error {
     io::Error::new(
         io::ErrorKind::PermissionDenied,
@@ -327,6 +340,29 @@ mod tests {
         root.write(Path::new(TEST_FILE_NAME), TEST_FILE_CONTENT)?;
         assert_eq!(root.read(Path::new(TEST_FILE_NAME))?, TEST_FILE_CONTENT);
         assert_eq!(root.kind(), CapabilityRootKind::EvidenceBundle);
+
+        fs::remove_dir_all(directory)?;
+        Ok(())
+    }
+
+    #[test]
+    fn bounded_reads_accept_the_limit_and_reject_larger_files(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let directory = test_directory("bounded-read");
+        remove_test_directory(&directory)?;
+        fs::create_dir_all(&directory)?;
+        let root = CapabilityRoot::open(CapabilityRootKind::Repository, &directory)?;
+        let max_bytes = u64::try_from(TEST_FILE_CONTENT.len())?;
+
+        root.write(Path::new(TEST_FILE_NAME), TEST_FILE_CONTENT)?;
+        assert_eq!(
+            root.read_bounded(Path::new(TEST_FILE_NAME), max_bytes)?,
+            TEST_FILE_CONTENT
+        );
+        root.write(Path::new(TEST_FILE_NAME), b"inside\nextra")?;
+        assert!(root
+            .read_bounded(Path::new(TEST_FILE_NAME), max_bytes)
+            .is_err());
 
         fs::remove_dir_all(directory)?;
         Ok(())

@@ -267,17 +267,20 @@ pub use verified::probe::{
 pub use verified::radicle_change::{
     apply_change_cob_operation, change_cob_action_json, change_cob_content_root,
     change_cob_lifecycle_view, change_cob_state_hash, current_change_cob_evidence,
-    initialize_change_cob, materialize_change_cob, ChangeArtifactId, ChangeCobAction,
-    ChangeCobError, ChangeCobEvidence, ChangeCobInit, ChangeCobOperation, ChangeCobState,
-    ChangeLifecycleRecord, ChangeLifecycleStatus, ChangeLifecycleView, ChangeMaterializedFile,
-    ChangeRevision, ChangeRevisionSet, ARTIFACT_DESIGN, ARTIFACT_METADATA, ARTIFACT_PROPOSAL,
-    ARTIFACT_SPEC_PREFIX, ARTIFACT_TASKS, BLAKE3_HEX_LENGTH, GIT_SHA1_HEX_LENGTH,
-    GIT_SHA256_HEX_LENGTH, MAX_ACTIONS_PER_OPERATION, MAX_ACTOR_ID_BYTES, MAX_ARTIFACTS,
-    MAX_ARTIFACT_BYTES, MAX_ARTIFACT_ID_BYTES, MAX_CHANGE_ID_BYTES, MAX_EVIDENCE_NON_CLAIMS,
-    MAX_EVIDENCE_RECORDS, MAX_EVIDENCE_TEXT_BYTES, MAX_LIFECYCLE_EVIDENCE_IDS,
-    MAX_LIFECYCLE_REVISIONS, MAX_OPERATIONS, MAX_OPERATION_ID_BYTES, MAX_REPOSITORY_ID_BYTES,
-    MAX_REVISIONS_PER_ARTIFACT, MAX_REVISION_BASIS_IDS, RADICLE_CHANGE_COB_SCHEMA_V1,
-    RADICLE_CHANGE_COB_TYPE_NAME,
+    initialize_change_cob, materialize_change_cob, validate_change_cob_init, ChangeArtifactId,
+    ChangeCobAction, ChangeCobError, ChangeCobEvidence, ChangeCobInit, ChangeCobOperation,
+    ChangeCobState, ChangeLifecycleRecord, ChangeLifecycleStatus, ChangeLifecycleView,
+    ChangeMaterializedFile, ChangeRevision, ChangeRevisionSet, ARTIFACT_DESIGN, ARTIFACT_METADATA,
+    ARTIFACT_PROPOSAL, ARTIFACT_SPEC_PREFIX, ARTIFACT_TASKS, BLAKE3_HEX_LENGTH,
+    GIT_SHA1_HEX_LENGTH, GIT_SHA256_HEX_LENGTH, MAX_ACTIONS_PER_OPERATION, MAX_ACTOR_ID_BYTES,
+    MAX_ARTIFACTS, MAX_ARTIFACT_BYTES, MAX_ARTIFACT_ID_BYTES, MAX_CHANGE_ID_BYTES,
+    MAX_EVIDENCE_NON_CLAIMS, MAX_EVIDENCE_RECORDS, MAX_EVIDENCE_TEXT_BYTES,
+    MAX_LIFECYCLE_EVIDENCE_IDS, MAX_LIFECYCLE_REVISIONS, MAX_OPERATIONS, MAX_OPERATION_ID_BYTES,
+    MAX_REPOSITORY_ID_BYTES, MAX_REVISIONS_PER_ARTIFACT, MAX_REVISION_BASIS_IDS,
+    RADICLE_CHANGE_COB_SCHEMA_V1, RADICLE_CHANGE_COB_TYPE_NAME,
+};
+pub use verified::radicle_import::{
+    change_cob_import_content_root, plan_change_cob_import, ChangeCobImportSnapshot,
 };
 pub use verified::receipt_drift::{receipt_field_drift, DriftClass, DriftEntry, DriftReport};
 pub use verified::release_run_ledger::{

@@ -135,6 +135,11 @@ Expected result: no matches.
   - `cairn lifecycle import-markdown --root PATH --out PATH [--execute]`
   - `cairn probe run --root PATH --probe-file PATH [--out PATH]`
   - `cairn probe validate --root PATH --probe-file PATH --receipt PATH`
+- Radicle collaboration:
+  - `cairn radicle import <change> --root PATH --rad-home PATH --rid RID [--policy PATH] [--execute]` imports supported native active-change artifacts into `xyz.onixresearch.cairn-change`.
+  - Import is preview-first and requires explicit Radicle home/repository context; it does not infer `RAD_HOME` or invoke an external `rad` helper.
+  - Execute mode reloads local inputs, requires the profile actor in the current canonical identity document, serializes same-change local imports with an atomic lock under the explicit Radicle home, rechecks authority and existing objects while locked, creates through the typed in-process store, reloads the object, and checks the previewed BLAKE3 content root.
+  - The authority check is point-in-time only. Local creation does not prove gate validity, evidence truth, dependency readiness, network publication, peer availability, future authority, archive execution, or release eligibility.
 - Migration:
   - Cairn migration commands emit dry-run copy plans from legacy lifecycle layouts to native `cairn/`.
   - `--execute` copies accepted specs, active changes, and archives; it never deletes legacy content.
