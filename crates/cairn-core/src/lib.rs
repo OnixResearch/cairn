@@ -117,7 +117,8 @@ pub use verified::collaboration_portable::{
 };
 pub use verified::collaboration_resolution::{
     apply_planned_change_collaboration_resolution, change_cob_resolution_plan_hash,
-    change_collaboration_resolution_plan_hash, inspect_change_collaboration_conflict_value,
+    change_collaboration_resolution_plan_hash, inspect_change_cob_conflict_value,
+    inspect_change_cob_conflicts, inspect_change_collaboration_conflict_value,
     inspect_change_collaboration_conflicts, plan_change_cob_resolution,
     plan_change_collaboration_resolution, ChangeArtifactConflict, ChangeArtifactConflictHead,
     ChangeArtifactConflictValue, ChangeArtifactHeadSelection, ChangeCobResolutionPlan,

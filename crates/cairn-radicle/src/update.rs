@@ -33,7 +33,7 @@ pub struct ChangeUpdateOutcome {
 }
 
 #[derive(Debug)]
-struct UpdateLock {
+pub(crate) struct UpdateLock {
     path: PathBuf,
 }
 
@@ -169,7 +169,7 @@ fn validate_plan_context(
     Ok(())
 }
 
-fn validate_update_context(
+pub(crate) fn validate_update_context(
     current: &ChangeStatusInspection,
     expected: &ChangeStatusInspection,
 ) -> Result<(), ChangeImportError> {
@@ -215,7 +215,9 @@ fn validate_update_context(
     Ok(())
 }
 
-fn require_update_authority(inspection: &ChangeStatusInspection) -> Result<(), ChangeImportError> {
+pub(crate) fn require_update_authority(
+    inspection: &ChangeStatusInspection,
+) -> Result<(), ChangeImportError> {
     if inspection.authority.is_delegate || inspection.authority.actor == inspection.state.creator {
         Ok(())
     } else {
@@ -227,12 +229,12 @@ fn require_update_authority(inspection: &ChangeStatusInspection) -> Result<(), C
 }
 
 impl UpdateLock {
-    fn release(self) -> io::Result<()> {
+    pub(crate) fn release(self) -> io::Result<()> {
         fs::remove_file(self.path)
     }
 }
 
-fn acquire_update_lock(
+pub(crate) fn acquire_update_lock(
     rad_home: &Path,
     repository_id: &str,
     change_id: &str,

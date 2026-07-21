@@ -7,6 +7,7 @@ use super::{
         validate_change_collaboration_state, ChangeCollaborationError, ChangeCollaborationState,
     },
     evidence::canonical_json_hash,
+    radicle_change::ChangeCobError,
     radicle_change::CHANGE_COLLABORATION_SCHEMA_V1,
 };
 
@@ -20,7 +21,7 @@ pub struct PortableChangeCollaboration {
     pub schema: String,
     pub backend: String,
     pub state: ChangeCollaborationState,
-    pub content_root: String,
+    pub content_root: Option<String>,
     pub state_hash: String,
     pub envelope_hash: String,
 }
@@ -33,8 +34,13 @@ pub enum PortableChangeCollaborationError {
     UnsupportedBackend { backend: String },
     #[error("portable collaboration contains non-neutral state schema: {schema}")]
     NonNeutralStateSchema { schema: String },
-    #[error("portable collaboration content root mismatch: stated {stated}, computed {computed}")]
-    ContentRootMismatch { stated: String, computed: String },
+    #[error(
+        "portable collaboration content root mismatch: stated {stated:?}, computed {computed:?}"
+    )]
+    ContentRootMismatch {
+        stated: Option<String>,
+        computed: Option<String>,
+    },
     #[error("portable collaboration state hash mismatch: stated {stated}, computed {computed}")]
     StateHashMismatch { stated: String, computed: String },
     #[error("portable collaboration envelope hash mismatch: stated {stated}, computed {computed}")]
@@ -50,7 +56,7 @@ pub fn build_portable_change_collaboration(
 ) -> Result<PortableChangeCollaboration, PortableChangeCollaborationError> {
     require_neutral_state(&state)?;
     validate_change_collaboration_state(&state)?;
-    let content_root = change_collaboration_content_root(&state)?;
+    let content_root = portable_content_root(&state)?;
     let state_hash = change_collaboration_state_hash(&state)?;
     let envelope_hash = portable_envelope_hash(&state, &content_root, &state_hash)?;
     Ok(PortableChangeCollaboration {
@@ -80,7 +86,7 @@ pub fn validate_portable_change_collaboration(
     }
     require_neutral_state(&envelope.state)?;
     validate_change_collaboration_state(&envelope.state)?;
-    let content_root = change_collaboration_content_root(&envelope.state)?;
+    let content_root = portable_content_root(&envelope.state)?;
     if content_root != envelope.content_root {
         return Err(PortableChangeCollaborationError::ContentRootMismatch {
             stated: envelope.content_root.clone(),
@@ -108,6 +114,16 @@ pub fn validate_portable_change_collaboration(
     Ok(envelope.state.clone())
 }
 
+fn portable_content_root(
+    state: &ChangeCollaborationState,
+) -> Result<Option<String>, PortableChangeCollaborationError> {
+    match change_collaboration_content_root(state) {
+        Ok(content_root) => Ok(Some(content_root)),
+        Err(ChangeCobError::ArtifactConflict { .. }) => Ok(None),
+        Err(error) => Err(PortableChangeCollaborationError::State(error)),
+    }
+}
+
 fn require_neutral_state(
     state: &ChangeCollaborationState,
 ) -> Result<(), PortableChangeCollaborationError> {
@@ -121,7 +137,7 @@ fn require_neutral_state(
 
 fn portable_envelope_hash(
     state: &ChangeCollaborationState,
-    content_root: &str,
+    content_root: &Option<String>,
     state_hash: &str,
 ) -> Result<String, PortableChangeCollaborationError> {
     let identity = PortableEnvelopeIdentity {
@@ -144,18 +160,19 @@ struct PortableEnvelopeIdentity<'a> {
     schema: &'a str,
     backend: &'a str,
     state: &'a ChangeCollaborationState,
-    content_root: &'a str,
+    content_root: &'a Option<String>,
     state_hash: &'a str,
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
+    use std::collections::{BTreeMap, BTreeSet};
 
     use super::*;
     use crate::{
-        initialize_change_collaboration, ChangeArtifactId, ChangeBaseRevision,
-        ChangeCollaborationAction, ChangeCollaborationInit, ChangeCollaborationOperation,
+        apply_change_collaboration_operation, initialize_change_collaboration, ChangeArtifactId,
+        ChangeBaseRevision, ChangeCollaborationAction, ChangeCollaborationInit,
+        ChangeCollaborationOperation,
     };
 
     const CHANGE_ID: &str = "portable-roundtrip";
@@ -163,6 +180,8 @@ mod tests {
     const POLICY_HASH: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     const ACTOR: &str = "actor:portable";
     const OPERATION_ID: &str = "operation:portable-root";
+    const LEFT_OPERATION_ID: &str = "operation:portable-left";
+    const RIGHT_OPERATION_ID: &str = "operation:portable-right";
 
     fn state() -> ChangeCollaborationState {
         initialize_change_collaboration(ChangeCollaborationOperation {
@@ -187,6 +206,17 @@ mod tests {
     fn portable_round_trip_preserves_exact_state_and_hashes() {
         let state = state();
         let envelope = build_portable_change_collaboration(state.clone()).unwrap();
+        let legacy_identity = serde_json::json!({
+            "schema": PORTABLE_COLLABORATION_SCHEMA_V1,
+            "backend": PORTABLE_COLLABORATION_BACKEND_V1,
+            "state": &state,
+            "content_root": change_collaboration_content_root(&state).unwrap(),
+            "state_hash": change_collaboration_state_hash(&state).unwrap(),
+        });
+        assert_eq!(
+            envelope.envelope_hash,
+            canonical_json_hash(&legacy_identity)
+        );
         let bytes = serde_json::to_vec(&envelope).unwrap();
         let decoded: PortableChangeCollaboration = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(
@@ -195,11 +225,44 @@ mod tests {
         );
         assert_eq!(
             decoded.content_root,
-            change_collaboration_content_root(&state).unwrap()
+            Some(change_collaboration_content_root(&state).unwrap())
         );
         assert_eq!(
             decoded.state_hash,
             change_collaboration_state_hash(&state).unwrap()
+        );
+    }
+
+    #[test]
+    fn portable_round_trip_preserves_conflicted_state_without_claiming_content_root() {
+        let mut state = state();
+        let basis = BTreeSet::from([OPERATION_ID.to_string()]);
+        for (operation_id, content) in [
+            (LEFT_OPERATION_ID, "# Left\n"),
+            (RIGHT_OPERATION_ID, "# Right\n"),
+        ] {
+            apply_change_collaboration_operation(
+                &mut state,
+                ChangeCollaborationOperation {
+                    id: operation_id.to_string(),
+                    actor: ACTOR.to_string(),
+                    is_delegate: false,
+                    actions: vec![ChangeCollaborationAction::SetArtifact {
+                        artifact: ChangeArtifactId::proposal(),
+                        content: Some(content.to_string()),
+                        basis: basis.clone(),
+                    }],
+                },
+            )
+            .unwrap();
+        }
+        let envelope = build_portable_change_collaboration(state.clone()).unwrap();
+        assert!(envelope.content_root.is_none());
+        let bytes = serde_json::to_vec(&envelope).unwrap();
+        let decoded: PortableChangeCollaboration = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(
+            validate_portable_change_collaboration(&decoded).unwrap(),
+            state
         );
     }
 
@@ -218,8 +281,12 @@ mod tests {
         cases.push(backend);
 
         let mut content = envelope.clone();
-        content.content_root = POLICY_HASH.to_string();
+        content.content_root = Some(POLICY_HASH.to_string());
         cases.push(content);
+
+        let mut absent_content = envelope.clone();
+        absent_content.content_root = None;
+        cases.push(absent_content);
 
         let mut state_hash = envelope.clone();
         state_hash.state_hash = POLICY_HASH.to_string();
@@ -239,7 +306,8 @@ mod tests {
 
         let mut recomputed = build_portable_change_collaboration(state()).unwrap();
         recomputed.state.operations.clear();
-        recomputed.content_root = change_collaboration_content_root(&recomputed.state).unwrap();
+        recomputed.content_root =
+            Some(change_collaboration_content_root(&recomputed.state).unwrap());
         recomputed.state_hash = change_collaboration_state_hash(&recomputed.state).unwrap();
         recomputed.envelope_hash = portable_envelope_hash(
             &recomputed.state,

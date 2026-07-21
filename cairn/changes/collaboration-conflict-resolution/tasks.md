@@ -8,9 +8,9 @@
 
 ## Phase 2: Provider Execution
 
-- [ ] [serial] Add preview-first portable resolution with provider/repository locking, full input rechecks, validated prepared replacement, and exact reload verification. r[cairn.collaboration_resolution.portable_execution]
-- [ ] [serial] Add preview-first signed Radicle resolution with current identity authority, signer possession, serialized state rechecks, typed reload, and exact result verification. r[cairn.collaboration_resolution.radicle_execution]
-- [ ] [serial] Add positive and negative provider tests for inspection, preview, successful resolution, drift, locks, unsafe stores, missing objects, and unauthorized actors. r[cairn.collaboration_resolution.portable_execution] r[cairn.collaboration_resolution.radicle_execution]
+- [x] [serial] Add preview-first portable resolution with provider/repository locking, full input rechecks, validated prepared replacement, and exact reload verification. r[cairn.collaboration_resolution.portable_execution]
+- [x] [serial] Add preview-first signed Radicle resolution with current identity authority, signer possession, serialized state rechecks, typed reload, and exact result verification. r[cairn.collaboration_resolution.radicle_execution]
+- [x] [serial] Add positive and negative provider tests for inspection, preview, successful resolution, drift, locks, unsafe stores, missing objects, and unauthorized actors. r[cairn.collaboration_resolution.portable_execution] r[cairn.collaboration_resolution.radicle_execution]
 
 ## Phase 3: CLI, Receipts, and Validation
 

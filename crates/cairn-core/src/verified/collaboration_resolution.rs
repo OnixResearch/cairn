@@ -161,6 +161,12 @@ pub fn inspect_change_collaboration_conflicts(
     })
 }
 
+pub fn inspect_change_cob_conflicts(
+    state: &ChangeCobState,
+) -> Result<ChangeCollaborationConflictInspection, ChangeCobError> {
+    inspect_change_collaboration_conflicts(&state_from_compatibility(state.clone())?)
+}
+
 pub fn inspect_change_collaboration_conflict_value(
     state: &ChangeCollaborationState,
     artifact: &ChangeArtifactId,
@@ -211,6 +217,18 @@ pub fn inspect_change_collaboration_conflict_value(
             .map(|content| super::evidence::blake3_hex(content.as_bytes())),
         content_bytes: revision.value.as_ref().map(String::len),
     })
+}
+
+pub fn inspect_change_cob_conflict_value(
+    state: &ChangeCobState,
+    artifact: &ChangeArtifactId,
+    revision_id: &str,
+) -> Result<ChangeArtifactConflictValue, ChangeCobError> {
+    inspect_change_collaboration_conflict_value(
+        &state_from_compatibility(state.clone())?,
+        artifact,
+        revision_id,
+    )
 }
 
 pub fn plan_change_collaboration_resolution(

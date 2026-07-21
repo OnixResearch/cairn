@@ -3,6 +3,7 @@
 mod authority;
 mod checkout;
 mod import;
+mod resolution;
 mod update;
 
 pub use authority::{
@@ -15,6 +16,9 @@ pub use checkout::{
 pub use import::{
     create_change_import, execute_profile_import, inspect_change_import, inspect_profile_import,
     ChangeImportError, ChangeImportInspection, ChangeImportOutcome,
+};
+pub use resolution::{
+    create_change_resolution, execute_profile_resolution, ChangeResolutionOutcome,
 };
 pub use update::{create_change_update, execute_profile_update, ChangeUpdateOutcome};
 

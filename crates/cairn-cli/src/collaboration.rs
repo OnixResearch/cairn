@@ -1,5 +1,6 @@
 pub(crate) mod materialize;
 pub(crate) mod portable_store;
+pub(crate) mod resolution;
 
 use std::{error::Error, path::PathBuf};
 
@@ -61,6 +62,8 @@ enum CollaborationCommand {
     Status,
     Checkout,
     Update,
+    Conflicts,
+    Resolve,
 }
 
 impl CollaborationCommand {
@@ -70,6 +73,8 @@ impl CollaborationCommand {
             "status" => Ok(Self::Status),
             "checkout" => Ok(Self::Checkout),
             "update" => Ok(Self::Update),
+            "conflicts" => Ok(Self::Conflicts),
+            "resolve" => Ok(Self::Resolve),
             _ => Err(format!("unknown collaboration subcommand: {value}").into()),
         }
     }
@@ -80,11 +85,16 @@ impl CollaborationCommand {
             Self::Status => "status",
             Self::Checkout => "checkout",
             Self::Update => "update",
+            Self::Conflicts => "conflicts",
+            Self::Resolve => "resolve",
         }
     }
 
     fn allows_execute(self) -> bool {
-        matches!(self, Self::Import | Self::Checkout | Self::Update)
+        matches!(
+            self,
+            Self::Import | Self::Checkout | Self::Update | Self::Resolve
+        )
     }
 }
 
@@ -104,21 +114,38 @@ struct PortableOptions {
 pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(command_text) = args.first() else {
         return Err(
-            "collaboration requires a subcommand: import, status, checkout, or update".into(),
+            "collaboration requires a subcommand: import, status, checkout, update, conflicts, or resolve".into(),
         );
     };
     let command = CollaborationCommand::parse(command_text)?;
     let (backend, backend_args) = extract_backend(&args[1..])?;
     match backend.as_str() {
         PORTABLE_COLLABORATION_BACKEND_V1 => {
-            let options = parse_portable_options(command, &backend_args)?;
             let receipt = match command {
-                CollaborationCommand::Import => portable_import(&options)?,
-                CollaborationCommand::Status => portable_status(&options)?,
-                CollaborationCommand::Checkout => portable_checkout(&options)?,
-                CollaborationCommand::Update => portable_update(&options)?,
+                CollaborationCommand::Conflicts => {
+                    resolution::run_portable_conflicts(&backend_args)?
+                }
+                CollaborationCommand::Resolve => resolution::run_portable_resolve(&backend_args)?,
+                CollaborationCommand::Import
+                | CollaborationCommand::Status
+                | CollaborationCommand::Checkout
+                | CollaborationCommand::Update => {
+                    let options = parse_portable_options(command, &backend_args)?;
+                    match command {
+                        CollaborationCommand::Import => portable_import(&options)?,
+                        CollaborationCommand::Status => portable_status(&options)?,
+                        CollaborationCommand::Checkout => portable_checkout(&options)?,
+                        CollaborationCommand::Update => portable_update(&options)?,
+                        CollaborationCommand::Conflicts | CollaborationCommand::Resolve => {
+                            unreachable!(
+                                "resolution commands are dispatched before portable options"
+                            )
+                        }
+                    }
+                }
             };
-            print_json(with_portable_receipt_hash(&options.root, receipt))
+            let root = collaboration_receipt_root(&receipt);
+            print_json(with_portable_receipt_hash(&root, receipt))
         }
         RADICLE_BACKEND_V1 => {
             let mut forwarded = vec![command.as_str().to_string()];
@@ -127,6 +154,13 @@ pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>>
         }
         unsupported => Err(format!("unsupported collaboration backend: {unsupported}").into()),
     }
+}
+
+fn collaboration_receipt_root(receipt: &Value) -> PathBuf {
+    receipt
+        .get("root")
+        .and_then(Value::as_str)
+        .map_or_else(|| PathBuf::from("."), PathBuf::from)
 }
 
 fn extract_backend(args: &[String]) -> Result<(String, Vec<String>), Box<dyn Error>> {
