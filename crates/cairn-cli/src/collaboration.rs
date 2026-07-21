@@ -137,9 +137,9 @@ pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>>
                         CollaborationCommand::Checkout => portable_checkout(&options)?,
                         CollaborationCommand::Update => portable_update(&options)?,
                         CollaborationCommand::Conflicts | CollaborationCommand::Resolve => {
-                            unreachable!(
-                                "resolution commands are dispatched before portable options"
-                            )
+                            return Err(
+                                "resolution command reached ordinary portable parser".into()
+                            );
                         }
                     }
                 }
@@ -990,6 +990,14 @@ mod tests {
         )
         .is_err());
         assert!(extract_backend(&[CHANGE_ID.to_string()]).is_err());
+        assert_eq!(
+            CollaborationCommand::parse("conflicts").unwrap(),
+            CollaborationCommand::Conflicts
+        );
+        assert_eq!(
+            CollaborationCommand::parse("resolve").unwrap(),
+            CollaborationCommand::Resolve
+        );
     }
 
     // r[verify cairn.collaboration_backend.portable_shell.positive]

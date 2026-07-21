@@ -394,6 +394,18 @@ cairn collaboration update my-change \
   --store /path/to/my-change.cairn.json \
   --actor operator-label \
   --root /path/to/repo [--execute]
+
+cairn collaboration conflicts my-change \
+  --backend portable-json.v1 \
+  --store /path/to/my-change.cairn.json \
+  --root /path/to/repo [--show-head proposal=REVISION]
+
+cairn collaboration resolve my-change \
+  --backend portable-json.v1 \
+  --store /path/to/my-change.cairn.json \
+  --actor operator-label \
+  --choose-head proposal=REVISION \
+  --root /path/to/repo [--lifecycle open] [--execute]
 ```
 
 Import, update, and checkout are preview-first. Portable import reads bounded
@@ -410,6 +422,24 @@ Checkout rechecks the envelope and local destination while locked, then uses the
 same no-overlay exact-byte materialization contract as the Radicle adapter. Exact
 destinations are no-ops; divergent, partial, symlinked, non-UTF-8, oversized,
 conflicted, or unsupported destinations fail closed.
+
+`conflicts` reports every current competing head through sorted revision, actor,
+deletion, byte-length, and BLAKE3 metadata. `--show-head ARTIFACT=REVISION`
+returns one exact bounded candidate. `resolve` requires exactly one
+`--choose-head ARTIFACT=REVISION` for every conflicted artifact, copies each
+selected value into a new revision whose basis supersedes every current head,
+and refuses missing, extra, duplicate, stale, or non-head choices. A lifecycle
+conflict also requires the explicit conservative `--lifecycle open`; Cairn never
+carries an approval-like head or stale evidence forward. Portable conflicted
+envelopes record `content_root: null` while retaining validated state and
+envelope identities. Resolution is preview-first and uses the same store and
+repository locks, full rechecks, prepared replacement, and reload verification
+as update. r[impl cairn.collaboration_resolution.inspection]
+r[impl cairn.collaboration_resolution.plan]
+r[impl cairn.collaboration_resolution.portable_execution]
+r[verify cairn.collaboration_resolution.portable_execution.success]
+r[verify cairn.collaboration_resolution.portable_execution.blocked]
+
 r[impl cairn.collaboration_update.portable_execution]
 r[verify cairn.collaboration_update.portable_execution.success]
 r[verify cairn.collaboration_update.portable_execution.blocked]
@@ -440,14 +470,35 @@ cairn collaboration update my-change \
   --rad-home /path/to/radicle-home \
   --rid rad:repository-id \
   --root /path/to/repo [--execute]
+
+cairn collaboration conflicts my-change \
+  --backend radicle.v1 \
+  --rad-home /path/to/radicle-home \
+  --rid rad:repository-id \
+  --root /path/to/repo [--show-head proposal=REVISION]
+
+cairn collaboration resolve my-change \
+  --backend radicle.v1 \
+  --rad-home /path/to/radicle-home \
+  --rid rad:repository-id \
+  --choose-head proposal=REVISION \
+  --root /path/to/repo [--lifecycle open] [--execute]
 ```
 
-`cairn radicle import|status|checkout|update` remains a compatibility entry point.
+`cairn radicle import|status|checkout|update|conflicts|resolve` remains a compatibility entry point.
 Radicle still owns COB/Git object addressing, canonical identity documents,
 delegate checks, signer possession, signed mutation, and local Radicle locks.
 Radicle update rechecks exact local artifacts, policy, typed object state, and
 current creator-or-delegate authority before signed mutation, then reloads the
-same object and verifies the planned content root.
+same object and verifies the planned content root. Radicle conflict resolution
+rechecks current canonical identity authority and signer possession, signs one
+complete-basis operation under the per-change lock, then reloads the same object,
+verifies no conflicts remain and the selected content root matches, and records
+the provider-assigned result state hash. It does not precompute a Radicle state
+hash because the signed operation ID is provider-assigned.
+r[impl cairn.collaboration_resolution.radicle_execution]
+r[verify cairn.collaboration_resolution.radicle_execution.success]
+r[verify cairn.collaboration_resolution.radicle_execution.blocked]
 r[impl cairn.collaboration_update.radicle_execution]
 r[verify cairn.collaboration_update.radicle_execution.success]
 r[verify cairn.collaboration_update.radicle_execution.blocked]
@@ -469,13 +520,18 @@ and `specs/<stable-id>/spec.md`. Repository access, files, locks, signing,
 identity lookup, clocks, process execution, and JSON output stay in provider
 shells. Cross-change dependency existence, cycles, readiness, and archive
 ordering remain aggregate Cairn repository decisions after all selected provider
-states are materialized. Ordinary update refuses content or lifecycle conflicts;
-it never treats local bytes as an implicit winner. Explicit conflict inspection
-and resolution remain a later reviewed command. Passing update receipts prove
-only the recorded local plan, authority observation, and provider mutation
-result; they do not prove conflict resolution, network publication, peer
-synchronization, remote trust, lifecycle approval, source correctness, or
-release eligibility.
+states are materialized. Ordinary update still refuses content or lifecycle
+conflicts and never treats local bytes as an implicit winner. Explicit resolution
+retains every competing revision, requires complete current-head choices, and
+creates one superseding operation; it does not rewrite history or perform a
+semantic/textual merge. Passing inspection, update, or resolution receipts prove
+only the recorded local DAG plan, authority observation, and provider mutation
+result. They do not prove merge correctness, losing-head invalidity, lifecycle
+approval, evidence truth, network publication, peer convergence, remote trust,
+source correctness, archive execution, or release eligibility.
+r[impl cairn.collaboration_resolution.receipts]
+r[verify cairn.collaboration_resolution.receipts.modes]
+r[verify cairn.collaboration_resolution.non_claims.local]
 r[impl cairn.collaboration_update.plan]
 r[verify cairn.collaboration_update.plan.exact]
 r[verify cairn.collaboration_update.plan.noop]

@@ -14,6 +14,6 @@
 
 ## Phase 3: CLI, Receipts, and Validation
 
-- [ ] [serial] Expose backend-neutral `collaboration conflicts|resolve` plus compatibility `radicle conflicts|resolve` with strict explicit selectors. r[cairn.collaboration_resolution.receipts]
-- [ ] [serial] Emit deterministic backend-labeled inspection/resolution receipts with head metadata, choices, complete bases, identities, authority observations, blockers, execution mode, mutation result, and bounded non-claims. r[cairn.collaboration_resolution.receipts] r[cairn.collaboration_resolution.non_claims]
+- [x] [serial] Expose backend-neutral `collaboration conflicts|resolve` plus compatibility `radicle conflicts|resolve` with strict explicit selectors. r[cairn.collaboration_resolution.receipts]
+- [x] [serial] Emit deterministic backend-labeled inspection/resolution receipts with head metadata, choices, complete bases, identities, authority observations, blockers, execution mode, mutation result, and bounded non-claims. r[cairn.collaboration_resolution.receipts] r[cairn.collaboration_resolution.non_claims]
 - [ ] [serial] Update public docs and run focused, workspace, lifecycle, traceability, formatting, Clippy, purity, and Nix validation before sync/archive. r[cairn.collaboration_resolution.non_claims]
