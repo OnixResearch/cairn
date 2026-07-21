@@ -75,7 +75,7 @@ r[cairn.collaboration_resolution.radicle_execution] The system MUST resolve a ty
 r[cairn.collaboration_resolution.radicle_execution.success]
 - GIVEN one conflicted typed Cairn change object, a current creator or delegate profile signer, and a drift-free complete preview
 - WHEN the operator requests execution
-- THEN Cairn creates one signed typed resolution, reloads the same object, and verifies the planned conflict-free state and content identities
+- THEN Cairn creates one signed typed resolution, reloads the same object, verifies conflict-free state and the planned content identity, and records the observed result state identity
 
 #### Scenario: Unauthorized or stale Radicle resolution is rejected
 

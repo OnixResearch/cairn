@@ -115,6 +115,15 @@ pub use verified::collaboration_portable::{
     PortableChangeCollaboration, PortableChangeCollaborationError,
     PORTABLE_COLLABORATION_BACKEND_V1, PORTABLE_COLLABORATION_SCHEMA_V1,
 };
+pub use verified::collaboration_resolution::{
+    apply_planned_change_collaboration_resolution, change_cob_resolution_plan_hash,
+    change_collaboration_resolution_plan_hash, inspect_change_collaboration_conflict_value,
+    inspect_change_collaboration_conflicts, plan_change_cob_resolution,
+    plan_change_collaboration_resolution, ChangeArtifactConflict, ChangeArtifactConflictHead,
+    ChangeArtifactConflictValue, ChangeArtifactHeadSelection, ChangeCobResolutionPlan,
+    ChangeCollaborationConflictInspection, ChangeCollaborationResolutionPlan,
+    ChangeCollaborationResolutionSnapshot, ChangeLifecycleConflictHead,
+};
 pub use verified::collaboration_update::{
     apply_planned_change_collaboration_update, change_cob_update_plan_hash,
     change_collaboration_update_plan_hash, plan_change_cob_update,

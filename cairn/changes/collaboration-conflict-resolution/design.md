@@ -32,7 +32,7 @@ Collaboration state stores artifact and lifecycle values in revision DAGs. A rev
 
 ### Decision: reuse provider serialization without transferring authority claims
 
-**Choice:** Portable execution uses caller-declared creator identity, portable-store locking, the shared repository-change lock, envelope validation, prepared replacement, and reload verification. Radicle execution reloads current canonical identity, derives creator-or-delegate authority from the profile signer, uses the per-change update lock, creates one signed typed operation, and reloads the same object. `cairn collaboration conflicts|resolve` is backend-neutral; `cairn radicle conflicts|resolve` remains a compatibility entry point.
+**Choice:** Portable execution uses caller-declared creator identity, portable-store locking, the shared repository-change lock, envelope validation, prepared replacement, and reload verification. Radicle execution reloads current canonical identity, derives creator-or-delegate authority from the profile signer, uses the per-change update lock, creates one signed typed operation, and reloads the same object. Because Radicle assigns the signed operation ID, its preview binds the exact actions and expected content root while execution records the observed result state hash; it does not advertise a precomputed Radicle state hash. `cairn collaboration conflicts|resolve` is backend-neutral; `cairn radicle conflicts|resolve` remains a compatibility entry point.
 
 **Rationale:** Semantics remain provider-neutral while signatures, identity documents, object IDs, and locks remain Radicle adapter observations.
 

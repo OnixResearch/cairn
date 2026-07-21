@@ -2,9 +2,9 @@
 
 ## Phase 1: Pure Inspection and Planning
 
-- [ ] [serial] Add deterministic conflict-head inspection and bounded exact single-head disclosure for artifact and lifecycle conflicts. r[cairn.collaboration_resolution.inspection]
-- [ ] [serial] Add complete history-preserving resolution planning, explicit lifecycle reset, deterministic operation/result identities, and stale-plan application. r[cairn.collaboration_resolution.plan]
-- [ ] [serial] Add positive and negative core tests for complete selection, exact bases, lifecycle reset, unauthorized/stale/malformed inputs, no-conflict input, and plan drift. r[cairn.collaboration_resolution.inspection] r[cairn.collaboration_resolution.plan]
+- [x] [serial] Add deterministic conflict-head inspection and bounded exact single-head disclosure for artifact and lifecycle conflicts. r[cairn.collaboration_resolution.inspection]
+- [x] [serial] Add complete history-preserving resolution planning, explicit lifecycle reset, deterministic operation/result identities, and stale-plan application. r[cairn.collaboration_resolution.plan]
+- [x] [serial] Add positive and negative core tests for complete selection, exact bases, lifecycle reset, unauthorized/stale/malformed inputs, no-conflict input, and plan drift. r[cairn.collaboration_resolution.inspection] r[cairn.collaboration_resolution.plan]
 
 ## Phase 2: Provider Execution
 
