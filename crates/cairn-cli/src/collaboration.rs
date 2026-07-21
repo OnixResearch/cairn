@@ -1079,6 +1079,7 @@ mod tests {
     }
 
     // r[verify cairn.collaboration_update.portable_execution.blocked]
+    // r[verify cairn.collaboration_update.non_claims.local]
     #[test]
     fn portable_update_rejects_wrong_actor_stale_lock_and_prepared_state(
     ) -> Result<(), Box<dyn Error>> {
@@ -1099,6 +1100,9 @@ mod tests {
         let denied = portable_update(&unauthorized)?;
         assert_eq!(denied["blocked"], true);
         assert_eq!(denied["mutated"], false);
+        assert!(denied["non_claims"]
+            .as_array()
+            .is_some_and(|claims| claims.iter().any(|claim| claim == NON_CLAIM_CONFLICT)));
         assert_eq!(fs::read(&store)?, original_store);
 
         let lock = root.join(".portable-store.json.lock");

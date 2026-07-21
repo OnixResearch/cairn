@@ -271,8 +271,12 @@ mod tests {
         ChangeCollaborationUpdateSnapshot, RADICLE_CHANGE_COB_SCHEMA_V1,
     };
     use radicle::{
-        crypto::test::signer::MockSigner, node::device::Device, prelude::ReadRepository,
-        test::setup::NodeWithRepo,
+        crypto::{test::signer::MockSigner, Seed},
+        node::{device::Device, Alias},
+        prelude::ReadRepository,
+        profile::{Home, Profile},
+        storage::ReadStorage,
+        test::{fixtures, setup::NodeWithRepo},
     };
 
     use super::*;
@@ -283,6 +287,7 @@ mod tests {
     const PROPOSAL: &str = "# Proposal\n";
     const UPDATED_PROPOSAL: &str = "# Updated proposal\n";
     const TEST_DIRECTORY_PREFIX: &str = "cairn-radicle-update-lock";
+    const PROFILE_TEST_DIRECTORY_PREFIX: &str = "cairn-radicle-update-profile";
 
     fn create_change(fixture: &NodeWithRepo) -> Result<ChangeStatusInspection, Box<dyn Error>> {
         let repository_id = fixture.repo.id().to_string();
@@ -370,6 +375,61 @@ mod tests {
             create_change_update(&fixture.repo, &outsider, &plan, &outsider_inspection),
             Err(ChangeImportError::CurrentDelegateRequired { .. })
         ));
+        Ok(())
+    }
+
+    // r[verify cairn.collaboration_update.radicle_execution.success]
+    #[test]
+    fn explicit_profile_update_executes_and_reloads_end_to_end() -> Result<(), Box<dyn Error>> {
+        let root = std::env::temp_dir().join(format!(
+            "{PROFILE_TEST_DIRECTORY_PREFIX}-{}",
+            std::process::id()
+        ));
+        match fs::remove_dir_all(&root) {
+            Ok(()) => {}
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
+        fs::create_dir_all(&root)?;
+        let home = Home::new(root.join("rad-home"))?;
+        let profile = Profile::init(
+            home,
+            "cairn-update".parse::<Alias>()?,
+            None,
+            Seed::generate(),
+        )?;
+        let signer = profile.signer()?;
+        let (repository_id, _, _, _) =
+            fixtures::project(root.join("working"), &profile.storage, signer.as_ref())?;
+        let repo = profile.storage.repository(repository_id)?;
+        let init = ChangeCobInit {
+            schema: RADICLE_CHANGE_COB_SCHEMA_V1.to_string(),
+            change_id: CHANGE_ID.to_string(),
+            repository_id: repository_id.to_string(),
+            base_git_oid: repo.head()?.1.to_string(),
+            policy_hash: POLICY_HASH.to_string(),
+            artifacts: BTreeMap::from([(ChangeArtifactId::proposal(), PROPOSAL.to_string())]),
+        };
+        let import = inspect_change_import(&repo, &profile.public_key, CHANGE_ID)?;
+        let content_root = change_cob_import_content_root(&init, &import.authority.actor)?;
+        create_change_import(&repo, &signer, init, &import, &content_root)?;
+        let status = inspect_change_status(&repo, &profile.public_key, CHANGE_ID)?;
+        let plan = plan(&status, &status.authority.actor, true)?;
+        let home_path = profile.home.path().to_path_buf();
+        let repository_id_text = repository_id.to_string();
+        drop(repo);
+        drop(signer);
+        drop(profile);
+
+        let outcome = execute_profile_update(&home_path, &repository_id_text, &plan, &status)?;
+        assert_eq!(outcome.content_root, plan.expected_content_root);
+        let reloaded = crate::inspect_profile_status(&home_path, &repository_id_text, CHANGE_ID)?;
+        assert_eq!(
+            change_cob_content_root(&reloaded.state)?,
+            outcome.content_root
+        );
+
+        fs::remove_dir_all(&root)?;
         Ok(())
     }
 
