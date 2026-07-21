@@ -279,6 +279,10 @@ pub use verified::radicle_change::{
     MAX_REPOSITORY_ID_BYTES, MAX_REVISIONS_PER_ARTIFACT, MAX_REVISION_BASIS_IDS,
     RADICLE_CHANGE_COB_SCHEMA_V1, RADICLE_CHANGE_COB_TYPE_NAME,
 };
+pub use verified::radicle_checkout::{
+    plan_change_cob_checkout, ChangeCheckoutDestination, ChangeCheckoutFile, ChangeCobCheckoutPlan,
+    ChangeCobLocalSnapshot,
+};
 pub use verified::radicle_import::{
     change_cob_import_content_root, plan_change_cob_import, ChangeCobImportSnapshot,
 };

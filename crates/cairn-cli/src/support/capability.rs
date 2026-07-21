@@ -131,6 +131,11 @@ impl CapabilityRoot {
         self.dir.write(relative, contents)
     }
 
+    pub(crate) fn create_dir(&self, relative: &Path) -> io::Result<()> {
+        let relative = self.relative(relative)?;
+        self.dir.create_dir(relative)
+    }
+
     pub(crate) fn create_dir_all(&self, relative: &Path) -> io::Result<()> {
         let relative = self.relative(relative)?;
         self.dir.create_dir_all(relative)
@@ -181,20 +186,15 @@ impl CapabilityRoot {
     }
 
     pub(crate) fn entries(&self, relative: &Path) -> io::Result<Vec<CapabilityDirEntry>> {
-        let relative = self.relative(relative)?;
-        let directory = if relative == Path::new(".") {
-            self.dir.try_clone()?
-        } else {
-            self.dir.open_dir(&relative)?
-        };
-        let mut entries = Vec::new();
-        for entry in directory.entries()? {
-            let entry = entry?;
-            let name = entry.file_name();
-            let file_type = entry.file_type()?;
-            entries.push(CapabilityDirEntry { name, file_type });
-        }
-        Ok(entries)
+        self.entries_inner(relative, None)
+    }
+
+    pub(crate) fn entries_bounded(
+        &self,
+        relative: &Path,
+        max_entries: usize,
+    ) -> io::Result<Vec<CapabilityDirEntry>> {
+        self.entries_inner(relative, Some(max_entries))
     }
 
     pub(crate) fn read_path(&self, path: &Path) -> io::Result<Vec<u8>> {
@@ -241,6 +241,30 @@ impl CapabilityRoot {
         let source_relative = self.relative_from_display_path(source_path)?;
         let destination_relative = destination.relative_from_display_path(destination_path)?;
         self.copy_to(&source_relative, destination, &destination_relative)
+    }
+
+    fn entries_inner(
+        &self,
+        relative: &Path,
+        max_entries: Option<usize>,
+    ) -> io::Result<Vec<CapabilityDirEntry>> {
+        let relative = self.relative(relative)?;
+        let directory = if relative == Path::new(".") {
+            self.dir.try_clone()?
+        } else {
+            self.dir.open_dir(&relative)?
+        };
+        let mut entries = Vec::new();
+        for entry in directory.entries()? {
+            if max_entries.is_some_and(|limit| entries.len() >= limit) {
+                return Err(bounded_entry_limit_error());
+            }
+            let entry = entry?;
+            let name = entry.file_name();
+            let file_type = entry.file_type()?;
+            entries.push(CapabilityDirEntry { name, file_type });
+        }
+        Ok(entries)
     }
 
     fn relative_from_display_path(&self, path: &Path) -> io::Result<PathBuf> {
@@ -291,6 +315,13 @@ fn bounded_read_limit_error() -> io::Error {
     io::Error::new(
         io::ErrorKind::InvalidData,
         "file exceeds the bounded read limit",
+    )
+}
+
+fn bounded_entry_limit_error() -> io::Error {
+    io::Error::new(
+        io::ErrorKind::InvalidData,
+        "directory exceeds the bounded entry limit",
     )
 }
 
@@ -363,6 +394,32 @@ mod tests {
         assert!(root
             .read_bounded(Path::new(TEST_FILE_NAME), max_bytes)
             .is_err());
+
+        fs::remove_dir_all(directory)?;
+        Ok(())
+    }
+
+    #[test]
+    fn bounded_entries_and_exclusive_directory_creation_fail_closed(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        const ENTRY_LIMIT: usize = 1;
+        const PREPARED_DIRECTORY: &str = "prepared";
+        const SECOND_FILE_NAME: &str = "second.txt";
+
+        let directory = test_directory("bounded-entries");
+        remove_test_directory(&directory)?;
+        fs::create_dir_all(&directory)?;
+        let root = CapabilityRoot::open(CapabilityRootKind::Repository, &directory)?;
+        root.write(Path::new(TEST_FILE_NAME), TEST_FILE_CONTENT)?;
+        assert_eq!(
+            root.entries_bounded(Path::new("."), ENTRY_LIMIT)?.len(),
+            ENTRY_LIMIT
+        );
+        root.write(Path::new(SECOND_FILE_NAME), TEST_FILE_CONTENT)?;
+        assert!(root.entries_bounded(Path::new("."), ENTRY_LIMIT).is_err());
+
+        root.create_dir(Path::new(PREPARED_DIRECTORY))?;
+        assert!(root.create_dir(Path::new(PREPARED_DIRECTORY)).is_err());
 
         fs::remove_dir_all(directory)?;
         Ok(())

@@ -1,3 +1,5 @@
+mod status_checkout;
+
 use std::{
     collections::BTreeMap,
     error::Error,
@@ -45,10 +47,12 @@ struct RadicleImportOptions {
 
 pub(crate) fn run_radicle(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(subcommand) = args.first() else {
-        return Err("radicle requires a subcommand: import".into());
+        return Err("radicle requires a subcommand: import, status, or checkout".into());
     };
     match subcommand.as_str() {
         "import" => run_radicle_import(args.into_iter().skip(1).collect()),
+        "status" => status_checkout::run_status(args.into_iter().skip(1).collect()),
+        "checkout" => status_checkout::run_checkout(args.into_iter().skip(1).collect()),
         unknown => Err(format!("unknown radicle subcommand: {unknown}").into()),
     }
 }
@@ -267,7 +271,7 @@ fn read_delta_specs(
         )
         .into());
     }
-    let mut entries = capability.entries(specs_dir)?;
+    let mut entries = capability.entries_bounded(specs_dir, MAX_ARTIFACTS)?;
     entries.sort_by(|left, right| left.file_name().cmp(right.file_name()));
     let mut delta_specs = BTreeMap::new();
     for entry in entries {

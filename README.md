@@ -362,39 +362,61 @@ r[verify cairn.structured_lifecycle.format_strategy.steel_probe_dsl]
 The `onix-cairn-radicle` crate defines the custom Radicle COB type
 `xyz.onixresearch.cairn-change`. One COB represents one active Cairn change;
 accepted specs, implementation source, and executed archive commits remain
-canonical Git content. Cairn exposes preview-first local import while checkout,
-update, network publication, and peer-sync commands remain future work:
+canonical Git content. Cairn exposes preview-first local import, read-only
+status, and preview-first checkout. Update, network publication, and peer-sync
+commands remain future work:
 
 ```bash
 cairn radicle import my-change \
   --root /path/to/repo \
   --rad-home /path/to/radicle-home \
-  --rid rad:repository-id
+  --rid rad:repository-id [--execute]
 
-cairn radicle import my-change \
+cairn radicle status my-change \
   --root /path/to/repo \
   --rad-home /path/to/radicle-home \
-  --rid rad:repository-id \
-  --execute
+  --rid rad:repository-id
+
+cairn radicle checkout my-change \
+  --root /path/to/repo \
+  --rad-home /path/to/radicle-home \
+  --rid rad:repository-id [--execute]
 ```
 
-Both modes require explicit Radicle context. Preview reads bounded exact native
-artifact bytes and emits the planned content root without creating refs.
-Execution reloads the active change and policy, rechecks the profile actor
-against the repository's current canonical identity document, acquires an
-atomic local per-change import lock, rechecks authority and existing objects
-while serialized, signs the root through Radicle's typed store, reloads it, and
-verifies the previewed BLAKE3 content root. A concurrent local import fails
-before signing; a stale lock left by an unclean process exit fails closed and
-the blocker reports its path relative to `--rad-home` for deliberate recovery.
-The receipt
-records actor, canonical identity OID, repository/base OIDs, artifact hashes,
-policy/input/plan/content hashes, blockers, mutation state, and the object/state
-IDs when created; the profile path is not included in portable hash material.
+Every command requires explicit Radicle context. Import preview reads bounded
+exact native artifact bytes and emits the planned content root without creating
+refs. Import execution reloads the active change and policy, rechecks the
+profile actor against the repository's current canonical identity document,
+serializes duplicate detection, signs through Radicle's typed store, reloads
+the object, and verifies the previewed BLAKE3 content root.
+
+Status never loads a signer or mutates storage. It typed-loads the unique
+matching object and reports object/state/content identities, conflicts,
+lifecycle and evidence condition, current profile delegate membership, policy
+observation, exact materialized file hashes, and whether the local active change
+is absent, current, or divergent.
+
+Checkout preview performs the same typed and capability-bounded observations
+without creating a lock or file. Execution requires current delegate authority
+and proof of possession of the profile signer, then acquires a local per-change
+checkout lock and repeats identity/object/state checks while serialized. An
+absent destination is written and verified in an exclusive prepared directory
+before atomic rename into `cairn/changes/<change>`; an exact destination is an
+idempotent no-op. Divergent, partial, symlinked, non-UTF-8, oversized, or
+unsupported local content is never overlaid, and there is no force option.
+Stale locks and prepared directories fail closed for deliberate recovery.
+
+Portable BLAKE3 receipts exclude the Radicle home path and bind the actor,
+canonical identity, repository/object/state/content identities, policy
+observation, lifecycle/evidence condition, file hashes, local classification,
+blockers, execution mode, and mutation result.
 r[impl cairn.radicle_change_cob.radicle_adapter]
 r[impl cairn.radicle_import_cli.command]
 r[impl cairn.radicle_import_cli.current_authority]
 r[impl cairn.radicle_import_cli.receipt]
+r[impl cairn.radicle_status_checkout.status]
+r[impl cairn.radicle_status_checkout.checkout_execution]
+r[impl cairn.radicle_status_checkout.receipts]
 
 `cairn-core::verified::radicle_change` is the pure reducer. It preserves exact
 UTF-8 proposal, design, tasks, metadata, and keyed delta-spec text; derives
@@ -413,14 +435,16 @@ objects are materialized. r[impl cairn.radicle_change_cob.materialized_view]
 
 The adapter loads the identity document referenced by each Radicle operation and
 passes only actor, creator, and delegate facts into the reducer. Historical
-identity documents authorize historical operations. Import execution separately
-computes the current canonical identity head and requires the signing profile
-actor to be a delegate in that exact document immediately before typed storage
-mutation. This is a point-in-time check rather than a lease; later identity
-changes do not rewrite history, and every future Git mutation shell must perform
-its own current-authority check. Protocol resource ceilings are named reducer
-constants shared by every peer; local Nickel policy may later impose stricter
-admission but cannot relax consensus limits.
+identity documents authorize historical operations. Import and checkout
+execution separately compute the current canonical identity head and require the
+profile actor to be a delegate in that exact document immediately before
+mutation. Import signs its typed storage operation; checkout signs and verifies
+a state-bound possession challenge before acquiring its guard. This is a
+point-in-time check rather than a lease; later identity changes do not rewrite
+history, and every future Git or filesystem mutation shell must perform its own
+current-authority check. Protocol resource ceilings are named reducer constants
+shared by every peer; local Nickel policy may later impose stricter admission but
+cannot relax consensus limits.
 
 A valid signature or accepted COB operation proves only bounded authorship and
 reducer acceptance. It does not prove gate validity, evidence truth, dependency
@@ -429,6 +453,7 @@ remote peer trust. Evidence and lifecycle assertions remain BLAKE3-subject-bound
 and become visibly stale when lifecycle content changes.
 r[verify cairn.radicle_change_cob.evidence_boundary.non_claims]
 r[verify cairn.radicle_import_cli.non_claims.local_only]
+r[verify cairn.radicle_status_checkout.non_claims.local_only]
 
 ## Lifecycle views
 

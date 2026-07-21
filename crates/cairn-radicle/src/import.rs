@@ -73,6 +73,8 @@ pub enum ChangeImportError {
     Git(#[from] git::raw::Error),
     #[error("invalid Radicle COB object ref {reference}: {reason}")]
     InvalidCobObjectRef { reference: String, reason: String },
+    #[error("invalid Radicle COB object ID {object_id}: {reason}")]
+    InvalidCobObjectId { object_id: String, reason: String },
     #[error("Cairn rejected the import state: {0}")]
     Core(#[from] ChangeCobError),
     #[error("failed to load the explicit Radicle home: {0}")]
@@ -85,6 +87,8 @@ pub enum ChangeImportError {
     Storage(#[from] storage::Error),
     #[error("failed to load the Radicle signer: {0}")]
     Signer(#[from] profile::SignerError),
+    #[error("failed to prove possession of the checkout signer key")]
+    CheckoutSignerProof,
     #[error("no Radicle profile key exists under {path}")]
     ProfileKeyMissing { path: String },
     #[error("invalid Radicle repository ID {repository_id}: {reason}")]
@@ -100,6 +104,12 @@ pub enum ChangeImportError {
         repository_id: String,
         lock_relative: String,
     },
+    #[error("another local checkout is active for change {change_id} in repository {repository_id}; after confirming no checkout is running, remove stale lock {lock_relative}")]
+    ConcurrentCheckout {
+        change_id: String,
+        repository_id: String,
+        lock_relative: String,
+    },
     #[error("change {change_id} already has Radicle object {object_id}")]
     ExistingChangeObject {
         change_id: String,
@@ -110,6 +120,12 @@ pub enum ChangeImportError {
         change_id: String,
         object_ids: Vec<String>,
     },
+    #[error("change {change_id} has no Radicle object")]
+    ChangeObjectMissing { change_id: String },
+    #[error("Radicle change object {object_id} disappeared before typed reload")]
+    ChangeObjectReloadMissing { object_id: String },
+    #[error("checkout context changed before execution: {field}")]
+    CheckoutContextDrift { field: String },
     #[error("import context changed before execution: {field}")]
     ContextDrift { field: String },
     #[error("import repository mismatch: planned {planned}, current {current}")]
@@ -408,7 +424,7 @@ fn validate_execution_context(
     Ok(())
 }
 
-fn load_profile_at(rad_home: &Path) -> Result<Profile, ChangeImportError> {
+pub(crate) fn load_profile_at(rad_home: &Path) -> Result<Profile, ChangeImportError> {
     let home = Home::load(rad_home)?;
     let keystore = Keystore::new(&home.keys());
     let public_key =
@@ -434,7 +450,7 @@ fn load_profile_at(rad_home: &Path) -> Result<Profile, ChangeImportError> {
     })
 }
 
-fn parse_repository_id(value: &str) -> Result<RepoId, ChangeImportError> {
+pub(crate) fn parse_repository_id(value: &str) -> Result<RepoId, ChangeImportError> {
     RepoId::from_str(value).map_err(|error| ChangeImportError::InvalidRepositoryId {
         repository_id: value.to_string(),
         reason: error.to_string(),

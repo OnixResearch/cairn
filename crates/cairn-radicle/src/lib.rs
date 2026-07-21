@@ -1,10 +1,15 @@
 #![deny(clippy::unwrap_used)]
 
 mod authority;
+mod checkout;
 mod import;
 
 pub use authority::{
     inspect_current_delegate_authority, CurrentAuthorityError, CurrentDelegateAuthority,
+};
+pub use checkout::{
+    acquire_change_checkout_guard, acquire_profile_checkout_guard, inspect_change_status,
+    inspect_profile_status, ChangeCheckoutGuard, ChangeStatusInspection,
 };
 pub use import::{
     create_change_import, execute_profile_import, inspect_change_import, inspect_profile_import,
