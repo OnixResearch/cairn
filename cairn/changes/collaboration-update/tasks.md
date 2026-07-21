@@ -15,4 +15,15 @@
 
 - [x] [serial] Expose `cairn collaboration update` for portable and Radicle backends while retaining the compatibility `cairn radicle update` entry point. r[cairn.collaboration_update.receipts]
 - [x] [serial] Emit deterministic backend-labeled update receipts with exact bases, artifact/content/state identities, authority observations, blockers, execution mode, mutation results, and explicit non-claims. r[cairn.collaboration_update.receipts] r[cairn.collaboration_update.non_claims]
-- [ ] [serial] Update public docs and run focused, workspace, lifecycle, traceability, formatting, Clippy, purity, and Nix validation before sync/archive. r[cairn.collaboration_update.non_claims]
+- [x] [serial] Update public docs and run focused, workspace, lifecycle, traceability, formatting, Clippy, purity, and Nix validation before sync/archive. r[cairn.collaboration_update.non_claims]
+
+## Verification Evidence
+
+- Baseline focused collaboration core, Radicle adapter, and CLI tests passed before implementation.
+- Pure update planner positive/negative tests passed for deterministic add/change/remove actions, no-op behavior, authorization, identity/policy drift, protocol limits, and content/lifecycle conflicts.
+- Radicle adapter tests passed with signed typed update/reload, stale-plan rejection, current-authority rejection, serialized locking, and explicit profile/signer execution.
+- Portable CLI tests passed for preview, exact execution, no-op, unauthorized actor, stale lock, prepared-state collision, tamper, unsafe storage, and cross-backend local locking.
+- Full workspace tests, formatting, and Clippy with warnings denied passed after implementation.
+- Policy freshness, Cairn validation, proposal/design/tasks gates, and verified-core purity passed.
+- Traceability coverage passed with `1657/1657` accepted requirement and scenario IDs referenced.
+- `nix flake check path:$PWD -L` completed with `all checks passed` on `x86_64-linux`; `aarch64-linux` was omitted as incompatible.
