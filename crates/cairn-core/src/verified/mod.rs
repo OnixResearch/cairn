@@ -29,6 +29,7 @@ pub mod plan;
 pub mod policy;
 pub mod preserves_evidence_ingest;
 pub mod probe;
+pub mod radicle_change;
 pub mod receipt_drift;
 pub mod release_run_ledger;
 pub mod repo;

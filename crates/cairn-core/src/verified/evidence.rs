@@ -9,9 +9,29 @@ pub fn blake3_hex(bytes: &[u8]) -> String {
 }
 
 pub fn canonical_json(value: &Value) -> String {
-    match serde_json::to_string(value) {
+    let canonical = canonical_json_value(value);
+    match serde_json::to_string(&canonical) {
         Ok(text) => text,
         Err(error) => format!("serde_json_value_serialization_error:{error}"),
+    }
+}
+
+fn canonical_json_value(value: &Value) -> Value {
+    match value {
+        Value::Object(object) => {
+            let mut keys = object.keys().collect::<Vec<_>>();
+            keys.sort();
+            let mut canonical = serde_json::Map::new();
+            for key in keys {
+                let Some(child) = object.get(key) else {
+                    continue;
+                };
+                canonical.insert(key.clone(), canonical_json_value(child));
+            }
+            Value::Object(canonical)
+        }
+        Value::Array(items) => Value::Array(items.iter().map(canonical_json_value).collect()),
+        scalar => scalar.clone(),
     }
 }
 
@@ -59,6 +79,27 @@ mod content_hash_tests {
     use serde_json::json;
 
     use super::*;
+
+    const SORTED_CANONICAL_JSON: &str = "{\"a\":{\"c\":false,\"d\":true},\"z\":null}";
+
+    // r[verify cairn.radicle_change_cob.deterministic_reducer]
+    #[test]
+    fn canonical_json_sorts_nested_object_keys_explicitly() {
+        let mut nested = serde_json::Map::new();
+        nested.insert("d".to_string(), Value::Bool(true));
+        nested.insert("c".to_string(), Value::Bool(false));
+        let mut value = serde_json::Map::new();
+        value.insert("z".to_string(), Value::Null);
+        value.insert("a".to_string(), Value::Object(nested));
+        assert_eq!(canonical_json(&Value::Object(value)), SORTED_CANONICAL_JSON);
+    }
+
+    #[test]
+    fn canonical_json_hash_rejects_value_equivalence_after_content_change() {
+        let before = json!({"z": null, "a": {"d": true, "c": false}});
+        let after = json!({"z": null, "a": {"d": false, "c": false}});
+        assert_ne!(canonical_json_hash(&before), canonical_json_hash(&after));
+    }
 
     #[test]
     // r[verify cairn.determinism.preserves_authoritative_content_hash.tests]

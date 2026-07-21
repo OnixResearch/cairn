@@ -357,6 +357,44 @@ r[verify cairn.structured_lifecycle.format_strategy.preserves_candidate]
 r[verify cairn.structured_lifecycle.format_strategy.steel_not_source]
 r[verify cairn.structured_lifecycle.format_strategy.steel_probe_dsl]
 
+## Radicle collaborative changes
+
+The `onix-cairn-radicle` crate defines the custom Radicle COB type
+`xyz.onixresearch.cairn-change`. One COB represents one active Cairn change;
+accepted specs, implementation source, and executed archive commits remain
+canonical Git content. The library does not yet add CLI import, checkout,
+publish, or peer-sync commands. r[impl cairn.radicle_change_cob.radicle_adapter]
+
+`cairn-core::verified::radicle_change` is the pure reducer. It preserves exact
+UTF-8 proposal, design, tasks, metadata, and keyed delta-spec text; derives
+artifact heads from explicit revision bases; merges disjoint edits; and retains
+same-artifact concurrent edits as visible conflicts. Conflict-free semantic
+content receives a BLAKE3 `content_root`, while the complete reducer history has
+a separate BLAKE3 state hash. Radicle object and entry IDs remain the Git OIDs
+required by the transport. r[impl cairn.radicle_change_cob.lossless_change_state]
+r[impl cairn.radicle_change_cob.deterministic_reducer]
+
+Materialization is a pure sorted plan to `proposal.md`, `design.md`, `tasks.md`,
+`metadata.json`, and `specs/<stable-id>/spec.md`. A conflicted state cannot
+produce a partial plan. Cross-change dependency existence, cycle, readiness,
+and archive-order checks remain aggregate Cairn repository decisions after all
+objects are materialized. r[impl cairn.radicle_change_cob.materialized_view]
+
+The adapter loads the identity document referenced by each Radicle operation and
+passes only actor, creator, and delegate facts into the reducer. Historical
+identity documents authorize historical operations; any future shell that
+mutates current Git state must re-check current delegate authority. Protocol
+resource ceilings are named reducer constants shared by every peer; local
+Nickel policy may later impose stricter admission but cannot relax consensus
+limits.
+
+A valid signature or accepted COB operation proves only bounded authorship and
+reducer acceptance. It does not prove gate validity, evidence truth, dependency
+readiness, source correctness, archive execution, release eligibility, or
+remote peer trust. Evidence and lifecycle assertions remain BLAKE3-subject-bound
+and become visibly stale when lifecycle content changes.
+r[verify cairn.radicle_change_cob.evidence_boundary.non_claims]
+
 ## Lifecycle views
 
 Cairn can project the same reviewed lifecycle facts as a kanban board, containment
@@ -827,3 +865,4 @@ The split does not relicense dependencies, revoke prior grants, or turn lifecycl
 - [oxidecomputer/omicron](https://github.com/oxidecomputer/omicron), [oxidecomputer/hubris](https://github.com/oxidecomputer/hubris), [oxidecomputer/humility](https://github.com/oxidecomputer/humility), [oxidecomputer/crucible](https://github.com/oxidecomputer/crucible), [oxidecomputer/propolis](https://github.com/oxidecomputer/propolis), [oxidecomputer/helios](https://github.com/oxidecomputer/helios), [oxidecomputer/maghemite](https://github.com/oxidecomputer/maghemite), [oxidecomputer/opte](https://github.com/oxidecomputer/opte), and [oxidecomputer/dendrite](https://github.com/oxidecomputer/dendrite) — study-only system references for observability, archive shape, debugging workflows, and operator diagnostics; Cairn does not adopt their domain-specific correctness claims.
 - [joweeba/dpub](https://github.com/joweeba/dpub) — durable publish-run, status/explain/resume, and release-evidence ledger reference; Cairn adapts ledger and evidence-shape ideas without adopting remote publishing authority.
 - [joweeba/tla2](https://github.com/joweeba/tla2) — TLA+/state-machine tooling reference for optional lifecycle transition receipts; Cairn validates bounded receipt identity and non-claims rather than embedding a model checker.
+- [radicle-dev/radicle-node](https://github.com/radicle-dev/radicle-node) — signed Git-backed Collaborative Object storage, deterministic operation-DAG evaluation, identity-document authorization, and custom COB type reference used by `onix-cairn-radicle`; Cairn retains lifecycle policy, evidence interpretation, and Git mutation authority.

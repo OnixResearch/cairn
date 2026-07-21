@@ -414,6 +414,8 @@ fn replay_temp_root(source: &Path, label: &str) -> Result<PathBuf, Box<dyn Error
     Ok(destination)
 }
 
+const REPLAY_COPY_EXCLUDED_DIRECTORY: &str = "target";
+
 fn copy_tree(
     source_root: &CapabilityRoot,
     destination_root: &CapabilityRoot,
@@ -433,6 +435,9 @@ fn copy_tree(
                 return Err(
                     format!("replay fixture contains a symlink: {}", relative.display()).into(),
                 );
+            }
+            if entry.file_type().is_dir() && entry.file_name() == REPLAY_COPY_EXCLUDED_DIRECTORY {
+                continue;
             }
             if entry.file_type().is_dir() {
                 directories.push(relative);
@@ -487,6 +492,35 @@ mod tests {
 
         copy_tree(&source_root, &destination_root)?;
 
+        assert_eq!(
+            destination_root.read(Path::new("nested/fixture.json"))?,
+            TEST_FILE_CONTENT
+        );
+        fs::remove_dir_all(source)?;
+        fs::remove_dir_all(destination)?;
+        Ok(())
+    }
+
+    // r[verify cairn.supersede.determinism_replay.cross_root]
+    #[test]
+    fn copy_tree_excludes_cargo_build_outputs() -> Result<(), Box<dyn Error>> {
+        let source = test_directory("excluded-target-source");
+        let destination = test_directory("excluded-target-destination");
+        remove_test_directory(&source)?;
+        remove_test_directory(&destination)?;
+        fs::create_dir_all(source.join("target/debug"))?;
+        fs::create_dir_all(source.join("nested"))?;
+        fs::create_dir_all(&destination)?;
+        fs::write(source.join("target/debug/derived.bin"), TEST_FILE_CONTENT)?;
+        fs::write(source.join("nested/fixture.json"), TEST_FILE_CONTENT)?;
+        let source_root = CapabilityRoot::open(CapabilityRootKind::Replay, &source)?;
+        let destination_root = CapabilityRoot::open(CapabilityRootKind::Replay, &destination)?;
+
+        copy_tree(&source_root, &destination_root)?;
+
+        assert!(destination_root
+            .read(Path::new("target/debug/derived.bin"))
+            .is_err());
         assert_eq!(
             destination_root.read(Path::new("nested/fixture.json"))?,
             TEST_FILE_CONTENT

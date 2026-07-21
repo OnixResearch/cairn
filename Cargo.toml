@@ -2,6 +2,7 @@
 members = [
   "crates/cairn-core",
   "crates/cairn-cli",
+  "crates/cairn-radicle",
 ]
 resolver = "2"
 
@@ -21,11 +22,13 @@ ed25519-dalek = "2.2"
 iddqd = "0.4.5"
 nickel-export-core = { git = "https://github.com/OnixResearch/nickel-export", rev = "257fafc1c746f1faf156207043a4c826bfb16d49" }
 preserves = "4.996.0"
+radicle = "0.24.0"
 rat-nodegraph = { git = "https://github.com/brittonr/subwayrat.git", rev = "9d68c69f13ad5c4385e8c96ff727bd6a7a1f8dd2" }
 ratatui = "0.30"
 redb = "3.0.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+thiserror = "2"
 
 [workspace.metadata.slotcar]
 default_scope = ["--workspace"]
