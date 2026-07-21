@@ -17,7 +17,7 @@ const MAX_PORTABLE_STORE_BYTES: u64 =
     (MAX_ARTIFACTS as u64 * MAX_ARTIFACT_BYTES as u64) + PORTABLE_STORE_OVERHEAD_BYTES;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(super) struct ActiveChangeArtifacts {
+pub(crate) struct ActiveChangeArtifacts {
     pub proposal: Option<String>,
     pub design: Option<String>,
     pub tasks: Option<String>,
@@ -51,7 +51,7 @@ impl Drop for PortableStoreLock {
     }
 }
 
-pub(super) fn read_active_change_artifacts(
+pub(crate) fn read_active_change_artifacts(
     repository_root: &Path,
     change: &str,
 ) -> Result<ActiveChangeArtifacts, Box<dyn Error>> {
@@ -170,6 +170,51 @@ pub(super) fn commit_store(
     let reloaded = load_store(store)?;
     if &reloaded != envelope {
         return Err("portable collaboration store changed during commit verification".into());
+    }
+    Ok(())
+}
+
+pub(super) fn replace_store(
+    store: &Path,
+    expected: &PortableChangeCollaboration,
+    updated: &PortableChangeCollaboration,
+) -> Result<(), Box<dyn Error>> {
+    let current = load_store(store)?;
+    if &current != expected {
+        return Err("portable collaboration store changed before replacement".into());
+    }
+    let (root, relative) =
+        CapabilityRoot::open_file_parent(CapabilityRootKind::Registry, store, false)?;
+    let file_name = relative
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or("portable collaboration store must have a UTF-8 file name")?;
+    let prepared = PathBuf::from(format!(".{file_name}.{}.prepared", updated.envelope_hash));
+    if path_exists(&root, &prepared)? {
+        return Err("portable collaboration prepared file already exists".into());
+    }
+    let bytes = serde_json::to_vec_pretty(updated)?;
+    let byte_count = u64::try_from(bytes.len())?;
+    if byte_count > MAX_PORTABLE_STORE_BYTES {
+        return Err(format!(
+            "portable collaboration store exceeds byte limit: {byte_count} > {MAX_PORTABLE_STORE_BYTES}"
+        )
+        .into());
+    }
+    root.write_new(&prepared, &bytes)?;
+    if let Err(error) = verify_prepared_store(&root, &prepared) {
+        let _ = root.remove_file(&prepared);
+        return Err(error);
+    }
+    let confirmed = load_store(store)?;
+    if &confirmed != expected {
+        root.remove_file(&prepared)?;
+        return Err("portable collaboration store changed before atomic replacement".into());
+    }
+    root.rename(&prepared, &root, &relative)?;
+    let reloaded = load_store(store)?;
+    if &reloaded != updated {
+        return Err("portable collaboration store changed during replacement verification".into());
     }
     Ok(())
 }

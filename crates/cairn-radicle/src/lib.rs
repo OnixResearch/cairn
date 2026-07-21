@@ -3,6 +3,7 @@
 mod authority;
 mod checkout;
 mod import;
+mod update;
 
 pub use authority::{
     inspect_current_delegate_authority, CurrentAuthorityError, CurrentDelegateAuthority,
@@ -15,6 +16,7 @@ pub use import::{
     create_change_import, execute_profile_import, inspect_change_import, inspect_profile_import,
     ChangeImportError, ChangeImportInspection, ChangeImportOutcome,
 };
+pub use update::{create_change_update, execute_profile_update, ChangeUpdateOutcome};
 
 use std::{ops::Deref, str::FromStr, sync::LazyLock};
 

@@ -53,7 +53,7 @@ impl ChangeCollaborationUpdatePlan {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChangeCobUpdatePlan {
     pub change_id: String,
     pub actor: String,
@@ -186,6 +186,14 @@ pub fn apply_planned_change_collaboration_update(
 pub fn change_collaboration_update_plan_hash(
     plan: &ChangeCollaborationUpdatePlan,
 ) -> Result<String, ChangeCobError> {
+    update_plan_hash(plan)
+}
+
+pub fn change_cob_update_plan_hash(plan: &ChangeCobUpdatePlan) -> Result<String, ChangeCobError> {
+    update_plan_hash(plan)
+}
+
+fn update_plan_hash<T: Serialize>(plan: &T) -> Result<String, ChangeCobError> {
     let value = serde_json::to_value(plan).map_err(|error| ChangeCobError::Serialization {
         reason: error.to_string(),
     })?;

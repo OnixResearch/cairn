@@ -116,9 +116,10 @@ pub use verified::collaboration_portable::{
     PORTABLE_COLLABORATION_BACKEND_V1, PORTABLE_COLLABORATION_SCHEMA_V1,
 };
 pub use verified::collaboration_update::{
-    apply_planned_change_collaboration_update, change_collaboration_update_plan_hash,
-    plan_change_cob_update, plan_change_collaboration_update, ChangeCobUpdatePlan,
-    ChangeCollaborationUpdatePlan, ChangeCollaborationUpdateSnapshot,
+    apply_planned_change_collaboration_update, change_cob_update_plan_hash,
+    change_collaboration_update_plan_hash, plan_change_cob_update,
+    plan_change_collaboration_update, ChangeCobUpdatePlan, ChangeCollaborationUpdatePlan,
+    ChangeCollaborationUpdateSnapshot,
 };
 pub use verified::content_addressed::{
     circuit_primitive_graph_hash, circuit_primitive_hash_material, downstream_pilot_hash,

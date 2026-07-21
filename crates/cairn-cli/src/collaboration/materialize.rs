@@ -49,7 +49,7 @@ impl RepositoryCheckoutLock {
                 active: true,
             }),
             Err(error) if error.kind() == io::ErrorKind::AlreadyExists => Err(format!(
-                "another collaboration backend is checking out change {change}; after confirming no checkout is running, remove stale repository lock {}",
+                "another collaboration operation is active for change {change}; after confirming no checkout or update is running, remove stale repository lock {}",
                 relative.display()
             )
             .into()),

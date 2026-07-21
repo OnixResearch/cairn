@@ -112,6 +112,18 @@ pub enum ChangeImportError {
         repository_id: String,
         lock_relative: String,
     },
+    #[error("another local update is active for change {change_id} in repository {repository_id}; after confirming no updater is running, remove stale lock {lock_relative}")]
+    ConcurrentUpdate {
+        change_id: String,
+        repository_id: String,
+        lock_relative: String,
+    },
+    #[error("change update requires at least one action")]
+    EmptyUpdate,
+    #[error("update context changed before execution: {field}")]
+    UpdateContextDrift { field: String },
+    #[error("update actor {planned} does not match current profile actor {current}")]
+    UpdateActorMismatch { planned: String, current: String },
     #[error("change {change_id} already has Radicle object {object_id}")]
     ExistingChangeObject {
         change_id: String,
@@ -142,6 +154,10 @@ pub enum ChangeImportError {
     CreatedObjectMissing { object_id: String },
     #[error("created content root mismatch: planned {planned}, created {created}")]
     CreatedContentRootMismatch { planned: String, created: String },
+    #[error("updated Radicle object {object_id} could not be reloaded")]
+    UpdatedObjectMissing { object_id: String },
+    #[error("updated content root mismatch: planned {planned}, updated {updated}")]
+    UpdatedContentRootMismatch { planned: String, updated: String },
 }
 
 pub fn inspect_change_import(

@@ -1,4 +1,5 @@
 pub(crate) mod status_checkout;
+pub(crate) mod update;
 
 use std::{
     collections::BTreeMap,
@@ -47,12 +48,13 @@ struct RadicleImportOptions {
 
 pub(crate) fn run_radicle(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(subcommand) = args.first() else {
-        return Err("radicle requires a subcommand: import, status, or checkout".into());
+        return Err("radicle requires a subcommand: import, status, checkout, or update".into());
     };
     match subcommand.as_str() {
         "import" => run_radicle_import(args.into_iter().skip(1).collect()),
         "status" => status_checkout::run_status(args.into_iter().skip(1).collect()),
         "checkout" => status_checkout::run_checkout(args.into_iter().skip(1).collect()),
+        "update" => update::run_update(args.into_iter().skip(1).collect()),
         unknown => Err(format!("unknown radicle subcommand: {unknown}").into()),
     }
 }

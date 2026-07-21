@@ -388,18 +388,31 @@ cairn collaboration checkout my-change \
   --backend portable-json.v1 \
   --store /path/to/my-change.cairn.json \
   --root /path/to/repo [--execute]
+
+cairn collaboration update my-change \
+  --backend portable-json.v1 \
+  --store /path/to/my-change.cairn.json \
+  --actor operator-label \
+  --root /path/to/repo [--execute]
 ```
 
-Import and checkout are preview-first. Portable import reads bounded exact
-artifacts, computes a deterministic root operation, validates the complete
+Import, update, and checkout are preview-first. Portable import reads bounded
+exact artifacts, computes a deterministic root operation, validates the complete
 neutral state, and emits a plan without writing unless `--execute` is present.
-Execution acquires an exclusive sibling lock, rechecks active files and policy,
-refuses an existing or unsafe store, writes and validates an exclusive prepared
-file, atomically exposes it, and reloads every BLAKE3 identity. Status is bounded
-and read-only. Checkout rechecks the envelope and local destination while locked,
-then uses the same no-overlay exact-byte materialization contract as the Radicle
-adapter. Exact destinations are no-ops; divergent, partial, symlinked,
-non-UTF-8, oversized, conflicted, or unsupported destinations fail closed.
+Update compares bounded exact local artifacts with conflict-free provider state,
+emits sorted `SetArtifact` actions with complete current revision bases, and
+classifies byte-equivalent input as a no-op. Executed update serializes the store
+and local change, rechecks policy, state, actor, artifacts, and plan, validates a
+prepared envelope, atomically replaces only the expected store, and reloads every
+BLAKE3 identity. Import similarly refuses an existing or unsafe store and
+atomically exposes a validated prepared file. Status is bounded and read-only.
+Checkout rechecks the envelope and local destination while locked, then uses the
+same no-overlay exact-byte materialization contract as the Radicle adapter. Exact
+destinations are no-ops; divergent, partial, symlinked, non-UTF-8, oversized,
+conflicted, or unsupported destinations fail closed.
+r[impl cairn.collaboration_update.portable_execution]
+r[verify cairn.collaboration_update.portable_execution.success]
+r[verify cairn.collaboration_update.portable_execution.blocked]
 r[impl cairn.collaboration_backend.portable_state]
 r[impl cairn.collaboration_backend.portable_shell]
 r[impl cairn.collaboration_backend.cli]
@@ -421,11 +434,23 @@ cairn collaboration status my-change \
   --rad-home /path/to/radicle-home \
   --rid rad:repository-id \
   --root /path/to/repo
+
+cairn collaboration update my-change \
+  --backend radicle.v1 \
+  --rad-home /path/to/radicle-home \
+  --rid rad:repository-id \
+  --root /path/to/repo [--execute]
 ```
 
-`cairn radicle import|status|checkout` remains a compatibility entry point.
+`cairn radicle import|status|checkout|update` remains a compatibility entry point.
 Radicle still owns COB/Git object addressing, canonical identity documents,
 delegate checks, signer possession, signed mutation, and local Radicle locks.
+Radicle update rechecks exact local artifacts, policy, typed object state, and
+current creator-or-delegate authority before signed mutation, then reloads the
+same object and verifies the planned content root.
+r[impl cairn.collaboration_update.radicle_execution]
+r[verify cairn.collaboration_update.radicle_execution.success]
+r[verify cairn.collaboration_update.radicle_execution.blocked]
 New imports reduce through the neutral schema; existing
 `cairn.radicle-change-cob.v1` objects remain readable and retain their exact
 legacy canonical content and state hashes. Radicle-specific object, signature,
@@ -437,13 +462,27 @@ r[impl cairn.radicle_status_checkout.checkout_execution]
 r[verify cairn.radicle_change_cob.evidence_boundary.non_claims]
 
 The pure core remains transport-free: it receives explicit actor/delegate facts,
-reduces revisions and conflicts, validates portable envelopes, and derives a
-sorted materialization plan to `proposal.md`, `design.md`, `tasks.md`,
-`metadata.json`, and `specs/<stable-id>/spec.md`. Repository access, files,
-locks, signing, identity lookup, clocks, process execution, and JSON output stay
-in provider shells. Cross-change dependency existence, cycles, readiness, and
-archive ordering remain aggregate Cairn repository decisions after all selected
-provider states are materialized.
+reduces revisions and conflicts, validates portable envelopes, derives sorted
+artifact-update actions with complete revision bases, and derives a sorted
+materialization plan to `proposal.md`, `design.md`, `tasks.md`, `metadata.json`,
+and `specs/<stable-id>/spec.md`. Repository access, files, locks, signing,
+identity lookup, clocks, process execution, and JSON output stay in provider
+shells. Cross-change dependency existence, cycles, readiness, and archive
+ordering remain aggregate Cairn repository decisions after all selected provider
+states are materialized. Ordinary update refuses content or lifecycle conflicts;
+it never treats local bytes as an implicit winner. Explicit conflict inspection
+and resolution remain a later reviewed command. Passing update receipts prove
+only the recorded local plan, authority observation, and provider mutation
+result; they do not prove conflict resolution, network publication, peer
+synchronization, remote trust, lifecycle approval, source correctness, or
+release eligibility.
+r[impl cairn.collaboration_update.plan]
+r[verify cairn.collaboration_update.plan.exact]
+r[verify cairn.collaboration_update.plan.noop]
+r[verify cairn.collaboration_update.plan.blocked]
+r[impl cairn.collaboration_update.receipts]
+r[verify cairn.collaboration_update.receipts.modes]
+r[verify cairn.collaboration_update.non_claims.local]
 
 ## Lifecycle views
 

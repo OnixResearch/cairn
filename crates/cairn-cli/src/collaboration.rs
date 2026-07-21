@@ -1,15 +1,17 @@
 pub(crate) mod materialize;
-mod portable_store;
+pub(crate) mod portable_store;
 
 use std::{error::Error, path::PathBuf};
 
 use cairn_core::{
-    build_portable_change_collaboration, canonical_json_hash,
+    apply_planned_change_collaboration_update, build_portable_change_collaboration,
+    canonical_json_hash, change_collaboration_update_plan_hash,
     initialize_change_collaboration_import, materialize_change_collaboration,
-    plan_change_collaboration_checkout, plan_change_collaboration_import, validate_change_name,
-    ChangeBaseRevision, ChangeCheckoutDestination, ChangeCollaborationCheckoutPlan,
-    ChangeCollaborationImportSnapshot, ChangeCollaborationState, ChangeLifecycleView,
-    PortableChangeCollaboration, PORTABLE_COLLABORATION_BACKEND_V1,
+    plan_change_collaboration_checkout, plan_change_collaboration_import,
+    plan_change_collaboration_update, validate_change_name, ChangeBaseRevision,
+    ChangeCheckoutDestination, ChangeCollaborationCheckoutPlan, ChangeCollaborationImportSnapshot,
+    ChangeCollaborationState, ChangeCollaborationUpdatePlan, ChangeCollaborationUpdateSnapshot,
+    ChangeLifecycleView, PortableChangeCollaboration, PORTABLE_COLLABORATION_BACKEND_V1,
 };
 use serde_json::{json, Value};
 
@@ -25,7 +27,8 @@ use self::{
         materialize_collaboration_checkout, MaterializationOutcome, RepositoryCheckoutLock,
     },
     portable_store::{
-        commit_store, load_store, read_active_change_artifacts, store_exists, PortableStoreLock,
+        commit_store, load_store, read_active_change_artifacts, replace_store, store_exists,
+        PortableStoreLock,
     },
 };
 
@@ -36,9 +39,11 @@ const NON_CLAIM_AUTHORITY: &str =
 const NON_CLAIM_LOCAL: &str =
     "portable collaboration proves bounded local envelope and filesystem observations only";
 const NON_CLAIM_LIFECYCLE: &str =
-    "collaboration import, status, and checkout do not prove gate validity, evidence truth, dependency readiness, source correctness, archive execution, or release eligibility";
+    "collaboration import, status, checkout, and update do not prove gate validity, evidence truth, dependency readiness, source correctness, archive execution, or release eligibility";
 const NON_CLAIM_TRANSPORT: &str =
     "a portable store does not prove network publication, peer synchronization, availability, or remote trust";
+const NON_CLAIM_CONFLICT: &str =
+    "ordinary collaboration update refuses conflicts and does not prove or perform conflict resolution";
 const BLOCKER_STORE_EXISTS: &str = "portable collaboration store already exists";
 const BLOCKER_INPUT_DRIFT: &str =
     "active change, policy, portable state, or local destination changed after preview";
@@ -55,6 +60,7 @@ enum CollaborationCommand {
     Import,
     Status,
     Checkout,
+    Update,
 }
 
 impl CollaborationCommand {
@@ -63,6 +69,7 @@ impl CollaborationCommand {
             "import" => Ok(Self::Import),
             "status" => Ok(Self::Status),
             "checkout" => Ok(Self::Checkout),
+            "update" => Ok(Self::Update),
             _ => Err(format!("unknown collaboration subcommand: {value}").into()),
         }
     }
@@ -72,11 +79,12 @@ impl CollaborationCommand {
             Self::Import => "import",
             Self::Status => "status",
             Self::Checkout => "checkout",
+            Self::Update => "update",
         }
     }
 
     fn allows_execute(self) -> bool {
-        matches!(self, Self::Import | Self::Checkout)
+        matches!(self, Self::Import | Self::Checkout | Self::Update)
     }
 }
 
@@ -95,7 +103,9 @@ struct PortableOptions {
 
 pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(command_text) = args.first() else {
-        return Err("collaboration requires a subcommand: import, status, or checkout".into());
+        return Err(
+            "collaboration requires a subcommand: import, status, checkout, or update".into(),
+        );
     };
     let command = CollaborationCommand::parse(command_text)?;
     let (backend, backend_args) = extract_backend(&args[1..])?;
@@ -106,6 +116,7 @@ pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>>
                 CollaborationCommand::Import => portable_import(&options)?,
                 CollaborationCommand::Status => portable_status(&options)?,
                 CollaborationCommand::Checkout => portable_checkout(&options)?,
+                CollaborationCommand::Update => portable_update(&options)?,
             };
             print_json(with_portable_receipt_hash(&options.root, receipt))
         }
@@ -187,7 +198,12 @@ fn parse_portable_options(
                 base_revision = Some(cairn_core::decode_base_revision(&encoded)?);
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--actor" if command == CollaborationCommand::Import => {
+            "--actor"
+                if matches!(
+                    command,
+                    CollaborationCommand::Import | CollaborationCommand::Update
+                ) =>
+            {
                 actor = Some(read_option(args, index, "--actor", actor.is_some())?);
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
@@ -227,6 +243,9 @@ fn parse_portable_options(
         if actor.is_none() {
             return Err("portable collaboration import requires --actor ID".into());
         }
+    }
+    if command == CollaborationCommand::Update && actor.is_none() {
+        return Err("portable collaboration update requires --actor ID".into());
     }
     Ok(PortableOptions {
         command,
@@ -387,6 +406,112 @@ fn portable_checkout(options: &PortableOptions) -> Result<Value, Box<dyn Error>>
         &preview,
         &outcome,
     ))
+}
+
+// r[impl cairn.collaboration_update.portable_execution]
+// r[impl cairn.collaboration_update.receipts]
+fn portable_update(options: &PortableOptions) -> Result<Value, Box<dyn Error>> {
+    debug_assert_eq!(options.command, CollaborationCommand::Update);
+    let policy = load_policy_file(options.policy.clone())?;
+    let observed_policy_hash = canonical_json_hash(&policy.raw);
+    let envelope = match load_store(&options.store) {
+        Ok(envelope) => envelope,
+        Err(error) => {
+            return Ok(failure_receipt(options, "update", error.to_string()));
+        }
+    };
+    if envelope.state.change_id != options.change {
+        return Ok(failure_receipt(
+            options,
+            "update",
+            BLOCKER_CHANGE_MISMATCH.to_string(),
+        ));
+    }
+    let (preview, candidate) =
+        match build_update_candidate(options, &observed_policy_hash, &envelope) {
+            Ok(value) => value,
+            Err(error) => return Ok(failure_receipt(options, "update", error.to_string())),
+        };
+    let mut blockers = Vec::new();
+    let mut mutated = false;
+
+    if options.execute && !preview.is_noop() {
+        match PortableStoreLock::acquire(&options.store, false) {
+            Ok(_store_guard) => {
+                match RepositoryCheckoutLock::acquire(&options.root, &options.change) {
+                    Ok(repository_guard) => {
+                        let execution = (|| {
+                            let current_policy = load_policy_file(options.policy.clone())?;
+                            let current_policy_hash = canonical_json_hash(&current_policy.raw);
+                            let current_envelope = load_store(&options.store)?;
+                            let (current_plan, current_candidate) = build_update_candidate(
+                                options,
+                                &current_policy_hash,
+                                &current_envelope,
+                            )?;
+                            if current_envelope != envelope
+                                || current_plan != preview
+                                || current_candidate != candidate
+                            {
+                                return Err(BLOCKER_INPUT_DRIFT.into());
+                            }
+                            replace_store(&options.store, &current_envelope, &current_candidate)?;
+                            Ok::<(), Box<dyn Error>>(())
+                        })();
+                        match execution {
+                            Ok(()) => mutated = true,
+                            Err(error) => blockers.push(error.to_string()),
+                        }
+                        if let Err(error) = repository_guard.release() {
+                            blockers.push(error.to_string());
+                        }
+                    }
+                    Err(error) => blockers.push(error.to_string()),
+                }
+            }
+            Err(error) => blockers.push(error.to_string()),
+        }
+    }
+    blockers.sort();
+    blockers.dedup();
+    update_receipt(PortableUpdateReceiptInput {
+        options,
+        policy_name: &policy.name,
+        observed_policy_hash: &observed_policy_hash,
+        input: &envelope,
+        candidate: &candidate,
+        plan: &preview,
+        blockers: &blockers,
+        mutated,
+    })
+}
+
+fn build_update_candidate(
+    options: &PortableOptions,
+    policy_hash: &str,
+    envelope: &PortableChangeCollaboration,
+) -> Result<(ChangeCollaborationUpdatePlan, PortableChangeCollaboration), Box<dyn Error>> {
+    let artifacts = read_active_change_artifacts(&options.root, &options.change)?;
+    let plan = plan_change_collaboration_update(
+        &envelope.state,
+        ChangeCollaborationUpdateSnapshot {
+            change_id: options.change.clone(),
+            policy_hash: policy_hash.to_string(),
+            actor: options
+                .actor
+                .clone()
+                .ok_or("portable update actor is missing")?,
+            is_delegate: false,
+            proposal: artifacts.proposal,
+            design: artifacts.design,
+            tasks: artifacts.tasks,
+            metadata: artifacts.metadata,
+            delta_specs: artifacts.delta_specs,
+        },
+    )?;
+    let updated = apply_planned_change_collaboration_update(&envelope.state, &plan)?;
+    let candidate = build_portable_change_collaboration(updated)?;
+    Ok((plan, candidate))
 }
 
 fn build_import_envelope(
@@ -557,6 +682,92 @@ fn checkout_receipt(
     })
 }
 
+struct PortableUpdateReceiptInput<'a> {
+    options: &'a PortableOptions,
+    policy_name: &'a str,
+    observed_policy_hash: &'a str,
+    input: &'a PortableChangeCollaboration,
+    candidate: &'a PortableChangeCollaboration,
+    plan: &'a ChangeCollaborationUpdatePlan,
+    blockers: &'a [String],
+    mutated: bool,
+}
+
+fn update_receipt(receipt: PortableUpdateReceiptInput<'_>) -> Result<Value, Box<dyn Error>> {
+    let PortableUpdateReceiptInput {
+        options,
+        policy_name,
+        observed_policy_hash,
+        input,
+        candidate,
+        plan,
+        blockers,
+        mutated,
+    } = receipt;
+    let plan_hash = change_collaboration_update_plan_hash(plan)?;
+    let updates = plan
+        .actions
+        .iter()
+        .filter_map(|action| match action {
+            cairn_core::ChangeCollaborationAction::SetArtifact {
+                artifact,
+                content,
+                basis,
+            } => Some(json!({
+                "artifact": artifact.as_str(),
+                "basis": basis,
+                "content_blake3": content
+                    .as_ref()
+                    .map(|value| cairn_core::blake3_hex(value.as_bytes())),
+                "content_bytes": content.as_ref().map(String::len),
+                "removed": content.is_none(),
+            })),
+            cairn_core::ChangeCollaborationAction::Init { .. }
+            | cairn_core::ChangeCollaborationAction::AttachEvidence { .. }
+            | cairn_core::ChangeCollaborationAction::SetLifecycle { .. } => None,
+        })
+        .collect::<Vec<_>>();
+    let blocked = !blockers.is_empty();
+    Ok(json!({
+        "command": "collaboration update",
+        "backend": PORTABLE_COLLABORATION_BACKEND_V1,
+        "root": path_string(&options.root),
+        "change": options.change,
+        "workspace_id": input.state.workspace_id,
+        "base_revision": input.state.base_revision,
+        "actor": {
+            "id": plan.actor,
+            "source": "caller_declared",
+            "cryptographically_verified": false,
+            "currently_authorized": plan.actor == input.state.creator,
+            "authority_class": "portable_creator_declaration",
+        },
+        "policy": policy_name,
+        "policy_hash": input.state.policy_hash,
+        "observed_policy_hash": observed_policy_hash,
+        "policy_current": input.state.policy_hash == observed_policy_hash,
+        "input_hash": plan.input_state_hash,
+        "plan_hash": plan_hash,
+        "operation_id": plan.operation_id,
+        "input_state_hash": plan.input_state_hash,
+        "input_content_root": plan.input_content_root,
+        "input_envelope_hash": input.envelope_hash,
+        "expected_content_root": plan.expected_content_root,
+        "expected_state_hash": candidate.state_hash,
+        "expected_envelope_hash": candidate.envelope_hash,
+        "changed_artifacts": plan.changed_artifacts,
+        "updates": updates,
+        "noop": plan.is_noop(),
+        "dry_run": !options.execute,
+        "blocked": blocked,
+        "blockers": blockers,
+        "mutated": mutated,
+        "valid": !blocked,
+        "verdict": if blocked { "FAIL" } else { "PASS" },
+        "non_claims": non_claims(),
+    }))
+}
+
 fn failure_receipt(options: &PortableOptions, command: &str, blocker: String) -> Value {
     json!({
         "command": format!("collaboration {command}"),
@@ -637,12 +848,13 @@ fn lifecycle_json(lifecycle: &ChangeLifecycleView) -> Value {
     }
 }
 
-fn non_claims() -> [&'static str; 4] {
+fn non_claims() -> [&'static str; 5] {
     [
         NON_CLAIM_AUTHORITY,
         NON_CLAIM_LOCAL,
         NON_CLAIM_LIFECYCLE,
         NON_CLAIM_TRANSPORT,
+        NON_CLAIM_CONFLICT,
     ]
 }
 
@@ -655,6 +867,7 @@ mod tests {
     const TEST_DIRECTORY_PREFIX: &str = "cairn-collaboration-portable";
     const CHANGE_ID: &str = "portable-demo";
     const PROPOSAL: &str = "# Proposal\n\nPortable.\n";
+    const UPDATED_PROPOSAL: &str = "# Updated Proposal\n\nPortable.\n";
     const TEST_POLICY_RELATIVE: &str = "../../cairn-policy/generated/cairn-policy.json";
 
     fn test_directory(name: &str) -> PathBuf {
@@ -696,7 +909,11 @@ mod tests {
                 .then(|| "workspace:test".to_string()),
             base_revision: (command == CollaborationCommand::Import)
                 .then(|| ChangeBaseRevision::new("opaque", "revision-one").unwrap()),
-            actor: (command == CollaborationCommand::Import).then(|| "actor:test".to_string()),
+            actor: matches!(
+                command,
+                CollaborationCommand::Import | CollaborationCommand::Update
+            )
+            .then(|| "actor:test".to_string()),
             policy: PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(TEST_POLICY_RELATIVE),
             execute,
         }
@@ -729,11 +946,22 @@ mod tests {
             &[CHANGE_ID.to_string(), "--rad-home".to_string()]
         )
         .is_err());
+        assert!(parse_portable_options(
+            CollaborationCommand::Update,
+            &[
+                CHANGE_ID.to_string(),
+                "--store".to_string(),
+                "store.json".to_string(),
+            ]
+        )
+        .is_err());
         assert!(extract_backend(&[CHANGE_ID.to_string()]).is_err());
     }
 
     // r[verify cairn.collaboration_backend.portable_shell.positive]
     // r[verify cairn.collaboration_backend.receipts.authority]
+    // r[verify cairn.collaboration_update.portable_execution.success]
+    // r[verify cairn.collaboration_update.receipts.modes]
     #[test]
     fn portable_import_status_checkout_round_trip_needs_no_radicle() -> Result<(), Box<dyn Error>> {
         let (root, store) = fixture("roundtrip")?;
@@ -753,6 +981,28 @@ mod tests {
         let status = portable_status(&options(CollaborationCommand::Status, &root, &store, false))?;
         assert_eq!(status["local_destination"], "current");
         assert_eq!(status["backend"], PORTABLE_COLLABORATION_BACKEND_V1);
+
+        fs::write(
+            root.join("cairn/changes")
+                .join(CHANGE_ID)
+                .join("proposal.md"),
+            UPDATED_PROPOSAL,
+        )?;
+        let store_before_preview = fs::read(&store)?;
+        let update_preview =
+            portable_update(&options(CollaborationCommand::Update, &root, &store, false))?;
+        assert_eq!(update_preview["dry_run"], true);
+        assert_eq!(update_preview["mutated"], false);
+        assert_eq!(update_preview["changed_artifacts"], json!(["proposal"]));
+        assert_eq!(fs::read(&store)?, store_before_preview);
+
+        let update = portable_update(&options(CollaborationCommand::Update, &root, &store, true))?;
+        assert_eq!(update["valid"], true);
+        assert_eq!(update["mutated"], true);
+        assert_ne!(fs::read(&store)?, store_before_preview);
+        let noop = portable_update(&options(CollaborationCommand::Update, &root, &store, true))?;
+        assert_eq!(noop["noop"], true);
+        assert_eq!(noop["mutated"], false);
 
         fs::remove_dir_all(root.join("cairn/changes").join(CHANGE_ID))?;
         let checkout_preview = portable_checkout(&options(
@@ -778,7 +1028,7 @@ mod tests {
                     .join(CHANGE_ID)
                     .join("proposal.md")
             )?,
-            PROPOSAL
+            UPDATED_PROPOSAL
         );
         remove_directory(&root)?;
         Ok(())
@@ -824,6 +1074,55 @@ mod tests {
         assert!(tampered["non_claims"]
             .as_array()
             .is_some_and(|claims| claims.iter().any(|claim| claim == NON_CLAIM_AUTHORITY)));
+        remove_directory(&root)?;
+        Ok(())
+    }
+
+    // r[verify cairn.collaboration_update.portable_execution.blocked]
+    #[test]
+    fn portable_update_rejects_wrong_actor_stale_lock_and_prepared_state(
+    ) -> Result<(), Box<dyn Error>> {
+        let (root, store) = fixture("update-negative")?;
+        let imported =
+            portable_import(&options(CollaborationCommand::Import, &root, &store, true))?;
+        assert_eq!(imported["valid"], true);
+        fs::write(
+            root.join("cairn/changes")
+                .join(CHANGE_ID)
+                .join("proposal.md"),
+            UPDATED_PROPOSAL,
+        )?;
+        let original_store = fs::read(&store)?;
+
+        let mut unauthorized = options(CollaborationCommand::Update, &root, &store, true);
+        unauthorized.actor = Some("actor:outsider".to_string());
+        let denied = portable_update(&unauthorized)?;
+        assert_eq!(denied["blocked"], true);
+        assert_eq!(denied["mutated"], false);
+        assert_eq!(fs::read(&store)?, original_store);
+
+        let lock = root.join(".portable-store.json.lock");
+        fs::write(&lock, b"stale\n")?;
+        let locked = portable_update(&options(CollaborationCommand::Update, &root, &store, true))?;
+        assert_eq!(locked["blocked"], true);
+        assert_eq!(locked["mutated"], false);
+        assert_eq!(fs::read(&store)?, original_store);
+        fs::remove_file(&lock)?;
+
+        let preview =
+            portable_update(&options(CollaborationCommand::Update, &root, &store, false))?;
+        let expected_envelope_hash = preview["expected_envelope_hash"]
+            .as_str()
+            .ok_or("update preview is missing expected_envelope_hash")?;
+        let prepared = root.join(format!(
+            ".portable-store.json.{expected_envelope_hash}.prepared"
+        ));
+        fs::write(&prepared, b"stale\n")?;
+        let blocked = portable_update(&options(CollaborationCommand::Update, &root, &store, true))?;
+        assert_eq!(blocked["blocked"], true);
+        assert_eq!(blocked["mutated"], false);
+        assert_eq!(fs::read(&store)?, original_store);
+        assert!(prepared.exists());
         remove_directory(&root)?;
         Ok(())
     }
