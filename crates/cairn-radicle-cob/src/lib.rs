@@ -332,6 +332,7 @@ pub fn create_change(
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, CobError> {
     let repository = CobRepository::open(repository_path)?;
+    repository.validate_local_commit_identity()?;
     match inspect_open_change(&repository, &init.change_id) {
         Ok(existing) => {
             return Err(CobError::ChangeAlreadyExists {
@@ -392,6 +393,7 @@ pub fn update_change(
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, CobError> {
     let repository = CobRepository::open(repository_path)?;
+    repository.validate_local_commit_identity()?;
     let signer = load_signer(keystore_path)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
@@ -812,6 +814,9 @@ mod tests {
 
     fn initialize_repository(path: &Path) -> Result<(), Box<dyn Error>> {
         let repository = git2::Repository::init(path)?;
+        let mut config = repository.config()?.open_level(git2::ConfigLevel::Local)?;
+        config.set_str("user.name", GIT_AUTHOR_NAME)?;
+        config.set_str("user.email", GIT_AUTHOR_EMAIL)?;
         let tree_id = repository.treebuilder(None)?.write()?;
         let signature = git2::Signature::new(
             GIT_AUTHOR_NAME,
@@ -945,6 +950,17 @@ mod tests {
     #[test]
     fn outsider_and_concurrent_lock_fail_before_ref_update() -> Result<(), Box<dyn Error>> {
         let fixture = Fixture::new("negative")?;
+        let repository = CobRepository::open(&fixture.repository)?;
+        let mut local_config = repository
+            .raw()
+            .config()?
+            .open_level(git2::ConfigLevel::Local)?;
+        local_config.remove("user.name")?;
+        assert!(matches!(
+            repository.validate_local_commit_identity(),
+            Err(CobStoreError::MissingLocalCommitIdentity { field: "user.name" })
+        ));
+        local_config.set_str("user.name", GIT_AUTHOR_NAME)?;
         assert!(matches!(
             validate_delegates(&fixture.creator, [fixture.creator]),
             Err(CobError::Core(ChangeCobError::InvalidField { ref field, .. }))

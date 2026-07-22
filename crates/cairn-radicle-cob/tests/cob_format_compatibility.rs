@@ -102,6 +102,9 @@ fn remove_directory(path: &Path) -> Result<(), Box<dyn Error>> {
 
 fn initialize_repository(path: &Path) -> Result<(), Box<dyn Error>> {
     let repository = Repository::init(path)?;
+    let mut config = repository.config()?.open_level(git2::ConfigLevel::Local)?;
+    config.set_str("user.name", GIT_AUTHOR_NAME)?;
+    config.set_str("user.email", GIT_AUTHOR_EMAIL)?;
     let tree_id = repository.treebuilder(None)?.write()?;
     let signature = git2::Signature::new(
         GIT_AUTHOR_NAME,

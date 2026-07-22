@@ -458,7 +458,10 @@ r[verify cairn.collaboration_backend.non_claims.provider]
 
 Cairn also provides a local, COB-only adapter. It uses `radicle-cob` as a
 format/CRDT library over an explicit Git repository; it does not load a Radicle
-profile or identity document and does not run or control a Radicle node:
+profile or identity document and does not run or control a Radicle node. The
+selected Git repository must define repository-local `user.name` and `user.email`
+for format-required commit metadata; these display fields grant no Cairn
+authority and global Git config is not accepted as a hidden fallback:
 
 ```bash
 cairn collaboration import my-change \

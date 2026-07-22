@@ -36,6 +36,8 @@ pub enum CobStoreError {
     InvalidCobChange { reference: String, reason: String },
     #[error("COB reference changed outside the new operation ancestry: {reference}")]
     ReferenceDrift { reference: String },
+    #[error("explicit Git repository lacks non-empty local config {field}")]
+    MissingLocalCommitIdentity { field: &'static str },
 }
 
 pub struct CobRepository {
@@ -69,6 +71,23 @@ impl CobRepository {
             .collect::<Vec<_>>();
         ids.sort();
         Ok(ids)
+    }
+
+    pub fn validate_local_commit_identity(&self) -> Result<(), CobStoreError> {
+        const REQUIRED_LOCAL_FIELDS: &[&str] = &["user.name", "user.email"];
+
+        let config = self.raw.config()?.open_level(git2::ConfigLevel::Local)?;
+        for &field in REQUIRED_LOCAL_FIELDS {
+            match config.get_string(field) {
+                Ok(value) if !value.trim().is_empty() => {}
+                Ok(_) => return Err(CobStoreError::MissingLocalCommitIdentity { field }),
+                Err(error) if error.code() == git2::ErrorCode::NotFound => {
+                    return Err(CobStoreError::MissingLocalCommitIdentity { field });
+                }
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(())
     }
 
     pub fn namespace_ref_target(

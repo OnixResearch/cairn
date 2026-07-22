@@ -74,6 +74,7 @@ r[cairn.radicle_cob_only.cli.explicit]
 - THEN status/conflict inspection MUST require `--git-repository PATH`
 - AND import/update/resolve MUST additionally require `--keystore PATH`
 - AND import MUST require an explicit workspace identity while optional delegates are explicit public keys
+- AND signed mutation MUST require non-empty repository-local Git `user.name` and `user.email` commit metadata without treating those display fields as authority
 
 #### Scenario: Preview and execution remain separated
 r[cairn.radicle_cob_only.cli.preview]
