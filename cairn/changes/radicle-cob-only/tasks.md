@@ -13,4 +13,4 @@
 ## Phase 3: Verification
 
 - [x] [serial] Add positive and negative direct-COB integration tests for import, status, update, conflicts, resolution, checkout, signer/authority failure, malformed refs, stale previews, and exact reload. r[cairn.radicle_cob_only.validation]
-- [ ] [serial] Run focused, workspace, lifecycle, traceability, dependency-audit, formatting, Clippy, release-readiness, self-dogfood, and full flake checks before sync/archive. r[cairn.radicle_cob_only.validation]
+- [x] [serial] Run focused, workspace, dependency-audit, formatting, and Clippy checks before sync; then rerun accepted-spec lifecycle, traceability, evidence, release-readiness, self-dogfood, and full flake checks before archive. r[cairn.radicle_cob_only.validation]
