@@ -22,7 +22,9 @@ const NON_CLAIM_SEMANTICS: &str =
 const NON_CLAIM_AUTHORITY: &str =
     "recorded local and peer identities are bounded observations, not future authority or remote-trust leases";
 
+// r[impl cairn.collaboration_sync.preview]
 // r[impl cairn.collaboration_sync.receipts]
+// r[impl cairn.collaboration_sync.non_claims]
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct RadicleSyncOptions {

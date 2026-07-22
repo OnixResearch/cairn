@@ -476,6 +476,7 @@ fn execute_guarded_sync(
     ))
 }
 
+// r[impl cairn.collaboration_sync.blocked]
 pub fn evaluate_change_sync_observation(
     plan: &ChangeSyncPlan,
     observation: ChangeSyncExecutionObservation,
