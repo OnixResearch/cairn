@@ -79,7 +79,7 @@ r[cairn.collaboration_sync.integration.bootstrap]
 - GIVEN the local profile has operator-configured seeding policy but lacks the repository or requested change and the explicit peer serves a valid signed change object
 - WHEN sync execution succeeds
 - THEN the local typed change reloads with the requested repository and change IDs
-- AND the exact peer custom COB ref is present
+- AND the fetch result identifies the requested signed namespace and the exact peer custom COB ref is present
 
 #### Scenario: No-op fetch remains validated
 

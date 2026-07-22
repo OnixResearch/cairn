@@ -2,7 +2,7 @@ use std::{path::Path, str::FromStr, time::Duration};
 
 use cairn_core::{
     change_cob_content_root, change_cob_state_hash, inspect_change_cob_conflicts,
-    validate_change_name, ChangeCobError,
+    validate_change_name, ChangeArtifactConflict, ChangeCobError, ChangeLifecycleConflictHead,
 };
 use radicle::{
     crypto::PublicKey,
@@ -31,6 +31,8 @@ const BLOCKER_FETCH_NOT_ATTEMPTED: &str = "peer fetch was not attempted";
 const BLOCKER_POST_STATE_UNAVAILABLE: &str = "post-fetch local Radicle state is unavailable";
 const BLOCKER_POST_CHANGE_MISSING: &str = "requested typed Cairn change is missing after fetch";
 const BLOCKER_PEER_REF_UNAVAILABLE: &str = "post-fetch peer change-ref evidence is unavailable";
+const BLOCKER_PEER_NAMESPACE_MISSING: &str =
+    "fetch result does not identify the requested signed peer namespace";
 const BLOCKER_PEER_REF_MISSING: &str =
     "requested peer namespace lacks the exact Cairn change object ref";
 
@@ -55,6 +57,8 @@ pub enum ChangeSyncLocalState {
         artifact_conflict_count: usize,
         conflict_head_count: usize,
         lifecycle_conflict_head_count: usize,
+        artifact_conflicts: Vec<ChangeArtifactConflict>,
+        lifecycle_conflicts: Vec<ChangeLifecycleConflictHead>,
     },
 }
 
@@ -67,10 +71,10 @@ impl ChangeSyncLocalState {
         matches!(
             self,
             Self::Present {
-                artifact_conflict_count,
-                lifecycle_conflict_head_count,
+                artifact_conflicts,
+                lifecycle_conflicts,
                 ..
-            } if *artifact_conflict_count > 0 || *lifecycle_conflict_head_count > 0
+            } if !artifact_conflicts.is_empty() || !lifecycle_conflicts.is_empty()
         )
     }
 
@@ -206,6 +210,8 @@ pub enum ChangeSyncError {
     InvalidControlSocket,
     #[error("sync plan no longer matches its canonical snapshot")]
     InvalidPlan,
+    #[error("execution Radicle home {current} does not match planned home {planned}")]
+    RadicleHomeDrift { planned: String, current: String },
     #[error("explicit Radicle profile actor changed from {planned} to {current}")]
     ProfileActorDrift { planned: String, current: String },
     #[error("sync is blocked by a cooperating local operation: {reason}")]
@@ -282,6 +288,13 @@ pub fn execute_profile_sync(
     plan: &ChangeSyncPlan,
 ) -> Result<ChangeSyncExecutionOutcome, ChangeSyncError> {
     validate_sync_plan(plan)?;
+    let current_rad_home = rad_home.display().to_string();
+    if current_rad_home != plan.rad_home {
+        return Err(ChangeSyncError::RadicleHomeDrift {
+            planned: plan.rad_home.clone(),
+            current: current_rad_home,
+        });
+    }
     let profile = load_profile_at(rad_home)?;
     let current_actor = profile.public_key.to_string();
     if current_actor != plan.local_actor {
@@ -554,10 +567,20 @@ pub fn evaluate_change_sync_observation(
 }
 
 fn validate_post_fetch(
-    _plan: &ChangeSyncPlan,
+    plan: &ChangeSyncPlan,
     observation: &ChangeSyncExecutionObservation,
     blockers: &mut Vec<String>,
 ) {
+    match &observation.fetch {
+        ChangeSyncFetchObservation::Succeeded { namespaces, .. }
+            if namespaces
+                .iter()
+                .any(|namespace| namespace == &plan.peer_id) => {}
+        ChangeSyncFetchObservation::Succeeded { .. } => {
+            blockers.push(BLOCKER_PEER_NAMESPACE_MISSING.to_string());
+        }
+        ChangeSyncFetchObservation::NotAttempted | ChangeSyncFetchObservation::Failed { .. } => {}
+    }
     match &observation.after {
         Some(state) if state.has_change() => {}
         Some(_) => blockers.push(BLOCKER_POST_CHANGE_MISSING.to_string()),
@@ -690,6 +713,8 @@ fn inspect_sync_state(
         artifact_conflict_count,
         conflict_head_count,
         lifecycle_conflict_head_count,
+        artifact_conflicts: conflicts.artifact_conflicts,
+        lifecycle_conflicts: conflicts.lifecycle_heads,
     })
 }
 
@@ -856,6 +881,8 @@ mod tests {
             artifact_conflict_count: 0,
             conflict_head_count: 0,
             lifecycle_conflict_head_count: 0,
+            artifact_conflicts: Vec::new(),
+            lifecycle_conflicts: Vec::new(),
         }
     }
 
@@ -1012,6 +1039,15 @@ mod tests {
         assert!(!wrong_socket.success);
         assert!(wrong_socket.blockers[0].contains("does not match explicit profile actor"));
 
+        let mut missing_namespace = successful_observation(&plan, before.clone());
+        missing_namespace.fetch = ChangeSyncFetchObservation::Succeeded {
+            ref_updates: Vec::new(),
+            namespaces: vec![plan.local_actor.clone()],
+        };
+        let missing_namespace = evaluate_change_sync_observation(&plan, missing_namespace);
+        assert!(!missing_namespace.success);
+        assert_eq!(missing_namespace.blockers, [BLOCKER_PEER_NAMESPACE_MISSING]);
+
         let mut missing_ref = successful_observation(&plan, before);
         missing_ref.peer_change_ref_present = Some(false);
         let missing_ref = evaluate_change_sync_observation(&plan, missing_ref);
@@ -1031,6 +1067,18 @@ mod tests {
         let record = ref_update_record(update);
         assert_eq!(record.kind, "skipped");
         assert_eq!(record.old_oid, record.new_oid);
+        Ok(())
+    }
+
+    #[test]
+    fn execution_rejects_a_different_radicle_home_before_profile_access(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let plan = plan_change_sync(snapshot(missing_state()))?;
+        let result = execute_profile_sync(Path::new("/tmp/different-cairn-sync-profile"), &plan);
+        assert!(matches!(
+            result,
+            Err(ChangeSyncError::RadicleHomeDrift { .. })
+        ));
         Ok(())
     }
 
