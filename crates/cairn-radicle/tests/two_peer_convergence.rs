@@ -28,7 +28,7 @@ fn peer_descriptor(peer: &NodeWithRepo) -> PeerDescriptor {
     }
 }
 
-// r[impl cairn.radicle_two_peer_convergence.fixture]
+// r[impl cairn.radicle_two_peer_convergence.transport]
 // r[verify cairn.radicle_two_peer_convergence.transport.independent]
 #[test]
 fn shared_peer_identity_is_rejected_before_transport() {

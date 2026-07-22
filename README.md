@@ -510,7 +510,7 @@ signers, and namespaces. It imports on Alice, fetches to Bob, creates authorized
 concurrent proposal updates, exchanges both signed namespaces, requires identical
 conflict heads and state hashes, resolves with complete bases, and requires
 identical conflict-free state/content hashes after the resolution transfer.
-r[impl cairn.radicle_two_peer_convergence.fixture]
+r[impl cairn.radicle_two_peer_convergence.transport]
 r[verify cairn.radicle_two_peer_convergence.transport.success]
 r[verify cairn.radicle_two_peer_convergence.conflict.success]
 r[verify cairn.radicle_two_peer_convergence.resolution.success]

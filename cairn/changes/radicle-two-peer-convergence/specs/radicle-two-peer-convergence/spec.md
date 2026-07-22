@@ -1,10 +1,6 @@
-# Radicle Two-Peer Convergence
+# Radicle Two-Peer Convergence Specification
 
-## Purpose
-
-Define bounded evidence that signed Cairn collaboration state can be transferred between two independent Radicle profiles, expose concurrent conflicts consistently, and converge after one explicit resolution without claiming arbitrary network behavior or adding a synchronization command.
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Independent signed-reference transport
 

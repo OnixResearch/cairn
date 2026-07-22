@@ -1,7 +1,7 @@
 ## Phase 1: Lifecycle and fixture contracts
 
 - [x] [serial] Define bounded two-peer transport, semantic convergence, live-node, negative-path, and non-claim requirements before implementation. r[cairn.radicle_two_peer_convergence.transport]
-- [x] [serial] Add shared fixture logic for two distinct profiles, current delegate authority, exact state comparison, and deterministic cleanup. r[cairn.radicle_two_peer_convergence.fixture]
+- [x] [serial] Add shared fixture logic for two distinct profiles, current delegate authority, exact state comparison, and deterministic cleanup. r[cairn.radicle_two_peer_convergence.transport]
 
 ## Phase 2: Deterministic signed-reference convergence
 
