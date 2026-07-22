@@ -16,7 +16,7 @@ use radicle::{
 use support::{
     add_delegate, assert_same_typed_state, assert_signed_change_ref, import_change,
     resolution_selection, update_proposal, validate_distinct_peers, PeerDescriptor, ALICE_PROPOSAL,
-    BOB_PROPOSAL, CHANGE_ID, EXPECTED_CONFLICT_HEADS, POLICY_HASH,
+    BOB_PROPOSAL, CHANGE_ID, EXPECTED_CONFLICT_HEADS, POLICY_HASH, TWO_PEER_NON_CLAIMS,
 };
 
 fn peer_descriptor(peer: &NodeWithRepo) -> PeerDescriptor {
@@ -64,12 +64,34 @@ fn shared_peer_identity_is_rejected_before_transport() {
     assert_eq!(validate_distinct_peers(&alice, &invalid), Ok(()));
 }
 
+// r[impl cairn.radicle_two_peer_convergence.conflict]
+// r[impl cairn.radicle_two_peer_convergence.resolution]
 // r[verify cairn.radicle_two_peer_convergence.transport.success]
 // r[verify cairn.radicle_two_peer_convergence.conflict.success]
 // r[verify cairn.radicle_two_peer_convergence.conflict.stale]
 // r[verify cairn.radicle_two_peer_convergence.resolution.success]
 // r[verify cairn.radicle_two_peer_convergence.resolution.blocked]
 // r[verify cairn.radicle_two_peer_convergence.blocked.authority]
+// r[verify cairn.radicle_two_peer_convergence.non_claims.local]
+#[test]
+fn two_peer_claim_boundary_remains_explicit() {
+    for required in [
+        "public-network publication",
+        "eventual convergence",
+        "partition recovery",
+        "supported collaboration sync command",
+    ] {
+        assert!(TWO_PEER_NON_CLAIMS.contains(&required));
+    }
+    assert_eq!(
+        TWO_PEER_NON_CLAIMS
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
+        TWO_PEER_NON_CLAIMS.len()
+    );
+}
+
 #[test]
 fn signed_peer_namespaces_converge_through_conflict_and_resolution() -> Result<(), Box<dyn Error>> {
     let network = Network::default();

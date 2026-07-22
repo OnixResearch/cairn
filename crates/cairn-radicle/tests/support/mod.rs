@@ -22,6 +22,17 @@ pub const INITIAL_PROPOSAL: &str = "# Initial proposal\n";
 pub const ALICE_PROPOSAL: &str = "# Alice proposal\n";
 pub const BOB_PROPOSAL: &str = "# Bob proposal\n";
 pub const EXPECTED_CONFLICT_HEADS: usize = 2;
+// r[impl cairn.radicle_two_peer_convergence.non_claims]
+pub const TWO_PEER_NON_CLAIMS: &[&str] = &[
+    "public-network publication",
+    "peer discovery",
+    "arbitrary-peer trust",
+    "availability",
+    "eventual convergence",
+    "partition recovery",
+    "release eligibility",
+    "supported collaboration sync command",
+];
 const IDENTITY_UPDATE_TITLE: &str = "Add second convergence delegate";
 
 #[derive(Debug, Clone, PartialEq, Eq)]

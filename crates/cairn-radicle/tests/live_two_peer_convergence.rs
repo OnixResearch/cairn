@@ -31,7 +31,7 @@ use radicle::{
 use support::{
     add_delegate, assert_same_typed_state, assert_signed_change_ref, import_change,
     resolution_selection, update_proposal, validate_distinct_peers, PeerDescriptor, ALICE_PROPOSAL,
-    BOB_PROPOSAL, CHANGE_ID, EXPECTED_CONFLICT_HEADS, POLICY_HASH,
+    BOB_PROPOSAL, CHANGE_ID, EXPECTED_CONFLICT_HEADS, POLICY_HASH, TWO_PEER_NON_CLAIMS,
 };
 
 const TEST_DIRECTORY_PREFIX: &str = "cairn-live-radicle-convergence";
@@ -73,6 +73,7 @@ impl Drop for TestRoot {
     }
 }
 
+// r[impl cairn.radicle_two_peer_convergence.blocked]
 #[derive(Debug)]
 struct LiveNode {
     child: Child,
@@ -187,6 +188,8 @@ fn connect_options() -> ConnectOptions {
 #[ignore = "requires CAIRN_RADICLE_NODE_BIN and the dedicated Nix live-node gate"]
 fn live_nodes_transfer_conflict_and_resolution_without_copying_storage(
 ) -> Result<(), Box<dyn Error>> {
+    assert!(TWO_PEER_NON_CLAIMS.contains(&"public-network publication"));
+    assert!(TWO_PEER_NON_CLAIMS.contains(&"supported collaboration sync command"));
     let binary = env::var_os(RADICLE_NODE_BINARY_ENV)
         .map(PathBuf::from)
         .ok_or("CAIRN_RADICLE_NODE_BIN is required")?;
