@@ -67,6 +67,6 @@ The public collaboration surface is preview-first. Provider-neutral semantics st
 
 - A direct fetch can partially change Radicle storage before a provider failure is reported. Receipts compare pre/post observations and do not claim transactional network mutation.
 - Explicit peer addresses may become stale between preview and execution; execution fails within fixed deadlines rather than discovering alternatives.
-- The command does not alter seeding policy. Operators remain responsible for long-lived Radicle policy and availability.
+- The command does not alter seeding policy. Radicle's direct fetch rejects an unseeded local repository ID, so operators must configure seeding policy explicitly before execution and remain responsible for long-lived policy and availability.
 - Cooperating local locks do not exclude unrelated processes with equivalent host authority.
 - A successful one-peer pull proves only the recorded operation and resulting local state, not remote state equality or future convergence.

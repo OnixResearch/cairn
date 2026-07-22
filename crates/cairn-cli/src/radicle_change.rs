@@ -1,5 +1,6 @@
 pub(crate) mod resolution;
 pub(crate) mod status_checkout;
+pub(crate) mod sync;
 pub(crate) mod update;
 
 use std::{
@@ -50,7 +51,7 @@ struct RadicleImportOptions {
 pub(crate) fn run_radicle(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(subcommand) = args.first() else {
         return Err(
-            "radicle requires a subcommand: import, status, checkout, update, conflicts, or resolve"
+            "radicle requires a subcommand: import, status, checkout, update, conflicts, resolve, or sync"
                 .into(),
         );
     };
@@ -61,6 +62,7 @@ pub(crate) fn run_radicle(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "update" => update::run_update(args.into_iter().skip(1).collect()),
         "conflicts" => resolution::run_conflicts(args.into_iter().skip(1).collect()),
         "resolve" => resolution::run_resolve(args.into_iter().skip(1).collect()),
+        "sync" => sync::run_sync(args.into_iter().skip(1).collect()),
         unknown => Err(format!("unknown radicle subcommand: {unknown}").into()),
     }
 }

@@ -49,7 +49,7 @@ r[cairn.collaboration_sync.execution] On explicit execution, the system MUST acq
 #### Scenario: One known peer is fetched
 
 r[cairn.collaboration_sync.execution.success]
-- GIVEN an unchanged preview, a running matching local node, a reachable explicit peer, and a valid repository
+- GIVEN an unchanged preview, operator-configured local seeding policy, a running matching local node, a reachable explicit peer, and a valid repository
 - WHEN the operator executes collaboration sync
 - THEN Cairn performs one bounded non-persistent connect followed by one bounded fetch for the exact repository and peer
 - AND it records the provider observations without seeding, following, announcing, pushing, or modifying working files
@@ -76,7 +76,7 @@ r[cairn.collaboration_sync.integration] A successful sync MUST reload the named 
 #### Scenario: Bootstrap fetch materializes the requested change
 
 r[cairn.collaboration_sync.integration.bootstrap]
-- GIVEN the local profile lacks the repository or requested change and the explicit peer serves a valid signed change object
+- GIVEN the local profile has operator-configured seeding policy but lacks the repository or requested change and the explicit peer serves a valid signed change object
 - WHEN sync execution succeeds
 - THEN the local typed change reloads with the requested repository and change IDs
 - AND the exact peer custom COB ref is present
@@ -100,6 +100,14 @@ r[cairn.collaboration_sync.integration.conflict]
 ### Requirement: Fail-closed negative paths
 
 r[cairn.collaboration_sync.blocked] The system MUST fail closed for malformed or duplicate arguments, invalid or self peer identities, invalid addresses or repository IDs, unavailable or wrong-profile control sockets, unavailable peers, fetch failures, stale local context, lock contention, invalid signed operations, missing typed change state, and missing exact peer change refs.
+
+#### Scenario: Missing seeding policy is explicit
+
+r[cairn.collaboration_sync.blocked.unseeded]
+- GIVEN the local node has no seeding policy for the explicit repository
+- WHEN sync reaches the bounded fetch
+- THEN the provider failure is reported as a blocker
+- AND Cairn does not silently create or change seeding policy
 
 #### Scenario: Wrong control socket is rejected
 

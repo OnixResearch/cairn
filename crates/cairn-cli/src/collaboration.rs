@@ -64,6 +64,7 @@ enum CollaborationCommand {
     Update,
     Conflicts,
     Resolve,
+    Sync,
 }
 
 impl CollaborationCommand {
@@ -75,6 +76,7 @@ impl CollaborationCommand {
             "update" => Ok(Self::Update),
             "conflicts" => Ok(Self::Conflicts),
             "resolve" => Ok(Self::Resolve),
+            "sync" => Ok(Self::Sync),
             _ => Err(format!("unknown collaboration subcommand: {value}").into()),
         }
     }
@@ -87,13 +89,14 @@ impl CollaborationCommand {
             Self::Update => "update",
             Self::Conflicts => "conflicts",
             Self::Resolve => "resolve",
+            Self::Sync => "sync",
         }
     }
 
     fn allows_execute(self) -> bool {
         matches!(
             self,
-            Self::Import | Self::Checkout | Self::Update | Self::Resolve
+            Self::Import | Self::Checkout | Self::Update | Self::Resolve | Self::Sync
         )
     }
 }
@@ -114,7 +117,7 @@ struct PortableOptions {
 pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(command_text) = args.first() else {
         return Err(
-            "collaboration requires a subcommand: import, status, checkout, update, conflicts, or resolve".into(),
+            "collaboration requires a subcommand: import, status, checkout, update, conflicts, resolve, or sync".into(),
         );
     };
     let command = CollaborationCommand::parse(command_text)?;
@@ -126,6 +129,11 @@ pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>>
                     resolution::run_portable_conflicts(&backend_args)?
                 }
                 CollaborationCommand::Resolve => resolution::run_portable_resolve(&backend_args)?,
+                CollaborationCommand::Sync => {
+                    return Err(
+                        "portable-json.v1 does not support collaboration sync transport".into(),
+                    );
+                }
                 CollaborationCommand::Import
                 | CollaborationCommand::Status
                 | CollaborationCommand::Checkout
@@ -136,9 +144,11 @@ pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>>
                         CollaborationCommand::Status => portable_status(&options)?,
                         CollaborationCommand::Checkout => portable_checkout(&options)?,
                         CollaborationCommand::Update => portable_update(&options)?,
-                        CollaborationCommand::Conflicts | CollaborationCommand::Resolve => {
+                        CollaborationCommand::Conflicts
+                        | CollaborationCommand::Resolve
+                        | CollaborationCommand::Sync => {
                             return Err(
-                                "resolution command reached ordinary portable parser".into()
+                                "specialized command reached ordinary portable parser".into()
                             );
                         }
                     }
@@ -955,6 +965,7 @@ mod tests {
 
     // r[verify cairn.collaboration_backend.cli.portable]
     // r[verify cairn.collaboration_backend.cli.arguments]
+    // r[verify cairn.collaboration_sync.preview.portable]
     #[test]
     fn backend_dispatch_and_portable_arguments_are_explicit() {
         let (backend, args) = extract_backend(&[
@@ -998,6 +1009,17 @@ mod tests {
             CollaborationCommand::parse("resolve").unwrap(),
             CollaborationCommand::Resolve
         );
+        assert_eq!(
+            CollaborationCommand::parse("sync").unwrap(),
+            CollaborationCommand::Sync
+        );
+        assert!(run_collaboration(vec![
+            "sync".to_string(),
+            CHANGE_ID.to_string(),
+            "--backend".to_string(),
+            PORTABLE_COLLABORATION_BACKEND_V1.to_string(),
+        ])
+        .is_err());
     }
 
     // r[verify cairn.collaboration_backend.portable_shell.positive]
