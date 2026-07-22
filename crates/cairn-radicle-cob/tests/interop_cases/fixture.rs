@@ -36,6 +36,10 @@ const FORBIDDEN_CONSUMER_DEPENDENCIES: &[&str] = &[
 // r[impl cairn.cob_interop.fixture]
 // r[verify cairn.cob_interop.fixture.current]
 // r[verify cairn.cob_interop.fixture.external]
+// r[impl cairn.cob_interop.boundary]
+// r[verify cairn.cob_interop.boundary.offline]
+// r[impl cairn.cob_interop.validation]
+// r[verify cairn.cob_interop.validation.release]
 #[test]
 fn provenance_binds_standalone_radicle_producer() -> Result<(), Box<dyn Error>> {
     let provenance = provenance()?;
