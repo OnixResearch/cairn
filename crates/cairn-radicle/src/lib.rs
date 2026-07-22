@@ -4,6 +4,7 @@ mod authority;
 mod checkout;
 mod import;
 mod resolution;
+mod sync;
 mod update;
 
 pub use authority::{
@@ -19,6 +20,13 @@ pub use import::{
 };
 pub use resolution::{
     create_change_resolution, execute_profile_resolution, ChangeResolutionOutcome,
+};
+pub use sync::{
+    evaluate_change_sync_observation, execute_profile_sync, inspect_profile_sync, plan_change_sync,
+    ChangeSyncAction, ChangeSyncConnectObservation, ChangeSyncError,
+    ChangeSyncExecutionObservation, ChangeSyncExecutionOutcome, ChangeSyncFetchObservation,
+    ChangeSyncInspection, ChangeSyncLocalState, ChangeSyncPlan, ChangeSyncRefUpdate,
+    ChangeSyncSnapshot, SYNC_CONNECT_TIMEOUT_SECONDS, SYNC_FETCH_TIMEOUT_SECONDS,
 };
 pub use update::{create_change_update, execute_profile_update, ChangeUpdateOutcome};
 

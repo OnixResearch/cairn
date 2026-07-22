@@ -33,7 +33,7 @@ pub struct ChangeStatusInspection {
 }
 
 #[derive(Debug)]
-struct CheckoutLock {
+pub(crate) struct CheckoutLock {
     path: PathBuf,
 }
 
@@ -172,12 +172,12 @@ fn checkout_authority_challenge(
 }
 
 impl CheckoutLock {
-    fn release(self) -> io::Result<()> {
+    pub(crate) fn release(self) -> io::Result<()> {
         fs::remove_file(self.path)
     }
 }
 
-fn acquire_checkout_lock(
+pub(crate) fn acquire_checkout_lock(
     rad_home: &Path,
     repository_id: &str,
     change_id: &str,

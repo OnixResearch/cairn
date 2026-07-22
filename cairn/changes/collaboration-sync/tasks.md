@@ -1,7 +1,7 @@
 ## Phase 1: Contract and Pure Adapter Logic
 
 - [ ] [serial] Define preview, execution, exact peer evidence, conflict, blocker, receipt, and non-claim requirements before implementation. r[cairn.collaboration_sync.preview]
-- [ ] [serial] Implement deterministic Radicle sync planning and observation evaluation with positive and negative tests. r[cairn.collaboration_sync.planning]
+- [x] [serial] Implement deterministic Radicle sync planning and observation evaluation with positive and negative tests. r[cairn.collaboration_sync.planning]
 
 ## Phase 2: Provider Shell and CLI
 

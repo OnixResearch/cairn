@@ -50,7 +50,7 @@ pub struct ChangeImportInspection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct ImportLock {
+pub(crate) struct ImportLock {
     path: PathBuf,
 }
 
@@ -311,12 +311,12 @@ pub fn execute_profile_import(
 }
 
 impl ImportLock {
-    fn release(self) -> io::Result<()> {
+    pub(crate) fn release(self) -> io::Result<()> {
         fs::remove_file(self.path)
     }
 }
 
-fn acquire_import_lock(
+pub(crate) fn acquire_import_lock(
     rad_home: &Path,
     repository_id: &str,
     change_id: &str,
