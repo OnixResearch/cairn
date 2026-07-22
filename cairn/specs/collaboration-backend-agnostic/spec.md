@@ -51,20 +51,20 @@ r[cairn.collaboration_backend.portable_shell.negative]
 - WHEN portable import or checkout execution is requested
 - THEN Cairn reports blockers and does not overwrite trusted state or local work
 
-### Requirement: Backend-neutral CLI
-r[cairn.collaboration_backend.cli] The system MUST expose `cairn collaboration import|status|checkout` with an explicit backend selector and backend-specific arguments while retaining `cairn radicle` as a compatibility entry point.
+### Requirement: Explicit backend-neutral CLI
+r[cairn.collaboration_backend.cli] The system MUST expose `cairn collaboration import|status|checkout` with an explicit backend selector and backend-specific arguments while retaining `cairn cob` as the direct entry point for the COB-only provider.
 
-#### Scenario: Portable CLI omits Radicle arguments
+#### Scenario: Portable backend needs no COB context
 r[cairn.collaboration_backend.cli.portable]
 - GIVEN the operator selects `portable-json.v1`
 - WHEN Cairn parses a collaboration command
-- THEN `--store` is accepted and `--rad-home` and `--rid` are not required
+- THEN `--store` is accepted and no Git COB repository or keystore is required.
 
-#### Scenario: Backend argument mismatch is rejected
+#### Scenario: Backend-specific arguments are strict
 r[cairn.collaboration_backend.cli.arguments]
-- GIVEN options for a different or unsupported backend
-- WHEN Cairn parses the collaboration command
-- THEN it fails closed with a deterministic diagnostic before mutation
+- GIVEN the operator supplies missing, duplicate, malformed, cross-backend, or Radicle runtime arguments
+- WHEN Cairn parses a collaboration command
+- THEN the command MUST reject those arguments deterministically before mutation.
 
 ### Requirement: Backend-labeled receipts
 r[cairn.collaboration_backend.receipts] The system MUST emit deterministic BLAKE3-bound collaboration receipts identifying backend, workspace, typed base revision, actor observation, state/content identities, policy, exact artifacts, local classification, blockers, execution mode, and mutation result.
