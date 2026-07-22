@@ -502,6 +502,44 @@ r[verify cairn.collaboration_resolution.radicle_execution.blocked]
 r[impl cairn.collaboration_update.radicle_execution]
 r[verify cairn.collaboration_update.radicle_execution.success]
 r[verify cairn.collaboration_update.radicle_execution.blocked]
+
+Cairn's two-peer convergence rail validates the custom change COB before any
+synchronization command is exposed. The always-on test uses Radicle's validated
+signed-reference Git transport between independent homes, storage paths,
+signers, and namespaces. It imports on Alice, fetches to Bob, creates authorized
+concurrent proposal updates, exchanges both signed namespaces, requires identical
+conflict heads and state hashes, resolves with complete bases, and requires
+identical conflict-free state/content hashes after the resolution transfer.
+r[impl cairn.radicle_two_peer_convergence.fixture]
+r[verify cairn.radicle_two_peer_convergence.transport.success]
+r[verify cairn.radicle_two_peer_convergence.conflict.success]
+r[verify cairn.radicle_two_peer_convergence.resolution.success]
+
+A separate required Nix check executes the ignored live test with two actual
+`radicle-node` processes on OS-assigned loopback ports:
+
+```bash
+nix build path:$PWD#checks.x86_64-linux.radicle-two-peer-convergence --no-link -L
+```
+
+The check records the Nix-pinned daemon version, waits for distinct control
+sockets and node IDs, rejects an unavailable peer within a deadline, connects
+both nodes, and performs explicit fetches for import, concurrent updates, and
+resolution. RAII teardown kills and reaps both children on success or failure.
+The Rust adapter remains pinned by `Cargo.lock`; daemon and adapter version
+compatibility is evidence from this exact gate, not a universal protocol claim.
+r[impl cairn.radicle_two_peer_convergence.live]
+r[verify cairn.radicle_two_peer_convergence.live.success]
+r[verify cairn.radicle_two_peer_convergence.blocked.unavailable]
+
+Passing both rails proves only the observed profiles, repository, signed refs,
+operations, versions, loopback transport, and deadlines. It does not prove
+public-network publication, discovery, arbitrary-peer trust, availability,
+eventual convergence, partition recovery, or release eligibility, and it does
+not add or imply a supported `cairn collaboration sync` command.
+r[impl cairn.radicle_two_peer_convergence.non_claims]
+r[verify cairn.radicle_two_peer_convergence.non_claims.local]
+
 New imports reduce through the neutral schema; existing
 `cairn.radicle-change-cob.v1` objects remain readable and retain their exact
 legacy canonical content and state hashes. Radicle-specific object, signature,

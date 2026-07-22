@@ -18,5 +18,5 @@
 
 ## Phase 4: Documentation and release evidence
 
-- [ ] [serial] Document the two transport rails, observed convergence claim, version boundary, and remaining network/synchronization non-claims. r[cairn.radicle_two_peer_convergence.non_claims]
+- [x] [serial] Document the two transport rails, observed convergence claim, version boundary, and remaining network/synchronization non-claims. r[cairn.radicle_two_peer_convergence.non_claims]
 - [ ] [serial] Run focused, workspace, lifecycle, traceability, formatting, Clippy, purity, live-node Nix, full flake, and release-readiness validation before sync/archive. r[cairn.radicle_two_peer_convergence.non_claims]
