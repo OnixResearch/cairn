@@ -1,14 +1,14 @@
 ## Phase 1: Lifecycle and fixture contracts
 
 - [x] [serial] Define bounded two-peer transport, semantic convergence, live-node, negative-path, and non-claim requirements before implementation. r[cairn.radicle_two_peer_convergence.transport]
-- [ ] [serial] Add shared fixture logic for two distinct profiles, current delegate authority, exact state comparison, and deterministic cleanup. r[cairn.radicle_two_peer_convergence.fixture]
+- [x] [serial] Add shared fixture logic for two distinct profiles, current delegate authority, exact state comparison, and deterministic cleanup. r[cairn.radicle_two_peer_convergence.fixture]
 
 ## Phase 2: Deterministic signed-reference convergence
 
-- [ ] [serial] Add an always-on independent-storage Radicle fetch test for import transfer and exact typed reload. r[cairn.radicle_two_peer_convergence.transport]
-- [ ] [serial] Create independently signed concurrent updates, exchange both namespaces, and verify identical explicit conflict heads and state identities. r[cairn.radicle_two_peer_convergence.conflict]
-- [ ] [serial] Resolve once with complete bases, transfer the resolution, and verify identical conflict-free state/content identities. r[cairn.radicle_two_peer_convergence.resolution]
-- [ ] [serial] Add negative tests for unauthorized mutation, stale or incomplete exchange, missing objects, and invalid transfer outcomes. r[cairn.radicle_two_peer_convergence.blocked]
+- [x] [serial] Add an always-on independent-storage Radicle fetch test for import transfer and exact typed reload. r[cairn.radicle_two_peer_convergence.transport]
+- [x] [serial] Create independently signed concurrent updates, exchange both namespaces, and verify identical explicit conflict heads and state identities. r[cairn.radicle_two_peer_convergence.conflict]
+- [x] [serial] Resolve once with complete bases, transfer the resolution, and verify identical conflict-free state/content identities. r[cairn.radicle_two_peer_convergence.resolution]
+- [x] [serial] Add negative tests for unauthorized mutation, stale or incomplete exchange, missing objects, and invalid transfer outcomes. r[cairn.radicle_two_peer_convergence.blocked]
 
 ## Phase 3: Live-node Nix evidence
 
