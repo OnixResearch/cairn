@@ -523,7 +523,12 @@ remote trust, lifecycle correctness, evidence truth, or release eligibility.
 
 The dedicated compatibility gate verifies standard namespaced Git refs, signed
 COB commit manifests, typed reload, malformed-history rejection, and absence of
-the umbrella `radicle` and `radicle-node` crates:
+the umbrella `radicle` and `radicle-node` crates from product dependencies. It
+also verifies a BLAKE3-bound static Git bundle produced through upstream
+`radicle::storage::git::Repository`, proves Cairn can append to that history,
+and evaluates Cairn output through a separate read-only direct consumer. The
+standalone fixture producer is retained for provenance but is not a workspace
+member, Nix input, released executable, or runtime dependency:
 
 ```bash
 nix build path:$PWD#checks.x86_64-linux.radicle-cob-format-compatibility --no-link -L
@@ -539,6 +544,8 @@ r[verify cairn.radicle_cob_only.authority.bounded]
 r[impl cairn.radicle_cob_only.cli]
 r[verify cairn.radicle_cob_only.cli.explicit]
 r[verify cairn.radicle_cob_only.cli.reject_runtime]
+r[impl cairn.cob_interop.boundary]
+r[verify cairn.cob_interop.boundary.offline]
 r[impl cairn.radicle_cob_only.no_runtime]
 r[verify cairn.radicle_cob_only.no_runtime.sync]
 r[verify cairn.radicle_cob_only.no_runtime.artifacts]
@@ -1050,3 +1057,4 @@ The split does not relicense dependencies, revoke prior grants, or turn lifecycl
 - [joweeba/dpub](https://github.com/joweeba/dpub) — durable publish-run, status/explain/resume, and release-evidence ledger reference; Cairn adapts ledger and evidence-shape ideas without adopting remote publishing authority.
 - [joweeba/tla2](https://github.com/joweeba/tla2) — TLA+/state-machine tooling reference for optional lifecycle transition receipts; Cairn validates bounded receipt identity and non-claims rather than embedding a model checker.
 - [`radicle-cob`](https://crates.io/crates/radicle-cob) — signed Git-backed Collaborative Object format, operation-DAG evaluation, object/type identity, and generic storage traits used by `onix-cairn-radicle-cob`; Cairn owns explicit storage selection, embedded authority, lifecycle policy, evidence interpretation, and mutation locking without the Radicle runtime.
+- [`radicle`](https://crates.io/crates/radicle) — upstream Git COB storage adapter used only by the standalone, provenance-retained interoperability fixture producer; it is excluded from Cairn product dependencies, Nix inputs, runtime behavior, and release claims.

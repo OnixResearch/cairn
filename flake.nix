@@ -314,6 +314,10 @@
         # r[verify cairn.radicle_cob_only.compatibility.git_refs]
         # r[verify cairn.radicle_cob_only.compatibility.signatures]
         # r[verify cairn.radicle_cob_only.compatibility.malformed]
+        # r[impl cairn.cob_interop.boundary]
+        # r[impl cairn.cob_interop.validation]
+        # r[verify cairn.cob_interop.boundary.offline]
+        # r[verify cairn.cob_interop.validation.release]
         radicle-cob-format-compatibility = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn-radicle-cob-format-compatibility";
           version = "0.1.0";
@@ -324,8 +328,14 @@
             "onix-cairn-radicle-cob"
             "--test"
             "cob_format_compatibility"
+            "--test"
+            "cob_interoperability"
           ];
-          nativeCheckInputs = [ pkgs.git ];
+          nativeCheckInputs = [
+            pkgs.git
+            pkgs.nickel
+            pkgs.rustfmt
+          ];
           doCheck = true;
           checkPhase = ''
             runHook preCheck
@@ -334,8 +344,18 @@
               echo "umbrella Radicle runtime dependency detected" >&2
               exit 1
             fi
+            fixture_root=fixtures/radicle-cob-interoperability
+            cargo fmt --manifest-path "$fixture_root/producer/Cargo.toml" -- --check
+            nickel export --format json "$fixture_root/provenance.ncl" \
+              > "$TMPDIR/cob-interoperability-provenance.json"
+            cmp "$TMPDIR/cob-interoperability-provenance.json" \
+              "$fixture_root/provenance.json"
+            git init --bare "$TMPDIR/cob-bundle-verifier.git"
+            git -C "$TMPDIR/cob-bundle-verifier.git" bundle verify \
+              "$PWD/$fixture_root/external-cairn-cob.bundle"
             cargo test -p onix-cairn-radicle-cob \
-              --test cob_format_compatibility
+              --test cob_format_compatibility \
+              --test cob_interoperability
             runHook postCheck
           '';
           installPhase = ''
