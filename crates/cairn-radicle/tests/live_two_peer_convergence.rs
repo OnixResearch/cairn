@@ -20,7 +20,7 @@ use cairn_core::{
 };
 use onix_cairn_radicle::{
     create_change_resolution, execute_profile_sync, inspect_change_status, inspect_profile_sync,
-    plan_change_sync, ChangeSyncSnapshot,
+    plan_change_sync, ChangeSyncSnapshot, SYNC_CONNECT_TIMEOUT_SECONDS,
 };
 use radicle::{
     crypto::{PublicKey, Seed},
@@ -45,6 +45,9 @@ const SECRET_KEY_FILE: &str = "radicle";
 const LOOPBACK_HOST: &str = "127.0.0.1";
 const NODE_LOG_FILE: &str = "cairn-live-node.log";
 const NODE_READY_TIMEOUT: Duration = Duration::from_secs(10);
+const SYNC_COMMAND_DEADLINE_SLACK_SECONDS: u64 = 2;
+const SYNC_UNAVAILABLE_DEADLINE: Duration =
+    Duration::from_secs(SYNC_CONNECT_TIMEOUT_SECONDS + SYNC_COMMAND_DEADLINE_SLACK_SECONDS);
 const POLL_INTERVAL: Duration = Duration::from_millis(50);
 static TEST_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
@@ -323,7 +326,7 @@ fn live_nodes_transfer_conflict_and_resolution_without_copying_storage(
         unavailable_address,
         true,
     )?;
-    assert!(unavailable_started.elapsed() <= NODE_READY_TIMEOUT);
+    assert!(unavailable_started.elapsed() <= SYNC_UNAVAILABLE_DEADLINE);
     assert_eq!(unavailable["blocked"], true);
     assert_eq!(unavailable["network_attempted"], true);
     assert_eq!(unavailable["before"]["status"], "repository_missing");
@@ -416,7 +419,7 @@ fn live_nodes_transfer_conflict_and_resolution_without_copying_storage(
         alice_address,
         true,
     )?;
-    assert_eq!(noop["valid"], true);
+    assert_eq!(noop["valid"], true, "{noop:#}");
     assert_eq!(noop["noop"], true);
 
     let stale_inspection = inspect_profile_sync(
@@ -486,8 +489,8 @@ fn live_nodes_transfer_conflict_and_resolution_without_copying_storage(
         alice_address,
         true,
     )?;
-    assert_eq!(alice_sync["valid"], true);
-    assert_eq!(bob_sync["valid"], true);
+    assert_eq!(alice_sync["valid"], true, "{alice_sync:#}");
+    assert_eq!(bob_sync["valid"], true, "{bob_sync:#}");
     assert_eq!(alice_sync["conflicts_observed"], true);
     assert_eq!(bob_sync["conflicts_observed"], true);
     assert_signed_change_ref(&alice_repo, bob_node_id)?;
@@ -555,7 +558,7 @@ fn live_nodes_transfer_conflict_and_resolution_without_copying_storage(
         alice_address,
         true,
     )?;
-    assert_eq!(resolution_sync["valid"], true);
+    assert_eq!(resolution_sync["valid"], true, "{resolution_sync:#}");
     assert_eq!(resolution_sync["conflicts_observed"], false);
     assert_signed_change_ref(&bob_repo, alice_node_id)?;
 

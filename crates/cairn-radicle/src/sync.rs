@@ -20,8 +20,8 @@ use crate::{
     ChangeImportError, TYPENAME,
 };
 
-pub const SYNC_CONNECT_TIMEOUT_SECONDS: u64 = 3;
-pub const SYNC_FETCH_TIMEOUT_SECONDS: u64 = 5;
+pub const SYNC_CONNECT_TIMEOUT_SECONDS: u64 = 10;
+pub const SYNC_FETCH_TIMEOUT_SECONDS: u64 = 15;
 
 const BLOCKER_LOCAL_STATE_DRIFT: &str = "local Radicle state changed after preview";
 const BLOCKER_LOCAL_STATE_UNAVAILABLE: &str = "guarded local Radicle state is unavailable";
