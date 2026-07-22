@@ -306,36 +306,36 @@
           '';
         };
 
-        # r[impl cairn.radicle_two_peer_convergence.live]
-        # r[verify cairn.radicle_two_peer_convergence.live.success]
-        # r[verify cairn.radicle_two_peer_convergence.live.explicit]
-        # r[verify cairn.radicle_two_peer_convergence.blocked.unavailable]
-        # r[impl cairn.collaboration_sync.validation]
-        radicle-two-peer-convergence = pkgs.rustPlatform.buildRustPackage {
-          pname = "cairn-radicle-two-peer-convergence";
+        # r[impl cairn.radicle_cob_only.dependencies]
+        # r[verify cairn.radicle_cob_only.dependencies.excludes_runtime]
+        # r[impl cairn.radicle_cob_only.validation]
+        # r[impl cairn.radicle_two_peer_convergence.retired]
+        # r[verify cairn.radicle_two_peer_convergence.retired.local_only]
+        # r[verify cairn.radicle_cob_only.compatibility.git_refs]
+        # r[verify cairn.radicle_cob_only.compatibility.signatures]
+        # r[verify cairn.radicle_cob_only.compatibility.malformed]
+        radicle-cob-format-compatibility = pkgs.rustPlatform.buildRustPackage {
+          pname = "cairn-radicle-cob-format-compatibility";
           version = "0.1.0";
           src = self;
           cargoLock = rustCargoLock;
           cargoBuildFlags = [
             "-p"
-            "onix-cairn-radicle"
+            "onix-cairn-radicle-cob"
             "--test"
-            "live_two_peer_convergence"
+            "cob_format_compatibility"
           ];
-          nativeCheckInputs = [
-            pkgs.git
-            pkgs.radicle-node
-          ];
+          nativeCheckInputs = [ pkgs.git ];
           doCheck = true;
           checkPhase = ''
             runHook preCheck
-            export CAIRN_RADICLE_NODE_BIN=${pkgs.radicle-node}/bin/radicle-node
-            export CAIRN_BIN=${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn
-            "$CAIRN_RADICLE_NODE_BIN" --version
-            "$CAIRN_BIN" --help >/dev/null
-            cargo test -p onix-cairn-radicle \
-              --test live_two_peer_convergence \
-              -- --ignored --nocapture
+            if cargo tree -p onix-cairn-radicle-cob --prefix none \
+              | grep -Eq '^(radicle|radicle-node) v'; then
+              echo "umbrella Radicle runtime dependency detected" >&2
+              exit 1
+            fi
+            cargo test -p onix-cairn-radicle-cob \
+              --test cob_format_compatibility
             runHook postCheck
           '';
           installPhase = ''

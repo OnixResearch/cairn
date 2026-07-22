@@ -419,7 +419,7 @@ prepared envelope, atomically replaces only the expected store, and reloads ever
 BLAKE3 identity. Import similarly refuses an existing or unsafe store and
 atomically exposes a validated prepared file. Status is bounded and read-only.
 Checkout rechecks the envelope and local destination while locked, then uses the
-same no-overlay exact-byte materialization contract as the Radicle adapter. Exact
+same no-overlay exact-byte materialization contract as the COB-only adapter. Exact
 destinations are no-ops; divergent, partial, symlinked, non-UTF-8, oversized,
 conflicted, or unsupported destinations fail closed.
 
@@ -456,132 +456,97 @@ source correctness, or release eligibility.
 r[impl cairn.collaboration_backend.receipts]
 r[verify cairn.collaboration_backend.non_claims.provider]
 
-Radicle remains one built-in adapter:
+Cairn also provides a local, COB-only adapter. It uses `radicle-cob` as a
+format/CRDT library over an explicit Git repository; it does not load a Radicle
+profile or identity document and does not run or control a Radicle node:
 
 ```bash
+cairn collaboration import my-change \
+  --backend radicle-cob.v1 \
+  --git-repository /path/to/git/repository \
+  --keystore /path/to/ssh-keystore \
+  --workspace workspace-id \
+  --delegate z6MkDelegatePublicKey \
+  --root /path/to/repo [--execute]
+
 cairn collaboration status my-change \
-  --backend radicle.v1 \
-  --rad-home /path/to/radicle-home \
-  --rid rad:repository-id \
+  --backend radicle-cob.v1 \
+  --git-repository /path/to/git/repository \
   --root /path/to/repo
 
 cairn collaboration update my-change \
-  --backend radicle.v1 \
-  --rad-home /path/to/radicle-home \
-  --rid rad:repository-id \
+  --backend radicle-cob.v1 \
+  --git-repository /path/to/git/repository \
+  --keystore /path/to/ssh-keystore \
   --root /path/to/repo [--execute]
 
 cairn collaboration conflicts my-change \
-  --backend radicle.v1 \
-  --rad-home /path/to/radicle-home \
-  --rid rad:repository-id \
+  --backend radicle-cob.v1 \
+  --git-repository /path/to/git/repository \
   --root /path/to/repo [--show-head proposal=REVISION]
 
 cairn collaboration resolve my-change \
-  --backend radicle.v1 \
-  --rad-home /path/to/radicle-home \
-  --rid rad:repository-id \
+  --backend radicle-cob.v1 \
+  --git-repository /path/to/git/repository \
+  --keystore /path/to/ssh-keystore \
   --choose-head proposal=REVISION \
   --root /path/to/repo [--lifecycle open] [--execute]
-
-# One-time operator policy prerequisite; Cairn never runs this implicitly.
-rad seed rad:repository-id --no-fetch
-
-cairn collaboration sync my-change \
-  --backend radicle.v1 \
-  --rad-home /path/to/radicle-home \
-  --rid rad:repository-id \
-  --control-socket /path/to/radicle-home/node/control.sock \
-  --peer-id z6MkPeerNodeId \
-  --peer-address peer.example:8776 \
-  --root /path/to/repo [--execute]
 ```
 
-`cairn radicle import|status|checkout|update|conflicts|resolve|sync` remains a compatibility entry point.
-Radicle still owns COB/Git object addressing, canonical identity documents,
-delegate checks, signer possession, signed mutation, and local Radicle locks.
-Radicle update rechecks exact local artifacts, policy, typed object state, and
-current creator-or-delegate authority before signed mutation, then reloads the
-same object and verifies the planned content root. Radicle conflict resolution
-rechecks current canonical identity authority and signer possession, signs one
-complete-basis operation under the per-change lock, then reloads the same object,
-verifies no conflicts remain and the selected content root matches, and records
-the provider-assigned result state hash. It does not precompute a Radicle state
-hash because the signed operation ID is provider-assigned.
-r[impl cairn.collaboration_resolution.radicle_execution]
-r[verify cairn.collaboration_resolution.radicle_execution.success]
-r[verify cairn.collaboration_resolution.radicle_execution.blocked]
-r[impl cairn.collaboration_update.radicle_execution]
-r[verify cairn.collaboration_update.radicle_execution.success]
-r[verify cairn.collaboration_update.radicle_execution.blocked]
+`cairn cob import|status|checkout|update|conflicts|resolve` is the direct entry
+point. Import, update, checkout, and resolution remain preview-first. Read-only
+status and conflict inspection require no key. Signed mutation loads only the
+explicit keystore, proves that its public key matches the planned actor, acquires
+a per-change lock in the selected Git directory, rechecks every preview input,
+writes a standard signed COB change and namespaced `refs/cobs` reference, reloads
+the typed object, and verifies the planned content root. The signed operation ID
+and resulting state hash remain provider-assigned and are never precomputed.
 
-Cairn's two-peer convergence rail bounds the supported synchronization command
-to the exact known-peer pull it validates. The always-on test uses Radicle's validated
-signed-reference Git transport between independent homes, storage paths,
-signers, and namespaces. It imports on Alice, fetches to Bob, creates authorized
-concurrent proposal updates, exchanges both signed namespaces, requires identical
-conflict heads and state hashes, resolves with complete bases, and requires
-identical conflict-free state/content hashes after the resolution transfer.
-r[impl cairn.radicle_two_peer_convergence.transport]
-r[verify cairn.radicle_two_peer_convergence.transport.success]
-r[verify cairn.radicle_two_peer_convergence.conflict.success]
-r[verify cairn.radicle_two_peer_convergence.resolution.success]
+The root operation records the creator key and a bounded canonical delegate set.
+For neutral-schema objects this embedded set is the complete immutable mutation
+authority: caller claims cannot add authority later. Existing
+`cairn.radicle-change-cob.v1` objects with no embedded delegates remain readable
+and retain their exact legacy canonical content and state hashes; the creator can
+still mutate them, but removed identity-document delegate authority is not
+silently reintroduced.
 
-A separate required Nix check executes the ignored live test with two actual
-`radicle-node` processes on OS-assigned loopback ports:
+Cairn intentionally has no collaboration sync, discovery, seeding, follow,
+announce, connect/fetch, peer address, node ID, control socket, Radicle home, or
+profile behavior. Moving COB refs between repositories is an external transport
+concern. Local success proves only the selected Git repository, signed object
+history, embedded authority, typed reduction, and bounded filesystem observations;
+it does not prove publication, synchronization, convergence, peer availability,
+remote trust, lifecycle correctness, evidence truth, or release eligibility.
+
+The dedicated compatibility gate verifies standard namespaced Git refs, signed
+COB commit manifests, typed reload, malformed-history rejection, and absence of
+the umbrella `radicle` and `radicle-node` crates:
 
 ```bash
-nix build path:$PWD#checks.x86_64-linux.radicle-two-peer-convergence --no-link -L
+nix build path:$PWD#checks.x86_64-linux.radicle-cob-format-compatibility --no-link -L
 ```
 
-The check records the Nix-pinned daemon version, waits for distinct control
-sockets and node IDs, and invokes the public `collaboration sync` binary for
-preview, unseeded-policy rejection, bootstrap, no-op, wrong-socket rejection,
-unavailable-peer rejection, missing peer-change evidence, concurrent conflict,
-and resolution transfer. It also proves stale plans stop before node interaction.
-RAII teardown kills and reaps both children on success or failure.
-The Rust adapter remains pinned by `Cargo.lock`; daemon and adapter version
-compatibility is evidence from this exact gate, not a universal protocol claim.
-r[impl cairn.radicle_two_peer_convergence.live]
-r[verify cairn.radicle_two_peer_convergence.live.success]
-r[verify cairn.radicle_two_peer_convergence.blocked.unavailable]
-
-`collaboration sync` previews without opening the control socket. Execution
-acquires the cooperating import/update-resolution/checkout locks, rechecks local
-state, verifies the socket's node ID against the explicit profile, performs one
-non-persistent connect and one bounded fetch, and requires both a typed reload and
-an exact custom COB ref under the requested peer namespace. Ref updates and
-namespaces are sorted in the receipt. A fetch that changes no refs is a valid
-no-op only after those postconditions pass. Conflicts are reported and preserved;
-sync never selects a head, checks out working files, seeds/follows peers, announces
-or pushes refs, or changes operator Radicle policy.
-r[impl cairn.collaboration_sync.preview]
-r[impl cairn.collaboration_sync.execution]
-r[verify cairn.collaboration_sync.integration.bootstrap]
-r[verify cairn.collaboration_sync.integration.noop]
-r[verify cairn.collaboration_sync.integration.conflict]
-
-Passing either the convergence rail or `collaboration sync` proves only the
-observed local profile, socket, explicit peer/address, repository/change, signed
-refs, operations, versions, transport, typed reload, and deadlines. It does not
-prove public-network publication, discovery, arbitrary-peer trust, peer-retained
-state equality, availability, eventual convergence, partition recovery, conflict
-correctness, lifecycle approval, evidence truth, working-tree materialization, or
-release eligibility.
-r[impl cairn.radicle_two_peer_convergence.non_claims]
-r[verify cairn.radicle_two_peer_convergence.non_claims.local]
-r[impl cairn.collaboration_sync.non_claims]
-r[verify cairn.collaboration_sync.non_claims.local]
-
-New imports reduce through the neutral schema; existing
-`cairn.radicle-change-cob.v1` objects remain readable and retain their exact
-legacy canonical content and state hashes. Radicle-specific object, signature,
-and authority facts stay adapter observations and are never promoted into
-universal collaboration or lifecycle claims.
-r[impl cairn.radicle_change_cob.radicle_adapter]
-r[impl cairn.radicle_import_cli.current_authority]
-r[impl cairn.radicle_status_checkout.checkout_execution]
-r[verify cairn.radicle_change_cob.evidence_boundary.non_claims]
+r[impl cairn.radicle_cob_only.store]
+r[verify cairn.radicle_cob_only.store.roundtrip]
+r[verify cairn.radicle_cob_only.store.negative]
+r[impl cairn.radicle_cob_only.authority]
+r[verify cairn.radicle_cob_only.authority.allowed]
+r[verify cairn.radicle_cob_only.authority.denied]
+r[verify cairn.radicle_cob_only.authority.bounded]
+r[impl cairn.radicle_cob_only.cli]
+r[verify cairn.radicle_cob_only.cli.explicit]
+r[verify cairn.radicle_cob_only.cli.reject_runtime]
+r[impl cairn.radicle_cob_only.no_runtime]
+r[verify cairn.radicle_cob_only.no_runtime.sync]
+r[verify cairn.radicle_cob_only.no_runtime.artifacts]
+r[impl cairn.radicle_cob_only.compatibility]
+r[verify cairn.radicle_cob_only.compatibility.legacy]
+r[verify cairn.radicle_cob_only.compatibility.git_refs]
+r[verify cairn.radicle_cob_only.compatibility.signatures]
+r[verify cairn.radicle_cob_only.compatibility.malformed]
+r[impl cairn.radicle_cob_only.dependencies]
+r[verify cairn.radicle_cob_only.dependencies.excludes_runtime]
+r[impl cairn.radicle_cob_only.docs]
 
 The pure core remains transport-free: it receives explicit actor/delegate facts,
 reduces revisions and conflicts, validates portable envelopes, derives sorted
@@ -1081,4 +1046,4 @@ The split does not relicense dependencies, revoke prior grants, or turn lifecycl
 - [oxidecomputer/omicron](https://github.com/oxidecomputer/omicron), [oxidecomputer/hubris](https://github.com/oxidecomputer/hubris), [oxidecomputer/humility](https://github.com/oxidecomputer/humility), [oxidecomputer/crucible](https://github.com/oxidecomputer/crucible), [oxidecomputer/propolis](https://github.com/oxidecomputer/propolis), [oxidecomputer/helios](https://github.com/oxidecomputer/helios), [oxidecomputer/maghemite](https://github.com/oxidecomputer/maghemite), [oxidecomputer/opte](https://github.com/oxidecomputer/opte), and [oxidecomputer/dendrite](https://github.com/oxidecomputer/dendrite) — study-only system references for observability, archive shape, debugging workflows, and operator diagnostics; Cairn does not adopt their domain-specific correctness claims.
 - [joweeba/dpub](https://github.com/joweeba/dpub) — durable publish-run, status/explain/resume, and release-evidence ledger reference; Cairn adapts ledger and evidence-shape ideas without adopting remote publishing authority.
 - [joweeba/tla2](https://github.com/joweeba/tla2) — TLA+/state-machine tooling reference for optional lifecycle transition receipts; Cairn validates bounded receipt identity and non-claims rather than embedding a model checker.
-- [radicle-dev/radicle-node](https://github.com/radicle-dev/radicle-node) — signed Git-backed Collaborative Object storage, deterministic operation-DAG evaluation, identity-document authorization, and custom COB type reference used by `onix-cairn-radicle`; Cairn retains lifecycle policy, evidence interpretation, and Git mutation authority.
+- [`radicle-cob`](https://crates.io/crates/radicle-cob) — signed Git-backed Collaborative Object format, operation-DAG evaluation, object/type identity, and generic storage traits used by `onix-cairn-radicle-cob`; Cairn owns explicit storage selection, embedded authority, lifecycle policy, evidence interpretation, and mutation locking without the Radicle runtime.

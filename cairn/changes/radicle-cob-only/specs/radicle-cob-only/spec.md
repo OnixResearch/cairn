@@ -50,6 +50,13 @@ r[cairn.radicle_cob_only.authority.denied]
 - THEN Cairn MUST reject that operation branch
 - AND CLI assertions, Git configuration, profile files, current clocks, or later authority files MUST NOT make it valid
 
+#### Scenario: Authority set is bounded and canonical
+r[cairn.radicle_cob_only.authority.bounded]
+- GIVEN duplicate creator/delegate keys or more than the supported maximum delegate keys
+- WHEN Cairn validates a new root
+- THEN it MUST reject invalid authority without writing a COB reference
+- AND valid delegate ordering MUST be canonical and deterministic.
+
 #### Scenario: Legacy empty-authority hashes remain stable
 r[cairn.radicle_cob_only.authority.legacy_hash]
 - GIVEN an existing valid collaboration state whose root has no embedded delegate field
@@ -107,6 +114,33 @@ r[cairn.radicle_cob_only.docs.non_claims]
 - WHEN Cairn presents the result
 - THEN the claim MUST be limited to the recorded local Git COB and filesystem observations
 - AND it MUST NOT claim Radicle repository identity, identity-document authority, node participation, publication, synchronization, remote trust, peer availability, convergence, lifecycle correctness, or release eligibility
+
+### Requirement: Exact Radicle COB format compatibility
+r[cairn.radicle_cob_only.compatibility] Cairn MUST preserve the standard Radicle COB Git commit, manifest, action, parent-DAG, extended-signature, object-ID, type-ID, and namespaced-ref encodings required for interoperable object storage without claiming runtime or network compatibility.
+
+#### Scenario: Legacy semantic identities remain stable
+r[cairn.radicle_cob_only.compatibility.legacy]
+- GIVEN a valid historical `cairn.radicle-change-cob.v1` state without embedded delegates
+- WHEN the updated reducer decodes and hashes it
+- THEN its canonical content and state identities MUST match the prior encoding exactly.
+
+#### Scenario: Namespaced COB refs are standard
+r[cairn.radicle_cob_only.compatibility.git_refs]
+- GIVEN Cairn creates or updates a custom COB
+- WHEN the explicit Git repository is inspected
+- THEN the resulting reference MUST use the standard signed namespace and `refs/cobs/<type>/<object>` structure.
+
+#### Scenario: Signed commits round-trip through direct traits
+r[cairn.radicle_cob_only.compatibility.signatures]
+- GIVEN an explicit valid Ed25519 keystore
+- WHEN Cairn stores and reloads a COB operation
+- THEN the standard extended signature and manifest MUST verify through direct `radicle-cob` traits.
+
+#### Scenario: Malformed format evidence is rejected
+r[cairn.radicle_cob_only.compatibility.malformed]
+- GIVEN a malformed, unsigned, mismatched-author, or wrong-manifest COB history
+- WHEN Cairn inspects the explicit store
+- THEN inspection MUST fail closed instead of omitting or accepting the malformed branch.
 
 ### Requirement: Reproducible COB-only validation
 r[cairn.radicle_cob_only.validation] The implementation MUST pass positive and negative direct-COB tests, a production dependency/runtime absence audit, workspace checks, lifecycle and traceability gates, release-readiness, self-dogfood, and the full supported-system flake check before archive.
