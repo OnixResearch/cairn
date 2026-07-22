@@ -12,9 +12,9 @@
 
 ## Phase 3: Live-node Nix evidence
 
-- [ ] [serial] Add bounded two-process `radicle-node` loopback orchestration with OS-assigned ports, explicit connect/fetch, captured diagnostics, and guaranteed teardown. r[cairn.radicle_two_peer_convergence.live]
-- [ ] [serial] Add a named flake check that supplies the pinned daemon and executes the ignored live-node test explicitly. r[cairn.radicle_two_peer_convergence.live]
-- [ ] [serial] Prove unavailable peers and readiness/fetch timeout paths fail within bounds without leaking processes or mutating peer state. r[cairn.radicle_two_peer_convergence.blocked]
+- [x] [serial] Add bounded two-process `radicle-node` loopback orchestration with OS-assigned ports, explicit connect/fetch, captured diagnostics, and guaranteed teardown. r[cairn.radicle_two_peer_convergence.live]
+- [x] [serial] Add a named flake check that supplies the pinned daemon and executes the ignored live-node test explicitly. r[cairn.radicle_two_peer_convergence.live]
+- [x] [serial] Prove unavailable peers and readiness/fetch timeout paths fail within bounds without leaking processes or mutating peer state. r[cairn.radicle_two_peer_convergence.blocked]
 
 ## Phase 4: Documentation and release evidence
 

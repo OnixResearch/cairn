@@ -306,6 +306,42 @@
           '';
         };
 
+        # r[impl cairn.radicle_two_peer_convergence.live]
+        # r[verify cairn.radicle_two_peer_convergence.live.success]
+        # r[verify cairn.radicle_two_peer_convergence.live.explicit]
+        # r[verify cairn.radicle_two_peer_convergence.blocked.unavailable]
+        radicle-two-peer-convergence = pkgs.rustPlatform.buildRustPackage {
+          pname = "cairn-radicle-two-peer-convergence";
+          version = "0.1.0";
+          src = self;
+          cargoLock = rustCargoLock;
+          cargoBuildFlags = [
+            "-p"
+            "onix-cairn-radicle"
+            "--test"
+            "live_two_peer_convergence"
+          ];
+          nativeCheckInputs = [
+            pkgs.git
+            pkgs.radicle-node
+          ];
+          doCheck = true;
+          checkPhase = ''
+            runHook preCheck
+            export CAIRN_RADICLE_NODE_BIN=${pkgs.radicle-node}/bin/radicle-node
+            "$CAIRN_RADICLE_NODE_BIN" --version
+            cargo test -p onix-cairn-radicle \
+              --test live_two_peer_convergence \
+              -- --ignored --nocapture
+            runHook postCheck
+          '';
+          installPhase = ''
+            runHook preInstall
+            touch $out
+            runHook postInstall
+          '';
+        };
+
         cairn-validate =
           pkgs.runCommand "cairn-validate"
             {
