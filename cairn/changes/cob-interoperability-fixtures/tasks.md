@@ -11,4 +11,4 @@
 
 ## Phase 3: Verification
 
-- [ ] [serial] Run positive and negative focused tests, fixture freshness, dependency audit, formatting, workspace tests/Clippy, lifecycle/traceability, evidence export, release-readiness, self-dogfood, and full flake checks before sync/archive. r[cairn.cob_interop.validation]
+- [x] [serial] Run focused tests, fixture freshness, dependency audit, formatting, and Clippy before sync; then run the full workspace, lifecycle, traceability, evidence, release-readiness, self-dogfood, and flake rails before archive. r[cairn.cob_interop.validation]
