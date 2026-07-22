@@ -25,7 +25,7 @@ cap-std.workspace = true
 crossterm.workspace = true
 ed25519-dalek.workspace = true
 nickel-export-core.workspace = true
-onix-cairn-radicle = { path = "../cairn-radicle" }
+onix-cairn-radicle-cob = { path = "../cairn-radicle-cob" }
 rat-nodegraph.workspace = true
 ratatui.workspace = true
 redb = { workspace = true, optional = true }

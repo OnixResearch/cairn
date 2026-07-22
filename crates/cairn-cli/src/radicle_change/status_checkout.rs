@@ -10,10 +10,7 @@ use cairn_core::{
     ChangeCheckoutDestination, ChangeCobCheckoutPlan, ChangeCobLocalSnapshot, ChangeLifecycleView,
     MAX_ARTIFACTS, MAX_ARTIFACT_BYTES, RADICLE_CHANGE_COB_TYPE_NAME,
 };
-use onix_cairn_radicle::{
-    acquire_profile_checkout_guard, inspect_profile_status, ChangeImportError,
-    ChangeStatusInspection,
-};
+use onix_cairn_radicle_cob::{inspect_change, CobChangeInspection, CobMutationLock};
 use serde_json::{json, Value};
 
 use crate::{
@@ -24,26 +21,30 @@ use crate::{
     },
 };
 
-use super::{read_unique_option_value, OPTION_TOKEN_WIDTH};
+use super::{
+    format_library_versions, read_unique_option_value, COB_BACKEND_V1, OPTION_TOKEN_WIDTH,
+    RADICLE_COB_LIBRARY_VERSION,
+};
 
 const STANDARD_ROOT_ENTRY_LIMIT: usize = 5;
 const LOCAL_ROOT_ENTRY_LIMIT: usize = MAX_ARTIFACTS + STANDARD_ROOT_ENTRY_LIMIT;
 const SPEC_DIRECTORY_ENTRY_LIMIT: usize = 1;
 const CHANGES_DIRECTORY: &str = "cairn/changes";
-const CHECKOUT_PREPARED_DIRECTORY: &str = "cairn/.radicle-checkout-prepared";
+const CHECKOUT_PREPARED_DIRECTORY: &str = "cairn/.cob-checkout-prepared";
 const STATUS_NON_CLAIM_LOCAL: &str =
-    "typed status proves only reduction and observations in the selected local Radicle storage";
+    "typed status proves only reduction and observations in the selected local Git COB store";
 const CHECKOUT_NON_CLAIM_LOCAL: &str =
-    "checkout proves only local materialization from the stated reduced object under a point-in-time authority observation";
+    "checkout proves only local materialization from the stated reduced object";
 const NON_CLAIM_LIFECYCLE: &str =
     "status and checkout do not prove gate validity, evidence truth, dependency readiness, source correctness, archive execution, or release eligibility";
 const NON_CLAIM_TRANSPORT: &str =
-    "status and checkout do not prove network publication, peer availability, synchronization, or remote trust";
+    "status and checkout do not prove node participation, publication, peer availability, synchronization, convergence, or remote trust";
+const NON_CLAIM_AUTHORITY: &str =
+    "embedded creator and delegate keys are immutable COB authority, not Radicle identity-document or future authorization proof";
 const NON_CLAIM_HOST: &str =
     "the cooperative checkout lock is not a sandbox against unrelated processes with equivalent host filesystem authority";
-const BLOCKER_AUTHORITY: &str =
-    "current profile actor is not authorized to materialize this change";
-const BLOCKER_INPUT_DRIFT: &str = "typed state or local destination changed after checkout preview";
+const BLOCKER_INPUT_DRIFT: &str =
+    "Git repository head, object, typed state, policy, or local destination changed after checkout preview";
 const BLOCKER_CHANGES_DIRECTORY: &str =
     "native cairn/changes directory is missing, unsafe, or not a directory";
 const BLOCKER_PREPARED_EXISTS: &str =
@@ -55,17 +56,14 @@ const BLOCKER_POST_VERIFICATION: &str =
 const BLOCKER_POST_VERIFICATION_UNAVAILABLE: &str =
     "materialized active change could not be inspected after checkout";
 
-// r[impl cairn.radicle_status_checkout.status]
-// r[impl cairn.radicle_status_checkout.checkout_execution]
-// r[impl cairn.radicle_status_checkout.receipts]
-// r[impl cairn.radicle_status_checkout.non_claims]
+// r[impl cairn.radicle_cob_only.cli]
+// r[impl cairn.radicle_cob_only.docs]
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct RadicleObjectOptions {
+struct CobObjectOptions {
     change: String,
     root: PathBuf,
-    rad_home: PathBuf,
-    repository_id: String,
+    git_repository: PathBuf,
     policy: PathBuf,
     execute: bool,
 }
@@ -73,15 +71,13 @@ struct RadicleObjectOptions {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct CheckoutExecutionOutcome {
     mutated: bool,
-    signer_possession_proved: bool,
     final_destination: Option<ChangeCheckoutDestination>,
     blockers: Vec<String>,
 }
 
 pub(super) fn run_status(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let options = parse_object_options(&args, "status", false)?;
-    let inspection =
-        inspect_profile_status(&options.rad_home, &options.repository_id, &options.change)?;
+    let inspection = inspect_change(&options.git_repository, &options.change)?;
     let policy = load_policy_file(options.policy.clone())?;
     let observed_policy_hash = canonical_json_hash(&policy.raw);
     let local = read_local_change_snapshot(&options.root, &options.change)?;
@@ -98,8 +94,7 @@ pub(super) fn run_status(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
 pub(super) fn run_checkout(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let options = parse_object_options(&args, "checkout", true)?;
-    let initial_inspection =
-        inspect_profile_status(&options.rad_home, &options.repository_id, &options.change)?;
+    let initial_inspection = inspect_change(&options.git_repository, &options.change)?;
     let policy = load_policy_file(options.policy.clone())?;
     let observed_policy_hash = canonical_json_hash(&policy.raw);
     let local = read_local_change_snapshot(&options.root, &options.change)?;
@@ -107,44 +102,45 @@ pub(super) fn run_checkout(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut blockers = checkout_blockers(&initial_inspection, &initial_plan);
     let mut outcome = CheckoutExecutionOutcome {
         mutated: false,
-        signer_possession_proved: false,
         final_destination: None,
         blockers: Vec::new(),
     };
     let mut receipt_inspection = initial_inspection.clone();
 
     if options.execute && blockers.is_empty() && !initial_plan.already_current() {
-        match acquire_profile_checkout_guard(
-            &options.rad_home,
-            &options.repository_id,
-            &options.change,
-            &initial_inspection,
-        ) {
-            Ok(guard) => {
-                receipt_inspection = guard.inspection().clone();
-                let execution =
-                    execute_guarded_checkout(&options, &initial_plan, guard.inspection());
-                let release = guard.release();
-                match execution {
-                    Ok(executed) => {
-                        outcome = executed;
-                        outcome.signer_possession_proved = true;
+        match RepositoryCheckoutLock::acquire(&options.root, &options.change) {
+            Ok(repository_guard) => {
+                match CobMutationLock::acquire(&options.git_repository, &options.change) {
+                    Ok(cob_guard) => {
+                        let current = inspect_change(&options.git_repository, &options.change);
+                        let current_policy = load_policy_file(options.policy.clone())
+                            .map(|policy| canonical_json_hash(&policy.raw));
+                        match (current, current_policy) {
+                            (Ok(current), Ok(current_policy_hash))
+                                if current == initial_inspection
+                                    && current_policy_hash == observed_policy_hash =>
+                            {
+                                receipt_inspection = current.clone();
+                                match execute_guarded_checkout(&options, &initial_plan, &current) {
+                                    Ok(executed) => outcome = executed,
+                                    Err(error) => blockers.push(error.to_string()),
+                                }
+                            }
+                            (Ok(_), Ok(_)) => blockers.push(BLOCKER_INPUT_DRIFT.to_string()),
+                            (Err(error), _) => blockers.push(error.to_string()),
+                            (_, Err(error)) => blockers.push(error.to_string()),
+                        }
+                        if let Err(error) = cob_guard.release() {
+                            blockers.push(error.to_string());
+                        }
                     }
-                    Err(error) => {
-                        let _release_result = release;
-                        return Err(error);
-                    }
+                    Err(error) => blockers.push(error.to_string()),
                 }
-                if let Err(error) = release {
-                    outcome
-                        .blockers
-                        .push(format!("failed to release checkout lock: {error}"));
+                if let Err(error) = repository_guard.release() {
+                    blockers.push(error.to_string());
                 }
             }
-            Err(error) if is_checkout_pre_mutation_blocker(&error) => {
-                blockers.push(error.to_string());
-            }
-            Err(error) => return Err(error.into()),
+            Err(error) => blockers.push(error.to_string()),
         }
     }
     blockers.append(&mut outcome.blockers);
@@ -164,44 +160,25 @@ pub(super) fn run_checkout(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn execute_guarded_checkout(
-    options: &RadicleObjectOptions,
+    options: &CobObjectOptions,
     preview: &ChangeCobCheckoutPlan,
-    inspection: &ChangeStatusInspection,
+    inspection: &CobChangeInspection,
 ) -> Result<CheckoutExecutionOutcome, Box<dyn Error>> {
-    let repository_guard = match RepositoryCheckoutLock::acquire(&options.root, &options.change) {
-        Ok(guard) => guard,
-        Err(error) => return Ok(blocked_execution(&error.to_string())),
-    };
-    let execution = (|| {
-        let current_local = read_local_change_snapshot(&options.root, &options.change)?;
-        let current = plan_change_cob_checkout(&inspection.state, current_local)?;
-        if &current != preview {
-            return Ok(CheckoutExecutionOutcome {
-                mutated: false,
-                signer_possession_proved: false,
-                final_destination: None,
-                blockers: vec![BLOCKER_INPUT_DRIFT.to_string()],
-            });
-        }
-        materialize_checkout(
-            &options.root,
-            &inspection.repository_id,
-            &inspection.state,
-            &current,
-        )
-    })();
-    match execution {
-        Ok(mut outcome) => {
-            if let Err(error) = repository_guard.release() {
-                outcome.blockers.push(error.to_string());
-            }
-            Ok(outcome)
-        }
-        Err(error) => {
-            let _ = repository_guard.release();
-            Err(error)
-        }
+    let current_local = read_local_change_snapshot(&options.root, &options.change)?;
+    let current = plan_change_cob_checkout(&inspection.state, current_local)?;
+    if &current != preview {
+        return Ok(CheckoutExecutionOutcome {
+            mutated: false,
+            final_destination: None,
+            blockers: vec![BLOCKER_INPUT_DRIFT.to_string()],
+        });
     }
+    materialize_checkout(
+        &options.root,
+        &inspection.state.repository_id,
+        &inspection.state,
+        &current,
+    )
 }
 
 fn materialize_checkout(
@@ -254,14 +231,12 @@ fn materialize_checkout(
             };
             Ok(CheckoutExecutionOutcome {
                 mutated: true,
-                signer_possession_proved: false,
                 final_destination: Some(post_plan.destination),
                 blockers,
             })
         }
         Err(_) => Ok(CheckoutExecutionOutcome {
             mutated: true,
-            signer_possession_proved: false,
             final_destination: None,
             blockers: vec![BLOCKER_POST_VERIFICATION_UNAVAILABLE.to_string()],
         }),
@@ -306,7 +281,6 @@ fn cleanup_after_prepare_error(
 fn blocked_execution(blocker: &str) -> CheckoutExecutionOutcome {
     CheckoutExecutionOutcome {
         mutated: false,
-        signer_possession_proved: false,
         final_destination: None,
         blockers: vec![blocker.to_string()],
     }
@@ -316,14 +290,13 @@ fn parse_object_options(
     args: &[String],
     command: &str,
     allow_execute: bool,
-) -> Result<RadicleObjectOptions, Box<dyn Error>> {
+) -> Result<CobObjectOptions, Box<dyn Error>> {
     let Some(change) = args.first() else {
-        return Err(format!("radicle {command} requires a change name").into());
+        return Err(format!("cob {command} requires a change name").into());
     };
     validate_change_name(change).map_err(|reason| format!("invalid change name: {reason}"))?;
     let mut root = None;
-    let mut rad_home = None;
-    let mut repository_id = None;
+    let mut git_repository = None;
     let mut policy = None;
     let mut execute = false;
     let mut index = 1;
@@ -334,19 +307,16 @@ fn parse_object_options(
                     Some(read_unique_option_value(args, index, "--root", root.is_some())?.into());
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--rad-home" => {
-                rad_home = Some(
-                    read_unique_option_value(args, index, "--rad-home", rad_home.is_some())?.into(),
+            "--git-repository" => {
+                git_repository = Some(
+                    read_unique_option_value(
+                        args,
+                        index,
+                        "--git-repository",
+                        git_repository.is_some(),
+                    )?
+                    .into(),
                 );
-                index = index.saturating_add(OPTION_TOKEN_WIDTH);
-            }
-            "--rid" => {
-                repository_id = Some(read_unique_option_value(
-                    args,
-                    index,
-                    "--rid",
-                    repository_id.is_some(),
-                )?);
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
             "--policy" => {
@@ -362,17 +332,21 @@ fn parse_object_options(
                 execute = true;
                 index = index.saturating_add(1);
             }
-            unknown => return Err(format!("unknown radicle {command} argument: {unknown}").into()),
+            "--rad-home" | "--rid" | "--control-socket" | "--peer-id" | "--peer-address" => {
+                return Err(format!(
+                    "unsupported Radicle runtime argument for COB-only {command}: {}",
+                    args[index]
+                )
+                .into());
+            }
+            unknown => return Err(format!("unknown cob {command} argument: {unknown}").into()),
         }
     }
-    let rad_home = rad_home.ok_or_else(|| format!("radicle {command} requires --rad-home PATH"))?;
-    let repository_id =
-        repository_id.ok_or_else(|| format!("radicle {command} requires --rid RID"))?;
-    Ok(RadicleObjectOptions {
+    Ok(CobObjectOptions {
         change: change.clone(),
         root: root.unwrap_or_else(|| PathBuf::from(".")),
-        rad_home,
-        repository_id,
+        git_repository: git_repository
+            .ok_or_else(|| format!("cob {command} requires --git-repository PATH"))?,
         policy: policy.unwrap_or_else(|| PathBuf::from(default_policy_path())),
         execute,
     })
@@ -560,35 +534,18 @@ fn read_local_artifact(
 }
 
 fn checkout_blockers(
-    inspection: &ChangeStatusInspection,
+    _inspection: &CobChangeInspection,
     plan: &ChangeCobCheckoutPlan,
 ) -> Vec<String> {
     let mut blockers = plan.blockers.clone();
-    if !inspection.authority.is_delegate && plan.destination == ChangeCheckoutDestination::Absent {
-        blockers.push(BLOCKER_AUTHORITY.to_string());
-    }
     blockers.sort();
     blockers.dedup();
     blockers
 }
 
-fn is_checkout_pre_mutation_blocker(error: &ChangeImportError) -> bool {
-    matches!(
-        error,
-        ChangeImportError::CurrentDelegateRequired { .. }
-            | ChangeImportError::ConcurrentCheckout { .. }
-            | ChangeImportError::CheckoutContextDrift { .. }
-            | ChangeImportError::CheckoutSignerProof
-            | ChangeImportError::SignerMismatch { .. }
-            | ChangeImportError::ChangeObjectMissing { .. }
-            | ChangeImportError::ChangeObjectReloadMissing { .. }
-            | ChangeImportError::DuplicateChangeObjects { .. }
-    )
-}
-
 fn status_receipt(
-    options: &RadicleObjectOptions,
-    inspection: &ChangeStatusInspection,
+    options: &CobObjectOptions,
+    inspection: &CobChangeInspection,
     policy_name: &str,
     observed_policy_hash: &str,
     plan: &ChangeCobCheckoutPlan,
@@ -603,16 +560,21 @@ fn status_receipt(
         &checkout_blockers,
     );
     json!({
-        "command": "radicle status",
+        "command": "collaboration status",
+        "compatibility_command": "cob status",
+        "backend": COB_BACKEND_V1,
+        "format_libraries": format_library_versions(),
         "root": path_string(&options.root),
         "change": options.change,
         "type_name": RADICLE_CHANGE_COB_TYPE_NAME,
-        "repository_id": inspection.repository_id,
+        "workspace_id": inspection.state.repository_id,
         "repository_head_oid": inspection.repository_head_oid,
         "object_id": inspection.object_id,
-        "actor": inspection.authority.actor,
-        "current_identity_oid": inspection.authority.identity_oid,
-        "currently_authorized": inspection.authority.is_delegate,
+        "authority": {
+            "creator": inspection.state.creator,
+            "delegates": inspection.state.delegates,
+            "source": "signed_root_embedded_authority",
+        },
         "base_git_oid": plan.base_git_oid,
         "policy": policy_name,
         "object_policy_hash": plan.policy_hash,
@@ -635,6 +597,7 @@ fn status_receipt(
         "verdict": "PASS",
         "non_claims": [
             STATUS_NON_CLAIM_LOCAL,
+            NON_CLAIM_AUTHORITY,
             NON_CLAIM_LIFECYCLE,
             NON_CLAIM_TRANSPORT,
             NON_CLAIM_HOST,
@@ -643,8 +606,8 @@ fn status_receipt(
 }
 
 fn checkout_receipt(
-    options: &RadicleObjectOptions,
-    inspection: &ChangeStatusInspection,
+    options: &CobObjectOptions,
+    inspection: &CobChangeInspection,
     policy_name: &str,
     observed_policy_hash: &str,
     plan: &ChangeCobCheckoutPlan,
@@ -660,16 +623,21 @@ fn checkout_receipt(
         &outcome.blockers,
     );
     json!({
-        "command": "radicle checkout",
+        "command": "collaboration checkout",
+        "compatibility_command": "cob checkout",
+        "backend": COB_BACKEND_V1,
+        "format_libraries": format_library_versions(),
         "root": path_string(&options.root),
         "change": options.change,
         "type_name": RADICLE_CHANGE_COB_TYPE_NAME,
-        "repository_id": inspection.repository_id,
+        "workspace_id": inspection.state.repository_id,
         "repository_head_oid": inspection.repository_head_oid,
         "object_id": inspection.object_id,
-        "actor": inspection.authority.actor,
-        "current_identity_oid": inspection.authority.identity_oid,
-        "currently_authorized": inspection.authority.is_delegate,
+        "authority": {
+            "creator": inspection.state.creator,
+            "delegates": inspection.state.delegates,
+            "source": "signed_root_embedded_authority",
+        },
         "base_git_oid": plan.base_git_oid,
         "policy": policy_name,
         "object_policy_hash": plan.policy_hash,
@@ -686,7 +654,6 @@ fn checkout_receipt(
         "local_destination": plan.destination.as_str(),
         "already_current": plan.already_current(),
         "post_checkout_destination": outcome.final_destination.map(ChangeCheckoutDestination::as_str),
-        "signer_possession_proved": outcome.signer_possession_proved,
         "plan_hash": plan_hash,
         "dry_run": !options.execute,
         "blocked": blocked,
@@ -696,6 +663,7 @@ fn checkout_receipt(
         "verdict": if blocked { "FAIL" } else { "PASS" },
         "non_claims": [
             CHECKOUT_NON_CLAIM_LOCAL,
+            NON_CLAIM_AUTHORITY,
             NON_CLAIM_LIFECYCLE,
             NON_CLAIM_TRANSPORT,
             NON_CLAIM_HOST,
@@ -717,7 +685,7 @@ fn checkout_file_receipts(plan: &ChangeCobCheckoutPlan) -> Vec<Value> {
 }
 
 fn checkout_plan_hash(
-    inspection: &ChangeStatusInspection,
+    inspection: &CobChangeInspection,
     policy_name: &str,
     observed_policy_hash: &str,
     plan: &ChangeCobCheckoutPlan,
@@ -725,10 +693,10 @@ fn checkout_plan_hash(
 ) -> String {
     canonical_json_hash(&json!({
         "type_name": RADICLE_CHANGE_COB_TYPE_NAME,
-        "repository_id": inspection.repository_id,
+        "workspace_id": inspection.state.repository_id,
         "object_id": inspection.object_id,
-        "actor": inspection.authority.actor,
-        "identity_oid": inspection.authority.identity_oid,
+        "creator": inspection.state.creator,
+        "delegates": inspection.state.delegates,
         "policy": policy_name,
         "object_policy_hash": plan.policy_hash,
         "observed_policy_hash": observed_policy_hash,
@@ -789,20 +757,17 @@ pub(crate) fn path_exists(repository: &CapabilityRoot, relative: &Path) -> Resul
 mod tests {
     use std::{collections::BTreeMap, fs};
 
+    use super::*;
     use cairn_core::{
         initialize_change_cob, ChangeArtifactId, ChangeCobAction, ChangeCobInit,
         ChangeCobOperation, RADICLE_CHANGE_COB_SCHEMA_V1,
     };
-    use onix_cairn_radicle::CurrentDelegateAuthority;
-
-    use super::*;
 
     const TEST_DIRECTORY_PREFIX: &str = "cairn-radicle-status-checkout-cli";
     const CHANGE_ID: &str = "demo";
-    const REPOSITORY_ID: &str = "rad:z3example";
+    const REPOSITORY_ID: &str = "workspace:example";
     const BASE_GIT_OID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     const POLICY_HASH: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-    const IDENTITY_OID: &str = "cccccccccccccccccccccccccccccccccccccccc";
     const OBJECT_ID: &str = "dddddddddddddddddddddddddddddddddddddddd";
     const ROOT_OPERATION: &str = "1111111111111111111111111111111111111111";
     const ACTOR: &str = "z6Mkactor";
@@ -835,6 +800,7 @@ mod tests {
                     repository_id: REPOSITORY_ID.to_string(),
                     base_git_oid: BASE_GIT_OID.to_string(),
                     policy_hash: POLICY_HASH.to_string(),
+                    delegates: Default::default(),
                     artifacts: BTreeMap::from([(
                         ChangeArtifactId::proposal(),
                         PROPOSAL.to_string(),
@@ -845,42 +811,33 @@ mod tests {
         .expect("valid test state")
     }
 
-    fn inspection() -> ChangeStatusInspection {
-        ChangeStatusInspection {
-            authority: CurrentDelegateAuthority {
-                actor: ACTOR.to_string(),
-                identity_oid: IDENTITY_OID.to_string(),
-                is_delegate: true,
-            },
-            repository_id: REPOSITORY_ID.to_string(),
+    fn inspection() -> CobChangeInspection {
+        CobChangeInspection {
             repository_head_oid: BASE_GIT_OID.to_string(),
             object_id: OBJECT_ID.to_string(),
             state: state(),
         }
     }
 
-    fn options(root: &Path, execute: bool) -> RadicleObjectOptions {
-        RadicleObjectOptions {
+    fn options(root: &Path, execute: bool) -> CobObjectOptions {
+        CobObjectOptions {
             change: CHANGE_ID.to_string(),
             root: root.to_path_buf(),
-            rad_home: PathBuf::from("/secret/radicle-home"),
-            repository_id: REPOSITORY_ID.to_string(),
+            git_repository: PathBuf::from("/explicit/git/repository"),
             policy: PathBuf::from(default_policy_path()),
             execute,
         }
     }
 
-    // r[verify cairn.radicle_status_checkout.status.typed]
-    // r[verify cairn.radicle_status_checkout.checkout_execution.preview]
+    // r[verify cairn.radicle_cob_only.cli.explicit]
+    // r[verify cairn.radicle_cob_only.cli.reject_runtime]
     #[test]
     fn explicit_status_and_checkout_arguments_default_to_read_only() {
         let status = parse_object_options(
             &[
                 CHANGE_ID.to_string(),
-                "--rad-home".to_string(),
-                "/tmp/radicle".to_string(),
-                "--rid".to_string(),
-                REPOSITORY_ID.to_string(),
+                "--git-repository".to_string(),
+                "/tmp/repository".to_string(),
             ],
             "status",
             false,
@@ -890,10 +847,8 @@ mod tests {
         let checkout = parse_object_options(
             &[
                 CHANGE_ID.to_string(),
-                "--rad-home".to_string(),
-                "/tmp/radicle".to_string(),
-                "--rid".to_string(),
-                REPOSITORY_ID.to_string(),
+                "--git-repository".to_string(),
+                "/tmp/repository".to_string(),
             ],
             "checkout",
             true,
@@ -904,11 +859,19 @@ mod tests {
         assert!(parse_object_options(
             &[
                 CHANGE_ID.to_string(),
+                "--git-repository".to_string(),
+                "/tmp/repository".to_string(),
+                "--execute".to_string(),
+            ],
+            "status",
+            false,
+        )
+        .is_err());
+        assert!(parse_object_options(
+            &[
+                CHANGE_ID.to_string(),
                 "--rad-home".to_string(),
                 "/tmp/radicle".to_string(),
-                "--rid".to_string(),
-                REPOSITORY_ID.to_string(),
-                "--execute".to_string(),
             ],
             "status",
             false,
@@ -916,7 +879,7 @@ mod tests {
         .is_err());
     }
 
-    // r[verify cairn.radicle_status_checkout.checkout_plan.divergent]
+    // r[verify cairn.radicle_cob_only.store.negative]
     #[test]
     fn local_scan_preserves_exact_bytes_and_reports_unsupported_entries(
     ) -> Result<(), Box<dyn Error>> {
@@ -959,8 +922,7 @@ mod tests {
         Ok(())
     }
 
-    // r[verify cairn.radicle_status_checkout.checkout_execution.atomic]
-    // r[verify cairn.radicle_status_checkout.receipts.blocked]
+    // r[verify cairn.radicle_cob_only.cli.preview]
     #[test]
     fn checkout_materializes_exact_bytes_and_refuses_existing_destination(
     ) -> Result<(), Box<dyn Error>> {
@@ -995,11 +957,9 @@ mod tests {
         Ok(())
     }
 
-    // r[verify cairn.radicle_status_checkout.receipts]
-    // r[verify cairn.radicle_status_checkout.receipts.blocked]
-    // r[verify cairn.radicle_status_checkout.non_claims.local_only]
+    // r[verify cairn.radicle_cob_only.docs.non_claims]
     #[test]
-    fn receipts_bind_plan_without_disclosing_radicle_home() -> Result<(), Box<dyn Error>> {
+    fn receipts_bind_plan_without_disclosing_repository_path() -> Result<(), Box<dyn Error>> {
         let root = PathBuf::from(".");
         let inspection = inspection();
         let plan = plan_change_cob_checkout(&inspection.state, ChangeCobLocalSnapshot::absent())?;
@@ -1014,8 +974,15 @@ mod tests {
             ),
         );
         let rendered = serde_json::to_string(&receipt)?;
-        assert!(!rendered.contains("/secret/radicle-home"));
+        assert!(!rendered.contains("/explicit/git/repository"));
         assert_eq!(receipt.get("mutated").and_then(Value::as_bool), Some(false));
+        assert_eq!(
+            receipt
+                .get("format_libraries")
+                .and_then(|libraries| libraries.get("radicle-cob"))
+                .and_then(Value::as_str),
+            Some(RADICLE_COB_LIBRARY_VERSION)
+        );
         assert_eq!(
             receipt
                 .get("receipt_hash")
@@ -1036,9 +1003,8 @@ mod tests {
             &plan,
             &CheckoutExecutionOutcome {
                 mutated: false,
-                signer_possession_proved: false,
                 final_destination: None,
-                blockers: vec![BLOCKER_AUTHORITY.to_string()],
+                blockers: vec![BLOCKER_INPUT_DRIFT.to_string()],
             },
         );
         assert_eq!(blocked.get("blocked").and_then(Value::as_bool), Some(true));
@@ -1052,7 +1018,6 @@ mod tests {
             &plan,
             &CheckoutExecutionOutcome {
                 mutated: true,
-                signer_possession_proved: true,
                 final_destination: Some(ChangeCheckoutDestination::Current),
                 blockers: Vec::new(),
             },
@@ -1064,12 +1029,6 @@ mod tests {
                 .get("post_checkout_destination")
                 .and_then(Value::as_str),
             Some("current")
-        );
-        assert_eq!(
-            executed
-                .get("signer_possession_proved")
-                .and_then(Value::as_bool),
-            Some(true)
         );
         Ok(())
     }

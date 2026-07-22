@@ -57,7 +57,7 @@ use hash_algorithm_policy::run_hash_policy;
 use mcp::run_mcp;
 use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
-use radicle_change::run_radicle;
+use radicle_change::run_cob;
 use receipt_preserves_diff::run_receipt_preserves_diff;
 use receipt_verify_content_hash::run_receipt_verify_content_hash;
 use requirement_id_registry::run_requirement_registry;
@@ -120,7 +120,10 @@ fn run() -> Result<(), Box<dyn Error>> {
         "probe" => probe::run_probe(args.collect())?,
         "runtime-evidence" => run_runtime_evidence(args.collect())?,
         "collaboration" => run_collaboration(args.collect())?,
-        "radicle" => run_radicle(args.collect())?,
+        "cob" => run_cob(args.collect())?,
+        "radicle" => {
+            return Err("the Radicle runtime command was removed; use `cairn cob` with an explicit Git repository".into());
+        }
         "state-machine-receipt" => run_state_machine_receipt(args.collect())?,
         "traceability" => run_traceability(args.collect())?,
         "tracey" => run_tracey(args.collect())?,

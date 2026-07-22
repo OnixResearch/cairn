@@ -4,9 +4,9 @@ use cairn_core::{
     change_cob_update_plan_hash, plan_change_cob_update, validate_change_name, ChangeCobAction,
     ChangeCobUpdatePlan, ChangeCollaborationUpdateSnapshot,
 };
-use onix_cairn_radicle::{
-    execute_profile_update, inspect_profile_status, ChangeImportError, ChangeStatusInspection,
-    ChangeUpdateOutcome,
+use onix_cairn_radicle_cob::{
+    embedded_authority, inspect_change, signer_actor, update_change, CobChangeInspection,
+    CobMutationLock, CobMutationOutcome,
 };
 use serde_json::{json, Value};
 
@@ -19,41 +19,42 @@ use crate::{
     },
 };
 
-use super::{read_unique_option_value, OPTION_TOKEN_WIDTH};
+use super::{
+    format_library_versions, read_unique_option_value, COB_BACKEND_V1, OPTION_TOKEN_WIDTH,
+};
 
-const RADICLE_BACKEND_V1: &str = "radicle.v1";
 const UPDATE_NON_CLAIM_LOCAL: &str =
-    "a signed typed update proves bounded local Radicle storage observations, not network publication, peer availability, synchronization, or remote trust";
+    "a signed update proves bounded local Git COB observations, not node participation, publication, peer availability, synchronization, convergence, or remote trust";
 const UPDATE_NON_CLAIM_LIFECYCLE: &str =
     "collaboration update does not prove gate validity, evidence truth, dependency readiness, source correctness, archive execution, or release eligibility";
 const UPDATE_NON_CLAIM_AUTHORITY: &str =
-    "current identity and signer checks prove point-in-time local authority observations, not future authorization";
+    "embedded creator and delegate keys are immutable COB authority, not Radicle identity-document or future authorization proof";
 const UPDATE_NON_CLAIM_CONFLICT: &str =
     "ordinary collaboration update refuses conflicts and does not prove or perform conflict resolution";
 const BLOCKER_INPUT_DRIFT: &str =
-    "active change, policy, current identity, object, or typed state changed after preview";
+    "active change, policy, Git repository head, object, signer, embedded authority, or typed state changed after preview";
 
+// r[impl cairn.radicle_cob_only.cli]
+// r[impl cairn.radicle_cob_only.docs]
 // r[impl cairn.collaboration_update.radicle_execution]
-// r[impl cairn.collaboration_update.receipts]
-// r[impl cairn.collaboration_update.non_claims]
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct RadicleUpdateOptions {
+struct CobUpdateOptions {
     change: String,
     root: PathBuf,
-    rad_home: PathBuf,
-    repository_id: String,
+    git_repository: PathBuf,
+    keystore: PathBuf,
     policy: PathBuf,
     execute: bool,
 }
 
 pub(super) fn run_update(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let options = parse_update_options(&args)?;
-    let inspection =
-        inspect_profile_status(&options.rad_home, &options.repository_id, &options.change)?;
+    let inspection = inspect_change(&options.git_repository, &options.change)?;
+    let actor = signer_actor(&options.keystore)?;
     let policy = load_policy_file(options.policy.clone())?;
     let observed_policy_hash = cairn_core::canonical_json_hash(&policy.raw);
-    let preview = match build_update_plan(&options, &inspection, &observed_policy_hash) {
+    let preview = match build_update_plan(&options, &inspection, &actor, &observed_policy_hash) {
         Ok(plan) => plan,
         Err(error) => {
             return print_json(with_portable_receipt_hash(
@@ -68,27 +69,34 @@ pub(super) fn run_update(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if options.execute && !preview.is_noop() {
         match RepositoryCheckoutLock::acquire(&options.root, &options.change) {
             Ok(repository_guard) => {
-                let mut fatal_error = None;
-                match recheck_update_inputs(&options, &inspection, &preview) {
-                    Ok((current, current_plan)) => match execute_profile_update(
-                        &options.rad_home,
-                        &options.repository_id,
-                        &current_plan,
-                        &current,
-                    ) {
-                        Ok(updated) => outcome = Some(updated),
-                        Err(error) if is_pre_mutation_blocker(&error) => {
+                match CobMutationLock::acquire(&options.git_repository, &options.change) {
+                    Ok(cob_guard) => {
+                        let execution = recheck_update_inputs(&options, &inspection, &preview)
+                            .and_then(|(current, current_plan)| {
+                                update_change(
+                                    &options.git_repository,
+                                    &options.keystore,
+                                    &current.object_id,
+                                    &options.change,
+                                    &current_plan.actor,
+                                    &current_plan.actions,
+                                    &current_plan.expected_content_root,
+                                )
+                                .map_err(Into::into)
+                            });
+                        let cob_release = cob_guard.release();
+                        match execution {
+                            Ok(updated) => outcome = Some(updated),
+                            Err(error) => blockers.push(error.to_string()),
+                        }
+                        if let Err(error) = cob_release {
                             blockers.push(error.to_string());
                         }
-                        Err(error) => fatal_error = Some(error),
-                    },
+                    }
                     Err(error) => blockers.push(error.to_string()),
                 }
                 if let Err(error) = repository_guard.release() {
                     blockers.push(error.to_string());
-                }
-                if let Some(error) = fatal_error {
-                    return Err(error.into());
                 }
             }
             Err(error) => blockers.push(error.to_string()),
@@ -108,14 +116,14 @@ pub(super) fn run_update(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     print_json(with_portable_receipt_hash(&options.root, receipt))
 }
 
-fn parse_update_options(args: &[String]) -> Result<RadicleUpdateOptions, Box<dyn Error>> {
+fn parse_update_options(args: &[String]) -> Result<CobUpdateOptions, Box<dyn Error>> {
     let Some(change) = args.first() else {
-        return Err("radicle update requires a change name".into());
+        return Err("cob update requires a change name".into());
     };
     validate_change_name(change).map_err(|reason| format!("invalid change name: {reason}"))?;
     let mut root = None;
-    let mut rad_home = None;
-    let mut repository_id = None;
+    let mut git_repository = None;
+    let mut keystore = None;
     let mut policy = None;
     let mut execute = false;
     let mut index = 1;
@@ -126,19 +134,22 @@ fn parse_update_options(args: &[String]) -> Result<RadicleUpdateOptions, Box<dyn
                     Some(read_unique_option_value(args, index, "--root", root.is_some())?.into());
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--rad-home" => {
-                rad_home = Some(
-                    read_unique_option_value(args, index, "--rad-home", rad_home.is_some())?.into(),
+            "--git-repository" => {
+                git_repository = Some(
+                    read_unique_option_value(
+                        args,
+                        index,
+                        "--git-repository",
+                        git_repository.is_some(),
+                    )?
+                    .into(),
                 );
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--rid" => {
-                repository_id = Some(read_unique_option_value(
-                    args,
-                    index,
-                    "--rid",
-                    repository_id.is_some(),
-                )?);
+            "--keystore" => {
+                keystore = Some(
+                    read_unique_option_value(args, index, "--keystore", keystore.is_some())?.into(),
+                );
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
             "--policy" => {
@@ -154,32 +165,41 @@ fn parse_update_options(args: &[String]) -> Result<RadicleUpdateOptions, Box<dyn
                 execute = true;
                 index = index.saturating_add(1);
             }
-            unknown => return Err(format!("unknown radicle update argument: {unknown}").into()),
+            "--rad-home" | "--rid" | "--control-socket" | "--peer-id" | "--peer-address" => {
+                return Err(format!(
+                    "unsupported Radicle runtime argument for COB-only update: {}",
+                    args[index]
+                )
+                .into());
+            }
+            unknown => return Err(format!("unknown cob update argument: {unknown}").into()),
         }
     }
-    Ok(RadicleUpdateOptions {
+    Ok(CobUpdateOptions {
         change: change.clone(),
         root: root.unwrap_or_else(|| PathBuf::from(".")),
-        rad_home: rad_home.ok_or("radicle update requires --rad-home PATH")?,
-        repository_id: repository_id.ok_or("radicle update requires --rid RID")?,
+        git_repository: git_repository.ok_or("cob update requires --git-repository PATH")?,
+        keystore: keystore.ok_or("cob update requires --keystore PATH")?,
         policy: policy.unwrap_or_else(|| PathBuf::from(default_policy_path())),
         execute,
     })
 }
 
 fn build_update_plan(
-    options: &RadicleUpdateOptions,
-    inspection: &ChangeStatusInspection,
+    options: &CobUpdateOptions,
+    inspection: &CobChangeInspection,
+    actor: &str,
     policy_hash: &str,
 ) -> Result<ChangeCobUpdatePlan, Box<dyn Error>> {
     let artifacts = read_active_change_artifacts(&options.root, &options.change)?;
+    let (_, is_delegate) = embedded_authority(&inspection.state, actor);
     Ok(plan_change_cob_update(
         &inspection.state,
         ChangeCollaborationUpdateSnapshot {
             change_id: options.change.clone(),
             policy_hash: policy_hash.to_string(),
-            actor: inspection.authority.actor.clone(),
-            is_delegate: inspection.authority.is_delegate,
+            actor: actor.to_string(),
+            is_delegate,
             proposal: artifacts.proposal,
             design: artifacts.design,
             tasks: artifacts.tasks,
@@ -190,15 +210,15 @@ fn build_update_plan(
 }
 
 fn recheck_update_inputs(
-    options: &RadicleUpdateOptions,
-    expected_inspection: &ChangeStatusInspection,
+    options: &CobUpdateOptions,
+    expected_inspection: &CobChangeInspection,
     expected_plan: &ChangeCobUpdatePlan,
-) -> Result<(ChangeStatusInspection, ChangeCobUpdatePlan), Box<dyn Error>> {
+) -> Result<(CobChangeInspection, ChangeCobUpdatePlan), Box<dyn Error>> {
     let current_policy = load_policy_file(options.policy.clone())?;
     let current_policy_hash = cairn_core::canonical_json_hash(&current_policy.raw);
-    let current =
-        inspect_profile_status(&options.rad_home, &options.repository_id, &options.change)?;
-    let current_plan = build_update_plan(options, &current, &current_policy_hash)?;
+    let current = inspect_change(&options.git_repository, &options.change)?;
+    let actor = signer_actor(&options.keystore)?;
+    let current_plan = build_update_plan(options, &current, &actor, &current_policy_hash)?;
     if &current != expected_inspection || &current_plan != expected_plan {
         return Err(BLOCKER_INPUT_DRIFT.into());
     }
@@ -206,13 +226,13 @@ fn recheck_update_inputs(
 }
 
 fn update_receipt(
-    options: &RadicleUpdateOptions,
+    options: &CobUpdateOptions,
     policy_name: &str,
     observed_policy_hash: &str,
-    inspection: &ChangeStatusInspection,
+    inspection: &CobChangeInspection,
     plan: &ChangeCobUpdatePlan,
     blockers: &[String],
-    outcome: Option<&ChangeUpdateOutcome>,
+    outcome: Option<&CobMutationOutcome>,
 ) -> Result<Value, Box<dyn Error>> {
     let updates = plan
         .actions
@@ -237,12 +257,15 @@ fn update_receipt(
         })
         .collect::<Vec<_>>();
     let blocked = !blockers.is_empty();
+    let (is_creator, is_delegate) = embedded_authority(&inspection.state, &plan.actor);
     Ok(json!({
         "command": "collaboration update",
-        "backend": RADICLE_BACKEND_V1,
+        "compatibility_command": "cob update",
+        "backend": COB_BACKEND_V1,
+        "format_libraries": format_library_versions(),
         "root": path_string(&options.root),
         "change": options.change,
-        "workspace_id": inspection.repository_id,
+        "workspace_id": inspection.state.repository_id,
         "base_revision": {
             "kind": "git_oid",
             "value": inspection.repository_head_oid,
@@ -250,17 +273,12 @@ fn update_receipt(
         "object_id": inspection.object_id,
         "actor": {
             "id": plan.actor,
-            "source": "radicle_profile_and_current_identity",
+            "source": "explicit_cob_keystore_and_embedded_authority",
             "cryptographically_verified": outcome.is_some(),
-            "currently_authorized": inspection.authority.is_delegate
-                || inspection.authority.actor == inspection.state.creator,
-            "authority_class": if inspection.authority.is_delegate {
-                "current_delegate"
-            } else {
-                "signed_creator"
-            },
-            "canonical_identity_oid": inspection.authority.identity_oid,
+            "currently_authorized": is_creator || is_delegate,
+            "authority_class": if is_creator { "signed_creator" } else { "embedded_delegate" },
         },
+        "delegates": inspection.state.delegates,
         "policy": policy_name,
         "policy_hash": inspection.state.policy_hash,
         "observed_policy_hash": observed_policy_hash,
@@ -271,6 +289,7 @@ fn update_receipt(
         "input_state_hash": plan.input_state_hash,
         "input_content_root": plan.input_content_root,
         "expected_content_root": plan.expected_content_root,
+        "result_operation_id": outcome.map(|value| value.operation_id.as_str()),
         "result_state_hash": outcome.map(|value| value.state_hash.as_str()),
         "result_content_root": outcome.map(|value| value.content_root.as_str()),
         "changed_artifacts": plan.changed_artifacts,
@@ -286,10 +305,12 @@ fn update_receipt(
     }))
 }
 
-fn failure_receipt(options: &RadicleUpdateOptions, blocker: String) -> Value {
+fn failure_receipt(options: &CobUpdateOptions, blocker: String) -> Value {
     json!({
         "command": "collaboration update",
-        "backend": RADICLE_BACKEND_V1,
+        "compatibility_command": "cob update",
+        "backend": COB_BACKEND_V1,
+        "format_libraries": format_library_versions(),
         "root": path_string(&options.root),
         "change": options.change,
         "dry_run": !options.execute,
@@ -300,20 +321,6 @@ fn failure_receipt(options: &RadicleUpdateOptions, blocker: String) -> Value {
         "verdict": "FAIL",
         "non_claims": non_claims(),
     })
-}
-
-fn is_pre_mutation_blocker(error: &ChangeImportError) -> bool {
-    matches!(
-        error,
-        ChangeImportError::CurrentDelegateRequired { .. }
-            | ChangeImportError::ConcurrentUpdate { .. }
-            | ChangeImportError::EmptyUpdate
-            | ChangeImportError::UpdateContextDrift { .. }
-            | ChangeImportError::UpdateActorMismatch { .. }
-            | ChangeImportError::ChangeObjectMissing { .. }
-            | ChangeImportError::DuplicateChangeObjects { .. }
-            | ChangeImportError::SignerMismatch { .. }
-    )
 }
 
 fn non_claims() -> [&'static str; 4] {
@@ -327,146 +334,30 @@ fn non_claims() -> [&'static str; 4] {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::BTreeMap, fs, io, path::Path};
-
-    use cairn_core::{
-        change_cob_import_content_root, change_cob_state_hash, initialize_change_cob,
-        ChangeArtifactId, ChangeCobInit, ChangeCobOperation, RADICLE_CHANGE_COB_SCHEMA_V1,
-    };
-    use onix_cairn_radicle::CurrentDelegateAuthority;
-
     use super::*;
 
-    const CHANGE_ID: &str = "radicle-update-preview";
-    const REPOSITORY_ID: &str = "rad:repository";
-    const BASE_GIT_OID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    const IDENTITY_OID: &str = "cccccccccccccccccccccccccccccccccccccccc";
-    const ROOT_OPERATION: &str = "1111111111111111111111111111111111111111";
-    const ACTOR: &str = "did:key:actor";
-    const POLICY_HASH: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-    const TEST_POLICY_RELATIVE: &str = "../../cairn-policy/generated/cairn-policy.json";
-    const TEST_DIRECTORY_PREFIX: &str = "cairn-radicle-update-preview";
+    const CHANGE_ID: &str = "cob-update-preview";
 
-    fn test_directory() -> PathBuf {
-        std::env::temp_dir().join(format!("{TEST_DIRECTORY_PREFIX}-{}", std::process::id()))
-    }
-
-    fn remove_directory(path: &Path) -> Result<(), Box<dyn Error>> {
-        match fs::remove_dir_all(path) {
-            Ok(()) => Ok(()),
-            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
-            Err(error) => Err(error.into()),
-        }
-    }
-
-    fn inspection() -> ChangeStatusInspection {
-        let state = initialize_change_cob(ChangeCobOperation {
-            id: ROOT_OPERATION.to_string(),
-            actor: ACTOR.to_string(),
-            is_delegate: true,
-            actions: vec![ChangeCobAction::Init {
-                state: ChangeCobInit {
-                    schema: RADICLE_CHANGE_COB_SCHEMA_V1.to_string(),
-                    change_id: CHANGE_ID.to_string(),
-                    repository_id: REPOSITORY_ID.to_string(),
-                    base_git_oid: BASE_GIT_OID.to_string(),
-                    policy_hash: POLICY_HASH.to_string(),
-                    artifacts: BTreeMap::from([(
-                        ChangeArtifactId::proposal(),
-                        "# Proposal\n".to_string(),
-                    )]),
-                },
-            }],
-        })
-        .unwrap();
-        ChangeStatusInspection {
-            authority: CurrentDelegateAuthority {
-                actor: ACTOR.to_string(),
-                identity_oid: IDENTITY_OID.to_string(),
-                is_delegate: true,
-            },
-            repository_id: REPOSITORY_ID.to_string(),
-            repository_head_oid: BASE_GIT_OID.to_string(),
-            object_id: ROOT_OPERATION.to_string(),
-            state,
-        }
-    }
-
-    fn options(root: &Path, execute: bool) -> RadicleUpdateOptions {
-        RadicleUpdateOptions {
-            change: CHANGE_ID.to_string(),
-            root: root.to_path_buf(),
-            rad_home: root.join("radicle"),
-            repository_id: REPOSITORY_ID.to_string(),
-            policy: PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(TEST_POLICY_RELATIVE),
-            execute,
-        }
-    }
-
-    // r[verify cairn.collaboration_update.receipts.modes]
+    // r[verify cairn.radicle_cob_only.cli.explicit]
+    // r[verify cairn.radicle_cob_only.cli.reject_runtime]
     #[test]
-    fn preview_plan_and_receipt_bind_exact_local_update() -> Result<(), Box<dyn Error>> {
-        let root = test_directory();
-        remove_directory(&root)?;
-        let change = root.join("cairn/changes").join(CHANGE_ID);
-        fs::create_dir_all(change.join("specs"))?;
-        fs::write(change.join("proposal.md"), "# Updated proposal\n")?;
-        let inspection = inspection();
-        let plan = build_update_plan(&options(&root, false), &inspection, POLICY_HASH)?;
-        assert_eq!(plan.changed_artifacts, vec!["proposal"]);
-        assert_ne!(plan.input_content_root, plan.expected_content_root);
-        let receipt = update_receipt(
-            &options(&root, false),
-            "default",
-            POLICY_HASH,
-            &inspection,
-            &plan,
-            &[],
-            None,
-        )?;
-        assert_eq!(receipt["dry_run"], true);
-        assert_eq!(receipt["mutated"], false);
-        assert_eq!(receipt["plan_hash"], change_cob_update_plan_hash(&plan)?);
-        assert_eq!(
-            receipt["input_state_hash"],
-            change_cob_state_hash(&inspection.state)?
-        );
-        assert_eq!(
-            receipt["input_content_root"],
-            change_cob_import_content_root(
-                &ChangeCobInit {
-                    schema: RADICLE_CHANGE_COB_SCHEMA_V1.to_string(),
-                    change_id: CHANGE_ID.to_string(),
-                    repository_id: REPOSITORY_ID.to_string(),
-                    base_git_oid: BASE_GIT_OID.to_string(),
-                    policy_hash: POLICY_HASH.to_string(),
-                    artifacts: BTreeMap::from([(
-                        ChangeArtifactId::proposal(),
-                        "# Proposal\n".to_string(),
-                    )]),
-                },
-                ACTOR,
-            )?
-        );
-        assert!(receipt["non_claims"].as_array().is_some_and(|claims| claims
-            .iter()
-            .any(|claim| claim == UPDATE_NON_CLAIM_CONFLICT)));
-        remove_directory(&root)?;
-        Ok(())
-    }
-
-    #[test]
-    fn update_arguments_require_explicit_radicle_context() {
+    fn update_arguments_require_repository_and_keystore_without_runtime_context() {
         assert!(parse_update_options(&[CHANGE_ID.to_string()]).is_err());
         let parsed = parse_update_options(&[
             CHANGE_ID.to_string(),
-            "--rad-home".to_string(),
-            "/tmp/radicle".to_string(),
-            "--rid".to_string(),
-            REPOSITORY_ID.to_string(),
+            "--git-repository".to_string(),
+            "/tmp/repository".to_string(),
+            "--keystore".to_string(),
+            "/tmp/keys".to_string(),
         ])
-        .unwrap();
+        .expect("explicit COB options");
         assert_eq!(parsed.change, CHANGE_ID);
         assert!(!parsed.execute);
+        assert!(parse_update_options(&[
+            CHANGE_ID.to_string(),
+            "--rad-home".to_string(),
+            "/tmp/radicle".to_string(),
+        ])
+        .is_err());
     }
 }

@@ -17,7 +17,7 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 use crate::{
-    radicle_change::{run_radicle, status_checkout::read_local_change_snapshot},
+    radicle_change::{run_cob, status_checkout::read_local_change_snapshot},
     support::{
         default_policy_path, load_policy_file, path_string, print_json, with_portable_receipt_hash,
     },
@@ -33,7 +33,7 @@ use self::{
     },
 };
 
-const RADICLE_BACKEND_V1: &str = "radicle.v1";
+const COB_BACKEND_V1: &str = "radicle-cob.v1";
 const OPTION_TOKEN_WIDTH: usize = 2;
 const NON_CLAIM_AUTHORITY: &str =
     "portable actor and workspace values are caller declarations, not cryptographic identity or remote authority proof";
@@ -55,6 +55,7 @@ const BLOCKER_CHANGE_MISMATCH: &str =
 // r[impl cairn.collaboration_backend.portable_shell]
 // r[impl cairn.collaboration_backend.receipts]
 // r[impl cairn.collaboration_backend.non_claims]
+// r[impl cairn.collaboration_update.non_claims]
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CollaborationCommand {
@@ -64,7 +65,6 @@ enum CollaborationCommand {
     Update,
     Conflicts,
     Resolve,
-    Sync,
 }
 
 impl CollaborationCommand {
@@ -76,7 +76,6 @@ impl CollaborationCommand {
             "update" => Ok(Self::Update),
             "conflicts" => Ok(Self::Conflicts),
             "resolve" => Ok(Self::Resolve),
-            "sync" => Ok(Self::Sync),
             _ => Err(format!("unknown collaboration subcommand: {value}").into()),
         }
     }
@@ -89,14 +88,13 @@ impl CollaborationCommand {
             Self::Update => "update",
             Self::Conflicts => "conflicts",
             Self::Resolve => "resolve",
-            Self::Sync => "sync",
         }
     }
 
     fn allows_execute(self) -> bool {
         matches!(
             self,
-            Self::Import | Self::Checkout | Self::Update | Self::Resolve | Self::Sync
+            Self::Import | Self::Checkout | Self::Update | Self::Resolve
         )
     }
 }
@@ -117,7 +115,7 @@ struct PortableOptions {
 pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(command_text) = args.first() else {
         return Err(
-            "collaboration requires a subcommand: import, status, checkout, update, conflicts, resolve, or sync".into(),
+            "collaboration requires a subcommand: import, status, checkout, update, conflicts, or resolve".into(),
         );
     };
     let command = CollaborationCommand::parse(command_text)?;
@@ -129,11 +127,6 @@ pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>>
                     resolution::run_portable_conflicts(&backend_args)?
                 }
                 CollaborationCommand::Resolve => resolution::run_portable_resolve(&backend_args)?,
-                CollaborationCommand::Sync => {
-                    return Err(
-                        "portable-json.v1 does not support collaboration sync transport".into(),
-                    );
-                }
                 CollaborationCommand::Import
                 | CollaborationCommand::Status
                 | CollaborationCommand::Checkout
@@ -144,9 +137,7 @@ pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>>
                         CollaborationCommand::Status => portable_status(&options)?,
                         CollaborationCommand::Checkout => portable_checkout(&options)?,
                         CollaborationCommand::Update => portable_update(&options)?,
-                        CollaborationCommand::Conflicts
-                        | CollaborationCommand::Resolve
-                        | CollaborationCommand::Sync => {
+                        CollaborationCommand::Conflicts | CollaborationCommand::Resolve => {
                             return Err(
                                 "specialized command reached ordinary portable parser".into()
                             );
@@ -157,10 +148,10 @@ pub(crate) fn run_collaboration(args: Vec<String>) -> Result<(), Box<dyn Error>>
             let root = collaboration_receipt_root(&receipt);
             print_json(with_portable_receipt_hash(&root, receipt))
         }
-        RADICLE_BACKEND_V1 => {
+        COB_BACKEND_V1 => {
             let mut forwarded = vec![command.as_str().to_string()];
             forwarded.extend(backend_args);
-            run_radicle(forwarded)
+            run_cob(forwarded)
         }
         unsupported => Err(format!("unsupported collaboration backend: {unsupported}").into()),
     }
@@ -965,7 +956,6 @@ mod tests {
 
     // r[verify cairn.collaboration_backend.cli.portable]
     // r[verify cairn.collaboration_backend.cli.arguments]
-    // r[verify cairn.collaboration_sync.preview.portable]
     #[test]
     fn backend_dispatch_and_portable_arguments_are_explicit() {
         let (backend, args) = extract_backend(&[
@@ -1009,10 +999,7 @@ mod tests {
             CollaborationCommand::parse("resolve").unwrap(),
             CollaborationCommand::Resolve
         );
-        assert_eq!(
-            CollaborationCommand::parse("sync").unwrap(),
-            CollaborationCommand::Sync
-        );
+        assert!(CollaborationCommand::parse("sync").is_err());
         assert!(run_collaboration(vec![
             "sync".to_string(),
             CHANGE_ID.to_string(),

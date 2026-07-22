@@ -32,6 +32,7 @@ pub const MAX_ARTIFACT_ID_BYTES: usize = 256;
 pub const MAX_ARTIFACTS: usize = 256;
 pub const MAX_ARTIFACT_BYTES: usize = 1_048_576;
 pub const MAX_ACTIONS_PER_OPERATION: usize = 64;
+pub const MAX_DELEGATES: usize = 256;
 pub const MAX_OPERATIONS: usize = 16_384;
 pub const MAX_REVISIONS_PER_ARTIFACT: usize = 4_096;
 pub const MAX_REVISION_BASIS_IDS: usize = MAX_REVISIONS_PER_ARTIFACT;
@@ -125,6 +126,8 @@ pub struct ChangeCobInit {
     pub repository_id: String,
     pub base_git_oid: String,
     pub policy_hash: String,
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub delegates: BTreeSet<String>,
     pub artifacts: BTreeMap<ChangeArtifactId, String>,
 }
 
@@ -293,6 +296,8 @@ pub struct ChangeCobState {
     pub base_git_oid: String,
     pub policy_hash: String,
     pub creator: String,
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub delegates: BTreeSet<String>,
     pub artifacts: BTreeMap<ChangeArtifactId, ChangeRevisionSet<Option<String>>>,
     pub evidence: BTreeMap<String, ChangeCobEvidence>,
     pub lifecycle: ChangeRevisionSet<ChangeLifecycleRecord>,
@@ -410,6 +415,7 @@ pub fn initialize_change_cob(
         base_git_oid: init.base_git_oid,
         policy_hash: init.policy_hash,
         creator: operation.actor.clone(),
+        delegates: init.delegates,
         artifacts,
         evidence: BTreeMap::new(),
         lifecycle: ChangeRevisionSet {
@@ -494,6 +500,7 @@ pub fn change_cob_content_root(state: &ChangeCobState) -> Result<String, ChangeC
         base_revision,
         policy_hash: &state.policy_hash,
         creator: &state.creator,
+        delegates: &state.delegates,
         artifacts,
     })
 }
@@ -511,6 +518,7 @@ pub fn change_cob_state_hash(state: &ChangeCobState) -> Result<String, ChangeCob
         base_revision,
         policy_hash: &state.policy_hash,
         creator: &state.creator,
+        delegates: &state.delegates,
         artifacts: &state.artifacts,
         evidence: &state.evidence,
         lifecycle: &state.lifecycle,
@@ -805,6 +813,16 @@ pub fn validate_change_cob_init(init: &ChangeCobInit) -> Result<(), ChangeCobErr
         let _base_revision = decode_base_revision(&init.base_git_oid)?;
     }
     validate_blake3("policy_hash", &init.policy_hash)?;
+    if init.schema == RADICLE_CHANGE_COB_SCHEMA_V1 && !init.delegates.is_empty() {
+        return Err(ChangeCobError::InvalidField {
+            field: "delegates".to_string(),
+            reason: "legacy Radicle roots cannot embed Cairn delegate authority".to_string(),
+        });
+    }
+    validate_count_limit("delegates", init.delegates.len(), MAX_DELEGATES)?;
+    for delegate in &init.delegates {
+        validate_text_limit("delegate", delegate, MAX_ACTOR_ID_BYTES)?;
+    }
     validate_count_limit("artifacts", init.artifacts.len(), MAX_ARTIFACTS)?;
     for (artifact, content) in &init.artifacts {
         artifact.validate()?;
@@ -821,9 +839,16 @@ pub fn validate_change_cob_state(state: &ChangeCobState) -> Result<(), ChangeCob
         repository_id: state.repository_id.clone(),
         base_git_oid: state.base_git_oid.clone(),
         policy_hash: state.policy_hash.clone(),
+        delegates: state.delegates.clone(),
         artifacts: BTreeMap::new(),
     })?;
     validate_text_limit("creator", &state.creator, MAX_ACTOR_ID_BYTES)?;
+    if state.delegates.contains(&state.creator) {
+        return Err(ChangeCobError::InvalidField {
+            field: "delegates".to_string(),
+            reason: "creator must not also be an embedded delegate".to_string(),
+        });
+    }
     validate_count_limit("operations", state.operations.len(), MAX_OPERATIONS)?;
     if state.operations.is_empty() {
         return Err(ChangeCobError::InvalidField {
@@ -1207,6 +1232,8 @@ struct ChangeContentIdentity<'a> {
     base_revision: ChangeBaseRevision,
     policy_hash: &'a str,
     creator: &'a str,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    delegates: &'a BTreeSet<String>,
     artifacts: BTreeMap<ChangeArtifactId, String>,
 }
 
@@ -1218,6 +1245,8 @@ struct ChangeStateIdentity<'a> {
     base_revision: ChangeBaseRevision,
     policy_hash: &'a str,
     creator: &'a str,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    delegates: &'a BTreeSet<String>,
     artifacts: &'a BTreeMap<ChangeArtifactId, ChangeRevisionSet<Option<String>>>,
     evidence: &'a BTreeMap<String, ChangeCobEvidence>,
     lifecycle: &'a ChangeRevisionSet<ChangeLifecycleRecord>,
@@ -1273,6 +1302,7 @@ mod tests {
                 repository_id: REPOSITORY_ID.to_string(),
                 base_git_oid: BASE_GIT_OID.to_string(),
                 policy_hash: POLICY_HASH.to_string(),
+                delegates: BTreeSet::new(),
                 artifacts: BTreeMap::from([
                     (ChangeArtifactId::proposal(), INITIAL_PROPOSAL.to_string()),
                     (ChangeArtifactId::design(), INITIAL_DESIGN.to_string()),
@@ -1309,6 +1339,21 @@ mod tests {
             vec![init_action()],
         ))
         .unwrap()
+    }
+
+    fn neutral_state(delegates: BTreeSet<String>) -> ChangeCobState {
+        let mut action = init_action();
+        let ChangeCobAction::Init { state: init } = &mut action else {
+            unreachable!("test helper constructs an init action");
+        };
+        init.schema = CHANGE_COLLABORATION_SCHEMA_V1.to_string();
+        init.repository_id = "workspace:radicle-cob-only".to_string();
+        init.base_git_oid = ChangeBaseRevision::new("git_oid", BASE_GIT_OID)
+            .unwrap()
+            .encode()
+            .unwrap();
+        init.delegates = delegates;
+        initialize_change_cob(operation(ROOT_OPERATION, CREATOR, false, vec![action])).unwrap()
     }
 
     fn set_artifact(artifact: ChangeArtifactId, content: &str, basis: &[&str]) -> ChangeCobAction {
@@ -1740,6 +1785,100 @@ mod tests {
         assert!(matches!(
             apply_change_cob_operation(&mut state, update),
             Err(ChangeCobError::DuplicateOperation { .. })
+        ));
+    }
+
+    // r[verify cairn.radicle_cob_only.authority.allowed]
+    #[test]
+    fn neutral_schema_preserves_embedded_delegate_authority() {
+        let mut state = neutral_state(BTreeSet::from([DELEGATE.to_string()]));
+        assert!(state.delegates.contains(DELEGATE));
+        apply_change_cob_operation(
+            &mut state,
+            operation(
+                DESIGN_OPERATION,
+                DELEGATE,
+                true,
+                vec![set_artifact(
+                    ChangeArtifactId::design(),
+                    UPDATED_DESIGN,
+                    &[ROOT_OPERATION],
+                )],
+            ),
+        )
+        .unwrap();
+    }
+
+    // r[verify cairn.radicle_cob_only.compatibility.legacy]
+    // r[verify cairn.radicle_cob_only.authority.bounded]
+    // r[verify cairn.radicle_cob_only.authority.legacy_hash]
+    #[test]
+    fn legacy_empty_authority_stays_omitted_and_neutral_authority_is_hashed() {
+        let legacy = state();
+        let serialized = serde_json::to_value(&legacy).unwrap();
+        assert!(serialized.get("delegates").is_none());
+
+        let without_delegate = neutral_state(BTreeSet::new());
+        let base_revision = decode_base_revision(&without_delegate.base_git_oid).unwrap();
+        let artifacts = resolved_artifacts(&without_delegate)
+            .unwrap()
+            .into_iter()
+            .filter_map(|(artifact, content)| content.map(|content| (artifact, content)))
+            .collect::<BTreeMap<_, _>>();
+        let expected_content_root = canonical_json_hash(&serde_json::json!({
+            "schema": without_delegate.schema,
+            "change_id": without_delegate.change_id,
+            "workspace_id": without_delegate.repository_id,
+            "base_revision": base_revision,
+            "policy_hash": without_delegate.policy_hash,
+            "creator": without_delegate.creator,
+            "artifacts": artifacts,
+        }));
+        assert_eq!(
+            change_cob_content_root(&without_delegate).unwrap(),
+            expected_content_root
+        );
+        let expected_state_hash = canonical_json_hash(&serde_json::json!({
+            "schema": without_delegate.schema,
+            "change_id": without_delegate.change_id,
+            "workspace_id": without_delegate.repository_id,
+            "base_revision": decode_base_revision(&without_delegate.base_git_oid).unwrap(),
+            "policy_hash": without_delegate.policy_hash,
+            "creator": without_delegate.creator,
+            "artifacts": without_delegate.artifacts,
+            "evidence": without_delegate.evidence,
+            "lifecycle": without_delegate.lifecycle,
+            "operations": without_delegate.operations,
+        }));
+        assert_eq!(
+            change_cob_state_hash(&without_delegate).unwrap(),
+            expected_state_hash
+        );
+
+        let with_delegate = neutral_state(BTreeSet::from([DELEGATE.to_string()]));
+        assert_ne!(
+            change_cob_content_root(&without_delegate).unwrap(),
+            change_cob_content_root(&with_delegate).unwrap()
+        );
+        assert_ne!(
+            change_cob_state_hash(&without_delegate).unwrap(),
+            change_cob_state_hash(&with_delegate).unwrap()
+        );
+
+        let mut invalid_legacy = legacy;
+        invalid_legacy.delegates.insert(DELEGATE.to_string());
+        assert!(matches!(
+            validate_change_cob_state(&invalid_legacy),
+            Err(ChangeCobError::InvalidField { ref field, .. }) if field == "delegates"
+        ));
+
+        let mut oversized = without_delegate;
+        oversized.delegates = (0..=MAX_DELEGATES)
+            .map(|index| format!("delegate-{index}"))
+            .collect();
+        assert!(matches!(
+            validate_change_cob_state(&oversized),
+            Err(ChangeCobError::CountLimitExceeded { ref field, .. }) if field == "delegates"
         ));
     }
 }

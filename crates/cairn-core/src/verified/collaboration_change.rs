@@ -27,6 +27,8 @@ pub struct ChangeCollaborationInit {
     pub workspace_id: String,
     pub base_revision: ChangeBaseRevision,
     pub policy_hash: String,
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub delegates: BTreeSet<String>,
     pub artifacts: BTreeMap<ChangeArtifactId, String>,
 }
 
@@ -44,8 +46,14 @@ impl ChangeCollaborationInit {
             workspace_id: workspace_id.into(),
             base_revision,
             policy_hash: policy_hash.into(),
+            delegates: BTreeSet::new(),
             artifacts,
         }
+    }
+
+    pub fn with_delegates(mut self, delegates: BTreeSet<String>) -> Self {
+        self.delegates = delegates;
+        self
     }
 }
 
@@ -87,6 +95,8 @@ pub struct ChangeCollaborationState {
     pub base_revision: ChangeBaseRevision,
     pub policy_hash: String,
     pub creator: String,
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub delegates: BTreeSet<String>,
     pub artifacts: BTreeMap<ChangeArtifactId, ChangeRevisionSet<Option<String>>>,
     pub evidence: BTreeMap<String, ChangeCollaborationEvidence>,
     pub lifecycle: ChangeRevisionSet<ChangeLifecycleRecord>,
@@ -170,6 +180,7 @@ pub(crate) fn state_to_compatibility(
         base_git_oid: compatibility_base_revision(&state.schema, &state.base_revision)?,
         policy_hash: state.policy_hash.clone(),
         creator: state.creator.clone(),
+        delegates: state.delegates.clone(),
         artifacts: state.artifacts.clone(),
         evidence: state.evidence.clone(),
         lifecycle: state.lifecycle.clone(),
@@ -192,6 +203,7 @@ pub(crate) fn state_from_compatibility(
         base_revision,
         policy_hash: state.policy_hash,
         creator: state.creator,
+        delegates: state.delegates,
         artifacts: state.artifacts,
         evidence: state.evidence,
         lifecycle: state.lifecycle,
@@ -257,6 +269,7 @@ fn init_to_compatibility(
         repository_id: init.workspace_id,
         base_git_oid: compatibility_base_revision(&init.schema, &init.base_revision)?,
         policy_hash: init.policy_hash,
+        delegates: init.delegates,
         artifacts: init.artifacts,
     })
 }
@@ -354,6 +367,8 @@ mod tests {
     }
 
     // r[verify cairn.collaboration_backend.semantic_core.legacy]
+    // r[verify cairn.radicle_cob_only.compatibility.legacy]
+    // r[verify cairn.radicle_cob_only.authority.legacy_hash]
     #[test]
     fn legacy_radicle_hashes_use_the_original_canonical_shape() {
         let legacy = ChangeCobState {
@@ -363,6 +378,7 @@ mod tests {
             base_git_oid: LEGACY_GIT_OID.to_string(),
             policy_hash: POLICY_HASH.to_string(),
             creator: ACTOR.to_string(),
+            delegates: BTreeSet::new(),
             artifacts: BTreeMap::from([(
                 ChangeArtifactId::proposal(),
                 ChangeRevisionSet {

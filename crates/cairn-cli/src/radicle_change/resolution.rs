@@ -7,9 +7,9 @@ use cairn_core::{
     ChangeCollaborationConflictInspection, ChangeCollaborationResolutionSnapshot,
     ChangeLifecycleStatus, MAX_OPERATION_ID_BYTES,
 };
-use onix_cairn_radicle::{
-    execute_profile_resolution, inspect_profile_status, ChangeImportError, ChangeResolutionOutcome,
-    ChangeStatusInspection,
+use onix_cairn_radicle_cob::{
+    embedded_authority, inspect_change, signer_actor, update_change, CobChangeInspection,
+    CobMutationLock, CobMutationOutcome,
 };
 use serde_json::{json, Value};
 
@@ -20,34 +20,35 @@ use crate::{
     },
 };
 
-use super::{read_unique_option_value, OPTION_TOKEN_WIDTH};
+use super::{
+    format_library_versions, read_unique_option_value, COB_BACKEND_V1, OPTION_TOKEN_WIDTH,
+};
 
-const RADICLE_BACKEND_V1: &str = "radicle.v1";
 const BLOCKER_INPUT_DRIFT: &str =
-    "policy, current identity, object, typed state, conflict heads, or resolution choices changed after preview";
+    "policy, Git repository head, object, signer, embedded authority, typed state, conflict heads, or resolution choices changed after preview";
 const NON_CLAIM_AUTHORITY: &str =
-    "current identity and signer checks prove point-in-time local authority observations, not future authorization";
+    "embedded creator and delegate keys are immutable COB authority, not Radicle identity-document or future authorization proof";
 const NON_CLAIM_LOCAL: &str =
-    "signed conflict resolution proves bounded local Radicle storage observations only";
+    "signed conflict resolution proves bounded local Git COB observations only";
 const NON_CLAIM_MERGE: &str =
     "selecting a conflict head does not prove semantic merge correctness or that losing heads are invalid";
 const NON_CLAIM_LIFECYCLE: &str =
     "an explicit lifecycle reset to open does not prove review, approval, evidence truth, source correctness, archive execution, or release eligibility";
 const NON_CLAIM_TRANSPORT: &str =
-    "local signed Radicle resolution does not prove network publication, peer convergence, availability, or remote trust";
+    "local signed COB resolution does not prove node participation, publication, synchronization, peer convergence, availability, or remote trust";
 const NON_CLAIM_COUNT: usize = 5;
 
+// r[impl cairn.radicle_cob_only.cli]
+// r[impl cairn.radicle_cob_only.docs]
 // r[impl cairn.collaboration_resolution.radicle_execution]
-// r[impl cairn.collaboration_resolution.receipts]
-// r[impl cairn.collaboration_resolution.non_claims]
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum RadicleResolutionCommand {
+enum CobResolutionCommand {
     Conflicts,
     Resolve,
 }
 
-impl RadicleResolutionCommand {
+impl CobResolutionCommand {
     fn as_str(self) -> &'static str {
         match self {
             Self::Conflicts => "conflicts",
@@ -57,12 +58,12 @@ impl RadicleResolutionCommand {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct RadicleResolutionOptions {
-    command: RadicleResolutionCommand,
+struct CobResolutionOptions {
+    command: CobResolutionCommand,
     change: String,
     root: PathBuf,
-    rad_home: PathBuf,
-    repository_id: String,
+    git_repository: PathBuf,
+    keystore: Option<PathBuf>,
     policy: PathBuf,
     show_head: Option<ChangeArtifactHeadSelection>,
     selections: Vec<ChangeArtifactHeadSelection>,
@@ -71,9 +72,8 @@ struct RadicleResolutionOptions {
 }
 
 pub(super) fn run_conflicts(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let options = parse_options(RadicleResolutionCommand::Conflicts, &args)?;
-    let inspection =
-        inspect_profile_status(&options.rad_home, &options.repository_id, &options.change)?;
+    let options = parse_options(CobResolutionCommand::Conflicts, &args)?;
+    let inspection = inspect_change(&options.git_repository, &options.change)?;
     let policy = load_policy_file(options.policy.clone())?;
     let observed_policy_hash = cairn_core::canonical_json_hash(&policy.raw);
     let conflicts = inspect_change_cob_conflicts(&inspection.state)?;
@@ -105,13 +105,13 @@ pub(super) fn run_conflicts(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 pub(super) fn run_resolve(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let options = parse_options(RadicleResolutionCommand::Resolve, &args)?;
-    let inspection =
-        inspect_profile_status(&options.rad_home, &options.repository_id, &options.change)?;
+    let options = parse_options(CobResolutionCommand::Resolve, &args)?;
+    let inspection = inspect_change(&options.git_repository, &options.change)?;
+    let actor = resolution_actor(&options)?;
     let policy = load_policy_file(options.policy.clone())?;
     let observed_policy_hash = cairn_core::canonical_json_hash(&policy.raw);
     let (conflicts, preview) =
-        match build_resolution_plan(&options, &inspection, &observed_policy_hash) {
+        match build_resolution_plan(&options, &inspection, &actor, &observed_policy_hash) {
             Ok(value) => value,
             Err(error) => {
                 return print_json(with_portable_receipt_hash(
@@ -126,27 +126,34 @@ pub(super) fn run_resolve(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if options.execute {
         match RepositoryCheckoutLock::acquire(&options.root, &options.change) {
             Ok(repository_guard) => {
-                let mut fatal_error = None;
-                match recheck_resolution_inputs(&options, &inspection, &preview) {
-                    Ok((current, current_plan)) => match execute_profile_resolution(
-                        &options.rad_home,
-                        &options.repository_id,
-                        &current_plan,
-                        &current,
-                    ) {
-                        Ok(resolved) => outcome = Some(resolved),
-                        Err(error) if is_pre_mutation_blocker(&error) => {
+                match CobMutationLock::acquire(&options.git_repository, &options.change) {
+                    Ok(cob_guard) => {
+                        let execution = recheck_resolution_inputs(&options, &inspection, &preview)
+                            .and_then(|(current, current_plan)| {
+                                update_change(
+                                    &options.git_repository,
+                                    required_keystore(&options)?,
+                                    &current.object_id,
+                                    &options.change,
+                                    &current_plan.actor,
+                                    &current_plan.actions,
+                                    &current_plan.expected_content_root,
+                                )
+                                .map_err(Into::into)
+                            });
+                        let cob_release = cob_guard.release();
+                        match execution {
+                            Ok(resolved) => outcome = Some(resolved),
+                            Err(error) => blockers.push(error.to_string()),
+                        }
+                        if let Err(error) = cob_release {
                             blockers.push(error.to_string());
                         }
-                        Err(error) => fatal_error = Some(error),
-                    },
+                    }
                     Err(error) => blockers.push(error.to_string()),
                 }
                 if let Err(error) = repository_guard.release() {
                     blockers.push(error.to_string());
-                }
-                if let Some(error) = fatal_error {
-                    return Err(error.into());
                 }
             }
             Err(error) => blockers.push(error.to_string()),
@@ -168,8 +175,9 @@ pub(super) fn run_resolve(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn build_resolution_plan(
-    options: &RadicleResolutionOptions,
-    inspection: &ChangeStatusInspection,
+    options: &CobResolutionOptions,
+    inspection: &CobChangeInspection,
+    actor: &str,
     policy_hash: &str,
 ) -> Result<
     (
@@ -179,13 +187,14 @@ fn build_resolution_plan(
     Box<dyn Error>,
 > {
     let conflicts = inspect_change_cob_conflicts(&inspection.state)?;
+    let (_, is_delegate) = embedded_authority(&inspection.state, actor);
     let plan = plan_change_cob_resolution(
         &inspection.state,
         ChangeCollaborationResolutionSnapshot {
             change_id: options.change.clone(),
             policy_hash: policy_hash.to_string(),
-            actor: inspection.authority.actor.clone(),
-            is_delegate: inspection.authority.is_delegate,
+            actor: actor.to_string(),
+            is_delegate,
             artifact_selections: options.selections.clone(),
             lifecycle_status: options.lifecycle_status,
         },
@@ -194,15 +203,15 @@ fn build_resolution_plan(
 }
 
 fn recheck_resolution_inputs(
-    options: &RadicleResolutionOptions,
-    expected_inspection: &ChangeStatusInspection,
+    options: &CobResolutionOptions,
+    expected_inspection: &CobChangeInspection,
     expected_plan: &ChangeCobResolutionPlan,
-) -> Result<(ChangeStatusInspection, ChangeCobResolutionPlan), Box<dyn Error>> {
+) -> Result<(CobChangeInspection, ChangeCobResolutionPlan), Box<dyn Error>> {
     let current_policy = load_policy_file(options.policy.clone())?;
     let current_policy_hash = cairn_core::canonical_json_hash(&current_policy.raw);
-    let current =
-        inspect_profile_status(&options.rad_home, &options.repository_id, &options.change)?;
-    let (_, current_plan) = build_resolution_plan(options, &current, &current_policy_hash)?;
+    let current = inspect_change(&options.git_repository, &options.change)?;
+    let actor = resolution_actor(options)?;
+    let (_, current_plan) = build_resolution_plan(options, &current, &actor, &current_policy_hash)?;
     if &current != expected_inspection || &current_plan != expected_plan {
         return Err(BLOCKER_INPUT_DRIFT.into());
     }
@@ -210,25 +219,31 @@ fn recheck_resolution_inputs(
 }
 
 fn conflict_receipt(
-    options: &RadicleResolutionOptions,
+    options: &CobResolutionOptions,
     policy_name: &str,
     observed_policy_hash: &str,
-    inspection: &ChangeStatusInspection,
+    inspection: &CobChangeInspection,
     conflicts: &ChangeCollaborationConflictInspection,
     shown_head: Option<Value>,
 ) -> Value {
     json!({
         "command": "collaboration conflicts",
-        "backend": RADICLE_BACKEND_V1,
+        "compatibility_command": "cob conflicts",
+        "backend": COB_BACKEND_V1,
+        "format_libraries": format_library_versions(),
         "root": path_string(&options.root),
         "change": options.change,
-        "workspace_id": inspection.repository_id,
+        "workspace_id": inspection.state.repository_id,
         "base_revision": {
             "kind": "git_oid",
             "value": inspection.repository_head_oid,
         },
         "object_id": inspection.object_id,
-        "actor": actor_observation(inspection, false),
+        "authority": {
+            "creator": inspection.state.creator,
+            "delegates": inspection.state.delegates,
+            "source": "signed_root_embedded_authority",
+        },
         "policy": policy_name,
         "policy_hash": inspection.state.policy_hash,
         "observed_policy_hash": observed_policy_hash,
@@ -249,28 +264,38 @@ fn conflict_receipt(
 
 #[allow(clippy::too_many_arguments)]
 fn resolution_receipt(
-    options: &RadicleResolutionOptions,
+    options: &CobResolutionOptions,
     policy_name: &str,
     observed_policy_hash: &str,
-    inspection: &ChangeStatusInspection,
+    inspection: &CobChangeInspection,
     conflicts: &ChangeCollaborationConflictInspection,
     plan: &ChangeCobResolutionPlan,
     blockers: &[String],
-    outcome: Option<&ChangeResolutionOutcome>,
+    outcome: Option<&CobMutationOutcome>,
 ) -> Result<Value, Box<dyn Error>> {
     let blocked = !blockers.is_empty();
+    let (is_creator, is_delegate) = embedded_authority(&inspection.state, &plan.actor);
     Ok(json!({
         "command": "collaboration resolve",
-        "backend": RADICLE_BACKEND_V1,
+        "compatibility_command": "cob resolve",
+        "backend": COB_BACKEND_V1,
+        "format_libraries": format_library_versions(),
         "root": path_string(&options.root),
         "change": options.change,
-        "workspace_id": inspection.repository_id,
+        "workspace_id": inspection.state.repository_id,
         "base_revision": {
             "kind": "git_oid",
             "value": inspection.repository_head_oid,
         },
         "object_id": inspection.object_id,
-        "actor": actor_observation(inspection, outcome.is_some()),
+        "actor": {
+            "id": plan.actor,
+            "source": "explicit_cob_keystore_and_embedded_authority",
+            "cryptographically_verified": outcome.is_some(),
+            "currently_authorized": is_creator || is_delegate,
+            "authority_class": if is_creator { "signed_creator" } else { "embedded_delegate" },
+        },
+        "delegates": inspection.state.delegates,
         "policy": policy_name,
         "policy_hash": inspection.state.policy_hash,
         "observed_policy_hash": observed_policy_hash,
@@ -280,6 +305,7 @@ fn resolution_receipt(
         "operation_plan_id": plan.operation_id,
         "input_state_hash": plan.input_state_hash,
         "expected_content_root": plan.expected_content_root,
+        "result_operation_id": outcome.map(|value| value.operation_id.as_str()),
         "result_state_hash": outcome.map(|value| value.state_hash.as_str()),
         "result_content_root": outcome.map(|value| value.content_root.as_str()),
         "artifact_conflicts": conflicts.artifact_conflicts,
@@ -332,29 +358,15 @@ fn resolution_actions(actions: &[ChangeCobAction]) -> Vec<Value> {
         .collect()
 }
 
-fn actor_observation(inspection: &ChangeStatusInspection, signed: bool) -> Value {
-    json!({
-        "id": inspection.authority.actor,
-        "source": "radicle_profile_and_current_identity",
-        "cryptographically_verified": signed,
-        "currently_authorized": inspection.authority.is_delegate
-            || inspection.authority.actor == inspection.state.creator,
-        "authority_class": if inspection.authority.is_delegate {
-            "current_delegate"
-        } else {
-            "signed_creator"
-        },
-        "canonical_identity_oid": inspection.authority.identity_oid,
-    })
-}
-
-fn failure_receipt(options: &RadicleResolutionOptions, blocker: String) -> Value {
+fn failure_receipt(options: &CobResolutionOptions, blocker: String) -> Value {
     json!({
         "command": format!("collaboration {}", options.command.as_str()),
-        "backend": RADICLE_BACKEND_V1,
+        "compatibility_command": format!("cob {}", options.command.as_str()),
+        "backend": COB_BACKEND_V1,
+        "format_libraries": format_library_versions(),
         "root": path_string(&options.root),
         "change": options.change,
-        "dry_run": options.command == RadicleResolutionCommand::Resolve && !options.execute,
+        "dry_run": options.command == CobResolutionCommand::Resolve && !options.execute,
         "blocked": true,
         "blockers": [blocker],
         "mutated": false,
@@ -364,31 +376,17 @@ fn failure_receipt(options: &RadicleResolutionOptions, blocker: String) -> Value
     })
 }
 
-fn is_pre_mutation_blocker(error: &ChangeImportError) -> bool {
-    matches!(
-        error,
-        ChangeImportError::CurrentDelegateRequired { .. }
-            | ChangeImportError::ConcurrentUpdate { .. }
-            | ChangeImportError::EmptyUpdate
-            | ChangeImportError::UpdateContextDrift { .. }
-            | ChangeImportError::UpdateActorMismatch { .. }
-            | ChangeImportError::ChangeObjectMissing { .. }
-            | ChangeImportError::DuplicateChangeObjects { .. }
-            | ChangeImportError::SignerMismatch { .. }
-    )
-}
-
 fn parse_options(
-    command: RadicleResolutionCommand,
+    command: CobResolutionCommand,
     args: &[String],
-) -> Result<RadicleResolutionOptions, Box<dyn Error>> {
+) -> Result<CobResolutionOptions, Box<dyn Error>> {
     let Some(change) = args.first() else {
-        return Err(format!("radicle {} requires a change name", command.as_str()).into());
+        return Err(format!("cob {} requires a change name", command.as_str()).into());
     };
     validate_change_name(change).map_err(|reason| format!("invalid change name: {reason}"))?;
     let mut root = None;
-    let mut rad_home = None;
-    let mut repository_id = None;
+    let mut git_repository = None;
+    let mut keystore = None;
     let mut policy = None;
     let mut show_head = None;
     let mut selections = Vec::new();
@@ -402,19 +400,22 @@ fn parse_options(
                     Some(read_unique_option_value(args, index, "--root", root.is_some())?.into());
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--rad-home" => {
-                rad_home = Some(
-                    read_unique_option_value(args, index, "--rad-home", rad_home.is_some())?.into(),
+            "--git-repository" => {
+                git_repository = Some(
+                    read_unique_option_value(
+                        args,
+                        index,
+                        "--git-repository",
+                        git_repository.is_some(),
+                    )?
+                    .into(),
                 );
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--rid" => {
-                repository_id = Some(read_unique_option_value(
-                    args,
-                    index,
-                    "--rid",
-                    repository_id.is_some(),
-                )?);
+            "--keystore" if command == CobResolutionCommand::Resolve => {
+                keystore = Some(
+                    read_unique_option_value(args, index, "--keystore", keystore.is_some())?.into(),
+                );
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
             "--policy" => {
@@ -423,18 +424,18 @@ fn parse_options(
                 );
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--show-head" if command == RadicleResolutionCommand::Conflicts => {
+            "--show-head" if command == CobResolutionCommand::Conflicts => {
                 let value =
                     read_unique_option_value(args, index, "--show-head", show_head.is_some())?;
                 show_head = Some(parse_head_selection(&value)?);
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--choose-head" if command == RadicleResolutionCommand::Resolve => {
+            "--choose-head" if command == CobResolutionCommand::Resolve => {
                 let value = read_unique_option_value(args, index, "--choose-head", false)?;
                 selections.push(parse_head_selection(&value)?);
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--lifecycle" if command == RadicleResolutionCommand::Resolve => {
+            "--lifecycle" if command == CobResolutionCommand::Resolve => {
                 let value = read_unique_option_value(
                     args,
                     index,
@@ -444,34 +445,53 @@ fn parse_options(
                 lifecycle_status = Some(parse_lifecycle_status(&value)?);
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--execute" if command == RadicleResolutionCommand::Resolve => {
+            "--execute" if command == CobResolutionCommand::Resolve => {
                 if execute {
                     return Err("duplicate option: --execute".into());
                 }
                 execute = true;
                 index = index.saturating_add(1);
             }
-            unknown => {
-                return Err(
-                    format!("unknown radicle {} argument: {unknown}", command.as_str()).into(),
+            "--rad-home" | "--rid" | "--control-socket" | "--peer-id" | "--peer-address" => {
+                return Err(format!(
+                    "unsupported Radicle runtime argument for COB-only {}: {}",
+                    command.as_str(),
+                    args[index]
                 )
+                .into());
+            }
+            unknown => {
+                return Err(format!("unknown cob {} argument: {unknown}", command.as_str()).into());
             }
         }
     }
-    Ok(RadicleResolutionOptions {
+    if command == CobResolutionCommand::Resolve && keystore.is_none() {
+        return Err("cob resolve requires --keystore PATH".into());
+    }
+    Ok(CobResolutionOptions {
         command,
         change: change.clone(),
         root: root.unwrap_or_else(|| PathBuf::from(".")),
-        rad_home: rad_home
-            .ok_or_else(|| format!("radicle {} requires --rad-home PATH", command.as_str()))?,
-        repository_id: repository_id
-            .ok_or_else(|| format!("radicle {} requires --rid RID", command.as_str()))?,
+        git_repository: git_repository
+            .ok_or_else(|| format!("cob {} requires --git-repository PATH", command.as_str()))?,
+        keystore,
         policy: policy.unwrap_or_else(|| PathBuf::from(default_policy_path())),
         show_head,
         selections,
         lifecycle_status,
         execute,
     })
+}
+
+fn required_keystore(options: &CobResolutionOptions) -> Result<&std::path::Path, Box<dyn Error>> {
+    options
+        .keystore
+        .as_deref()
+        .ok_or_else(|| "cob resolve requires --keystore PATH".into())
+}
+
+fn resolution_actor(options: &CobResolutionOptions) -> Result<String, Box<dyn Error>> {
+    Ok(signer_actor(required_keystore(options)?)?)
 }
 
 fn parse_head_selection(value: &str) -> Result<ChangeArtifactHeadSelection, Box<dyn Error>> {
@@ -521,170 +541,31 @@ fn non_claims() -> [&'static str; NON_CLAIM_COUNT] {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
-
-    use cairn_core::{
-        apply_change_cob_operation, initialize_change_cob, ChangeCobInit, ChangeCobOperation,
-        RADICLE_CHANGE_COB_SCHEMA_V1,
-    };
-    use onix_cairn_radicle::CurrentDelegateAuthority;
-
     use super::*;
 
-    const CHANGE_ID: &str = "radicle-resolution-cli";
-    const REPOSITORY_ID: &str = "rad:repository";
-    const BASE_GIT_OID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    const IDENTITY_OID: &str = "cccccccccccccccccccccccccccccccccccccccc";
-    const ROOT_OPERATION: &str = "1111111111111111111111111111111111111111";
-    const LEFT_OPERATION: &str = "2222222222222222222222222222222222222222";
-    const RIGHT_OPERATION: &str = "3333333333333333333333333333333333333333";
-    const ACTOR: &str = "did:key:actor";
-    const POLICY_HASH: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    const CHANGE_ID: &str = "cob-resolution-cli";
 
-    fn inspection() -> ChangeStatusInspection {
-        let mut state = initialize_change_cob(ChangeCobOperation {
-            id: ROOT_OPERATION.to_string(),
-            actor: ACTOR.to_string(),
-            is_delegate: true,
-            actions: vec![ChangeCobAction::Init {
-                state: ChangeCobInit {
-                    schema: RADICLE_CHANGE_COB_SCHEMA_V1.to_string(),
-                    change_id: CHANGE_ID.to_string(),
-                    repository_id: REPOSITORY_ID.to_string(),
-                    base_git_oid: BASE_GIT_OID.to_string(),
-                    policy_hash: POLICY_HASH.to_string(),
-                    artifacts: BTreeMap::from([(
-                        ChangeArtifactId::proposal(),
-                        "# Proposal\n".to_string(),
-                    )]),
-                },
-            }],
-        })
-        .unwrap();
-        let basis = BTreeSet::from([ROOT_OPERATION.to_string()]);
-        for (operation_id, content) in
-            [(LEFT_OPERATION, "# Left\n"), (RIGHT_OPERATION, "# Right\n")]
-        {
-            apply_change_cob_operation(
-                &mut state,
-                ChangeCobOperation {
-                    id: operation_id.to_string(),
-                    actor: ACTOR.to_string(),
-                    is_delegate: true,
-                    actions: vec![ChangeCobAction::SetArtifact {
-                        artifact: ChangeArtifactId::proposal(),
-                        content: Some(content.to_string()),
-                        basis: basis.clone(),
-                    }],
-                },
-            )
-            .unwrap();
-        }
-        ChangeStatusInspection {
-            authority: CurrentDelegateAuthority {
-                actor: ACTOR.to_string(),
-                identity_oid: IDENTITY_OID.to_string(),
-                is_delegate: true,
-            },
-            repository_id: REPOSITORY_ID.to_string(),
-            repository_head_oid: BASE_GIT_OID.to_string(),
-            object_id: ROOT_OPERATION.to_string(),
-            state,
-        }
-    }
-
-    fn options(command: RadicleResolutionCommand) -> RadicleResolutionOptions {
-        RadicleResolutionOptions {
-            command,
-            change: CHANGE_ID.to_string(),
-            root: PathBuf::from("."),
-            rad_home: PathBuf::from("/tmp/radicle"),
-            repository_id: REPOSITORY_ID.to_string(),
-            policy: PathBuf::from("policy.json"),
-            show_head: None,
-            selections: if command == RadicleResolutionCommand::Resolve {
-                vec![ChangeArtifactHeadSelection {
-                    artifact: ChangeArtifactId::proposal(),
-                    revision_id: LEFT_OPERATION.to_string(),
-                }]
-            } else {
-                Vec::new()
-            },
-            lifecycle_status: None,
-            execute: false,
-        }
-    }
-
-    // r[verify cairn.collaboration_resolution.receipts.modes]
+    // r[verify cairn.radicle_cob_only.cli.explicit]
     #[test]
-    fn radicle_conflict_and_resolution_receipts_bind_heads_choices_and_non_claims(
-    ) -> Result<(), Box<dyn Error>> {
-        let inspection = inspection();
-        let conflicts = inspect_change_cob_conflicts(&inspection.state)?;
-        let conflict = conflict_receipt(
-            &options(RadicleResolutionCommand::Conflicts),
-            "default",
-            POLICY_HASH,
-            &inspection,
-            &conflicts,
-            None,
-        );
-        assert_eq!(conflict["conflicted"], true);
-        assert_eq!(conflict["mutated"], false);
-
-        let resolve_options = options(RadicleResolutionCommand::Resolve);
-        let (_, plan) = build_resolution_plan(&resolve_options, &inspection, POLICY_HASH)?;
-        let receipt = resolution_receipt(
-            &resolve_options,
-            "default",
-            POLICY_HASH,
-            &inspection,
-            &conflicts,
-            &plan,
-            &[],
-            None,
-        )?;
-        assert_eq!(
-            receipt["selected_artifacts"][0]["revision_id"],
-            LEFT_OPERATION
-        );
-        assert_eq!(receipt["dry_run"], true);
-        assert_eq!(receipt["mutated"], false);
-        assert!(receipt["non_claims"]
-            .as_array()
-            .is_some_and(|claims| claims.iter().any(|claim| claim == NON_CLAIM_MERGE)));
-        Ok(())
-    }
-
-    #[test]
-    fn radicle_resolution_arguments_require_explicit_context_and_safe_choices() {
-        let args = [
-            CHANGE_ID.to_string(),
-            "--rad-home".to_string(),
-            "/tmp/radicle".to_string(),
-            "--rid".to_string(),
-            REPOSITORY_ID.to_string(),
-            "--choose-head".to_string(),
-            format!("proposal={LEFT_OPERATION}"),
-        ];
-        let parsed = parse_options(RadicleResolutionCommand::Resolve, &args).unwrap();
-        assert_eq!(parsed.selections.len(), 1);
-        assert!(
-            parse_options(RadicleResolutionCommand::Resolve, &[CHANGE_ID.to_string()]).is_err()
-        );
-        assert!(parse_options(
-            RadicleResolutionCommand::Conflicts,
+    fn inspection_needs_only_repository_and_resolution_needs_keystore() {
+        let conflicts = parse_options(
+            CobResolutionCommand::Conflicts,
             &[
                 CHANGE_ID.to_string(),
-                "--rad-home".to_string(),
-                "/tmp/radicle".to_string(),
-                "--rid".to_string(),
-                REPOSITORY_ID.to_string(),
-                "--execute".to_string(),
+                "--git-repository".to_string(),
+                "/tmp/repository".to_string(),
+            ],
+        )
+        .expect("conflict inspection options");
+        assert!(conflicts.keystore.is_none());
+        assert!(parse_options(
+            CobResolutionCommand::Resolve,
+            &[
+                CHANGE_ID.to_string(),
+                "--git-repository".to_string(),
+                "/tmp/repository".to_string(),
             ],
         )
         .is_err());
-        assert!(parse_head_selection("proposal").is_err());
-        assert!(parse_lifecycle_status("approved").is_err());
     }
 }

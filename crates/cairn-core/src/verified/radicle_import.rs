@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use super::{
     collaboration_change::BASE_REVISION_KIND_GIT_OID,
@@ -53,6 +53,7 @@ pub fn plan_change_cob_import(
         repository_id: snapshot.repository_id,
         base_git_oid: base_revision,
         policy_hash: snapshot.policy_hash,
+        delegates: BTreeSet::new(),
         artifacts,
     };
     validate_change_cob_init(&init)?;

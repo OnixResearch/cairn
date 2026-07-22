@@ -1,6 +1,5 @@
 pub(crate) mod resolution;
 pub(crate) mod status_checkout;
-pub(crate) mod sync;
 pub(crate) mod update;
 
 use std::{
@@ -15,97 +14,137 @@ use cairn_core::{
     validate_change_name, ChangeCobError, ChangeCobImportSnapshot, ChangeCobInit, MAX_ARTIFACTS,
     MAX_ARTIFACT_BYTES, RADICLE_CHANGE_COB_TYPE_NAME,
 };
-use onix_cairn_radicle::{
-    execute_profile_import, inspect_profile_import, ChangeImportError, ChangeImportInspection,
-    ChangeImportOutcome,
+use onix_cairn_radicle_cob::{
+    create_change, find_change, parse_delegate_ids, signer_actor, CobMutationLock,
+    CobMutationOutcome, CobRepository, GIT2_LIBRARY_VERSION, GIT_REF_FORMAT_LIBRARY_VERSION,
+    RADICLE_COB_LIBRARY_VERSION, RADICLE_CRYPTO_LIBRARY_VERSION, RADICLE_OID_LIBRARY_VERSION,
 };
 use serde_json::{json, Value};
 
-use crate::support::{
-    default_policy_path, load_policy_file, path_string, print_json, with_portable_receipt_hash,
-    CapabilityRoot, CapabilityRootKind,
+use crate::{
+    collaboration::materialize::RepositoryCheckoutLock,
+    support::{
+        default_policy_path, load_policy_file, path_string, print_json, with_portable_receipt_hash,
+        CapabilityRoot, CapabilityRootKind,
+    },
 };
 
-const OPTION_TOKEN_WIDTH: usize = 2;
+pub(super) const COB_BACKEND_V1: &str = "radicle-cob.v1";
+pub(super) const OPTION_TOKEN_WIDTH: usize = 2;
+
+pub(super) fn format_library_versions() -> Value {
+    json!({
+        "radicle-cob": RADICLE_COB_LIBRARY_VERSION,
+        "radicle-crypto": RADICLE_CRYPTO_LIBRARY_VERSION,
+        "radicle-oid": RADICLE_OID_LIBRARY_VERSION,
+        "git2": GIT2_LIBRARY_VERSION,
+        "git-ref-format-core": GIT_REF_FORMAT_LIBRARY_VERSION,
+    })
+}
 const IMPORT_NON_CLAIM_LOCAL: &str =
-    "local typed COB creation does not prove network publication, peer availability, or remote trust";
+    "signed COB creation proves bounded local Git object and reference observations only";
 const IMPORT_NON_CLAIM_LIFECYCLE: &str =
     "signed import does not prove gate validity, evidence truth, dependency readiness, archive execution, or release eligibility";
 const IMPORT_NON_CLAIM_AUTHORITY: &str =
-    "the recorded canonical identity proves only point-in-time authority and is not a future authorization lease";
+    "embedded creator and delegate keys are immutable object authority, not Radicle identity-document or future authorization proof";
+const IMPORT_NON_CLAIM_TRANSPORT: &str =
+    "local Git COB creation does not prove node participation, publication, synchronization, peer availability, convergence, or remote trust";
+const BLOCKER_INPUT_DRIFT: &str =
+    "active change, policy, repository head, signer, embedded authority, or existing COB state changed after preview";
 
-// r[impl cairn.radicle_import_cli.command]
-// r[impl cairn.radicle_import_cli.receipt]
-// r[impl cairn.radicle_import_cli.non_claims]
+// r[impl cairn.radicle_cob_only.cli]
+// r[impl cairn.radicle_cob_only.no_runtime]
+// r[impl cairn.radicle_cob_only.docs]
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct RadicleImportOptions {
+struct CobImportOptions {
     change: String,
     root: PathBuf,
-    rad_home: PathBuf,
-    repository_id: String,
+    git_repository: PathBuf,
+    keystore: PathBuf,
+    workspace_id: String,
+    delegates: Vec<String>,
     policy: PathBuf,
     execute: bool,
 }
 
-pub(crate) fn run_radicle(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ImportInspection {
+    actor: String,
+    repository_head_oid: String,
+    existing_object_id: Option<String>,
+}
+
+pub(crate) fn run_cob(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(subcommand) = args.first() else {
         return Err(
-            "radicle requires a subcommand: import, status, checkout, update, conflicts, resolve, or sync"
+            "cob requires a subcommand: import, status, checkout, update, conflicts, or resolve"
                 .into(),
         );
     };
     match subcommand.as_str() {
-        "import" => run_radicle_import(args.into_iter().skip(1).collect()),
+        "import" => run_cob_import(args.into_iter().skip(1).collect()),
         "status" => status_checkout::run_status(args.into_iter().skip(1).collect()),
         "checkout" => status_checkout::run_checkout(args.into_iter().skip(1).collect()),
         "update" => update::run_update(args.into_iter().skip(1).collect()),
         "conflicts" => resolution::run_conflicts(args.into_iter().skip(1).collect()),
         "resolve" => resolution::run_resolve(args.into_iter().skip(1).collect()),
-        "sync" => sync::run_sync(args.into_iter().skip(1).collect()),
-        unknown => Err(format!("unknown radicle subcommand: {unknown}").into()),
+        // r[impl cairn.collaboration_sync.retired]
+        // r[verify cairn.collaboration_sync.retired.rejected]
+        // r[verify cairn.radicle_cob_only.no_runtime.sync]
+        "sync" => Err(
+            "COB-only collaboration does not provide synchronization; manage Git transport outside Cairn"
+                .into(),
+        ),
+        unknown => Err(format!("unknown cob subcommand: {unknown}").into()),
     }
 }
 
-fn run_radicle_import(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+fn run_cob_import(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let options = parse_import_options(&args)?;
-    let inspection =
-        inspect_profile_import(&options.rad_home, &options.repository_id, &options.change)?;
+    let inspection = inspect_import(&options)?;
     let policy = load_policy_file(options.policy.clone())?;
     let policy_hash = canonical_json_hash(&policy.raw);
-    let snapshot =
-        read_active_change_snapshot(&options.root, &options.change, &inspection, &policy_hash)?;
-    let init = plan_change_cob_import(snapshot)?;
-    let content_root = change_cob_import_content_root(&init, &inspection.authority.actor)?;
-    let mut blockers = import_precondition_blockers(&inspection);
+    let init = build_import_init(&options, &inspection, &policy_hash)?;
+    let content_root = change_cob_import_content_root(&init, &inspection.actor)?;
+    let mut blockers = existing_import_blockers(&inspection);
     let mut outcome = None;
 
     if options.execute && blockers.is_empty() {
-        let current_policy = load_policy_file(options.policy.clone())?;
-        let current_policy_hash = canonical_json_hash(&current_policy.raw);
-        let current_snapshot = read_active_change_snapshot(
-            &options.root,
-            &options.change,
-            &inspection,
-            &current_policy_hash,
-        )?;
-        let current_init = plan_change_cob_import(current_snapshot)?;
-        if current_init != init {
-            blockers.push("active change or policy input changed before execution".to_string());
-        } else {
-            match execute_profile_import(
-                &options.rad_home,
-                &options.repository_id,
-                current_init,
-                &inspection,
-                &content_root,
-            ) {
-                Ok(created) => outcome = Some(created),
-                Err(error) if is_pre_mutation_blocker(&error) => blockers.push(error.to_string()),
-                Err(error) => return Err(error.into()),
+        match RepositoryCheckoutLock::acquire(&options.root, &options.change) {
+            Ok(repository_guard) => {
+                match CobMutationLock::acquire(&options.git_repository, &options.change) {
+                    Ok(cob_guard) => {
+                        let execution = recheck_import(&options, &inspection, &init, &content_root)
+                            .and_then(|current| {
+                                create_change(
+                                    &options.git_repository,
+                                    &options.keystore,
+                                    current,
+                                    &content_root,
+                                )
+                                .map_err(Into::into)
+                            });
+                        let cob_release = cob_guard.release();
+                        match execution {
+                            Ok(created) => outcome = Some(created),
+                            Err(error) => blockers.push(error.to_string()),
+                        }
+                        if let Err(error) = cob_release {
+                            blockers.push(error.to_string());
+                        }
+                    }
+                    Err(error) => blockers.push(error.to_string()),
+                }
+                if let Err(error) = repository_guard.release() {
+                    blockers.push(error.to_string());
+                }
             }
+            Err(error) => blockers.push(error.to_string()),
         }
     }
+    blockers.sort();
+    blockers.dedup();
 
     let receipt = import_receipt(
         &options,
@@ -119,14 +158,69 @@ fn run_radicle_import(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     print_json(with_portable_receipt_hash(&options.root, receipt))
 }
 
-fn parse_import_options(args: &[String]) -> Result<RadicleImportOptions, Box<dyn Error>> {
+fn inspect_import(options: &CobImportOptions) -> Result<ImportInspection, Box<dyn Error>> {
+    let repository = CobRepository::open(&options.git_repository)?;
+    Ok(ImportInspection {
+        actor: signer_actor(&options.keystore)?,
+        repository_head_oid: repository.head_oid()?.to_string(),
+        existing_object_id: find_change(&options.git_repository, &options.change)?
+            .map(|inspection| inspection.object_id),
+    })
+}
+
+fn build_import_init(
+    options: &CobImportOptions,
+    inspection: &ImportInspection,
+    policy_hash: &str,
+) -> Result<ChangeCobInit, Box<dyn Error>> {
+    let snapshot = read_active_change_snapshot(
+        &options.root,
+        &options.change,
+        &options.workspace_id,
+        &inspection.repository_head_oid,
+        policy_hash,
+    )?;
+    let mut init = plan_change_cob_import(snapshot)?;
+    init.delegates = parse_delegate_ids(&inspection.actor, &options.delegates)?;
+    cairn_core::validate_change_cob_init(&init)?;
+    Ok(init)
+}
+
+fn recheck_import(
+    options: &CobImportOptions,
+    expected_inspection: &ImportInspection,
+    expected_init: &ChangeCobInit,
+    expected_content_root: &str,
+) -> Result<ChangeCobInit, Box<dyn Error>> {
+    let policy = load_policy_file(options.policy.clone())?;
+    let current_inspection = inspect_import(options)?;
+    let current_init = build_import_init(
+        options,
+        &current_inspection,
+        &canonical_json_hash(&policy.raw),
+    )?;
+    let current_content_root =
+        change_cob_import_content_root(&current_init, &current_inspection.actor)?;
+    if &current_inspection != expected_inspection
+        || &current_init != expected_init
+        || current_content_root != expected_content_root
+        || current_inspection.existing_object_id.is_some()
+    {
+        return Err(BLOCKER_INPUT_DRIFT.into());
+    }
+    Ok(current_init)
+}
+
+fn parse_import_options(args: &[String]) -> Result<CobImportOptions, Box<dyn Error>> {
     let Some(change) = args.first() else {
-        return Err("radicle import requires a change name".into());
+        return Err("cob import requires a change name".into());
     };
     validate_change_name(change).map_err(|reason| format!("invalid change name: {reason}"))?;
     let mut root = None;
-    let mut rad_home = None;
-    let mut repository_id = None;
+    let mut git_repository = None;
+    let mut keystore = None;
+    let mut workspace_id = None;
+    let mut delegates = Vec::new();
     let mut policy = None;
     let mut execute = false;
     let mut index = 1;
@@ -137,19 +231,35 @@ fn parse_import_options(args: &[String]) -> Result<RadicleImportOptions, Box<dyn
                     Some(read_unique_option_value(args, index, "--root", root.is_some())?.into());
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--rad-home" => {
-                rad_home = Some(
-                    read_unique_option_value(args, index, "--rad-home", rad_home.is_some())?.into(),
+            "--git-repository" => {
+                git_repository = Some(
+                    read_unique_option_value(
+                        args,
+                        index,
+                        "--git-repository",
+                        git_repository.is_some(),
+                    )?
+                    .into(),
                 );
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
-            "--rid" => {
-                repository_id = Some(read_unique_option_value(
+            "--keystore" => {
+                keystore = Some(
+                    read_unique_option_value(args, index, "--keystore", keystore.is_some())?.into(),
+                );
+                index = index.saturating_add(OPTION_TOKEN_WIDTH);
+            }
+            "--workspace" => {
+                workspace_id = Some(read_unique_option_value(
                     args,
                     index,
-                    "--rid",
-                    repository_id.is_some(),
+                    "--workspace",
+                    workspace_id.is_some(),
                 )?);
+                index = index.saturating_add(OPTION_TOKEN_WIDTH);
+            }
+            "--delegate" => {
+                delegates.push(read_unique_option_value(args, index, "--delegate", false)?);
                 index = index.saturating_add(OPTION_TOKEN_WIDTH);
             }
             "--policy" => {
@@ -165,22 +275,31 @@ fn parse_import_options(args: &[String]) -> Result<RadicleImportOptions, Box<dyn
                 execute = true;
                 index = index.saturating_add(1);
             }
-            unknown => return Err(format!("unknown radicle import argument: {unknown}").into()),
+            "--rad-home" | "--rid" | "--control-socket" | "--peer-id" | "--peer-address" => {
+                return Err(format!(
+                    "unsupported Radicle runtime argument for COB-only import: {}",
+                    args[index]
+                )
+                .into());
+            }
+            unknown => return Err(format!("unknown cob import argument: {unknown}").into()),
         }
     }
-    let rad_home = rad_home.ok_or("radicle import requires --rad-home PATH")?;
-    let repository_id = repository_id.ok_or("radicle import requires --rid RID")?;
-    Ok(RadicleImportOptions {
+    delegates.sort();
+    delegates.dedup();
+    Ok(CobImportOptions {
         change: change.clone(),
         root: root.unwrap_or_else(|| PathBuf::from(".")),
-        rad_home,
-        repository_id,
+        git_repository: git_repository.ok_or("cob import requires --git-repository PATH")?,
+        keystore: keystore.ok_or("cob import requires --keystore PATH")?,
+        workspace_id: workspace_id.ok_or("cob import requires --workspace ID")?,
+        delegates,
         policy: policy.unwrap_or_else(|| PathBuf::from(default_policy_path())),
         execute,
     })
 }
 
-fn read_unique_option_value(
+pub(super) fn read_unique_option_value(
     args: &[String],
     index: usize,
     name: &str,
@@ -202,7 +321,8 @@ fn read_unique_option_value(
 fn read_active_change_snapshot(
     root: &Path,
     change: &str,
-    inspection: &ChangeImportInspection,
+    workspace_id: &str,
+    base_git_oid: &str,
     policy_hash: &str,
 ) -> Result<ChangeCobImportSnapshot, Box<dyn Error>> {
     validate_change_name(change).map_err(|reason| format!("invalid change name: {reason}"))?;
@@ -228,8 +348,8 @@ fn read_active_change_snapshot(
     let delta_specs = read_delta_specs(&capability, &change_dir.join("specs"))?;
     Ok(ChangeCobImportSnapshot {
         change_id: change.to_string(),
-        repository_id: inspection.repository_id.clone(),
-        base_git_oid: inspection.base_git_oid.clone(),
+        repository_id: workspace_id.to_string(),
+        base_git_oid: base_git_oid.to_string(),
         policy_hash: policy_hash.to_string(),
         proposal,
         design,
@@ -311,43 +431,22 @@ fn read_delta_specs(
     Ok(delta_specs)
 }
 
-fn import_precondition_blockers(inspection: &ChangeImportInspection) -> Vec<String> {
-    let mut blockers = Vec::new();
-    if !inspection.authority.is_delegate {
-        blockers.push(format!(
-            "actor {} is not a delegate in current identity {}",
-            inspection.authority.actor, inspection.authority.identity_oid
-        ));
-    }
-    if let Some(object_id) = &inspection.existing_object_id {
-        blockers.push(format!("change already has Radicle object {object_id}"));
-    }
-    blockers
-}
-
-fn is_pre_mutation_blocker(error: &ChangeImportError) -> bool {
-    matches!(
-        error,
-        ChangeImportError::CurrentDelegateRequired { .. }
-            | ChangeImportError::ConcurrentImport { .. }
-            | ChangeImportError::ExistingChangeObject { .. }
-            | ChangeImportError::DuplicateChangeObjects { .. }
-            | ChangeImportError::ContextDrift { .. }
-            | ChangeImportError::RepositoryMismatch { .. }
-            | ChangeImportError::BaseGitObjectMismatch { .. }
-            | ChangeImportError::SignerMismatch { .. }
-            | ChangeImportError::ContentRootDrift { .. }
-    )
+fn existing_import_blockers(inspection: &ImportInspection) -> Vec<String> {
+    inspection
+        .existing_object_id
+        .as_ref()
+        .map(|object_id| vec![format!("change already has COB object {object_id}")])
+        .unwrap_or_default()
 }
 
 fn import_receipt(
-    options: &RadicleImportOptions,
-    inspection: &ChangeImportInspection,
+    options: &CobImportOptions,
+    inspection: &ImportInspection,
     policy_name: &str,
     init: &ChangeCobInit,
     content_root: &str,
     blockers: &[String],
-    outcome: Option<&ChangeImportOutcome>,
+    outcome: Option<&CobMutationOutcome>,
 ) -> Result<Value, Box<dyn Error>> {
     let artifacts = init
         .artifacts
@@ -363,12 +462,13 @@ fn import_receipt(
         .collect::<Result<Vec<_>, ChangeCobError>>()?;
     let input_hash = canonical_json_hash(&serde_json::to_value(init)?);
     let plan_hash = canonical_json_hash(&json!({
+        "backend": COB_BACKEND_V1,
         "type_name": RADICLE_CHANGE_COB_TYPE_NAME,
         "change": options.change,
-        "repository_id": inspection.repository_id,
-        "actor": inspection.authority.actor,
-        "identity_oid": inspection.authority.identity_oid,
-        "base_git_oid": inspection.base_git_oid,
+        "workspace_id": init.repository_id,
+        "actor": inspection.actor,
+        "delegates": init.delegates,
+        "base_git_oid": inspection.repository_head_oid,
         "policy": policy_name,
         "policy_hash": init.policy_hash,
         "input_hash": input_hash,
@@ -376,15 +476,18 @@ fn import_receipt(
     }));
     let blocked = !blockers.is_empty();
     Ok(json!({
-        "command": "radicle import",
+        "command": "cob import",
+        "collaboration_command": "collaboration import",
+        "backend": COB_BACKEND_V1,
+        "format_libraries": format_library_versions(),
         "root": path_string(&options.root),
         "change": options.change,
         "type_name": RADICLE_CHANGE_COB_TYPE_NAME,
-        "repository_id": inspection.repository_id,
-        "actor": inspection.authority.actor,
-        "current_identity_oid": inspection.authority.identity_oid,
-        "currently_authorized": inspection.authority.is_delegate,
-        "base_git_oid": inspection.base_git_oid,
+        "workspace_id": init.repository_id,
+        "actor": inspection.actor,
+        "delegates": init.delegates,
+        "authority_source": "signed_root_embedded_authority",
+        "repository_head_oid": inspection.repository_head_oid,
         "policy": policy_name,
         "policy_hash": init.policy_hash,
         "artifacts": artifacts,
@@ -396,207 +499,53 @@ fn import_receipt(
         "blocked": blocked,
         "blockers": blockers,
         "mutated": outcome.is_some(),
-        "object_id": outcome.map(|created| created.object_id.clone()),
-        "state_hash": outcome.map(|created| created.state_hash.clone()),
+        "object_id": outcome.map(|created| created.object_id.as_str()),
+        "operation_id": outcome.map(|created| created.operation_id.as_str()),
+        "state_hash": outcome.map(|created| created.state_hash.as_str()),
         "valid": !blocked,
         "verdict": if blocked { "FAIL" } else { "PASS" },
         "non_claims": [
             IMPORT_NON_CLAIM_LOCAL,
             IMPORT_NON_CLAIM_LIFECYCLE,
             IMPORT_NON_CLAIM_AUTHORITY,
+            IMPORT_NON_CLAIM_TRANSPORT,
         ],
     }))
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::BTreeSet, fs};
-
     use super::*;
 
-    const TEST_DIRECTORY_PREFIX: &str = "cairn-radicle-import-cli";
-    const REPOSITORY_ID: &str = "rad:z3example";
-    const BASE_GIT_OID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    const POLICY_HASH: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-    const ACTOR: &str = "z6Mkexample";
-    const IDENTITY_OID: &str = "cccccccccccccccccccccccccccccccccccccccc";
+    const CHANGE_ID: &str = "cob-import-cli";
+    const PUBLIC_KEY: &str = "z6MknSLrJoTcukLrE435hVNQT4JUhbvWLX4kUzqkEStBU8Vi";
 
-    fn test_directory(name: &str) -> PathBuf {
-        std::env::temp_dir().join(format!(
-            "{TEST_DIRECTORY_PREFIX}-{name}-{}",
-            std::process::id()
-        ))
-    }
-
-    fn remove_test_directory(path: &Path) -> Result<(), Box<dyn Error>> {
-        match fs::remove_dir_all(path) {
-            Ok(()) => Ok(()),
-            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
-            Err(error) => Err(error.into()),
-        }
-    }
-
-    fn inspection() -> ChangeImportInspection {
-        ChangeImportInspection {
-            authority: onix_cairn_radicle::CurrentDelegateAuthority {
-                actor: ACTOR.to_string(),
-                identity_oid: IDENTITY_OID.to_string(),
-                is_delegate: true,
-            },
-            repository_id: REPOSITORY_ID.to_string(),
-            base_git_oid: BASE_GIT_OID.to_string(),
-            existing_object_id: None,
-        }
-    }
-
-    // r[verify cairn.radicle_import_cli.command.preview]
-    // r[verify cairn.radicle_import_cli.command.explicit_context]
+    // r[verify cairn.radicle_cob_only.cli.explicit]
+    // r[verify cairn.radicle_cob_only.cli.reject_runtime]
+    // r[verify cairn.radicle_cob_only.no_runtime.artifacts]
     #[test]
-    fn import_arguments_require_explicit_radicle_context() {
+    fn import_arguments_require_only_explicit_cob_context() -> Result<(), Box<dyn Error>> {
         let parsed = parse_import_options(&[
-            "demo".to_string(),
-            "--rad-home".to_string(),
-            "/tmp/radicle".to_string(),
-            "--rid".to_string(),
-            REPOSITORY_ID.to_string(),
-        ])
-        .unwrap();
-        assert_eq!(parsed.change, "demo");
+            CHANGE_ID.to_string(),
+            "--git-repository".to_string(),
+            "/tmp/repository".to_string(),
+            "--keystore".to_string(),
+            "/tmp/keys".to_string(),
+            "--workspace".to_string(),
+            "workspace:example".to_string(),
+            "--delegate".to_string(),
+            PUBLIC_KEY.to_string(),
+        ])?;
+        assert_eq!(parsed.change, CHANGE_ID);
         assert!(!parsed.execute);
-        assert!(parse_import_options(&["demo".to_string()]).is_err());
+        assert!(parse_import_options(&[CHANGE_ID.to_string()]).is_err());
         assert!(parse_import_options(&[
-            "demo".to_string(),
+            CHANGE_ID.to_string(),
             "--rad-home".to_string(),
             "/tmp/radicle".to_string(),
         ])
         .is_err());
-        assert!(parse_import_options(&[
-            "demo".to_string(),
-            "--rad-home".to_string(),
-            "/tmp/radicle".to_string(),
-            "--rid".to_string(),
-            REPOSITORY_ID.to_string(),
-            "--unknown".to_string(),
-        ])
-        .is_err());
-    }
-
-    // r[verify cairn.radicle_import_cli.receipt]
-    // r[verify cairn.radicle_import_cli.receipt.blocked]
-    // r[verify cairn.radicle_import_cli.non_claims.local_only]
-    #[test]
-    fn import_receipt_binds_preview_and_blocked_non_claims() -> Result<(), Box<dyn Error>> {
-        let options = RadicleImportOptions {
-            change: "demo".to_string(),
-            root: PathBuf::from("."),
-            rad_home: PathBuf::from("/tmp/radicle"),
-            repository_id: REPOSITORY_ID.to_string(),
-            policy: PathBuf::from(default_policy_path()),
-            execute: false,
-        };
-        let init = plan_change_cob_import(ChangeCobImportSnapshot {
-            change_id: options.change.clone(),
-            repository_id: REPOSITORY_ID.to_string(),
-            base_git_oid: BASE_GIT_OID.to_string(),
-            policy_hash: POLICY_HASH.to_string(),
-            proposal: Some("# Proposal\n".to_string()),
-            design: None,
-            tasks: None,
-            metadata: None,
-            delta_specs: BTreeMap::new(),
-        })?;
-        let allowed = inspection();
-        let content_root = change_cob_import_content_root(&init, ACTOR)?;
-        let receipt = with_portable_receipt_hash(
-            &options.root,
-            import_receipt(
-                &options,
-                &allowed,
-                "cairn-default",
-                &init,
-                &content_root,
-                &[],
-                None,
-            )?,
-        );
-        assert_eq!(receipt.get("valid").and_then(Value::as_bool), Some(true));
-        assert_eq!(
-            receipt
-                .get("receipt_hash")
-                .and_then(Value::as_str)
-                .map(str::len),
-            Some(cairn_core::BLAKE3_HEX_LENGTH)
-        );
-        assert!(receipt
-            .get("non_claims")
-            .and_then(Value::as_array)
-            .is_some_and(|claims| claims.iter().any(|claim| claim == IMPORT_NON_CLAIM_LOCAL)));
-
-        let mut denied = allowed;
-        denied.authority.is_delegate = false;
-        let blockers = import_precondition_blockers(&denied);
-        let blocked = import_receipt(
-            &options,
-            &denied,
-            "cairn-default",
-            &init,
-            &content_root,
-            &blockers,
-            None,
-        )?;
-        assert_eq!(blocked.get("blocked").and_then(Value::as_bool), Some(true));
-        assert_eq!(blocked.get("mutated").and_then(Value::as_bool), Some(false));
-        Ok(())
-    }
-
-    // r[verify cairn.radicle_import_cli.lossless_plan.exact]
-    #[test]
-    fn active_change_snapshot_reads_exact_supported_bytes() -> Result<(), Box<dyn Error>> {
-        let root = test_directory("exact");
-        remove_test_directory(&root)?;
-        let change_dir = root.join("cairn/changes/demo");
-        fs::create_dir_all(change_dir.join("specs/demo"))?;
-        fs::write(change_dir.join("proposal.md"), "# Proposal\n\nExact.  \n")?;
-        fs::write(change_dir.join("design.md"), "# Design\n")?;
-        fs::write(change_dir.join("tasks.md"), "# Tasks\n")?;
-        fs::write(
-            change_dir.join("metadata.json"),
-            "{\n  \"depends_on\": []\n}\n",
-        )?;
-        fs::write(change_dir.join("specs/demo/spec.md"), "# Delta\n")?;
-
-        let snapshot = read_active_change_snapshot(&root, "demo", &inspection(), POLICY_HASH)?;
-        assert_eq!(
-            snapshot.proposal.as_deref(),
-            Some("# Proposal\n\nExact.  \n")
-        );
-        assert_eq!(
-            snapshot.delta_specs.get("demo").map(String::as_str),
-            Some("# Delta\n")
-        );
-        let init = plan_change_cob_import(snapshot)?;
-        assert_eq!(
-            init.artifacts.len(),
-            init.artifacts.keys().collect::<BTreeSet<_>>().len()
-        );
-
-        fs::remove_dir_all(root)?;
-        Ok(())
-    }
-
-    // r[verify cairn.radicle_import_cli.receipt.blocked]
-    #[test]
-    fn active_change_snapshot_rejects_unsupported_spec_entries() -> Result<(), Box<dyn Error>> {
-        let root = test_directory("unsupported");
-        remove_test_directory(&root)?;
-        let change_dir = root.join("cairn/changes/demo");
-        fs::create_dir_all(change_dir.join("specs"))?;
-        fs::write(change_dir.join("specs/loose.md"), "not a delta spec\n")?;
-
-        let result = read_active_change_snapshot(&root, "demo", &inspection(), POLICY_HASH);
-        assert!(result.is_err());
-
-        fs::remove_dir_all(root)?;
+        assert!(run_cob(vec!["sync".to_string(), CHANGE_ID.to_string()]).is_err());
         Ok(())
     }
 }

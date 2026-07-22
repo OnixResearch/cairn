@@ -18,7 +18,6 @@ const BLOCKER_LOCAL_DIVERGENCE: &str =
 const BLOCKER_INVALID_ABSENT_SNAPSHOT: &str =
     "local snapshot marks the destination absent but includes observed content";
 
-// r[impl cairn.radicle_status_checkout.status]
 // r[impl cairn.radicle_status_checkout.checkout_plan]
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -209,6 +208,7 @@ mod tests {
                     repository_id: REPOSITORY_ID.to_string(),
                     base_git_oid: BASE_GIT_OID.to_string(),
                     policy_hash: POLICY_HASH.to_string(),
+                    delegates: BTreeSet::new(),
                     artifacts: BTreeMap::from([(
                         ChangeArtifactId::proposal(),
                         PROPOSAL.to_string(),
@@ -283,7 +283,6 @@ mod tests {
             .any(|blocker| blocker == BLOCKER_LOCAL_DIVERGENCE));
     }
 
-    // r[verify cairn.radicle_status_checkout.status.conflict]
     #[test]
     fn lifecycle_conflict_is_visible_and_blocks_checkout() {
         let mut conflicted = state();
@@ -323,7 +322,6 @@ mod tests {
             .any(|blocker| blocker == BLOCKER_LIFECYCLE_CONFLICT));
     }
 
-    // r[verify cairn.radicle_status_checkout.status.conflict]
     #[test]
     fn content_conflict_is_visible_without_partial_materialization() {
         let mut conflicted = state();
