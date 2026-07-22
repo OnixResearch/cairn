@@ -232,6 +232,7 @@ fn collaboration_sync_with_socket(
 // r[verify cairn.radicle_two_peer_convergence.live.explicit]
 // r[verify cairn.radicle_two_peer_convergence.blocked.unavailable]
 // r[impl cairn.collaboration_sync.integration]
+// r[impl cairn.collaboration_sync.validation]
 // r[verify cairn.collaboration_sync.execution.success]
 // r[verify cairn.collaboration_sync.execution.stale]
 // r[verify cairn.collaboration_sync.integration.bootstrap]
