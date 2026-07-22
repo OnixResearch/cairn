@@ -82,7 +82,7 @@ impl CobRepository {
             Ok(reference) => reference
                 .target()
                 .map(Into::into)
-                .ok_or_else(|| CobStoreError::InvalidCobReference { reference: name })
+                .ok_or(CobStoreError::InvalidCobReference { reference: name })
                 .map(Some),
             Err(error) if error.code() == git2::ErrorCode::NotFound => Ok(None),
             Err(error) => Err(error.into()),
