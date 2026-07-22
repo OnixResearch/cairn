@@ -19,6 +19,10 @@ const REFERENCE_RADICLE_OID_VERSION: &str = "0.2.0";
 const REFERENCE_GIT2_VERSION: &str = "0.20.4";
 const REFERENCE_TYPE_NAME: &str = "xyz.onixresearch.cairn-change";
 const UMBRELLA_RADICLE_PACKAGE: &str = "radicle";
+const RADICLE_COB_PACKAGE: &str = "radicle-cob";
+const RADICLE_CRYPTO_PACKAGE: &str = "radicle-crypto";
+const RADICLE_OID_PACKAGE: &str = "radicle-oid";
+const GIT2_PACKAGE: &str = "git2";
 const RADICLE_NODE_PACKAGE: &str = "radicle-node";
 const UNSUPPORTED_VERSION_NUMBER: usize = 2;
 const FORBIDDEN_CONSUMER_DEPENDENCIES: &[&str] = &[
@@ -71,11 +75,19 @@ fn provenance_binds_standalone_radicle_producer() -> Result<(), Box<dyn Error>> 
         .non_claims
         .iter()
         .all(|non_claim| !non_claim.trim().is_empty()));
-    assert!(lockfile_has_package_version(
-        PRODUCER_LOCK_BYTES,
-        UMBRELLA_RADICLE_PACKAGE,
-        REFERENCE_RADICLE_VERSION
-    ));
+    for (package, version) in [
+        (UMBRELLA_RADICLE_PACKAGE, REFERENCE_RADICLE_VERSION),
+        (RADICLE_COB_PACKAGE, REFERENCE_RADICLE_COB_VERSION),
+        (RADICLE_CRYPTO_PACKAGE, REFERENCE_RADICLE_CRYPTO_VERSION),
+        (RADICLE_OID_PACKAGE, REFERENCE_RADICLE_OID_VERSION),
+        (GIT2_PACKAGE, REFERENCE_GIT2_VERSION),
+    ] {
+        assert!(lockfile_has_package_version(
+            PRODUCER_LOCK_BYTES,
+            package,
+            version
+        ));
+    }
     assert!(!lockfile_has_package(
         PRODUCER_LOCK_BYTES,
         RADICLE_NODE_PACKAGE

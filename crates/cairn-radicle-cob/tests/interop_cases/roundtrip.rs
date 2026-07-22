@@ -36,6 +36,16 @@ const EXPECTED_LINEAR_OPERATION_COUNT: usize = 2;
 fn cairn_loads_and_updates_external_radicle_storage_fixture() -> Result<(), Box<dyn Error>> {
     let provenance = provenance()?;
     let fixture = ExternalFixture::new("external-inward", &provenance)?;
+    let fixture_repository = git2::Repository::open(&fixture.repository)?;
+    assert_eq!(fixture_repository.remotes()?.len(), 0);
+    assert_eq!(
+        fixture_repository
+            .find_reference(&provenance.fixture.reference)?
+            .target()
+            .map(|target| target.to_string()),
+        Some(provenance.fixture.operation_id.clone())
+    );
+    drop(fixture_repository);
     let initial = inspect_change(&fixture.repository, &provenance.fixture.change_id)?;
     assert_eq!(initial.object_id, provenance.fixture.object_id);
     assert_eq!(initial.state.creator, provenance.fixture.actor);
@@ -101,7 +111,9 @@ fn cairn_loads_and_updates_external_radicle_storage_fixture() -> Result<(), Box<
         reloaded_heads[0].1.value.as_deref(),
         Some(EXTERNAL_UPDATED_PROPOSAL)
     );
-    assert!(git2::Repository::open(&fixture.repository)?
+    let fixture_repository = git2::Repository::open(&fixture.repository)?;
+    assert_eq!(fixture_repository.remotes()?.len(), 0);
+    assert!(fixture_repository
         .find_commit(provenance.fixture.operation_id.parse()?)
         .is_ok());
     Ok(())
