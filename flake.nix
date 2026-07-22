@@ -310,6 +310,7 @@
         # r[verify cairn.radicle_two_peer_convergence.live.success]
         # r[verify cairn.radicle_two_peer_convergence.live.explicit]
         # r[verify cairn.radicle_two_peer_convergence.blocked.unavailable]
+        # r[impl cairn.collaboration_sync.validation]
         radicle-two-peer-convergence = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn-radicle-two-peer-convergence";
           version = "0.1.0";
@@ -329,7 +330,9 @@
           checkPhase = ''
             runHook preCheck
             export CAIRN_RADICLE_NODE_BIN=${pkgs.radicle-node}/bin/radicle-node
+            export CAIRN_BIN=${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn
             "$CAIRN_RADICLE_NODE_BIN" --version
+            "$CAIRN_BIN" --help >/dev/null
             cargo test -p onix-cairn-radicle \
               --test live_two_peer_convergence \
               -- --ignored --nocapture

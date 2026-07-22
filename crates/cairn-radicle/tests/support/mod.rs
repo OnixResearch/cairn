@@ -31,7 +31,7 @@ pub const TWO_PEER_NON_CLAIMS: &[&str] = &[
     "eventual convergence",
     "partition recovery",
     "release eligibility",
-    "supported collaboration sync command",
+    "automatic peer discovery or background synchronization",
 ];
 const IDENTITY_UPDATE_TITLE: &str = "Add second convergence delegate";
 

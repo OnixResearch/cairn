@@ -10,6 +10,6 @@
 
 ## Phase 3: Integration and Evidence
 
-- [ ] [serial] Extend real two-node coverage through the public sync path for bootstrap, no-op, conflict preservation, stale preview, wrong socket, unavailable peer, and missing peer-change evidence. r[cairn.collaboration_sync.integration]
+- [x] [serial] Extend real two-node coverage through the public sync path for bootstrap, no-op, conflict preservation, stale preview, wrong socket, unavailable peer, unseeded local policy, and missing peer-change evidence. r[cairn.collaboration_sync.integration]
 - [ ] [serial] Document the exact pull semantics, operational inputs, conflict behavior, and bounded non-claims. r[cairn.collaboration_sync.non_claims]
 - [ ] [serial] Run focused, workspace, lifecycle, traceability, formatting, Clippy, purity, live-node Nix, full flake, release-readiness, and self-dogfood validation before sync/archive. r[cairn.collaboration_sync.validation]

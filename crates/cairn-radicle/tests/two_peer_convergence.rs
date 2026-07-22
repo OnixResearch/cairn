@@ -79,7 +79,7 @@ fn two_peer_claim_boundary_remains_explicit() {
         "public-network publication",
         "eventual convergence",
         "partition recovery",
-        "supported collaboration sync command",
+        "automatic peer discovery or background synchronization",
     ] {
         assert!(TWO_PEER_NON_CLAIMS.contains(&required));
     }

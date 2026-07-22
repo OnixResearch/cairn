@@ -18,15 +18,19 @@ use cairn_core::{
     change_cob_content_root, inspect_change_cob_conflicts, plan_change_cob_resolution,
     ChangeArtifactId, ChangeCobAction, ChangeCollaborationResolutionSnapshot,
 };
-use onix_cairn_radicle::{create_change_resolution, inspect_change_status};
+use onix_cairn_radicle::{
+    create_change_resolution, execute_profile_sync, inspect_change_status, inspect_profile_sync,
+    plan_change_sync, ChangeSyncSnapshot,
+};
 use radicle::{
     crypto::{PublicKey, Seed},
-    node::{policy::Scope, ConnectOptions, ConnectResult, FetchResult, Handle as _, Node},
+    node::{policy::Scope, Handle as _, Node},
     profile::{Home, Profile},
     rad,
     storage::{ReadStorage, SignRepository},
     test::fixtures,
 };
+use serde_json::Value;
 
 use support::{
     add_delegate, assert_same_typed_state, assert_signed_change_ref, import_change,
@@ -36,12 +40,11 @@ use support::{
 
 const TEST_DIRECTORY_PREFIX: &str = "cairn-live-radicle-convergence";
 const RADICLE_NODE_BINARY_ENV: &str = "CAIRN_RADICLE_NODE_BIN";
+const CAIRN_BINARY_ENV: &str = "CAIRN_BIN";
 const SECRET_KEY_FILE: &str = "radicle";
 const LOOPBACK_HOST: &str = "127.0.0.1";
 const NODE_LOG_FILE: &str = "cairn-live-node.log";
 const NODE_READY_TIMEOUT: Duration = Duration::from_secs(10);
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
-const FETCH_TIMEOUT: Duration = Duration::from_secs(5);
 const POLL_INTERVAL: Duration = Duration::from_millis(50);
 static TEST_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
@@ -160,41 +163,102 @@ fn peer_descriptor(profile: &Profile, repository_id: &str) -> PeerDescriptor {
     }
 }
 
-fn successful_fetch(
-    handle: &mut Node,
+fn collaboration_sync(
+    binary: &Path,
+    root: &Path,
+    profile: &Profile,
     repository_id: radicle::prelude::RepoId,
-    remote: PublicKey,
-) -> Result<Vec<radicle::storage::RefUpdate>, Box<dyn Error>> {
-    match handle.fetch(repository_id, remote, FETCH_TIMEOUT, None)? {
-        FetchResult::Success { updated, .. } => Ok(updated),
-        FetchResult::Failed { reason } => {
-            Err(format!("live Radicle fetch failed: {reason}").into())
-        }
-    }
+    peer_id: PublicKey,
+    peer_address: SocketAddr,
+    execute: bool,
+) -> Result<Value, Box<dyn Error>> {
+    collaboration_sync_with_socket(
+        binary,
+        root,
+        profile,
+        &profile.home.socket_default(),
+        repository_id,
+        (peer_id, peer_address),
+        execute,
+    )
 }
 
-fn connect_options() -> ConnectOptions {
-    ConnectOptions {
-        persistent: true,
-        timeout: CONNECT_TIMEOUT,
+fn collaboration_sync_with_socket(
+    binary: &Path,
+    root: &Path,
+    profile: &Profile,
+    control_socket: &Path,
+    repository_id: radicle::prelude::RepoId,
+    peer: (PublicKey, SocketAddr),
+    execute: bool,
+) -> Result<Value, Box<dyn Error>> {
+    let (peer_id, peer_address) = peer;
+    let mut command = Command::new(binary);
+    command
+        .arg("collaboration")
+        .arg("sync")
+        .arg(CHANGE_ID)
+        .arg("--backend")
+        .arg("radicle.v1")
+        .arg("--rad-home")
+        .arg(profile.home.path())
+        .arg("--rid")
+        .arg(repository_id.to_string())
+        .arg("--control-socket")
+        .arg(control_socket)
+        .arg("--peer-id")
+        .arg(peer_id.to_string())
+        .arg("--peer-address")
+        .arg(peer_address.to_string())
+        .arg("--root")
+        .arg(root);
+    if execute {
+        command.arg("--execute");
     }
+    let output = command.output()?;
+    if !output.status.success() {
+        return Err(format!(
+            "cairn collaboration sync failed with {}: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into());
+    }
+    Ok(serde_json::from_slice(&output.stdout)?)
 }
 
 // r[impl cairn.radicle_two_peer_convergence.live]
 // r[verify cairn.radicle_two_peer_convergence.live.success]
 // r[verify cairn.radicle_two_peer_convergence.live.explicit]
 // r[verify cairn.radicle_two_peer_convergence.blocked.unavailable]
+// r[impl cairn.collaboration_sync.integration]
+// r[verify cairn.collaboration_sync.execution.success]
+// r[verify cairn.collaboration_sync.execution.stale]
+// r[verify cairn.collaboration_sync.integration.bootstrap]
+// r[verify cairn.collaboration_sync.integration.noop]
+// r[verify cairn.collaboration_sync.integration.conflict]
+// r[verify cairn.collaboration_sync.blocked.unavailable]
+// r[verify cairn.collaboration_sync.blocked.socket]
+// r[verify cairn.collaboration_sync.blocked.unseeded]
+// r[verify cairn.collaboration_sync.blocked.missing_ref]
+// r[verify cairn.collaboration_sync.validation.live]
 #[test]
 #[ignore = "requires CAIRN_RADICLE_NODE_BIN and the dedicated Nix live-node gate"]
 fn live_nodes_transfer_conflict_and_resolution_without_copying_storage(
 ) -> Result<(), Box<dyn Error>> {
     assert!(TWO_PEER_NON_CLAIMS.contains(&"public-network publication"));
-    assert!(TWO_PEER_NON_CLAIMS.contains(&"supported collaboration sync command"));
+    assert!(TWO_PEER_NON_CLAIMS.contains(&"automatic peer discovery or background synchronization"));
     let binary = env::var_os(RADICLE_NODE_BINARY_ENV)
         .map(PathBuf::from)
         .ok_or("CAIRN_RADICLE_NODE_BIN is required")?;
     if !binary.is_file() {
         return Err(format!("radicle-node binary does not exist: {}", binary.display()).into());
+    }
+    let cairn_binary = env::var_os(CAIRN_BINARY_ENV)
+        .map(PathBuf::from)
+        .ok_or("CAIRN_BIN is required")?;
+    if !cairn_binary.is_file() {
+        return Err(format!("cairn binary does not exist: {}", cairn_binary.display()).into());
     }
 
     let root = TestRoot::create()?;
@@ -234,52 +298,197 @@ fn live_nodes_transfer_conflict_and_resolution_without_copying_storage(
     assert!(alice_handle.seed(repository_id, Scope::All)?);
     assert!(alice_handle.add_inventory(repository_id)?);
 
+    let wrong_socket = collaboration_sync_with_socket(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        &alice_socket,
+        repository_id,
+        (alice_node_id, alice_address),
+        true,
+    )?;
+    assert_eq!(wrong_socket["blocked"], true);
+    assert_eq!(wrong_socket["network_attempted"], false);
+    assert_eq!(wrong_socket["local_node_id"], alice_node_id.to_string());
+
     let unavailable_address = available_loopback_address()?;
     let unavailable_started = Instant::now();
-    let unavailable = bob_handle.connect(
+    let unavailable = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
         unavailable_profile.public_key,
-        unavailable_address.into(),
-        connect_options(),
-    );
+        unavailable_address,
+        true,
+    )?;
     assert!(unavailable_started.elapsed() <= NODE_READY_TIMEOUT);
-    assert!(matches!(
-        unavailable,
-        Ok(ConnectResult::Disconnected { .. }) | Err(_)
-    ));
+    assert_eq!(unavailable["blocked"], true);
+    assert_eq!(unavailable["network_attempted"], true);
+    assert_eq!(unavailable["before"]["status"], "repository_missing");
+    assert!(bob_profile.storage.repository(repository_id).is_err());
+
+    let import_preview = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        false,
+    )?;
+    assert_eq!(import_preview["dry_run"], true);
+    assert_eq!(import_preview["network_attempted"], false);
+    assert_eq!(import_preview["before"]["status"], "repository_missing");
+    assert!(bob_profile.storage.repository(repository_id).is_err());
+    let unseeded = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        true,
+    )?;
+    assert_eq!(unseeded["blocked"], true);
+    assert!(unseeded["blockers"]
+        .as_array()
+        .is_some_and(|blockers| blockers.iter().any(|blocker| blocker
+            .as_str()
+            .is_some_and(|text| text.contains("not seeded")))));
     assert!(bob_profile.storage.repository(repository_id).is_err());
     assert!(bob_handle.seed(repository_id, Scope::All)?);
 
-    assert!(matches!(
-        bob_handle.connect(alice_node_id, alice_address.into(), connect_options())?,
-        ConnectResult::Connected
-    ));
-    let import_updates = successful_fetch(&mut bob_handle, repository_id, alice_node_id)?;
-    assert!(!import_updates.is_empty());
-    assert!(import_updates
-        .iter()
-        .any(|update| update.name().as_str().contains("refs/cobs/")));
+    let imported = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        true,
+    )?;
+    assert_eq!(imported["valid"], true, "{imported:#}");
+    assert_eq!(imported["peer_change_ref_present"], true);
+    assert_eq!(imported["after"]["status"], "present");
+    assert!(imported["ref_updates"]
+        .as_array()
+        .is_some_and(|updates| updates.iter().any(|update| update["name"]
+            .as_str()
+            .is_some_and(|name| name.contains("refs/cobs/")))));
     let bob_repo = bob_profile.storage.repository(repository_id)?;
     rad::fork(repository_id, bob_signer.as_ref(), &bob_profile.storage)?;
     bob_repo.sign_refs(&bob_signer)?;
     assert_signed_change_ref(&bob_repo, alice_node_id)?;
     let bob_imported = inspect_change_status(&bob_repo, &bob_profile.public_key, CHANGE_ID)?;
     assert_same_typed_state(&alice_imported, &bob_imported)?;
+    bob_handle.announce_refs_for(repository_id, [bob_node_id])?;
 
-    assert!(matches!(
-        alice_handle.connect(bob_node_id, bob_address.into(), connect_options())?,
-        ConnectResult::Connected
-    ));
+    let missing_peer_ref = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &alice_profile,
+        repository_id,
+        bob_node_id,
+        bob_address,
+        true,
+    )?;
+    assert_eq!(missing_peer_ref["blocked"], true);
+    assert_eq!(missing_peer_ref["peer_change_ref_present"], false);
+
+    let noop_preview = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        false,
+    )?;
+    assert_eq!(noop_preview["dry_run"], true);
+    let noop = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        true,
+    )?;
+    assert_eq!(noop["valid"], true);
+    assert_eq!(noop["noop"], true);
+
+    let stale_inspection = inspect_profile_sync(
+        bob_profile.home.path(),
+        &repository_id.to_string(),
+        CHANGE_ID,
+    )?;
+    let stale_plan = plan_change_sync(ChangeSyncSnapshot {
+        change_id: CHANGE_ID.to_string(),
+        repository_id: stale_inspection.repository_id,
+        rad_home: bob_profile.home.path().display().to_string(),
+        control_socket: bob_socket.display().to_string(),
+        local_actor: stale_inspection.local_actor,
+        peer_id: alice_node_id.to_string(),
+        peer_address: alice_address.to_string(),
+        before: stale_inspection.state,
+    })?;
     let alice_updated = update_proposal(&alice_repo, &alice_signer, ALICE_PROPOSAL)?;
     let bob_updated = update_proposal(&bob_repo, &bob_signer, BOB_PROPOSAL)?;
     assert!(!inspect_change_cob_conflicts(&alice_updated.state)?.has_conflicts());
     assert!(!inspect_change_cob_conflicts(&bob_updated.state)?.has_conflicts());
+    let stale = execute_profile_sync(bob_profile.home.path(), &stale_plan)?;
+    assert!(!stale.success);
+    assert!(!stale.network_attempted);
+    assert!(stale
+        .blockers
+        .iter()
+        .any(|blocker| blocker.contains("changed after preview")));
     alice_handle.announce_refs_for(repository_id, [alice_node_id])?;
     bob_handle.announce_refs_for(repository_id, [bob_node_id])?;
 
-    let alice_updates = successful_fetch(&mut alice_handle, repository_id, bob_node_id)?;
-    let bob_updates = successful_fetch(&mut bob_handle, repository_id, alice_node_id)?;
-    assert!(!alice_updates.is_empty());
-    assert!(!bob_updates.is_empty());
+    let alice_conflict_preview = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &alice_profile,
+        repository_id,
+        bob_node_id,
+        bob_address,
+        false,
+    )?;
+    let bob_conflict_preview = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        false,
+    )?;
+    assert_eq!(alice_conflict_preview["dry_run"], true);
+    assert_eq!(bob_conflict_preview["dry_run"], true);
+    let alice_sync = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &alice_profile,
+        repository_id,
+        bob_node_id,
+        bob_address,
+        true,
+    )?;
+    let bob_sync = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        true,
+    )?;
+    assert_eq!(alice_sync["valid"], true);
+    assert_eq!(bob_sync["valid"], true);
+    assert_eq!(alice_sync["conflicts_observed"], true);
+    assert_eq!(bob_sync["conflicts_observed"], true);
     assert_signed_change_ref(&alice_repo, bob_node_id)?;
     assert_signed_change_ref(&bob_repo, alice_node_id)?;
     let alice_conflicted =
@@ -326,8 +535,27 @@ fn live_nodes_transfer_conflict_and_resolution_without_copying_storage(
     assert_eq!(resolution_bases, &expected_bases);
     create_change_resolution(&alice_repo, &alice_signer, &resolution, &alice_conflicted)?;
     alice_handle.announce_refs_for(repository_id, [alice_node_id])?;
-    let resolution_updates = successful_fetch(&mut bob_handle, repository_id, alice_node_id)?;
-    assert!(!resolution_updates.is_empty());
+    let resolution_preview = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        false,
+    )?;
+    assert_eq!(resolution_preview["dry_run"], true);
+    let resolution_sync = collaboration_sync(
+        &cairn_binary,
+        &root.path,
+        &bob_profile,
+        repository_id,
+        alice_node_id,
+        alice_address,
+        true,
+    )?;
+    assert_eq!(resolution_sync["valid"], true);
+    assert_eq!(resolution_sync["conflicts_observed"], false);
     assert_signed_change_ref(&bob_repo, alice_node_id)?;
 
     let alice_resolved = inspect_change_status(&alice_repo, &alice_profile.public_key, CHANGE_ID)?;
