@@ -23,7 +23,6 @@ use crate::{
 
 use super::{
     format_library_versions, read_unique_option_value, COB_BACKEND_V1, OPTION_TOKEN_WIDTH,
-    RADICLE_COB_LIBRARY_VERSION,
 };
 
 const STANDARD_ROOT_ENTRY_LIMIT: usize = 5;
@@ -762,6 +761,7 @@ mod tests {
         initialize_change_cob, ChangeArtifactId, ChangeCobAction, ChangeCobInit,
         ChangeCobOperation, RADICLE_CHANGE_COB_SCHEMA_V1,
     };
+    use onix_cairn_radicle_cob::RADICLE_COB_LIBRARY_VERSION;
 
     const TEST_DIRECTORY_PREFIX: &str = "cairn-radicle-status-checkout-cli";
     const CHANGE_ID: &str = "demo";
