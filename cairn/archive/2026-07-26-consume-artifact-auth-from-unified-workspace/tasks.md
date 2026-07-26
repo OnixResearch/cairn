@@ -11,4 +11,4 @@
 ## Phase 3: Evidence and closeout
 
 - [x] [parallel] Run post-change authentication and source-admission checks, record rollback and non-claims, and prove that transfer and binding packages do not enter Cairn's crate graph. r[cairn.artifact_auth.repository_extraction.cutover]
-- [ ] [serial] Run formatting, workspace tests, strict Clippy, lifecycle validation and gates, traceability, policy freshness, and bounded Nix checks; then sync accepted requirements and archive only after all evidence agrees. r[cairn.artifact_auth.repository_extraction.cutover] r[cairn.artifact_auth.repository_extraction.repository]
+- [x] [serial] Run formatting, workspace tests, strict Clippy, lifecycle validation and gates, traceability, policy freshness, and bounded Nix checks; then sync accepted requirements and archive only after all evidence agrees. r[cairn.artifact_auth.repository_extraction.cutover] r[cairn.artifact_auth.repository_extraction.repository]

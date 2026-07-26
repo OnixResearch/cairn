@@ -72,4 +72,20 @@ Cairn retains filesystem measurement, canonical JSON reconstruction, lifecycle p
 
 The historical source revision remains an explicit rollback coordinate. It is not an active Cargo or Nix dependency.
 
+## Final validation
+
+The final rail passed:
+
+- Cargo formatting;
+- all workspace tests;
+- strict workspace Clippy for all targets;
+- exact unified source-pin and source-byte checks;
+- the packaged Cairn build;
+- policy export freshness;
+- native Cairn validation plus proposal, design, and tasks gates;
+- traceability coverage at 1,694 of 1,694 accepted requirement IDs;
+- `nix flake check path:$PWD -L`, with all host-system checks passing.
+
+The broad Nix check omitted `aarch64-linux` because the current host cannot run that system's checks. It did not report an aarch64 source or build failure.
+
 This migration does not prove artifact truth, trust-root correctness, revocation freshness, verifier correctness, authorization, lifecycle conformance, release readiness, Radicle availability, or whole-stack GitHub independence.

@@ -26,24 +26,23 @@ r[cairn.artifact_auth.repository_extraction.inventory.incomplete]
 - THEN the extraction MUST fail closed with the missing consumer and semantic class
 - AND no standalone release identity may be admitted.
 
-### Requirement: Independent repository owns the neutral contract
+### Requirement: Independent workspace packages own the neutral contract
 
-r[cairn.artifact_auth.repository_extraction.repository] Cairn MUST move canonical product-neutral artifact-authentication ownership to an independent `OnixResearch/artifact-auth` repository with its own native lifecycle, documentation, release profile, source identity, and MIT-or-Apache reusable package boundary.
+r[cairn.artifact_auth.repository_extraction.repository] Cairn MUST consume product-neutral authentication mechanics from the independently versioned `artifact-auth-core` and `artifact-auth-ed25519` packages in `OnixResearch/onix-artifact`, and those packages MUST retain their own lifecycle, documentation, release profile, source identity, and `MIT OR Apache-2.0` boundary without acquiring product authority.
 
-#### Scenario: Standalone repository is product neutral
+#### Scenario: Unified source preserves package independence
 
 r[cairn.artifact_auth.repository_extraction.repository.neutral]
-- GIVEN the standalone repository is prepared for review
-- WHEN its package graph, source tree, and release metadata are inspected
-- THEN it MUST have no runtime dependency on Cairn, Mantle, Molten, Valence, Kamacite, UCAN, Basalt, OCI, Radicle, or a sibling checkout
-- AND every reused product source unit MUST record exact provenance, preserved attribution, material changes, explicit owner authorization, and a standalone-compatible license grant.
+- GIVEN one reviewed immutable Artifact workspace revision with authentication and transfer packages
+- WHEN Cairn validates the source package graph and package metadata
+- THEN the authentication packages retain their narrow dependency edge and no transfer, binding, product, or authority dependency enters them.
 
-#### Scenario: Product-coupled package is rejected
+#### Scenario: Product-coupled or widened source is rejected
 
 r[cairn.artifact_auth.repository_extraction.repository.product_dependency]
-- GIVEN a candidate standalone package imports a product crate, depends on a workspace-relative sibling path, or reuses source without exact provenance, attribution, owner authorization, and a compatible standalone license grant
-- WHEN repository admission runs
-- THEN the candidate MUST be rejected before publication or consumer pinning.
+- GIVEN a source package imports a product crate, adds an unreviewed cross-mechanism dependency, uses a workspace-relative consumer path, or lacks exact provenance and compatible licensing
+- WHEN source admission runs
+- THEN Cairn rejects the source before dependency or release evidence is accepted.
 
 ### Requirement: Standalone core remains authority free
 
@@ -139,21 +138,21 @@ r[cairn.artifact_auth.repository_extraction.consumer_authority.no_promotion]
 
 ### Requirement: Cutover uses immutable source and compatibility evidence
 
-r[cairn.artifact_auth.repository_extraction.cutover] Cairn MUST consume one immutable reviewed standalone source revision with aligned Cargo and Nix identities, dual-run legacy and standalone decisions over identical observations, classify every difference, preserve a bounded rollback path, and reject floating or workspace-relative release dependencies.
+r[cairn.artifact_auth.repository_extraction.cutover] Cairn MUST consume one immutable reviewed Artifact workspace revision with aligned Cargo and Nix identities, MUST keep its resolved source package set limited to the two authentication packages, MUST preserve a bounded historical-source rollback, and MUST reject floating, workspace-relative, widened, or mismatched release dependencies.
 
-#### Scenario: Explained parity permits cutover
+#### Scenario: Exact unified source permits receiver migration
 
 r[cairn.artifact_auth.repository_extraction.cutover.positive]
-- GIVEN the standalone release passes its conformance corpus and Cairn dual-run results are equal or explicitly mapped without claim widening
+- GIVEN the unified revision is remotely available, Cargo and Nix agree, authentication crate bytes match the historical source, focused behavior tests pass, and only two authentication packages enter Cairn's graph
 - WHEN cutover admission runs
-- THEN Cairn MAY select the immutable standalone revision while retaining lifecycle-specific compatibility projections.
+- THEN Cairn may use the unified source while retaining all product authority and the historical rollback reference.
 
-#### Scenario: Drift or source mismatch blocks cutover
+#### Scenario: Drift or graph widening blocks migration
 
 r[cairn.artifact_auth.repository_extraction.cutover.negative]
-- GIVEN unexplained preimage, identity, decision, issue, non-claim, Cargo/Nix source, lock, or mapping drift
+- GIVEN source bytes, revision, repository, NAR hash, license, package profile, Cargo lock set, Nix lock, adapter behavior, or required non-claims drift
 - WHEN cutover admission runs
-- THEN Cairn MUST keep the legacy path authoritative and report the exact blocker.
+- THEN Cairn keeps the migration blocked and does not treat equal package names as compatibility proof.
 
 ### Requirement: Conformance includes positive and negative mappings
 
