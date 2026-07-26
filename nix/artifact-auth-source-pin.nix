@@ -1,23 +1,27 @@
 { lib }:
 
 let
-  expectedRevision = "799459346d5416fbd7b9f55840a7371441b55afa";
+  expectedRevision = "e41340bec587b6d049b5cc518ec7db925dde84be";
+  rollbackRevision = "799459346d5416fbd7b9f55840a7371441b55afa";
   mismatchedRevision = "0000000000000000000000000000000000000000";
-  expectedProfileRepository = "https://github.com/OnixResearch/artifact-auth";
-  expectedSshRepository = "ssh://git@github.com/OnixResearch/artifact-auth.git";
-  expectedNixNarHash = "sha256-nEgz2FtVuDesX95yyxidp0vhjxL4INB6Ve8rkpLyJk0=";
+  expectedProfileRepository = "https://github.com/OnixResearch/onix-artifact";
+  expectedSshRepository = "ssh://git@github.com/OnixResearch/onix-artifact.git";
+  expectedNixNarHash = "sha256-2cM912L2YXVnVX9LquwhAPKyjPP/z/oFQRe7Qq9bHHE=";
   expectedLicense = "MIT OR Apache-2.0";
   incompatibleLicense = "AGPL-3.0-or-later";
   expectedVersion = "0.1.0";
   corePackage = "artifact-auth-core";
   ed25519Package = "artifact-auth-ed25519";
-  packageNames = [
+  transferPackage = "artifact-transfer-core";
+  consumerPackageNames = [
     corePackage
     ed25519Package
   ];
-  expectedPackageCount = builtins.length packageNames;
+  sourcePackageNames = consumerPackageNames ++ [ transferPackage ];
+  expectedWorkspaceMembers = map (packageName: "crates/${packageName}") sourcePackageNames;
+  expectedConsumerPackageCount = builtins.length consumerPackageNames;
   expectedCargoSource = "git+${expectedSshRepository}?rev=${expectedRevision}#${expectedRevision}";
-  nixInputNode = "artifact-auth";
+  nixInputNode = "artifact";
 
   valueAt =
     path: fallback: value:
@@ -48,6 +52,18 @@ let
     issueUnless (builtins.length matching == 1) "cargo-lock.${packageName}.unique"
     ++ issueUnless ((package.version or null) == expectedVersion) "cargo-lock.${packageName}.version"
     ++ issueUnless ((package.source or null) == expectedCargoSource) "cargo-lock.${packageName}.source";
+
+  consumerLockSetIssues =
+    cargoLock:
+    let
+      sourcePackages = builtins.filter (package: (package.source or null) == expectedCargoSource) (
+        cargoLock.package or [ ]
+      );
+      sourcePackageNamesObserved = map (package: package.name or "") sourcePackages;
+    in
+    issueUnless (
+      sorted sourcePackageNamesObserved == sorted consumerPackageNames
+    ) "cargo-lock.consumer-package-set";
 
   workspaceUseIssues =
     input:
@@ -99,6 +115,7 @@ let
     input:
     let
       workspacePackage = valueAt [ "workspace" "package" ] { } input.standaloneWorkspaceManifest;
+      workspaceMembers = valueAt [ "workspace" "members" ] [ ] input.standaloneWorkspaceManifest;
       profilePackages = input.releaseProfile.packages or [ ];
       distribution = input.releaseProfile.distribution or { };
     in
@@ -112,7 +129,10 @@ let
     ++ issueUnless (
       (input.releaseProfile.repository or null) == expectedProfileRepository
     ) "standalone.profile.repository"
-    ++ issueUnless (sorted profilePackages == sorted packageNames) "standalone.profile.packages"
+    ++ issueUnless (
+      sorted workspaceMembers == sorted expectedWorkspaceMembers
+    ) "standalone.workspace.members"
+    ++ issueUnless (sorted profilePackages == sorted sourcePackageNames) "standalone.profile.packages"
     ++ issueUnless (
       (distribution.channel or null) == "immutable-git-revision"
     ) "standalone.profile.channel"
@@ -131,13 +151,14 @@ let
         ++ workspaceUseIssues input
         ++ lockPackageIssues input.cargoLock corePackage
         ++ lockPackageIssues input.cargoLock ed25519Package
+        ++ consumerLockSetIssues input.cargoLock
         ++ nixLockIssues input
         ++ standaloneReleaseIssues input;
     in
     {
       valid = issues == [ ];
       inherit issues;
-      package_count = expectedPackageCount;
+      package_count = expectedConsumerPackageCount;
       revision = expectedRevision;
     };
 
@@ -169,6 +190,9 @@ let
       coreLockPackage = builtins.head (
         builtins.filter (package: (package.name or null) == corePackage) (input.cargoLock.package or [ ])
       );
+      transferLockPackage = coreLockPackage // {
+        name = transferPackage;
+      };
       floatingInput = replaceWorkspaceDependency input corePackage {
         git = expectedSshRepository;
         branch = "main";
@@ -183,6 +207,21 @@ let
           package = (input.cargoLock.package or [ ]) ++ [ coreLockPackage ];
         };
       };
+      widenedConsumerGraphInput = input // {
+        cargoLock = input.cargoLock // {
+          package = (input.cargoLock.package or [ ]) ++ [ transferLockPackage ];
+        };
+      };
+      incompleteSourceProfileInput = input // {
+        releaseProfile = input.releaseProfile // {
+          packages = consumerPackageNames;
+        };
+      };
+      incompleteSourceWorkspaceInput = input // {
+        standaloneWorkspaceManifest = lib.recursiveUpdate input.standaloneWorkspaceManifest {
+          workspace.members = map (packageName: "crates/${packageName}") consumerPackageNames;
+        };
+      };
       incompatibleLicenseInput = input // {
         releaseProfile = input.releaseProfile // {
           license = incompatibleLicense;
@@ -192,12 +231,15 @@ let
         };
       };
       workspaceRelativeInput = replaceWorkspaceDependency input corePackage {
-        path = "../artifact-auth/crates/artifact-auth-core";
+        path = "../artifact/crates/artifact-auth-core";
       };
     in
     expectRejected "cargo.${corePackage}.revision" floatingInput
     ++ expectRejected "nix.locked.revision" mismatchedInput
     ++ expectRejected "cargo-lock.${corePackage}.unique" duplicateInput
+    ++ expectRejected "cargo-lock.consumer-package-set" widenedConsumerGraphInput
+    ++ expectRejected "standalone.profile.packages" incompleteSourceProfileInput
+    ++ expectRejected "standalone.workspace.members" incompleteSourceWorkspaceInput
     ++ expectRejected "standalone.workspace.license" incompatibleLicenseInput
     ++ expectRejected "cargo.${corePackage}.workspace-relative" workspaceRelativeInput;
 in
@@ -207,8 +249,10 @@ in
     inherit expectedCargoSource expectedLicense expectedNixNarHash;
     profile_repository = expectedProfileRepository;
     ssh_repository = expectedSshRepository;
-    packages = packageNames;
+    packages = consumerPackageNames;
+    source_packages = sourcePackageNames;
     revision = expectedRevision;
+    rollback_revision = rollbackRevision;
     version = expectedVersion;
   };
 }

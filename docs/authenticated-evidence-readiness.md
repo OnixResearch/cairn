@@ -51,7 +51,7 @@ Missing files, mismatched byte identities, unsupported profiles, stale policy ex
 
 ## Standalone artifact-auth dual run
 
-r[cairn.artifact_auth.repository_extraction.consumer_authority.cairn] Cairn consumes `artifact-auth-core` and `artifact-auth-ed25519` from `ssh://git@github.com/OnixResearch/artifact-auth.git` at reviewed revision `799459346d5416fbd7b9f55840a7371441b55afa`. Cargo and the non-flake Nix input resolve that same immutable revision. SSH credentials authorize retrieval only; they do not change source identity, policy, trust, or verification semantics.
+r[cairn.artifact_auth.repository_extraction.consumer_authority.cairn] Cairn consumes `artifact-auth-core` and `artifact-auth-ed25519` from the unified `ssh://git@github.com/OnixResearch/onix-artifact.git` workspace at reviewed revision `e41340bec587b6d049b5cc518ec7db925dde84be`. Cargo and the non-flake Nix input resolve that same immutable revision. Cairn's crate graph excludes the workspace's transfer package. SSH credentials authorize retrieval only; they do not change source identity, policy, trust, or verification semantics.
 
 The existing `signature.signature_hex` continues to authenticate Cairn's historical `cairn.authenticated-evidence.v1` canonical JSON. It cannot authenticate the distinct `artifact-auth.statement.v1` preimage. During dual run, a producer may add `signature.artifact_auth_signature_hex`, containing a separate Ed25519 signature over the mapped standalone statement bytes. Omitting this optional field preserves legacy operation and reports a standalone cutover blocker; it does not make the standalone path authoritative.
 
@@ -69,8 +69,8 @@ r[cairn.artifact_auth.repository_extraction.cutover] Review the candidate standa
 
 1. Set the exact SSH URL and full commit in root `Cargo.toml` and the exact matching non-flake input revision in `flake.nix`; never use a branch, tag, sibling path, abbreviated revision, or duplicate source.
 2. Regenerate `Cargo.lock` with Cargo and `flake.lock` with `nix flake lock`/`nix flake update`; never edit either lock manually.
-3. Run `nix build .#checks.x86_64-linux.artifact-auth-source-pin -L`. It rejects Cargo/Nix revision drift, duplicate packages, floating or workspace-relative sources, incompatible licensing, profile/publication mismatch, and its synthetic negative mutations.
-4. Run positive and tamper dual-run fixtures, strict Cargo checks, Slotcar, Cairn lifecycle validation/traceability, and the full Nix rail. Keep the old path authoritative until all drift is explained and a separate lifecycle change explicitly admits authority.
+3. Run `nix build .#checks.x86_64-linux.artifact-auth-source-pin -L`. It rejects Cargo/Nix revision drift, duplicate or widened consumer packages, source-workspace drift, floating or workspace-relative sources, incompatible licensing, profile mismatch, and synthetic negative mutations.
+4. Run positive and tamper dual-run fixtures, strict Cargo checks, Slotcar, Cairn lifecycle validation/traceability, and the full Nix rail. The historical `artifact-auth` revision remains rollback evidence only. Keep Cairn product policy authoritative.
 
 ### Rollback procedure
 

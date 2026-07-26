@@ -1,20 +1,20 @@
 {
   "nodes": {
-    "artifact-auth": {
+    "artifact": {
       "flake": false,
       "locked": {
-        "lastModified": 1784395143,
-        "narHash": "sha256-nEgz2FtVuDesX95yyxidp0vhjxL4INB6Ve8rkpLyJk0=",
+        "lastModified": 1785024816,
+        "narHash": "sha256-2cM912L2YXVnVX9LquwhAPKyjPP/z/oFQRe7Qq9bHHE=",
         "ref": "refs/heads/main",
-        "rev": "799459346d5416fbd7b9f55840a7371441b55afa",
-        "revCount": 5,
+        "rev": "e41340bec587b6d049b5cc518ec7db925dde84be",
+        "revCount": 13,
         "type": "git",
-        "url": "ssh://git@github.com/OnixResearch/artifact-auth.git"
+        "url": "ssh://git@github.com/OnixResearch/onix-artifact.git"
       },
       "original": {
-        "rev": "799459346d5416fbd7b9f55840a7371441b55afa",
+        "rev": "e41340bec587b6d049b5cc518ec7db925dde84be",
         "type": "git",
-        "url": "ssh://git@github.com/OnixResearch/artifact-auth.git"
+        "url": "ssh://git@github.com/OnixResearch/onix-artifact.git"
       }
     },
     "cairn": {
@@ -391,7 +391,7 @@
     },
     "root": {
       "inputs": {
-        "artifact-auth": "artifact-auth",
+        "artifact": "artifact",
         "nickel-export": "nickel-export",
         "nixpkgs": "nixpkgs_3",
         "slotcar": "slotcar_3"
