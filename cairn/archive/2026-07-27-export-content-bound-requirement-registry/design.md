@@ -40,7 +40,7 @@ The proposed commands are:
 
 ```text
 cairn requirement-registry export --root <ROOT> --repository-id <ID> --revision-kind <KIND> --revision <VALUE> --out <FILE>
-cairn requirement-registry verify --root <ROOT> --registry <FILE>
+cairn requirement-registry verify --root <ROOT> --registry <FILE> --repository-id <ID>
 ```
 
 Export writes only the requested file after complete validation. Verification recomputes current specification and policy identities before comparing rows.

@@ -143,6 +143,19 @@ pub use verified::content_addressed::{
     NamePointerReport, CIRCUIT_PRIMITIVE_SCHEMA_V1, DOWNSTREAM_PILOT_SCHEMA_V1,
     EXPORT_BUNDLE_SCHEMA_V1, FUNCTION_OBJECT_SCHEMA_V1, NAME_POINTER_SCHEMA_V1,
 };
+pub use verified::content_bound_requirement_registry::{
+    content_bound_requirement_registry_issues_json, evaluate_content_bound_requirement_registry,
+    parse_content_bound_requirement_registry_value, validate_content_bound_requirement_registry,
+    verify_content_bound_requirement_registry, ContentBoundRequirementRegistry,
+    ContentBoundRequirementRegistryEvaluation, ContentBoundRequirementRegistryIssue,
+    ContentBoundRequirementRegistryReceipt, ContentBoundRequirementRegistryVerification,
+    ContentBoundRequirementRow, ContentBoundRevision, ContentBoundSourceSpan,
+    ContentBoundSpecificationIdentity, ContentBoundSpecificationInput,
+    CONTENT_BOUND_REQUIREMENT_REGISTRY_BOUNDARY, CONTENT_BOUND_REQUIREMENT_REGISTRY_NON_CLAIMS,
+    CONTENT_BOUND_REQUIREMENT_REGISTRY_RECEIPT_SCHEMA_V1,
+    CONTENT_BOUND_REQUIREMENT_REGISTRY_SCHEMA_V1, CONTENT_BOUND_REVISION_KIND_GIT,
+    CONTENT_BOUND_REVISION_KIND_JUJUTSU, CONTENT_BOUND_REVISION_KIND_OPAQUE,
+};
 pub use verified::cross_repo_dependencies::{
     cross_repo_dependency_contract, dependency_blocker_messages, evaluate_cross_repo_dependencies,
     parse_cross_repo_dependencies, summaries_by_identity, CrossRepoDependency,

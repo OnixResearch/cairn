@@ -6,6 +6,7 @@
 // r[verify cli_maintainability.evidence_manifest_cli_source.behavior_preserved.repository_checks]
 use std::error::Error;
 
+mod artifact;
 mod generate;
 mod issues;
 mod metadata;

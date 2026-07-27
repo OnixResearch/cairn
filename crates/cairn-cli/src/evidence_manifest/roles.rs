@@ -1,5 +1,8 @@
 use std::path::Path;
 
+use cairn_core::{
+    parse_content_bound_requirement_registry_value, validate_content_bound_requirement_registry,
+};
 use serde_json::Value;
 
 use crate::agent_receipt::{
@@ -104,6 +107,20 @@ pub(super) fn validate_manifest_artifact_role(
             "artifact.coverage_audit_invalid",
             "valid coverage-audit receipt",
         ),
+        "requirement_registry" => match parse_content_bound_requirement_registry_value(value) {
+            Ok(registry) if validate_content_bound_requirement_registry(&registry).is_empty() => {
+                true
+            }
+            Ok(_) | Err(_) => {
+                issues.push(evidence_manifest_issue(
+                    "artifact.requirement_registry_invalid",
+                    role,
+                    "valid self-bound content requirement registry",
+                    "invalid",
+                ));
+                false
+            }
+        },
         "evidence_registry" => {
             let receipt = evidence_registry_verify_receipt(&EvidenceRegistryVerifyOptions {
                 root: root.to_path_buf(),

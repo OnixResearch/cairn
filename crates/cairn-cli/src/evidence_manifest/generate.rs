@@ -7,13 +7,11 @@ use std::{
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
-use crate::agent_receipt::{
-    read_json_artifact, receipt_stated_or_computed_hash, AGENT_RECEIPT_MAX_BYTES,
-};
 use crate::support::{
     path_string, portable_json_hash, print_json, read_option, with_portable_receipt_hash,
 };
 
+use super::artifact::{manifest_artifact_entry, read_manifest_artifact};
 use super::issues::evidence_manifest_issue;
 use super::metadata::read_optional_manifest_metadata;
 
@@ -26,6 +24,7 @@ pub(crate) struct EvidenceManifestGenerateOptions {
     pub(crate) replay_verification: Option<PathBuf>,
     pub(crate) release_readiness: Option<PathBuf>,
     pub(crate) coverage_audit: Option<PathBuf>,
+    pub(crate) requirement_registry: Option<PathBuf>,
     pub(crate) registry: Option<PathBuf>,
     pub(crate) registry_verification: Option<PathBuf>,
     pub(crate) registry_selection: Option<PathBuf>,
@@ -98,6 +97,7 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             | "--replay-verification"
             | "--release-readiness"
             | "--coverage-audit"
+            | "--requirement-registry"
             | "--registry"
             | "--registry-verification"
             | "--registry-selection"
@@ -123,6 +123,9 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             }
             ("--coverage-audit", Some(value)) => {
                 options.coverage_audit = Some(PathBuf::from(value));
+            }
+            ("--requirement-registry", Some(value)) => {
+                options.requirement_registry = Some(PathBuf::from(value));
             }
             ("--registry", Some(value)) => {
                 options.registry = Some(PathBuf::from(value));
@@ -174,6 +177,10 @@ pub(crate) fn evidence_manifest_generate_manifest(
         ),
         ("release_readiness", options.release_readiness.as_deref()),
         ("coverage_audit", options.coverage_audit.as_deref()),
+        (
+            "requirement_registry",
+            options.requirement_registry.as_deref(),
+        ),
         ("evidence_registry", options.registry.as_deref()),
         (
             "evidence_registry_verification",
@@ -192,12 +199,16 @@ pub(crate) fn evidence_manifest_generate_manifest(
         ("witness_checkpoint", options.witness_checkpoint.as_deref()),
     ] {
         if let Some(path) = path {
-            match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
-                Ok(value) => artifacts.push(json!({
-                    "role": role,
-                    "path": path_string(path),
-                    "hash": receipt_stated_or_computed_hash(&options.root, &value),
-                })),
+            match read_manifest_artifact(&options.root, role, path) {
+                Ok((value, hash)) => match manifest_artifact_entry(role, path, &value, hash) {
+                    Ok(entry) => artifacts.push(entry),
+                    Err(_) => issues.push(evidence_manifest_issue(
+                        "generate.artifact_identity_failed",
+                        role,
+                        "hash-bound JSON artifact with required receipt identity",
+                        "invalid",
+                    )),
+                },
                 Err(_) => issues.push(evidence_manifest_issue(
                     "generate.artifact_read_failed",
                     role,
@@ -208,6 +219,7 @@ pub(crate) fn evidence_manifest_generate_manifest(
         } else if ![
             "release_readiness",
             "coverage_audit",
+            "requirement_registry",
             "evidence_registry",
             "evidence_registry_verification",
             "evidence_registry_selection",

@@ -6,13 +6,14 @@ use std::{
 use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
-use crate::agent_receipt::{
-    read_json_artifact, receipt_stated_or_computed_hash, AGENT_RECEIPT_MAX_BYTES,
-};
+use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
 use crate::support::{
     path_string, portable_json_hash, print_json, read_option, with_portable_receipt_hash,
 };
 
+use super::artifact::{
+    read_manifest_artifact, requirement_registry_receipt_hash, REQUIREMENT_REGISTRY_ROLE,
+};
 use super::issues::evidence_manifest_issue;
 use super::metadata::optional_metadata_hash;
 use super::roles::validate_manifest_artifact_role;
@@ -207,9 +208,9 @@ fn verify_evidence_manifest_artifact(
     }
     let mut actual_hash = Value::Null;
     if let Some(path) = path.as_deref() {
-        match read_json_artifact(path, AGENT_RECEIPT_MAX_BYTES) {
-            Ok(value) => {
-                actual_hash = receipt_stated_or_computed_hash(root, &value);
+        match read_manifest_artifact(root, role, path) {
+            Ok((value, hash)) => {
+                actual_hash = hash;
                 if let Some(expected) = expected_hash {
                     if actual_hash.as_str() != Some(expected) {
                         artifact_valid = false;
@@ -220,6 +221,11 @@ fn verify_evidence_manifest_artifact(
                             "mismatch",
                         ));
                     }
+                }
+                if role == REQUIREMENT_REGISTRY_ROLE
+                    && !requirement_registry_receipt_matches(entry, &value, role, issues)
+                {
+                    artifact_valid = false;
                 }
                 if !validate_manifest_artifact_role(root, path, role, &value, issues) {
                     artifact_valid = false;
@@ -242,6 +248,26 @@ fn verify_evidence_manifest_artifact(
         "schema": schema,
         "valid": artifact_valid,
     })
+}
+
+fn requirement_registry_receipt_matches(
+    entry: &Value,
+    registry: &Value,
+    role: &str,
+    issues: &mut Vec<Value>,
+) -> bool {
+    let declared = entry.get("receipt_hash").and_then(Value::as_str);
+    let actual = requirement_registry_receipt_hash(registry);
+    if declared.is_some() && declared == actual {
+        return true;
+    }
+    issues.push(evidence_manifest_issue(
+        "artifact.requirement_registry_receipt_mismatch",
+        role,
+        "declared registry receipt identity matches the artifact",
+        "missing or mismatched",
+    ));
+    false
 }
 
 fn evidence_manifest_receipt(root: &Path, parts: EvidenceManifestReceiptParts) -> Value {

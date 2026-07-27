@@ -184,8 +184,27 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     assert_hash_field(&verified, "receipt_hash")?;
 
     let generated_manifest_path = dir.join("generated-manifest.json");
+    let requirement_registry_path = dir.join("requirement-registry.json");
     let signer_path = dir.join("signer.json");
     let anchor_path = dir.join("anchor.json");
+    let requirement_registry_export = run_json_strings(&[
+        "requirement-registry".into(),
+        "export".into(),
+        "--root".into(),
+        repo_root()
+            .join("fixtures/content-bound-requirement-registry/current")
+            .display()
+            .to_string(),
+        "--repository-id".into(),
+        "OnixResearch/example".into(),
+        "--revision-kind".into(),
+        "opaque".into(),
+        "--revision".into(),
+        "reviewed-manifest-fixture".into(),
+        "--out".into(),
+        requirement_registry_path.display().to_string(),
+    ])?;
+    assert_eq!(requirement_registry_export["valid"], true);
     fs::write(&signer_path, "{\"id\":\"onix-ci\",\"kind\":\"ci\"}\n")?;
     fs::write(
         &anchor_path,
@@ -206,6 +225,8 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
         release_path.display().to_string(),
         "--coverage-audit".into(),
         coverage_path.display().to_string(),
+        "--requirement-registry".into(),
+        requirement_registry_path.display().to_string(),
         "--signer-metadata".into(),
         signer_path.display().to_string(),
         "--anchor-metadata".into(),
@@ -233,8 +254,27 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
             "replay_receipt",
             "replay_verification",
             "release_readiness",
-            "coverage_audit"
+            "coverage_audit",
+            "requirement_registry"
         ]
+    );
+    let requirement_registry_entry = generated_manifest["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["role"] == "requirement_registry")
+        .expect("requirement registry manifest entry");
+    let requirement_registry: Value =
+        serde_json::from_str(&fs::read_to_string(&requirement_registry_path)?)?;
+    assert_eq!(
+        requirement_registry_entry["hash"],
+        blake3::hash(&fs::read(&requirement_registry_path)?)
+            .to_hex()
+            .to_string()
+    );
+    assert_eq!(
+        requirement_registry_entry["receipt_hash"],
+        requirement_registry["receipt"]["receipt_blake3"]
     );
     assert_eq!(generated_manifest["signer"]["kind"], "ci");
     let generated_verified = run_json_strings(&[
@@ -253,6 +293,37 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
         generated_verified["manifest_hash"],
         generated["manifest_hash"]
     );
+    assert!(generated_verified["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|artifact| artifact["role"] == "requirement_registry" && artifact["valid"] == true));
+
+    let mut wrong_registry_receipt_manifest = generated_manifest.clone();
+    let wrong_registry_entry = wrong_registry_receipt_manifest["artifacts"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|entry| entry["role"] == "requirement_registry")
+        .expect("mutable requirement registry manifest entry");
+    wrong_registry_entry["receipt_hash"] = requirement_registry["registry_blake3"].clone();
+    let wrong_registry_receipt_path = dir.join("wrong-registry-receipt-manifest.json");
+    fs::write(
+        &wrong_registry_receipt_path,
+        serde_json::to_string_pretty(&wrong_registry_receipt_manifest)? + "\n",
+    )?;
+    let wrong_registry_receipt = run_json_failure_strings(&[
+        "evidence-manifest".into(),
+        "verify".into(),
+        wrong_registry_receipt_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    assert!(wrong_registry_receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| issue["code"] == "artifact.requirement_registry_receipt_mismatch"));
 
     let missing_generation = run_json_failure_strings(&[
         "evidence-manifest".into(),

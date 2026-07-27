@@ -307,6 +307,7 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         replay_verification: Some(replay_verification_path.clone()),
         release_readiness: Some(release_path.clone()),
         coverage_audit: Some(coverage_path.clone()),
+        requirement_registry: None,
         registry: None,
         registry_verification: None,
         registry_selection: None,
