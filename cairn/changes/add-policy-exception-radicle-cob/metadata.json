@@ -1,0 +1,5 @@
+{
+  "depends_on": [
+    "add-verification-obligation-radicle-cob"
+  ]
+}
