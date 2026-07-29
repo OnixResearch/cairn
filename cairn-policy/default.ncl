@@ -1,6 +1,7 @@
 let Contracts = import "contracts.ncl" in
+let NominalIdentityPolicy = import "nominal-evidence-identities.ncl" in
 let PolicySchemaVersion = "cairn.policy-schema.v1" in
-let PolicyFieldSetDigest = "cdbe3adf5778872343f8576e0304e3748dcaf7fb58f59c489599ea9dbac425ef" in
+let PolicyFieldSetDigest = "c5709173290bf8be1135dc5fd893bf5f94ab80130e06f01e94824521176d9b70" in
 {
   name = "cairn-default",
   version = 1,
@@ -295,6 +296,8 @@ let PolicyFieldSetDigest = "cdbe3adf5778872343f8576e0304e3748dcaf7fb58f59c489599
     forbidden_summary_fragments = ["SECRET=", "token=", "/home/"],
     aggregation_profiles = [],
   },
+
+  nominal_identity_policy = NominalIdentityPolicy,
 
   structured_lifecycle = {
     preserves_receipt_source_map = {},

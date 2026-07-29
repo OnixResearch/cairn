@@ -273,6 +273,25 @@ pub use verified::lifecycle_receipt::{
     LIFECYCLE_RECEIPT_ISSUE_SELF_HASH, LIFECYCLE_RECEIPT_ISSUE_STALE_HASH,
     LIFECYCLE_RECEIPT_ISSUE_UNSUPPORTED_VERDICT, LIFECYCLE_RECEIPT_ISSUE_WEAK_NON_CLAIM,
 };
+pub use verified::nominal_identity::{
+    nominal_identity_policy_diagnostics, nominal_octet_projection_hash,
+    nominal_runtime_projection_hash, ActorId, ActorIdRole, AnyIdentity, ArchiveDigest,
+    ArchiveDigestRole, ArchiveId, ArchiveIdRole, ArtifactDigest, ArtifactDigestRole, BinaryDigest,
+    BinaryDigestRole, Blake3Digest, Blake3DigestRef, ChainDigest, ChainDigestRole, ChangeId,
+    ChangeIdRole, ContentRootDigest, ContentRootDigestRole, DigestProfile, DigestRoleMarker,
+    DigestSpelling, DomainId, DomainIdRef, DomainRoleMarker, EvidenceKind, EvidenceKindRole,
+    GitOidSha1Digest, GitOidSha1DigestRole, GraphDigest, GraphDigestRole, IdentityIssue,
+    IdentityRole, IdentityWire, ImportedDigest, ImportedDigestAlgorithm, ImportedDigestRoleMarker,
+    InputDigest, InputDigestRole, LedgerDigest, LedgerDigestRole, MantleDigest, MantleDigestRole,
+    NominalIdentityDomainPolicy, NominalIdentityOctetDomain, NominalIdentityOctetProjection,
+    NominalIdentityPolicy, NominalIdentityRuntimeProjection, OperationId, OperationIdRole,
+    PackDigest, PackDigestRole, PlanDigest, PlanDigestRole, PolicyDigest, PolicyDigestRole,
+    PolicyKind, PolicyKindRole, ProjectionRole, ProjectionRoleMarker, ReceiptDigest,
+    ReceiptDigestRole, Sha256Digest, Sha256DigestRole, SidecarDigest, SidecarDigestRole,
+    SourceDigest, SourceDigestRole, StateDigest, StateDigestRole, ValenceDigest, ValenceDigestRole,
+    WorkspaceId, WorkspaceIdRole, MIXED_BLAKE3_PROFILE, NOMINAL_IDENTITY_OCTET_SCHEMA_V1,
+    NOMINAL_IDENTITY_RUNTIME_SCHEMA_V1, RAW_BLAKE3_PROFILE, STRICT_B3_PROFILE,
+};
 pub use verified::oxide_lifecycle_patterns::{
     positive_oxide_lifecycle_patterns_fixture, validate_oxide_lifecycle_patterns_value,
     EvidenceBundleMember, GoldenSnapshotPlan, LifecycleDocumentPlan, LifecycleSagaStep,

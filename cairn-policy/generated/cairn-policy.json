@@ -1443,8 +1443,981 @@
     }
   },
   "name": "cairn-default",
+  "nominal_identity_policy": {
+    "non_claims": [
+      "nominal identities prove configured local syntax and role separation only; they do not prove evidence truth, authority, policy correctness, verifier soundness, mutation safety outside checked plans, or release eligibility"
+    ],
+    "octet": {
+      "default_mode": "deny",
+      "domains": [
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "actor-id",
+          "raw_representation": "string",
+          "symbols": [
+            "ActorId"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "archive-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "ArchiveDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "archive-id",
+          "raw_representation": "string",
+          "symbols": [
+            "ArchiveId"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "artifact-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "ArtifactDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "binary-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "BinaryDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "chain-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "ChainDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "change-id",
+          "raw_representation": "string",
+          "symbols": [
+            "ChangeId"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "content-root-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "ContentRootDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "evidence-kind",
+          "raw_representation": "string",
+          "symbols": [
+            "EvidenceKind"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "git-oid-sha1",
+          "raw_representation": "string",
+          "symbols": [
+            "GitOidSha1Digest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "graph-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "GraphDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "input-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "InputDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "ledger-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "LedgerDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "mantle-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "MantleDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "operation-id",
+          "raw_representation": "string",
+          "symbols": [
+            "OperationId"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "pack-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "PackDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "plan-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "PlanDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "policy-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "PolicyDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "policy-kind",
+          "raw_representation": "string",
+          "symbols": [
+            "PolicyKind"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "projection-role",
+          "raw_representation": "string",
+          "symbols": [
+            "ProjectionRole"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "receipt-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "ReceiptDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "sha256-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "Sha256Digest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "sidecar-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "SidecarDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "source-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "SourceDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "state-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "StateDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "valence-digest",
+          "raw_representation": "string",
+          "symbols": [
+            "ValenceDigest"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "compatibility_required": true,
+          "compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "workspace-id",
+          "raw_representation": "string",
+          "symbols": [
+            "WorkspaceId"
+          ],
+          "wrapper_kind": "marker-generic"
+        }
+      ],
+      "heuristic_suffixes": [
+        "Id",
+        "Digest",
+        "Hash",
+        "Root"
+      ],
+      "non_claims": [
+        "nominal identities prove configured local syntax and role separation only; they do not prove evidence truth, authority, policy correctness, verifier soundness, mutation safety outside checked plans, or release eligibility"
+      ],
+      "policy_id": "cairn.nominal-evidence-identities.v1",
+      "schema_version": "octet-nominal-domain-policy/v1"
+    },
+    "policy_id": "cairn.nominal-evidence-identities.v1",
+    "runtime": {
+      "domains": [
+        {
+          "algorithm": "none",
+          "category": "domain-ref",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "actor-id",
+          "max_bytes": 256,
+          "raw_representation": "string",
+          "required_prefix": "actor:",
+          "rust_symbols": [
+            "ActorId"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "archive-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ArchiveDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "none",
+          "category": "domain-id",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "archive-id",
+          "max_bytes": 128,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ArchiveId"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "artifact-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ArtifactDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "binary-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "BinaryDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "chain-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ChainDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "none",
+          "category": "domain-id",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "change-id",
+          "max_bytes": 128,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ChangeId"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "content-root-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ContentRootDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "none",
+          "category": "domain-id",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "evidence-kind",
+          "max_bytes": 128,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "EvidenceKind"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "Git-OID-SHA-1",
+          "category": "imported-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "git-oid-sha1",
+          "max_bytes": 40,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "GitOidSha1Digest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "graph-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "GraphDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "input-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "InputDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "ledger-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "LedgerDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "mantle-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "MantleDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "none",
+          "category": "domain-id",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "operation-id",
+          "max_bytes": 128,
+          "raw_representation": "string",
+          "required_prefix": "operation:",
+          "rust_symbols": [
+            "OperationId"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "pack-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "PackDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "plan-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "PlanDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "policy-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "PolicyDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "none",
+          "category": "domain-id",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "policy-kind",
+          "max_bytes": 128,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "PolicyKind"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "none",
+          "category": "domain-id",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "projection-role",
+          "max_bytes": 128,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ProjectionRole"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "receipt-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ReceiptDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "SHA-256",
+          "category": "imported-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "sha256-digest",
+          "max_bytes": 64,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "Sha256Digest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "sidecar-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "SidecarDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "source-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "SourceDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "state-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "StateDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "BLAKE3",
+          "category": "blake3-digest",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "valence-digest",
+          "max_bytes": 71,
+          "raw_representation": "string",
+          "required_prefix": "",
+          "rust_symbols": [
+            "ValenceDigest"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        },
+        {
+          "algorithm": "none",
+          "category": "domain-id",
+          "constructor_policy": "marker-only",
+          "core_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "domain_id": "workspace-id",
+          "max_bytes": 128,
+          "raw_representation": "string",
+          "required_prefix": "workspace:",
+          "rust_symbols": [
+            "WorkspaceId"
+          ],
+          "wire_compatibility_scopes": [
+            "crates/cairn-core/src/verified"
+          ],
+          "wrapper_kind": "marker-generic"
+        }
+      ],
+      "policy_id": "cairn.nominal-evidence-identities.v1",
+      "schema_version": "cairn.nominal-evidence-identity-runtime.v1"
+    }
+  },
   "policy_schema_compatibility": {
-    "field_set_digest": "cdbe3adf5778872343f8576e0304e3748dcaf7fb58f59c489599ea9dbac425ef",
+    "field_set_digest": "c5709173290bf8be1135dc5fd893bf5f94ab80130e06f01e94824521176d9b70",
     "producer": "cairn policy export",
     "refresh_command": "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json",
     "schema_version": "cairn.policy-schema.v1"

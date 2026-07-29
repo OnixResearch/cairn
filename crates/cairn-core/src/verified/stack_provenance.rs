@@ -1,5 +1,10 @@
 use serde_json::{json, Value};
 
+use super::nominal_identity::{
+    ArtifactDigestRole, BinaryDigestRole, Blake3Digest, DigestRoleMarker, GraphDigestRole,
+    PolicyDigestRole, ReceiptDigestRole, SidecarDigestRole, RAW_BLAKE3_PROFILE,
+};
+
 pub const STACK_PROVENANCE_MODE_DISABLED: &str = "disabled";
 pub const STACK_PROVENANCE_MODE_OPTIONAL: &str = "optional";
 pub const STACK_PROVENANCE_MODE_REQUIRED: &str = "required";
@@ -231,7 +236,7 @@ fn validate_valence_receipt(
         ));
     }
     match receipt_string(receipt, "receipt_hash") {
-        Some(hash) if is_blake3_hex(&hash) => {}
+        Some(hash) if admit_digest::<ReceiptDigestRole>(&hash).is_some() => {}
         _ => issues.push(stack_issue(
             "stack_provenance.valence_receipt_hash_invalid",
             "valence_receipt.receipt_hash",
@@ -243,11 +248,17 @@ fn validate_valence_receipt(
     if policy.accepted_valence_policy_hashes.is_empty() {
         return;
     }
-    if !policy
-        .accepted_valence_policy_hashes
-        .iter()
-        .any(|accepted| accepted == &policy_hash)
-    {
+    let observed_policy = admit_digest::<PolicyDigestRole>(&policy_hash);
+    let policy_is_accepted = observed_policy.as_ref().is_some_and(|observed| {
+        policy
+            .accepted_valence_policy_hashes
+            .iter()
+            .any(|accepted| {
+                admit_digest::<PolicyDigestRole>(accepted)
+                    .is_some_and(|candidate| candidate.as_hex() == observed.as_hex())
+            })
+    });
+    if !policy_is_accepted {
         issues.push(stack_issue(
             "stack_provenance.valence_policy_stale",
             "valence_receipt.valence_policy_hash",
@@ -295,24 +306,8 @@ fn validate_mantle_linkage(
             },
         ));
     }
-    for field in ["sidecar_digest", "binary_identity_hash"] {
-        let value = linkage
-            .get(field)
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        if !is_blake3_hex(value) {
-            issues.push(stack_issue(
-                "stack_provenance.linkage_hash_invalid",
-                &format!("mantle_linkage.{field}"),
-                "BLAKE3 hash",
-                if value.is_empty() {
-                    "missing"
-                } else {
-                    "invalid"
-                },
-            ));
-        }
-    }
+    validate_linkage_digest::<SidecarDigestRole>(linkage, "sidecar_digest", issues);
+    validate_linkage_digest::<BinaryDigestRole>(linkage, "binary_identity_hash", issues);
 }
 
 fn validate_artifact_hashes(receipt: &Value, issues: &mut Vec<StackProvenanceIssue>) {
@@ -342,7 +337,13 @@ fn validate_artifact_hashes(receipt: &Value, issues: &mut Vec<StackProvenanceIss
             .get("observed_hash")
             .and_then(Value::as_str)
             .unwrap_or_default();
-        if !is_blake3_hex(declared) || !is_blake3_hex(observed) || declared != observed {
+        let declared_digest = admit_digest::<ArtifactDigestRole>(declared);
+        let observed_digest = admit_digest::<ArtifactDigestRole>(observed);
+        let matches = matches!(
+            (declared_digest, observed_digest),
+            (Some(declared), Some(observed)) if declared.as_hex() == observed.as_hex()
+        );
+        if !matches {
             issues.push(stack_issue(
                 "stack_provenance.artifact_digest_mismatch",
                 artifact
@@ -422,7 +423,7 @@ fn validate_graph_summary(
         .get("report_hash")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    if !is_blake3_hex(report_hash) {
+    if admit_digest::<GraphDigestRole>(report_hash).is_none() {
         issues.push(stack_issue(
             "stack_provenance.graph_summary_malformed",
             "graph_summary.report_hash",
@@ -436,6 +437,35 @@ fn validate_graph_summary(
         valid = false;
     }
     valid.then(|| graph.clone())
+}
+
+fn validate_linkage_digest<Role: DigestRoleMarker>(
+    linkage: &Value,
+    field: &str,
+    issues: &mut Vec<StackProvenanceIssue>,
+) {
+    let value = linkage
+        .get(field)
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if admit_digest::<Role>(value).is_some() {
+        return;
+    }
+    issues.push(stack_issue(
+        "stack_provenance.linkage_hash_invalid",
+        &format!("mantle_linkage.{field}"),
+        "BLAKE3 hash",
+        if value.is_empty() {
+            "missing"
+        } else {
+            "invalid"
+        },
+    ));
+}
+
+fn admit_digest<Role: DigestRoleMarker>(value: &str) -> Option<Blake3Digest<Role>> {
+    Blake3Digest::<Role>::parse_compatible(value, RAW_BLAKE3_PROFILE, "stack_provenance.digest")
+        .ok()
 }
 
 fn stack_issue(code: &str, field_path: &str, expected: &str, actual: &str) -> StackProvenanceIssue {

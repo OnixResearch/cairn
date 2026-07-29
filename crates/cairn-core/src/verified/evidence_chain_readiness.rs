@@ -1,8 +1,16 @@
+// r[impl cairn.nominal_evidence_identities.readiness]
+// r[verify cairn.nominal_evidence_identities.readiness.validation]
+
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
 
 use super::evidence::canonical_json_hash;
+use super::nominal_identity::{
+    ArtifactDigestRole, BinaryDigestRole, Blake3DigestRef, DigestRoleMarker, DomainIdRef,
+    DomainRoleMarker, EvidenceKindRole, MantleDigestRole, PolicyDigestRole, PolicyKindRole,
+    ProjectionRoleMarker, SourceDigestRole, ValenceDigestRole, RAW_BLAKE3_PROFILE,
+};
 
 pub const EVIDENCE_CHAIN_MODE_OPTIONAL: &str = "optional";
 pub const EVIDENCE_CHAIN_MODE_REQUIRED: &str = "required";
@@ -18,7 +26,6 @@ pub const EVIDENCE_CHAIN_READINESS_BOUNDARY: &str = "Cairn evidence-chain readin
 pub const EVIDENCE_CHAIN_REQUIRED_NON_CLAIM: &str =
     "evidence-chain readiness does not prove evidence truth or release eligibility";
 
-const BLAKE3_HEX_LENGTH: usize = 64;
 const MAX_PROFILES_COUNT: usize = 32;
 const MAX_PROFILE_CLAIM_SCOPES_COUNT: usize = 16;
 const MAX_PROFILE_NON_CLAIMS_COUNT: usize = 32;
@@ -206,7 +213,7 @@ fn validate_policy(policy: &EvidenceChainPolicy) -> Vec<EvidenceChainReadinessIs
             &policy.mode,
         ));
     }
-    validate_hash(
+    validate_digest::<PolicyDigestRole>(
         &policy.gate_policy_identity,
         "policy.gate_policy_identity",
         &mut issues,
@@ -251,12 +258,20 @@ fn validate_profile_registry(
     }
     for (index, profile) in profiles.iter().enumerate() {
         let profile_path = format!("policy.profiles[{index}]");
-        if profile.evidence_kind.trim().is_empty() || profile.profile_version.trim().is_empty() {
+        let evidence_kind = DomainIdRef::<EvidenceKindRole>::parse(
+            &profile.evidence_kind,
+            "policy.profile.evidence_kind",
+        );
+        if evidence_kind.is_err() || profile.profile_version.trim().is_empty() {
             issues.push(issue(
                 "evidence_chain.profile_malformed",
                 &profile_path,
-                "non-empty evidence kind and profile version",
-                "empty",
+                "canonical evidence kind and non-empty profile version",
+                if profile.evidence_kind.is_empty() || profile.profile_version.is_empty() {
+                    "empty"
+                } else {
+                    "malformed"
+                },
             ));
         }
         if profile.allowed_claim_scopes.is_empty() || profile.required_non_claims.is_empty() {
@@ -322,8 +337,15 @@ fn registered_profile<'a>(
     policy: &'a EvidenceChainPolicy,
     evidence: &EvidenceChainReadinessInput,
 ) -> Option<&'a EvidenceChainProfile> {
+    let evidence_kind =
+        DomainIdRef::<EvidenceKindRole>::parse(&evidence.evidence_kind, "evidence.evidence_kind")
+            .ok()?;
     policy.profiles.iter().find(|profile| {
-        profile.evidence_kind == evidence.evidence_kind
+        let profile_kind = DomainIdRef::<EvidenceKindRole>::parse(
+            &profile.evidence_kind,
+            "policy.profile.evidence_kind",
+        );
+        profile_kind.is_ok_and(|kind| kind == evidence_kind)
             && profile.profile_version == evidence.profile_version
     })
 }
@@ -334,6 +356,16 @@ fn validate_evidence(
     evidence: &EvidenceChainReadinessInput,
     issues: &mut Vec<EvidenceChainReadinessIssue>,
 ) {
+    if DomainIdRef::<EvidenceKindRole>::parse(&evidence.evidence_kind, "evidence.evidence_kind")
+        .is_err()
+    {
+        issues.push(issue(
+            "evidence_chain.evidence_kind_malformed",
+            "evidence.evidence_kind",
+            "canonical evidence kind",
+            &evidence.evidence_kind,
+        ));
+    }
     validate_evidence_counts(evidence, issues);
     validate_evidence_hashes(evidence, issues);
     validate_links(evidence, issues);
@@ -383,59 +415,59 @@ fn validate_evidence_hashes(
     evidence: &EvidenceChainReadinessInput,
     issues: &mut Vec<EvidenceChainReadinessIssue>,
 ) {
-    let fields = [
-        (
-            evidence.canonical_envelope_hash.as_str(),
-            "evidence.canonical_envelope_hash",
-        ),
-        (
-            evidence.valence_validation.artifact_hash.as_str(),
-            "evidence.valence_validation.artifact_hash",
-        ),
-        (
-            evidence.mantle_binding.artifact_hash.as_str(),
-            "evidence.mantle_binding.artifact_hash",
-        ),
-        (
-            evidence.source_artifact_hash.as_str(),
-            "evidence.source_artifact_hash",
-        ),
-        (
-            evidence.release_binary_hash.as_str(),
-            "evidence.release_binary_hash",
-        ),
-    ];
-    for (value, field_path) in fields {
-        validate_hash(value, field_path, issues);
-    }
+    validate_digest::<ArtifactDigestRole>(
+        &evidence.canonical_envelope_hash,
+        "evidence.canonical_envelope_hash",
+        issues,
+    );
+    validate_digest::<ValenceDigestRole>(
+        &evidence.valence_validation.artifact_hash,
+        "evidence.valence_validation.artifact_hash",
+        issues,
+    );
+    validate_digest::<MantleDigestRole>(
+        &evidence.mantle_binding.artifact_hash,
+        "evidence.mantle_binding.artifact_hash",
+        issues,
+    );
+    validate_digest::<SourceDigestRole>(
+        &evidence.source_artifact_hash,
+        "evidence.source_artifact_hash",
+        issues,
+    );
+    validate_digest::<BinaryDigestRole>(
+        &evidence.release_binary_hash,
+        "evidence.release_binary_hash",
+        issues,
+    );
 }
 
 fn validate_links(
     evidence: &EvidenceChainReadinessInput,
     issues: &mut Vec<EvidenceChainReadinessIssue>,
 ) {
-    compare_link(
+    compare_digest_link::<ArtifactDigestRole>(
         &evidence.valence_validation.canonical_envelope_hash,
         &evidence.canonical_envelope_hash,
         "evidence.valence_validation.canonical_envelope_hash",
         "evidence_chain.valence_link_stale",
         issues,
     );
-    compare_link(
+    compare_digest_link::<ValenceDigestRole>(
         &evidence.mantle_binding.valence_validation_hash,
         &evidence.valence_validation.artifact_hash,
         "evidence.mantle_binding.valence_validation_hash",
         "evidence_chain.mantle_link_stale",
         issues,
     );
-    compare_link(
+    compare_digest_link::<SourceDigestRole>(
         &evidence.mantle_binding.source_artifact_hash,
         &evidence.source_artifact_hash,
         "evidence.mantle_binding.source_artifact_hash",
         "evidence_chain.source_link_mismatch",
         issues,
     );
-    compare_link(
+    compare_digest_link::<BinaryDigestRole>(
         &evidence.mantle_binding.release_binary_hash,
         &evidence.release_binary_hash,
         "evidence.mantle_binding.release_binary_hash",
@@ -463,15 +495,21 @@ fn validate_policy_identities(
         ));
     }
     for (index, identity) in identities.iter().enumerate() {
-        if identity.policy_kind.trim().is_empty() {
+        if DomainIdRef::<PolicyKindRole>::parse(&identity.policy_kind, "evidence.policy_kind")
+            .is_err()
+        {
             issues.push(issue(
                 "evidence_chain.policy_kind_empty",
                 &format!("{field_path}[{index}].policy_kind"),
-                "non-empty policy kind",
-                "empty",
+                "canonical policy kind",
+                if identity.policy_kind.is_empty() {
+                    "empty"
+                } else {
+                    "malformed"
+                },
             ));
         }
-        validate_hash(
+        validate_digest::<PolicyDigestRole>(
             &identity.digest_blake3,
             &format!("{field_path}[{index}].digest_blake3"),
             issues,
@@ -485,12 +523,15 @@ fn validate_required_policy_hashes(
     issues: &mut Vec<EvidenceChainReadinessIssue>,
 ) {
     for required in &policy.required_policy_hashes {
-        let actual = evidence
-            .policy_hashes
-            .iter()
-            .find(|identity| identity.policy_kind == required.policy_kind);
+        let actual = evidence.policy_hashes.iter().find(|identity| {
+            same_domain::<PolicyKindRole>(&identity.policy_kind, &required.policy_kind)
+        });
         match actual {
-            Some(actual) if actual.digest_blake3 == required.digest_blake3 => {}
+            Some(actual)
+                if same_digest::<PolicyDigestRole>(
+                    &actual.digest_blake3,
+                    &required.digest_blake3,
+                ) => {}
             Some(actual) => issues.push(issue(
                 "evidence_chain.policy_hash_stale",
                 &format!("evidence.policy_hashes.{}", required.policy_kind),
@@ -576,20 +617,26 @@ fn validate_projections(
         ));
     }
     for (index, projection) in evidence.projections.iter().enumerate() {
-        if projection.role.trim().is_empty() {
+        if DomainIdRef::<ProjectionRoleMarker>::parse(&projection.role, "evidence.projection.role")
+            .is_err()
+        {
             issues.push(issue(
                 "evidence_chain.projection_role_empty",
                 &format!("evidence.projections[{index}].role"),
-                "a non-empty projection role",
-                "empty",
+                "a canonical projection role",
+                if projection.role.is_empty() {
+                    "empty"
+                } else {
+                    "malformed"
+                },
             ));
         }
-        validate_hash(
+        validate_digest::<ArtifactDigestRole>(
             &projection.artifact_hash,
             &format!("evidence.projections[{index}].artifact_hash"),
             issues,
         );
-        compare_link(
+        compare_digest_link::<ArtifactDigestRole>(
             &projection.canonical_envelope_hash,
             &evidence.canonical_envelope_hash,
             &format!("evidence.projections[{index}].canonical_envelope_hash"),
@@ -657,32 +704,63 @@ fn readiness(
     readiness
 }
 
-fn compare_link(
+fn same_domain<Role: DomainRoleMarker>(left: &str, right: &str) -> bool {
+    let left = DomainIdRef::<Role>::parse(left, "evidence_chain.left_domain");
+    let right = DomainIdRef::<Role>::parse(right, "evidence_chain.right_domain");
+    matches!((left, right), (Ok(left), Ok(right)) if left == right)
+}
+
+fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
+    let left =
+        Blake3DigestRef::<Role>::parse(left, RAW_BLAKE3_PROFILE, "evidence_chain.left_digest");
+    let right =
+        Blake3DigestRef::<Role>::parse(right, RAW_BLAKE3_PROFILE, "evidence_chain.right_digest");
+    matches!((left, right), (Ok(left), Ok(right)) if left.matches(right))
+}
+
+fn compare_digest_link<Role: DigestRoleMarker>(
     actual: &str,
     expected: &str,
     field_path: &str,
     code: &str,
     issues: &mut Vec<EvidenceChainReadinessIssue>,
 ) {
-    validate_hash(actual, field_path, issues);
-    if actual != expected {
+    let actual_digest =
+        Blake3DigestRef::<Role>::parse(actual, RAW_BLAKE3_PROFILE, "evidence_chain.actual_digest");
+    let expected_digest = Blake3DigestRef::<Role>::parse(
+        expected,
+        RAW_BLAKE3_PROFILE,
+        "evidence_chain.expected_digest",
+    );
+    let Ok(actual_digest) = actual_digest else {
+        push_digest_issue(actual, field_path, issues);
+        return;
+    };
+    let Ok(expected_digest) = expected_digest else {
+        return;
+    };
+    if !actual_digest.matches(expected_digest) {
         issues.push(issue(code, field_path, expected, actual));
     }
 }
 
-fn validate_hash(value: &str, field_path: &str, issues: &mut Vec<EvidenceChainReadinessIssue>) {
-    let valid = value.len() == BLAKE3_HEX_LENGTH
-        && value
-            .chars()
-            .all(|character| character.is_ascii_hexdigit() && !character.is_ascii_uppercase());
-    if !valid {
-        issues.push(issue(
-            "evidence_chain.digest_malformed",
-            field_path,
-            "64 lowercase BLAKE3 hexadecimal characters",
-            value,
-        ));
+fn validate_digest<Role: DigestRoleMarker>(
+    value: &str,
+    field_path: &str,
+    issues: &mut Vec<EvidenceChainReadinessIssue>,
+) {
+    if Blake3DigestRef::<Role>::parse(value, RAW_BLAKE3_PROFILE, "evidence_chain.digest").is_err() {
+        push_digest_issue(value, field_path, issues);
     }
+}
+
+fn push_digest_issue(value: &str, field_path: &str, issues: &mut Vec<EvidenceChainReadinessIssue>) {
+    issues.push(issue(
+        "evidence_chain.digest_malformed",
+        field_path,
+        "64 lowercase BLAKE3 hexadecimal characters",
+        value,
+    ));
 }
 
 fn validate_count(

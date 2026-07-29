@@ -172,7 +172,36 @@ The ast-grep gate checks saved scan and test receipts. Pure code never runs ast-
 
 Runtime evidence uses Cairn-owned BLAKE3 identities. A local action chain proves only presented-sequence integrity.
 
+Read [Nominal evidence identities](docs/nominal-evidence-identities.md) for typed roles, wire compatibility, and non-claims.
+
 A matching witness checkpoint proves only a bounded witnessed prefix. Cairn does not decide social, legal, or organizational trust.
+
+### Stable receipt compatibility
+
+Stable public gate fields include `change`, `stage`, `verdict`, `valid`, issues, and receipt hashes.
+
+Stable public lifecycle
+receipt fields include the command result, actions, policy identity, and receipt identity. The sync receipts also include `delta_specs`.
+
+Stable public migration receipt
+fields include source and destination facts. The contract keeps `source_hash`, and `destination_hash` fields.
+
+Stable public determinism replay fields include case results, selected cases, selected groups, and receipt identities. Mismatch entries expose stable `case`, `comparison`, `field_path`, `class` fields.
+
+Replay groups are policy-owned named suites. Receipts include `available_groups`, `selected_groups`, `entropy_inventory`, `entropy_assumptions`, `entropy_policy_hash`, and `environment_attestation`.
+
+The attestation includes `attestation_hash`. It does not expose raw environment values, usernames, or host paths.
+
+Stable public replay verification fields come from `cairn determinism verify-receipt <receipt.json> --root .`.
+
+Stable public agent evidence bundle verification fields come from `cairn agent-receipt verify-bundle <bundle.json> --root .`.
+
+Rejected
+entropy failures disclose source names and handling but never environment values.
+
+Stable public agent receipt validation fields include `current_replay_policy_hash`, `required_replay_group`, `required_replay_cases`, `replay_evidence`, and `replay_selected_groups`.
+
+Run the agent suite with `cairn determinism replay --group agent`.
 
 <!--
 r[verify cairn.runtime_evidence.docs.claims]

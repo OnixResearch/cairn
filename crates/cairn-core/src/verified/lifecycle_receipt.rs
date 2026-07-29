@@ -3,6 +3,10 @@ use std::collections::BTreeSet;
 use serde_json::Value;
 
 use super::evidence::canonical_json_hash;
+use super::nominal_identity::{
+    ArtifactDigestRole, Blake3Digest, ChainDigestRole, DigestRoleMarker, InputDigestRole,
+    PlanDigestRole, PolicyDigestRole, ReceiptDigestRole, StateDigestRole, RAW_BLAKE3_PROFILE,
+};
 
 pub const LIFECYCLE_RECEIPT_CORE_SCHEMA_V1: &str = "cairn.lifecycle-receipt-core.v1";
 pub const LIFECYCLE_RECEIPT_CORE_BOUNDARY: &str = "lifecycle receipt core validation proves only receipt envelope syntax, hash consistency, diagnostics shape, and non-claim presence; it does not prove release eligibility, lifecycle readiness, policy satisfaction, evidence truth, source-code correctness, verifier soundness, or downstream behavioral correctness";
@@ -25,7 +29,6 @@ pub const LIFECYCLE_RECEIPT_ISSUE_SELF_HASH: &str = "lifecycle_receipt.self_hash
 pub const LIFECYCLE_RECEIPT_ISSUE_WEAK_NON_CLAIM: &str = "lifecycle_receipt.weak_non_claim";
 pub const LIFECYCLE_RECEIPT_ISSUE_OVERCLAIM: &str = "lifecycle_receipt.overclaim";
 
-const BLAKE3_HEX_LENGTH: usize = 64;
 const SUPPORTED_VERDICTS: &[&str] = &[
     "PASS", "WARN", "FAIL", "SKIP", "pass", "warn", "fail", "skip",
 ];
@@ -497,7 +500,7 @@ fn validate_hash_fields(
         }
     }
     for field in &input.envelope.hash_fields {
-        if !is_blake3_hex(&field.value) {
+        if !is_typed_hash_field(&field.name, &field.value) {
             push_lifecycle_receipt_issue(
                 issues,
                 LIFECYCLE_RECEIPT_ISSUE_MALFORMED_HASH,
@@ -515,7 +518,7 @@ fn validate_hash_fields(
         );
         return;
     }
-    if !is_blake3_hex(&input.envelope.receipt_hash) {
+    if !is_digest::<ReceiptDigestRole>(&input.envelope.receipt_hash) {
         push_lifecycle_receipt_issue(
             issues,
             LIFECYCLE_RECEIPT_ISSUE_MALFORMED_HASH,
@@ -525,7 +528,7 @@ fn validate_hash_fields(
         return;
     }
     let expected = lifecycle_receipt_hash(&input.hash_material, &input.hash_profile);
-    if input.envelope.receipt_hash != expected {
+    if !same_digest::<ReceiptDigestRole>(&input.envelope.receipt_hash, &expected) {
         push_lifecycle_receipt_issue(
             issues,
             LIFECYCLE_RECEIPT_ISSUE_STALE_HASH,
@@ -739,11 +742,29 @@ fn is_hash_field_name(name: &str) -> bool {
     name == LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH || name.ends_with(HASH_FIELD_SUFFIX)
 }
 
-fn is_blake3_hex(value: &str) -> bool {
-    value.len() == BLAKE3_HEX_LENGTH
-        && value
-            .bytes()
-            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+fn is_typed_hash_field(name: &str, value: &str) -> bool {
+    match name {
+        LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH => is_digest::<ReceiptDigestRole>(value),
+        LIFECYCLE_RECEIPT_HASH_FIELD_INPUT_HASH => is_digest::<InputDigestRole>(value),
+        LIFECYCLE_RECEIPT_HASH_FIELD_POLICY_HASH => is_digest::<PolicyDigestRole>(value),
+        "plan_hash" => is_digest::<PlanDigestRole>(value),
+        "chain_hash" => is_digest::<ChainDigestRole>(value),
+        "state_hash" => is_digest::<StateDigestRole>(value),
+        _ => is_digest::<ArtifactDigestRole>(value),
+    }
+}
+
+fn is_digest<Role: DigestRoleMarker>(value: &str) -> bool {
+    Blake3Digest::<Role>::parse(value, RAW_BLAKE3_PROFILE, "lifecycle_receipt.digest").is_ok()
+}
+
+fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
+    let left = Blake3Digest::<Role>::parse(left, RAW_BLAKE3_PROFILE, "lifecycle_receipt.left");
+    let right = Blake3Digest::<Role>::parse(right, RAW_BLAKE3_PROFILE, "lifecycle_receipt.right");
+    matches!(
+        (left, right),
+        (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()
+    )
 }
 
 fn push_lifecycle_receipt_issue(
@@ -773,6 +794,8 @@ mod tests {
     use serde_json::json;
 
     use super::*;
+
+    const BLAKE3_HEX_LENGTH: usize = 64;
 
     const EXPECTED_GATE_DIAGNOSTICS: usize = 1;
 

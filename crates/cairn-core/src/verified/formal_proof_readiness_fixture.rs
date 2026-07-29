@@ -12,7 +12,10 @@
 use serde_json::json;
 use serde_json::Value;
 
-const RAW_BLAKE3_HEX_LENGTH: usize = 64;
+use super::nominal_identity::{
+    ArtifactDigestRole, Blake3Digest, DigestRoleMarker, GraphDigestRole, InputDigestRole,
+    PolicyDigestRole, ReceiptDigestRole, SidecarDigestRole, ValenceDigestRole, RAW_BLAKE3_PROFILE,
+};
 const FORMAL_PROOF_READINESS_SCHEMA_V1: &str = "cairn.formal-proof-readiness-fixture.v1";
 const UPSTREAM_PROOF_STATUS_PASSED: &str = "passed";
 const EMPTY_FIELD: &str = "";
@@ -124,32 +127,32 @@ pub fn validate_formal_proof_readiness_fixture(
         "formal_proof_readiness.schema_version_mismatch",
         "schema_version",
     );
-    validate_hash_pair(
+    validate_hash_pair::<ValenceDigestRole>(
         &mut issues,
         "valence_input_hash",
         &fixture.valence_input_hash,
         &fixture.observed_valence_input_hash,
     );
-    validate_hash_pair(
+    validate_hash_pair::<GraphDigestRole>(
         &mut issues,
         "valence_graph_digest",
         &fixture.valence_graph_digest,
         &fixture.observed_valence_graph_digest,
     );
-    validate_hash_pair(
+    validate_hash_pair::<SidecarDigestRole>(
         &mut issues,
         "sidecar_digest",
         &fixture.sidecar_digest,
         &fixture.observed_sidecar_digest,
     );
-    validate_required_hash(
+    validate_required_hash::<ArtifactDigestRole>(
         &mut issues,
         "upstream_octet_proof_identity",
         &fixture.upstream_octet_proof_identity,
     );
-    validate_required_hash(&mut issues, "policy_hash", &fixture.policy_hash);
-    validate_required_hash(&mut issues, "input_hash", &fixture.input_hash);
-    validate_required_hash(
+    validate_required_hash::<PolicyDigestRole>(&mut issues, "policy_hash", &fixture.policy_hash);
+    validate_required_hash::<InputDigestRole>(&mut issues, "input_hash", &fixture.input_hash);
+    validate_required_hash::<ReceiptDigestRole>(
         &mut issues,
         "readiness_receipt_hash",
         &fixture.readiness_receipt_hash,
@@ -189,44 +192,51 @@ fn push_if(
     }
 }
 
-fn validate_hash_pair(
+fn validate_hash_pair<Role: DigestRoleMarker>(
     issues: &mut Vec<FormalProofReadinessIssue>,
     field: &'static str,
     expected: &str,
     observed: &str,
 ) {
-    validate_required_hash(issues, field, expected);
-    validate_required_hash(issues, field, observed);
-    push_if(
-        issues,
-        !expected.is_empty() && !observed.is_empty() && expected != observed,
-        "formal_proof_readiness.stale_input",
-        field,
+    let expected_digest = admit_digest::<Role>(issues, field, expected);
+    let observed_digest = admit_digest::<Role>(issues, field, observed);
+    let stale = matches!(
+        (expected_digest, observed_digest),
+        (Some(expected), Some(observed)) if expected.as_hex() != observed.as_hex()
     );
+    push_if(issues, stale, "formal_proof_readiness.stale_input", field);
 }
 
-fn validate_required_hash(
+fn validate_required_hash<Role: DigestRoleMarker>(
     issues: &mut Vec<FormalProofReadinessIssue>,
     field: &'static str,
     value: &str,
 ) {
-    push_if(
-        issues,
-        value == EMPTY_FIELD,
-        "formal_proof_readiness.hash_missing",
-        field,
-    );
-    push_if(
-        issues,
-        !value.is_empty() && !is_raw_blake3_hex(value),
-        "formal_proof_readiness.hash_malformed",
-        field,
-    );
+    let _ = admit_digest::<Role>(issues, field, value);
 }
 
-fn is_raw_blake3_hex(value: &str) -> bool {
-    value.len() == RAW_BLAKE3_HEX_LENGTH
-        && value.chars().all(|character| character.is_ascii_hexdigit())
+fn admit_digest<Role: DigestRoleMarker>(
+    issues: &mut Vec<FormalProofReadinessIssue>,
+    field: &'static str,
+    value: &str,
+) -> Option<Blake3Digest<Role>> {
+    if value == EMPTY_FIELD {
+        issues.push(FormalProofReadinessIssue::new(
+            "formal_proof_readiness.hash_missing",
+            field,
+        ));
+        return None;
+    }
+    match Blake3Digest::<Role>::parse_compatible(value, RAW_BLAKE3_PROFILE, field) {
+        Ok(digest) => Some(digest),
+        Err(_) => {
+            issues.push(FormalProofReadinessIssue::new(
+                "formal_proof_readiness.hash_malformed",
+                field,
+            ));
+            None
+        }
+    }
 }
 
 fn validate_role_counts(

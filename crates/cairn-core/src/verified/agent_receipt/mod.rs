@@ -1,3 +1,6 @@
+// r[impl cairn.nominal_evidence_identities.receipt_chains]
+// r[verify cairn.nominal_evidence_identities.receipt_chains.validation]
+
 use serde_json::Value;
 
 mod authoritative;
@@ -73,7 +76,9 @@ pub fn agent_run_receipt_issues(receipt: &Value) -> Vec<AgentRunGateIssue> {
 mod tests {
     use serde_json::{json, Value};
 
-    use super::common::is_blake3_hex;
+    use crate::verified::nominal_identity::ReceiptDigestRole;
+
+    use super::common::is_digest;
     use super::*;
 
     #[test]
@@ -86,7 +91,7 @@ mod tests {
             agent_run_receipt_hash(&second)
         );
         let hash = first.get("receipt_hash").and_then(Value::as_str).unwrap();
-        assert!(is_blake3_hex(hash));
+        assert!(is_digest::<ReceiptDigestRole>(hash));
     }
 
     #[test]
@@ -100,7 +105,7 @@ mod tests {
             .expect("checked-in positive fixture Preserves hash");
         assert_eq!(
             hash,
-            "5b561ff30ee566ca86c190b5bff2ba8c2ff90f771edc654e9e835f7ff5d92982"
+            "b2561613ac6bb44bda72b2dcb29700fe086b5b0d958468b369497af8b61671df"
         );
     }
 

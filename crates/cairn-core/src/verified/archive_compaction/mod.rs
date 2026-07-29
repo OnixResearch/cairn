@@ -1,3 +1,6 @@
+// r[impl cairn.nominal_evidence_identities.lifecycle]
+// r[verify cairn.nominal_evidence_identities.lifecycle.validation]
+
 mod chain;
 mod model;
 mod plan;

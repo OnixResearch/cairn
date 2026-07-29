@@ -1,3 +1,4 @@
+use crate::verified::nominal_identity::ChangeId;
 use crate::verified::repo::{ChangeStatus, TaskCounts};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -129,7 +130,10 @@ fn archive_blockers(change: &ChangeStatus, dependency_blockers: &[String]) -> Ve
 }
 
 fn required_artifact_blockers(change: &ChangeStatus) -> Vec<String> {
-    let mut reasons = Vec::with_capacity(2);
+    let mut reasons = Vec::with_capacity(3);
+    if let Err(issue) = ChangeId::parse(&change.name, "plan.change_id") {
+        reasons.push(format!("{}: {}", change.name, issue.code));
+    }
     if !change.has_proposal {
         reasons.push(format!("{}: missing proposal.md", change.name));
     }
@@ -183,6 +187,20 @@ mod tests {
         assert_eq!(plan.actions.len(), 1);
         assert_eq!(plan.actions[0].kind, PlanActionKind::SyncDeltaSpec);
         assert_eq!(plan.delta_specs.len(), 1);
+    }
+
+    #[test]
+    fn blocks_malformed_change_identity_before_mutation() {
+        // r[verify cairn.nominal_evidence_identities.lifecycle.validation]
+        let mut change = complete_change();
+        change.name = "wrong:change".to_string();
+        let plan = build_archive_plan(&change);
+        assert!(plan.blocked);
+        assert!(plan.actions.is_empty());
+        assert!(plan
+            .reasons
+            .iter()
+            .any(|reason| reason.contains("identity_prefix_unsupported")));
     }
 
     #[test]

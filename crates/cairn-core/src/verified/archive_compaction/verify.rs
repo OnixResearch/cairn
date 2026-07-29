@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::json;
 
 use crate::verified::evidence::{blake3_hex, canonical_json_hash};
+use crate::verified::nominal_identity::{ArchiveDigestRole, ArtifactDigestRole, PackDigestRole};
 
 use super::{
     model::{
@@ -10,7 +11,7 @@ use super::{
         PackManifest, PackObjectInput, UnpackFile, UnpackPlan, COMPACTION_NON_CLAIM,
         COMPACTION_PACK_SCHEMA_V1, COMPACTION_UNPACK_SCHEMA_V1, COMPACTION_VERIFY_SCHEMA_V1,
     },
-    plan::{hash_serializable, issue, safe_relative_path, validate_hash},
+    plan::{hash_serializable, issue, safe_relative_path, same_digest, validate_hash},
 };
 
 pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
@@ -112,7 +113,7 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
             "archive_id": archive.archive_id,
             "entries": archive.entries,
         }));
-        if archive.archive_root != expected_archive_root {
+        if !same_digest::<ArchiveDigestRole>(&archive.archive_root, &expected_archive_root) {
             issues.push(issue(
                 "archive_compaction.archive_root_mismatch",
                 &archive.archive_id,
@@ -125,7 +126,7 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
         }));
     }
     let expected_packed_root = canonical_json_hash(&json!({"archives": archive_roots}));
-    if pack.packed_archives_root != expected_packed_root {
+    if !same_digest::<ArchiveDigestRole>(&pack.packed_archives_root, &expected_packed_root) {
         issues.push(issue(
             "archive_compaction.packed_archives_root_mismatch",
             "packed_archives_root",
@@ -146,7 +147,7 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
     }
     let mut pack_material = pack.clone();
     pack_material.pack_root.clear();
-    if hash_serializable(&pack_material) != pack.pack_root {
+    if !same_digest::<PackDigestRole>(&hash_serializable(&pack_material), &pack.pack_root) {
         issues.push(issue(
             "archive_compaction.pack_root_mismatch",
             "pack_root",
@@ -194,7 +195,8 @@ pub fn verify_pack_objects(
                         "object byte length must match its descriptor",
                     ));
                 }
-                if blake3_hex(bytes) != descriptor.content_hash {
+                if !same_digest::<ArtifactDigestRole>(&blake3_hex(bytes), &descriptor.content_hash)
+                {
                     issues.push(issue(
                         "archive_compaction.object_hash_mismatch",
                         &descriptor.content_hash,
@@ -230,7 +232,7 @@ pub fn build_unpack_plan(
     // r[impl cairn.sync_archive.compaction.lossless_pack]
     // r[impl cairn.sync_archive.compaction.lossless_pack.unpack]
     let mut blockers = verify_pack_objects(pack, objects);
-    if pointer.pack_root != pack.pack_root {
+    if !same_digest::<PackDigestRole>(&pointer.pack_root, &pack.pack_root) {
         blockers.push(issue(
             "archive_compaction.pointer_pack_mismatch",
             &pointer.archive_id,
@@ -244,7 +246,7 @@ pub fn build_unpack_plan(
     let mut files = Vec::new();
     let archive_root = match archive {
         Some(archive) => {
-            if archive.archive_root != pointer.archive_root {
+            if !same_digest::<ArchiveDigestRole>(&archive.archive_root, &pointer.archive_root) {
                 blockers.push(issue(
                     "archive_compaction.pointer_archive_root_mismatch",
                     &pointer.archive_id,

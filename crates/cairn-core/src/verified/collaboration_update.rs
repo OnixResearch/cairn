@@ -11,6 +11,10 @@ use super::{
         ChangeCollaborationOperation, ChangeCollaborationState,
     },
     evidence::canonical_json_hash,
+    nominal_identity::{
+        ActorId, Blake3Digest, ChangeId, ContentRootDigestRole, DigestRoleMarker, IdentityIssue,
+        PlanDigest, PolicyDigest, StateDigestRole, RAW_BLAKE3_PROFILE,
+    },
     radicle_change::{
         ChangeArtifactId, ChangeCobAction, ChangeCobError, ChangeCobState, ChangeLifecycleView,
         MAX_ACTOR_ID_BYTES,
@@ -154,7 +158,7 @@ pub fn apply_planned_change_collaboration_update(
     plan: &ChangeCollaborationUpdatePlan,
 ) -> Result<ChangeCollaborationState, ChangeCobError> {
     let current_state_hash = change_collaboration_state_hash(state)?;
-    if current_state_hash != plan.input_state_hash {
+    if !same_digest::<StateDigestRole>(&current_state_hash, &plan.input_state_hash) {
         return Err(ChangeCobError::InvalidField {
             field: "update.input_state_hash".to_string(),
             reason: "collaboration state changed after planning".to_string(),
@@ -174,7 +178,7 @@ pub fn apply_planned_change_collaboration_update(
         },
     )?;
     let content_root = change_collaboration_content_root(&updated)?;
-    if content_root != plan.expected_content_root {
+    if !same_digest::<ContentRootDigestRole>(&content_root, &plan.expected_content_root) {
         return Err(ChangeCobError::InvalidField {
             field: "update.expected_content_root".to_string(),
             reason: "applied update content does not match the reviewed plan".to_string(),
@@ -197,14 +201,21 @@ fn update_plan_hash<T: Serialize>(plan: &T) -> Result<String, ChangeCobError> {
     let value = serde_json::to_value(plan).map_err(|error| ChangeCobError::Serialization {
         reason: error.to_string(),
     })?;
-    Ok(canonical_json_hash(&value))
+    let hash = canonical_json_hash(&value);
+    let digest =
+        PlanDigest::parse(&hash, RAW_BLAKE3_PROFILE, "update.plan_hash").map_err(nominal_error)?;
+    Ok(digest.as_hex().to_owned())
 }
 
 fn validate_snapshot_context(
     state: &ChangeCollaborationState,
     snapshot: &ChangeCollaborationUpdateSnapshot,
 ) -> Result<(), ChangeCobError> {
-    if state.change_id != snapshot.change_id {
+    let state_change =
+        ChangeId::parse(&state.change_id, "update.state_change_id").map_err(nominal_error)?;
+    let snapshot_change =
+        ChangeId::parse(&snapshot.change_id, "update.snapshot_change_id").map_err(nominal_error)?;
+    if state_change != snapshot_change {
         return Err(ChangeCobError::InvalidField {
             field: "update.change_id".to_string(),
             reason: format!(
@@ -213,16 +224,22 @@ fn validate_snapshot_context(
             ),
         });
     }
-    if state.policy_hash != snapshot.policy_hash {
+    let state_policy = PolicyDigest::parse_compatible(
+        &state.policy_hash,
+        RAW_BLAKE3_PROFILE,
+        "update.state_policy_hash",
+    )
+    .map_err(nominal_error)?;
+    let snapshot_policy = PolicyDigest::parse_compatible(
+        &snapshot.policy_hash,
+        RAW_BLAKE3_PROFILE,
+        "update.snapshot_policy_hash",
+    )
+    .map_err(nominal_error)?;
+    if state_policy != snapshot_policy {
         return Err(ChangeCobError::InvalidField {
             field: "update.policy_hash".to_string(),
             reason: "current policy does not match collaboration state".to_string(),
-        });
-    }
-    if snapshot.actor.is_empty() {
-        return Err(ChangeCobError::InvalidField {
-            field: "actor".to_string(),
-            reason: "must not be empty".to_string(),
         });
     }
     let actor_bytes = snapshot.actor.len();
@@ -233,7 +250,9 @@ fn validate_snapshot_context(
             limit: MAX_ACTOR_ID_BYTES,
         });
     }
-    if snapshot.actor != state.creator && !snapshot.is_delegate {
+    let actor = ActorId::parse(&snapshot.actor, "update.actor").map_err(nominal_error)?;
+    let creator = ActorId::parse(&state.creator, "update.creator").map_err(nominal_error)?;
+    if actor != creator && !snapshot.is_delegate {
         return Err(ChangeCobError::Unauthorized {
             actor: snapshot.actor.clone(),
             action: "plan_collaboration_update".to_string(),
@@ -335,6 +354,24 @@ fn artifact_update_actions(
         }
     }
     Ok(actions)
+}
+
+fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
+    let left =
+        Blake3Digest::<Role>::parse_compatible(left, RAW_BLAKE3_PROFILE, "update.left_digest");
+    let right =
+        Blake3Digest::<Role>::parse_compatible(right, RAW_BLAKE3_PROFILE, "update.right_digest");
+    matches!(
+        (left, right),
+        (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()
+    )
+}
+
+fn nominal_error(issue: IdentityIssue) -> ChangeCobError {
+    ChangeCobError::InvalidField {
+        field: issue.field.to_owned(),
+        reason: issue.code.to_owned(),
+    }
 }
 
 fn update_operation_id(

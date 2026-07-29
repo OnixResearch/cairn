@@ -72,11 +72,49 @@ fn parses_generated_default_policy_text() {
         .function_address_policy
         .required_roles
         .contains(&"kamacite-function-address-receipt".to_string()));
+    assert_eq!(
+        policy.nominal_identity_policy.runtime.schema_version,
+        crate::verified::nominal_identity::NOMINAL_IDENTITY_RUNTIME_SCHEMA_V1
+    );
+    assert_eq!(
+        policy.nominal_identity_policy.octet.schema_version,
+        crate::verified::nominal_identity::NOMINAL_IDENTITY_OCTET_SCHEMA_V1
+    );
+    assert!(
+        crate::verified::nominal_identity::nominal_identity_policy_diagnostics(
+            &policy.nominal_identity_policy
+        )
+        .is_empty()
+    );
     let metadata = policy
         .policy_schema_compatibility
         .expect("generated policy includes schema compatibility metadata");
     assert_eq!(metadata.schema_version, CURRENT_POLICY_SCHEMA_VERSION);
     assert_eq!(metadata.field_set_digest, CURRENT_POLICY_FIELD_SET_DIGEST);
+}
+
+#[test]
+fn rejects_missing_or_drifting_nominal_identity_policy() {
+    // r[verify cairn.nominal_evidence_identities.policy.deterministic]
+    let source = include_str!("../../../../../cairn-policy/generated/cairn-policy.json");
+
+    let mut missing: Value = serde_json::from_str(source).expect("policy JSON");
+    missing
+        .as_object_mut()
+        .expect("policy object")
+        .remove("nominal_identity_policy");
+    assert!(matches!(
+        validate_policy_json(missing),
+        Err(PolicyError::MissingField("nominal_identity_policy"))
+    ));
+
+    let mut drift: Value = serde_json::from_str(source).expect("policy JSON");
+    drift["nominal_identity_policy"]["octet"]["domains"][0]["symbols"] =
+        serde_json::json!(["RawString"]);
+    assert!(matches!(
+        validate_policy_json(drift),
+        Err(PolicyError::InvalidField("nominal_identity_policy"))
+    ));
 }
 
 #[test]

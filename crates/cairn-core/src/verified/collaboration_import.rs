@@ -9,6 +9,7 @@ use super::{
         ChangeCollaborationOperation, ChangeCollaborationState,
     },
     evidence::canonical_json_hash,
+    nominal_identity::OperationId,
     radicle_change::{ChangeArtifactId, ChangeBaseRevision},
 };
 
@@ -87,7 +88,16 @@ pub fn change_collaboration_import_operation_id(
             reason: error.to_string(),
         }
     })?;
-    Ok(canonical_json_hash(&value))
+    let hash = canonical_json_hash(&value);
+    let operation =
+        OperationId::parse(&hash, "collaboration.import_operation_id").map_err(|issue| {
+            ChangeCollaborationError::InvalidField {
+                field: issue.field.to_owned(),
+                reason: issue.code.to_owned(),
+            }
+        })?;
+    debug_assert_eq!(operation.as_str(), hash);
+    Ok(operation.as_str().to_owned())
 }
 
 fn insert_present_artifact(

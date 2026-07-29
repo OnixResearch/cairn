@@ -1,8 +1,9 @@
 use serde_json::{Map, Value};
 
 use crate::verified::evidence::{canonical_json_hash, canonical_preserves_hash};
+use crate::verified::nominal_identity::{Blake3Digest, ReceiptDigestRole, RAW_BLAKE3_PROFILE};
 
-use super::common::{is_blake3_hex, issue};
+use super::common::issue;
 use super::types::AgentRunGateIssue;
 
 // r[impl cairn.supersede.agent_run_receipts.schema]
@@ -36,7 +37,21 @@ pub(super) fn receipt_hash_issues(
         return Vec::new();
     };
     let expected_hash = agent_run_receipt_hash(receipt);
-    if stated_hash == expected_hash && is_blake3_hex(stated_hash) {
+    let stated = Blake3Digest::<ReceiptDigestRole>::parse_compatible(
+        stated_hash,
+        RAW_BLAKE3_PROFILE,
+        "agent_receipt.receipt_hash",
+    );
+    let expected = Blake3Digest::<ReceiptDigestRole>::parse(
+        &expected_hash,
+        RAW_BLAKE3_PROFILE,
+        "agent_receipt.expected_receipt_hash",
+    );
+    let matches = matches!(
+        (stated, expected),
+        (Ok(stated), Ok(expected)) if stated.as_hex() == expected.as_hex()
+    );
+    if matches {
         Vec::new()
     } else {
         vec![issue(

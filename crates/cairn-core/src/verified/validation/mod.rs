@@ -36,7 +36,7 @@ mod tests {
         FUNCTION_ADDRESS_MODE_DISABLED,
     };
     use crate::verified::policy::{
-        ArtifactSubstancePolicy, ExemptionMarkerPolicy, Policy, ReceiptSchema,
+        parse_policy_json, ArtifactSubstancePolicy, ExemptionMarkerPolicy, Policy, ReceiptSchema,
         SteelOrchestrationPolicy, TaskMarker, TraceabilityPolicy,
     };
     use crate::verified::repo::{ChangeStatus, SpecSource, TaskCounts};
@@ -162,6 +162,11 @@ mod tests {
                 forbidden_summary_fragments: Vec::new(),
                 aggregation_profiles: Vec::new(),
             },
+            nominal_identity_policy: parse_policy_json(include_str!(
+                "../../../../../cairn-policy/generated/cairn-policy.json"
+            ))
+            .expect("generated policy")
+            .nominal_identity_policy,
             policy_schema_compatibility: None,
             raw: json!({}),
         }

@@ -1,8 +1,14 @@
+// r[impl cairn.nominal_evidence_identities.lifecycle]
+// r[verify cairn.nominal_evidence_identities.lifecycle.validation]
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::nominal_identity::{
+    ActorId, ChangeId, IdentityIssue, OperationId, PolicyDigest, WorkspaceId, RAW_BLAKE3_PROFILE,
+};
 use super::radicle_change::{
     apply_change_cob_operation, change_cob_content_root, change_cob_lifecycle_view,
     change_cob_state_hash, current_change_cob_evidence, decode_base_revision,
@@ -19,6 +25,30 @@ pub const BASE_REVISION_KIND_GIT_OID: &str = "git_oid";
 
 pub type ChangeCollaborationEvidence = ChangeCobEvidence;
 pub type ChangeCollaborationError = ChangeCobError;
+
+#[derive(Debug)]
+struct AdmittedCollaborationInit {
+    change_id: ChangeId,
+    workspace_id: WorkspaceId,
+    policy_hash: PolicyDigest,
+    delegates: BTreeSet<ActorId>,
+}
+
+#[derive(Debug)]
+struct AdmittedCollaborationOperation {
+    id: OperationId,
+    actor: ActorId,
+}
+
+#[derive(Debug)]
+struct AdmittedCollaborationState {
+    change_id: ChangeId,
+    workspace_id: WorkspaceId,
+    policy_hash: PolicyDigest,
+    creator: ActorId,
+    delegates: BTreeSet<ActorId>,
+    operations: BTreeSet<OperationId>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChangeCollaborationInit {
@@ -106,7 +136,14 @@ pub struct ChangeCollaborationState {
 pub fn initialize_change_collaboration(
     operation: ChangeCollaborationOperation,
 ) -> Result<ChangeCollaborationState, ChangeCollaborationError> {
-    let state = initialize_change_cob(operation_into_compatibility(operation)?)?;
+    let enforce_nominal = operation.actions.iter().any(|action| {
+        matches!(
+            action,
+            ChangeCollaborationAction::Init { state }
+                if state.schema == CHANGE_COLLABORATION_SCHEMA_V1
+        )
+    });
+    let state = initialize_change_cob(operation_into_compatibility(operation, enforce_nominal)?)?;
     state_from_compatibility(state)
 }
 
@@ -115,7 +152,11 @@ pub fn apply_change_collaboration_operation(
     operation: ChangeCollaborationOperation,
 ) -> Result<(), ChangeCollaborationError> {
     let mut compatibility = state_to_compatibility(state)?;
-    apply_change_cob_operation(&mut compatibility, operation_into_compatibility(operation)?)?;
+    let enforce_nominal = state.schema == CHANGE_COLLABORATION_SCHEMA_V1;
+    apply_change_cob_operation(
+        &mut compatibility,
+        operation_into_compatibility(operation, enforce_nominal)?,
+    )?;
     *state = state_from_compatibility(compatibility)?;
     Ok(())
 }
@@ -173,18 +214,42 @@ pub fn change_collaboration_action_json(
 pub(crate) fn state_to_compatibility(
     state: &ChangeCollaborationState,
 ) -> Result<ChangeCobState, ChangeCollaborationError> {
+    if state.schema != CHANGE_COLLABORATION_SCHEMA_V1 {
+        return Ok(ChangeCobState {
+            schema: state.schema.clone(),
+            change_id: state.change_id.clone(),
+            repository_id: state.workspace_id.clone(),
+            base_git_oid: compatibility_base_revision(&state.schema, &state.base_revision)?,
+            policy_hash: state.policy_hash.clone(),
+            creator: state.creator.clone(),
+            delegates: state.delegates.clone(),
+            artifacts: state.artifacts.clone(),
+            evidence: state.evidence.clone(),
+            lifecycle: state.lifecycle.clone(),
+            operations: state.operations.clone(),
+        });
+    }
+    let identities = admit_collaboration_state(state)?;
     Ok(ChangeCobState {
         schema: state.schema.clone(),
-        change_id: state.change_id.clone(),
-        repository_id: state.workspace_id.clone(),
+        change_id: identities.change_id.as_str().to_owned(),
+        repository_id: identities.workspace_id.as_str().to_owned(),
         base_git_oid: compatibility_base_revision(&state.schema, &state.base_revision)?,
-        policy_hash: state.policy_hash.clone(),
-        creator: state.creator.clone(),
-        delegates: state.delegates.clone(),
+        policy_hash: identities.policy_hash.as_hex().to_owned(),
+        creator: identities.creator.as_str().to_owned(),
+        delegates: identities
+            .delegates
+            .iter()
+            .map(|value| value.as_str().to_owned())
+            .collect(),
         artifacts: state.artifacts.clone(),
         evidence: state.evidence.clone(),
         lifecycle: state.lifecycle.clone(),
-        operations: state.operations.clone(),
+        operations: identities
+            .operations
+            .iter()
+            .map(|value| value.as_str().to_owned())
+            .collect(),
     })
 }
 
@@ -196,7 +261,7 @@ pub(crate) fn state_from_compatibility(
     } else {
         decode_base_revision(&state.base_git_oid)?
     };
-    Ok(ChangeCollaborationState {
+    let result = ChangeCollaborationState {
         schema: state.schema,
         change_id: state.change_id,
         workspace_id: state.repository_id,
@@ -208,20 +273,38 @@ pub(crate) fn state_from_compatibility(
         evidence: state.evidence,
         lifecycle: state.lifecycle,
         operations: state.operations,
-    })
+    };
+    if result.schema == CHANGE_COLLABORATION_SCHEMA_V1 {
+        let _ = admit_collaboration_state(&result)?;
+    }
+    Ok(result)
 }
 
 fn operation_into_compatibility(
     operation: ChangeCollaborationOperation,
+    enforce_nominal: bool,
 ) -> Result<ChangeCobOperation, ChangeCollaborationError> {
+    let identities = if enforce_nominal {
+        Some(admit_collaboration_operation(&operation)?)
+    } else {
+        None
+    };
     let actions = operation
         .actions
         .into_iter()
         .map(action_into_compatibility)
         .collect::<Result<Vec<_>, _>>()?;
+    let Some(identities) = identities else {
+        return Ok(ChangeCobOperation {
+            id: operation.id,
+            actor: operation.actor,
+            is_delegate: operation.is_delegate,
+            actions,
+        });
+    };
     Ok(ChangeCobOperation {
-        id: operation.id,
-        actor: operation.actor,
+        id: identities.id.as_str().to_owned(),
+        actor: identities.actor.as_str().to_owned(),
         is_delegate: operation.is_delegate,
         actions,
     })
@@ -263,15 +346,102 @@ pub(crate) fn action_into_compatibility(
 fn init_to_compatibility(
     init: ChangeCollaborationInit,
 ) -> Result<ChangeCobInit, ChangeCollaborationError> {
+    if init.schema != CHANGE_COLLABORATION_SCHEMA_V1 {
+        return Ok(ChangeCobInit {
+            schema: init.schema.clone(),
+            change_id: init.change_id,
+            repository_id: init.workspace_id,
+            base_git_oid: compatibility_base_revision(&init.schema, &init.base_revision)?,
+            policy_hash: init.policy_hash,
+            delegates: init.delegates,
+            artifacts: init.artifacts,
+        });
+    }
+    let identities = admit_collaboration_init(&init)?;
     Ok(ChangeCobInit {
         schema: init.schema.clone(),
-        change_id: init.change_id,
-        repository_id: init.workspace_id,
+        change_id: identities.change_id.as_str().to_owned(),
+        repository_id: identities.workspace_id.as_str().to_owned(),
         base_git_oid: compatibility_base_revision(&init.schema, &init.base_revision)?,
-        policy_hash: init.policy_hash,
-        delegates: init.delegates,
+        policy_hash: identities.policy_hash.as_hex().to_owned(),
+        delegates: identities
+            .delegates
+            .iter()
+            .map(|value| value.as_str().to_owned())
+            .collect(),
         artifacts: init.artifacts,
     })
+}
+
+fn admit_collaboration_init(
+    init: &ChangeCollaborationInit,
+) -> Result<AdmittedCollaborationInit, ChangeCollaborationError> {
+    Ok(AdmittedCollaborationInit {
+        change_id: ChangeId::parse(&init.change_id, "collaboration.change_id")
+            .map_err(nominal_error)?,
+        workspace_id: WorkspaceId::parse(&init.workspace_id, "collaboration.workspace_id")
+            .map_err(nominal_error)?,
+        policy_hash: PolicyDigest::parse_compatible(
+            &init.policy_hash,
+            RAW_BLAKE3_PROFILE,
+            "collaboration.policy_hash",
+        )
+        .map_err(nominal_error)?,
+        delegates: admit_actor_set(&init.delegates, "collaboration.delegates")?,
+    })
+}
+
+fn admit_collaboration_operation(
+    operation: &ChangeCollaborationOperation,
+) -> Result<AdmittedCollaborationOperation, ChangeCollaborationError> {
+    Ok(AdmittedCollaborationOperation {
+        id: OperationId::parse(&operation.id, "collaboration.operation_id")
+            .map_err(nominal_error)?,
+        actor: ActorId::parse(&operation.actor, "collaboration.actor_id").map_err(nominal_error)?,
+    })
+}
+
+fn admit_collaboration_state(
+    state: &ChangeCollaborationState,
+) -> Result<AdmittedCollaborationState, ChangeCollaborationError> {
+    Ok(AdmittedCollaborationState {
+        change_id: ChangeId::parse(&state.change_id, "collaboration.change_id")
+            .map_err(nominal_error)?,
+        workspace_id: WorkspaceId::parse(&state.workspace_id, "collaboration.workspace_id")
+            .map_err(nominal_error)?,
+        policy_hash: PolicyDigest::parse_compatible(
+            &state.policy_hash,
+            RAW_BLAKE3_PROFILE,
+            "collaboration.policy_hash",
+        )
+        .map_err(nominal_error)?,
+        creator: ActorId::parse(&state.creator, "collaboration.creator").map_err(nominal_error)?,
+        delegates: admit_actor_set(&state.delegates, "collaboration.delegates")?,
+        operations: state
+            .operations
+            .iter()
+            .map(|value| {
+                OperationId::parse(value, "collaboration.operations").map_err(nominal_error)
+            })
+            .collect::<Result<BTreeSet<_>, _>>()?,
+    })
+}
+
+fn admit_actor_set(
+    values: &BTreeSet<String>,
+    field: &'static str,
+) -> Result<BTreeSet<ActorId>, ChangeCollaborationError> {
+    values
+        .iter()
+        .map(|value| ActorId::parse(value, field).map_err(nominal_error))
+        .collect()
+}
+
+fn nominal_error(issue: IdentityIssue) -> ChangeCollaborationError {
+    ChangeCobError::InvalidField {
+        field: issue.field.to_owned(),
+        reason: issue.code.to_owned(),
+    }
 }
 
 fn compatibility_base_revision(

@@ -1,3 +1,6 @@
+// r[impl cairn.nominal_evidence_identities.receipt_chains]
+// r[verify cairn.nominal_evidence_identities.receipt_chains.validation]
+
 mod graph;
 mod query;
 mod types;
@@ -8,6 +11,10 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::verified::evidence::canonical_json_hash;
+use crate::verified::nominal_identity::{
+    ArtifactDigestRole, Blake3Digest, DigestRoleMarker, ReceiptDigestRole, StateDigestRole,
+    WorkspaceId, RAW_BLAKE3_PROFILE,
+};
 
 pub use graph::evaluate_registry_graph;
 pub use query::{query_registry_exact_id, query_registry_tags};
@@ -48,15 +55,15 @@ pub fn build_global_registry_snapshot(
             "registry core policy must preserve vocabulary and claim boundaries",
         ));
     }
-    if scope_id.is_empty() {
+    if WorkspaceId::parse(scope_id, "registry.scope_id").is_err() {
         issues.push(issue(
             "registry.scope_empty",
             "snapshot",
             "",
             "scope_id",
-            Some("non-empty explicit scope"),
+            Some("canonical workspace scope"),
             Some(scope_id),
-            "registry scope must be explicit and non-empty",
+            "registry scope must be an explicit workspace identity",
         ));
     }
 
@@ -194,7 +201,7 @@ pub fn verify_global_registry_snapshot(
             policy,
         );
     }
-    if stated_hash == snapshot.snapshot_hash && is_blake3_hex(&stated_hash) {
+    if same_digest::<StateDigestRole>(&stated_hash, &snapshot.snapshot_hash) {
         report
     } else {
         finalize_snapshot_report(
@@ -691,7 +698,7 @@ fn validate_stated_record_hash(
     expected: &str,
     issues: &mut Vec<RegistryIssue>,
 ) {
-    if !stated.is_empty() && stated != expected {
+    if !stated.is_empty() && !same_digest::<ReceiptDigestRole>(stated, expected) {
         issues.push(issue(
             "registry.record_hash_mismatch",
             kind,
@@ -828,7 +835,22 @@ pub(super) fn sorted_unique(mut values: Vec<String>) -> Vec<String> {
 }
 
 pub(super) fn is_blake3_hex(value: &str) -> bool {
-    value.len() == 64 && value.as_bytes().iter().all(u8::is_ascii_hexdigit)
+    is_digest::<ArtifactDigestRole>(value)
+}
+
+fn is_digest<Role: DigestRoleMarker>(value: &str) -> bool {
+    Blake3Digest::<Role>::parse_compatible(value, RAW_BLAKE3_PROFILE, "registry.digest").is_ok()
+}
+
+fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
+    let left =
+        Blake3Digest::<Role>::parse_compatible(left, RAW_BLAKE3_PROFILE, "registry.left_digest");
+    let right =
+        Blake3Digest::<Role>::parse_compatible(right, RAW_BLAKE3_PROFILE, "registry.right_digest");
+    matches!(
+        (left, right),
+        (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()
+    )
 }
 
 fn is_safe_reference(value: &str) -> bool {

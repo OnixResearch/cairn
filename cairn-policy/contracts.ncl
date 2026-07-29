@@ -104,6 +104,30 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
   std.is_string value && value == "lifecycle-id"
 ) in
 
+let NominalIdentityCategory = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "domain-id" || value == "domain-ref" || value == "blake3-digest" || value == "imported-digest")
+) in
+
+let NominalIdentityAlgorithm = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "none" || value == "BLAKE3" || value == "SHA-256" || value == "Git-OID-SHA-1")
+) in
+
+let NominalIdentityRawRepresentation = std.contract.from_predicate (fun value =>
+  std.is_string value && value == "string"
+) in
+
+let NominalIdentityWrapperKind = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "refined-newtype" || value == "marker-generic")
+) in
+
+let NominalIdentityConstructorPolicy = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "private-fallible" || value == "marker-only")
+) in
+
+let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
+  std.is_string value && value == "deny"
+) in
+
 {
   Artifact = {
     id | NonEmptyString,
@@ -269,6 +293,53 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
     max_summary_bytes | PositiveNumber,
     forbidden_summary_fragments | Array NonEmptyString | default = [],
     aggregation_profiles | Array NonEmptyString | default = [],
+  },
+
+  NominalIdentityDomain = {
+    domain_id | NonEmptyString,
+    category | NominalIdentityCategory,
+    algorithm | NominalIdentityAlgorithm,
+    required_prefix | String,
+    max_bytes | PositiveNumber,
+    rust_symbols | NonEmptyArray | Array NonEmptyString,
+    core_scopes | NonEmptyArray | Array NonEmptyString,
+    wire_compatibility_scopes | NonEmptyArray | Array NonEmptyString,
+    raw_representation | NominalIdentityRawRepresentation,
+    wrapper_kind | NominalIdentityWrapperKind,
+    constructor_policy | NominalIdentityConstructorPolicy,
+  },
+
+  NominalIdentityRuntimeProjection = {
+    schema_version | NonEmptyString,
+    policy_id | NonEmptyString,
+    domains | NonEmptyArray | Array NominalIdentityDomain,
+  },
+
+  NominalIdentityOctetDomain = {
+    domain_id | NonEmptyString,
+    symbols | NonEmptyArray | Array NonEmptyString,
+    raw_representation | NominalIdentityRawRepresentation,
+    core_scopes | NonEmptyArray | Array NonEmptyString,
+    compatibility_scopes | NonEmptyArray | Array NonEmptyString,
+    compatibility_required | Bool,
+    wrapper_kind | NominalIdentityWrapperKind,
+    constructor_policy | NominalIdentityConstructorPolicy,
+  },
+
+  NominalIdentityOctetProjection = {
+    schema_version | NonEmptyString,
+    policy_id | NonEmptyString,
+    default_mode | NominalIdentityOctetMode,
+    heuristic_suffixes | NonEmptyArray | Array NonEmptyString,
+    domains | NonEmptyArray | Array NominalIdentityOctetDomain,
+    non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
+  NominalIdentityPolicy = {
+    policy_id | NonEmptyString,
+    runtime | NominalIdentityRuntimeProjection,
+    octet | NominalIdentityOctetProjection,
+    non_claims | NonEmptyArray | Array NonEmptyString,
   },
 
   ProbeCommandProfile = {
@@ -494,6 +565,7 @@ let DependencyTargetClass = std.contract.from_predicate (fun value =>
       required_boundary = "workspace contract matrix validation proves declared edge health only; it does not prove provider correctness, does not prove consumer behavioral correctness, does not prove verifier soundness, or does not prove release eligibility",
     },
     runtime_evidence_policy | RuntimeEvidencePolicy,
+    nominal_identity_policy | NominalIdentityPolicy,
     structured_lifecycle | StructuredLifecycle | default = {},
     probe_policy | ProbePolicy,
     receipt_schemas | NonEmptyArray | Array ReceiptSchema,

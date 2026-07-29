@@ -1,9 +1,15 @@
+// r[impl cairn.nominal_evidence_identities.receipt_chains]
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use super::evidence::canonical_json_hash;
+use super::nominal_identity::{
+    ArtifactDigestRole, Blake3Digest, DigestRoleMarker, LedgerDigestRole, PolicyDigestRole,
+    StateDigestRole, RAW_BLAKE3_PROFILE,
+};
 
 pub const RELEASE_RUN_LEDGER_SCHEMA_V1: &str = "cairn.release-run-ledger.v1";
 pub const RELEASE_RUN_LEDGER_BOUNDARY: &str = "release-run ledger validation proves ledger syntax, Cairn-owned identity linkage, transition validity, and non-claim preservation only; it does not publish artifacts, does not create tags, does not create GitHub releases, does not upload registry packages, does not sign artifacts, does not prove release eligibility, does not prove evidence truth, and does not trust external services";
@@ -278,7 +284,7 @@ fn validate_release_run_ledger(
         &mut issues,
     );
     validate_hash(&ledger.policy_hash, "policy_hash", &mut issues);
-    if ledger.policy_hash != expected_policy_hash {
+    if !same_digest::<PolicyDigestRole>(&ledger.policy_hash, expected_policy_hash) {
         push_issue(
             &mut issues,
             "release_run_ledger.policy_stale",
@@ -299,7 +305,7 @@ fn validate_release_run_ledger(
     validate_required_text(&ledger.profile, "profile", &mut issues);
     let expected_run_id = release_run_identity(ledger);
     validate_hash(&ledger.run_id, "run_id", &mut issues);
-    if ledger.run_id != expected_run_id {
+    if !same_digest::<StateDigestRole>(&ledger.run_id, &expected_run_id) {
         push_issue(
             &mut issues,
             "release_run_ledger.run_identity_stale",
@@ -318,7 +324,7 @@ fn validate_release_run_ledger(
     );
     validate_blockers_and_hints(ledger, &step_index, &mut issues);
     validate_non_claims(&ledger.non_claims, &mut issues);
-    if ledger.ledger_hash != computed_hash {
+    if !same_digest::<LedgerDigestRole>(&ledger.ledger_hash, &computed_hash) {
         push_issue(
             &mut issues,
             "release_run_ledger.hash_mismatch",
@@ -443,7 +449,7 @@ fn validate_artifacts(
                 "artifact ids must be unique",
             );
         }
-        if artifact.run_id != ledger.run_id {
+        if !same_digest::<StateDigestRole>(&artifact.run_id, &ledger.run_id) {
             push_issue(
                 issues,
                 "release_run_ledger.artifact_run_substitution",
@@ -736,10 +742,15 @@ fn validate_unique_texts(
 }
 
 fn validate_hash(value: &str, field_path: &str, issues: &mut Vec<ReleaseRunLedgerIssue>) {
-    let valid = value.len() == BLAKE3_HEX_LENGTH
-        && value
-            .chars()
-            .all(|character| character.is_ascii_hexdigit() && !character.is_ascii_uppercase());
+    let valid = if field_path == "policy_hash" {
+        is_digest::<PolicyDigestRole>(value)
+    } else if field_path == "ledger_hash" {
+        is_digest::<LedgerDigestRole>(value)
+    } else if matches!(field_path, "lifecycle_root_identity" | "run_id") {
+        is_digest::<StateDigestRole>(value)
+    } else {
+        is_digest::<ArtifactDigestRole>(value)
+    };
     if !valid {
         push_issue(
             issues,
@@ -748,6 +759,19 @@ fn validate_hash(value: &str, field_path: &str, issues: &mut Vec<ReleaseRunLedge
             "hash must be 64 lowercase BLAKE3 hexadecimal characters",
         );
     }
+}
+
+fn is_digest<Role: DigestRoleMarker>(value: &str) -> bool {
+    Blake3Digest::<Role>::parse(value, RAW_BLAKE3_PROFILE, "release_run.digest").is_ok()
+}
+
+fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
+    let left = Blake3Digest::<Role>::parse(left, RAW_BLAKE3_PROFILE, "release_run.left_digest");
+    let right = Blake3Digest::<Role>::parse(right, RAW_BLAKE3_PROFILE, "release_run.right_digest");
+    matches!(
+        (left, right),
+        (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()
+    )
 }
 
 fn validate_required_text(value: &str, field_path: &str, issues: &mut Vec<ReleaseRunLedgerIssue>) {

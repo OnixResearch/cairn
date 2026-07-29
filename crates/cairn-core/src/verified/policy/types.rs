@@ -3,8 +3,9 @@ use serde_json::Value;
 use super::PolicySchemaCompatibilityMetadata;
 
 use crate::verified::{
-    function_address_gates::FunctionAddressPolicy, runtime_evidence::RuntimeEvidencePolicy,
-    stack_provenance::StackProvenancePolicy, traceability::TraceabilityProfile,
+    function_address_gates::FunctionAddressPolicy, nominal_identity::NominalIdentityPolicy,
+    runtime_evidence::RuntimeEvidencePolicy, stack_provenance::StackProvenancePolicy,
+    traceability::TraceabilityProfile,
 };
 
 pub const SUPPORTED_POLICY_VERSION: u64 = 1;
@@ -35,6 +36,7 @@ pub struct Policy {
     pub stack_provenance_policy: StackProvenancePolicy,
     pub function_address_policy: FunctionAddressPolicy,
     pub runtime_evidence_policy: RuntimeEvidencePolicy,
+    pub nominal_identity_policy: NominalIdentityPolicy,
     pub policy_schema_compatibility: Option<PolicySchemaCompatibilityMetadata>,
     pub raw: Value,
 }

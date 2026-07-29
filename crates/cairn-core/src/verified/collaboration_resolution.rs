@@ -11,6 +11,10 @@ use super::{
         ChangeCollaborationOperation, ChangeCollaborationState,
     },
     evidence::canonical_json_hash,
+    nominal_identity::{
+        ActorId, Blake3Digest, ChangeId, ContentRootDigestRole, DigestRoleMarker, IdentityIssue,
+        OperationId, PlanDigest, PolicyDigest, StateDigestRole, RAW_BLAKE3_PROFILE,
+    },
     radicle_change::{
         ChangeArtifactId, ChangeCobAction, ChangeCobError, ChangeCobState, ChangeLifecycleRecord,
         ChangeLifecycleStatus, ChangeLifecycleView, MAX_ACTOR_ID_BYTES,
@@ -258,21 +262,21 @@ pub fn plan_change_collaboration_resolution(
             )
         })?;
         let basis = history.head_ids();
-        if !basis.contains(&selection.revision_id) {
-            return Err(invalid_resolution(
-                "resolution.revision",
-                "selected artifact revision is not a current head",
-            ));
-        }
-        let revision = history
-            .revisions
-            .get(&selection.revision_id)
+        let selected_revision = basis
+            .iter()
+            .find(|revision| same_operation_id(revision, &selection.revision_id))
             .ok_or_else(|| {
                 invalid_resolution(
                     "resolution.revision",
-                    "selected artifact revision is missing",
+                    "selected artifact revision is not a current head",
                 )
             })?;
+        let revision = history.revisions.get(selected_revision).ok_or_else(|| {
+            invalid_resolution(
+                "resolution.revision",
+                "selected artifact revision is missing",
+            )
+        })?;
         artifact_actions.push(ChangeCollaborationAction::SetArtifact {
             artifact: selection.artifact.clone(),
             content: revision.value.clone(),
@@ -352,7 +356,7 @@ pub fn apply_planned_change_collaboration_resolution(
     plan: &ChangeCollaborationResolutionPlan,
 ) -> Result<ChangeCollaborationState, ChangeCobError> {
     let current_state_hash = change_collaboration_state_hash(state)?;
-    if current_state_hash != plan.input_state_hash {
+    if !same_digest::<StateDigestRole>(&current_state_hash, &plan.input_state_hash) {
         return Err(invalid_resolution(
             "resolution.input_state_hash",
             "collaboration state changed after planning",
@@ -370,14 +374,14 @@ pub fn apply_planned_change_collaboration_resolution(
     )?;
     require_conflict_free_result(&resolved)?;
     let state_hash = change_collaboration_state_hash(&resolved)?;
-    if state_hash != plan.expected_state_hash {
+    if !same_digest::<StateDigestRole>(&state_hash, &plan.expected_state_hash) {
         return Err(invalid_resolution(
             "resolution.expected_state_hash",
             "resolved state does not match the reviewed plan",
         ));
     }
     let content_root = change_collaboration_content_root(&resolved)?;
-    if content_root != plan.expected_content_root {
+    if !same_digest::<ContentRootDigestRole>(&content_root, &plan.expected_content_root) {
         return Err(invalid_resolution(
             "resolution.expected_content_root",
             "resolved content does not match the reviewed plan",
@@ -402,27 +406,43 @@ fn resolution_plan_hash<T: Serialize>(plan: &T) -> Result<String, ChangeCobError
     let value = serde_json::to_value(plan).map_err(|error| ChangeCobError::Serialization {
         reason: error.to_string(),
     })?;
-    Ok(canonical_json_hash(&value))
+    let hash = canonical_json_hash(&value);
+    let digest = PlanDigest::parse(&hash, RAW_BLAKE3_PROFILE, "resolution.plan_hash")
+        .map_err(nominal_error)?;
+    Ok(digest.as_hex().to_owned())
 }
 
 fn validate_resolution_context(
     state: &ChangeCollaborationState,
     snapshot: &ChangeCollaborationResolutionSnapshot,
 ) -> Result<(), ChangeCobError> {
-    if state.change_id != snapshot.change_id {
+    let state_change =
+        ChangeId::parse(&state.change_id, "resolution.state_change_id").map_err(nominal_error)?;
+    let snapshot_change = ChangeId::parse(&snapshot.change_id, "resolution.snapshot_change_id")
+        .map_err(nominal_error)?;
+    if state_change != snapshot_change {
         return Err(invalid_resolution(
             "resolution.change_id",
             "snapshot and collaboration state name different changes",
         ));
     }
-    if state.policy_hash != snapshot.policy_hash {
+    let state_policy = PolicyDigest::parse_compatible(
+        &state.policy_hash,
+        RAW_BLAKE3_PROFILE,
+        "resolution.state_policy_hash",
+    )
+    .map_err(nominal_error)?;
+    let snapshot_policy = PolicyDigest::parse_compatible(
+        &snapshot.policy_hash,
+        RAW_BLAKE3_PROFILE,
+        "resolution.snapshot_policy_hash",
+    )
+    .map_err(nominal_error)?;
+    if state_policy != snapshot_policy {
         return Err(invalid_resolution(
             "resolution.policy_hash",
             "current policy does not match collaboration state",
         ));
-    }
-    if snapshot.actor.is_empty() {
-        return Err(invalid_resolution("actor", "must not be empty"));
     }
     let actor_bytes = snapshot.actor.len();
     if actor_bytes > MAX_ACTOR_ID_BYTES {
@@ -432,7 +452,9 @@ fn validate_resolution_context(
             limit: MAX_ACTOR_ID_BYTES,
         });
     }
-    if snapshot.actor != state.creator && !snapshot.is_delegate {
+    let actor = ActorId::parse(&snapshot.actor, "resolution.actor").map_err(nominal_error)?;
+    let creator = ActorId::parse(&state.creator, "resolution.creator").map_err(nominal_error)?;
+    if actor != creator && !snapshot.is_delegate {
         return Err(ChangeCobError::Unauthorized {
             actor: snapshot.actor.clone(),
             action: "plan_collaboration_resolution".to_string(),
@@ -493,7 +515,7 @@ fn validate_complete_selections(
         if !conflict
             .heads
             .iter()
-            .any(|head| head.revision_id == selection.revision_id)
+            .any(|head| same_operation_id(&head.revision_id, &selection.revision_id))
         {
             return Err(invalid_resolution(
                 "resolution.revision",
@@ -565,6 +587,33 @@ fn require_conflict_free_result(state: &ChangeCollaborationState) -> Result<(), 
     }
 }
 
+fn same_operation_id(left: &str, right: &str) -> bool {
+    let left = OperationId::parse(left, "resolution.left_operation_id");
+    let right = OperationId::parse(right, "resolution.right_operation_id");
+    matches!((left, right), (Ok(left), Ok(right)) if left == right)
+}
+
+fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
+    let left =
+        Blake3Digest::<Role>::parse_compatible(left, RAW_BLAKE3_PROFILE, "resolution.left_digest");
+    let right = Blake3Digest::<Role>::parse_compatible(
+        right,
+        RAW_BLAKE3_PROFILE,
+        "resolution.right_digest",
+    );
+    matches!(
+        (left, right),
+        (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()
+    )
+}
+
+fn nominal_error(issue: IdentityIssue) -> ChangeCobError {
+    ChangeCobError::InvalidField {
+        field: issue.field.to_owned(),
+        reason: issue.code.to_owned(),
+    }
+}
+
 fn resolution_operation_id(
     input_state_hash: &str,
     actor: &str,
@@ -581,7 +630,9 @@ fn resolution_operation_id(
     .map_err(|error| ChangeCobError::Serialization {
         reason: error.to_string(),
     })?;
-    Ok(canonical_json_hash(&value))
+    let hash = canonical_json_hash(&value);
+    let operation = OperationId::parse(&hash, "resolution.operation_id").map_err(nominal_error)?;
+    Ok(operation.as_str().to_owned())
 }
 
 fn invalid_resolution(field: &str, reason: impl Into<String>) -> ChangeCobError {
