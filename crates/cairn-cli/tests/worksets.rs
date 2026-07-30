@@ -369,7 +369,11 @@ fn malformed_policy_shell_profile_is_rejected() -> Result<(), Box<dyn Error>> {
         .arg("--policy")
         .arg(unsafe_policy);
     let error = failed_stderr(command.output()?);
-    assert!(error.contains("contains shell syntax"), "{error}");
+    assert!(
+        error
+            .contains("policy has invalid field lifecycle_store_policy.opener_profiles.fixed_args"),
+        "{error}"
+    );
     assert!(!fixture.state_path().exists());
 
     fixture.cleanup()
