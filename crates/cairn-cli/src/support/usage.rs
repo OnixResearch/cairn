@@ -7,6 +7,7 @@ pub(crate) fn usage_text() -> &'static str {
     // r[verify cairn.change_dependency_graph.docs.discoverability.boundary]
     // r[impl cairn.lifecycle_views.docs]
     // r[impl cairn.lifecycle_views.docs.boundary]
+    // r[impl cairn.lifecycle_stores.docs]
     // r[impl cairn.sync_archive.compaction.docs]
     // r[impl cairn.sync_archive.compaction.docs.chain_merkle]
     // r[impl cairn.sync_archive.compaction.docs.non_claims]

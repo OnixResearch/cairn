@@ -135,6 +135,7 @@ struct ShellPolicy {
     max_spec_title_bytes: usize,
 }
 
+// r[impl cairn.lifecycle_stores.root_cli]
 pub(crate) fn prepare_invocation(
     command: &str,
     args: Vec<String>,

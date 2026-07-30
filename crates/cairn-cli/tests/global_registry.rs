@@ -100,6 +100,7 @@ fn generated_policy_owns_registry_adapters_tags_and_graph_profiles() -> Result<(
 // r[verify cairn.global_registry.portability.export]
 // r[verify cairn.global_registry.portability.verify]
 // r[verify cairn.global_registry.validation.positive]
+// r[verify cairn.lifecycle_stores.root_cli.compatibility]
 fn explicit_portable_registry_round_trip_is_snapshot_bound() -> Result<(), Box<dyn Error>> {
     let (store, output) = paths("round-trip");
     for path in [&store, &output] {

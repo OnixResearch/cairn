@@ -186,6 +186,7 @@ fn write_project(
 fn explicit_store_selects_status_and_spec_reads() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.lifecycle_stores.root_resolution.explicit]
     // r[verify cairn.lifecycle_stores.root_cli.spec_fetch]
+    // r[verify cairn.lifecycle_stores.verification]
     let base = test_root("explicit")?;
     let store = base.join("shared");
     let data = base.join("data");
@@ -269,6 +270,7 @@ fn setup_register_and_spec_show_share_the_data_override() -> Result<(), Box<dyn 
 #[test]
 fn selector_conflict_fails_before_lifecycle_reads() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.lifecycle_stores.root_resolution.conflict]
+    // r[verify cairn.lifecycle_stores.verification.suites]
     let base = test_root("selector-conflict")?;
     let output = run_failure(command(&base, &base.join("data")).args([
         "status",
@@ -377,7 +379,9 @@ fn missing_and_stale_store_rows_fail_closed() -> Result<(), Box<dyn Error>> {
 fn context_reads_only_direct_accepted_specs_without_authority() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.lifecycle_stores.references.index]
     // r[verify cairn.lifecycle_stores.references.non_authority]
+    // r[verify cairn.lifecycle_stores.boundary]
     // r[verify cairn.lifecycle_stores.boundary.bounded]
+    // r[verify cairn.lifecycle_stores.boundary.overclaim]
     let base = test_root("context-boundary")?;
     let subject = base.join("subject");
     let shared = base.join("shared");
