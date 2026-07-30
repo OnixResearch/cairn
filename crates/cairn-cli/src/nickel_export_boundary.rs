@@ -41,13 +41,59 @@ pub(crate) fn export_json_dual_run(
     destination: &Path,
     allow_reviewed_secret_markers: bool,
 ) -> Result<DualRunExport, Box<dyn Error>> {
+    export_json_dual_run_inner(
+        family_id,
+        source,
+        destination,
+        None,
+        allow_reviewed_secret_markers,
+    )
+}
+
+pub(crate) fn export_json_dual_run_with_contract(
+    family_id: &str,
+    source: &Path,
+    destination: &Path,
+    contract: &Path,
+    allow_reviewed_secret_markers: bool,
+) -> Result<DualRunExport, Box<dyn Error>> {
+    export_json_dual_run_inner(
+        family_id,
+        source,
+        destination,
+        Some(contract),
+        allow_reviewed_secret_markers,
+    )
+}
+
+fn export_json_dual_run_inner(
+    family_id: &str,
+    source: &Path,
+    destination: &Path,
+    contract: Option<&Path>,
+    allow_reviewed_secret_markers: bool,
+) -> Result<DualRunExport, Box<dyn Error>> {
     validate_pinned_cohort(STANDALONE_SOURCE_REVISION, NICKEL_EVALUATOR_VERSION)?;
     let source_path = portable_relative_path(source)?;
     let destination_path = portable_relative_path(destination)?;
     reject_symlink_components(source)?;
     reject_symlink_components(destination)?;
     let source_bytes = fs::read(source)?;
-    let dependencies = load_declared_dependencies(source, &source_bytes)?;
+    let mut dependencies = load_declared_dependencies(source, &source_bytes)?;
+    let contract_path = if let Some(contract) = contract {
+        reject_symlink_components(contract)?;
+        let bytes = fs::read(contract)?;
+        dependencies.extend(load_declared_dependencies(contract, &bytes)?);
+        dependencies.push(OwnedDependency {
+            path: portable_relative_path(contract)?,
+            bytes,
+        });
+        dependencies.sort_by(|left, right| left.path.cmp(&right.path));
+        dependencies.dedup_by(|left, right| left.path == right.path);
+        portable_relative_path(contract)?
+    } else {
+        String::new()
+    };
 
     let request = ExportRequest {
         schema: REQUEST_SCHEMA.to_string(),
@@ -59,12 +105,12 @@ pub(crate) fn export_json_dual_run(
             .collect(),
         import_paths: Vec::new(),
         selector: String::new(),
-        contract: String::new(),
+        contract: contract_path,
         format: ExportFormat::Json,
         destination: destination_path.clone(),
         allow_secret_material: allow_reviewed_secret_markers,
     };
-    let legacy = run_nickel(source)?;
+    let legacy = run_nickel(source, contract)?;
     let standalone = run_standalone_shell(&request)?;
     require_matching_observations(&legacy, &standalone)?;
 
@@ -181,13 +227,17 @@ fn run_standalone_shell(request: &ExportRequest) -> Result<Output, Box<dyn Error
     })
 }
 
-fn run_nickel(source: &Path) -> Result<Output, Box<dyn Error>> {
-    let output = Command::new("nickel")
+fn run_nickel(source: &Path, contract: Option<&Path>) -> Result<Output, Box<dyn Error>> {
+    let mut command = Command::new("nickel");
+    command
         .arg("export")
         .arg("--format")
         .arg("json")
-        .arg(source)
-        .output()?;
+        .arg(source);
+    if let Some(contract) = contract {
+        command.arg("--apply-contract").arg(contract);
+    }
+    let output = command.output()?;
     if output.status.success() {
         Ok(output)
     } else {

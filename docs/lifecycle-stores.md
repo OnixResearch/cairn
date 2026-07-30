@@ -30,9 +30,19 @@ The identity binds these facts:
 
 Normal lifecycle commands read only `.cairn-store/store.json`. They do not evaluate Nickel at runtime.
 
-Use the configuration-export flow to write or validate the JSON projection. This flow evaluates the Nickel contract and rejects a stale projection.
+Use this command to export or check the store projection:
 
-The lifecycle-stores design does not assign a CLI spelling to this export flow. Do not substitute a different Cairn export command.
+```text
+cairn config export --kind store --root PATH [--check] [--execute]
+```
+
+The default mode prints a deterministic plan. It does not change the projection.
+
+Use `--check` to compare the current projection with the typed source. This mode is read-only and fails for a stale projection.
+
+Use `--execute` to replace only `.cairn-store/store.json`. Cairn rechecks the source and destination before an atomic same-directory replacement.
+
+This command evaluates the lifecycle-store Nickel contract. Normal lifecycle commands read JSON and do not evaluate Nickel.
 
 ## Set up a store
 
@@ -203,7 +213,15 @@ The project source can declare these values:
 
 Keep machine paths out of the project files. Each machine resolves shared store IDs through its local locator.
 
-Use the configuration-export flow after each source change. Normal commands reject a missing, malformed, or stale projection.
+Use this command after each project source change:
+
+```text
+cairn config export --kind project --root PATH [--check] [--execute]
+```
+
+Preview the export without flags. Use `--check` for a read-only freshness check. Use `--execute` to replace only `.cairn/project.json`.
+
+Normal commands reject a missing, malformed, or stale projection. They do not evaluate Nickel.
 
 If the repository has no native lifecycle root, a pointer can select an external store. The resolution receipt reports `project_pointer` as its source.
 
@@ -323,9 +341,10 @@ cairn store register '<checkout-path>' --id '<store-id>' --execute
 ### Repair a stale projection
 
 1. Update the typed `.ncl` source.
-2. Run the configuration-export flow for that source.
-3. Validate that the checked JSON projection is current.
-4. Rerun the failed store, context, or doctor command.
+2. Preview `cairn config export --kind store|project --root PATH`.
+3. Run the same command with `--execute`.
+4. Run the same command with `--check`.
+5. Rerun the failed store, context, or doctor command.
 
 Do not repair drift by editing the generated JSON projection or local locator directly.
 

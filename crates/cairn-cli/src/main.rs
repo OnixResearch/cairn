@@ -50,6 +50,7 @@ mod workspace_contract_matrix;
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules.visible_boundaries]
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules.narrow_bridges]
 mod collaboration;
+mod config_export;
 mod content_addressed_evidence;
 
 use collaboration::run_collaboration;
@@ -121,6 +122,7 @@ fn run() -> Result<(), Box<dyn Error>> {
                 .as_ref()
                 .ok_or("context root resolution is unavailable")?,
         )?,
+        "config" => config_export::run_config(args.collect())?,
         "doctor" => run_doctor(
             args.collect(),
             root_local
