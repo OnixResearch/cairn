@@ -1,5 +1,7 @@
 # Nickel contracts for cairn policy profiles.
 
+let LifecycleStores = import "lifecycle-store-contracts.ncl" in
+
 let NonEmptyString = std.contract.from_predicate (fun value =>
   std.is_string value && std.string.length value > 0
 ) in
@@ -554,6 +556,7 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     cross_repo_dependency_policy | CrossRepoDependencyPolicy,
     agent_completion_policy | AgentCompletionPolicy,
     global_registry_policy | GlobalRegistryPolicy,
+    lifecycle_store_policy | LifecycleStores.Policy,
     steel_orchestration_policy | SteelOrchestrationPolicy,
     traceability_policy | TraceabilityPolicy,
     stack_provenance_gate | StackProvenancePolicy,
@@ -579,5 +582,16 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     exemptions | Array Exemption,
   },
 
+  LifecycleStoreId = LifecycleStores.StoreId,
+  LifecycleStoreRemoteHint = LifecycleStores.RemoteHint,
+  LifecycleStoreReference = LifecycleStores.StoreReference,
+  LifecycleStoreIdentitySource = LifecycleStores.StoreIdentitySource,
+  LifecycleStoreIdentityProjection = LifecycleStores.StoreIdentityProjection,
+  LifecycleStoreProjectSource = LifecycleStores.ProjectDeclarationSource,
+  LifecycleStoreProjectProjection = LifecycleStores.ProjectDeclarationProjection,
+  LifecycleStoreLocatorState = LifecycleStores.LocatorState,
+  LifecycleStoreWorksetState = LifecycleStores.WorksetState,
+  LifecycleStoreReceipt = LifecycleStores.LifecycleStoreReceipt,
+  LifecycleStorePolicy = LifecycleStores.Policy,
   Blake3Hex = Blake3HexContract,
 }

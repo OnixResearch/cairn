@@ -1431,6 +1431,275 @@
     "implementation",
     "archive"
   ],
+  "lifecycle_store_policy": {
+    "bounds": {
+      "max_context_specs_per_store": 512,
+      "max_issue_count": 256,
+      "max_locator_entries": 256,
+      "max_non_claims": 32,
+      "max_path_bytes": 4096,
+      "max_purpose_summary_bytes": 1024,
+      "max_references": 32,
+      "max_remote_hint_bytes": 2048,
+      "max_spec_title_bytes": 256,
+      "max_store_id_bytes": 64,
+      "max_workset_id_bytes": 64,
+      "max_workset_members": 32,
+      "max_worksets": 128
+    },
+    "canonicalization": "serde_json_compact_sorted_keys",
+    "hash_algorithm": "BLAKE3",
+    "issue_codes": [
+      "lifecycle_store.claim.overclaim",
+      "lifecycle_store.identity.invalid",
+      "lifecycle_store.identity.stale_projection",
+      "lifecycle_store.locator.duplicate_id",
+      "lifecycle_store.locator.duplicate_path",
+      "lifecycle_store.locator.identity_changed",
+      "lifecycle_store.locator.stale_plan",
+      "lifecycle_store.locator.symlink_path",
+      "lifecycle_store.project.duplicate_reference",
+      "lifecycle_store.project.invalid",
+      "lifecycle_store.project.self_reference",
+      "lifecycle_store.project.stale_projection",
+      "lifecycle_store.reference.transitive_forbidden",
+      "lifecycle_store.reference.unregistered",
+      "lifecycle_store.remote.unsafe",
+      "lifecycle_store.root.conflicting_selectors",
+      "lifecycle_store.root.ineligible_command",
+      "lifecycle_store.root.unknown_store",
+      "lifecycle_store.workset.changed_member",
+      "lifecycle_store.workset.execute_required",
+      "lifecycle_store.workset.invalid",
+      "lifecycle_store.workset.stale_plan",
+      "lifecycle_store.workset.unknown_opener"
+    ],
+    "locator": {
+      "expected_prior_hash_field": "expected_prior_state_hash",
+      "hash_algorithm": "BLAKE3",
+      "lock_kind": "exclusive",
+      "preview_required": true,
+      "relative_path": "cairn/stores/registry.json",
+      "replacement_kind": "atomic",
+      "schema": "cairn.lifecycle-store-locator.v1",
+      "state_hash_field": "state_hash",
+      "symlink_paths_allowed": false
+    },
+    "opener_profiles": [
+      {
+        "executable": "code",
+        "fixed_args": [
+          "--new-window"
+        ],
+        "id": "code-new-window",
+        "member_argument_mode": "positional_paths",
+        "primary_first": true
+      },
+      {
+        "executable": "zed",
+        "fixed_args": [],
+        "id": "zed",
+        "member_argument_mode": "positional_paths",
+        "primary_first": true
+      }
+    ],
+    "project_config": {
+      "projection_path": ".cairn/project.json",
+      "projection_schema": "cairn.lifecycle-store-project.v1",
+      "required_fields": [
+        "schema",
+        "lifecycle_store",
+        "references",
+        "source_blake3",
+        "non_claims"
+      ],
+      "required_non_claims": [
+        "a project pointer selects one declared store but does not grant lifecycle authority",
+        "a direct reference provides read-only discovery and does not satisfy dependencies, gates, evidence, or requirements",
+        "reference indexing does not prove truth, freshness, ownership, implementation, or satisfaction",
+        "project configuration does not authorize transitive reference traversal or transport"
+      ],
+      "runtime_nickel_evaluation": false,
+      "source_identity_field": "source_blake3",
+      "source_path": ".cairn/project.ncl",
+      "source_schema": "cairn.lifecycle-store-project-source.v1",
+      "stale_projection_rejected": true
+    },
+    "receipts": {
+      "evidence_class": "local-only",
+      "full_hash_field": "receipt_hash",
+      "local_display_fields": [
+        "root",
+        "path",
+        "checkout_path",
+        "resolution.root",
+        "actions.path",
+        "members.path"
+      ],
+      "local_only_by_default": true,
+      "portable_excluded_fields": [
+        "root",
+        "path",
+        "checkout_path",
+        "resolution.root",
+        "actions.path",
+        "members.path"
+      ],
+      "portable_fields": [
+        "schema",
+        "command",
+        "store_id",
+        "store_identity",
+        "project_identity",
+        "reference_ids",
+        "member_labels",
+        "opener_profile",
+        "actions",
+        "policy_hash",
+        "non_claims"
+      ],
+      "portable_hash_field": "portable_hash",
+      "release_readiness_consumes_by_default": false,
+      "required_fields": [
+        "schema",
+        "command",
+        "valid",
+        "verdict",
+        "evidence_class",
+        "resolution",
+        "actions",
+        "issues",
+        "policy_hash",
+        "receipt_hash",
+        "portable_hash",
+        "non_claims"
+      ],
+      "required_non_claims": [
+        "a valid store proves only a bounded native lifecycle identity at one observed local path",
+        "registration proves only one machine-local locator mapping",
+        "references do not prove truth, freshness, ownership, implementation, or requirement satisfaction",
+        "references do not satisfy dependencies, gates, evidence, lifecycle policy, or release policy",
+        "worksets do not select lifecycle roots or authorize member mutation",
+        "opener plans and process observations do not prove editor state, retained folders, or saved work",
+        "store and context commands do not perform VCS, network, credential, or hosting-service transport",
+        "local locator and workset receipts are local-only and are not release evidence by default",
+        "portable hashes exclude absolute host paths and do not prove cross-machine trust",
+        "lifecycle store outputs do not prove lifecycle readiness or release eligibility"
+      ],
+      "resolution_fields": [
+        "source",
+        "root",
+        "store_id",
+        "store_identity",
+        "project_identity",
+        "diagnostics"
+      ],
+      "schema": "cairn.lifecycle-store-receipt-policy.v1"
+    },
+    "required_non_claims": [
+      "a valid store proves only a bounded native lifecycle identity at one observed local path",
+      "registration proves only one machine-local locator mapping",
+      "references do not prove truth, freshness, ownership, implementation, or requirement satisfaction",
+      "references do not satisfy dependencies, gates, evidence, lifecycle policy, or release policy",
+      "worksets do not select lifecycle roots or authorize member mutation",
+      "opener plans and process observations do not prove editor state, retained folders, or saved work",
+      "store and context commands do not perform VCS, network, credential, or hosting-service transport",
+      "local locator and workset receipts are local-only and are not release evidence by default",
+      "portable hashes exclude absolute host paths and do not prove cross-machine trust",
+      "lifecycle store outputs do not prove lifecycle readiness or release eligibility"
+    ],
+    "root_resolution": {
+      "consult_global_registry": false,
+      "current_directory_only_without_vcs_boundary": true,
+      "eligible_commands": [
+        "archive",
+        "change create",
+        "change depend add",
+        "change depend list",
+        "change depend remove",
+        "change graph",
+        "change list",
+        "change next",
+        "change show",
+        "compact archive",
+        "compact unpack",
+        "compact verify",
+        "context",
+        "doctor",
+        "gate design",
+        "gate proposal",
+        "gate tasks",
+        "gate-context",
+        "release-readiness",
+        "spec list",
+        "spec show",
+        "status",
+        "sync",
+        "traceability coverage",
+        "tracey coverage",
+        "validate",
+        "view graph",
+        "view kanban",
+        "view mindmap"
+      ],
+      "lifecycle_store_flag": "--lifecycle-store",
+      "machine_default_store": false,
+      "native_root_wins_over_project_pointer": true,
+      "precedence": [
+        "explicit_root",
+        "explicit_lifecycle_store",
+        "native_root",
+        "project_pointer",
+        "classic_fallback"
+      ],
+      "root_flag": "--root",
+      "selectors_mutually_exclusive": true
+    },
+    "schema": "cairn.lifecycle-store-policy.v1",
+    "store_identity": {
+      "projection_path": ".cairn-store/store.json",
+      "projection_schema": "cairn.lifecycle-store-identity.v1",
+      "required_fields": [
+        "schema",
+        "store_id",
+        "remote_hint",
+        "source_blake3",
+        "non_claims"
+      ],
+      "required_non_claims": [
+        "store identity proves only the observed checked projection and native lifecycle identity",
+        "store identity does not prove remote freshness, ownership, trust, or VCS synchronization",
+        "store identity does not prove requirement truth, implementation, lifecycle readiness, or release eligibility"
+      ],
+      "runtime_nickel_evaluation": false,
+      "source_identity_field": "source_blake3",
+      "source_path": ".cairn-store/store.ncl",
+      "source_schema": "cairn.lifecycle-store-source.v1",
+      "stale_projection_rejected": true
+    },
+    "worksets": {
+      "minimum_members": 1,
+      "opener_profile_field": "opener_profile",
+      "removal_preserves_members": true,
+      "required_fields": [
+        "id",
+        "members",
+        "primary_member",
+        "opener_profile"
+      ],
+      "state": {
+        "expected_prior_hash_field": "expected_prior_state_hash",
+        "hash_algorithm": "BLAKE3",
+        "lock_kind": "exclusive",
+        "preview_required": true,
+        "relative_path": "cairn/worksets/state.json",
+        "replacement_kind": "atomic",
+        "schema": "cairn.lifecycle-store-worksets.v1",
+        "state_hash_field": "state_hash",
+        "symlink_paths_allowed": false
+      }
+    }
+  },
   "mutation_policy": {
     "archive": {
       "require_passing_gate": true
