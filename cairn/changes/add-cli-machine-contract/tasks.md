@@ -24,7 +24,7 @@
 - [x] [parallel] V2 Add negative parser, lookup, policy, unsafe-path, incompatible-option, privacy, and nonzero-status fixtures. r[cairn.cli_machine_contract.verification] r[cairn.cli_machine_contract.privacy]
 - [x] [depends:cairn.cli_machine_contract.compatibility] V3 Add default CLI and MCP compatibility goldens. r[cairn.cli_machine_contract.compatibility]
 - [x] [depends:cairn.cli_machine_contract.envelope] D1 Document invocation, envelope fields, exit classes, nested verdicts, controlled failures, privacy, and host-failure boundaries. r[cairn.cli_machine_contract.docs] r[cairn.cli_machine_contract.boundary]
-- [ ] [depends:cairn.cli_machine_contract.verification] V4 Run policy freshness, formatting, focused tests, Clippy, purity smoke, traceability, lifecycle gates, release readiness, and relevant Nix checks. r[cairn.cli_machine_contract.verification] r[cairn.cli_machine_contract.functional_boundary]
+- [x] [depends:cairn.cli_machine_contract.verification] V4 Run policy freshness, formatting, focused tests, Clippy, purity smoke, traceability, lifecycle gates, release readiness, and relevant Nix checks. r[cairn.cli_machine_contract.verification] r[cairn.cli_machine_contract.functional_boundary]
 
 ## Verification Coverage
 
@@ -38,3 +38,16 @@
 - `Scenario: Sensitive values are not added to diagnostics` -> C2, V2
 - `Scenario: Host-level failures remain outside the claim` -> D1, V2
 - `Scenario: Outcome classification remains pure` -> C1, C2, V4
+
+## Verification Evidence
+
+- The pre-change workspace suite passed in pueue task `1041`.
+- Final formatting and workspace tests passed in pueue task `1172`.
+- Focused machine-contract tests passed with 12 positive and negative cases.
+- Workspace Clippy passed with warnings denied in pueue task `1143`.
+- Policy freshness passed in pueue task `1145`.
+- Cairn validation, traceability `1798/1798`, and release readiness passed in pueue tasks `1160`, `1162`, and `1161`.
+- Proposal, design, and tasks gates passed before accepted-spec sync.
+- Focused purity scans found no shell effects in the new core modules.
+- `nix flake check path:$PWD -L` reached evaluation but could not fetch `https://github.com/brittonr/subwayrat.git` in this environment.
+- The repository-wide Tiger Style command reached analysis but stopped on three pre-existing noncanonical-path domain findings outside this change.

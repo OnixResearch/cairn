@@ -35,6 +35,23 @@ Accepted-spec sync completed for `cairn/specs/cli-machine-contract/spec.md`.
 
 Traceability passed after every new accepted requirement and scenario had a source or test marker.
 
+## Final rails
+
+- `cargo fmt --all -- --check` passed.
+- `cargo test --workspace` passed after the final changes.
+- `cargo clippy --workspace --all-targets -- -D warnings` passed.
+- `cairn policy export --check` passed.
+- `cairn validate --root .` passed.
+- Traceability passed with `1798/1798` referenced IDs.
+- Release readiness passed.
+- Proposal, design, and tasks gates passed.
+
+`nix flake check path:$PWD -L` reached flake evaluation. It could not fetch `https://github.com/brittonr/subwayrat.git` in this environment.
+
+The repository-wide Tiger Style command reached analysis. It stopped on three pre-existing noncanonical-path domain findings outside this change.
+
+These bounded environment and baseline findings did not affect focused purity, workspace tests, Clippy, lifecycle validation, traceability, or release readiness.
+
 ## Claim boundary
 
 A machine envelope proves controlled transport and serialization only.
