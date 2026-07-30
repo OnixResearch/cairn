@@ -333,10 +333,10 @@ fn tampered_member_path_hash_is_rejected() -> Result<(), Box<dyn Error>> {
     successful_json(create_command(&fixture, true).output()?)?;
     let changed_member = fixture.root.join("changed-member");
     fs::create_dir_all(&changed_member)?;
-    let bytes = fs::read(&fixture.state_path())?;
+    let bytes = fs::read(fixture.state_path())?;
     let mut state: Value = serde_json::from_slice(&bytes)?;
     state["worksets"][0]["members"][0]["display_path"] = Value::String(canonical(&changed_member)?);
-    fs::write(&fixture.state_path(), serde_json::to_vec_pretty(&state)?)?;
+    fs::write(fixture.state_path(), serde_json::to_vec_pretty(&state)?)?;
 
     let error = failed_stderr(list_command(&fixture).output()?);
     assert!(
