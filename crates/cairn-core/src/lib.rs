@@ -92,6 +92,21 @@ pub use verified::change_dependencies::{
     DEPENDENCY_ISSUE_INVALID_ID, DEPENDENCY_ISSUE_INVALID_ITEM, DEPENDENCY_ISSUE_INVALID_TYPE,
     DEPENDENCY_ISSUE_SELF, DEPENDENCY_ISSUE_UNKNOWN,
 };
+pub use verified::cli_machine::{
+    build_machine_outcome, is_machine_command_name_safe, sort_machine_diagnostics,
+    MachineContractBounds, MachineContractError, MachineContractPolicy, MachineDiagnostic,
+    MachineDiagnosticDefinition, MachineDiagnosticSeverity, MachineEnvelope, MachineExitClass,
+    MachineExitClassPolicy, MachineFailureKind, MachineOutcome, MachineProcessOutcome,
+    CLI_MACHINE_DIAGNOSTIC_BLOCKED, CLI_MACHINE_DIAGNOSTIC_INCOMPATIBLE_OPTION,
+    CLI_MACHINE_DIAGNOSTIC_INTERNAL_ERROR, CLI_MACHINE_DIAGNOSTIC_INVOCATION_FAILED,
+    CLI_MACHINE_DIAGNOSTIC_MISSING_COMMAND, CLI_MACHINE_DIAGNOSTIC_NOT_FOUND,
+    CLI_MACHINE_DIAGNOSTIC_OUTPUT_INVALID, CLI_MACHINE_DIAGNOSTIC_OUTPUT_TOO_LARGE,
+    CLI_MACHINE_DIAGNOSTIC_POLICY_ERROR, CLI_MACHINE_DIAGNOSTIC_UNKNOWN_COMMAND,
+    CLI_MACHINE_EXIT_CLASSES, CLI_MACHINE_MAX_CAPTURE_BYTES_LIMIT,
+    CLI_MACHINE_MAX_COMMAND_BYTES_LIMIT, CLI_MACHINE_MAX_DIAGNOSTICS_LIMIT,
+    CLI_MACHINE_MAX_FIELD_BYTES_LIMIT, CLI_MACHINE_MAX_PROCESS_STATUS,
+    CLI_MACHINE_REQUIRED_DIAGNOSTIC_CODES, CLI_MACHINE_SCHEMA_V1, CLI_MACHINE_UNKNOWN_COMMAND,
+};
 pub use verified::collaboration_change::{
     apply_change_collaboration_operation, change_collaboration_action_json,
     change_collaboration_content_root, change_collaboration_lifecycle_view,
@@ -369,7 +384,8 @@ pub use verified::policy::{
     LifecycleStoreReceiptPolicy, LifecycleStoreRootResolutionPolicy, LifecycleStoreWorksetPolicy,
     Policy, PolicyError, PolicySchemaCompatibilityMetadata, PolicySchemaCompatibilityReport,
     SteelOrchestrationPolicy, SteelOrchestrationProfile, TraceabilityPolicy,
-    CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_SCHEMA_VERSION, DEFAULT_POLICY_REFRESH_COMMAND,
+    CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_FIELD_SET_DIGEST_MATERIAL,
+    CURRENT_POLICY_SCHEMA_VERSION, DEFAULT_POLICY_REFRESH_COMMAND,
     LIFECYCLE_STORE_POLICY_SCHEMA_V1, POLICY_SCHEMA_METADATA_FIELD, SUPPORTED_POLICY_VERSION,
 };
 pub use verified::preserves_evidence_ingest::{

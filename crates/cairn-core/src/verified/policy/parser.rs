@@ -7,6 +7,7 @@ use super::{
     },
     function_address::function_address_policy,
     lifecycle_store::lifecycle_store_policy,
+    machine::machine_contract_policy,
     nominal_identity::nominal_identity_policy,
     runtime_evidence::runtime_evidence_policy,
     schema_compatibility::{policy_schema_metadata, POLICY_SCHEMA_METADATA_FIELD},
@@ -46,6 +47,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
             "gate_policy.substance.dependency_target_class",
         ));
     }
+    let machine_contract_policy = machine_contract_policy(&value)?;
     let mutation = mutation_policy_fields(&value)?;
     let should_require_receipt_hashes = super::fields::bool_field(
         value
@@ -77,6 +79,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         gate_finding_scope: gate.finding_scope,
         gate_finding_promoted: gate.finding_promoted,
         artifact_substance_policy: gate.substance,
+        machine_contract_policy,
         sync_require_gate: mutation.sync_require_gate,
         archive_require_gate: mutation.archive_require_gate,
         migrate_require_manifest: mutation.migrate_require_manifest,

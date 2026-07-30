@@ -3,6 +3,7 @@ use serde_json::Value;
 use super::*;
 
 const EXPECTED_MAX_STORE_ID_BYTES: usize = 64;
+const INVALID_MACHINE_SUCCESS_STATUS: u64 = 1;
 
 #[test]
 fn parses_generated_default_policy_text() {
@@ -13,6 +14,23 @@ fn parses_generated_default_policy_text() {
     assert_eq!(policy.name, "cairn-default");
     assert_eq!(policy.version, SUPPORTED_POLICY_VERSION);
     assert!(policy.task_markers_enabled);
+    assert_eq!(
+        policy.machine_contract_policy.schema_version,
+        crate::verified::cli_machine::CLI_MACHINE_SCHEMA_V1
+    );
+    assert_eq!(
+        policy.machine_contract_policy.exit_classes.len(),
+        crate::verified::cli_machine::CLI_MACHINE_EXIT_CLASSES.len()
+    );
+    assert!(
+        crate::verified::cli_machine::CLI_MACHINE_REQUIRED_DIAGNOSTIC_CODES
+            .iter()
+            .all(|required| policy
+                .machine_contract_policy
+                .diagnostics
+                .iter()
+                .any(|definition| definition.code == *required))
+    );
     assert_eq!(policy.gate_stages, vec!["proposal", "design", "tasks"]);
     assert!(policy.gate_ignore_archives);
     assert_eq!(policy.gate_finding_scope, "tasks");
@@ -151,6 +169,57 @@ fn parses_generated_default_policy_text() {
         .expect("generated policy includes schema compatibility metadata");
     assert_eq!(metadata.schema_version, CURRENT_POLICY_SCHEMA_VERSION);
     assert_eq!(metadata.field_set_digest, CURRENT_POLICY_FIELD_SET_DIGEST);
+    assert_eq!(
+        crate::verified::evidence::blake3_hex(CURRENT_POLICY_FIELD_SET_DIGEST_MATERIAL.as_bytes()),
+        CURRENT_POLICY_FIELD_SET_DIGEST
+    );
+}
+
+#[test]
+fn rejects_invalid_machine_contract_policy() {
+    // r[verify cairn.cli_machine_contract.policy.invalid]
+    let mut missing = generated_policy_value();
+    missing
+        .as_object_mut()
+        .expect("policy object")
+        .remove("machine_contract_policy");
+    assert!(matches!(
+        validate_policy_json(missing),
+        Err(PolicyError::MissingField("machine_contract_policy"))
+    ));
+
+    let mut unknown_class = generated_policy_value();
+    unknown_class["machine_contract_policy"]["exit_classes"][0]["id"] =
+        Value::String("unknown".to_string());
+    assert_invalid_field(unknown_class, "machine_contract_policy.exit_classes.id");
+
+    let mut duplicate_code = generated_policy_value();
+    let duplicate = duplicate_code["machine_contract_policy"]["diagnostics"][0].clone();
+    duplicate_code["machine_contract_policy"]["diagnostics"]
+        .as_array_mut()
+        .expect("machine diagnostics")
+        .push(duplicate);
+    assert_invalid_field(duplicate_code, "machine_contract_policy.diagnostics.code");
+
+    let mut unsafe_target = generated_policy_value();
+    unsafe_target["machine_contract_policy"]["diagnostics"][0]["target"] =
+        Value::String("../secret".to_string());
+    assert_invalid_field(unsafe_target, "machine_contract_policy.diagnostics.target");
+
+    let mut invalid_bound = generated_policy_value();
+    invalid_bound["machine_contract_policy"]["bounds"]["max_stdout_bytes"] = Value::from(0);
+    assert_invalid_field(
+        invalid_bound,
+        "machine_contract_policy.bounds.max_stdout_bytes",
+    );
+
+    let mut invalid_status = generated_policy_value();
+    invalid_status["machine_contract_policy"]["exit_classes"][0]["process_status"] =
+        Value::from(INVALID_MACHINE_SUCCESS_STATUS);
+    assert_invalid_field(
+        invalid_status,
+        "machine_contract_policy.exit_classes.process_status",
+    );
 }
 
 #[test]

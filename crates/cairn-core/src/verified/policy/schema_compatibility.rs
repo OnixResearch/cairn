@@ -4,8 +4,21 @@ use super::PolicyError;
 
 pub const POLICY_SCHEMA_METADATA_FIELD: &str = "policy_schema_compatibility";
 pub const CURRENT_POLICY_SCHEMA_VERSION: &str = "cairn.policy-schema.v1";
+pub const CURRENT_POLICY_FIELD_SET_DIGEST_MATERIAL: &str = concat!(
+    "agent_completion_policy\n",
+    "authenticated_evidence_policy\n",
+    "cross_repo_dependency_policy\n",
+    "global_registry_policy\n",
+    "lifecycle_store_policy\n",
+    "machine_contract_policy\n",
+    "nominal_identity_policy\n",
+    "policy_schema_compatibility\n",
+    "runtime_evidence_policy\n",
+    "steel_orchestration_policy\n",
+    "traceability_policy\n",
+);
 pub const CURRENT_POLICY_FIELD_SET_DIGEST: &str =
-    "2d86abb8cbcb43323f4bdf81870ee963fcdc34ef5bf815eabc5b41e271c0a38a";
+    "44243e4898d51a39da4c27c856d7e6c40447d1aad6f9f3c677d638a7d02a4c6b";
 pub const DEFAULT_POLICY_REFRESH_COMMAND: &str =
     "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json";
 
@@ -36,6 +49,7 @@ const REFRESH_REQUIRED_FIELDS: &[&str] = &[
     "cross_repo_dependency_policy",
     "global_registry_policy",
     "lifecycle_store_policy",
+    "machine_contract_policy",
     "nominal_identity_policy",
     "policy_schema_compatibility",
     "runtime_evidence_policy",

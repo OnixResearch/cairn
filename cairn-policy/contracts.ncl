@@ -66,6 +66,28 @@ let Promoted = std.contract.from_predicate (fun value =>
   std.is_string value && (value == "yes" || value == "no")
 ) in
 
+let MaxMachineProcessStatus = 125 in
+
+let MachineExitClass = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "success" || value == "invalid_arguments" || value == "not_found" || value == "policy_error" || value == "blocked" || value == "internal_error")
+) in
+
+let MachineDiagnosticSeverity = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "error" || value == "warning" || value == "info")
+) in
+
+let MachineProcessStatus = std.contract.from_predicate (fun value =>
+  std.is_number value && value >= 0 && value <= MaxMachineProcessStatus
+) in
+
+let MachineDiagnosticCode = std.contract.from_predicate (fun value =>
+  std.is_string value && std.string.length value > 0 && std.string.is_match "^[a-z0-9][a-z0-9._-]*$" value
+) in
+
+let MachineDiagnosticTarget = std.contract.from_predicate (fun value =>
+  std.is_string value && std.string.length value > 0 && std.string.is_match "^[A-Za-z0-9][A-Za-z0-9._/-]*$" value
+) in
+
 let SteelProfileMode = std.contract.from_predicate (fun value =>
   std.is_string value && (value == "disabled" || value == "comparison" || value == "opt_in" || value == "selected_default" || value == "broad_default")
 ) in
@@ -187,6 +209,41 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     verdicts | NonEmptyArray | Array NonEmptyString,
     sections | NonEmptyArray | Array NonEmptyString,
     tagged_findings_required_fields | NonEmptyArray | Array NonEmptyString,
+  },
+
+  MachineExitClassPolicy = {
+    id | MachineExitClass,
+    process_status | MachineProcessStatus,
+  },
+
+  MachineDiagnosticPolicy = {
+    code | MachineDiagnosticCode,
+    exit_class | MachineExitClass,
+    severity | MachineDiagnosticSeverity,
+    message | NonEmptyString,
+    target | MachineDiagnosticTarget,
+    fix | String,
+  },
+
+  MachineContractBounds = {
+    max_command_bytes | PositiveNumber,
+    max_diagnostics | PositiveNumber,
+    max_code_bytes | PositiveNumber,
+    max_message_bytes | PositiveNumber,
+    max_target_bytes | PositiveNumber,
+    max_fix_bytes | PositiveNumber,
+    max_stdout_bytes | PositiveNumber,
+    max_stderr_bytes | PositiveNumber,
+  },
+
+  MachineContractPolicy = {
+    schema_version | NonEmptyString,
+    exit_classes | NonEmptyArray | Array MachineExitClassPolicy,
+    diagnostic_fields | NonEmptyArray | Array NonEmptyString,
+    diagnostic_order | NonEmptyArray | Array MachineDiagnosticCode,
+    diagnostics | NonEmptyArray | Array MachineDiagnosticPolicy,
+    bounds | MachineContractBounds,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
   },
 
   RegistryLabelPolicy = {
@@ -551,6 +608,7 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     gate_policy | GatePolicy,
     finding_defaults | FindingPolicy,
     report_contract | ReportContract,
+    machine_contract_policy | MachineContractPolicy,
     registry_label_policy | RegistryLabelPolicy,
     change_metadata_policy | ChangeMetadataPolicy,
     cross_repo_dependency_policy | CrossRepoDependencyPolicy,

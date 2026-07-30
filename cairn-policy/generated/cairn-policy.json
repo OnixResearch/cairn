@@ -1677,6 +1677,153 @@
       }
     }
   },
+  "machine_contract_policy": {
+    "bounds": {
+      "max_code_bytes": 128,
+      "max_command_bytes": 128,
+      "max_diagnostics": 32,
+      "max_fix_bytes": 512,
+      "max_message_bytes": 512,
+      "max_stderr_bytes": 1048576,
+      "max_stdout_bytes": 4194304,
+      "max_target_bytes": 256
+    },
+    "diagnostic_fields": [
+      "code",
+      "severity",
+      "message",
+      "target",
+      "fix"
+    ],
+    "diagnostic_order": [
+      "cairn.cli.missing_command",
+      "cairn.cli.unknown_command",
+      "cairn.cli.incompatible_option",
+      "cairn.cli.invocation_preparation_failed",
+      "cairn.cli.not_found",
+      "cairn.cli.policy_error",
+      "cairn.cli.blocked",
+      "cairn.cli.output_too_large",
+      "cairn.cli.output_invalid",
+      "cairn.cli.internal_error"
+    ],
+    "diagnostics": [
+      {
+        "code": "cairn.cli.missing_command",
+        "exit_class": "invalid_arguments",
+        "fix": "Select one documented command.",
+        "message": "The machine invocation requires a command.",
+        "severity": "error",
+        "target": "command"
+      },
+      {
+        "code": "cairn.cli.unknown_command",
+        "exit_class": "invalid_arguments",
+        "fix": "Select one documented command.",
+        "message": "The machine invocation selected an unknown command.",
+        "severity": "error",
+        "target": "command"
+      },
+      {
+        "code": "cairn.cli.incompatible_option",
+        "exit_class": "invalid_arguments",
+        "fix": "Remove human, alternate-format, help, or MCP presentation options.",
+        "message": "The machine invocation selected an incompatible presentation option.",
+        "severity": "error",
+        "target": "arguments"
+      },
+      {
+        "code": "cairn.cli.invocation_preparation_failed",
+        "exit_class": "invalid_arguments",
+        "fix": "Check required arguments and admitted path values.",
+        "message": "Cairn could not prepare the requested invocation.",
+        "severity": "error",
+        "target": "arguments"
+      },
+      {
+        "code": "cairn.cli.not_found",
+        "exit_class": "not_found",
+        "fix": "Check the object identity and selected lifecycle root.",
+        "message": "Cairn could not find the requested lifecycle object.",
+        "severity": "error",
+        "target": "lifecycle-object"
+      },
+      {
+        "code": "cairn.cli.policy_error",
+        "exit_class": "policy_error",
+        "fix": "Refresh and validate the checked policy projection.",
+        "message": "Cairn rejected the selected runtime policy.",
+        "severity": "error",
+        "target": "policy"
+      },
+      {
+        "code": "cairn.cli.blocked",
+        "exit_class": "blocked",
+        "fix": "Resolve the reported lifecycle blockers before execution.",
+        "message": "Cairn blocked the requested operation before execution.",
+        "severity": "error",
+        "target": "operation"
+      },
+      {
+        "code": "cairn.cli.output_too_large",
+        "exit_class": "internal_error",
+        "fix": "Reduce the selected output or use a bounded artifact export.",
+        "message": "The command output exceeded the machine contract bound.",
+        "severity": "error",
+        "target": "output"
+      },
+      {
+        "code": "cairn.cli.output_invalid",
+        "exit_class": "internal_error",
+        "fix": "Use a machine-compatible command and presentation mode.",
+        "message": "The command did not produce one admitted JSON result.",
+        "severity": "error",
+        "target": "output"
+      },
+      {
+        "code": "cairn.cli.internal_error",
+        "exit_class": "internal_error",
+        "fix": "Inspect operator logs without parsing this display message for decisions.",
+        "message": "Cairn could not classify the controlled command failure.",
+        "severity": "error",
+        "target": "command"
+      }
+    ],
+    "exit_classes": [
+      {
+        "id": "success",
+        "process_status": 0
+      },
+      {
+        "id": "invalid_arguments",
+        "process_status": 2
+      },
+      {
+        "id": "not_found",
+        "process_status": 3
+      },
+      {
+        "id": "policy_error",
+        "process_status": 4
+      },
+      {
+        "id": "blocked",
+        "process_status": 5
+      },
+      {
+        "id": "internal_error",
+        "process_status": 70
+      }
+    ],
+    "required_non_claims": [
+      "a valid machine envelope proves only that Cairn reached the controlled output boundary and serialized one typed outcome",
+      "a machine envelope does not prove nested evidence truth or command correctness",
+      "a machine envelope does not prove mutation safety, process reliability, or host integrity",
+      "a machine envelope does not prove lifecycle readiness or release eligibility",
+      "no envelope is guaranteed after host termination, process kill, memory exhaustion, pre-boundary panic, broken stdout, or failure before Cairn starts"
+    ],
+    "schema_version": "cairn.cli-machine.v1"
+  },
   "mutation_policy": {
     "archive": {
       "require_passing_gate": true
@@ -2663,7 +2810,7 @@
     }
   },
   "policy_schema_compatibility": {
-    "field_set_digest": "2d86abb8cbcb43323f4bdf81870ee963fcdc34ef5bf815eabc5b41e271c0a38a",
+    "field_set_digest": "44243e4898d51a39da4c27c856d7e6c40447d1aad6f9f3c677d638a7d02a4c6b",
     "producer": "cairn policy export",
     "refresh_command": "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json",
     "schema_version": "cairn.policy-schema.v1"

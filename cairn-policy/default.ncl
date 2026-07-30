@@ -1,7 +1,7 @@
 let Contracts = import "contracts.ncl" in
 let NominalIdentityPolicy = import "nominal-evidence-identities.ncl" in
 let PolicySchemaVersion = "cairn.policy-schema.v1" in
-let PolicyFieldSetDigest = "2d86abb8cbcb43323f4bdf81870ee963fcdc34ef5bf815eabc5b41e271c0a38a" in
+let PolicyFieldSetDigest = "44243e4898d51a39da4c27c856d7e6c40447d1aad6f9f3c677d638a7d02a4c6b" in
 let MaxStoreIdBytes = 64 in
 let MaxRemoteHintBytes = 2048 in
 let MaxReferences = 32 in
@@ -15,6 +15,20 @@ let MaxSpecTitleBytes = 256 in
 let MaxPurposeSummaryBytes = 1024 in
 let MaxIssueCount = 256 in
 let MaxNonClaims = 32 in
+let MachineSuccessStatus = 0 in
+let MachineInvalidArgumentsStatus = 2 in
+let MachineNotFoundStatus = 3 in
+let MachinePolicyErrorStatus = 4 in
+let MachineBlockedStatus = 5 in
+let MachineInternalErrorStatus = 70 in
+let MachineMaxCommandBytes = 128 in
+let MachineMaxDiagnostics = 32 in
+let MachineMaxCodeBytes = 128 in
+let MachineMaxMessageBytes = 512 in
+let MachineMaxTargetBytes = 256 in
+let MachineMaxFixBytes = 512 in
+let MachineMaxStdoutBytes = 4194304 in
+let MachineMaxStderrBytes = 1048576 in
 let MinimumWorksetMembers = 1 in
 let StoreIdentityNonClaims = [
   "store identity proves only the observed checked projection and native lifecycle identity",
@@ -109,6 +123,60 @@ let LifecycleStoreRequiredNonClaims = [
     verdicts = ["PASS", "WARN", "FAIL"],
     sections = ["Findings", "Required Fixes", "OpenSpec Check", "Gaps", "Next Steps"],
     tagged_findings_required_fields = ["class", "scope", "route", "promoted"],
+  },
+
+  machine_contract_policy = {
+    schema_version = "cairn.cli-machine.v1",
+    exit_classes = [
+      { id = "success", process_status = MachineSuccessStatus },
+      { id = "invalid_arguments", process_status = MachineInvalidArgumentsStatus },
+      { id = "not_found", process_status = MachineNotFoundStatus },
+      { id = "policy_error", process_status = MachinePolicyErrorStatus },
+      { id = "blocked", process_status = MachineBlockedStatus },
+      { id = "internal_error", process_status = MachineInternalErrorStatus },
+    ],
+    diagnostic_fields = ["code", "severity", "message", "target", "fix"],
+    diagnostic_order = [
+      "cairn.cli.missing_command",
+      "cairn.cli.unknown_command",
+      "cairn.cli.incompatible_option",
+      "cairn.cli.invocation_preparation_failed",
+      "cairn.cli.not_found",
+      "cairn.cli.policy_error",
+      "cairn.cli.blocked",
+      "cairn.cli.output_too_large",
+      "cairn.cli.output_invalid",
+      "cairn.cli.internal_error",
+    ],
+    diagnostics = [
+      { code = "cairn.cli.missing_command", exit_class = "invalid_arguments", severity = "error", message = "The machine invocation requires a command.", target = "command", fix = "Select one documented command." },
+      { code = "cairn.cli.unknown_command", exit_class = "invalid_arguments", severity = "error", message = "The machine invocation selected an unknown command.", target = "command", fix = "Select one documented command." },
+      { code = "cairn.cli.incompatible_option", exit_class = "invalid_arguments", severity = "error", message = "The machine invocation selected an incompatible presentation option.", target = "arguments", fix = "Remove human, alternate-format, help, or MCP presentation options." },
+      { code = "cairn.cli.invocation_preparation_failed", exit_class = "invalid_arguments", severity = "error", message = "Cairn could not prepare the requested invocation.", target = "arguments", fix = "Check required arguments and admitted path values." },
+      { code = "cairn.cli.not_found", exit_class = "not_found", severity = "error", message = "Cairn could not find the requested lifecycle object.", target = "lifecycle-object", fix = "Check the object identity and selected lifecycle root." },
+      { code = "cairn.cli.policy_error", exit_class = "policy_error", severity = "error", message = "Cairn rejected the selected runtime policy.", target = "policy", fix = "Refresh and validate the checked policy projection." },
+      { code = "cairn.cli.blocked", exit_class = "blocked", severity = "error", message = "Cairn blocked the requested operation before execution.", target = "operation", fix = "Resolve the reported lifecycle blockers before execution." },
+      { code = "cairn.cli.output_too_large", exit_class = "internal_error", severity = "error", message = "The command output exceeded the machine contract bound.", target = "output", fix = "Reduce the selected output or use a bounded artifact export." },
+      { code = "cairn.cli.output_invalid", exit_class = "internal_error", severity = "error", message = "The command did not produce one admitted JSON result.", target = "output", fix = "Use a machine-compatible command and presentation mode." },
+      { code = "cairn.cli.internal_error", exit_class = "internal_error", severity = "error", message = "Cairn could not classify the controlled command failure.", target = "command", fix = "Inspect operator logs without parsing this display message for decisions." },
+    ],
+    bounds = {
+      max_command_bytes = MachineMaxCommandBytes,
+      max_diagnostics = MachineMaxDiagnostics,
+      max_code_bytes = MachineMaxCodeBytes,
+      max_message_bytes = MachineMaxMessageBytes,
+      max_target_bytes = MachineMaxTargetBytes,
+      max_fix_bytes = MachineMaxFixBytes,
+      max_stdout_bytes = MachineMaxStdoutBytes,
+      max_stderr_bytes = MachineMaxStderrBytes,
+    },
+    required_non_claims = [
+      "a valid machine envelope proves only that Cairn reached the controlled output boundary and serialized one typed outcome",
+      "a machine envelope does not prove nested evidence truth or command correctness",
+      "a machine envelope does not prove mutation safety, process reliability, or host integrity",
+      "a machine envelope does not prove lifecycle readiness or release eligibility",
+      "no envelope is guaranteed after host termination, process kill, memory exhaustion, pre-boundary panic, broken stdout, or failure before Cairn starts",
+    ],
   },
 
   registry_label_policy = {

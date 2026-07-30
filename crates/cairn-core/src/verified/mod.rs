@@ -5,6 +5,7 @@ pub mod artifact_auth;
 pub mod ast_grep_gate;
 pub mod authenticated_inputs;
 pub mod change_dependencies;
+pub mod cli_machine;
 pub mod collaboration_change;
 pub mod collaboration_checkout;
 pub mod collaboration_import;

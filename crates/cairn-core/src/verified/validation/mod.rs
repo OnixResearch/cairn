@@ -85,6 +85,7 @@ mod tests {
             gate_ignore_archives: true,
             gate_finding_scope: "tasks".to_string(),
             gate_finding_promoted: "no".to_string(),
+            machine_contract_policy: generated_policy.machine_contract_policy,
             artifact_substance_policy: ArtifactSubstancePolicy {
                 proposal_minimum_substantive_lines: 1,
                 design_minimum_substantive_lines: 1,
