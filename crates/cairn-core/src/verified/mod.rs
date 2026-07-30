@@ -31,6 +31,7 @@ pub mod lifecycle;
 pub mod lifecycle_orchestration;
 pub mod lifecycle_receipt;
 pub mod lifecycle_views;
+pub mod lifecycle_worksets;
 pub mod nominal_identity;
 pub mod oxide_lifecycle_patterns;
 pub mod plan;

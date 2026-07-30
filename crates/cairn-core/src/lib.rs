@@ -273,6 +273,24 @@ pub use verified::lifecycle_receipt::{
     LIFECYCLE_RECEIPT_ISSUE_SELF_HASH, LIFECYCLE_RECEIPT_ISSUE_STALE_HASH,
     LIFECYCLE_RECEIPT_ISSUE_UNSUPPORTED_VERDICT, LIFECYCLE_RECEIPT_ISSUE_WEAK_NON_CLAIM,
 };
+pub use verified::lifecycle_worksets::{
+    apply_workset_transition, opener_profile_identity, plan_workset_create, plan_workset_open,
+    plan_workset_remove, recheck_workset_open_plan, workset_identity, workset_open_plan_identity,
+    workset_portable_identity, workset_portable_state_identity, workset_state_identity,
+    workset_transition_plan_identity, Workset, WorksetArtifactEffect, WorksetArtifactPlan,
+    WorksetArtifactRole, WorksetCreateRequest, WorksetError, WorksetExecutionMode, WorksetId,
+    WorksetLocalMemberFact, WorksetLocalReceiptFacts, WorksetMember, WorksetMemberLabel,
+    WorksetOpenPlan, WorksetOpenRequest, WorksetOpenerPolicy, WorksetOpenerProfile,
+    WorksetOpenerProfileId, WorksetPlanAction, WorksetPortableArg, WorksetReceiptOperation,
+    WorksetRemoveRequest, WorksetState, WorksetTransitionOperation, WorksetTransitionPlan,
+    BLAKE3_HEX_BYTES, MAX_ARG_BYTES, MAX_DISPLAY_PATH_BYTES, MAX_EXECUTABLE_BYTES, MAX_FIXED_ARGS,
+    MAX_OPENER_PROFILES, MAX_OPENER_PROFILE_ID_BYTES, MAX_WORKSETS, MAX_WORKSET_ID_BYTES,
+    MAX_WORKSET_MEMBERS, MAX_WORKSET_MEMBER_LABEL_BYTES, WORKSET_EVIDENCE_CLASS_LOCAL_ONLY,
+    WORKSET_LOCAL_RECEIPT_SCHEMA_V1, WORKSET_NON_CLAIM_EDITOR_STATE,
+    WORKSET_NON_CLAIM_LIFECYCLE_AUTHORITY, WORKSET_NON_CLAIM_MEMBER_EFFECTS,
+    WORKSET_OPEN_PLAN_SCHEMA_V1, WORKSET_STATE_LOGICAL_PATH, WORKSET_STATE_SCHEMA_V1,
+    WORKSET_TRANSITION_PLAN_SCHEMA_V1,
+};
 pub use verified::nominal_identity::{
     nominal_identity_policy_diagnostics, nominal_octet_projection_hash,
     nominal_runtime_projection_hash, ActorId, ActorIdRole, AnyIdentity, ArchiveDigest,
