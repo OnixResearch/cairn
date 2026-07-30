@@ -27,7 +27,7 @@
 - [x] [parallel] V1 Add positive identity, locator, root-resolution, pointer, reference, context, doctor, workset, opener, and portable-hash fixtures. r[cairn.lifecycle_stores.verification]
 - [x] [parallel] V2 Add negative selector, duplicate, stale, malformed, symlink, unsafe-path, transport, ambient-state, overclaim, and partial-mutation fixtures. r[cairn.lifecycle_stores.verification] r[cairn.lifecycle_stores.boundary]
 - [x] [depends:cairn.lifecycle_stores.commands] D1 Write a Cairn lifecycle-store user guide with setup, registration, pointers, references, context, doctor, worksets, precedence, file locations, and non-claims. r[cairn.lifecycle_stores.docs]
-- [ ] [depends:cairn.lifecycle_stores.verification] V3 Run policy freshness, formatting, focused core and CLI tests, Clippy, purity smoke, traceability, lifecycle gates, release readiness, and relevant Nix checks. r[cairn.lifecycle_stores.verification] r[cairn.lifecycle_stores.functional_boundary]
+- [x] [depends:cairn.lifecycle_stores.verification] V3 Run policy freshness, formatting, focused core and CLI tests, Clippy, purity smoke, traceability, lifecycle gates, release readiness, and relevant Nix checks. r[cairn.lifecycle_stores.verification] r[cairn.lifecycle_stores.functional_boundary]
 
 ## Verification Coverage
 
@@ -46,3 +46,13 @@
 - `Scenario: Local display paths do not change portable identity` -> C4, V1
 - `Scenario: Pure decisions remain in the functional core` -> C1, C2, C3, C4, V3
 - `Scenario: Documentation preserves the source and claim boundaries` -> D1, V3
+
+## Verification Evidence
+
+- Generated policy freshness, Cargo formatting, the full workspace test suite, and workspace Clippy passed.
+- Lifecycle-store core, CLI, configuration-export, registry, workset, policy, positive, and negative focused tests passed.
+- The new lifecycle-store core modules had no purity-smoke matches. The repository-wide smoke still reports pre-existing `to_json` names outside this change.
+- Traceability passed with `1767/1767` accepted requirements referenced.
+- Proposal, design, and tasks gates passed. Accepted-spec sync completed.
+- MCP agent-receipt smoke and release readiness passed.
+- Slotcar and `nix flake check` reached the same external blocker: Nix could not fetch `https://github.com/brittonr/subwayrat.git`.
