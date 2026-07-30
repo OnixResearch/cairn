@@ -14,6 +14,7 @@ mod global_registry;
 mod hash_algorithm_policy;
 mod lifecycle;
 mod lifecycle_data;
+mod lifecycle_store;
 mod lifecycle_store_shell;
 mod mcp;
 mod migration;
@@ -114,6 +115,7 @@ fn run() -> Result<(), Box<dyn Error>> {
                 .as_ref()
                 .ok_or("status root resolution is unavailable")?,
         )?,
+        "store" => lifecycle_store::run_store(args.collect())?,
         "context" => run_context(
             root_local
                 .as_ref()
