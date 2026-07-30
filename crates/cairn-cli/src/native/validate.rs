@@ -7,6 +7,7 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 use crate::cross_repo_dependencies::{cross_repo_reports, load_cross_repo_evidence, reports_json};
+use crate::lifecycle_store_shell::{attach_resolution, RootLocalInvocation};
 use crate::support::{
     collect_archived_change_ids, collect_validation_spec_sources, default_policy_path,
     detect_layout, has_flag, load_policy_file, print_json, read_gate_snapshot, read_option,
@@ -14,14 +15,19 @@ use crate::support::{
     validation_findings_json,
 };
 
-pub(crate) fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub(crate) fn run_validate(
+    args: Vec<String>,
+    invocation: &RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.rust_nickel_only_gates.gates]
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let is_strict = has_flag(&args, "--strict");
     let cross_repo_evidence = read_repeated_path_options(&args, "--cross-repo-evidence");
-    let receipt =
-        cairn_validation_receipt_with_cross_repo_evidence(root, policy_path, &cross_repo_evidence)?;
+    let receipt = attach_resolution(
+        cairn_validation_receipt_with_cross_repo_evidence(root, policy_path, &cross_repo_evidence)?,
+        invocation,
+    );
     print_json(receipt.clone())?;
     if is_strict && receipt["valid"].as_bool() != Some(true) {
         return Err("validation failed".into());

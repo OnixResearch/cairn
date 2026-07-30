@@ -23,12 +23,18 @@ pub(crate) use validate::{
     cairn_validation_receipt, cairn_validation_receipt_with_cross_repo_evidence,
 };
 
-pub(crate) fn run_status(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    read::run_status(args)
+pub(crate) fn run_status(
+    args: Vec<String>,
+    invocation: &crate::lifecycle_store_shell::RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
+    read::run_status(args, invocation)
 }
 
-pub(crate) fn run_doctor(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    read::run_doctor(args)
+pub(crate) fn run_doctor(
+    args: Vec<String>,
+    invocation: &crate::lifecycle_store_shell::RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
+    read::run_doctor(args, invocation)
 }
 
 pub(crate) fn run_change(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -59,25 +65,31 @@ pub(crate) fn run_change(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     }
 }
 
-pub(crate) fn run_spec(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub(crate) fn run_spec(
+    args: Vec<String>,
+    invocation: &crate::lifecycle_store_shell::RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
     let Some(subcommand) = iter.next() else {
         return Err("spec requires a subcommand: list or show".into());
     };
     match subcommand.as_str() {
-        "list" => read::run_spec_list(iter.collect()),
+        "list" => read::run_spec_list(iter.collect(), invocation),
         "show" => {
             let Some(spec) = iter.next() else {
                 return Err("spec show requires a spec id".into());
             };
-            read::run_spec_show(iter.collect(), &spec)
+            read::run_spec_show(iter.collect(), &spec, invocation)
         }
         unknown => Err(format!("unknown spec subcommand: {unknown}").into()),
     }
 }
 
-pub(crate) fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    validate::run_validate(args)
+pub(crate) fn run_validate(
+    args: Vec<String>,
+    invocation: &crate::lifecycle_store_shell::RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
+    validate::run_validate(args, invocation)
 }
 
 pub(crate) fn run_init(args: Vec<String>) -> Result<(), Box<dyn Error>> {

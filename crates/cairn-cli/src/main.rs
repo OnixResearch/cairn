@@ -14,6 +14,7 @@ mod global_registry;
 mod hash_algorithm_policy;
 mod lifecycle;
 mod lifecycle_data;
+mod lifecycle_store_shell;
 mod mcp;
 mod migration;
 mod native;
@@ -55,6 +56,7 @@ use determinism::run_determinism;
 use evidence::run_evidence;
 use evidence_manifest::run_evidence_manifest;
 use hash_algorithm_policy::run_hash_policy;
+use lifecycle_store_shell::{prepare_invocation, run_context};
 use mcp::run_mcp;
 use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
@@ -83,11 +85,14 @@ fn run() -> Result<(), Box<dyn Error>> {
     if invoked_as.ends_with("ironspec") {
         eprintln!("warning: `ironspec` is a compatibility alias; use canonical `cairn`");
     }
-    let mut args = env::args().skip(1);
-    let Some(command) = args.next() else {
+    let all_args = env::args().skip(1).collect::<Vec<_>>();
+    let Some(command) = all_args.first() else {
         print_usage();
         return Ok(());
     };
+    let prepared = prepare_invocation(command, all_args[1..].to_vec())?;
+    let root_local = prepared.root_local;
+    let mut args = prepared.args.into_iter();
 
     match command.as_str() {
         "--help" | "-h" | "help" => print_usage(),
@@ -97,10 +102,35 @@ fn run() -> Result<(), Box<dyn Error>> {
         "template" => developer_experience::run_template(args.collect())?,
         "scaffold" => developer_experience::run_scaffold(args.collect())?,
         "discover-specs" => developer_experience::run_discover_specs(args.collect())?,
-        "spec" => run_spec(args.collect())?,
-        "status" => run_status(args.collect())?,
-        "doctor" => run_doctor(args.collect())?,
-        "validate" => run_validate(args.collect())?,
+        "spec" => run_spec(
+            args.collect(),
+            root_local
+                .as_ref()
+                .ok_or("spec root resolution is unavailable")?,
+        )?,
+        "status" => run_status(
+            args.collect(),
+            root_local
+                .as_ref()
+                .ok_or("status root resolution is unavailable")?,
+        )?,
+        "context" => run_context(
+            root_local
+                .as_ref()
+                .ok_or("context root resolution is unavailable")?,
+        )?,
+        "doctor" => run_doctor(
+            args.collect(),
+            root_local
+                .as_ref()
+                .ok_or("doctor root resolution is unavailable")?,
+        )?,
+        "validate" => run_validate(
+            args.collect(),
+            root_local
+                .as_ref()
+                .ok_or("validate root resolution is unavailable")?,
+        )?,
         "view" => run_view(args.collect())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,

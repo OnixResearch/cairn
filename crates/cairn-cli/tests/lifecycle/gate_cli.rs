@@ -78,8 +78,18 @@ fn help_lists_commands() -> Result<(), Box<dyn Error>> {
         stdout.contains("change show <name> [--root PATH]"),
         "{stdout}"
     );
-    assert!(stdout.contains("spec list [--root PATH]"), "{stdout}");
-    assert!(stdout.contains("spec show <id> [--root PATH]"), "{stdout}");
+    assert!(
+        stdout.contains("spec list [--root PATH | --lifecycle-store ID]"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("spec show <id> [--root PATH | --lifecycle-store ID]"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("context [--root PATH | --lifecycle-store ID]"),
+        "{stdout}"
+    );
     assert!(
         stdout.contains("migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]"),
         "{stdout}"

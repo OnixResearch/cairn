@@ -10,11 +10,16 @@ use cairn_core::{
 };
 use serde_json::json;
 
-use crate::support::{
-    collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
-    default_policy_path, detect_layout, find_change, find_spec_source, load_policy_file,
-    path_string, print_json, read_gate_snapshot, read_option, read_string_option, scan_repo,
-    with_portable_receipt_hash,
+use crate::{
+    lifecycle_store_shell::{
+        attach_resolution, context_result_json, resolution_json, RootLocalInvocation,
+    },
+    support::{
+        collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
+        default_policy_path, detect_layout, find_change, find_spec_source, load_policy_file,
+        path_string, print_json, read_gate_snapshot, read_option, read_string_option, scan_repo,
+        with_portable_receipt_hash,
+    },
 };
 
 use super::json::{
@@ -22,14 +27,23 @@ use super::json::{
     repo_status_json, spec_detail_json, spec_list_json,
 };
 
-pub(crate) fn run_status(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub(crate) fn run_status(
+    args: Vec<String>,
+    invocation: &RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let status = scan_repo(root, selected.layout)?;
-    print_json(repo_status_json(&status, selected.layout))
+    print_json(attach_resolution(
+        repo_status_json(&status, selected.layout),
+        invocation,
+    ))
 }
 
-pub(crate) fn run_doctor(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub(crate) fn run_doctor(
+    args: Vec<String>,
+    invocation: &RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args, "--policy", default_policy_path());
     let selected = detect_layout(&root);
@@ -76,7 +90,21 @@ pub(crate) fn run_doctor(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         validation_issue_count,
     };
     let report = build_doctor_report(snapshot);
-    print_json(doctor_report_json(&report))
+    let context = invocation.context_result()?;
+    let doctor_valid = report.valid && context.valid;
+    let mut value = doctor_report_json(&report);
+    if let Some(object) = value.as_object_mut() {
+        object.insert("valid".to_string(), json!(doctor_valid));
+        object.insert(
+            "resolution".to_string(),
+            resolution_json(&invocation.resolution),
+        );
+        object.insert(
+            "lifecycle_store_context".to_string(),
+            context_result_json(&context),
+        );
+    }
+    print_json(value)
 }
 
 pub(super) fn run_change_list(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -171,22 +199,31 @@ fn change_next_receipt(
     })
 }
 
-pub(super) fn run_spec_list(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub(super) fn run_spec_list(
+    args: Vec<String>,
+    invocation: &RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let specs = collect_spec_sources(&root.join(specs_dir(selected.layout)))?;
     let list = build_spec_list(specs);
-    print_json(spec_list_json(&path_string(root), selected.layout, &list))
+    print_json(attach_resolution(
+        spec_list_json(&path_string(root), selected.layout, &list),
+        invocation,
+    ))
 }
 
-pub(super) fn run_spec_show(args: Vec<String>, spec: &str) -> Result<(), Box<dyn Error>> {
+pub(super) fn run_spec_show(
+    args: Vec<String>,
+    spec: &str,
+    invocation: &RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let source = find_spec_source(&root, selected.layout, spec)?;
     let detail = build_spec_detail(source);
-    print_json(spec_detail_json(
-        &path_string(root),
-        selected.layout,
-        &detail,
+    print_json(attach_resolution(
+        spec_detail_json(&path_string(root), selected.layout, &detail),
+        invocation,
     ))
 }

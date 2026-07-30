@@ -7,6 +7,19 @@
   "issues": [],
   "layout": "cairn",
   "policy": "cairn-default",
+  "resolution": {
+    "diagnostics": [],
+    "locator_consulted": false,
+    "registry_lookup": "local_locator_only",
+    "selected": {
+      "project_identity": null,
+      "root": "fixtures/basic",
+      "source": "explicit_root",
+      "store_id": null,
+      "store_identity": null
+    },
+    "valid": true
+  },
   "spec_findings": [],
   "spec_issues": [],
   "spec_substance": [
