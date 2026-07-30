@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "333e99da49c5222229aec2ce77fe1923591065090652007e0f1820e90fc04662",
+    "input_hash": "c5a478cbfc662fd997e7ad050cd19487200302796427e697e2d50faf43095c13",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "d49884fab800116dc3510182dd3f0a6595e6b53ce2a4711c9c4c43e7d58f12b7",
-    "receipt_hash": "eab3720b78eea9f9448306d85a7e8ad475dabb4be73ef183c9bfa46b5a440682",
+    "policy_hash": "860fcf019180b030d855e90c3475a102dc6cdeb4aeb5214badeb84e0dd95145f",
+    "receipt_hash": "b06b13b9f7df737bb10a7204ea1b0f2bd67b15db56686a8e08767561662ed3de",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -24,7 +24,7 @@
     "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "45f36c610e3baf5d62150c108cf4f8234196874b31fc376c0e854bfa70f7a004",
+  "input_hash": "56c5dcffd5694a66857bf56af2dffa20aefd52c63f42ae44acc94c33fd495322",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -58,12 +58,12 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "e97a83cd7de8ad011c69e7a05dc5bfe324311038773569f53b109c4a839054b7",
+  "plan_hash": "e8ecd6872096e47b15bc635fecd179c660df7f3e60376917e252b9d9f9cffe3f",
   "policy": "cairn-default",
-  "policy_hash": "d49884fab800116dc3510182dd3f0a6595e6b53ce2a4711c9c4c43e7d58f12b7",
+  "policy_hash": "860fcf019180b030d855e90c3475a102dc6cdeb4aeb5214badeb84e0dd95145f",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "72f957aa11a7e97dd1c271a99535144eedfb334d0f5b1ff9f2b54ab73cf460e9"
+  "receipt_hash": "331847153323cda6b084edad51486cc69d59ac8a493fa44d9aad954c73c0d592"
 }
