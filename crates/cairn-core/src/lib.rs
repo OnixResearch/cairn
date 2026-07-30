@@ -364,10 +364,13 @@ pub use verified::plan::{
 pub use verified::policy::{
     classify_policy_schema_compatibility, default_policy_schema_metadata, parse_policy_json,
     policy_schema_compatibility_diagnostic, policy_schema_metadata, validate_policy_json,
-    ArtifactSubstancePolicy, Policy, PolicyError, PolicySchemaCompatibilityMetadata,
-    PolicySchemaCompatibilityReport, SteelOrchestrationPolicy, SteelOrchestrationProfile,
-    TraceabilityPolicy, CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_SCHEMA_VERSION,
-    DEFAULT_POLICY_REFRESH_COMMAND, POLICY_SCHEMA_METADATA_FIELD, SUPPORTED_POLICY_VERSION,
+    ArtifactSubstancePolicy, LifecycleStoreBounds, LifecycleStoreLocalStateSchema,
+    LifecycleStoreOpenerProfile, LifecycleStorePolicy, LifecycleStoreProjectionPolicy,
+    LifecycleStoreReceiptPolicy, LifecycleStoreRootResolutionPolicy, LifecycleStoreWorksetPolicy,
+    Policy, PolicyError, PolicySchemaCompatibilityMetadata, PolicySchemaCompatibilityReport,
+    SteelOrchestrationPolicy, SteelOrchestrationProfile, TraceabilityPolicy,
+    CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_SCHEMA_VERSION, DEFAULT_POLICY_REFRESH_COMMAND,
+    LIFECYCLE_STORE_POLICY_SCHEMA_V1, POLICY_SCHEMA_METADATA_FIELD, SUPPORTED_POLICY_VERSION,
 };
 pub use verified::preserves_evidence_ingest::{
     default_preserves_evidence_non_claims, measure_preserves_evidence_envelope_bytes,

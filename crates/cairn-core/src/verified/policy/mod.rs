@@ -1,6 +1,7 @@
 mod error;
 mod fields;
 mod function_address;
+mod lifecycle_store;
 mod nominal_identity;
 mod parser;
 mod runtime_evidence;
@@ -11,6 +12,7 @@ mod traceability;
 mod types;
 
 pub use error::PolicyError;
+pub use lifecycle_store::LIFECYCLE_STORE_POLICY_SCHEMA_V1;
 pub use parser::{parse_policy_json, validate_policy_json};
 pub use schema_compatibility::{
     classify_policy_schema_compatibility, default_policy_schema_metadata,
@@ -20,7 +22,10 @@ pub use schema_compatibility::{
     POLICY_SCHEMA_METADATA_FIELD,
 };
 pub use types::{
-    ArtifactSubstancePolicy, ExemptionMarkerPolicy, Policy, ReceiptSchema,
+    ArtifactSubstancePolicy, ExemptionMarkerPolicy, LifecycleStoreBounds,
+    LifecycleStoreLocalStateSchema, LifecycleStoreOpenerProfile, LifecycleStorePolicy,
+    LifecycleStoreProjectionPolicy, LifecycleStoreReceiptPolicy,
+    LifecycleStoreRootResolutionPolicy, LifecycleStoreWorksetPolicy, Policy, ReceiptSchema,
     SteelOrchestrationPolicy, SteelOrchestrationProfile, TaskMarker, TraceabilityPolicy,
     SUPPORTED_POLICY_VERSION,
 };

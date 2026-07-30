@@ -51,6 +51,10 @@ mod tests {
     };
 
     fn policy(enabled: bool, strictness: &str) -> Policy {
+        let generated_policy = parse_policy_json(include_str!(
+            "../../../../../cairn-policy/generated/cairn-policy.json"
+        ))
+        .expect("generated policy");
         Policy {
             name: "test".to_string(),
             version: 1,
@@ -162,11 +166,8 @@ mod tests {
                 forbidden_summary_fragments: Vec::new(),
                 aggregation_profiles: Vec::new(),
             },
-            nominal_identity_policy: parse_policy_json(include_str!(
-                "../../../../../cairn-policy/generated/cairn-policy.json"
-            ))
-            .expect("generated policy")
-            .nominal_identity_policy,
+            nominal_identity_policy: generated_policy.nominal_identity_policy,
+            lifecycle_store_policy: generated_policy.lifecycle_store_policy,
             policy_schema_compatibility: None,
             raw: json!({}),
         }

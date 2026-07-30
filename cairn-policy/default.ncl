@@ -1,7 +1,7 @@
 let Contracts = import "contracts.ncl" in
 let NominalIdentityPolicy = import "nominal-evidence-identities.ncl" in
 let PolicySchemaVersion = "cairn.policy-schema.v1" in
-let PolicyFieldSetDigest = "c5709173290bf8be1135dc5fd893bf5f94ab80130e06f01e94824521176d9b70" in
+let PolicyFieldSetDigest = "2d86abb8cbcb43323f4bdf81870ee963fcdc34ef5bf815eabc5b41e271c0a38a" in
 let MaxStoreIdBytes = 64 in
 let MaxRemoteHintBytes = 2048 in
 let MaxReferences = 32 in

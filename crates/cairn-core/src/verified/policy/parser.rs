@@ -6,6 +6,7 @@ use super::{
         receipt_schemas, require_nonempty_array, task_marker_fields, task_markers, version_field,
     },
     function_address::function_address_policy,
+    lifecycle_store::lifecycle_store_policy,
     nominal_identity::nominal_identity_policy,
     runtime_evidence::runtime_evidence_policy,
     schema_compatibility::{policy_schema_metadata, POLICY_SCHEMA_METADATA_FIELD},
@@ -61,6 +62,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
     let function_address_policy = function_address_policy(&value)?;
     let runtime_evidence_policy = runtime_evidence_policy(&value)?;
     let nominal_identity_policy = nominal_identity_policy(&value)?;
+    let lifecycle_store_policy = lifecycle_store_policy(&value)?;
     let policy_schema_compatibility = policy_schema_metadata(&value)?
         .ok_or(PolicyError::MissingField(POLICY_SCHEMA_METADATA_FIELD))?;
 
@@ -90,6 +92,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         function_address_policy,
         runtime_evidence_policy,
         nominal_identity_policy,
+        lifecycle_store_policy,
         policy_schema_compatibility: Some(policy_schema_compatibility),
         raw: value,
     })

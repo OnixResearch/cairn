@@ -2,6 +2,8 @@ use serde_json::Value;
 
 use super::*;
 
+const EXPECTED_MAX_STORE_ID_BYTES: usize = 64;
+
 #[test]
 fn parses_generated_default_policy_text() {
     // r[verify developer_experience.core_policy_parser_boundary_split.behavior]
@@ -86,6 +88,57 @@ fn parses_generated_default_policy_text() {
         )
         .is_empty()
     );
+    let lifecycle_store = &policy.lifecycle_store_policy;
+    assert_eq!(lifecycle_store.schema, LIFECYCLE_STORE_POLICY_SCHEMA_V1);
+    assert_eq!(
+        lifecycle_store.bounds.max_store_id_bytes,
+        EXPECTED_MAX_STORE_ID_BYTES
+    );
+    assert_eq!(
+        lifecycle_store.store_identity.projection_schema,
+        "cairn.lifecycle-store-identity.v1"
+    );
+    assert_eq!(
+        lifecycle_store.project_config.projection_path,
+        ".cairn/project.json"
+    );
+    assert_eq!(lifecycle_store.root_resolution.root_flag, "--root");
+    assert_eq!(
+        lifecycle_store.root_resolution.lifecycle_store_flag,
+        "--lifecycle-store"
+    );
+    assert!(lifecycle_store
+        .root_resolution
+        .eligible_commands
+        .contains(&"spec show".to_string()));
+    assert_eq!(
+        lifecycle_store.locator.schema,
+        "cairn.lifecycle-store-locator.v1"
+    );
+    assert_eq!(
+        lifecycle_store.worksets.state.relative_path,
+        "cairn/worksets/state.json"
+    );
+    assert!(lifecycle_store
+        .opener_profiles
+        .iter()
+        .any(|profile| profile.id == "code-new-window"
+            && profile.member_argument_mode == "positional_paths"));
+    assert!(lifecycle_store
+        .issue_codes
+        .contains(&"lifecycle_store.root.conflicting_selectors".to_string()));
+    assert_eq!(
+        lifecycle_store.receipts.portable_hash_field,
+        "portable_hash"
+    );
+    assert!(lifecycle_store
+        .receipts
+        .portable_excluded_fields
+        .contains(&"resolution.root".to_string()));
+    assert_eq!(
+        lifecycle_store.receipts.required_non_claims,
+        lifecycle_store.required_non_claims
+    );
     let metadata = policy
         .policy_schema_compatibility
         .expect("generated policy includes schema compatibility metadata");
@@ -115,6 +168,162 @@ fn rejects_missing_or_drifting_nominal_identity_policy() {
         validate_policy_json(drift),
         Err(PolicyError::InvalidField("nominal_identity_policy"))
     ));
+}
+
+#[test]
+fn rejects_malformed_lifecycle_store_bounds() {
+    let mut zero_bound = generated_policy_value();
+    zero_bound["lifecycle_store_policy"]["bounds"]["max_store_id_bytes"] = Value::from(0);
+    assert_invalid_field(
+        zero_bound,
+        "lifecycle_store_policy.bounds.max_store_id_bytes",
+    );
+
+    let mut wrong_type = generated_policy_value();
+    wrong_type["lifecycle_store_policy"]["bounds"]["max_references"] =
+        Value::String("many".to_string());
+    assert_invalid_field(wrong_type, "lifecycle_store_policy.bounds.max_references");
+}
+
+#[test]
+fn rejects_duplicate_lifecycle_store_ids_and_issue_codes() {
+    let mut duplicate_opener = generated_policy_value();
+    let opener = duplicate_opener["lifecycle_store_policy"]["opener_profiles"][0].clone();
+    duplicate_opener["lifecycle_store_policy"]["opener_profiles"]
+        .as_array_mut()
+        .expect("opener profiles")
+        .push(opener);
+    assert_invalid_field(
+        duplicate_opener,
+        "lifecycle_store_policy.opener_profiles.id",
+    );
+
+    let mut duplicate_issue = generated_policy_value();
+    let issue = duplicate_issue["lifecycle_store_policy"]["issue_codes"][0].clone();
+    duplicate_issue["lifecycle_store_policy"]["issue_codes"]
+        .as_array_mut()
+        .expect("issue codes")
+        .push(issue);
+    assert_invalid_field(duplicate_issue, "lifecycle_store_policy.issue_codes");
+}
+
+#[test]
+fn rejects_unknown_lifecycle_store_opener_shapes() {
+    let mut unknown_mode = generated_policy_value();
+    unknown_mode["lifecycle_store_policy"]["opener_profiles"][0]["member_argument_mode"] =
+        Value::String("shell_template".to_string());
+    assert_invalid_field(
+        unknown_mode,
+        "lifecycle_store_policy.opener_profiles.member_argument_mode",
+    );
+
+    let mut unknown_field = generated_policy_value();
+    unknown_field["lifecycle_store_policy"]["opener_profiles"][0]["shell"] =
+        Value::String("code {members}".to_string());
+    assert_invalid_field(
+        unknown_field,
+        "lifecycle_store_policy.opener_profiles.shape",
+    );
+}
+
+#[test]
+fn rejects_missing_lifecycle_store_non_claims() {
+    let mut missing = generated_policy_value();
+    missing["lifecycle_store_policy"]
+        .as_object_mut()
+        .expect("lifecycle store policy")
+        .remove("required_non_claims");
+    assert_missing_field(missing, "lifecycle_store_policy.required_non_claims");
+
+    let mut empty_receipt_non_claims = generated_policy_value();
+    empty_receipt_non_claims["lifecycle_store_policy"]["receipts"]["required_non_claims"] =
+        serde_json::json!([]);
+    assert_invalid_field(
+        empty_receipt_non_claims,
+        "lifecycle_store_policy.receipts.required_non_claims",
+    );
+}
+
+#[test]
+fn rejects_missing_lifecycle_store_required_fields() {
+    let mut missing_hash_field = generated_policy_value();
+    missing_hash_field["lifecycle_store_policy"]["receipts"]
+        .as_object_mut()
+        .expect("receipt policy")
+        .remove("portable_hash_field");
+    assert_missing_field(
+        missing_hash_field,
+        "lifecycle_store_policy.receipts.portable_hash_field",
+    );
+
+    let mut missing_required_name = generated_policy_value();
+    missing_required_name["lifecycle_store_policy"]["receipts"]["required_fields"]
+        .as_array_mut()
+        .expect("required fields")
+        .retain(|field| field.as_str() != Some("portable_hash"));
+    assert_invalid_field(
+        missing_required_name,
+        "lifecycle_store_policy.receipts.required_fields",
+    );
+}
+
+#[test]
+fn rejects_lifecycle_store_schema_root_and_local_state_drift() {
+    let mut schema = generated_policy_value();
+    schema["lifecycle_store_policy"]["schema"] = Value::String("unknown.v1".to_string());
+    assert_invalid_field(schema, "lifecycle_store_policy.schema");
+
+    let mut root_flag = generated_policy_value();
+    root_flag["lifecycle_store_policy"]["root_resolution"]["root_flag"] =
+        Value::String("--workspace".to_string());
+    assert_invalid_field(
+        root_flag,
+        "lifecycle_store_policy.root_resolution.root_flag",
+    );
+
+    let mut duplicate_command = generated_policy_value();
+    let command = duplicate_command["lifecycle_store_policy"]["root_resolution"]
+        ["eligible_commands"][0]
+        .clone();
+    duplicate_command["lifecycle_store_policy"]["root_resolution"]["eligible_commands"]
+        .as_array_mut()
+        .expect("eligible commands")
+        .push(command);
+    assert_invalid_field(
+        duplicate_command,
+        "lifecycle_store_policy.root_resolution.eligible_commands",
+    );
+
+    let mut unsafe_command = generated_policy_value();
+    unsafe_command["lifecycle_store_policy"]["root_resolution"]["eligible_commands"][0] =
+        Value::String("-ambient".to_string());
+    assert_invalid_field(
+        unsafe_command,
+        "lifecycle_store_policy.root_resolution.eligible_commands",
+    );
+
+    let mut locator_schema = generated_policy_value();
+    locator_schema["lifecycle_store_policy"]["locator"]["schema"] =
+        Value::String("cairn.ambient-locator.v1".to_string());
+    assert_invalid_field(locator_schema, "lifecycle_store_policy.locator.schema");
+}
+
+#[test]
+fn rejects_lifecycle_store_issue_and_portable_field_drift() {
+    let mut issue_code = generated_policy_value();
+    issue_code["lifecycle_store_policy"]["issue_codes"][0] =
+        Value::String("ambient.overclaim".to_string());
+    assert_invalid_field(issue_code, "lifecycle_store_policy.issue_codes");
+
+    let mut portable_fields = generated_policy_value();
+    portable_fields["lifecycle_store_policy"]["receipts"]["portable_fields"]
+        .as_array_mut()
+        .expect("portable fields")
+        .push(Value::String("root".to_string()));
+    assert_invalid_field(
+        portable_fields,
+        "lifecycle_store_policy.receipts.portable_fields",
+    );
 }
 
 #[test]
@@ -163,6 +372,9 @@ fn policy_module_split_preserves_public_api_exports() {
     let _steel_policy: Option<SteelOrchestrationPolicy> = None;
     let _steel_profile: Option<SteelOrchestrationProfile> = None;
     let _traceability_policy: Option<TraceabilityPolicy> = None;
+    let _lifecycle_store_policy: Option<LifecycleStorePolicy> = None;
+    let _lifecycle_store_bounds: Option<LifecycleStoreBounds> = None;
+    let _lifecycle_store_opener: Option<LifecycleStoreOpenerProfile> = None;
     let _stack_provenance_policy: Option<crate::verified::stack_provenance::StackProvenancePolicy> =
         None;
     let _function_address_policy: Option<
@@ -492,6 +704,25 @@ fn classifies_missing_new_required_field_as_refresh_required() {
 }
 
 #[test]
+fn classifies_missing_lifecycle_store_policy_as_refresh_required() {
+    let mut value = generated_policy_value();
+    value
+        .as_object_mut()
+        .expect("policy object")
+        .remove("lifecycle_store_policy");
+    let error = validate_policy_json(value.clone()).expect_err("missing field fails");
+    let report = classify_policy_schema_compatibility(&value, Some(&error));
+    assert_eq!(report.status, "refresh-required");
+    assert_eq!(
+        report.missing_field.as_deref(),
+        Some("lifecycle_store_policy")
+    );
+    let diagnostic = policy_schema_compatibility_diagnostic(&value, &error)
+        .expect("refresh diagnostic is available");
+    assert!(diagnostic.contains("missing_field=lifecycle_store_policy"));
+}
+
+#[test]
 fn rejects_unsupported_policy_schema_metadata() {
     // r[verify cairn.policy_schema_compatibility.classifier.unsupported]
     // r[verify cairn.policy_schema_compatibility.fixtures.negative]
@@ -518,6 +749,20 @@ fn rejects_malformed_policy_schema_metadata() {
     ));
     let report = classify_policy_schema_compatibility(&value, Some(&error));
     assert_eq!(report.status, "unsupported");
+}
+
+fn assert_invalid_field(value: Value, expected_field: &'static str) {
+    match validate_policy_json(value) {
+        Err(PolicyError::InvalidField(field)) => assert_eq!(field, expected_field),
+        other => panic!("expected invalid field {expected_field}, got {other:?}"),
+    }
+}
+
+fn assert_missing_field(value: Value, expected_field: &'static str) {
+    match validate_policy_json(value) {
+        Err(PolicyError::MissingField(field)) => assert_eq!(field, expected_field),
+        other => panic!("expected missing field {expected_field}, got {other:?}"),
+    }
 }
 
 fn generated_policy_value() -> Value {
