@@ -20,6 +20,7 @@ pub(crate) const CAPABILITY_PATH_BOUNDARY: &str =
 pub(crate) enum CapabilityRootKind {
     Repository,
     EvidenceBundle,
+    LocalState,
     Registry,
     Release,
     Replay,

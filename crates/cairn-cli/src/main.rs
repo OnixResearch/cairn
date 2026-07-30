@@ -41,6 +41,7 @@ mod test_harness;
 mod toolchain_profile_matrix;
 mod tracey;
 mod view;
+mod worksets;
 mod workspace_contract_matrix;
 
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules]
@@ -101,6 +102,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "doctor" => run_doctor(args.collect())?,
         "validate" => run_validate(args.collect())?,
         "view" => run_view(args.collect())?,
+        "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-evidence" => release_evidence::run_release_evidence(args.collect())?,
         "release-run" => release_run::run_release_run(args.collect())?,
