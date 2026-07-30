@@ -291,6 +291,22 @@ pub use verified::lifecycle_worksets::{
     WORKSET_OPEN_PLAN_SCHEMA_V1, WORKSET_STATE_LOGICAL_PATH, WORKSET_STATE_SCHEMA_V1,
     WORKSET_TRANSITION_PLAN_SCHEMA_V1,
 };
+pub use verified::lifecycle_store_context::{
+    build_lifecycle_store_context, normalize_direct_references, resolve_lifecycle_root,
+    store_qualified_spec_fetch_command, AcceptedSpecMetadata, AcceptedSpecSnapshot,
+    ContextBoundary, ContextObservations, ContextResult, ContextSpecResult,
+    DirectReferenceNormalization, DirectStoreReference, DoctorFindingStatus,
+    ExplicitLifecycleStoreSelector, ExplicitRootSelector, FallbackFacts, LifecycleAuthorityEffect,
+    LifecycleStoreDoctorFinding, LocatorSnapshot, LocatorStoreObservation, NativeRootCandidate,
+    ProjectPointerObservation, ReferenceContentBoundary, ReferenceTraversalBoundary,
+    RegistryLookupBoundary, ResolvedLifecycleRoot, RootResolutionObservations,
+    RootResolutionResult, RootResolutionSource, StoreIdentityObservation, VcsBoundaryFacts,
+    REFERENCE_AVAILABLE, REFERENCE_DUPLICATE, REFERENCE_SELF, REFERENCE_SNAPSHOT_AMBIGUOUS,
+    REFERENCE_SNAPSHOT_MISSING, REFERENCE_SNAPSHOT_STALE, REFERENCE_SPEC_DUPLICATE,
+    REFERENCE_STORE_AMBIGUOUS, REFERENCE_STORE_MISSING, REFERENCE_STORE_STALE,
+    ROOT_PROJECT_POINTER_STALE, ROOT_SELECTOR_CONFLICT, ROOT_STORE_AMBIGUOUS, ROOT_STORE_MISSING,
+    ROOT_STORE_STALE,
+};
 pub use verified::nominal_identity::{
     nominal_identity_policy_diagnostics, nominal_octet_projection_hash,
     nominal_runtime_projection_hash, ActorId, ActorIdRole, AnyIdentity, ArchiveDigest,
