@@ -491,7 +491,7 @@ impl StatePaths {
                 return Err(format!("{CAIRN_DATA_DIR_ENV} must not be empty").into());
             }
             return Ok(Self {
-                data_dir: PathBuf::from(path),
+                data_dir: PathBuf::from(path).join(CAIRN_DATA_DIRECTORY_NAME),
             });
         }
         if let Some(path) = env::var_os(XDG_DATA_HOME_ENV) {

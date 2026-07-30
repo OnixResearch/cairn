@@ -107,10 +107,17 @@ fn parses_generated_default_policy_text() {
         lifecycle_store.root_resolution.lifecycle_store_flag,
         "--lifecycle-store"
     );
-    assert!(lifecycle_store
-        .root_resolution
-        .eligible_commands
-        .contains(&"spec show".to_string()));
+    assert_eq!(
+        lifecycle_store.root_resolution.eligible_commands,
+        vec![
+            "status",
+            "spec list",
+            "spec show",
+            "validate",
+            "context",
+            "doctor",
+        ]
+    );
     assert_eq!(
         lifecycle_store.locator.schema,
         "cairn.lifecycle-store-locator.v1"
@@ -294,11 +301,13 @@ fn rejects_lifecycle_store_schema_root_and_local_state_drift() {
         "lifecycle_store_policy.root_resolution.eligible_commands",
     );
 
-    let mut unsafe_command = generated_policy_value();
-    unsafe_command["lifecycle_store_policy"]["root_resolution"]["eligible_commands"][0] =
-        Value::String("-ambient".to_string());
+    let mut widened_commands = generated_policy_value();
+    widened_commands["lifecycle_store_policy"]["root_resolution"]["eligible_commands"]
+        .as_array_mut()
+        .expect("eligible commands")
+        .push(Value::String("archive".to_string()));
     assert_invalid_field(
-        unsafe_command,
+        widened_commands,
         "lifecycle_store_policy.root_resolution.eligible_commands",
     );
 

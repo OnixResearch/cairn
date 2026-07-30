@@ -48,7 +48,8 @@ fn command(current_dir: &Path, data_dir: &Path) -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_cairn"));
     command
         .current_dir(current_dir)
-        .env("XDG_DATA_HOME", data_dir)
+        .env("CAIRN_DATA_DIR", data_dir)
+        .env_remove("XDG_DATA_HOME")
         .env_remove("CAIRN_GLOBAL_REGISTRY");
     command
 }
@@ -220,6 +221,52 @@ fn explicit_store_selects_status_and_spec_reads() -> Result<(), Box<dyn Error>> 
 }
 
 #[test]
+fn setup_register_and_spec_show_share_the_data_override() -> Result<(), Box<dyn Error>> {
+    let base = test_root("cross-command-data-override")?;
+    let store = base.join("shared");
+    let data = base.join("data");
+    let store_text = store.to_str().ok_or("store path")?;
+
+    let setup = run_success(command(&base, &data).args([
+        "store",
+        "setup",
+        "shared",
+        "--path",
+        store_text,
+        "--execute",
+    ]))?;
+    assert_eq!(setup["valid"], true);
+    write_spec(&store, "alpha", "Alpha")?;
+
+    let registered = run_success(command(&base, &data).args([
+        "store",
+        "register",
+        store_text,
+        "--id",
+        "shared",
+        "--execute",
+    ]))?;
+    assert_eq!(registered["valid"], true);
+    assert!(data.join("cairn/stores/registry.json").is_file());
+
+    let shown = run_success(command(&base, &data).args([
+        "spec",
+        "show",
+        "alpha",
+        "--lifecycle-store",
+        "shared",
+    ]))?;
+    assert_eq!(shown["spec"]["title"], "Alpha");
+    assert_eq!(
+        shown["resolution"]["selected"]["source"],
+        "explicit_lifecycle_store"
+    );
+
+    fs::remove_dir_all(base)?;
+    Ok(())
+}
+
+#[test]
 fn selector_conflict_fails_before_lifecycle_reads() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.lifecycle_stores.root_resolution.conflict]
     let base = test_root("selector-conflict")?;
@@ -353,6 +400,7 @@ fn context_reads_only_direct_accepted_specs_without_authority() -> Result<(), Bo
         subject.to_str().ok_or("subject path")?,
     ]))?;
     assert_eq!(context["specs"].as_array().map(Vec::len), Some(1));
+    assert_eq!(context["resolution"]["selected"]["source"], "explicit_root");
     assert_eq!(context["specs"][0]["spec_id"], "alpha");
     assert_eq!(
         context["specs"][0]["fetch_command"],
@@ -438,6 +486,7 @@ fn doctor_reports_missing_reference_and_global_registry_is_ignored() -> Result<(
                 policy_path().to_str().ok_or("policy path")?,
             ]),
     )?;
+    assert_eq!(doctor["resolution"]["selected"]["source"], "explicit_root");
     let health = &doctor["lifecycle_store_context"]["reference_health"][0];
     assert_eq!(health["code"], "lifecycle_store.reference.store_missing");
     assert_eq!(

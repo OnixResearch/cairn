@@ -57,10 +57,15 @@ let SafePolicyPath = std.contract.from_predicate (fun value =>
   && std.string.is_match "^[.A-Za-z0-9][A-Za-z0-9._/-]*$" value
 ) in
 
-let SafeCommandId = std.contract.from_predicate (fun value =>
-  std.is_string value
-  && std.string.length value > 0
-  && std.string.is_match "^[a-z0-9][a-z0-9 -]*$" value
+let EligibleRootCommands = std.contract.from_predicate (fun value =>
+  value == [
+    "status",
+    "spec list",
+    "spec show",
+    "validate",
+    "context",
+    "doctor",
+  ]
 ) in
 
 let SafeExecutable = std.contract.from_predicate (fun value =>
@@ -221,7 +226,7 @@ let RootResolutionPolicy = {
   root_flag | NonEmptyString,
   lifecycle_store_flag | NonEmptyString,
   selectors_mutually_exclusive | TrueOnly,
-  eligible_commands | NonEmptyArray | Array SafeCommandId,
+  eligible_commands | EligibleRootCommands,
   precedence | NonEmptyArray | Array RootResolutionSource,
   native_root_wins_over_project_pointer | TrueOnly,
   current_directory_only_without_vcs_boundary | TrueOnly,

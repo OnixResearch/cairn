@@ -39,7 +39,7 @@ impl Fixture {
             "cairn-workset-cli-{name}-{}-{unique}",
             std::process::id()
         ));
-        let data = root.join("data/cairn");
+        let data = root.join("data");
         let first_member = root.join("planning");
         let second_member = root.join("service");
         fs::create_dir_all(&first_member)?;
@@ -61,11 +61,11 @@ impl Fixture {
     }
 
     fn state_path(&self) -> PathBuf {
-        self.data.join("worksets/state.json")
+        self.data.join("cairn/worksets/state.json")
     }
 
     fn lock_path(&self) -> PathBuf {
-        self.data.join("worksets/.state.json.lock")
+        self.data.join("cairn/worksets/.state.json.lock")
     }
 
     fn cleanup(self) -> Result<(), Box<dyn Error>> {

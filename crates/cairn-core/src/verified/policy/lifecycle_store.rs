@@ -22,6 +22,14 @@ const RECEIPT_EVIDENCE_CLASS_LOCAL_ONLY: &str = "local-only";
 const RECEIPT_HASH_FIELD: &str = "receipt_hash";
 const PORTABLE_HASH_FIELD: &str = "portable_hash";
 
+const ELIGIBLE_ROOT_COMMANDS: &[&str] = &[
+    "status",
+    "spec list",
+    "spec show",
+    "validate",
+    "context",
+    "doctor",
+];
 const ROOT_PRECEDENCE: &[&str] = &[
     "explicit_root",
     "explicit_lifecycle_store",
@@ -486,10 +494,7 @@ fn parse_root_resolution(
     let eligible_commands =
         nonempty_string_array_field(resolution, "eligible_commands", FIELD_ELIGIBLE_COMMANDS)?;
     validate_unique(&eligible_commands, FIELD_ELIGIBLE_COMMANDS)?;
-    if eligible_commands
-        .iter()
-        .any(|command| !is_safe_command_id(command))
-    {
+    if !same_ordered_values(&eligible_commands, ELIGIBLE_ROOT_COMMANDS) {
         return Err(PolicyError::InvalidField(FIELD_ELIGIBLE_COMMANDS));
     }
     let precedence = nonempty_string_array_field(resolution, "precedence", FIELD_PRECEDENCE)?;
@@ -987,19 +992,6 @@ fn same_ordered_values(values: &[String], expected: &[&str]) -> bool {
             .iter()
             .zip(expected)
             .all(|(actual, expected)| actual == expected)
-}
-
-fn is_safe_command_id(command: &str) -> bool {
-    command
-        .bytes()
-        .next()
-        .is_some_and(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
-        && command.bytes().all(|byte| {
-            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-' || byte == b' '
-        })
-        && !command.starts_with(' ')
-        && !command.ends_with(' ')
-        && !command.contains("  ")
 }
 
 fn is_store_id(value: &str) -> bool {

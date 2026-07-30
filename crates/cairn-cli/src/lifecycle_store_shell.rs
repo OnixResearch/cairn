@@ -26,6 +26,7 @@ const GENERATED_POLICY_JSON: &str =
     include_str!("../../../cairn-policy/generated/cairn-policy.json");
 const ROOT_FLAG: &str = "--root";
 const LIFECYCLE_STORE_FLAG: &str = "--lifecycle-store";
+const CAIRN_DATA_DIR_ENV: &str = "CAIRN_DATA_DIR";
 const XDG_DATA_HOME_ENV: &str = "XDG_DATA_HOME";
 const HOME_ENV: &str = "HOME";
 const CONFIG_READ_MAX_BYTES: u64 = 1_048_576;
@@ -140,7 +141,7 @@ pub(crate) fn prepare_invocation(
 ) -> Result<PreparedInvocation, Box<dyn Error>> {
     let policy = ShellPolicy::load()?;
     let command_identity = policy.command_identity(command, &args);
-    let target = is_wave_two_target(command_identity.as_deref());
+    let resolution_enabled = is_resolution_enabled_command(command_identity.as_deref());
     let explicit_root = read_unique_selector(&args, ROOT_FLAG)?;
     let explicit_store = read_unique_selector(&args, LIFECYCLE_STORE_FLAG)?;
 
@@ -152,16 +153,11 @@ pub(crate) fn prepare_invocation(
         .into());
     }
 
-    if !target {
+    if !resolution_enabled {
         if explicit_store.is_some() {
             let identity = command_identity.unwrap_or_else(|| command.to_string());
-            let reason = if policy.eligible_commands.contains(&identity) {
-                "eligible command wiring remains in Wave 3"
-            } else {
-                "command is not policy-eligible"
-            };
             return Err(format!(
-                "lifecycle_store.root.ineligible_command: {LIFECYCLE_STORE_FLAG} is unavailable for {identity}: {reason}"
+                "lifecycle_store.root.ineligible_command: {LIFECYCLE_STORE_FLAG} is unavailable for {identity}: command does not support lifecycle-store root resolution"
             )
             .into());
         }
@@ -205,7 +201,7 @@ pub(crate) fn attach_resolution(mut value: Value, invocation: &RootLocalInvocati
 pub(crate) fn run_context(invocation: &RootLocalInvocation) -> Result<(), Box<dyn Error>> {
     let context = invocation.context_result()?;
     let valid = context.valid;
-    print_json(context_result_json(&context))?;
+    print_json(attach_resolution(context_result_json(&context), invocation))?;
     if !valid {
         return Err("lifecycle-store context is invalid".into());
     }
@@ -599,9 +595,14 @@ fn observe_current_store_identity(
 }
 
 fn platform_data_root() -> Option<PathBuf> {
-    env::var_os(XDG_DATA_HOME_ENV)
+    env::var_os(CAIRN_DATA_DIR_ENV)
         .filter(|value| !value.is_empty())
         .map(PathBuf::from)
+        .or_else(|| {
+            env::var_os(XDG_DATA_HOME_ENV)
+                .filter(|value| !value.is_empty())
+                .map(PathBuf::from)
+        })
         .or_else(|| {
             env::var_os(HOME_ENV)
                 .filter(|value| !value.is_empty())
@@ -821,7 +822,7 @@ fn command_words_match(candidate: &str, tokens: &[&str]) -> bool {
             .all(|(word, token)| word == token)
 }
 
-fn is_wave_two_target(identity: Option<&str>) -> bool {
+fn is_resolution_enabled_command(identity: Option<&str>) -> bool {
     matches!(
         identity,
         Some("status" | "spec list" | "spec show" | "validate" | "context" | "doctor")
