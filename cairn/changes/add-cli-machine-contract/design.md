@@ -45,15 +45,18 @@ Default invocations keep their current output and stderr behavior. Machine mode 
   "command": "validate",
   "exit_class": "success",
   "result": {},
-  "diagnostics": []
+  "diagnostics": [],
+  "non_claims": ["a valid machine envelope proves controlled transport only"]
 }
 ```
 
 Failure envelopes will set `ok` to false, set `result` to null, include sorted diagnostics, and retain a nonzero process status.
 
-The shell will write the object once after the dispatcher returns a typed outcome. Controlled machine-mode outcomes will not write stderr.
+The shell will run the same command through a bounded child-process adapter. It will parse one default JSON result before it builds the envelope.
 
-**Rationale:** One write path prevents mixed JSON and display text.
+The shell will write the completed object once. Controlled machine-mode outcomes will not write stderr.
+
+**Rationale:** One bounded adapter preserves result receipts and prevents mixed JSON and display text.
 
 ### Decision: Keep nested command receipts unchanged
 

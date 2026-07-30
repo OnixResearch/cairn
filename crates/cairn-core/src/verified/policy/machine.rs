@@ -40,6 +40,7 @@ const FIELD_MAX_STDOUT_BYTES: &str = "machine_contract_policy.bounds.max_stdout_
 const FIELD_MAX_STDERR_BYTES: &str = "machine_contract_policy.bounds.max_stderr_bytes";
 const FIELD_REQUIRED_NON_CLAIMS: &str = "machine_contract_policy.required_non_claims";
 const EXPECTED_DIAGNOSTIC_FIELDS: &[&str] = &["code", "severity", "message", "target", "fix"];
+const SERIALIZATION_OVERHEAD_PER_ENTRY: usize = 128;
 
 pub(super) fn machine_contract_policy(value: &Value) -> Result<MachineContractPolicy, PolicyError> {
     // r[impl cairn.cli_machine_contract.policy]
@@ -110,12 +111,14 @@ pub(super) fn machine_contract_policy(value: &Value) -> Result<MachineContractPo
     validate_diagnostic_order(&diagnostics, &diagnostic_order)?;
     let required_non_claims = string_array_field(policy, FIELD_REQUIRED_NON_CLAIMS)?;
     if required_non_claims.is_empty()
-        || required_non_claims.iter().any(|claim| {
-            claim.is_empty() || claim.len() > bounds.max_message_bytes || claim.contains('\n')
-        })
+        || required_non_claims.len() > bounds.max_diagnostics
+        || required_non_claims
+            .iter()
+            .any(|claim| !is_single_line_bounded(claim, bounds.max_message_bytes))
     {
         return Err(PolicyError::InvalidField(FIELD_REQUIRED_NON_CLAIMS));
     }
+    validate_combined_bounds(&bounds)?;
     Ok(MachineContractPolicy {
         schema_version,
         exit_classes,
@@ -252,6 +255,29 @@ fn validate_diagnostic_order(
     Ok(())
 }
 
+fn validate_combined_bounds(bounds: &MachineContractBounds) -> Result<(), PolicyError> {
+    let diagnostic_bytes = bounds
+        .max_code_bytes
+        .checked_add(bounds.max_message_bytes)
+        .and_then(|total| total.checked_add(bounds.max_target_bytes))
+        .and_then(|total| total.checked_add(bounds.max_fix_bytes))
+        .and_then(|total| total.checked_add(SERIALIZATION_OVERHEAD_PER_ENTRY))
+        .and_then(|total| total.checked_mul(bounds.max_diagnostics))
+        .ok_or(PolicyError::InvalidField(FIELD_MAX_STDOUT_BYTES))?;
+    let non_claim_bytes = bounds
+        .max_message_bytes
+        .checked_add(SERIALIZATION_OVERHEAD_PER_ENTRY)
+        .and_then(|total| total.checked_mul(bounds.max_diagnostics))
+        .ok_or(PolicyError::InvalidField(FIELD_MAX_STDOUT_BYTES))?;
+    let minimum_failure_envelope_bytes = diagnostic_bytes
+        .checked_add(non_claim_bytes)
+        .ok_or(PolicyError::InvalidField(FIELD_MAX_STDOUT_BYTES))?;
+    if minimum_failure_envelope_bytes > bounds.max_stdout_bytes {
+        return Err(PolicyError::InvalidField(FIELD_MAX_STDOUT_BYTES));
+    }
+    Ok(())
+}
+
 fn bounded_usize_field(
     value: &Value,
     field: &'static str,
@@ -270,7 +296,10 @@ fn bounded_usize_field(
 }
 
 fn is_diagnostic_code_safe(value: &str, max_bytes: usize) -> bool {
-    !value.is_empty()
+    let Some(first) = value.bytes().next() else {
+        return false;
+    };
+    (first.is_ascii_lowercase() || first.is_ascii_digit())
         && value.len() <= max_bytes
         && value.bytes().all(|byte| {
             byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'_' | b'-')
@@ -287,7 +316,7 @@ fn is_diagnostic_target_safe(value: &str, max_bytes: usize) -> bool {
     }
     if value
         .split(['/', '\\'])
-        .any(|component| component.is_empty() || component == "..")
+        .any(|component| component.is_empty() || matches!(component, "." | ".."))
     {
         return false;
     }

@@ -80,6 +80,9 @@ Templates, scaffolds, sync, archive, and migration are preview-first. Add `--exe
 
 Read the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md) or the [copyable example](examples/make-a-cairn/README.md).
 
+Direct CLI agents can use `cairn --machine <command> ...` for one versioned JSON outcome.
+Read the [CLI machine contract](docs/cli-machine-contract.md) before you depend on its status and failure rules.
+
 ## Local checks
 
 ```bash

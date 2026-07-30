@@ -44,7 +44,7 @@ r[cairn.cli_machine_contract.mode.incompatible]
 
 ### Requirement: Controlled outcomes emit one JSON envelope
 
-r[cairn.cli_machine_contract.envelope] Cairn MUST emit exactly one JSON object on stdout for every dispatcher-controlled machine-mode success or failure. The object MUST include `schema_version`, `ok`, `command`, `exit_class`, `result`, and sorted `diagnostics`.
+r[cairn.cli_machine_contract.envelope] Cairn MUST emit exactly one JSON object on stdout for every dispatcher-controlled machine-mode success or failure. The object MUST include `schema_version`, `ok`, `command`, `exit_class`, `result`, sorted `diagnostics`, and policy-owned `non_claims`.
 
 #### Scenario: Machine success emits one envelope
 

@@ -211,6 +211,7 @@ pub struct MachineEnvelope {
     pub exit_class: MachineExitClass,
     pub result: Option<Value>,
     pub diagnostics: Vec<MachineDiagnostic>,
+    pub non_claims: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -249,6 +250,7 @@ pub fn build_machine_outcome(
     // r[impl cairn.cli_machine_contract.diagnostics]
     // r[impl cairn.cli_machine_contract.privacy]
     // r[impl cairn.cli_machine_contract.functional_boundary]
+    // r[impl cairn.cli_machine_contract.functional_boundary.pure]
     if !is_machine_command_name_safe(command, policy.bounds.max_command_bytes) {
         return Err(MachineContractError::InvalidCommand);
     }
@@ -264,6 +266,7 @@ pub fn build_machine_outcome(
                 exit_class: MachineExitClass::Success,
                 result: Some(result),
                 diagnostics: Vec::new(),
+                non_claims: policy.required_non_claims.clone(),
             },
             process_status,
         }),
@@ -278,10 +281,9 @@ fn build_failure_outcome(
     command: &str,
     failures: &[MachineFailureKind],
 ) -> Result<MachineProcessOutcome, MachineContractError> {
-    let Some(primary) = failures.first() else {
+    if failures.is_empty() {
         return Err(MachineContractError::EmptyFailureSet);
-    };
-    let primary_definition = diagnostic_definition(policy, primary.diagnostic_code())?;
+    }
     let mut diagnostics = failures
         .iter()
         .map(|failure| diagnostic_from_kind(policy, *failure))
@@ -289,7 +291,12 @@ fn build_failure_outcome(
     sort_machine_diagnostics(policy, &mut diagnostics);
     diagnostics.dedup_by(|left, right| left.code == right.code && left.target == right.target);
     diagnostics.truncate(policy.bounds.max_diagnostics);
-    let exit_class = primary_definition.exit_class;
+    let primary_code = diagnostics
+        .first()
+        .ok_or(MachineContractError::EmptyFailureSet)?
+        .code
+        .as_str();
+    let exit_class = diagnostic_definition(policy, primary_code)?.exit_class;
     let process_status = process_status(policy, exit_class)?;
     Ok(MachineProcessOutcome {
         envelope: MachineEnvelope {
@@ -299,6 +306,7 @@ fn build_failure_outcome(
             exit_class,
             result: None,
             diagnostics,
+            non_claims: policy.required_non_claims.clone(),
         },
         process_status,
     })
@@ -395,6 +403,7 @@ mod tests {
                 exit_class: if *code == CLI_MACHINE_DIAGNOSTIC_UNKNOWN_COMMAND
                     || *code == CLI_MACHINE_DIAGNOSTIC_MISSING_COMMAND
                     || *code == CLI_MACHINE_DIAGNOSTIC_INCOMPATIBLE_OPTION
+                    || *code == CLI_MACHINE_DIAGNOSTIC_INVOCATION_FAILED
                 {
                     MachineExitClass::InvalidArguments
                 } else if *code == CLI_MACHINE_DIAGNOSTIC_NOT_FOUND {
@@ -465,6 +474,7 @@ mod tests {
         assert_eq!(outcome.process_status, TEST_STATUS_INTERNAL_ERROR);
         assert_eq!(outcome.envelope.exit_class, MachineExitClass::Success);
         assert!(outcome.envelope.diagnostics.is_empty());
+        assert_eq!(outcome.envelope.non_claims, policy.required_non_claims);
     }
 
     #[test]
@@ -522,6 +532,39 @@ mod tests {
     }
 
     #[test]
+    fn failure_class_is_independent_of_input_order() {
+        let policy = policy();
+        let forward = build_machine_outcome(
+            &policy,
+            "validate",
+            MachineOutcome::ControlledFailure {
+                failures: vec![
+                    MachineFailureKind::Internal,
+                    MachineFailureKind::UnknownCommand,
+                ],
+            },
+        )
+        .expect("known failures build envelope");
+        let reverse = build_machine_outcome(
+            &policy,
+            "validate",
+            MachineOutcome::ControlledFailure {
+                failures: vec![
+                    MachineFailureKind::UnknownCommand,
+                    MachineFailureKind::Internal,
+                ],
+            },
+        )
+        .expect("known failures build envelope");
+        assert_eq!(forward, reverse);
+        assert_eq!(
+            forward.envelope.exit_class,
+            MachineExitClass::InvalidArguments
+        );
+    }
+
+    #[test]
+    // r[verify cairn.cli_machine_contract.diagnostics.unknown]
     fn unknown_failure_definition_fails_closed() {
         let mut policy = policy();
         policy

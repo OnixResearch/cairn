@@ -9,6 +9,7 @@ const INVALID_MACHINE_SUCCESS_STATUS: u64 = 1;
 fn parses_generated_default_policy_text() {
     // r[verify developer_experience.core_policy_parser_boundary_split.behavior]
     // r[verify cairn.supersede.traceability_ownership.configured_profiles.cairn_default]
+    // r[verify cairn.cli_machine_contract.policy.valid]
     let text = include_str!("../../../../../cairn-policy/generated/cairn-policy.json");
     let policy = parse_policy_json(text).expect("generated policy parses");
     assert_eq!(policy.name, "cairn-default");
@@ -205,6 +206,19 @@ fn rejects_invalid_machine_contract_policy() {
     unsafe_target["machine_contract_policy"]["diagnostics"][0]["target"] =
         Value::String("../secret".to_string());
     assert_invalid_field(unsafe_target, "machine_contract_policy.diagnostics.target");
+
+    let mut unsafe_code = generated_policy_value();
+    unsafe_code["machine_contract_policy"]["diagnostics"][0]["code"] =
+        Value::String(".hidden".to_string());
+    assert_invalid_field(unsafe_code, "machine_contract_policy.diagnostics.code");
+
+    let mut multiline_non_claim = generated_policy_value();
+    multiline_non_claim["machine_contract_policy"]["required_non_claims"][0] =
+        Value::String("first\rsecond".to_string());
+    assert_invalid_field(
+        multiline_non_claim,
+        "machine_contract_policy.required_non_claims",
+    );
 
     let mut invalid_bound = generated_policy_value();
     invalid_bound["machine_contract_policy"]["bounds"]["max_stdout_bytes"] = Value::from(0);

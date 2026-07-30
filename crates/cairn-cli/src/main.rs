@@ -16,6 +16,7 @@ mod lifecycle;
 mod lifecycle_data;
 mod lifecycle_store;
 mod lifecycle_store_shell;
+mod machine;
 mod mcp;
 mod migration;
 mod native;
@@ -59,6 +60,9 @@ use evidence::run_evidence;
 use evidence_manifest::run_evidence_manifest;
 use hash_algorithm_policy::run_hash_policy;
 use lifecycle_store_shell::{prepare_invocation, run_context};
+use machine::{
+    run_machine, MachineRunError, MACHINE_BOOTSTRAP_POLICY_STATUS, MACHINE_HOST_OUTPUT_STATUS,
+};
 use mcp::run_mcp;
 use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
@@ -76,18 +80,36 @@ use view::run_view;
 use workspace_contract_matrix::run_workspace_contract;
 
 fn main() {
-    if let Err(err) = run() {
+    let invoked_as = env::args().next().unwrap_or_default();
+    let all_args = env::args().skip(1).collect::<Vec<_>>();
+    if all_args.first().map(String::as_str) == Some("--machine") {
+        finish_machine(run_machine(all_args.into_iter().skip(1).collect()));
+        return;
+    }
+    if invoked_as.ends_with("ironspec") {
+        eprintln!("warning: `ironspec` is a compatibility alias; use canonical `cairn`");
+    }
+    if let Err(err) = run(all_args) {
         eprintln!("error: {err}");
         std::process::exit(1);
     }
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
-    let invoked_as = env::args().next().unwrap_or_default();
-    if invoked_as.ends_with("ironspec") {
-        eprintln!("warning: `ironspec` is a compatibility alias; use canonical `cairn`");
+fn finish_machine(result: Result<u8, MachineRunError>) {
+    let status = match result {
+        Ok(status) => status,
+        Err(MachineRunError::PolicyUnavailable) => {
+            eprintln!("error: cairn.cli.policy_error");
+            MACHINE_BOOTSTRAP_POLICY_STATUS
+        }
+        Err(MachineRunError::HostOutputFailure) => MACHINE_HOST_OUTPUT_STATUS,
+    };
+    if status != 0 {
+        std::process::exit(i32::from(status));
     }
-    let all_args = env::args().skip(1).collect::<Vec<_>>();
+}
+
+fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(command) = all_args.first() else {
         print_usage();
         return Ok(());
