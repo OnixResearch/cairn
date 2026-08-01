@@ -31,8 +31,25 @@ Use this Hermes skill for work in `/home/brittonr/git/cairn`. Cairn is the canon
 
 - For public CLI behavior, compatibility semantics, mutation, architecture, receipt schemas, or roadmap work, write a native `cairn/changes/<slug>/` package first.
 - Small fixture/test/doc hardening can be direct when it does not alter public behavior.
-- Prefer one narrow ROI slice at a time, then verify, sync/archive the change when applicable, commit, and push.
+- Prefer one narrow ROI slice at a time, then verify, sync/archive the change when applicable, commit, and integrate it.
 - Treat compatibility surfaces as import-only product behavior; native Cairn remains the sole planning authority.
+
+## Worktree and branch completion
+
+Complete every Cairn change through an isolated worktree and unique new branch. This rule applies when the primary worktree is clean or dirty.
+
+1. Fetch `origin/main` and create the new branch from it in a dedicated worktree.
+2. If the change package is uncommitted, copy only its inspected files into the worktree.
+3. Leave the primary worktree files unchanged.
+4. Implement, validate, sync, archive, and commit the change only in the dedicated worktree.
+5. Push the verified change branch to `origin`.
+6. Fetch `origin` again before integration.
+7. If `origin/main` advanced, merge it into the change branch and rerun the relevant checks.
+8. Push the updated branch, fast-forward `main` to it, and push `main` to `origin`.
+9. Verify that `origin/main` contains the completion commit. Then remove the worktree.
+
+A request to complete or drain Cairn changes authorizes these normal change-branch and `main` pushes.
+Never open a pull request or force-push. Preserve unrelated work and report any integration blocker.
 
 ## Native change package workflow
 
@@ -221,7 +238,7 @@ Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix c
 - `cairn sync <change>` requires explicit `## ADDED Requirements`, `## MODIFIED Requirements`, or `## REMOVED Requirements` operations with one stable bare requirement ID per block. If `merge_preflight` reports blockers, repair the delta shape or identity conflict and rerun the dry-run; never substitute a manual post-sync accepted-spec patch for a blocked semantic plan. See `docs/sync-delta-merge.md`.
 - Historical archives and compatibility code may mention legacy lifecycle names; do not churn those unless the task is explicitly a migration/rename cleanup.
 - Slotcar Nix checks need a C compiler/linker; keep `pkgs.stdenv.cc` in check inputs.
-- The canonical repo at `/home/brittonr/git/cairn` has origin `onixresearch/cairn`; after verified slices, commit and push `main`.
+- The canonical repo uses `git@github.com:OnixResearch/cairn.git`. Complete verified slices through the required worktree, branch, and `main` integration workflow.
 
 ## Skill maintenance
 
