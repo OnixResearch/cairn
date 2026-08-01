@@ -1,0 +1,130 @@
+{
+  "changes": [
+    {
+      "delta_specs": [
+        "./cairn/changes/add-adr-radicle-cob/specs/adr-radicle-cob/spec.md"
+      ],
+      "has_design": true,
+      "has_proposal": true,
+      "has_tasks": true,
+      "metadata": {
+        "depends_on": [
+          "add-rfd-radicle-cob"
+        ],
+        "groups": [],
+        "status": null,
+        "target_date": null
+      },
+      "name": "add-adr-radicle-cob",
+      "path": "./cairn/changes/add-adr-radicle-cob",
+      "task_counts": {
+        "done": 0,
+        "in_progress": 0,
+        "todo": 18,
+        "total": 18,
+        "unmarked": 0
+      }
+    },
+    {
+      "delta_specs": [
+        "./cairn/changes/add-policy-exception-radicle-cob/specs/policy-exception-radicle-cob/spec.md"
+      ],
+      "has_design": true,
+      "has_proposal": true,
+      "has_tasks": true,
+      "metadata": {
+        "depends_on": [
+          "add-verification-obligation-radicle-cob"
+        ],
+        "groups": [],
+        "status": null,
+        "target_date": null
+      },
+      "name": "add-policy-exception-radicle-cob",
+      "path": "./cairn/changes/add-policy-exception-radicle-cob",
+      "task_counts": {
+        "done": 0,
+        "in_progress": 0,
+        "todo": 20,
+        "total": 20,
+        "unmarked": 0
+      }
+    },
+    {
+      "delta_specs": [
+        "./cairn/changes/add-release-decision-radicle-cob/specs/release-decision-radicle-cob/spec.md"
+      ],
+      "has_design": true,
+      "has_proposal": true,
+      "has_tasks": true,
+      "metadata": {
+        "depends_on": [
+          "add-verification-obligation-radicle-cob"
+        ],
+        "groups": [],
+        "status": null,
+        "target_date": null
+      },
+      "name": "add-release-decision-radicle-cob",
+      "path": "./cairn/changes/add-release-decision-radicle-cob",
+      "task_counts": {
+        "done": 0,
+        "in_progress": 0,
+        "todo": 20,
+        "total": 20,
+        "unmarked": 0
+      }
+    },
+    {
+      "delta_specs": [
+        "./cairn/changes/add-rfd-radicle-cob/specs/document-collaboration/spec.md",
+        "./cairn/changes/add-rfd-radicle-cob/specs/rfd-radicle-cob/spec.md"
+      ],
+      "has_design": true,
+      "has_proposal": true,
+      "has_tasks": true,
+      "metadata": {
+        "groups": [],
+        "status": null,
+        "target_date": null
+      },
+      "name": "add-rfd-radicle-cob",
+      "path": "./cairn/changes/add-rfd-radicle-cob",
+      "task_counts": {
+        "done": 0,
+        "in_progress": 0,
+        "todo": 18,
+        "total": 18,
+        "unmarked": 0
+      }
+    },
+    {
+      "delta_specs": [
+        "./cairn/changes/add-verification-obligation-radicle-cob/specs/verification-obligation-radicle-cob/spec.md",
+        "./cairn/changes/add-verification-obligation-radicle-cob/specs/workflow-collaboration/spec.md"
+      ],
+      "has_design": true,
+      "has_proposal": true,
+      "has_tasks": true,
+      "metadata": {
+        "depends_on": [
+          "add-rfd-radicle-cob"
+        ],
+        "groups": [],
+        "status": null,
+        "target_date": null
+      },
+      "name": "add-verification-obligation-radicle-cob",
+      "path": "./cairn/changes/add-verification-obligation-radicle-cob",
+      "task_counts": {
+        "done": 0,
+        "in_progress": 0,
+        "todo": 22,
+        "total": 22,
+        "unmarked": 0
+      }
+    }
+  ],
+  "layout": "cairn",
+  "root": "."
+}
