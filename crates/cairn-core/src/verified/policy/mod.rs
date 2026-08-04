@@ -1,4 +1,5 @@
 mod agent_guidance;
+mod developer_loop;
 mod error;
 mod fields;
 mod function_address;

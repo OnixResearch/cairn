@@ -7,6 +7,7 @@ mod authenticated_inputs;
 mod cross_repo_dependencies;
 mod determinism;
 mod developer_experience;
+mod developer_loop;
 mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
@@ -59,6 +60,7 @@ mod content_addressed_evidence;
 
 use collaboration::run_collaboration;
 use determinism::run_determinism;
+use developer_loop::run_developer_loop;
 use evidence::run_evidence;
 use evidence_manifest::run_evidence_manifest;
 use generated_agent_workflow_shell::run_agent;
@@ -174,6 +176,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
             oxide_lifecycle_patterns::run_oxide_lifecycle_patterns(args.collect())?
         }
         "determinism" => run_determinism(args.collect())?,
+        "developer-loop" => run_developer_loop(args.collect())?,
         "agent" => run_agent(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,

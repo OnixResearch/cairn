@@ -17,8 +17,8 @@ pub fn positive_agent_run_fixture() -> Value {
         "verification_manifest": {"checks": [{"name": "cargo test", "verdict": "PASS", "evidence_hash": "3333333333333333333333333333333333333333333333333333333333333333"}]},
         "nondeterminism_manifest": {"captured": [{"class": "model_provider", "metadata": {"provider": "fixture"}}], "forbidden_uncaptured": []},
         "replay_evidence": {
-            "replay_receipt_hash": "7e4e504eb62e4bb7ae1341a5853e7de782a899c4d70f87e6cd3024479ebb8453",
-            "replay_policy_hash": "794e65e05f3ffe7a872581e7d2cddae45bcea5a6d38cd9a8892a2079050679f2",
+            "replay_receipt_hash": "496217fba7948f1b2d3450c51b482855a216ef2b6b26310a69f637107cef0154",
+            "replay_policy_hash": "0d5cb1655724e88eba5e81e493cdc7b90b210233965dbb785028848b6d0d48fe",
             "replay_selected_cases": ["agent_completion_validate", "agent_receipt_validate", "mcp_describe", "status", "validate"],
             "replay_selected_groups": ["agent"],
             "replay_verdict": "pass",

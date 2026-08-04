@@ -190,6 +190,23 @@ let GeneratedWorkflowAdapterFormat = std.contract.from_predicate (fun value =>
   )
 ) in
 
+let DeveloperLoopEffectPosture = std.contract.from_predicate (fun value =>
+  std.is_string value && (
+    value == "read_only" ||
+    value == "read_write_file" ||
+    value == "network_read" ||
+    value == "network_write"
+  )
+) in
+
+let DeveloperLoopCacheMode = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "disabled" || value == "enabled")
+) in
+
+let DeveloperLoopStatusClass = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "success" || value == "failure")
+) in
+
 {
   WorkflowBounds = {
     max_artifacts | PositiveNumber,
@@ -330,6 +347,62 @@ let GeneratedWorkflowAdapterFormat = std.contract.from_predicate (fun value =>
     descriptors | NonEmptyArray | Array GeneratedWorkflowDescriptor,
     adapters | NonEmptyArray | Array GeneratedWorkflowAdapter,
     bounds | GeneratedWorkflowBounds,
+    receipt_fields | NonEmptyArray | Array NonEmptyString,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
+  DeveloperLoopBounds = {
+    max_profiles | PositiveNumber,
+    max_budgets | PositiveNumber,
+    max_checks | PositiveNumber,
+    max_checks_per_profile | PositiveNumber,
+    max_text_bytes | PositiveNumber,
+    max_issues | PositiveNumber,
+    max_cache_key_inputs | PositiveNumber,
+    max_duration_seconds | PositiveNumber,
+    max_receipt_bytes | PositiveNumber,
+  },
+
+  DeveloperLoopBudget = {
+    id | NonEmptyString,
+    max_seconds | PositiveNumber,
+  },
+
+  DeveloperLoopCheck = {
+    id | NonEmptyString,
+    command_identity | NonEmptyString,
+    argv | NonEmptyArray | Array NonEmptyString,
+    working_root | NonEmptyString,
+    expected_status_class | DeveloperLoopStatusClass,
+  },
+
+  DeveloperLoopCachePolicy = {
+    mode | DeveloperLoopCacheMode,
+    key_inputs | Array NonEmptyString | default = [],
+  },
+
+  DeveloperLoopProfile = {
+    id | NonEmptyString,
+    purpose | NonEmptyString,
+    repositories | NonEmptyArray | Array NonEmptyString,
+    subject_scope | NonEmptyString,
+    checks | NonEmptyArray | Array NonEmptyString,
+    target | NonEmptyString,
+    toolchain | NonEmptyString,
+    budget_id | NonEmptyString,
+    effect_posture | DeveloperLoopEffectPosture,
+    cache_policy | DeveloperLoopCachePolicy,
+    full_gate_refs | NonEmptyArray | Array NonEmptyString,
+    required_enforcement | Array NonEmptyString | default = [],
+    non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
+  DeveloperLoopPolicy = {
+    schema | NonEmptyString,
+    profiles | NonEmptyArray | Array DeveloperLoopProfile,
+    budgets | NonEmptyArray | Array DeveloperLoopBudget,
+    checks | NonEmptyArray | Array DeveloperLoopCheck,
+    bounds | DeveloperLoopBounds,
     receipt_fields | NonEmptyArray | Array NonEmptyString,
     required_non_claims | NonEmptyArray | Array NonEmptyString,
   },
@@ -774,6 +847,7 @@ let GeneratedWorkflowAdapterFormat = std.contract.from_predicate (fun value =>
     schemas | NonEmptyArray | Array ArtifactSchema,
     workflow_profile_policy | WorkflowProfilePolicy,
     agent_guidance_policy | AgentGuidancePolicy,
+    developer_loop_policy | DeveloperLoopPolicy,
     generated_agent_workflow_policy | GeneratedAgentWorkflowPolicy,
     lifecycle_stages | NonEmptyArray | Array Stage,
     task_marker_policy | TaskMarkerPolicy,

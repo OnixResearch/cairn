@@ -37,6 +37,22 @@ fn rejects_agent_guidance_policy_authority_impersonation() {
 }
 
 #[test]
+fn generated_policy_admits_developer_loop_profiles() {
+    // r[verify cairn.developer_loop_profiles.policy.valid]
+    let policy = parse_policy_json(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy parses");
+    assert_eq!(
+        policy.developer_loop_policy.schema,
+        "cairn.developer-loop-policy.v1"
+    );
+    assert_eq!(policy.developer_loop_policy.profiles.len(), 1);
+    assert_eq!(policy.developer_loop_policy.profiles[0].id, "cairn-local");
+    assert_eq!(policy.developer_loop_policy.checks.len(), 3);
+}
+
+#[test]
 fn rejects_generated_explore_mutation_and_missing_constraint() {
     // r[verify cairn.generated_agent_workflows.descriptors.invalid]
     // r[verify cairn.generated_agent_workflows.explore.invalid]

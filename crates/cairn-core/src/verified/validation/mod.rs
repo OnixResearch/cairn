@@ -89,6 +89,7 @@ mod tests {
             workflow_schemas: generated_policy.workflow_schemas,
             workflow_profile_policy: generated_policy.workflow_profile_policy,
             agent_guidance_policy: generated_policy.agent_guidance_policy,
+            developer_loop_policy: generated_policy.developer_loop_policy,
             generated_agent_workflow_policy: generated_policy.generated_agent_workflow_policy,
             artifact_substance_policy: ArtifactSubstancePolicy {
                 proposal_minimum_substantive_lines: 1,

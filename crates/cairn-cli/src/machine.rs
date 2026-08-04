@@ -43,6 +43,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "lifecycle",
     "lifecycle-patterns",
     "determinism",
+    "developer-loop",
     "agent",
     "agent-receipt",
     "evidence",

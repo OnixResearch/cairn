@@ -103,9 +103,11 @@ Read [Workflow profiles](docs/workflow-profiles.md) for selection, obligations, 
 Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, fields, MCP parity, and claim boundaries.
 Read [Agent guidance context](docs/agent-guidance-context.md) before you declare local context or advisory text.
 Read [Generated agent workflows](docs/generated-agent-workflows.md) before you install project-local agent guidance.
+Read [Developer-loop profiles](docs/developer-loop-profiles.md) before you define or verify a fast local loop.
 
 <!-- r[impl cairn.artifact_workflow_contract.docs] -->
 <!-- r[impl cairn.lifecycle_workflow_profiles.docs] -->
+<!-- r[impl cairn.developer_loop_profiles.docs] -->
 <!-- r[impl cairn.agent_guidance_context.docs] -->
 
 ## Local checks

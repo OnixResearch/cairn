@@ -19,6 +19,7 @@ pub mod content_bound_requirement_registry;
 pub mod cross_repo_dependencies;
 pub mod delta_merge;
 pub mod developer_experience;
+pub mod developer_loop;
 pub mod doctor;
 pub mod ears_property_vocabulary;
 pub mod evidence;

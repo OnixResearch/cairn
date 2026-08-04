@@ -1215,6 +1215,133 @@
       "surface_kind": "cli"
     }
   ],
+  "developer_loop_policy": {
+    "bounds": {
+      "max_budgets": 8,
+      "max_cache_key_inputs": 8,
+      "max_checks": 32,
+      "max_checks_per_profile": 16,
+      "max_duration_seconds": 3600,
+      "max_issues": 64,
+      "max_profiles": 8,
+      "max_receipt_bytes": 65536,
+      "max_text_bytes": 4096
+    },
+    "budgets": [
+      {
+        "id": "cairn-local-budget",
+        "max_seconds": 60
+      }
+    ],
+    "checks": [
+      {
+        "argv": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "command_identity": "cairn-developer-loop.fmt.check",
+        "expected_status_class": "success",
+        "id": "fmt",
+        "working_root": "."
+      },
+      {
+        "argv": [
+          "cairn",
+          "validate",
+          "--root",
+          "."
+        ],
+        "command_identity": "cairn-developer-loop.validate.check",
+        "expected_status_class": "success",
+        "id": "validate",
+        "working_root": "."
+      },
+      {
+        "argv": [
+          "cairn",
+          "traceability",
+          "coverage",
+          "--root",
+          "."
+        ],
+        "command_identity": "cairn-developer-loop.traceability.check",
+        "expected_status_class": "success",
+        "id": "traceability",
+        "working_root": "."
+      }
+    ],
+    "profiles": [
+      {
+        "budget_id": "cairn-local-budget",
+        "cache_policy": {
+          "key_inputs": [
+            "profile",
+            "subject",
+            "dependency",
+            "target",
+            "toolchain",
+            "policy",
+            "checks"
+          ],
+          "mode": "enabled"
+        },
+        "checks": [
+          "fmt",
+          "validate",
+          "traceability"
+        ],
+        "effect_posture": "read_only",
+        "full_gate_refs": [
+          "cargo test --workspace",
+          "cargo clippy --workspace --all-targets -- -D warnings",
+          "nix flake check path:$PWD -L"
+        ],
+        "id": "cairn-local",
+        "non_claims": [
+          "a passing developer-loop receipt proves profile conformance, current supplied identities, selected check statuses, and budget comparison only",
+          "declared read-only posture does not prove command hermeticity, network denial, mutation absence, or clock accuracy",
+          "a fast-loop pass does not satisfy release readiness, full repository checks, proofs, source correctness, or lifecycle archive requirements"
+        ],
+        "purpose": "Run the three fastest repository-owned checks with a named latency budget and explicit full-gate references.",
+        "repositories": [
+          "cairn"
+        ],
+        "required_enforcement": [
+          "vacuum"
+        ],
+        "subject_scope": "commit",
+        "target": "x86_64-linux",
+        "toolchain": "nix develop"
+      }
+    ],
+    "receipt_fields": [
+      "valid",
+      "profile",
+      "subject_hash",
+      "policy_hash",
+      "target",
+      "toolchain",
+      "result_statuses",
+      "observed_duration_seconds",
+      "measurement_class",
+      "budget",
+      "cache",
+      "cache_key_identity",
+      "posture_states",
+      "full_gate_status",
+      "issues",
+      "non_claims"
+    ],
+    "required_non_claims": [
+      "a passing developer-loop receipt proves profile conformance, current supplied identities, selected check statuses, and budget comparison only",
+      "declared effect posture does not prove command hermeticity, network denial, mutation absence, or clock accuracy",
+      "a fast-loop pass does not satisfy release readiness, full repository checks, proofs, source correctness, or lifecycle archive requirements"
+    ],
+    "schema": "cairn.developer-loop-policy.v1"
+  },
   "exemption_marker_policy": {
     "date_fields": [
       "until"
@@ -3208,7 +3335,7 @@
     }
   },
   "policy_schema_compatibility": {
-    "field_set_digest": "dcf499d154b906a153039768157f57eca6868b205524f5f23a27b570c3b53257",
+    "field_set_digest": "18dd2f541b4e9f737a8a54e91b8cb3f7206a0593d112e9ba1b8a7b97d3a2a09a",
     "producer": "cairn policy export",
     "refresh_command": "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json",
     "schema_version": "cairn.policy-schema.v1"

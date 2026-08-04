@@ -1,7 +1,7 @@
 let Contracts = import "contracts.ncl" in
 let NominalIdentityPolicy = import "nominal-evidence-identities.ncl" in
 let PolicySchemaVersion = "cairn.policy-schema.v1" in
-let PolicyFieldSetDigest = "dcf499d154b906a153039768157f57eca6868b205524f5f23a27b570c3b53257" in
+let PolicyFieldSetDigest = "18dd2f541b4e9f737a8a54e91b8cb3f7206a0593d112e9ba1b8a7b97d3a2a09a" in
 let MaxStoreIdBytes = 64 in
 let MaxRemoteHintBytes = 2048 in
 let MaxReferences = 32 in
@@ -450,6 +450,56 @@ let WorkflowRequiredNonClaims = [
       "path, encoding, size, and omission checks do not prove that declared text is secret-free or safe to disclose",
       "guidance selection does not satisfy gates, dependencies, evidence, implementation correctness, or release eligibility",
       "portable guidance identity omits raw text and absolute paths by default",
+    ],
+  },
+
+  developer_loop_policy = {
+    schema = "cairn.developer-loop-policy.v1",
+    budgets = [
+      { id = "cairn-local-budget", max_seconds = 60 },
+    ],
+    checks = [
+      { id = "fmt", command_identity = "cairn-developer-loop.fmt.check", argv = ["cargo", "fmt", "--all", "--", "--check"], working_root = ".", expected_status_class = "success" },
+      { id = "validate", command_identity = "cairn-developer-loop.validate.check", argv = ["cairn", "validate", "--root", "."], working_root = ".", expected_status_class = "success" },
+      { id = "traceability", command_identity = "cairn-developer-loop.traceability.check", argv = ["cairn", "traceability", "coverage", "--root", "."], working_root = ".", expected_status_class = "success" },
+    ],
+    profiles = [
+      {
+        id = "cairn-local",
+        purpose = "Run the three fastest repository-owned checks with a named latency budget and explicit full-gate references.",
+        repositories = ["cairn"],
+        subject_scope = "commit",
+        checks = ["fmt", "validate", "traceability"],
+        target = "x86_64-linux",
+        toolchain = "nix develop",
+        budget_id = "cairn-local-budget",
+        effect_posture = "read_only",
+        cache_policy = { mode = "enabled", key_inputs = ["profile", "subject", "dependency", "target", "toolchain", "policy", "checks"] },
+        full_gate_refs = ["cargo test --workspace", "cargo clippy --workspace --all-targets -- -D warnings", "nix flake check path:$PWD -L"],
+        required_enforcement = ["vacuum"],
+        non_claims = [
+          "a passing developer-loop receipt proves profile conformance, current supplied identities, selected check statuses, and budget comparison only",
+          "declared read-only posture does not prove command hermeticity, network denial, mutation absence, or clock accuracy",
+          "a fast-loop pass does not satisfy release readiness, full repository checks, proofs, source correctness, or lifecycle archive requirements",
+        ],
+      },
+    ],
+    bounds = {
+      max_profiles = 8,
+      max_budgets = 8,
+      max_checks = 32,
+      max_checks_per_profile = 16,
+      max_text_bytes = 4096,
+      max_issues = 64,
+      max_cache_key_inputs = 8,
+      max_duration_seconds = 3600,
+      max_receipt_bytes = 65536,
+    },
+    receipt_fields = ["valid", "profile", "subject_hash", "policy_hash", "target", "toolchain", "result_statuses", "observed_duration_seconds", "measurement_class", "budget", "cache", "cache_key_identity", "posture_states", "full_gate_status", "issues", "non_claims"],
+    required_non_claims = [
+      "a passing developer-loop receipt proves profile conformance, current supplied identities, selected check statuses, and budget comparison only",
+      "declared effect posture does not prove command hermeticity, network denial, mutation absence, or clock accuracy",
+      "a fast-loop pass does not satisfy release readiness, full repository checks, proofs, source correctness, or lifecycle archive requirements",
     ],
   },
 
