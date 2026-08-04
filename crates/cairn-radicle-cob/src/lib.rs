@@ -1,8 +1,12 @@
 #![deny(clippy::unwrap_used)]
 
+mod adr;
 mod rfd;
 mod store;
 
+pub use crate::adr::{
+    create_adr, inspect_adr, update_adr, AdrCobError, AdrCobInspection, CairnAdrCob,
+};
 pub use crate::rfd::{
     create_rfd, inspect_rfd, update_rfd, CairnRfdCob, RfdCobError, RfdCobInspection,
 };

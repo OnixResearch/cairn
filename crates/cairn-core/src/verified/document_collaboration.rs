@@ -10,11 +10,14 @@ pub const DOCUMENT_COLLABORATION_SCHEMA_V1: &str = "cairn.document-collaboration
 pub const BASE_REVISION_KIND_GIT_OID: &str = "git_oid";
 pub const RFD_SCHEMA_V1: &str = "xyz.onixresearch.rfd.v1";
 pub const RFD_COB_TYPE_NAME: &str = "xyz.onixresearch.rfd";
+pub const ADR_COB_TYPE_NAME: &str = "xyz.onixresearch.adr";
+pub const ADR_SCHEMA_V1: &str = "xyz.onixresearch.adr.v1";
 pub const DOCUMENT_PORTABLE_SCHEMA_V1: &str = "cairn.document-portable.v1";
 pub const DOCUMENT_ROLE_AUTHOR: &str = "author";
 pub const DOCUMENT_ROLE_PARTICIPANT: &str = "participant";
 pub const DOCUMENT_ROLE_REVIEWER: &str = "reviewer";
 pub const DOCUMENT_ROLE_PUBLISHER: &str = "publisher";
+pub const DOCUMENT_ROLE_APPROVER: &str = "approver";
 const BLAKE3_HEX_LENGTH: usize = 64;
 
 // r[impl cairn.document_collaboration.semantic_core]
@@ -22,22 +25,26 @@ const BLAKE3_HEX_LENGTH: usize = 64;
 #[serde(rename_all = "snake_case")]
 pub enum DocumentKind {
     Rfd,
+    Adr,
 }
 
 impl DocumentKind {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Rfd => "rfd",
+            Self::Adr => "adr",
         }
     }
     pub fn cob_type_name(&self) -> &'static str {
         match self {
             Self::Rfd => RFD_COB_TYPE_NAME,
+            Self::Adr => ADR_COB_TYPE_NAME,
         }
     }
     pub fn schema_v1(&self) -> &'static str {
         match self {
             Self::Rfd => RFD_SCHEMA_V1,
+            Self::Adr => ADR_SCHEMA_V1,
         }
     }
 }
@@ -47,6 +54,7 @@ impl TryFrom<&str> for DocumentKind {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "rfd" | RFD_COB_TYPE_NAME => Ok(Self::Rfd),
+            "adr" | ADR_COB_TYPE_NAME => Ok(Self::Adr),
             other => Err(DocumentCobError::UnsupportedKind {
                 kind: other.to_string(),
             }),
@@ -61,6 +69,7 @@ pub enum DocumentRole {
     Author,
     Participant,
     Reviewer,
+    Approver,
     Publisher,
 }
 
@@ -70,6 +79,7 @@ impl DocumentRole {
             Self::Author => DOCUMENT_ROLE_AUTHOR,
             Self::Participant => DOCUMENT_ROLE_PARTICIPANT,
             Self::Reviewer => DOCUMENT_ROLE_REVIEWER,
+            Self::Approver => DOCUMENT_ROLE_APPROVER,
             Self::Publisher => DOCUMENT_ROLE_PUBLISHER,
         }
     }
@@ -120,6 +130,7 @@ pub struct DocumentState {
     pub authors: BTreeSet<String>,
     pub participants: BTreeSet<String>,
     pub reviewers: BTreeSet<String>,
+    pub approvers: BTreeSet<String>,
     pub publishers: BTreeSet<String>,
     pub artifacts: BTreeMap<String, DocumentRevisionSet>,
     pub links: BTreeMap<String, DocumentLink>,
@@ -163,6 +174,7 @@ pub enum DocumentLifecycleStatus {
     Proposed,
     Review,
     Accepted,
+    Deprecated,
     Published,
     Superseded,
 }
@@ -219,6 +231,7 @@ pub struct DocumentInit {
     pub authors: BTreeSet<String>,
     pub participants: BTreeSet<String>,
     pub reviewers: BTreeSet<String>,
+    pub approvers: BTreeSet<String>,
     pub publishers: BTreeSet<String>,
     pub artifacts: BTreeMap<String, String>,
 }
@@ -273,6 +286,7 @@ pub enum DocumentCobError {
         heads: Vec<String>,
     },
     AtomicConflict,
+    ImmutableDecision,
     InvalidRootShape,
     MultiStateAction,
     MissingRelatedBase {
@@ -335,6 +349,7 @@ impl std::fmt::Display for DocumentCobError {
                 formatter,
                 "document operation is conflict-preserving and atomic"
             ),
+            Self::ImmutableDecision => write!(formatter, "accepted decision content is immutable"),
             Self::InvalidRootShape => write!(
                 formatter,
                 "document root operation must be exactly one Init"

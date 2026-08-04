@@ -45,6 +45,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "determinism",
     "developer-loop",
     "agent",
+    "adr",
     "agent-receipt",
     "evidence",
     "evidence-manifest",

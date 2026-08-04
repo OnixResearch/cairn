@@ -86,6 +86,7 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
     let authors = parse_actor_set(read_string_option(args, "--authors"));
     let participants = parse_actor_set(read_string_option(args, "--participants"));
     let reviewers = parse_actor_set(read_string_option(args, "--reviewers"));
+    let approvers = parse_actor_set(read_string_option(args, "--approvers"));
     let publishers = parse_actor_set(read_string_option(args, "--publishers"));
     let spec = read_string_option(args, "--spec").ok_or("rfd import requires --spec PATH")?;
     let spec_content = read_option_path(&spec)?;
@@ -99,6 +100,7 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
         authors,
         participants,
         reviewers,
+        approvers,
         publishers,
         artifacts: std::collections::BTreeMap::from([("spec.md".to_string(), spec_content)]),
     };

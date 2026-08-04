@@ -22,6 +22,26 @@
 // r[verify cairn.rfd_cob.materialization.conflict]
 // r[verify cairn.document_collaboration.validation.negative]
 // r[verify cairn.rfd_cob.validation.release]
+// r[verify cairn.adr_cob.authority]
+// r[verify cairn.adr_cob.authority.allowed]
+// r[verify cairn.adr_cob.authority.denied]
+// r[verify cairn.adr_cob.authority.ambient]
+// r[verify cairn.adr_cob.immutability]
+// r[verify cairn.adr_cob.immutability.accept]
+// r[verify cairn.adr_cob.immutability.reject_edit]
+// r[verify cairn.adr_cob.immutability.supersede]
+// r[verify cairn.adr_cob.profile.root]
+// r[verify cairn.adr_cob.lineage.non_atomic]
+// r[verify cairn.adr_cob.lineage.reciprocal]
+// r[verify cairn.adr_cob.lineage.unknown]
+// r[verify cairn.adr_cob.backends.roundtrip]
+// r[verify cairn.adr_cob.backends.boundary]
+// r[verify cairn.adr_cob.profile.kind]
+// r[verify cairn.adr_cob.identity]
+// r[verify cairn.adr_cob.lineage]
+// r[verify cairn.adr_cob.validation]
+// r[verify cairn.adr_cob.interop.negative]
+// r[verify cairn.adr_cob.materialization.conflict]
 use super::*;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -63,6 +83,7 @@ fn init_op() -> (DocumentOperation, DocumentState) {
         authors: a,
         participants: p,
         reviewers: r,
+        approvers: BTreeSet::from(["approver-pubkey".to_string()]),
         publishers: pub_,
         artifacts: BTreeMap::from([("spec.md".to_string(), "# RFD\n".to_string())]),
     };
@@ -205,7 +226,7 @@ fn invalid_operation_is_atomic() {
 fn author_cannot_review_or_publish() {
     let (_, mut state) = init_op();
     let reviewer_action = DocumentAction::SetLifecycle {
-        status: DocumentLifecycleStatus::Accepted,
+        status: DocumentLifecycleStatus::Review,
         subject_root: document_content_root(&state).unwrap(),
         basis: BTreeSet::new(),
     };
@@ -265,4 +286,81 @@ fn provider_object_id_cannot_become_number() {
         plan_publication_number(&state, 7, &"e".repeat(BLAKE3_HEX_LENGTH), PUBLISHER).unwrap();
     assert_eq!(plan.number, 7);
     assert_eq!(plan.publisher, PUBLISHER);
+}
+
+// r[verify cairn.adr_cob.profile.kind]
+#[test]
+fn adr_kind_rejects_mixed_schema() {
+    let mut init = DocumentInit {
+        schema: RFD_SCHEMA_V1.to_string(),
+        kind: "adr".to_string(),
+        document_id: "adr-1".to_string(),
+        workspace_id: WORKSPACE.to_string(),
+        base_revision: base_revision(),
+        policy_hash: POLICY_HASH.to_string(),
+        authors: BTreeSet::from(["author".to_string()]),
+        participants: BTreeSet::from(["participant".to_string()]),
+        reviewers: BTreeSet::from(["reviewer".to_string()]),
+        approvers: BTreeSet::from(["approver".to_string()]),
+        publishers: BTreeSet::from(["publisher".to_string()]),
+        artifacts: BTreeMap::from([("decision.md".to_string(), "# Decision\n".to_string())]),
+    };
+    assert!(validate_document_init(&init).is_err());
+    init.schema = ADR_SCHEMA_V1.to_string();
+    assert!(validate_document_init(&init).is_ok());
+}
+
+// r[verify cairn.adr_cob.authority]
+// r[verify cairn.adr_cob.immutability]
+#[test]
+fn accept_requires_approver_and_freezes_artifacts() {
+    let (_, mut state) = init_op();
+    state.kind = "adr".to_string();
+    state.authors = BTreeSet::from(["author".to_string()]);
+    state.approvers = BTreeSet::from(["approver".to_string()]);
+    let accept_action = DocumentAction::SetLifecycle {
+        status: DocumentLifecycleStatus::Accepted,
+        subject_root: document_content_root(&state).unwrap(),
+        basis: BTreeSet::new(),
+    };
+    let author_accept = DocumentOperation {
+        id: "a-accept".to_string(),
+        actor: "author".to_string(),
+        role: Some(DocumentRole::Approver),
+        actions: vec![accept_action],
+    };
+    assert!(matches!(
+        apply_document_cob_operation(&mut state, author_accept),
+        Err(DocumentCobError::UnauthorizedRole {
+            required: "approver",
+            ..
+        })
+    ));
+    let accept_action = DocumentAction::SetLifecycle {
+        status: DocumentLifecycleStatus::Accepted,
+        subject_root: document_content_root(&state).unwrap(),
+        basis: BTreeSet::new(),
+    };
+    let approved = DocumentOperation {
+        id: "approve".to_string(),
+        actor: "approver".to_string(),
+        role: Some(DocumentRole::Approver),
+        actions: vec![accept_action],
+    };
+    apply_document_cob_operation(&mut state, approved).unwrap();
+    let heads = state.artifacts["spec.md"].head_ids();
+    let edit = DocumentOperation {
+        id: "edit-after".to_string(),
+        actor: "author".to_string(),
+        role: Some(DocumentRole::Author),
+        actions: vec![DocumentAction::SetArtifact {
+            artifact: "spec.md".to_string(),
+            content: Some("# Changed\n".to_string()),
+            basis: heads,
+        }],
+    };
+    assert!(matches!(
+        apply_document_cob_operation(&mut state, edit),
+        Err(DocumentCobError::ImmutableDecision)
+    ));
 }

@@ -1,5 +1,6 @@
 use std::{env, error::Error};
 
+mod adr;
 mod agent_guidance_shell;
 mod agent_receipt;
 mod archive_compaction;
@@ -59,6 +60,7 @@ mod collaboration;
 mod config_export;
 mod content_addressed_evidence;
 
+use adr::run_adr;
 use collaboration::run_collaboration;
 use determinism::run_determinism;
 use developer_loop::run_developer_loop;
@@ -180,6 +182,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "determinism" => run_determinism(args.collect())?,
         "developer-loop" => run_developer_loop(args.collect())?,
         "agent" => run_agent(args.collect())?,
+        "adr" => run_adr(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,
         "evidence-manifest" => run_evidence_manifest(args.collect())?,

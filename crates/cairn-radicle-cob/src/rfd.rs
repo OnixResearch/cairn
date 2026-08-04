@@ -531,6 +531,7 @@ mod tests {
                 authors: BTreeSet::from([self.author.to_string()]),
                 participants: BTreeSet::from(["participant".to_string()]),
                 reviewers: BTreeSet::from(["reviewer".to_string()]),
+                approvers: BTreeSet::from(["approver".to_string()]),
                 publishers: BTreeSet::from(["publisher".to_string()]),
                 artifacts: BTreeMap::from([("spec.md".to_string(), "# Initial RFD\n".to_string())]),
             })

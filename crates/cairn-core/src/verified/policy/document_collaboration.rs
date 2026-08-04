@@ -6,6 +6,7 @@ use super::PolicyError;
 
 pub const DOCUMENT_COLLABORATION_SCHEMA_V1: &str = "cairn.document-collaboration-policy.v1";
 pub const DOCUMENT_KIND_RFD: &str = "rfd";
+pub const DOCUMENT_KIND_ADR: &str = "adr";
 
 // r[impl cairn.document_collaboration.policy]
 // r[impl cairn.document_collaboration.policy.deterministic]
@@ -43,7 +44,9 @@ pub(super) fn document_collaboration_policy(
     let kind_set = kinds.iter().collect::<BTreeSet<_>>();
     if kinds.is_empty()
         || kinds.len() != kind_set.len()
-        || kinds.iter().any(|k| k != DOCUMENT_KIND_RFD)
+        || kinds
+            .iter()
+            .any(|k| k != DOCUMENT_KIND_RFD && k != DOCUMENT_KIND_ADR)
     {
         return Err(PolicyError::InvalidField(
             "document_collaboration_policy.kinds",

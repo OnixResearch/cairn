@@ -505,7 +505,7 @@ let WorkflowRequiredNonClaims = [
 
   document_collaboration_policy = {
     schema = "cairn.document-collaboration-policy.v1",
-    kinds = ["rfd"],
+    kinds = ["rfd", "adr"],
     profile = {
       bounds = {
         max_document_id_bytes = 256,

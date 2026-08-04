@@ -11,6 +11,10 @@
 // r[impl cairn.rfd_cob.validation]
 // r[impl cairn.rfd_cob.validation.release]
 // r[impl cairn.document_collaboration.radicle_adapter.boundary]
+// r[impl cairn.adr_cob.profile.kind]
+// r[impl cairn.adr_cob.authority]
+// r[impl cairn.adr_cob.identity.registry]
+// r[impl cairn.adr_cob.materialization.conflict]
 // r[impl cairn.rfd_cob.profile]
 pub fn validate_document_init(init: &DocumentInit) -> Result<(), DocumentCobError> {
     let kind = DocumentKind::try_from(init.kind.as_str())?;
@@ -40,6 +44,7 @@ pub fn validate_document_init(init: &DocumentInit) -> Result<(), DocumentCobErro
     if init.authors.is_empty()
         || init.participants.is_empty()
         || init.reviewers.is_empty()
+        || init.approvers.is_empty()
         || init.publishers.is_empty()
     {
         return Err(DocumentCobError::InvalidField {
@@ -95,6 +100,7 @@ pub fn initialize_document_cob(
         authors: state.authors.clone(),
         participants: state.participants.clone(),
         reviewers: state.reviewers.clone(),
+        approvers: state.approvers.clone(),
         publishers: state.publishers.clone(),
         artifacts,
         links: BTreeMap::new(),
@@ -178,6 +184,16 @@ fn apply_artifact(
     content: &Option<String>,
     basis: &BTreeSet<String>,
 ) -> Result<(), DocumentCobError> {
+    // r[impl cairn.adr_cob.immutability]
+    // An accepted (or later) decision freezes its decision source artifacts.
+    if matches!(
+        state.lifecycle.status,
+        DocumentLifecycleStatus::Accepted
+            | DocumentLifecycleStatus::Published
+            | DocumentLifecycleStatus::Superseded
+    ) {
+        return Err(DocumentCobError::ImmutableDecision);
+    }
     let set = state
         .artifacts
         .get_mut(artifact)
@@ -286,6 +302,9 @@ fn required_role(action: &DocumentAction) -> Option<DocumentRole> {
         DocumentAction::SetArtifact { .. } => Some(DocumentRole::Author),
         DocumentAction::AddDiscussion { .. } => Some(DocumentRole::Participant),
         DocumentAction::AddLink { .. } => Some(DocumentRole::Author),
+        DocumentAction::SetLifecycle { status: DocumentLifecycleStatus::Accepted, .. } => {
+            Some(DocumentRole::Approver)
+        }
         DocumentAction::SetLifecycle { .. } => Some(DocumentRole::Reviewer),
         DocumentAction::SetPublication { .. } => Some(DocumentRole::Publisher),
     }
@@ -306,6 +325,7 @@ pub fn document_actor_has_role(
         DocumentRole::Author => (operation_kind_matches(state, operation), state.authors.contains(actor)),
         DocumentRole::Participant => (operation_kind_matches(state, operation), state.participants.contains(actor)),
         DocumentRole::Reviewer => (operation_kind_matches(state, operation), state.reviewers.contains(actor)),
+        DocumentRole::Approver => (operation_kind_matches(state, operation), state.approvers.contains(actor)),
         DocumentRole::Publisher => (operation_kind_matches(state, operation), state.publishers.contains(actor)),
     };
     kind_ok && has_role
@@ -383,6 +403,7 @@ pub fn document_content_root(state: &DocumentState) -> Result<String, DocumentCo
         "authors": state.authors,
         "participants": state.participants,
         "reviewers": state.reviewers,
+        "approvers": state.approvers,
         "publishers": state.publishers,
         "artifacts": artifact_contents,
         "links": state.links,
@@ -439,6 +460,7 @@ pub fn document_conflicted(state: &DocumentState) -> bool {
 // r[impl cairn.rfd_cob.materialization]
 // r[impl cairn.rfd_cob.materialization.exact]
 // r[impl cairn.rfd_cob.materialization.unsafe]
+// r[impl cairn.adr_cob.materialization.exact]
 pub fn plan_document_materialization(
     state: &DocumentState,
     base_destination: &str,

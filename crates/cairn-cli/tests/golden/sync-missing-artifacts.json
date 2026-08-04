@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "ded499ed9aa1abec3eab8f558a287e5ee404e1b435d14972959e26e358586168",
+    "input_hash": "f988e043d1e935037d36485c4297ba0576c8dd4b1102e3bfbcaf7d6cc451be68",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "1b7242389219cf32ac7d776f68cbcbec966da3a3e0b6e710b0d23b2fbf8a39c9",
-    "receipt_hash": "041d82fed9d13b45e1b7be4672be0f7ecff372b56c0dc9b23c1eccfef0e35ecc",
+    "policy_hash": "587d6dabf9e73c050ff15562797eef98cc2b348fc2383563565e7583803d44ed",
+    "receipt_hash": "8cc4e570b545266c090181b8810f7dd057ea88e0a8c32bbfee5b38d3ccd1cc3c",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -24,7 +24,7 @@
     "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "bd7b3301adc8f16db0b6b599c8994cac55a1305bc71b5ceb9e5aaff49458e1b6",
+  "input_hash": "9099f706bad3774772fbc25a9d02c0ee8ce5fc706fd012134f7b9c61057a6750",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -58,12 +58,12 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "1aee412286d7052ebceed775e95b0f6f0c59439dd42c1366734d7894b1b7b311",
+  "plan_hash": "2b900e02adead1b917660cfa7bf9225cda9dd72e09b7b9598ecce6f3c4afc1c1",
   "policy": "cairn-default",
-  "policy_hash": "1b7242389219cf32ac7d776f68cbcbec966da3a3e0b6e710b0d23b2fbf8a39c9",
+  "policy_hash": "587d6dabf9e73c050ff15562797eef98cc2b348fc2383563565e7583803d44ed",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "d70caac8e722ae172dce8b84104c295bbebbd9450e4cf078f43a7122171a48fd"
+  "receipt_hash": "f8d26346b795f34eaad054909df7fbd434be2481c7efa137169941e880d7bfca"
 }

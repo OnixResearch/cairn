@@ -60,6 +60,8 @@ fn import_identity() -> Vec<String> {
         PARTICIPANT.to_string(),
         "--reviewers".to_string(),
         REVIEWER.to_string(),
+        "--approvers".to_string(),
+        "approver".to_string(),
         "--publishers".to_string(),
         PUBLISHER.to_string(),
         "--policy".to_string(),
