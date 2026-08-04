@@ -35,6 +35,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "doctor",
     "validate",
     "view",
+    "workflow",
     "workset",
     "release-readiness",
     "release-evidence",
@@ -445,6 +446,19 @@ mod tests {
                 args: vec!["--root".to_string(), ".".to_string()],
             })
         );
+    }
+
+    #[test]
+    fn admits_workflow_command() {
+        let args = vec![
+            "workflow".to_string(),
+            "status".to_string(),
+            "demo".to_string(),
+        ];
+        assert!(matches!(
+            admit_invocation(&args),
+            InvocationAdmission::Ready(_)
+        ));
     }
 
     #[test]

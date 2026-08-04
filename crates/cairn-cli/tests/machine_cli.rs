@@ -79,6 +79,27 @@ fn machine_success_wraps_the_unchanged_result() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn machine_mode_wraps_workflow_status() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.cli_machine_contract.mode.select]
+    // r[verify cairn.cli_machine_contract.compatibility.nested]
+    let output = run(&[
+        "--machine",
+        "workflow",
+        "status",
+        "demo",
+        "--root",
+        "fixtures/basic",
+    ])?;
+    assert!(output.status.success());
+    let wrapped = envelope(&output)?;
+    assert_eq!(wrapped["ok"], true);
+    assert_eq!(wrapped["command"], "workflow");
+    assert_eq!(wrapped["result"]["command"], "workflow status");
+    assert_eq!(wrapped["result"]["change"], "demo");
+    Ok(())
+}
+
+#[test]
 fn machine_output_is_byte_repeatable() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.cli_machine_contract.verification]
     // r[verify cairn.cli_machine_contract.verification.suites]
