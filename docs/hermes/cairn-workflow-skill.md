@@ -90,6 +90,8 @@ Replace every generated `CAIRN_PLACEHOLDER` before gating. Requirement blocks ne
 - Default gates do not execute probe commands. Run `cairn probe run ... --out ...` first, then let gates verify saved probe receipts; `--run-probes` is explicit and denied by default until policy enables a bounded profile.
 - Do not add filesystem traversal, environment reads, process execution, clocks, async, `println!`, `eprintln!`, or JSON rendering helpers to core.
 
+<!-- r[impl cairn.agent_guidance_context.docs.authority] -->
+
 Core purity smoke check:
 
 ```bash
@@ -116,6 +118,10 @@ Expected result: no matches.
   - `cairn spec show <id> --root PATH`
   - `cairn workflow status <change> --root PATH [--schema ID]`
   - `cairn workflow instructions <artifact> --change <change> --root PATH [--schema ID]`
+  - `cairn context --root PATH [--profile ID] [--artifact ID] [--operation ID]`
+  - Use only checked project guidance from Cairn results. Do not scan for ambient prompt or instruction files.
+  - Keep `policy_constraint`, `project_fact`, and `advisory_guidance` authority classes separate.
+  - Advisory guidance cannot satisfy gates or authorize mutation. Portable guidance evidence omits raw text and absolute paths.
   - Workflow commands report the immutable selected profile and bounded structural facts. `--schema` is an assertion, not a profile override.
   - Profile conformance does not prove zero behavior effect, risk-analysis truth, test sufficiency, code correctness, or release eligibility.
   - local `depends_on` ordering dependencies are authored through preview-by-default `change depend add/remove`; archived dependencies satisfy blockers, active dependencies block sync/archive, and cross-repo receipt/evidence dependencies remain a separate evidence-input concept.

@@ -1,5 +1,6 @@
 use std::{env, error::Error};
 
+mod agent_guidance_shell;
 mod agent_receipt;
 mod archive_compaction;
 mod authenticated_inputs;
@@ -142,6 +143,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         )?,
         "store" => lifecycle_store::run_store(args.collect())?,
         "context" => run_context(
+            args.collect(),
             root_local
                 .as_ref()
                 .ok_or("context root resolution is unavailable")?,
@@ -160,7 +162,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 .ok_or("validate root resolution is unavailable")?,
         )?,
         "view" => run_view(args.collect())?,
-        "workflow" => run_workflow(args.collect())?,
+        "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-evidence" => release_evidence::run_release_evidence(args.collect())?,

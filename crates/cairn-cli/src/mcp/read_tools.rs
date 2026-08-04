@@ -33,6 +33,53 @@ pub(super) fn mcp_list_content(input: &Value) -> Result<Value, Box<dyn Error>> {
     ))
 }
 
+// r[impl cairn.agent_guidance_context.mcp]
+pub(super) fn mcp_context(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let policy = if input.get("policy").is_some() {
+        load_policy_file(mcp_policy(input))?
+    } else {
+        cairn_core::parse_policy_json(include_str!(
+            "../../../../cairn-policy/generated/cairn-policy.json"
+        ))?
+    };
+    let request = cairn_core::AgentGuidanceRequest {
+        profile: input
+            .get("profile")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned),
+        artifact: input
+            .get("artifact")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned),
+        operation: Some(
+            input
+                .get("operation")
+                .and_then(Value::as_str)
+                .unwrap_or(cairn_core::AGENT_GUIDANCE_OPERATION_CONTEXT)
+                .to_string(),
+        ),
+    };
+    let guidance =
+        crate::agent_guidance_shell::load_agent_guidance(&root, &root, request, &[], &policy)?;
+    let valid = guidance.as_ref().is_none_or(|result| result.valid);
+    let mut receipt = json!({
+        "command": "context",
+        "root": path_string(&root),
+        "valid": valid,
+        "guidance": Value::Null,
+        "policy": policy.name,
+        "policy_hash": canonical_json_hash(&policy.raw),
+        "read_only": true,
+        "mutated": false,
+        "mcp": {"read_only": true, "destructive": false},
+    });
+    if let Some(guidance) = guidance {
+        receipt["guidance"] = crate::agent_guidance_shell::agent_guidance_json(&guidance);
+    }
+    Ok(with_portable_receipt_hash(&root, receipt))
+}
+
 pub(super) fn mcp_read_spec(input: &Value) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.mcp_server.read_tools.artifacts]
     let root = mcp_root(input);

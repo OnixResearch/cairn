@@ -96,13 +96,16 @@ Inspect policy-owned artifact readiness and instructions without mutation:
 ```bash
 nix run path:$PWD#cairn -- workflow status CHANGE --root .
 nix run path:$PWD#cairn -- workflow instructions ARTIFACT --change CHANGE --root .
+nix run path:$PWD#cairn -- context --root . --profile assurance --artifact tasks
 ```
 
 Read [Workflow profiles](docs/workflow-profiles.md) for selection, obligations, review evidence, sync, archive, compatibility, and non-claims.
 Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, fields, MCP parity, and claim boundaries.
+Read [Agent guidance context](docs/agent-guidance-context.md) before you declare local context or advisory text.
 
 <!-- r[impl cairn.artifact_workflow_contract.docs] -->
 <!-- r[impl cairn.lifecycle_workflow_profiles.docs] -->
+<!-- r[impl cairn.agent_guidance_context.docs] -->
 
 ## Local checks
 

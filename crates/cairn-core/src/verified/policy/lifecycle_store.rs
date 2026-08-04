@@ -28,6 +28,8 @@ const ELIGIBLE_ROOT_COMMANDS: &[&str] = &[
     "spec show",
     "validate",
     "context",
+    "workflow status",
+    "workflow instructions",
     "doctor",
 ];
 const ROOT_PRECEDENCE: &[&str] = &[
@@ -48,6 +50,9 @@ const PROJECT_CONFIG_REQUIRED_FIELDS: &[&str] = &[
     "schema",
     "lifecycle_store",
     "references",
+    "context_refs",
+    "artifact_guidance",
+    "operation_guidance",
     "source_blake3",
     "non_claims",
 ];

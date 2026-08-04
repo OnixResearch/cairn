@@ -1,3 +1,4 @@
+pub mod agent_guidance;
 pub mod agent_receipt;
 pub mod ai_spec_draft;
 pub mod archive_compaction;

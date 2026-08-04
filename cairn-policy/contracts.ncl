@@ -240,6 +240,32 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     forbidden_selection_sources | NonEmptyArray | Array NonEmptyString,
   },
 
+  AgentGuidanceBounds = {
+    max_context_refs | PositiveNumber,
+    max_artifact_guidance | PositiveNumber,
+    max_operation_guidance | PositiveNumber,
+    max_selectors_per_entry | PositiveNumber,
+    max_id_bytes | PositiveNumber,
+    max_path_bytes | PositiveNumber,
+    max_inline_text_bytes | PositiveNumber,
+    max_source_text_bytes | PositiveNumber,
+    max_priority | PositiveNumber,
+    max_issues | PositiveNumber,
+  },
+
+  AgentGuidancePolicy = {
+    schema | NonEmptyString,
+    allowed_source_roots | NonEmptyArray | Array NonEmptyString,
+    allowed_authority_classes | NonEmptyArray | Array NonEmptyString,
+    known_profiles | NonEmptyArray | Array NonEmptyString,
+    known_artifacts | NonEmptyArray | Array NonEmptyString,
+    known_operations | NonEmptyArray | Array NonEmptyString,
+    bounds | AgentGuidanceBounds,
+    receipt_fields | NonEmptyArray | Array NonEmptyString,
+    portable_excluded_fields | NonEmptyArray | Array NonEmptyString,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
   Marker = {
     id | NonEmptyString,
     token | MarkerToken,
@@ -679,6 +705,7 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     policy_schema_compatibility | PolicySchemaCompatibility,
     schemas | NonEmptyArray | Array ArtifactSchema,
     workflow_profile_policy | WorkflowProfilePolicy,
+    agent_guidance_policy | AgentGuidancePolicy,
     lifecycle_stages | NonEmptyArray | Array Stage,
     task_marker_policy | TaskMarkerPolicy,
     gate_policy | GatePolicy,

@@ -1,7 +1,7 @@
 let Contracts = import "contracts.ncl" in
 let NominalIdentityPolicy = import "nominal-evidence-identities.ncl" in
 let PolicySchemaVersion = "cairn.policy-schema.v1" in
-let PolicyFieldSetDigest = "99ef663c2b75b0dd51d5090c2a26d78fa5cb24e15b1b97368e5c5efb2381ae04" in
+let PolicyFieldSetDigest = "e7896d6058231d3440fc31936ed7b5baaf39530026d7c482cdd8d49d8a9d46bb" in
 let MaxStoreIdBytes = 64 in
 let MaxRemoteHintBytes = 2048 in
 let MaxReferences = 32 in
@@ -51,6 +51,8 @@ let ProjectConfigNonClaims = [
   "a direct reference provides read-only discovery and does not satisfy dependencies, gates, evidence, or requirements",
   "reference indexing does not prove truth, freshness, ownership, implementation, or satisfaction",
   "project configuration does not authorize transitive reference traversal or transport",
+  "project facts and advisory guidance do not override generated policy or command authorization",
+  "project context checks do not prove truth, secrecy, semantic consistency, agent compliance, or release eligibility",
 ] in
 let LifecycleStoreRequiredNonClaims = [
   "a valid store proves only a bounded native lifecycle identity at one observed local path",
@@ -387,6 +389,36 @@ let WorkflowRequiredNonClaims = [
     forbidden_selection_sources = ["user-global", "environment", "agent-prompt", "remote-package"],
   },
 
+  agent_guidance_policy = {
+    schema = "cairn.agent-guidance-policy.v1",
+    allowed_source_roots = ["project", "lifecycle"],
+    allowed_authority_classes = ["project_fact", "advisory_guidance"],
+    known_profiles = ["spec-driven", "assurance", "no-spec-delta"],
+    known_artifacts = ["proposal", "specs", "design", "tasks", "risk", "verification", "assurance-review", "acceptance", "no-spec-review"],
+    known_operations = ["context", "workflow-instructions"],
+    bounds = {
+      max_context_refs = 64,
+      max_artifact_guidance = 64,
+      max_operation_guidance = 64,
+      max_selectors_per_entry = 32,
+      max_id_bytes = 128,
+      max_path_bytes = 512,
+      max_inline_text_bytes = 65536,
+      max_source_text_bytes = 262144,
+      max_priority = 10000,
+      max_issues = 128,
+    },
+    receipt_fields = ["valid", "request", "bounds", "entries", "portable_entries", "issues", "local_result_hash", "portable_identity", "project_identity", "policy_hash", "non_claims"],
+    portable_excluded_fields = ["text", "absolute_path"],
+    required_non_claims = [
+      "project facts and advisory guidance do not override generated policy or command authorization",
+      "context identity binds observed bytes but does not prove truth, freshness beyond those bytes, or semantic consistency",
+      "path, encoding, size, and omission checks do not prove that declared text is secret-free or safe to disclose",
+      "guidance selection does not satisfy gates, dependencies, evidence, implementation correctness, or release eligibility",
+      "portable guidance identity omits raw text and absolute paths by default",
+    ],
+  },
+
   lifecycle_stages = ["proposal", "design", "tasks", "implementation", "archive"],
 
   task_marker_policy = {
@@ -649,7 +681,7 @@ let WorkflowRequiredNonClaims = [
       source_identity_field = "source_blake3",
       runtime_nickel_evaluation = false,
       stale_projection_rejected = true,
-      required_fields = ["schema", "lifecycle_store", "references", "source_blake3", "non_claims"],
+      required_fields = ["schema", "lifecycle_store", "references", "context_refs", "artifact_guidance", "operation_guidance", "source_blake3", "non_claims"],
       required_non_claims = ProjectConfigNonClaims,
     },
     root_resolution = {
@@ -662,6 +694,8 @@ let WorkflowRequiredNonClaims = [
         "spec show",
         "validate",
         "context",
+        "workflow status",
+        "workflow instructions",
         "doctor",
       ],
       precedence = [

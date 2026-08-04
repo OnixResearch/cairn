@@ -41,6 +41,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Read bounded active change metadata by id",
         ),
         mcp_tool(
+            "cairn_context",
+            true,
+            false,
+            "Return bounded project facts and advisory guidance with explicit authority labels",
+        ),
+        mcp_tool(
             "cairn_workflow_status",
             true,
             false,
@@ -196,6 +202,9 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_read_spec" => mcp_object_schema(&["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" => mcp_object_schema(&["change"], &["root"]),
         "cairn_change_create" => mcp_object_schema(&["change"], &["root", "policy", "profile"]),
+        "cairn_context" => {
+            mcp_object_schema(&[], &["root", "policy", "profile", "artifact", "operation"])
+        }
         "cairn_workflow_status" => mcp_object_schema(&["change"], &["root", "policy", "schema"]),
         "cairn_workflow_instructions" => {
             mcp_object_schema(&["change", "artifact"], &["root", "policy", "schema"])
@@ -308,6 +317,12 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_change_create" => {
             validate_string_args(name, object, &["change"], &["root", "policy", "profile"])
         }
+        "cairn_context" => validate_string_args(
+            name,
+            object,
+            &[],
+            &["root", "policy", "profile", "artifact", "operation"],
+        ),
         "cairn_workflow_status" => {
             validate_string_args(name, object, &["change"], &["root", "policy", "schema"])
         }

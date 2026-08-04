@@ -8,11 +8,12 @@ use std::{
 use cairn_core::{
     build_workflow_instructions, canonical_json_hash, changes_dir, derive_workflow_status,
     evaluate_workflow_profile, select_workflow_profile, validate_change_name,
-    validate_review_receipt, workflow_change_profile_metadata_from_value, GateSnapshot, GateStage,
-    LifecycleLayout, Policy, WorkflowArtifactObservation, WorkflowArtifactState,
-    WorkflowChangeProfileMetadata, WorkflowProfileArtifactHash, WorkflowProfileEvaluation,
-    WorkflowProfileEvidence, WorkflowProfileRef, WorkflowProfileSelection, WorkflowReviewEvidence,
-    WorkflowReviewInputEvidence, WorkflowSchemaPolicy, WorkflowStatusReport,
+    validate_review_receipt, workflow_change_profile_metadata_from_value, AgentGuidanceRequest,
+    GateSnapshot, GateStage, LifecycleLayout, Policy, WorkflowArtifactObservation,
+    WorkflowArtifactState, WorkflowChangeProfileMetadata, WorkflowProfileArtifactHash,
+    WorkflowProfileEvaluation, WorkflowProfileEvidence, WorkflowProfileRef,
+    WorkflowProfileSelection, WorkflowReviewEvidence, WorkflowReviewInputEvidence,
+    WorkflowSchemaPolicy, WorkflowStatusReport, AGENT_GUIDANCE_OPERATION_WORKFLOW_INSTRUCTIONS,
     MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT, WORKFLOW_ADMISSION_ACCEPTANCE,
     WORKFLOW_ADMISSION_DELTA_SPECS, WORKFLOW_ADMISSION_TASKS, WORKFLOW_PROFILE_SOURCE_CREATE,
 };
@@ -29,7 +30,10 @@ use options::{parse_workflow_request, WorkflowRequestKind};
 use receipts::{instructions_receipt, status_receipt, workflow_input_hash, WorkflowReceiptContext};
 
 // r[impl cairn.artifact_workflow_contract.cli]
-pub(crate) fn run_workflow(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub(crate) fn run_workflow(
+    args: Vec<String>,
+    root_local: Option<&crate::lifecycle_store_shell::RootLocalInvocation>,
+) -> Result<(), Box<dyn Error>> {
     let request = parse_workflow_request(&args)?;
     let value = match &request.kind {
         WorkflowRequestKind::Status { change } => workflow_status_value(
@@ -38,13 +42,18 @@ pub(crate) fn run_workflow(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             request.schema.as_deref(),
             &request.policy,
         )?,
-        WorkflowRequestKind::Instructions { change, artifact } => workflow_instructions_value(
-            &request.root,
-            change,
-            artifact,
-            request.schema.as_deref(),
-            &request.policy,
-        )?,
+        WorkflowRequestKind::Instructions { change, artifact } => {
+            workflow_instructions_value_with_project_root(
+                &request.root,
+                root_local
+                    .and_then(crate::lifecycle_store_shell::RootLocalInvocation::project_root)
+                    .unwrap_or(&request.root),
+                change,
+                artifact,
+                request.schema.as_deref(),
+                &request.policy,
+            )?
+        }
     };
     print_json(value)
 }
@@ -66,14 +75,56 @@ pub(crate) fn workflow_instructions_value(
     schema_selector: Option<&str>,
     policy_path: &Path,
 ) -> Result<Value, Box<dyn Error>> {
-    let context = workflow_context(root, change, schema_selector, policy_path)?;
+    workflow_instructions_value_with_project_root(
+        root,
+        root,
+        change,
+        artifact,
+        schema_selector,
+        policy_path,
+    )
+}
+
+// r[impl cairn.agent_guidance_context.integration.instructions]
+// r[impl cairn.agent_guidance_context.authority.advisory]
+fn workflow_instructions_value_with_project_root(
+    root: &Path,
+    project_root: &Path,
+    change: &str,
+    artifact: &str,
+    schema_selector: Option<&str>,
+    policy_path: &Path,
+) -> Result<Value, Box<dyn Error>> {
+    let mut context = workflow_context(root, change, schema_selector, policy_path)?;
     let instructions = build_workflow_instructions(
         &context.schema,
         &context.report,
         artifact,
         &context.change_path,
     )?;
-    instructions_receipt(&context.receipt_context(root, change), &instructions)
+    let policy = load_policy_file(policy_path.to_path_buf())?;
+    let guidance = crate::agent_guidance_shell::load_agent_guidance(
+        project_root,
+        root,
+        AgentGuidanceRequest {
+            profile: Some(context.selection.profile_id.clone()),
+            artifact: Some(artifact.to_string()),
+            operation: Some(AGENT_GUIDANCE_OPERATION_WORKFLOW_INSTRUCTIONS.to_string()),
+        },
+        &instructions.constraints,
+        &policy,
+    )?;
+    if let Some(guidance) = &guidance {
+        context.input_hash = canonical_json_hash(&json!({
+            "workflow_input_hash": context.input_hash,
+            "guidance_portable_identity": guidance.portable_identity,
+        }));
+    }
+    instructions_receipt(
+        &context.receipt_context(root, change),
+        &instructions,
+        guidance.as_ref(),
+    )
 }
 
 #[derive(Debug, Clone)]

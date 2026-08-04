@@ -5,6 +5,7 @@ use crate::verified::artifact_workflow::{
 };
 
 use super::{
+    agent_guidance::agent_guidance_policy,
     fields::{
         change_metadata_fields, exemption_marker_policy, gate_fields, mutation_policy_fields,
         receipt_schemas, require_nonempty_array, task_marker_fields, task_markers, version_field,
@@ -47,6 +48,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         path: error.path,
         message: error.message,
     })?;
+    let agent_guidance_policy = agent_guidance_policy(&value)?;
     let task_marker = task_marker_fields(&value)?;
     let task_marker_tokens = task_markers(&value)?;
     let gate = gate_fields(&value)?;
@@ -97,6 +99,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         artifact_substance_policy: gate.substance,
         workflow_schemas,
         workflow_profile_policy,
+        agent_guidance_policy,
         machine_contract_policy,
         sync_require_gate: mutation.sync_require_gate,
         archive_require_gate: mutation.archive_require_gate,

@@ -3,6 +3,7 @@ use serde_json::Value;
 use super::PolicySchemaCompatibilityMetadata;
 
 use crate::verified::{
+    agent_guidance::AgentGuidancePolicy,
     artifact_workflow::{WorkflowProfileRegistryPolicy, WorkflowSchemaPolicy},
     cli_machine::MachineContractPolicy,
     function_address_gates::FunctionAddressPolicy,
@@ -28,6 +29,7 @@ pub struct Policy {
     pub artifact_substance_policy: ArtifactSubstancePolicy,
     pub workflow_schemas: Vec<WorkflowSchemaPolicy>,
     pub workflow_profile_policy: WorkflowProfileRegistryPolicy,
+    pub agent_guidance_policy: AgentGuidancePolicy,
     pub machine_contract_policy: MachineContractPolicy,
     pub sync_require_gate: bool,
     pub archive_require_gate: bool,

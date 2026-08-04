@@ -7,9 +7,11 @@ use std::{
 };
 
 use cairn_core::{
-    admit_lifecycle_store_identity, blake3_hex, canonical_json, LifecycleStoreIdentityProjection,
-    LIFECYCLE_STORE_IDENTITY_NON_CLAIMS, LIFECYCLE_STORE_IDENTITY_SCHEMA_V1,
-    LIFECYCLE_STORE_NON_CLAIMS_MAX_COUNT, LIFECYCLE_STORE_NON_CLAIM_MAX_BYTES,
+    admit_agent_guidance_declaration, admit_lifecycle_store_identity, blake3_hex, canonical_json,
+    parse_policy_json, AgentArtifactGuidance, AgentContextReference, AgentGuidanceDeclaration,
+    AgentOperationGuidance, LifecycleStoreIdentityProjection, LIFECYCLE_STORE_IDENTITY_NON_CLAIMS,
+    LIFECYCLE_STORE_IDENTITY_SCHEMA_V1, LIFECYCLE_STORE_NON_CLAIMS_MAX_COUNT,
+    LIFECYCLE_STORE_NON_CLAIM_MAX_BYTES,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -34,6 +36,8 @@ const STAGED_CONTRACTS: &str = "lifecycle-store-contracts.ncl";
 const STAGED_CONTRACT: &str = "selected-contract.ncl";
 const STAGED_OUTPUT: &str = "output.json";
 const CONTRACTS_SOURCE: &str = include_str!("../../../cairn-policy/lifecycle-store-contracts.ncl");
+const GENERATED_POLICY_JSON: &str =
+    include_str!("../../../cairn-policy/generated/cairn-policy.json");
 const STORE_CONTRACT_FIELD: &str = "StoreIdentitySource";
 const PROJECT_CONTRACT_FIELD: &str = "ProjectDeclarationSource";
 const PROJECT_REQUIRED_NON_CLAIMS: &[&str] = &[
@@ -41,6 +45,8 @@ const PROJECT_REQUIRED_NON_CLAIMS: &[&str] = &[
     "a direct reference provides read-only discovery and does not satisfy dependencies, gates, evidence, or requirements",
     "reference indexing does not prove truth, freshness, ownership, implementation, or satisfaction",
     "project configuration does not authorize transitive reference traversal or transport",
+    "project facts and advisory guidance do not override generated policy or command authorization",
+    "project context checks do not prove truth, secrecy, semantic consistency, agent compliance, or release eligibility",
 ];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -130,6 +136,12 @@ struct ProjectSource {
     schema: String,
     lifecycle_store: Option<StoreReference>,
     references: Vec<StoreReference>,
+    #[serde(default)]
+    context_refs: Vec<AgentContextReference>,
+    #[serde(default)]
+    artifact_guidance: Vec<AgentArtifactGuidance>,
+    #[serde(default)]
+    operation_guidance: Vec<AgentOperationGuidance>,
     non_claims: Vec<String>,
 }
 
@@ -138,6 +150,9 @@ struct ProjectProjection {
     schema: String,
     lifecycle_store: Option<StoreReference>,
     references: Vec<StoreReference>,
+    context_refs: Vec<AgentContextReference>,
+    artifact_guidance: Vec<AgentArtifactGuidance>,
+    operation_guidance: Vec<AgentOperationGuidance>,
     source_blake3: String,
     non_claims: Vec<String>,
 }
@@ -324,6 +339,8 @@ fn build_store_projection(evaluated: Value, source_blake3: &str) -> Result<Value
     .map_err(Into::into)
 }
 
+// r[impl cairn.agent_guidance_context.project_config.valid]
+// r[impl cairn.agent_guidance_context.project_config.invalid]
 fn build_project_projection(
     evaluated: Value,
     source_blake3: &str,
@@ -336,6 +353,22 @@ fn build_project_projection(
     if let Some(pointer) = &source.lifecycle_store {
         validate_reference(pointer, source_blake3)?;
     }
+    let declaration = AgentGuidanceDeclaration {
+        context_refs: source.context_refs,
+        artifact_guidance: source.artifact_guidance,
+        operation_guidance: source.operation_guidance,
+    };
+    let generated_policy = parse_policy_json(GENERATED_POLICY_JSON)?;
+    let admitted =
+        admit_agent_guidance_declaration(&declaration, &generated_policy.agent_guidance_policy)
+            .map_err(|issues| {
+                let diagnostics = issues
+                    .iter()
+                    .map(|issue| format!("{}:{}: {}", issue.code, issue.field_path, issue.message))
+                    .collect::<Vec<_>>()
+                    .join("; ");
+                format!("project guidance declaration is invalid: {diagnostics}")
+            })?;
     let mut references = source.references;
     for reference in &references {
         validate_reference(reference, source_blake3)?;
@@ -366,6 +399,9 @@ fn build_project_projection(
         schema: PROJECT_PROJECTION_SCHEMA_V1.to_string(),
         lifecycle_store: source.lifecycle_store,
         references,
+        context_refs: admitted.declaration.context_refs,
+        artifact_guidance: admitted.declaration.artifact_guidance,
+        operation_guidance: admitted.declaration.operation_guidance,
         source_blake3: source_blake3.to_string(),
         non_claims,
     })

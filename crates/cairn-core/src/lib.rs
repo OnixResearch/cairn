@@ -16,6 +16,23 @@
 
 pub mod verified;
 
+pub use verified::agent_guidance::{
+    admit_agent_guidance_declaration, admit_portable_agent_guidance_result,
+    build_agent_guidance_result, portable_agent_guidance_result, safe_relative_context_path,
+    select_agent_guidance, validate_agent_guidance_policy, AdmittedAgentGuidance,
+    AgentArtifactGuidance, AgentContextReference, AgentGuidanceBounds, AgentGuidanceDeclaration,
+    AgentGuidanceEntry, AgentGuidanceIssue, AgentGuidanceObservationStatus, AgentGuidancePolicy,
+    AgentGuidanceRequest, AgentGuidanceResult, AgentGuidanceSelectionPlan,
+    AgentGuidanceSourceObservation, AgentOperationGuidance, PortableAgentGuidanceEntry,
+    PortableAgentGuidanceResult, AGENT_GUIDANCE_AUTHORITY_ADVISORY, AGENT_GUIDANCE_AUTHORITY_FACT,
+    AGENT_GUIDANCE_AUTHORITY_POLICY, AGENT_GUIDANCE_ISSUE_AUTHORITY,
+    AGENT_GUIDANCE_ISSUE_DECLARATION, AGENT_GUIDANCE_ISSUE_OBSERVATION, AGENT_GUIDANCE_ISSUE_PATH,
+    AGENT_GUIDANCE_ISSUE_PORTABLE_INVALID, AGENT_GUIDANCE_ISSUE_PORTABLE_RAW,
+    AGENT_GUIDANCE_ISSUE_SELECTOR, AGENT_GUIDANCE_ISSUE_SOURCE,
+    AGENT_GUIDANCE_ISSUE_SOURCE_MISSING, AGENT_GUIDANCE_OPERATION_CONTEXT,
+    AGENT_GUIDANCE_OPERATION_WORKFLOW_INSTRUCTIONS, AGENT_GUIDANCE_POLICY_SCHEMA_V1,
+    AGENT_GUIDANCE_SOURCE_LIFECYCLE, AGENT_GUIDANCE_SOURCE_PROJECT,
+};
 pub use verified::agent_receipt::{
     agent_run_preserves_receipt_hash, agent_run_receipt_hash, agent_run_receipt_issues,
     authoritative_command_hash, authoritative_selection_hash, evaluate_agent_run_completion,

@@ -8,14 +8,16 @@ use std::{
 use cairn_core::{
     admit_lifecycle_store_identity, admit_lifecycle_store_locator, build_lifecycle_store_context,
     canonical_json_hash, lifecycle_store_source_identity, normalize_direct_references,
-    resolve_lifecycle_root, spec_title, AcceptedSpecMetadata, AcceptedSpecSnapshot,
-    ContextObservations, ContextResult, DirectStoreReference, DoctorFindingStatus,
-    ExplicitLifecycleStoreSelector, ExplicitRootSelector, FallbackFacts, LifecycleAuthorityEffect,
-    LifecycleStoreDoctorFinding, LifecycleStoreIdentity, LifecycleStoreIdentityProjection,
-    LifecycleStoreLocatorProjection, LocatorSnapshot, LocatorStoreObservation, NativeRootCandidate,
-    ProjectPointerObservation, ReferenceContentBoundary, ReferenceTraversalBoundary,
-    RegistryLookupBoundary, RootResolutionObservations, RootResolutionResult, RootResolutionSource,
-    StoreIdentityObservation, VcsBoundaryFacts,
+    parse_policy_json, resolve_lifecycle_root, spec_title, AcceptedSpecMetadata,
+    AcceptedSpecSnapshot, AgentArtifactGuidance, AgentContextReference, AgentGuidanceRequest,
+    AgentGuidanceResult, AgentOperationGuidance, ContextObservations, ContextResult,
+    DirectStoreReference, DoctorFindingStatus, ExplicitLifecycleStoreSelector,
+    ExplicitRootSelector, FallbackFacts, LifecycleAuthorityEffect, LifecycleStoreDoctorFinding,
+    LifecycleStoreIdentity, LifecycleStoreIdentityProjection, LifecycleStoreLocatorProjection,
+    LocatorSnapshot, LocatorStoreObservation, NativeRootCandidate, ProjectPointerObservation,
+    ReferenceContentBoundary, ReferenceTraversalBoundary, RegistryLookupBoundary,
+    RootResolutionObservations, RootResolutionResult, RootResolutionSource,
+    StoreIdentityObservation, VcsBoundaryFacts, AGENT_GUIDANCE_OPERATION_CONTEXT,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -63,6 +65,12 @@ struct ProjectProjection {
     lifecycle_store: Option<ProjectStoreReference>,
     #[serde(default)]
     references: Vec<ProjectStoreReference>,
+    #[serde(default)]
+    context_refs: Vec<AgentContextReference>,
+    #[serde(default)]
+    artifact_guidance: Vec<AgentArtifactGuidance>,
+    #[serde(default)]
+    operation_guidance: Vec<AgentOperationGuidance>,
     source_blake3: String,
     #[serde(default)]
     non_claims: Vec<String>,
@@ -199,14 +207,58 @@ pub(crate) fn attach_resolution(mut value: Value, invocation: &RootLocalInvocati
     value
 }
 
-pub(crate) fn run_context(invocation: &RootLocalInvocation) -> Result<(), Box<dyn Error>> {
+// r[impl cairn.agent_guidance_context.integration]
+// r[impl cairn.agent_guidance_context.compatibility]
+pub(crate) fn run_context(
+    args: Vec<String>,
+    invocation: &RootLocalInvocation,
+) -> Result<(), Box<dyn Error>> {
     let context = invocation.context_result()?;
-    let valid = context.valid;
-    print_json(attach_resolution(context_result_json(&context), invocation))?;
+    let request = context_guidance_request(&args)?;
+    let guidance = invocation.agent_guidance(request)?;
+    let valid = context.valid && guidance.as_ref().is_none_or(|result| result.valid);
+    let mut value = attach_resolution(context_result_json(&context), invocation);
+    if let Some(guidance) = guidance {
+        value["guidance"] = crate::agent_guidance_shell::agent_guidance_json(&guidance);
+    }
+    print_json(value)?;
     if !valid {
-        return Err("lifecycle-store context is invalid".into());
+        return Err("lifecycle-store context or agent guidance is invalid".into());
     }
     Ok(())
+}
+
+fn context_guidance_request(args: &[String]) -> Result<AgentGuidanceRequest, Box<dyn Error>> {
+    let mut profile = None;
+    let mut artifact = None;
+    let mut operation = None;
+    let mut index = 0;
+    while index < args.len() {
+        let target = match args[index].as_str() {
+            "--profile" => &mut profile,
+            "--artifact" => &mut artifact,
+            "--operation" => &mut operation,
+            ROOT_FLAG | LIFECYCLE_STORE_FLAG => {
+                index = index.saturating_add(OPTION_TOKEN_WIDTH);
+                continue;
+            }
+            unknown => return Err(format!("unknown context argument: {unknown}").into()),
+        };
+        if target.is_some() {
+            return Err(format!("context received {} more than once", args[index]).into());
+        }
+        *target = Some(
+            args.get(index + 1)
+                .ok_or_else(|| format!("context {} requires a value", args[index]))?
+                .clone(),
+        );
+        index = index.saturating_add(OPTION_TOKEN_WIDTH);
+    }
+    Ok(AgentGuidanceRequest {
+        profile,
+        artifact,
+        operation: operation.or_else(|| Some(AGENT_GUIDANCE_OPERATION_CONTEXT.to_string())),
+    })
 }
 
 pub(crate) fn context_result_json(result: &ContextResult) -> Value {
@@ -247,6 +299,34 @@ pub(crate) fn resolution_json(result: &RootResolutionResult) -> Value {
 }
 
 impl RootLocalInvocation {
+    pub(crate) fn project_root(&self) -> Option<&Path> {
+        self.project.as_ref().map(|project| project.root.as_path())
+    }
+
+    pub(crate) fn selected_root(&self) -> Result<&Path, Box<dyn Error>> {
+        self.resolution
+            .selected
+            .as_ref()
+            .map(|selected| Path::new(&selected.root))
+            .ok_or_else(|| "lifecycle root is unavailable".into())
+    }
+
+    pub(crate) fn agent_guidance(
+        &self,
+        request: AgentGuidanceRequest,
+    ) -> Result<Option<AgentGuidanceResult>, Box<dyn Error>> {
+        let lifecycle_root = self.selected_root()?;
+        let project_root = self.project_root().unwrap_or(lifecycle_root);
+        let policy = parse_policy_json(GENERATED_POLICY_JSON)?;
+        crate::agent_guidance_shell::load_agent_guidance(
+            project_root,
+            lifecycle_root,
+            request,
+            &[],
+            &policy,
+        )
+    }
+
     pub(crate) fn context_result(&self) -> Result<ContextResult, Box<dyn Error>> {
         let references = self
             .project
@@ -506,6 +586,11 @@ fn observe_project(
     let projection_bytes = read_bounded_file(&projection_path, CONFIG_READ_MAX_BYTES)?;
     let projection_value: Value = serde_json::from_slice(&projection_bytes)?;
     let projection: ProjectProjection = serde_json::from_value(projection_value.clone())?;
+    let _guidance_entry_count = projection
+        .context_refs
+        .len()
+        .saturating_add(projection.artifact_guidance.len())
+        .saturating_add(projection.operation_guidance.len());
     if projection.schema != policy.project_projection_schema {
         return Err(format!(
             "unsupported project projection schema: {}",
@@ -826,7 +911,16 @@ fn command_words_match(candidate: &str, tokens: &[&str]) -> bool {
 fn is_resolution_enabled_command(identity: Option<&str>) -> bool {
     matches!(
         identity,
-        Some("status" | "spec list" | "spec show" | "validate" | "context" | "doctor")
+        Some(
+            "status"
+                | "spec list"
+                | "spec show"
+                | "validate"
+                | "context"
+                | "workflow status"
+                | "workflow instructions"
+                | "doctor"
+        )
     )
 }
 

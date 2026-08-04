@@ -12,6 +12,22 @@ let PositiveNumber = std.contract.from_predicate (fun value =>
   std.is_number value && value > 0
 ) in
 
+let NonNegativeNumber = std.contract.from_predicate (fun value =>
+  std.is_number value && value >= 0
+) in
+
+let GuidanceSourceRoot = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "project" || value == "lifecycle")
+) in
+
+let ProjectFactAuthority = std.contract.from_predicate (fun value =>
+  std.is_string value && value == "project_fact"
+) in
+
+let AdvisoryAuthority = std.contract.from_predicate (fun value =>
+  std.is_string value && value == "advisory_guidance"
+) in
+
 let TrueOnly = std.contract.from_predicate (fun value =>
   std.is_bool value && value
 ) in
@@ -64,6 +80,8 @@ let EligibleRootCommands = std.contract.from_predicate (fun value =>
     "spec show",
     "validate",
     "context",
+    "workflow status",
+    "workflow instructions",
     "doctor",
   ]
 ) in
@@ -120,10 +138,42 @@ let StoreIdentityProjection = {
   non_claims | NonEmptyStrings | Array NonEmptyString,
 } in
 
+let ContextReference = {
+  id | StoreId,
+  source_root | GuidanceSourceRoot,
+  path | SafePolicyPath,
+  required | Bool,
+  priority | NonNegativeNumber,
+  authority | ProjectFactAuthority,
+  profiles | Array StoreId | default = [],
+  artifacts | Array StoreId | default = [],
+  operations | Array StoreId | default = [],
+} in
+
+let ArtifactGuidance = {
+  id | StoreId,
+  text | NonEmptyString,
+  priority | NonNegativeNumber,
+  authority | AdvisoryAuthority,
+  profiles | Array StoreId | default = [],
+  artifacts | Array StoreId | default = [],
+} in
+
+let OperationGuidance = {
+  id | StoreId,
+  text | NonEmptyString,
+  priority | NonNegativeNumber,
+  authority | AdvisoryAuthority,
+  operations | Array StoreId | default = [],
+} in
+
 let ProjectDeclarationSource = {
   schema | NonEmptyString,
   lifecycle_store | OptionalStoreReference,
   references | Array StoreReference,
+  context_refs | Array ContextReference | default = [],
+  artifact_guidance | Array ArtifactGuidance | default = [],
+  operation_guidance | Array OperationGuidance | default = [],
   non_claims | NonEmptyStrings | Array NonEmptyString,
 } in
 
@@ -131,6 +181,9 @@ let ProjectDeclarationProjection = {
   schema | NonEmptyString,
   lifecycle_store | OptionalStoreReference,
   references | Array StoreReference,
+  context_refs | Array ContextReference | default = [],
+  artifact_guidance | Array ArtifactGuidance | default = [],
+  operation_guidance | Array OperationGuidance | default = [],
   source_blake3 | Blake3Hex,
   non_claims | NonEmptyStrings | Array NonEmptyString,
 } in
@@ -323,6 +376,9 @@ let PolicyContract = Policy in
   StoreReference = StoreReferenceContract,
   StoreIdentitySource = StoreIdentitySourceContract,
   StoreIdentityProjection = StoreIdentityProjectionContract,
+  ContextReference = ContextReference,
+  ArtifactGuidance = ArtifactGuidance,
+  OperationGuidance = OperationGuidance,
   ProjectDeclarationSource = ProjectDeclarationSourceContract,
   ProjectDeclarationProjection = ProjectDeclarationProjectionContract,
   LocatorEntry = LocatorEntryContract,

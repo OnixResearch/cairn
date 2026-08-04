@@ -40,6 +40,8 @@ const PROJECT_SOURCE: &str = r#"{
     "a direct reference provides read-only discovery and does not satisfy dependencies, gates, evidence, or requirements",
     "reference indexing does not prove truth, freshness, ownership, implementation, or satisfaction",
     "project configuration does not authorize transitive reference traversal or transport",
+    "project facts and advisory guidance do not override generated policy or command authorization",
+    "project context checks do not prove truth, secrecy, semantic consistency, agent compliance, or release eligibility",
   ],
 }
 "#;

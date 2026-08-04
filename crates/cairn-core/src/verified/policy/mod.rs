@@ -1,3 +1,4 @@
+mod agent_guidance;
 mod error;
 mod fields;
 mod function_address;

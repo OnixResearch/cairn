@@ -22,6 +22,21 @@ fn rejects_cyclic_generated_workflow_policy_with_a_stable_code() {
 }
 
 #[test]
+fn rejects_agent_guidance_policy_authority_impersonation() {
+    // r[verify cairn.agent_guidance_context.authority.reject]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy value");
+    value["agent_guidance_policy"]["allowed_authority_classes"] =
+        serde_json::json!(["policy_constraint"]);
+    let error = validate_policy_json(value).expect_err("policy authority impersonation fails");
+    assert!(error
+        .to_string()
+        .contains("agent_guidance_policy.authority"));
+}
+
+#[test]
 fn rejects_unknown_default_workflow_profile() {
     // r[verify cairn.lifecycle_workflow_profiles.selection.invalid]
     let mut value: Value = serde_json::from_str(include_str!(
@@ -231,6 +246,8 @@ fn parses_generated_default_policy_text() {
             "spec show",
             "validate",
             "context",
+            "workflow status",
+            "workflow instructions",
             "doctor",
         ]
     );
@@ -262,6 +279,18 @@ fn parses_generated_default_policy_text() {
         lifecycle_store.receipts.required_non_claims,
         lifecycle_store.required_non_claims
     );
+    assert_eq!(
+        policy.agent_guidance_policy.schema,
+        "cairn.agent-guidance-policy.v1"
+    );
+    assert!(policy
+        .agent_guidance_policy
+        .known_operations
+        .contains(&"workflow-instructions".to_string()));
+    assert!(policy
+        .agent_guidance_policy
+        .portable_excluded_fields
+        .contains(&"text".to_string()));
     let metadata = policy
         .policy_schema_compatibility
         .expect("generated policy includes schema compatibility metadata");

@@ -88,6 +88,7 @@ mod tests {
             machine_contract_policy: generated_policy.machine_contract_policy,
             workflow_schemas: generated_policy.workflow_schemas,
             workflow_profile_policy: generated_policy.workflow_profile_policy,
+            agent_guidance_policy: generated_policy.agent_guidance_policy,
             artifact_substance_policy: ArtifactSubstancePolicy {
                 proposal_minimum_substantive_lines: 1,
                 design_minimum_substantive_lines: 1,
