@@ -501,6 +501,7 @@ pub use verified::radicle_import::{
     change_cob_import_content_root, plan_change_cob_import, ChangeCobImportSnapshot,
 };
 pub use verified::receipt_drift::{receipt_field_drift, DriftClass, DriftEntry, DriftReport};
+pub use verified::release_decision::*;
 pub use verified::release_run_ledger::{
     positive_release_run_ledger_fixture, release_run_explain, release_run_identity,
     release_run_ledger_hash, release_run_status, validate_release_run_ledger_value,

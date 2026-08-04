@@ -33,6 +33,7 @@ mod probe;
 mod radicle_change;
 mod receipt_preserves_diff;
 mod receipt_verify_content_hash;
+mod release_decision;
 mod release_evidence;
 mod release_readiness;
 mod release_run;
@@ -79,6 +80,7 @@ use policy::run_policy;
 use radicle_change::run_cob;
 use receipt_preserves_diff::run_receipt_preserves_diff;
 use receipt_verify_content_hash::run_receipt_verify_content_hash;
+use release_decision::run_release;
 use requirement_id_registry::run_requirement_registry;
 use rfd::run_rfd;
 use runtime_evidence::run_runtime_evidence;
@@ -175,6 +177,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
+        "release-decision" => run_release(args.collect())?,
         "release-evidence" => release_evidence::run_release_evidence(args.collect())?,
         "release-run" => release_run::run_release_run(args.collect())?,
         "lifecycle" => lifecycle_data::run_lifecycle_data(args.collect())?,

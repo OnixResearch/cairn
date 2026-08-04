@@ -38,6 +38,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "workflow",
     "workset",
     "release-readiness",
+    "release-decision",
     "release-evidence",
     "release-run",
     "lifecycle",
