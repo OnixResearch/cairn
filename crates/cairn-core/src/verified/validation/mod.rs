@@ -86,6 +86,7 @@ mod tests {
             gate_finding_scope: "tasks".to_string(),
             gate_finding_promoted: "no".to_string(),
             machine_contract_policy: generated_policy.machine_contract_policy,
+            document_collaboration_policy: generated_policy.document_collaboration_policy,
             workflow_schemas: generated_policy.workflow_schemas,
             workflow_profile_policy: generated_policy.workflow_profile_policy,
             agent_guidance_policy: generated_policy.agent_guidance_policy,

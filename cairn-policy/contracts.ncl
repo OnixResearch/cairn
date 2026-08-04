@@ -407,6 +407,28 @@ let DeveloperLoopStatusClass = std.contract.from_predicate (fun value =>
     required_non_claims | NonEmptyArray | Array NonEmptyString,
   },
 
+  DocumentCollaborationBounds = {
+    max_document_id_bytes | PositiveNumber,
+    max_artifacts | PositiveNumber,
+    max_discussion_messages | PositiveNumber,
+    max_discussion_text_bytes | PositiveNumber,
+    max_links | PositiveNumber,
+    max_revisions_per_artifact | PositiveNumber,
+    max_path_bytes | PositiveNumber,
+    max_number | PositiveNumber,
+  },
+
+  DocumentCollaborationProfile = {
+    bounds | DocumentCollaborationBounds,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
+  DocumentCollaborationPolicy = {
+    schema | NonEmptyString,
+    kinds | NonEmptyArray | Array NonEmptyString,
+    profile | DocumentCollaborationProfile,
+  },
+
   Marker = {
     id | NonEmptyString,
     token | MarkerToken,
@@ -848,6 +870,7 @@ let DeveloperLoopStatusClass = std.contract.from_predicate (fun value =>
     workflow_profile_policy | WorkflowProfilePolicy,
     agent_guidance_policy | AgentGuidancePolicy,
     developer_loop_policy | DeveloperLoopPolicy,
+    document_collaboration_policy | DocumentCollaborationPolicy,
     generated_agent_workflow_policy | GeneratedAgentWorkflowPolicy,
     lifecycle_stages | NonEmptyArray | Array Stage,
     task_marker_policy | TaskMarkerPolicy,

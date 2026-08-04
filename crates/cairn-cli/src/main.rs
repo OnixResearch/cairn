@@ -37,6 +37,7 @@ mod release_readiness;
 mod release_run;
 mod rename_classification;
 mod requirement_id_registry;
+mod rfd;
 mod runtime_evidence;
 mod semantic_review;
 mod stack_provenance;
@@ -76,6 +77,7 @@ use radicle_change::run_cob;
 use receipt_preserves_diff::run_receipt_preserves_diff;
 use receipt_verify_content_hash::run_receipt_verify_content_hash;
 use requirement_id_registry::run_requirement_registry;
+use rfd::run_rfd;
 use runtime_evidence::run_runtime_evidence;
 use semantic_review::run_review;
 use state_machine_receipt::run_state_machine_receipt;
@@ -188,6 +190,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "probe" => probe::run_probe(args.collect())?,
         "runtime-evidence" => run_runtime_evidence(args.collect())?,
+        "rfd" => run_rfd(args.collect())?,
         "collaboration" => run_collaboration(args.collect())?,
         "cob" => run_cob(args.collect())?,
         "radicle" => {

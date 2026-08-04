@@ -10,6 +10,7 @@ pub const CURRENT_POLICY_FIELD_SET_DIGEST_MATERIAL: &str = concat!(
     "authenticated_evidence_policy\n",
     "cross_repo_dependency_policy\n",
     "developer_loop_policy\n",
+    "document_collaboration_policy\n",
     "generated_agent_workflow_policy\n",
     "global_registry_policy\n",
     "lifecycle_store_policy\n",
@@ -22,7 +23,7 @@ pub const CURRENT_POLICY_FIELD_SET_DIGEST_MATERIAL: &str = concat!(
     "workflow_profile_policy\n",
 );
 pub const CURRENT_POLICY_FIELD_SET_DIGEST: &str =
-    "18dd2f541b4e9f737a8a54e91b8cb3f7206a0593d112e9ba1b8a7b97d3a2a09a";
+    "9f44153637df26127588d81e70bb2095f07f64c4e7d5c009608f6c70b6ca961a";
 pub const DEFAULT_POLICY_REFRESH_COMMAND: &str =
     "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json";
 
@@ -51,6 +52,7 @@ const REFRESH_REQUIRED_FIELDS: &[&str] = &[
     "agent_completion_policy",
     "agent_guidance_policy",
     "developer_loop_policy",
+    "document_collaboration_policy",
     "generated_agent_workflow_policy",
     "authenticated_evidence_policy",
     "cross_repo_dependency_policy",

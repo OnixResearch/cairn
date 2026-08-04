@@ -250,6 +250,7 @@ pub use verified::developer_loop::*;
 pub use verified::doctor::{
     build_doctor_report, DoctorCheck, DoctorCheckStatus, DoctorReport, DoctorSnapshot,
 };
+pub use verified::document_collaboration::*;
 pub use verified::evidence::{
     blake3_hex, canonical_json, canonical_json_hash, canonical_preserves_bytes,
     canonical_preserves_hash, preserves_content_hash,

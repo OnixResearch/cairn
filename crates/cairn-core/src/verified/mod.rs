@@ -21,6 +21,7 @@ pub mod delta_merge;
 pub mod developer_experience;
 pub mod developer_loop;
 pub mod doctor;
+pub mod document_collaboration;
 pub mod ears_property_vocabulary;
 pub mod evidence;
 pub mod evidence_chain_readiness;

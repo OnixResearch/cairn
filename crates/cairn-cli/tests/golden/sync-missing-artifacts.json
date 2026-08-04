@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "7680e0f4443184e745fe2112b7a983940584e0987bf150e3e02b6c293217d0a5",
+    "input_hash": "ded499ed9aa1abec3eab8f558a287e5ee404e1b435d14972959e26e358586168",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "0d5cb1655724e88eba5e81e493cdc7b90b210233965dbb785028848b6d0d48fe",
-    "receipt_hash": "cc2d18d90d119754db05fa69c09510973b26249c19477f3063f5a47858c56f88",
+    "policy_hash": "1b7242389219cf32ac7d776f68cbcbec966da3a3e0b6e710b0d23b2fbf8a39c9",
+    "receipt_hash": "041d82fed9d13b45e1b7be4672be0f7ecff372b56c0dc9b23c1eccfef0e35ecc",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -24,7 +24,7 @@
     "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "dc2c932e1932f73a9ce56f5a82d787760148af3bc63ee41a6522b71f15f378a9",
+  "input_hash": "bd7b3301adc8f16db0b6b599c8994cac55a1305bc71b5ceb9e5aaff49458e1b6",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -58,12 +58,12 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "e56d94aeb13a4379932685450ba1b0c09da2edabd0756a6d8882f45f319ee1f2",
+  "plan_hash": "1aee412286d7052ebceed775e95b0f6f0c59439dd42c1366734d7894b1b7b311",
   "policy": "cairn-default",
-  "policy_hash": "0d5cb1655724e88eba5e81e493cdc7b90b210233965dbb785028848b6d0d48fe",
+  "policy_hash": "1b7242389219cf32ac7d776f68cbcbec966da3a3e0b6e710b0d23b2fbf8a39c9",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "00f4347e64bad60cf11a7384051495d15fd342828c45170093a5127bc8c80543"
+  "receipt_hash": "d70caac8e722ae172dce8b84104c295bbebbd9450e4cf078f43a7122171a48fd"
 }

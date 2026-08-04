@@ -1342,6 +1342,30 @@
     ],
     "schema": "cairn.developer-loop-policy.v1"
   },
+  "document_collaboration_policy": {
+    "kinds": [
+      "rfd"
+    ],
+    "profile": {
+      "bounds": {
+        "max_artifacts": 32,
+        "max_discussion_messages": 1024,
+        "max_discussion_text_bytes": 4096,
+        "max_document_id_bytes": 256,
+        "max_links": 256,
+        "max_number": 1000000,
+        "max_path_bytes": 4096,
+        "max_revisions_per_artifact": 65536
+      },
+      "required_non_claims": [
+        "document collaboration state is transport-neutral and does not prove publication, synchronization, or remote trust",
+        "RFC role authority comes only from immutable root role sets and does not grant acceptance or publication to an author",
+        "a local numbering registry comparison does not prove global uniqueness or remote reservation",
+        "a passing document receipt does not prove semantic review quality, source correctness, or release eligibility"
+      ]
+    },
+    "schema": "cairn.document-collaboration-policy.v1"
+  },
   "exemption_marker_policy": {
     "date_fields": [
       "until"
@@ -3335,7 +3359,7 @@
     }
   },
   "policy_schema_compatibility": {
-    "field_set_digest": "18dd2f541b4e9f737a8a54e91b8cb3f7206a0593d112e9ba1b8a7b97d3a2a09a",
+    "field_set_digest": "9f44153637df26127588d81e70bb2095f07f64c4e7d5c009608f6c70b6ca961a",
     "producer": "cairn policy export",
     "refresh_command": "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json",
     "schema_version": "cairn.policy-schema.v1"

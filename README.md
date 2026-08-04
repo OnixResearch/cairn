@@ -104,6 +104,7 @@ Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, field
 Read [Agent guidance context](docs/agent-guidance-context.md) before you declare local context or advisory text.
 Read [Generated agent workflows](docs/generated-agent-workflows.md) before you install project-local agent guidance.
 Read [Developer-loop profiles](docs/developer-loop-profiles.md) before you define or verify a fast local loop.
+Read [RFD collaboration](docs/rfd-collaboration.md) before you use the RFD document commands.
 
 <!-- r[impl cairn.artifact_workflow_contract.docs] -->
 <!-- r[impl cairn.lifecycle_workflow_profiles.docs] -->

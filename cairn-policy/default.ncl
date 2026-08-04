@@ -1,7 +1,7 @@
 let Contracts = import "contracts.ncl" in
 let NominalIdentityPolicy = import "nominal-evidence-identities.ncl" in
 let PolicySchemaVersion = "cairn.policy-schema.v1" in
-let PolicyFieldSetDigest = "18dd2f541b4e9f737a8a54e91b8cb3f7206a0593d112e9ba1b8a7b97d3a2a09a" in
+let PolicyFieldSetDigest = "9f44153637df26127588d81e70bb2095f07f64c4e7d5c009608f6c70b6ca961a" in
 let MaxStoreIdBytes = 64 in
 let MaxRemoteHintBytes = 2048 in
 let MaxReferences = 32 in
@@ -501,6 +501,29 @@ let WorkflowRequiredNonClaims = [
       "declared effect posture does not prove command hermeticity, network denial, mutation absence, or clock accuracy",
       "a fast-loop pass does not satisfy release readiness, full repository checks, proofs, source correctness, or lifecycle archive requirements",
     ],
+  },
+
+  document_collaboration_policy = {
+    schema = "cairn.document-collaboration-policy.v1",
+    kinds = ["rfd"],
+    profile = {
+      bounds = {
+        max_document_id_bytes = 256,
+        max_artifacts = 32,
+        max_discussion_messages = 1024,
+        max_discussion_text_bytes = 4096,
+        max_links = 256,
+        max_revisions_per_artifact = 65536,
+        max_path_bytes = 4096,
+        max_number = 1000000,
+      },
+      required_non_claims = [
+        "document collaboration state is transport-neutral and does not prove publication, synchronization, or remote trust",
+        "RFC role authority comes only from immutable root role sets and does not grant acceptance or publication to an author",
+        "a local numbering registry comparison does not prove global uniqueness or remote reservation",
+        "a passing document receipt does not prove semantic review quality, source correctness, or release eligibility",
+      ],
+    },
   },
 
   generated_agent_workflow_policy = {

@@ -1,5 +1,6 @@
 use serde_json::Value;
 
+use super::document_collaboration::DocumentCollaborationPolicy;
 use super::PolicySchemaCompatibilityMetadata;
 
 use crate::verified::{
@@ -35,6 +36,7 @@ pub struct Policy {
     pub developer_loop_policy: DeveloperLoopPolicy,
     pub generated_agent_workflow_policy: GeneratedAgentWorkflowPolicy,
     pub machine_contract_policy: MachineContractPolicy,
+    pub document_collaboration_policy: DocumentCollaborationPolicy,
     pub sync_require_gate: bool,
     pub archive_require_gate: bool,
     pub migrate_require_manifest: bool,

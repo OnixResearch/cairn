@@ -1,5 +1,6 @@
 mod agent_guidance;
 mod developer_loop;
+mod document_collaboration;
 mod error;
 mod fields;
 mod function_address;

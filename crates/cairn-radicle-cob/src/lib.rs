@@ -1,6 +1,11 @@
 #![deny(clippy::unwrap_used)]
 
+mod rfd;
 mod store;
+
+pub use crate::rfd::{
+    create_rfd, inspect_rfd, update_rfd, CairnRfdCob, RfdCobError, RfdCobInspection,
+};
 
 use std::{
     collections::BTreeSet,

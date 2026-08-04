@@ -7,6 +7,7 @@ use crate::verified::artifact_workflow::{
 use super::{
     agent_guidance::agent_guidance_policy,
     developer_loop::developer_loop_policy,
+    document_collaboration::document_collaboration_policy,
     fields::{
         change_metadata_fields, exemption_marker_policy, gate_fields, mutation_policy_fields,
         receipt_schemas, require_nonempty_array, task_marker_fields, task_markers, version_field,
@@ -70,6 +71,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         ));
     }
     let machine_contract_policy = machine_contract_policy(&value)?;
+    let document_collaboration_policy = document_collaboration_policy(&value)?;
     let mutation = mutation_policy_fields(&value)?;
     let should_require_receipt_hashes = super::fields::bool_field(
         value
@@ -107,6 +109,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         developer_loop_policy,
         generated_agent_workflow_policy,
         machine_contract_policy,
+        document_collaboration_policy,
         sync_require_gate: mutation.sync_require_gate,
         archive_require_gate: mutation.archive_require_gate,
         migrate_require_manifest: mutation.migrate_require_manifest,
