@@ -1,7 +1,7 @@
 let Contracts = import "contracts.ncl" in
 let NominalIdentityPolicy = import "nominal-evidence-identities.ncl" in
 let PolicySchemaVersion = "cairn.policy-schema.v1" in
-let PolicyFieldSetDigest = "e7896d6058231d3440fc31936ed7b5baaf39530026d7c482cdd8d49d8a9d46bb" in
+let PolicyFieldSetDigest = "dcf499d154b906a153039768157f57eca6868b205524f5f23a27b570c3b53257" in
 let MaxStoreIdBytes = 64 in
 let MaxRemoteHintBytes = 2048 in
 let MaxReferences = 32 in
@@ -40,6 +40,40 @@ let WorkflowMaxNonClaims = 16 in
 let WorkflowMaxIssues = 64 in
 let WorkflowMaxDirectoryDepth = 8 in
 let WorkflowMaxDirectoryEntries = 128 in
+let GeneratedWorkflowMaxDescriptors = 6 in
+let GeneratedWorkflowMaxAdapters = 3 in
+let GeneratedWorkflowMaxCommandClasses = 16 in
+let GeneratedWorkflowMaxTextBytes = 4096 in
+let GeneratedWorkflowMaxListItems = 32 in
+let GeneratedWorkflowMaxFilesPerAdapter = 16 in
+let GeneratedWorkflowMaxPathBytes = 4096 in
+let GeneratedWorkflowMaxFileBytes = 65536 in
+let GeneratedWorkflowMaxIssues = 64 in
+let GeneratedWorkflowNonClaims = [
+  "deterministic generation proves only a bounded transformation of admitted policy",
+  "an adapter changes representation but does not add authority or lifecycle semantics",
+  "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
+  "workflow success depends on checked project evidence and does not follow from generated text alone",
+] in
+let GeneratedWorkflowConstraints = [
+  "Use only explicit project roots and policy-known Cairn command classes.",
+  "Treat generated text as guidance; policy and gates remain authoritative.",
+  "Do not call a model, access the network, or load a remote package.",
+] in
+let GeneratedPreviewConstraints = [
+  "Use only explicit project roots and policy-known Cairn command classes.",
+  "Treat generated text as guidance; policy and gates remain authoritative.",
+  "Do not call a model, access the network, or load a remote package.",
+  "Preview each mutation and execute only the checked, content-bound plan.",
+] in
+let GeneratedExploreConstraints = [
+  "Use only explicit project roots and policy-known Cairn command classes.",
+  "Treat generated text as guidance; policy and gates remain authoritative.",
+  "Do not call a model, access the network, or load a remote package.",
+  "Do not create a change, edit lifecycle artifacts, execute mutation plans, or claim implementation completion.",
+] in
+let GeneratedWorkflowProgress = "For work with multiple steps, state the next action and report checked evidence after each major step." in
+let GeneratedWorkflowOutput = "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact." in
 let MinimumWorksetMembers = 1 in
 let StoreIdentityNonClaims = [
   "store identity proves only the observed checked projection and native lifecycle identity",
@@ -417,6 +451,128 @@ let WorkflowRequiredNonClaims = [
       "guidance selection does not satisfy gates, dependencies, evidence, implementation correctness, or release eligibility",
       "portable guidance identity omits raw text and absolute paths by default",
     ],
+  },
+
+  generated_agent_workflow_policy = {
+    schema = "cairn.generated-agent-workflow-policy.v1",
+    generator_version = "cairn-agent-workflow.v1",
+    command_classes = [
+      { id = "archive-execute", permission = "mutation" },
+      { id = "artifact-edit", permission = "mutation" },
+      { id = "change-create", permission = "mutation" },
+      { id = "context", permission = "read" },
+      { id = "gate", permission = "read" },
+      { id = "receipt-inspect", permission = "read" },
+      { id = "spec-read", permission = "read" },
+      { id = "status", permission = "read" },
+      { id = "sync-execute", permission = "mutation" },
+      { id = "traceability", permission = "read" },
+      { id = "workflow-inspect", permission = "read" },
+    ],
+    descriptors = [
+      {
+        id = "apply",
+        version = 1,
+        goal = "Implement the accepted change without weakening its requirements or policy boundaries.",
+        success_evidence = ["Changed code and tests map to accepted requirements.", "Relevant checks pass with recorded receipts."],
+        required_evidence = ["Accepted proposal, design, specifications, and tasks", "Baseline and final check results"],
+        command_classes = ["artifact-edit", "context", "workflow-inspect"],
+        mutation_class = "preview_first",
+        progress_rule = GeneratedWorkflowProgress,
+        immediate_action = "Run cairn workflow instructions for the selected change, then inspect its accepted artifacts before editing files.",
+        output_shape = GeneratedWorkflowOutput,
+        constraints = GeneratedPreviewConstraints,
+        non_claims = GeneratedWorkflowNonClaims,
+      },
+      {
+        id = "archive",
+        version = 1,
+        goal = "Archive a completed change only after required gates, sync, and evidence checks pass.",
+        success_evidence = ["Accepted specification deltas are synchronized.", "The archive receipt identifies the completed package and checked plan."],
+        required_evidence = ["Passing required gates", "Fresh sync and archive plans", "Completed task evidence"],
+        command_classes = ["archive-execute", "gate", "sync-execute", "workflow-inspect"],
+        mutation_class = "preview_first",
+        progress_rule = GeneratedWorkflowProgress,
+        immediate_action = "Run the required gates, preview sync and archive plans, then execute only their unchanged plan hashes.",
+        output_shape = GeneratedWorkflowOutput,
+        constraints = GeneratedPreviewConstraints,
+        non_claims = GeneratedWorkflowNonClaims,
+      },
+      {
+        id = "drain",
+        version = 1,
+        goal = "Complete each active change through implementation, validation, sync, and archive with bounded evidence.",
+        success_evidence = ["Each selected task is complete or has an exact blocker.", "Each completed change has passing gates and an archive receipt."],
+        required_evidence = ["Dependency order and active status", "Implementation and gate receipts", "Fresh sync and archive plans"],
+        command_classes = ["archive-execute", "artifact-edit", "context", "gate", "sync-execute", "workflow-inspect"],
+        mutation_class = "preview_first",
+        progress_rule = GeneratedWorkflowProgress,
+        immediate_action = "Run cairn workflow status, select the first unblocked change, and inspect its instructions and task evidence.",
+        output_shape = GeneratedWorkflowOutput,
+        constraints = GeneratedPreviewConstraints,
+        non_claims = GeneratedWorkflowNonClaims,
+      },
+      {
+        id = "explore",
+        version = 1,
+        goal = "Inspect project lifecycle state and evidence without creating or changing lifecycle artifacts.",
+        success_evidence = ["The report names observed roots, active changes, and policy identities.", "Unknowns and blockers remain explicit."],
+        required_evidence = ["Current status and declared project context", "Relevant specifications and workflow instructions"],
+        command_classes = ["context", "spec-read", "status", "workflow-inspect"],
+        mutation_class = "read_only",
+        progress_rule = GeneratedWorkflowProgress,
+        immediate_action = "Run cairn status for the explicit project root, then inspect only the relevant specifications and context.",
+        output_shape = GeneratedWorkflowOutput,
+        constraints = GeneratedExploreConstraints,
+        non_claims = GeneratedWorkflowNonClaims,
+      },
+      {
+        id = "propose",
+        version = 1,
+        goal = "Create a reviewable change package that states the problem, requirements, design, tasks, and evidence plan.",
+        success_evidence = ["The package passes proposal, design, and tasks gates.", "Requirements and tasks have complete traceability markers."],
+        required_evidence = ["Current specifications and project context", "Declared scope, dependencies, risks, and verification plan"],
+        command_classes = ["artifact-edit", "change-create", "context", "spec-read", "workflow-inspect"],
+        mutation_class = "preview_first",
+        progress_rule = GeneratedWorkflowProgress,
+        immediate_action = "Inspect current specifications and status, then preview change creation before writing the bounded package.",
+        output_shape = GeneratedWorkflowOutput,
+        constraints = GeneratedPreviewConstraints,
+        non_claims = GeneratedWorkflowNonClaims,
+      },
+      {
+        id = "verify",
+        version = 1,
+        goal = "Check requirement coverage, gates, tests, and receipts without changing lifecycle artifacts.",
+        success_evidence = ["Required checks pass or return exact diagnostics.", "Traceability has no missing or dangling references."],
+        required_evidence = ["Gate and test outputs", "Traceability and receipt identities", "Known blockers and non-claims"],
+        command_classes = ["gate", "receipt-inspect", "traceability", "workflow-inspect"],
+        mutation_class = "read_only",
+        progress_rule = GeneratedWorkflowProgress,
+        immediate_action = "Run the smallest required gate and traceability check for the selected change before broad validation.",
+        output_shape = GeneratedWorkflowOutput,
+        constraints = GeneratedWorkflowConstraints,
+        non_claims = GeneratedWorkflowNonClaims,
+      },
+    ],
+    adapters = [
+      { id = "agent-skills", version = 1, format = "agent-skills", file_prefix = "cairn-", file_suffix = "", directory_suffix = "/SKILL.md", front_matter = true, max_files = GeneratedWorkflowMaxFilesPerAdapter },
+      { id = "claude", version = 1, format = "claude", file_prefix = "cairn-", file_suffix = ".md", directory_suffix = "", front_matter = false, max_files = GeneratedWorkflowMaxFilesPerAdapter },
+      { id = "codex", version = 1, format = "codex", file_prefix = "cairn-", file_suffix = ".md", directory_suffix = "", front_matter = false, max_files = GeneratedWorkflowMaxFilesPerAdapter },
+    ],
+    bounds = {
+      max_descriptors = GeneratedWorkflowMaxDescriptors,
+      max_adapters = GeneratedWorkflowMaxAdapters,
+      max_command_classes = GeneratedWorkflowMaxCommandClasses,
+      max_text_bytes = GeneratedWorkflowMaxTextBytes,
+      max_list_items = GeneratedWorkflowMaxListItems,
+      max_files_per_adapter = GeneratedWorkflowMaxFilesPerAdapter,
+      max_path_bytes = GeneratedWorkflowMaxPathBytes,
+      max_file_bytes = GeneratedWorkflowMaxFileBytes,
+      max_issues = GeneratedWorkflowMaxIssues,
+    },
+    receipt_fields = ["adapter", "destination", "files", "manifest", "plan_hash", "policy_hash", "non_claims"],
+    required_non_claims = GeneratedWorkflowNonClaims,
   },
 
   lifecycle_stages = ["proposal", "design", "tasks", "implementation", "archive"],

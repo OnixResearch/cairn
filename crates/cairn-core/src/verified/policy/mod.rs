@@ -2,6 +2,7 @@ mod agent_guidance;
 mod error;
 mod fields;
 mod function_address;
+mod generated_agent_workflow;
 mod lifecycle_store;
 mod machine;
 mod nominal_identity;

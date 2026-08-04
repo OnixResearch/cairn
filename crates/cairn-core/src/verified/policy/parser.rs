@@ -11,6 +11,7 @@ use super::{
         receipt_schemas, require_nonempty_array, task_marker_fields, task_markers, version_field,
     },
     function_address::function_address_policy,
+    generated_agent_workflow::generated_agent_workflow_policy,
     lifecycle_store::lifecycle_store_policy,
     machine::machine_contract_policy,
     nominal_identity::nominal_identity_policy,
@@ -49,6 +50,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         message: error.message,
     })?;
     let agent_guidance_policy = agent_guidance_policy(&value)?;
+    let generated_agent_workflow_policy = generated_agent_workflow_policy(&value)?;
     let task_marker = task_marker_fields(&value)?;
     let task_marker_tokens = task_markers(&value)?;
     let gate = gate_fields(&value)?;
@@ -100,6 +102,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         workflow_schemas,
         workflow_profile_policy,
         agent_guidance_policy,
+        generated_agent_workflow_policy,
         machine_contract_policy,
         sync_require_gate: mutation.sync_require_gate,
         archive_require_gate: mutation.archive_require_gate,

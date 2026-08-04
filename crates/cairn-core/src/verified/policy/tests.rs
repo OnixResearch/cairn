@@ -37,6 +37,34 @@ fn rejects_agent_guidance_policy_authority_impersonation() {
 }
 
 #[test]
+fn rejects_generated_explore_mutation_and_missing_constraint() {
+    // r[verify cairn.generated_agent_workflows.descriptors.invalid]
+    // r[verify cairn.generated_agent_workflows.explore.invalid]
+    let source = include_str!("../../../../../cairn-policy/generated/cairn-policy.json");
+    for mutation in ["command", "constraint"] {
+        let mut value: Value = serde_json::from_str(source).expect("generated policy value");
+        let descriptors = value["generated_agent_workflow_policy"]["descriptors"]
+            .as_array_mut()
+            .expect("descriptor array");
+        let explore = descriptors
+            .iter_mut()
+            .find(|descriptor| descriptor["id"] == "explore")
+            .expect("explore descriptor");
+        match mutation {
+            "command" => explore["command_classes"] = serde_json::json!(["artifact-edit"]),
+            "constraint" => {
+                explore["constraints"] = serde_json::json!(["Keep policy authoritative."])
+            }
+            _ => unreachable!("bounded test mutation"),
+        }
+        let error = validate_policy_json(value).expect_err("invalid explore policy fails");
+        assert!(error
+            .to_string()
+            .contains("generated_workflow.policy.invalid"));
+    }
+}
+
+#[test]
 fn rejects_unknown_default_workflow_profile() {
     // r[verify cairn.lifecycle_workflow_profiles.selection.invalid]
     let mut value: Value = serde_json::from_str(include_str!(
@@ -291,6 +319,14 @@ fn parses_generated_default_policy_text() {
         .agent_guidance_policy
         .portable_excluded_fields
         .contains(&"text".to_string()));
+    assert_eq!(
+        policy.generated_agent_workflow_policy.descriptors.len(),
+        crate::verified::generated_agent_workflow::INITIAL_WORKFLOW_IDS.len()
+    );
+    assert_eq!(
+        policy.generated_agent_workflow_policy.adapters.len(),
+        crate::verified::generated_agent_workflow::INITIAL_ADAPTER_IDS.len()
+    );
     let metadata = policy
         .policy_schema_compatibility
         .expect("generated policy includes schema compatibility metadata");

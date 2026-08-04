@@ -11,6 +11,7 @@ mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
 mod function_address;
+mod generated_agent_workflow_shell;
 mod global_registry;
 mod hash_algorithm_policy;
 mod lifecycle;
@@ -60,6 +61,7 @@ use collaboration::run_collaboration;
 use determinism::run_determinism;
 use evidence::run_evidence;
 use evidence_manifest::run_evidence_manifest;
+use generated_agent_workflow_shell::run_agent;
 use hash_algorithm_policy::run_hash_policy;
 use lifecycle_store_shell::{prepare_invocation, run_context};
 use machine::{
@@ -172,6 +174,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
             oxide_lifecycle_patterns::run_oxide_lifecycle_patterns(args.collect())?
         }
         "determinism" => run_determinism(args.collect())?,
+        "agent" => run_agent(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,
         "evidence-manifest" => run_evidence_manifest(args.collect())?,

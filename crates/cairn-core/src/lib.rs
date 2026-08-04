@@ -297,6 +297,7 @@ pub use verified::function_address_stack_smoke::{
     evaluate_function_address_stack_smoke, FunctionAddressStackSmokeInput,
     FunctionAddressStackSmokeIssue, FunctionAddressStackSmokeReport,
 };
+pub use verified::generated_agent_workflow::*;
 pub use verified::global_registry::{
     build_global_registry_snapshot, empty_global_registry_snapshot, evaluate_registry_graph,
     global_registry_snapshot_hash, merge_global_registry_snapshot, query_registry_exact_id,

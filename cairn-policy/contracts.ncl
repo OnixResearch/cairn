@@ -176,6 +176,20 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
   std.is_string value && value == "deny"
 ) in
 
+let GeneratedWorkflowPermission = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "read" || value == "mutation")
+) in
+
+let GeneratedWorkflowMutationClass = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "read_only" || value == "preview_first")
+) in
+
+let GeneratedWorkflowAdapterFormat = std.contract.from_predicate (fun value =>
+  std.is_string value && (
+    value == "agent-skills" || value == "claude" || value == "codex"
+  )
+) in
+
 {
   WorkflowBounds = {
     max_artifacts | PositiveNumber,
@@ -263,6 +277,60 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     bounds | AgentGuidanceBounds,
     receipt_fields | NonEmptyArray | Array NonEmptyString,
     portable_excluded_fields | NonEmptyArray | Array NonEmptyString,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
+  GeneratedWorkflowBounds = {
+    max_descriptors | PositiveNumber,
+    max_adapters | PositiveNumber,
+    max_command_classes | PositiveNumber,
+    max_text_bytes | PositiveNumber,
+    max_list_items | PositiveNumber,
+    max_files_per_adapter | PositiveNumber,
+    max_path_bytes | PositiveNumber,
+    max_file_bytes | PositiveNumber,
+    max_issues | PositiveNumber,
+  },
+
+  GeneratedWorkflowCommandClass = {
+    id | NonEmptyString,
+    permission | GeneratedWorkflowPermission,
+  },
+
+  GeneratedWorkflowDescriptor = {
+    id | NonEmptyString,
+    version | PositiveNumber,
+    goal | NonEmptyString,
+    success_evidence | NonEmptyArray | Array NonEmptyString,
+    required_evidence | NonEmptyArray | Array NonEmptyString,
+    command_classes | NonEmptyArray | Array NonEmptyString,
+    mutation_class | GeneratedWorkflowMutationClass,
+    progress_rule | NonEmptyString,
+    immediate_action | NonEmptyString,
+    output_shape | NonEmptyString,
+    constraints | NonEmptyArray | Array NonEmptyString,
+    non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
+  GeneratedWorkflowAdapter = {
+    id | NonEmptyString,
+    version | PositiveNumber,
+    format | GeneratedWorkflowAdapterFormat,
+    file_prefix | NonEmptyString,
+    file_suffix | String,
+    directory_suffix | String,
+    front_matter | Bool,
+    max_files | PositiveNumber,
+  },
+
+  GeneratedAgentWorkflowPolicy = {
+    schema | NonEmptyString,
+    generator_version | NonEmptyString,
+    command_classes | NonEmptyArray | Array GeneratedWorkflowCommandClass,
+    descriptors | NonEmptyArray | Array GeneratedWorkflowDescriptor,
+    adapters | NonEmptyArray | Array GeneratedWorkflowAdapter,
+    bounds | GeneratedWorkflowBounds,
+    receipt_fields | NonEmptyArray | Array NonEmptyString,
     required_non_claims | NonEmptyArray | Array NonEmptyString,
   },
 
@@ -706,6 +774,7 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     schemas | NonEmptyArray | Array ArtifactSchema,
     workflow_profile_policy | WorkflowProfilePolicy,
     agent_guidance_policy | AgentGuidancePolicy,
+    generated_agent_workflow_policy | GeneratedAgentWorkflowPolicy,
     lifecycle_stages | NonEmptyArray | Array Stage,
     task_marker_policy | TaskMarkerPolicy,
     gate_policy | GatePolicy,

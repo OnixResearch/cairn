@@ -102,6 +102,7 @@ nix run path:$PWD#cairn -- context --root . --profile assurance --artifact tasks
 Read [Workflow profiles](docs/workflow-profiles.md) for selection, obligations, review evidence, sync, archive, compatibility, and non-claims.
 Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, fields, MCP parity, and claim boundaries.
 Read [Agent guidance context](docs/agent-guidance-context.md) before you declare local context or advisory text.
+Read [Generated agent workflows](docs/generated-agent-workflows.md) before you install project-local agent guidance.
 
 <!-- r[impl cairn.artifact_workflow_contract.docs] -->
 <!-- r[impl cairn.lifecycle_workflow_profiles.docs] -->
@@ -621,6 +622,15 @@ cairn migrate openspec --root PATH --execute
 ## Agent workflow source
 
 `docs/hermes/cairn-workflow-skill.md` contains the repository-maintained agent workflow. It documents native lifecycle, boundaries, checks, commands, and known errors.
+
+Cairn also generates bounded, project-local workflows for Agent Skills, Claude, and Codex. Generation uses the checked policy projection without network or model calls.
+
+```bash
+cairn agent workflow list
+cairn agent workflow install --root . --adapter agent-skills --destination .agents/skills
+```
+
+Installation is preview-first. Add `--execute --plan-hash <PLAN_HASH>` only after you review the exact paths and BLAKE3 identities.
 
 ## License
 

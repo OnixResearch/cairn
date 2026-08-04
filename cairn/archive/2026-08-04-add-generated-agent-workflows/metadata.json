@@ -1,0 +1,7 @@
+{
+  "depends_on": [
+    "add-agent-guidance-context",
+    "add-artifact-workflow-contract",
+    "add-cli-machine-contract"
+  ]
+}
