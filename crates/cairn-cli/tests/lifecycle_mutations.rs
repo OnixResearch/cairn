@@ -46,6 +46,8 @@ fn executed_mutations_emit_before_after_manifest() -> Result<(), Box<dyn Error>>
 
 #[test]
 fn plan_outputs_match_canonical_goldens() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.lifecycle_workflow_profiles.compatibility]
+    // r[verify cairn.lifecycle_workflow_profiles.compatibility.existing]
     assert_matches_golden(
         &["sync", "demo", "--root", "fixtures/basic"],
         "sync-basic-demo.json",

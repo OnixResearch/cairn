@@ -56,7 +56,10 @@ fn schema() -> WorkflowSchemaPolicy {
     WorkflowSchemaPolicy {
         schema_version: WORKFLOW_SCHEMA_VERSION_V1.to_string(),
         id: "spec-driven".to_string(),
+        profile_version: 1,
         description: "test workflow".to_string(),
+        spec_effect: WORKFLOW_SPEC_EFFECT_DELTA.to_string(),
+        task_link_class: WORKFLOW_TASK_LINK_REQUIREMENT.to_string(),
         states: WORKFLOW_SUPPORTED_STATES.map(ToOwned::to_owned).to_vec(),
         bounds: bounds(),
         artifacts: vec![
@@ -79,6 +82,13 @@ fn schema() -> WorkflowSchemaPolicy {
                 &["specs", "design"],
                 WORKFLOW_ADMISSION_TASKS,
             ),
+        ],
+        review_obligations: Vec::new(),
+        receipt_fields: vec![
+            "workflow_profile".to_string(),
+            "workflow_profile_version".to_string(),
+            "spec_effect".to_string(),
+            "non_claims".to_string(),
         ],
         required_non_claims: vec![
             "workflow state proves structural facts only".to_string(),

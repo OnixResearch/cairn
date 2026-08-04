@@ -13,9 +13,9 @@ mod substance;
 
 pub use changes::{change_issues, validate_changes, validate_changes_with_archives};
 pub use gates::{
-    classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, finalize_gate_report,
-    validation_issue_code, EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport,
-    GateSnapshot, GateStage,
+    classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot, evaluate_profile_gate_snapshot,
+    finalize_gate_report, validation_issue_code, EvidenceStrengthSummary, GateArtifact, GateIssue,
+    GateReport, GateSnapshot, GateStage,
 };
 pub use spec::{
     validate_spec_source, validate_spec_source_with_policy, validate_spec_sources,
@@ -87,6 +87,7 @@ mod tests {
             gate_finding_promoted: "no".to_string(),
             machine_contract_policy: generated_policy.machine_contract_policy,
             workflow_schemas: generated_policy.workflow_schemas,
+            workflow_profile_policy: generated_policy.workflow_profile_policy,
             artifact_substance_policy: ArtifactSubstancePolicy {
                 proposal_minimum_substantive_lines: 1,
                 design_minimum_substantive_lines: 1,

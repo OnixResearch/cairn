@@ -376,7 +376,9 @@ pub(crate) fn mutation_gate_blockers(
     policy: &Policy,
 ) -> Result<Vec<String>, Box<dyn Error>> {
     let snapshot = read_gate_snapshot(root, layout, change_status.clone())?;
-    let report = evaluate_gate_snapshot(&snapshot, stage, policy);
+    let profile_context =
+        crate::workflow::load_workflow_profile_context(root, layout, &change_status.name, policy)?;
+    let report = profile_context.gate_report(&snapshot, stage, policy);
     let mut blockers = report
         .issues
         .into_iter()

@@ -5,12 +5,14 @@ use std::{
 };
 
 use cairn_core::{
-    blake3_hex, count_tasks, evaluate_gate_snapshot, validation_issue_code,
+    blake3_hex, count_tasks, evaluate_gate_snapshot, parse_acceptance_ids,
+    synthetic_acceptance_spec, tasks_with_requirement_links, validation_issue_code,
     workflow_markdown_is_structurally_present, ChangeMetadata, ChangeStatus, GateArtifact,
     GateSnapshot, GateStage, LifecycleLayout, Policy, WorkflowArtifactFile,
     WorkflowArtifactObservation, WorkflowArtifactPolicy, WorkflowSchemaPolicy,
-    WORKFLOW_ADMISSION_DELTA_SPECS, WORKFLOW_ADMISSION_DESIGN, WORKFLOW_ADMISSION_PROPOSAL,
-    WORKFLOW_ADMISSION_TASKS, WORKFLOW_PATH_KIND_FILE, WORKFLOW_PATH_KIND_SPEC_DIRECTORY,
+    WORKFLOW_ADMISSION_ACCEPTANCE, WORKFLOW_ADMISSION_DELTA_SPECS, WORKFLOW_ADMISSION_DESIGN,
+    WORKFLOW_ADMISSION_PROPOSAL, WORKFLOW_ADMISSION_TASKS, WORKFLOW_PATH_KIND_FILE,
+    WORKFLOW_PATH_KIND_SPEC_DIRECTORY, WORKFLOW_SPEC_EFFECT_NONE,
 };
 
 use crate::support::{path_string, CapabilityRoot, CapabilityRootKind};
@@ -31,7 +33,7 @@ struct BoundedArtifact {
 }
 
 // r[impl cairn.artifact_workflow_contract.functional_boundary.shell]
-pub(super) fn observe_workflow_artifacts(
+pub(crate) fn observe_workflow_artifacts(
     root: &Path,
     layout: LifecycleLayout,
     change: &str,
@@ -50,13 +52,7 @@ pub(super) fn observe_workflow_artifacts(
             schema,
         )?);
     }
-    apply_structural_admission(
-        change,
-        &change_relative,
-        &mut bounded,
-        policy,
-        schema.bounds.max_issues,
-    );
+    apply_structural_admission(change, &change_relative, &mut bounded, policy, schema);
     Ok(bounded
         .into_iter()
         .map(|artifact| artifact.observation)
@@ -279,9 +275,10 @@ fn apply_structural_admission(
     change_relative: &Path,
     artifacts: &mut [BoundedArtifact],
     policy: &Policy,
-    max_issues: usize,
+    schema: &WorkflowSchemaPolicy,
 ) {
     let snapshot = gate_snapshot(change, change_relative, artifacts);
+    let snapshot = profile_aware_gate_snapshot(snapshot, artifacts, schema);
     let report = evaluate_gate_snapshot(&snapshot, GateStage::Tasks, policy);
     for artifact in artifacts {
         if !artifact.observation.present {
@@ -303,8 +300,37 @@ fn apply_structural_admission(
                 artifact.observation.artifact_id
             ));
         }
-        bound_issue_codes(&mut artifact.observation.issue_codes, max_issues);
+        bound_issue_codes(
+            &mut artifact.observation.issue_codes,
+            schema.bounds.max_issues,
+        );
     }
+}
+
+fn profile_aware_gate_snapshot(
+    mut snapshot: GateSnapshot,
+    artifacts: &[BoundedArtifact],
+    schema: &WorkflowSchemaPolicy,
+) -> GateSnapshot {
+    if schema.spec_effect != WORKFLOW_SPEC_EFFECT_NONE {
+        return snapshot;
+    }
+    let acceptance_markdown = all_markdown(artifacts, WORKFLOW_ADMISSION_ACCEPTANCE)
+        .into_iter()
+        .map(|artifact| artifact.markdown)
+        .collect::<Vec<_>>()
+        .join("\n");
+    let (acceptance_ids, _) = parse_acceptance_ids(&acceptance_markdown);
+    let synthetic_path = format!("{}/acceptance.md#profile-adapter", snapshot.change.path);
+    snapshot.change.delta_specs = vec![synthetic_path.clone()];
+    snapshot.delta_specs = vec![GateArtifact {
+        path: synthetic_path,
+        markdown: synthetic_acceptance_spec(&acceptance_ids),
+    }];
+    if let Some(tasks) = &mut snapshot.tasks {
+        tasks.markdown = tasks_with_requirement_links(&tasks.markdown);
+    }
+    snapshot
 }
 
 fn gate_snapshot(

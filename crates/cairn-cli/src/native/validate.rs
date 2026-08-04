@@ -1,8 +1,8 @@
 use std::{error::Error, path::PathBuf};
 
 use cairn_core::{
-    canonical_json_hash, dependency_blocker_messages, evaluate_lifecycle_substance, layout_name,
-    validate_changes_with_archives, validate_spec_source_with_policy,
+    canonical_json_hash, dependency_blocker_messages, layout_name, validate_changes_with_archives,
+    validate_spec_source_with_policy, GateStage,
 };
 use serde_json::{json, Value};
 
@@ -81,23 +81,54 @@ pub(crate) fn cairn_validation_receipt_with_cross_repo_evidence(
     spec_substance.sort_by(|left, right| left.path.cmp(&right.path));
     let mut substance_issues = Vec::new();
     let mut substance = Vec::new();
+    let mut profile_issues = Vec::new();
+    let mut workflow_profiles = Vec::new();
     for change in &status.changes {
         let snapshot = read_gate_snapshot(&root, selected.layout, change.clone())?;
-        let report = evaluate_lifecycle_substance(&snapshot, &policy);
-        substance_issues.extend(report.issues);
-        substance.extend(report.artifacts);
+        match crate::workflow::load_workflow_profile_context(
+            &root,
+            selected.layout,
+            &change.name,
+            &policy,
+        ) {
+            Ok(profile_context) => {
+                let report = profile_context.gate_report(&snapshot, GateStage::Tasks, &policy);
+                substance_issues.extend(
+                    report
+                        .issues
+                        .iter()
+                        .map(|issue| format!("{}: {}", issue.code, issue.message)),
+                );
+                substance.extend(report.substance);
+                if !profile_context.selection.compatibility_fallback {
+                    profile_issues.extend(profile_context.completion_blockers());
+                    workflow_profiles.push(profile_context.receipt_fields());
+                }
+            }
+            Err(error) => profile_issues.push(format!(
+                "{}: cairn.workflow.profile.selection: {error}",
+                change.name
+            )),
+        }
     }
+    profile_issues.sort();
+    profile_issues.dedup();
     substance_issues.sort();
     substance_issues.dedup();
     substance.sort_by(|left, right| left.path.cmp(&right.path).then(left.kind.cmp(&right.kind)));
-    let mut issues =
-        Vec::with_capacity(change_issues.len() + spec_issues.len() + substance_issues.len());
+    let issue_capacity = change_issues
+        .len()
+        .saturating_add(spec_issues.len())
+        .saturating_add(substance_issues.len())
+        .saturating_add(profile_issues.len());
+    let mut issues = Vec::with_capacity(issue_capacity);
     issues.extend(change_issues.iter().cloned());
     issues.extend(spec_issues.iter().cloned());
     issues.extend(substance_issues.iter().cloned());
+    issues.extend(profile_issues.iter().cloned());
     issues.sort();
     issues.dedup();
-    Ok(json!({
+    let mut receipt = json!({
         "valid": issues.is_empty(),
         "findings": validation_findings_json(&issues),
         "issues": issues,
@@ -114,5 +145,11 @@ pub(crate) fn cairn_validation_receipt_with_cross_repo_evidence(
         "specs_validated": spec_sources.len(),
         "policy": policy.name,
         "layout": layout_name(selected.layout),
-    }))
+    });
+    if !workflow_profiles.is_empty() || !profile_issues.is_empty() {
+        let object = receipt.as_object_mut().expect("validation receipt object");
+        object.insert("profile_issues".to_string(), json!(profile_issues));
+        object.insert("workflow_profiles".to_string(), json!(workflow_profiles));
+    }
+    Ok(receipt)
 }

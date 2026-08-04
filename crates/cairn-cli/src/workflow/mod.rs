@@ -1,14 +1,26 @@
-use std::{error::Error, path::Path};
+use std::{
+    error::Error,
+    fs,
+    io::ErrorKind,
+    path::{Path, PathBuf},
+};
 
 use cairn_core::{
     build_workflow_instructions, canonical_json_hash, changes_dir, derive_workflow_status,
-    validate_change_name, LifecycleLayout, Policy, WorkflowSchemaPolicy,
+    evaluate_workflow_profile, select_workflow_profile, validate_change_name,
+    validate_review_receipt, workflow_change_profile_metadata_from_value, GateSnapshot, GateStage,
+    LifecycleLayout, Policy, WorkflowArtifactObservation, WorkflowArtifactState,
+    WorkflowChangeProfileMetadata, WorkflowProfileArtifactHash, WorkflowProfileEvaluation,
+    WorkflowProfileEvidence, WorkflowProfileRef, WorkflowProfileSelection, WorkflowReviewEvidence,
+    WorkflowReviewInputEvidence, WorkflowSchemaPolicy, WorkflowStatusReport,
+    MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT, WORKFLOW_ADMISSION_ACCEPTANCE,
+    WORKFLOW_ADMISSION_DELTA_SPECS, WORKFLOW_ADMISSION_TASKS, WORKFLOW_PROFILE_SOURCE_CREATE,
 };
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::support::{detect_layout, load_policy_file, path_string, print_json};
 
-mod observe;
+pub(crate) mod observe;
 mod options;
 mod receipts;
 
@@ -44,7 +56,7 @@ pub(crate) fn workflow_status_value(
     policy_path: &Path,
 ) -> Result<Value, Box<dyn Error>> {
     let context = workflow_context(root, change, schema_selector, policy_path)?;
-    status_receipt(&context.receipt_context(), &context.report)
+    status_receipt(&context.receipt_context(root, change), &context.report)
 }
 
 pub(crate) fn workflow_instructions_value(
@@ -61,41 +73,109 @@ pub(crate) fn workflow_instructions_value(
         artifact,
         &context.change_path,
     )?;
-    instructions_receipt(&context.receipt_context(), &instructions)
+    instructions_receipt(&context.receipt_context(root, change), &instructions)
 }
 
-struct WorkflowContext<'a> {
-    root: &'a Path,
-    layout: LifecycleLayout,
-    change: &'a str,
-    policy: Policy,
-    schema: WorkflowSchemaPolicy,
-    policy_hash: String,
-    input_hash: String,
-    change_path: String,
-    report: cairn_core::WorkflowStatusReport,
+#[derive(Debug, Clone)]
+pub(crate) struct WorkflowProfileContext {
+    pub(crate) layout: LifecycleLayout,
+    pub(crate) policy_name: String,
+    pub(crate) policy_hash: String,
+    pub(crate) schema: WorkflowSchemaPolicy,
+    pub(crate) selection: WorkflowProfileSelection,
+    pub(crate) evaluation: WorkflowProfileEvaluation,
+    pub(crate) report: WorkflowStatusReport,
+    pub(crate) input_hash: String,
+    pub(crate) profile_identity_hash: String,
+    pub(crate) change_path: String,
 }
 
-impl WorkflowContext<'_> {
-    fn receipt_context(&self) -> WorkflowReceiptContext<'_> {
+impl WorkflowProfileContext {
+    fn receipt_context<'a>(
+        &'a self,
+        root: &'a Path,
+        change: &'a str,
+    ) -> WorkflowReceiptContext<'a> {
         WorkflowReceiptContext {
-            root: self.root,
+            root,
             layout: self.layout,
-            change: self.change,
-            policy_name: &self.policy.name,
+            change,
+            policy_name: &self.policy_name,
             policy_hash: &self.policy_hash,
             input_hash: &self.input_hash,
             schema: &self.schema,
+            selection: &self.selection,
+            evaluation: &self.evaluation,
+            profile_identity_hash: &self.profile_identity_hash,
         }
+    }
+
+    pub(crate) fn completion_blockers(&self) -> Vec<String> {
+        let mut blockers = self
+            .evaluation
+            .issues
+            .iter()
+            .map(|issue| format!("{}: {}", issue.code, issue.message))
+            .collect::<Vec<_>>();
+        blockers.extend(self.report.artifacts.iter().filter_map(|artifact| {
+            if matches!(
+                artifact.state,
+                WorkflowArtifactState::Done | WorkflowArtifactState::Skipped
+            ) {
+                None
+            } else {
+                Some(format!(
+                    "cairn.workflow.profile.artifact: {} is {}",
+                    artifact.id,
+                    artifact.state.as_str()
+                ))
+            }
+        }));
+        blockers.sort();
+        blockers.dedup();
+        blockers
+    }
+
+    pub(crate) fn gate_report(
+        &self,
+        snapshot: &GateSnapshot,
+        stage: GateStage,
+        policy: &Policy,
+    ) -> cairn_core::GateReport {
+        if self.selection.compatibility_fallback {
+            return cairn_core::evaluate_gate_snapshot(snapshot, stage, policy);
+        }
+        cairn_core::evaluate_profile_gate_snapshot(
+            snapshot,
+            stage,
+            policy,
+            &self.schema,
+            &self.evaluation,
+            &self.report,
+        )
+    }
+
+    pub(crate) fn receipt_fields(&self) -> Value {
+        json!({
+            "workflow_profile": self.selection.profile_id,
+            "workflow_profile_version": self.selection.profile_version,
+            "workflow_profile_source": self.selection.source,
+            "workflow_profile_compatibility_fallback": self.selection.compatibility_fallback,
+            "spec_effect": self.evaluation.spec_effect,
+            "acceptance_ids": self.evaluation.acceptance_ids,
+            "review_receipt_hashes": self.evaluation.review_receipt_hashes,
+            "profile_identity_hash": self.profile_identity_hash,
+            "non_claims": self.evaluation.non_claims,
+        })
     }
 }
 
-fn workflow_context<'a>(
-    root: &'a Path,
-    change: &'a str,
+fn workflow_context(
+    root: &Path,
+    change: &str,
     schema_selector: Option<&str>,
     policy_path: &Path,
-) -> Result<WorkflowContext<'a>, Box<dyn Error>> {
+) -> Result<WorkflowProfileContext, Box<dyn Error>> {
     validate_change_name(change)?;
     let selected = detect_layout(root);
     if selected.layout != LifecycleLayout::Native {
@@ -105,59 +185,294 @@ fn workflow_context<'a>(
         );
     }
     let policy = load_policy_file(policy_path.to_path_buf())?;
-    let schema_index = select_schema_index(&policy, schema_selector)?;
-    let schema = policy
-        .workflow_schemas
-        .get(schema_index)
-        .cloned()
-        .ok_or("cairn.workflow.schema_unknown: selected workflow schema disappeared")?;
-    let observations = observe_workflow_artifacts(root, selected.layout, change, &schema, &policy)?;
-    let input_hash = workflow_input_hash(change, &schema, &observations)?;
-    let report = derive_workflow_status(&schema, &observations)?;
-    let policy_hash = canonical_json_hash(&policy.raw);
-    let change_path = path_string(Path::new(&changes_dir(selected.layout)).join(change));
-    Ok(WorkflowContext {
+    let context = load_workflow_profile_context(root, selected.layout, change, &policy)?;
+    if schema_selector.is_some_and(|selector| selector != context.schema.id) {
+        return Err(format!(
+            "cairn.workflow.profile.selection: schema assertion does not match immutable change profile: requested {}, selected {}",
+            schema_selector.unwrap_or_default(),
+            context.schema.id
+        )
+        .into());
+    }
+    Ok(context)
+}
+
+pub(crate) fn load_workflow_profile_context(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+) -> Result<WorkflowProfileContext, Box<dyn Error>> {
+    // r[impl cairn.lifecycle_workflow_profiles.integration]
+    // r[impl cairn.lifecycle_workflow_profiles.functional_boundary]
+    validate_change_name(change)?;
+    let change_relative = PathBuf::from(changes_dir(layout)).join(change);
+    let metadata_value = read_change_metadata_value(root, &change_relative)?;
+    let metadata = workflow_change_profile_metadata_from_value(&metadata_value)?;
+    let (selection, schema) = select_workflow_profile(
+        &policy.workflow_profile_policy,
+        &policy.workflow_schemas,
+        &metadata,
+    )?;
+    let observations = observe_workflow_artifacts(root, layout, change, &schema, policy)?;
+    let mut report = derive_workflow_status(&schema, &observations)?;
+    let artifact_hashes = profile_artifact_hashes(&change_relative, &observations);
+    let acceptance_markdown = read_admission_artifact(
         root,
-        layout: selected.layout,
-        change,
-        policy,
-        schema,
+        &change_relative,
+        &schema,
+        WORKFLOW_ADMISSION_ACCEPTANCE,
+    )?;
+    let tasks_markdown =
+        read_admission_artifact(root, &change_relative, &schema, WORKFLOW_ADMISSION_TASKS)?;
+    let reviews = read_review_evidence(root, &change_relative, &schema, &artifact_hashes)?;
+    let delta_spec_paths = observations
+        .iter()
+        .filter(|observation| {
+            schema.artifacts.iter().any(|artifact| {
+                artifact.id == observation.artifact_id
+                    && artifact.structural_admission == WORKFLOW_ADMISSION_DELTA_SPECS
+            })
+        })
+        .flat_map(|observation| observation.files.iter().map(|file| file.path.clone()))
+        .collect::<Vec<_>>();
+    let evidence = WorkflowProfileEvidence {
+        spec_effect: metadata.spec_effect,
+        spec_effect_rationale: metadata.spec_effect_rationale,
+        delta_spec_paths,
+        acceptance_markdown,
+        tasks_markdown,
+        artifact_hashes,
+        reviews,
+    };
+    let evaluation = evaluate_workflow_profile(&schema, &evidence);
+    apply_profile_evaluation(&mut report, &evaluation);
+    let input_hash = workflow_input_hash(change, &schema, &observations)?;
+    let policy_hash = canonical_json_hash(&policy.raw);
+    let profile_identity_hash = canonical_json_hash(&json!({
+        "selection": selection,
+        "schema": schema,
+        "evaluation": evaluation,
+        "observations": observations,
+    }));
+    Ok(WorkflowProfileContext {
+        layout,
+        policy_name: policy.name.clone(),
         policy_hash,
-        input_hash,
-        change_path,
+        schema,
+        selection,
+        evaluation,
         report,
+        input_hash,
+        profile_identity_hash,
+        change_path: path_string(change_relative),
     })
 }
 
-fn select_schema_index(
+pub(crate) fn select_workflow_profile_for_create(
     policy: &Policy,
-    schema_selector: Option<&str>,
-) -> Result<usize, Box<dyn Error>> {
-    match schema_selector {
-        Some(selector) => policy
-            .workflow_schemas
+    profile_id: Option<&str>,
+) -> Result<(WorkflowProfileSelection, WorkflowSchemaPolicy), Box<dyn Error>> {
+    let selected_id = profile_id.unwrap_or(&policy.workflow_profile_policy.default_profile);
+    let selected_schema = policy
+        .workflow_schemas
+        .iter()
+        .find(|schema| schema.id == selected_id)
+        .ok_or_else(|| {
+            format!("cairn.workflow.profile.selection: unknown profile: {selected_id}")
+        })?;
+    let metadata = WorkflowChangeProfileMetadata {
+        workflow_profile: Some(WorkflowProfileRef {
+            id: selected_id.to_string(),
+            version: selected_schema.profile_version,
+            source: WORKFLOW_PROFILE_SOURCE_CREATE.to_string(),
+        }),
+        spec_effect: None,
+        spec_effect_rationale: None,
+    };
+    select_workflow_profile(
+        &policy.workflow_profile_policy,
+        &policy.workflow_schemas,
+        &metadata,
+    )
+    .map_err(Into::into)
+}
+
+fn read_change_metadata_value(
+    root: &Path,
+    change_relative: &Path,
+) -> Result<Value, Box<dyn Error>> {
+    let metadata_path = change_relative.join("metadata.json");
+    let Some(text) = read_bounded_text(root, &metadata_path, MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT)?
+    else {
+        return Ok(json!({}));
+    };
+    serde_json::from_str(&text).map_err(|error| {
+        format!("cairn.workflow.profile.selection: metadata.json is invalid: {error}").into()
+    })
+}
+
+fn read_admission_artifact(
+    root: &Path,
+    change_relative: &Path,
+    schema: &WorkflowSchemaPolicy,
+    admission: &str,
+) -> Result<Option<String>, Box<dyn Error>> {
+    let Some(artifact) = schema
+        .artifacts
+        .iter()
+        .find(|artifact| artifact.structural_admission == admission)
+    else {
+        return Ok(None);
+    };
+    read_bounded_text(
+        root,
+        &change_relative.join(&artifact.output_path),
+        schema.bounds.max_artifact_bytes,
+    )
+}
+
+fn read_review_evidence(
+    root: &Path,
+    change_relative: &Path,
+    schema: &WorkflowSchemaPolicy,
+    artifact_hashes: &[WorkflowProfileArtifactHash],
+) -> Result<Vec<WorkflowReviewEvidence>, Box<dyn Error>> {
+    let observed_hashes = artifact_hashes
+        .iter()
+        .map(|artifact| (artifact.path.clone(), artifact.blake3.clone()))
+        .collect::<Vec<_>>();
+    let mut reviews = Vec::new();
+    for obligation in &schema.review_obligations {
+        let Some(artifact) = schema
+            .artifacts
             .iter()
-            .position(|schema| schema.id == selector)
-            .ok_or_else(|| {
-                let known = policy
-                    .workflow_schemas
-                    .iter()
-                    .map(|schema| schema.id.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                format!(
-                    "cairn.workflow.schema_unknown: unknown schema {selector}; known schemas: {known}"
-                )
-                .into()
-            }),
-        None => {
-            if policy.workflow_schemas.is_empty() {
-                Err("cairn.workflow.schema_unknown: policy has no workflow schemas".into())
-            } else {
-                Ok(0)
+            .find(|artifact| artifact.id == obligation.artifact_id)
+        else {
+            continue;
+        };
+        let Some(text) = read_bounded_text(
+            root,
+            &change_relative.join(&artifact.output_path),
+            schema.bounds.max_artifact_bytes,
+        )?
+        else {
+            continue;
+        };
+        let value = serde_json::from_str::<Value>(&text).unwrap_or(Value::Null);
+        let report = validate_review_receipt(&value, &observed_hashes);
+        let reviewed_inputs = value
+            .get("reviewed_inputs")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|input| {
+                Some(WorkflowReviewInputEvidence {
+                    path: input.get("path")?.as_str()?.to_string(),
+                    hash: input.get("hash")?.as_str()?.to_string(),
+                })
+            })
+            .collect::<Vec<_>>();
+        reviews.push(WorkflowReviewEvidence {
+            obligation_id: obligation.id.clone(),
+            valid: report.valid,
+            review_kind: value
+                .get("review_kind")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string(),
+            decision: value
+                .get("decision")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string(),
+            reviewed_inputs,
+            receipt_hash: report.receipt_hash,
+        });
+    }
+    Ok(reviews)
+}
+
+fn profile_artifact_hashes(
+    change_relative: &Path,
+    observations: &[WorkflowArtifactObservation],
+) -> Vec<WorkflowProfileArtifactHash> {
+    let mut hashes = observations
+        .iter()
+        .flat_map(|observation| {
+            observation.files.iter().map(|file| {
+                let path = Path::new(&file.path)
+                    .strip_prefix(change_relative)
+                    .map(path_string)
+                    .unwrap_or_else(|_| file.path.clone());
+                WorkflowProfileArtifactHash {
+                    artifact_id: observation.artifact_id.clone(),
+                    path,
+                    blake3: file.blake3.clone(),
+                }
+            })
+        })
+        .collect::<Vec<_>>();
+    hashes.sort_by(|left, right| {
+        left.artifact_id
+            .cmp(&right.artifact_id)
+            .then(left.path.cmp(&right.path))
+    });
+    hashes
+}
+
+fn apply_profile_evaluation(
+    report: &mut WorkflowStatusReport,
+    evaluation: &WorkflowProfileEvaluation,
+) {
+    for issue in &evaluation.issues {
+        let blocker = format!("{}:{}", issue.code, issue.message);
+        if let Some(artifact_id) = &issue.artifact_id {
+            if let Some(status) = report
+                .artifacts
+                .iter_mut()
+                .find(|status| status.id == *artifact_id)
+            {
+                status.state = WorkflowArtifactState::Blocked;
+                status.blockers.push(blocker.clone());
+                status.blockers.sort();
+                status.blockers.dedup();
             }
         }
+        report.issues.push(blocker);
     }
+    report.issues.sort();
+    report.issues.dedup();
+    report.valid = evaluation.issues.is_empty();
+}
+
+fn read_bounded_text(
+    root: &Path,
+    relative: &Path,
+    max_bytes: usize,
+) -> Result<Option<String>, Box<dyn Error>> {
+    let path = root.join(relative);
+    let metadata = match fs::symlink_metadata(&path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error.into()),
+    };
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err(format!(
+            "workflow profile artifact is not a safe file: {}",
+            path.display()
+        )
+        .into());
+    }
+    let max_bytes = u64::try_from(max_bytes)?;
+    if metadata.len() > max_bytes {
+        return Err(format!(
+            "workflow profile artifact exceeds its byte bound: {}",
+            path.display()
+        )
+        .into());
+    }
+    Ok(Some(fs::read_to_string(path)?))
 }
 
 pub(crate) fn add_mcp_transport(mut value: Value) -> Value {

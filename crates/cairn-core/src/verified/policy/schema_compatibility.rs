@@ -16,9 +16,10 @@ pub const CURRENT_POLICY_FIELD_SET_DIGEST_MATERIAL: &str = concat!(
     "runtime_evidence_policy\n",
     "steel_orchestration_policy\n",
     "traceability_policy\n",
+    "workflow_profile_policy\n",
 );
 pub const CURRENT_POLICY_FIELD_SET_DIGEST: &str =
-    "44243e4898d51a39da4c27c856d7e6c40447d1aad6f9f3c677d638a7d02a4c6b";
+    "99ef663c2b75b0dd51d5090c2a26d78fa5cb24e15b1b97368e5c5efb2381ae04";
 pub const DEFAULT_POLICY_REFRESH_COMMAND: &str =
     "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json";
 
@@ -55,6 +56,7 @@ const REFRESH_REQUIRED_FIELDS: &[&str] = &[
     "runtime_evidence_policy",
     "steel_orchestration_policy",
     "traceability_policy",
+    "workflow_profile_policy",
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]

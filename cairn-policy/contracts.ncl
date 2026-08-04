@@ -105,7 +105,19 @@ let WorkflowPathKind = std.contract.from_predicate (fun value =>
 ) in
 
 let WorkflowStructuralAdmission = std.contract.from_predicate (fun value =>
-  std.is_string value && (value == "proposal" || value == "delta_specs" || value == "design" || value == "tasks" || value == "markdown")
+  std.is_string value && (value == "proposal" || value == "delta_specs" || value == "design" || value == "tasks" || value == "markdown" || value == "acceptance" || value == "risk" || value == "verification" || value == "semantic_review")
+) in
+
+let WorkflowSpecEffect = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "delta" || value == "none")
+) in
+
+let WorkflowTaskLinkClass = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "requirement" || value == "acceptance")
+) in
+
+let WorkflowReviewKind = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "plan" || value == "design" || value == "code" || value == "diff")
 ) in
 
 let TraceabilityRequirementSourceKind = std.contract.from_predicate (fun value =>
@@ -194,14 +206,38 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     skip_satisfies_dependencies | Bool | default = false,
   },
 
+  WorkflowReviewObligation = {
+    id | NonEmptyString,
+    artifact_id | NonEmptyString,
+    review_kind | WorkflowReviewKind,
+    required_artifacts | NonEmptyArray | Array NonEmptyString,
+  },
+
   ArtifactSchema = {
     schema_version | NonEmptyString,
     id | NonEmptyString,
+    profile_version | PositiveNumber,
     description | NonEmptyString,
+    spec_effect | WorkflowSpecEffect,
+    task_link_class | WorkflowTaskLinkClass,
     states | NonEmptyArray | Array WorkflowState,
     bounds | WorkflowBounds,
     artifacts | NonEmptyArray | Array Artifact,
+    review_obligations | Array WorkflowReviewObligation | default = [],
+    receipt_fields | NonEmptyArray | Array NonEmptyString,
     required_non_claims | NonEmptyArray | Array NonEmptyString,
+  },
+
+  WorkflowEffectProfile = {
+    effect | WorkflowSpecEffect,
+    profile | NonEmptyString,
+  },
+
+  WorkflowProfilePolicy = {
+    default_profile | NonEmptyString,
+    allowed_profiles | NonEmptyArray | Array NonEmptyString,
+    required_profiles_by_effect | Array WorkflowEffectProfile | default = [],
+    forbidden_selection_sources | NonEmptyArray | Array NonEmptyString,
   },
 
   Marker = {
@@ -642,6 +678,7 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
     version | SupportedPolicyVersion,
     policy_schema_compatibility | PolicySchemaCompatibility,
     schemas | NonEmptyArray | Array ArtifactSchema,
+    workflow_profile_policy | WorkflowProfilePolicy,
     lifecycle_stages | NonEmptyArray | Array Stage,
     task_marker_policy | TaskMarkerPolicy,
     gate_policy | GatePolicy,

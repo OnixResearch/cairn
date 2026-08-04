@@ -83,6 +83,14 @@ Read the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md) or the [copyabl
 Direct CLI agents can use `cairn --machine <command> ...` for one versioned JSON outcome.
 Read the [CLI machine contract](docs/cli-machine-contract.md) before you depend on its status and failure rules.
 
+Select a policy-owned workflow profile when you create a change:
+
+```bash
+nix run path:$PWD#cairn -- change create NAME --profile spec-driven --root .
+nix run path:$PWD#cairn -- change create NAME --profile assurance --root .
+nix run path:$PWD#cairn -- change create NAME --profile no-spec-delta --root .
+```
+
 Inspect policy-owned artifact readiness and instructions without mutation:
 
 ```bash
@@ -90,9 +98,11 @@ nix run path:$PWD#cairn -- workflow status CHANGE --root .
 nix run path:$PWD#cairn -- workflow instructions ARTIFACT --change CHANGE --root .
 ```
 
+Read [Workflow profiles](docs/workflow-profiles.md) for selection, obligations, review evidence, sync, archive, compatibility, and non-claims.
 Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, fields, MCP parity, and claim boundaries.
 
 <!-- r[impl cairn.artifact_workflow_contract.docs] -->
+<!-- r[impl cairn.lifecycle_workflow_profiles.docs] -->
 
 ## Local checks
 

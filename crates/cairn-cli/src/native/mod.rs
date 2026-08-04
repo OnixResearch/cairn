@@ -13,7 +13,7 @@ mod json;
 mod read;
 mod validate;
 
-pub(crate) use authoring::{change_template, write_new_file};
+pub(crate) use authoring::{create_change_with_profile, write_new_file};
 pub(crate) use json::{
     change_dependency_edge_json, change_dependency_graph_json, change_dependency_issue_json,
     change_dependency_node_json, change_detail_json, change_status_json, doctor_report_json,

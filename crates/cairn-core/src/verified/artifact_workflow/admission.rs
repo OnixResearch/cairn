@@ -51,6 +51,81 @@ pub fn workflow_schemas_from_value(
     Ok(schemas)
 }
 
+pub fn workflow_profile_registry_from_value(
+    value: &Value,
+    schemas: &[WorkflowSchemaPolicy],
+) -> Result<WorkflowProfileRegistryPolicy, WorkflowAdmissionError> {
+    // r[impl cairn.lifecycle_workflow_profiles.registry]
+    // r[impl cairn.lifecycle_workflow_profiles.boundary]
+    let registry_value = value
+        .get("workflow_profile_policy")
+        .cloned()
+        .ok_or_else(|| {
+            admission_error(
+                WORKFLOW_ISSUE_PROFILE_REGISTRY,
+                "workflow_profile_policy",
+                "workflow profile policy is missing",
+            )
+        })?;
+    let registry = serde_json::from_value::<WorkflowProfileRegistryPolicy>(registry_value)
+        .map_err(|error| {
+            admission_error(
+                WORKFLOW_ISSUE_PROFILE_REGISTRY,
+                "workflow_profile_policy",
+                format!("workflow profile policy shape is invalid: {error}"),
+            )
+        })?;
+    admit_workflow_profile_registry(&registry, schemas)?;
+    Ok(registry)
+}
+
+pub fn admit_workflow_profile_registry(
+    registry: &WorkflowProfileRegistryPolicy,
+    schemas: &[WorkflowSchemaPolicy],
+) -> Result<(), WorkflowAdmissionError> {
+    let known = schemas
+        .iter()
+        .map(|schema| schema.id.as_str())
+        .collect::<BTreeSet<_>>();
+    if !known.contains(registry.default_profile.as_str()) {
+        return Err(profile_registry_error(
+            "default_profile",
+            "default workflow profile is unknown",
+        ));
+    }
+    if registry.allowed_profiles.is_empty() {
+        return Err(profile_registry_error(
+            "allowed_profiles",
+            "at least one workflow profile must be allowed",
+        ));
+    }
+    let mut allowed = BTreeSet::new();
+    for profile in &registry.allowed_profiles {
+        if !known.contains(profile.as_str()) {
+            return Err(profile_registry_error(
+                "allowed_profiles",
+                format!("allowed workflow profile is unknown: {profile}"),
+            ));
+        }
+        if !allowed.insert(profile.as_str()) {
+            return Err(profile_registry_error(
+                "allowed_profiles",
+                format!("allowed workflow profile is duplicated: {profile}"),
+            ));
+        }
+    }
+    if !allowed.contains(registry.default_profile.as_str()) {
+        return Err(profile_registry_error(
+            "default_profile",
+            "default workflow profile must be repository-allowed",
+        ));
+    }
+    validate_effect_profile_mappings(registry, schemas)?;
+    validate_forbidden_profile_sources(registry)?;
+    validate_initial_profiles(schemas)?;
+    Ok(())
+}
+
 pub fn admit_workflow_schemas(
     schemas: &[WorkflowSchemaPolicy],
     allowed_stages: &[String],
@@ -139,6 +214,8 @@ fn admit_schema(
     validate_schema_header(schema, path)?;
     validate_bounds(&schema.bounds, path)?;
     validate_artifacts(schema, allowed_stages, path)?;
+    validate_review_obligations(schema, path)?;
+    validate_profile_shape(schema, path)?;
     workflow_topological_order(schema)?;
     Ok(())
 }
@@ -157,12 +234,55 @@ fn validate_schema_header(
             ),
         ));
     }
-    if schema.id.is_empty() || schema.description.is_empty() {
+    if schema.id.is_empty()
+        || schema.description.is_empty()
+        || schema.profile_version == 0
+        || schema.receipt_fields.is_empty()
+    {
         return Err(admission_error(
             WORKFLOW_ISSUE_POLICY_SHAPE,
             path,
-            "workflow schema id and description must be non-empty",
+            "workflow profile id, version, description, and receipt fields must be present",
         ));
+    }
+    if !matches!(
+        schema.spec_effect.as_str(),
+        WORKFLOW_SPEC_EFFECT_DELTA | WORKFLOW_SPEC_EFFECT_NONE
+    ) {
+        return Err(admission_error(
+            WORKFLOW_ISSUE_PROFILE_EFFECT,
+            format!("{path}.spec_effect"),
+            "workflow profile spec effect is unsupported",
+        ));
+    }
+    if !matches!(
+        schema.task_link_class.as_str(),
+        WORKFLOW_TASK_LINK_REQUIREMENT | WORKFLOW_TASK_LINK_ACCEPTANCE
+    ) {
+        return Err(admission_error(
+            WORKFLOW_ISSUE_PROFILE_REGISTRY,
+            format!("{path}.task_link_class"),
+            "workflow profile task-link class is unsupported",
+        ));
+    }
+    validate_unique_nonempty(
+        &schema.receipt_fields,
+        &format!("{path}.receipt_fields"),
+        "receipt field",
+    )?;
+    for required in [
+        "workflow_profile",
+        "workflow_profile_version",
+        "spec_effect",
+        "non_claims",
+    ] {
+        if !schema.receipt_fields.iter().any(|field| field == required) {
+            return Err(admission_error(
+                WORKFLOW_ISSUE_PROFILE_REGISTRY,
+                format!("{path}.receipt_fields"),
+                format!("workflow profile receipt fields must include {required}"),
+            ));
+        }
     }
     let expected_states = WORKFLOW_SUPPORTED_STATES.map(ToOwned::to_owned).to_vec();
     if schema.states != expected_states {
@@ -291,6 +411,10 @@ fn validate_artifact_shape(
             | WORKFLOW_ADMISSION_DESIGN
             | WORKFLOW_ADMISSION_TASKS
             | WORKFLOW_ADMISSION_MARKDOWN
+            | WORKFLOW_ADMISSION_ACCEPTANCE
+            | WORKFLOW_ADMISSION_RISK
+            | WORKFLOW_ADMISSION_VERIFICATION
+            | WORKFLOW_ADMISSION_SEMANTIC_REVIEW
     ) {
         return Err(admission_error(
             WORKFLOW_ISSUE_POLICY_ADMISSION,
@@ -459,6 +583,211 @@ fn validate_template(
         }
         remaining = &remaining[token_end + TEMPLATE_CLOSE.len()..];
     }
+}
+
+fn validate_review_obligations(
+    schema: &WorkflowSchemaPolicy,
+    path: &str,
+) -> Result<(), WorkflowAdmissionError> {
+    let known = schema
+        .artifacts
+        .iter()
+        .map(|artifact| artifact.id.as_str())
+        .collect::<BTreeSet<_>>();
+    let mut obligation_ids = BTreeSet::new();
+    for (index, obligation) in schema.review_obligations.iter().enumerate() {
+        let obligation_path = format!("{path}.review_obligations[{index}]");
+        if obligation.id.is_empty() || !obligation_ids.insert(obligation.id.as_str()) {
+            return Err(admission_error(
+                WORKFLOW_ISSUE_PROFILE_REVIEW,
+                format!("{obligation_path}.id"),
+                "workflow review obligation IDs must be non-empty and unique",
+            ));
+        }
+        let review_artifact = schema
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.id == obligation.artifact_id);
+        if review_artifact.is_none_or(|artifact| {
+            artifact.structural_admission != WORKFLOW_ADMISSION_SEMANTIC_REVIEW
+        }) {
+            return Err(admission_error(
+                WORKFLOW_ISSUE_PROFILE_REVIEW,
+                format!("{obligation_path}.artifact_id"),
+                "workflow review obligation must reference a semantic-review artifact",
+            ));
+        }
+        if !matches!(
+            obligation.review_kind.as_str(),
+            "plan" | "design" | "code" | "diff"
+        ) {
+            return Err(admission_error(
+                WORKFLOW_ISSUE_PROFILE_REVIEW,
+                format!("{obligation_path}.review_kind"),
+                "workflow review obligation uses an unsupported semantic review kind",
+            ));
+        }
+        if obligation.required_artifacts.is_empty() {
+            return Err(admission_error(
+                WORKFLOW_ISSUE_PROFILE_REVIEW,
+                format!("{obligation_path}.required_artifacts"),
+                "workflow review obligation must bind at least one artifact",
+            ));
+        }
+        validate_unique_nonempty(
+            &obligation.required_artifacts,
+            &format!("{obligation_path}.required_artifacts"),
+            "review artifact",
+        )?;
+        if let Some(unknown) = obligation
+            .required_artifacts
+            .iter()
+            .find(|artifact| !known.contains(artifact.as_str()))
+        {
+            return Err(admission_error(
+                WORKFLOW_ISSUE_PROFILE_REVIEW,
+                format!("{obligation_path}.required_artifacts"),
+                format!("workflow review obligation references unknown artifact: {unknown}"),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_profile_shape(
+    schema: &WorkflowSchemaPolicy,
+    path: &str,
+) -> Result<(), WorkflowAdmissionError> {
+    let admissions = schema
+        .artifacts
+        .iter()
+        .map(|artifact| artifact.structural_admission.as_str())
+        .collect::<BTreeSet<_>>();
+    let has_delta_specs = admissions.contains(WORKFLOW_ADMISSION_DELTA_SPECS);
+    let has_acceptance = admissions.contains(WORKFLOW_ADMISSION_ACCEPTANCE);
+    if schema.spec_effect == WORKFLOW_SPEC_EFFECT_NONE {
+        if has_delta_specs
+            || !has_acceptance
+            || schema.task_link_class != WORKFLOW_TASK_LINK_ACCEPTANCE
+            || schema.review_obligations.is_empty()
+        {
+            return Err(admission_error(
+                WORKFLOW_ISSUE_PROFILE_REGISTRY,
+                path,
+                "no-spec workflow profiles must forbid delta specs and require acceptance links and review",
+            ));
+        }
+    } else if !has_delta_specs || schema.task_link_class != WORKFLOW_TASK_LINK_REQUIREMENT {
+        return Err(admission_error(
+            WORKFLOW_ISSUE_PROFILE_REGISTRY,
+            path,
+            "spec-mutating workflow profiles must require delta specs and requirement task links",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_effect_profile_mappings(
+    registry: &WorkflowProfileRegistryPolicy,
+    schemas: &[WorkflowSchemaPolicy],
+) -> Result<(), WorkflowAdmissionError> {
+    let mut effects = BTreeSet::new();
+    for mapping in &registry.required_profiles_by_effect {
+        if !matches!(
+            mapping.effect.as_str(),
+            WORKFLOW_SPEC_EFFECT_DELTA | WORKFLOW_SPEC_EFFECT_NONE
+        ) || !effects.insert(mapping.effect.as_str())
+        {
+            return Err(profile_registry_error(
+                "required_profiles_by_effect",
+                "effect-to-profile mappings must use unique supported effects",
+            ));
+        }
+        let Some(schema) = schemas.iter().find(|schema| schema.id == mapping.profile) else {
+            return Err(profile_registry_error(
+                "required_profiles_by_effect",
+                format!(
+                    "effect mapping references unknown profile: {}",
+                    mapping.profile
+                ),
+            ));
+        };
+        if schema.spec_effect != mapping.effect {
+            return Err(profile_registry_error(
+                "required_profiles_by_effect",
+                "effect mapping cannot select a profile with a different declared effect",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_forbidden_profile_sources(
+    registry: &WorkflowProfileRegistryPolicy,
+) -> Result<(), WorkflowAdmissionError> {
+    let required = [
+        "user-global",
+        "environment",
+        "agent-prompt",
+        "remote-package",
+    ];
+    for source in required {
+        if !registry
+            .forbidden_selection_sources
+            .iter()
+            .any(|candidate| candidate == source)
+        {
+            return Err(profile_registry_error(
+                "forbidden_selection_sources",
+                format!("workflow profile policy must forbid ambient source: {source}"),
+            ));
+        }
+    }
+    validate_unique_nonempty(
+        &registry.forbidden_selection_sources,
+        "workflow_profile_policy.forbidden_selection_sources",
+        "forbidden source",
+    )
+}
+
+fn validate_initial_profiles(
+    schemas: &[WorkflowSchemaPolicy],
+) -> Result<(), WorkflowAdmissionError> {
+    for required in ["spec-driven", "assurance", "no-spec-delta"] {
+        if !schemas.iter().any(|schema| schema.id == required) {
+            return Err(profile_registry_error(
+                "schemas",
+                format!("initial workflow profile is missing: {required}"),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_unique_nonempty(
+    values: &[String],
+    path: &str,
+    label: &str,
+) -> Result<(), WorkflowAdmissionError> {
+    let mut unique = BTreeSet::new();
+    for value in values {
+        if value.is_empty() || !unique.insert(value.as_str()) {
+            return Err(admission_error(
+                WORKFLOW_ISSUE_PROFILE_REGISTRY,
+                path,
+                format!("{label} values must be non-empty and unique"),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn profile_registry_error(field: &str, message: impl Into<String>) -> WorkflowAdmissionError {
+    admission_error(
+        WORKFLOW_ISSUE_PROFILE_REGISTRY,
+        format!("workflow_profile_policy.{field}"),
+        message,
+    )
 }
 
 fn template_error(path: &str, message: impl Into<String>) -> WorkflowAdmissionError {

@@ -3,11 +3,13 @@ use serde_json::Value;
 use super::*;
 
 const EXPECTED_MAX_STORE_ID_BYTES: usize = 64;
+const EXPECTED_INITIAL_PROFILE_COUNT: usize = 3;
 const INVALID_MACHINE_SUCCESS_STATUS: u64 = 1;
 
 #[test]
 fn rejects_cyclic_generated_workflow_policy_with_a_stable_code() {
     // r[verify cairn.artifact_workflow_contract.policy.invalid]
+    // r[verify cairn.lifecycle_workflow_profiles.registry.invalid]
     let mut value: Value = serde_json::from_str(include_str!(
         "../../../../../cairn-policy/generated/cairn-policy.json"
     ))
@@ -20,11 +22,58 @@ fn rejects_cyclic_generated_workflow_policy_with_a_stable_code() {
 }
 
 #[test]
+fn rejects_unknown_default_workflow_profile() {
+    // r[verify cairn.lifecycle_workflow_profiles.selection.invalid]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy value");
+    value["workflow_profile_policy"]["default_profile"] = serde_json::json!("unknown-profile");
+    let error = validate_policy_json(value).expect_err("unknown default profile fails");
+    assert!(error.to_string().contains("default_profile"));
+}
+
+#[test]
+fn rejects_duplicate_workflow_profiles_and_ambient_sources() {
+    // r[verify cairn.lifecycle_workflow_profiles.registry]
+    // r[verify cairn.lifecycle_workflow_profiles.selection.invalid]
+    // r[verify cairn.lifecycle_workflow_profiles.boundary.ambient]
+    let value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy value");
+
+    let mut duplicate = value.clone();
+    let schema = duplicate["schemas"][0].clone();
+    duplicate["schemas"]
+        .as_array_mut()
+        .expect("schemas")
+        .push(schema);
+    let duplicate_error =
+        validate_policy_json(duplicate).expect_err("duplicate workflow profile fails");
+    assert!(duplicate_error
+        .to_string()
+        .contains("duplicate workflow schema id"));
+
+    let mut ambient = value;
+    ambient["workflow_profile_policy"]["forbidden_selection_sources"] =
+        serde_json::json!(["user-global", "agent-prompt", "remote-package"]);
+    let ambient_error = validate_policy_json(ambient).expect_err("ambient profile source fails");
+    assert!(ambient_error
+        .to_string()
+        .contains("must forbid ambient source: environment"));
+}
+
+#[test]
 fn parses_generated_default_policy_text() {
     // r[verify cairn.artifact_workflow_contract.policy.valid]
     // r[verify developer_experience.core_policy_parser_boundary_split.behavior]
     // r[verify cairn.supersede.traceability_ownership.configured_profiles.cairn_default]
     // r[verify cairn.cli_machine_contract.policy.valid]
+    // r[verify cairn.lifecycle_workflow_profiles.registry.valid]
+    // r[verify cairn.lifecycle_workflow_profiles.initial_profiles]
+    // r[verify cairn.lifecycle_workflow_profiles.initial_profiles.spec_driven]
+    // r[verify cairn.lifecycle_workflow_profiles.selection.compatibility]
     let text = include_str!("../../../../../cairn-policy/generated/cairn-policy.json");
     let policy = parse_policy_json(text).expect("generated policy parses");
     assert_eq!(policy.name, "cairn-default");
@@ -48,7 +97,26 @@ fn parses_generated_default_policy_text() {
                 .any(|definition| definition.code == *required))
     );
     assert_eq!(policy.gate_stages, vec!["proposal", "design", "tasks"]);
-    assert_eq!(policy.workflow_schemas.len(), 1);
+    assert_eq!(
+        policy.workflow_schemas.len(),
+        EXPECTED_INITIAL_PROFILE_COUNT
+    );
+    assert_eq!(
+        policy.workflow_profile_policy.allowed_profiles,
+        vec!["spec-driven", "assurance", "no-spec-delta"]
+    );
+    let (compatibility, _) = crate::verified::artifact_workflow::select_workflow_profile(
+        &policy.workflow_profile_policy,
+        &policy.workflow_schemas,
+        &crate::verified::artifact_workflow::WorkflowChangeProfileMetadata {
+            workflow_profile: None,
+            spec_effect: None,
+            spec_effect_rationale: None,
+        },
+    )
+    .expect("existing change uses compatibility profile");
+    assert_eq!(compatibility.profile_id, "spec-driven");
+    assert!(compatibility.compatibility_fallback);
     let workflow = &policy.workflow_schemas[0];
     assert_eq!(workflow.id, "spec-driven");
     assert_eq!(

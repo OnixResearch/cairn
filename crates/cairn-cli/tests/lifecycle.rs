@@ -24,3 +24,5 @@ mod probe_execution;
 mod read_validation;
 #[path = "lifecycle/structured_lifecycle.rs"]
 mod structured_lifecycle;
+#[path = "lifecycle/workflow_profiles.rs"]
+mod workflow_profiles;

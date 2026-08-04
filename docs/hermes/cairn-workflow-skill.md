@@ -56,10 +56,14 @@ Never open a pull request or force-push. Preserve unrelated work and report any 
 Create changes with:
 
 ```bash
-nix run path:$PWD#cairn -- change create <slug> --root .
+nix run path:$PWD#cairn -- change create <slug> --profile spec-driven --root .
 ```
 
-A complete change normally includes:
+The available profiles are `spec-driven`, `assurance`, and `no-spec-delta`. Existing changes without profile metadata use `spec-driven`.
+
+`assurance` adds risk, verification, and current semantic-review evidence. `no-spec-delta` uses local `a[...]` criteria and an explicit no-op sync.
+
+A complete `spec-driven` change normally includes:
 
 - `proposal.md`
 - `design.md`
@@ -98,7 +102,7 @@ Expected result: no matches.
 
 - Native lifecycle/read commands:
   - `cairn init --root PATH`
-  - `cairn change create <name> --root PATH`
+  - `cairn change create <name> [--profile spec-driven|assurance|no-spec-delta] --root PATH`
   - `cairn change depend list <name> --root PATH`
   - `cairn change depend add <name> <dependency> --root PATH [--execute]`
   - `cairn change depend remove <name> <dependency> --root PATH [--execute]`
@@ -112,7 +116,8 @@ Expected result: no matches.
   - `cairn spec show <id> --root PATH`
   - `cairn workflow status <change> --root PATH [--schema ID]`
   - `cairn workflow instructions <artifact> --change <change> --root PATH [--schema ID]`
-  - Workflow commands report bounded structural facts. They do not satisfy gates or mutate lifecycle artifacts.
+  - Workflow commands report the immutable selected profile and bounded structural facts. `--schema` is an assertion, not a profile override.
+  - Profile conformance does not prove zero behavior effect, risk-analysis truth, test sufficiency, code correctness, or release eligibility.
   - local `depends_on` ordering dependencies are authored through preview-by-default `change depend add/remove`; archived dependencies satisfy blockers, active dependencies block sync/archive, and cross-repo receipt/evidence dependencies remain a separate evidence-input concept.
   - native `cairn/` layout is used for normal runtime commands; legacy layouts are migration-only and are not implicit fallbacks.
 - Diagnostics:

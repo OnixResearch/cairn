@@ -56,18 +56,27 @@ pub use verified::artifact_auth::adapter::{
     CAIRN_ARTIFACT_AUTH_VERIFIER_CONTEXT_PROFILE_V1,
 };
 pub use verified::artifact_workflow::{
-    admit_workflow_schemas, build_workflow_instructions, derive_workflow_status,
-    workflow_markdown_is_structurally_present, workflow_schemas_from_value,
-    workflow_topological_order, WorkflowAdmissionError, WorkflowArtifactFile,
-    WorkflowArtifactObservation, WorkflowArtifactPolicy, WorkflowArtifactState,
-    WorkflowArtifactStatus, WorkflowBounds, WorkflowInstructionEnvelope, WorkflowSchemaPolicy,
+    admit_workflow_profile_registry, admit_workflow_schemas, build_workflow_instructions,
+    derive_workflow_status, evaluate_workflow_profile, parse_acceptance_ids,
+    profile_issue_applies_to_stage, select_workflow_profile, synthetic_acceptance_spec,
+    tasks_with_requirement_links, workflow_change_profile_metadata_from_value,
+    workflow_markdown_is_structurally_present, workflow_profile_registry_from_value,
+    workflow_schemas_from_value, workflow_topological_order, WorkflowAdmissionError,
+    WorkflowArtifactFile, WorkflowArtifactObservation, WorkflowArtifactPolicy,
+    WorkflowArtifactState, WorkflowArtifactStatus, WorkflowBounds, WorkflowChangeProfileMetadata,
+    WorkflowEffectProfilePolicy, WorkflowInstructionEnvelope, WorkflowProfileArtifactHash,
+    WorkflowProfileEvaluation, WorkflowProfileEvidence, WorkflowProfileIssue, WorkflowProfileRef,
+    WorkflowProfileRegistryPolicy, WorkflowProfileSelection, WorkflowReviewEvidence,
+    WorkflowReviewInputEvidence, WorkflowReviewObligationPolicy, WorkflowSchemaPolicy,
     WorkflowStatusReport, WorkflowUpstreamArtifact, MAX_WORKFLOW_ARTIFACTS_LIMIT,
     MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT, MAX_WORKFLOW_CONSTRAINTS_LIMIT,
     MAX_WORKFLOW_DEPENDENCIES_LIMIT, MAX_WORKFLOW_DIRECTORY_DEPTH_LIMIT,
     MAX_WORKFLOW_DIRECTORY_ENTRIES_LIMIT, MAX_WORKFLOW_FILES_LIMIT, MAX_WORKFLOW_ISSUES_LIMIT,
     MAX_WORKFLOW_NON_CLAIMS_LIMIT, MAX_WORKFLOW_PATH_BYTES_LIMIT, MAX_WORKFLOW_SCHEMAS_LIMIT,
-    MAX_WORKFLOW_TEMPLATE_BYTES_LIMIT, WORKFLOW_ADMISSION_DELTA_SPECS, WORKFLOW_ADMISSION_DESIGN,
-    WORKFLOW_ADMISSION_MARKDOWN, WORKFLOW_ADMISSION_PROPOSAL, WORKFLOW_ADMISSION_TASKS,
+    MAX_WORKFLOW_TEMPLATE_BYTES_LIMIT, WORKFLOW_ADMISSION_ACCEPTANCE,
+    WORKFLOW_ADMISSION_DELTA_SPECS, WORKFLOW_ADMISSION_DESIGN, WORKFLOW_ADMISSION_MARKDOWN,
+    WORKFLOW_ADMISSION_PROPOSAL, WORKFLOW_ADMISSION_RISK, WORKFLOW_ADMISSION_SEMANTIC_REVIEW,
+    WORKFLOW_ADMISSION_TASKS, WORKFLOW_ADMISSION_VERIFICATION, WORKFLOW_COMPATIBILITY_PROFILE,
     WORKFLOW_INSTRUCTIONS_SCHEMA_V1, WORKFLOW_ISSUE_ARTIFACT_INVALID,
     WORKFLOW_ISSUE_ARTIFACT_UNKNOWN, WORKFLOW_ISSUE_DEPENDENCY_BLOCKED,
     WORKFLOW_ISSUE_OBSERVATION_DUPLICATE, WORKFLOW_ISSUE_OBSERVATION_INCONSISTENT,
@@ -79,9 +88,13 @@ pub use verified::artifact_workflow::{
     WORKFLOW_ISSUE_POLICY_SELF_DEPENDENCY, WORKFLOW_ISSUE_POLICY_SHAPE,
     WORKFLOW_ISSUE_POLICY_STAGE, WORKFLOW_ISSUE_POLICY_STATES, WORKFLOW_ISSUE_POLICY_TEMPLATE,
     WORKFLOW_ISSUE_POLICY_UNKNOWN_DEPENDENCY, WORKFLOW_ISSUE_POLICY_UNSAFE_PATH,
-    WORKFLOW_PATH_KIND_FILE, WORKFLOW_PATH_KIND_SPEC_DIRECTORY, WORKFLOW_SCHEMA_VERSION_V1,
-    WORKFLOW_STATE_BLOCKED, WORKFLOW_STATE_DONE, WORKFLOW_STATE_READY, WORKFLOW_STATE_SKIPPED,
-    WORKFLOW_STATUS_SCHEMA_V1, WORKFLOW_SUPPORTED_STATES,
+    WORKFLOW_ISSUE_PROFILE_ACCEPTANCE, WORKFLOW_ISSUE_PROFILE_ARTIFACT,
+    WORKFLOW_ISSUE_PROFILE_EFFECT, WORKFLOW_ISSUE_PROFILE_REGISTRY, WORKFLOW_ISSUE_PROFILE_REVIEW,
+    WORKFLOW_ISSUE_PROFILE_SELECTION, WORKFLOW_ISSUE_PROFILE_TASK_LINK, WORKFLOW_PATH_KIND_FILE,
+    WORKFLOW_PATH_KIND_SPEC_DIRECTORY, WORKFLOW_PROFILE_SOURCE_CREATE, WORKFLOW_SCHEMA_VERSION_V1,
+    WORKFLOW_SPEC_EFFECT_DELTA, WORKFLOW_SPEC_EFFECT_NONE, WORKFLOW_STATE_BLOCKED,
+    WORKFLOW_STATE_DONE, WORKFLOW_STATE_READY, WORKFLOW_STATE_SKIPPED, WORKFLOW_STATUS_SCHEMA_V1,
+    WORKFLOW_SUPPORTED_STATES, WORKFLOW_TASK_LINK_ACCEPTANCE, WORKFLOW_TASK_LINK_REQUIREMENT,
 };
 pub use verified::ast_grep_gate::{
     ast_grep_receipt_hash, ast_grep_receipt_hash_material, default_ast_grep_gate_policy,
@@ -401,8 +414,10 @@ pub use verified::oxide_lifecycle_patterns::{
     OxideReferenceRow, OXIDE_LIFECYCLE_PATTERN_BOUNDARY, OXIDE_LIFECYCLE_PATTERN_SCHEMA_V1,
 };
 pub use verified::plan::{
-    build_archive_plan, build_archive_plan_with_dependency_blockers, build_sync_plan,
-    build_sync_plan_with_dependency_blockers, ArchivePlan, PlanAction, PlanActionKind, SyncPlan,
+    build_archive_plan, build_archive_plan_for_effect_with_dependency_blockers,
+    build_archive_plan_with_dependency_blockers, build_sync_plan,
+    build_sync_plan_for_effect_with_dependency_blockers, build_sync_plan_with_dependency_blockers,
+    ArchivePlan, PlanAction, PlanActionKind, SyncPlan,
 };
 pub use verified::policy::{
     classify_policy_schema_compatibility, default_policy_schema_metadata, parse_policy_json,
@@ -559,12 +574,12 @@ pub use verified::trellis_proof_readiness::{
 };
 pub use verified::validation::{
     change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot,
-    evaluate_lifecycle_substance, finalize_gate_report, lifecycle_substance_issues,
-    validate_changes, validate_changes_with_archives, validate_spec_source,
-    validate_spec_source_with_policy, validate_spec_sources, validate_spec_sources_with_policy,
-    validation_issue_code, ArtifactSubstanceInventory, EvidenceStrengthSummary, GateArtifact,
-    GateIssue, GateReport, GateSnapshot, GateStage, LifecycleSubstanceReport,
-    SpecSubstanceInventory,
+    evaluate_lifecycle_substance, evaluate_profile_gate_snapshot, finalize_gate_report,
+    lifecycle_substance_issues, validate_changes, validate_changes_with_archives,
+    validate_spec_source, validate_spec_source_with_policy, validate_spec_sources,
+    validate_spec_sources_with_policy, validation_issue_code, ArtifactSubstanceInventory,
+    EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
+    LifecycleSubstanceReport, SpecSubstanceInventory,
 };
 pub use verified::workspace_contract_matrix::{
     evaluate_workspace_contract_matrix_readiness, is_workspace_contract_mode,

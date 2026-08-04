@@ -28,10 +28,28 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
         &policy_hash,
     ));
     dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+    let profile_context =
+        crate::workflow::load_workflow_profile_context(&root, selected.layout, change, &policy)?;
+    let profile_blockers = if profile_context.selection.compatibility_fallback {
+        Vec::new()
+    } else {
+        profile_context.completion_blockers()
+    };
     dependency_blockers.sort();
     dependency_blockers.dedup();
-    let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
+    let mut plan = build_sync_plan_for_effect_with_dependency_blockers(
+        &change_status,
+        &dependency_blockers,
+        &profile_context.schema.spec_effect,
+    );
     let base_plan_unblocked = !plan.blocked;
+    plan.reasons.extend(profile_blockers);
+    plan.reasons.sort();
+    plan.reasons.dedup();
+    plan.blocked = !plan.reasons.is_empty();
+    if plan.blocked {
+        plan.actions.clear();
+    }
     let merge_snapshots = load_sync_merge_snapshots(&root, selected.layout, change, &plan)?;
     plan.reasons
         .extend(sync_merge_blockers(&root, &merge_snapshots));
@@ -67,6 +85,7 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
             "probe_evidence": probe_binding,
             "cross_repo_dependencies": cross_repo_report.to_json(),
             "cross_repo_evidence_issues": loaded_evidence.issues,
+            "workflow_profile": profile_context.receipt_fields(),
             "policy": policy.name,
             "policy_hash": policy_hash,
         }),
@@ -76,6 +95,20 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
     let mut mutation_manifest = Value::Null;
     if execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_profile = crate::workflow::load_workflow_profile_context(
+                &root,
+                selected.layout,
+                change,
+                &policy,
+            )?;
+            if current_profile.profile_identity_hash != profile_context.profile_identity_hash {
+                plan.blocked = true;
+                plan.reasons
+                    .push("workflow profile facts changed after preflight".to_string());
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let current_evidence =
                 crate::cross_repo_dependencies::load_cross_repo_evidence(&root, &evidence_inputs);
@@ -127,6 +160,7 @@ pub(super) fn mcp_sync(input: &Value, execute: bool) -> Result<Value, Box<dyn Er
     );
     value["cross_repo_dependencies"] = cross_repo_report.to_json();
     value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
+    attach_profile_fields(&mut value, &profile_context);
     value["mcp"] = json!({"read_only": !execute, "destructive": execute});
     Ok(with_portable_receipt_hash(&root, value))
 }
@@ -149,16 +183,6 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
     );
     let probe_binding =
         crate::probe::observe_gate_probes(&root, selected.layout, change, &policy).binding;
-    let input_hash = portable_json_hash(
-        &root,
-        &json!({
-            "change": change_status_json(&change_status),
-            "probe_evidence": probe_binding,
-            "cross_repo_dependencies": cross_repo_report.to_json(),
-            "cross_repo_evidence_issues": loaded_evidence.issues,
-            "policy_hash": policy_hash,
-        }),
-    );
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
     let mut dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
     dependency_blockers.extend(crate::cross_repo_dependencies::cross_repo_blockers(
@@ -167,11 +191,40 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
         &policy_hash,
     ));
     dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+    let profile_context =
+        crate::workflow::load_workflow_profile_context(&root, selected.layout, change, &policy)?;
+    let profile_blockers = if profile_context.selection.compatibility_fallback {
+        Vec::new()
+    } else {
+        profile_context.completion_blockers()
+    };
+    let input_hash = portable_json_hash(
+        &root,
+        &json!({
+            "change": change_status_json(&change_status),
+            "probe_evidence": probe_binding,
+            "cross_repo_dependencies": cross_repo_report.to_json(),
+            "cross_repo_evidence_issues": loaded_evidence.issues,
+            "workflow_profile": profile_context.receipt_fields(),
+            "policy_hash": policy_hash,
+        }),
+    );
     dependency_blockers.sort();
     dependency_blockers.dedup();
-    let mut plan =
-        build_archive_plan_with_dependency_blockers(&change_status, &dependency_blockers);
-    if policy.archive_require_gate && !plan.blocked {
+    let mut plan = build_archive_plan_for_effect_with_dependency_blockers(
+        &change_status,
+        &dependency_blockers,
+        &profile_context.schema.spec_effect,
+    );
+    let base_plan_unblocked = !plan.blocked;
+    plan.reasons.extend(profile_blockers);
+    plan.reasons.sort();
+    plan.reasons.dedup();
+    plan.blocked = !plan.reasons.is_empty();
+    if plan.blocked {
+        plan.actions.clear();
+    }
+    if policy.archive_require_gate && base_plan_unblocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
             selected.layout,
@@ -188,6 +241,20 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
     }
     if execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_profile = crate::workflow::load_workflow_profile_context(
+                &root,
+                selected.layout,
+                change,
+                &policy,
+            )?;
+            if current_profile.profile_identity_hash != profile_context.profile_identity_hash {
+                plan.blocked = true;
+                plan.reasons
+                    .push("workflow profile facts changed after preflight".to_string());
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let current_evidence =
                 crate::cross_repo_dependencies::load_cross_repo_evidence(&root, &evidence_inputs);
@@ -240,6 +307,7 @@ pub(super) fn mcp_archive(input: &Value, execute: bool) -> Result<Value, Box<dyn
     );
     value["cross_repo_dependencies"] = cross_repo_report.to_json();
     value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
+    attach_profile_fields(&mut value, &profile_context);
     value["mcp"] = json!({"read_only": !execute, "destructive": execute});
     Ok(with_portable_receipt_hash(&root, value))
 }
@@ -288,27 +356,13 @@ pub(super) fn mcp_init(input: &Value) -> Result<Value, Box<dyn Error>> {
 }
 
 pub(super) fn mcp_change_create(input: &Value) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.lifecycle_workflow_profiles.selection.create]
     let root = mcp_root(input);
     let change = mcp_required_string(input, "change")?;
     reject_selector_escape(change)?;
-    let skeleton = build_change_skeleton(change)?;
-    let mut created = Vec::with_capacity(skeleton.artifacts.len());
-    let mut existing = Vec::with_capacity(skeleton.artifacts.len());
-    for artifact in skeleton.artifacts {
-        let path = root.join(&artifact.path);
-        if path.exists() {
-            existing.push(artifact.path);
-            continue;
-        }
-        match artifact.kind {
-            LifecycleArtifactKind::Directory => fs::create_dir_all(&path)?,
-            LifecycleArtifactKind::File => {
-                write_new_file(&path, &change_template(change, &artifact.path))?
-            }
-        }
-        created.push(artifact.path);
-    }
-    Ok(with_receipt_hash(
-        json!({"command": "change_create", "root": path_string(root), "change": change, "mutated": !created.is_empty(), "layout": layout_name(LifecycleLayout::Native), "created": created, "existing": existing, "mcp": {"read_only": false, "destructive": true}}),
-    ))
+    let profile = input.get("profile").and_then(Value::as_str);
+    let policy = load_policy_file(mcp_policy(input))?;
+    let mut value = crate::native::create_change_with_profile(&root, change, profile, &policy)?;
+    value["mcp"] = json!({"read_only": false, "destructive": true});
+    Ok(with_portable_receipt_hash(&root, value))
 }

@@ -22,6 +22,17 @@ pub const WORKFLOW_ADMISSION_DELTA_SPECS: &str = "delta_specs";
 pub const WORKFLOW_ADMISSION_DESIGN: &str = "design";
 pub const WORKFLOW_ADMISSION_TASKS: &str = "tasks";
 pub const WORKFLOW_ADMISSION_MARKDOWN: &str = "markdown";
+pub const WORKFLOW_ADMISSION_ACCEPTANCE: &str = "acceptance";
+pub const WORKFLOW_ADMISSION_RISK: &str = "risk";
+pub const WORKFLOW_ADMISSION_VERIFICATION: &str = "verification";
+pub const WORKFLOW_ADMISSION_SEMANTIC_REVIEW: &str = "semantic_review";
+
+pub const WORKFLOW_SPEC_EFFECT_DELTA: &str = "delta";
+pub const WORKFLOW_SPEC_EFFECT_NONE: &str = "none";
+pub const WORKFLOW_TASK_LINK_REQUIREMENT: &str = "requirement";
+pub const WORKFLOW_TASK_LINK_ACCEPTANCE: &str = "acceptance";
+pub const WORKFLOW_PROFILE_SOURCE_CREATE: &str = "change_create";
+pub const WORKFLOW_COMPATIBILITY_PROFILE: &str = "spec-driven";
 
 pub const WORKFLOW_PATH_KIND_FILE: &str = "file";
 pub const WORKFLOW_PATH_KIND_SPEC_DIRECTORY: &str = "spec_directory";
@@ -45,6 +56,13 @@ pub const WORKFLOW_ISSUE_POLICY_STAGE: &str = "cairn.workflow.policy.stage";
 pub const WORKFLOW_ISSUE_POLICY_PATH_KIND: &str = "cairn.workflow.policy.path_kind";
 pub const WORKFLOW_ISSUE_POLICY_ADMISSION: &str = "cairn.workflow.policy.admission";
 pub const WORKFLOW_ISSUE_POLICY_PREREQUISITE: &str = "cairn.workflow.policy.prerequisite";
+pub const WORKFLOW_ISSUE_PROFILE_REGISTRY: &str = "cairn.workflow.profile.registry";
+pub const WORKFLOW_ISSUE_PROFILE_SELECTION: &str = "cairn.workflow.profile.selection";
+pub const WORKFLOW_ISSUE_PROFILE_EFFECT: &str = "cairn.workflow.profile.effect";
+pub const WORKFLOW_ISSUE_PROFILE_ACCEPTANCE: &str = "cairn.workflow.profile.acceptance";
+pub const WORKFLOW_ISSUE_PROFILE_TASK_LINK: &str = "cairn.workflow.profile.task_link";
+pub const WORKFLOW_ISSUE_PROFILE_REVIEW: &str = "cairn.workflow.profile.review";
+pub const WORKFLOW_ISSUE_PROFILE_ARTIFACT: &str = "cairn.workflow.profile.artifact";
 pub const WORKFLOW_ISSUE_OBSERVATION_UNKNOWN: &str = "cairn.workflow.observation.unknown";
 pub const WORKFLOW_ISSUE_OBSERVATION_DUPLICATE: &str = "cairn.workflow.observation.duplicate";
 pub const WORKFLOW_ISSUE_OBSERVATION_INCONSISTENT: &str = "cairn.workflow.observation.inconsistent";
@@ -105,14 +123,121 @@ pub struct WorkflowArtifactPolicy {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct WorkflowReviewObligationPolicy {
+    pub id: String,
+    pub artifact_id: String,
+    pub review_kind: String,
+    pub required_artifacts: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct WorkflowSchemaPolicy {
     pub schema_version: String,
     pub id: String,
+    pub profile_version: u64,
     pub description: String,
+    pub spec_effect: String,
+    pub task_link_class: String,
     pub states: Vec<String>,
     pub bounds: WorkflowBounds,
     pub artifacts: Vec<WorkflowArtifactPolicy>,
+    #[serde(default)]
+    pub review_obligations: Vec<WorkflowReviewObligationPolicy>,
+    pub receipt_fields: Vec<String>,
     pub required_non_claims: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkflowEffectProfilePolicy {
+    pub effect: String,
+    pub profile: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkflowProfileRegistryPolicy {
+    pub default_profile: String,
+    pub allowed_profiles: Vec<String>,
+    pub required_profiles_by_effect: Vec<WorkflowEffectProfilePolicy>,
+    pub forbidden_selection_sources: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkflowProfileRef {
+    pub id: String,
+    pub version: u64,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct WorkflowChangeProfileMetadata {
+    pub workflow_profile: Option<WorkflowProfileRef>,
+    pub spec_effect: Option<String>,
+    pub spec_effect_rationale: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkflowProfileSelection {
+    pub profile_id: String,
+    pub profile_version: u64,
+    pub source: String,
+    pub compatibility_fallback: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkflowProfileArtifactHash {
+    pub artifact_id: String,
+    pub path: String,
+    pub blake3: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkflowReviewInputEvidence {
+    pub path: String,
+    pub hash: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkflowReviewEvidence {
+    pub obligation_id: String,
+    pub valid: bool,
+    pub review_kind: String,
+    pub decision: String,
+    pub reviewed_inputs: Vec<WorkflowReviewInputEvidence>,
+    pub receipt_hash: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkflowProfileEvidence {
+    pub spec_effect: Option<String>,
+    pub spec_effect_rationale: Option<String>,
+    pub delta_spec_paths: Vec<String>,
+    pub acceptance_markdown: Option<String>,
+    pub tasks_markdown: Option<String>,
+    pub artifact_hashes: Vec<WorkflowProfileArtifactHash>,
+    pub reviews: Vec<WorkflowReviewEvidence>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkflowProfileIssue {
+    pub code: String,
+    pub artifact_id: Option<String>,
+    pub stage: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkflowProfileEvaluation {
+    pub profile_id: String,
+    pub profile_version: u64,
+    pub spec_effect: String,
+    pub acceptance_ids: Vec<String>,
+    pub review_receipt_hashes: Vec<String>,
+    pub issues: Vec<WorkflowProfileIssue>,
+    pub non_claims: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

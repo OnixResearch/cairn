@@ -10,11 +10,11 @@ use std::{
 // r[verify cli_maintainability.main_compat_release_followup.behavior_preserved.repository_checks]
 use cairn_core::{
     archive_dir, blake3_hex, build_change_dependency_graph, build_repo_status, canonical_json_hash,
-    changes_dir, evaluate_gate_snapshot, merge_delta_spec, policy_schema_compatibility_diagnostic,
-    preserves_content_hash, specs_dir, validate_policy_json, validate_spec_sources_with_policy,
-    validation_issue_code, ArtifactSubstanceInventory, ChangeDependencyGraph, ChangeSource,
-    ChangeStatus, DeltaMerge, GateArtifact, GateSnapshot, GateStage, LifecycleLayout, Policy,
-    RepoStatus, SpecSource, SpecSubstanceInventory, SyncPlan,
+    changes_dir, merge_delta_spec, policy_schema_compatibility_diagnostic, preserves_content_hash,
+    specs_dir, validate_policy_json, validate_spec_sources_with_policy, validation_issue_code,
+    ArtifactSubstanceInventory, ChangeDependencyGraph, ChangeSource, ChangeStatus, DeltaMerge,
+    GateArtifact, GateSnapshot, GateStage, LifecycleLayout, Policy, RepoStatus, SpecSource,
+    SpecSubstanceInventory, SyncPlan,
 };
 use serde_json::{json, Value};
 

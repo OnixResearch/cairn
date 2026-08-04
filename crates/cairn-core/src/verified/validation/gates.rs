@@ -1,4 +1,13 @@
-use crate::verified::{policy::Policy, repo::ChangeStatus};
+use crate::verified::{
+    artifact_workflow::{
+        profile_issue_applies_to_stage, synthetic_acceptance_spec, tasks_with_requirement_links,
+        WorkflowArtifactState, WorkflowProfileEvaluation, WorkflowSchemaPolicy,
+        WorkflowStatusReport, WORKFLOW_ADMISSION_DELTA_SPECS, WORKFLOW_ADMISSION_DESIGN,
+        WORKFLOW_ADMISSION_PROPOSAL, WORKFLOW_ADMISSION_TASKS, WORKFLOW_SPEC_EFFECT_NONE,
+    },
+    policy::Policy,
+    repo::ChangeStatus,
+};
 
 use super::changes::change_issues;
 use super::{
@@ -140,6 +149,109 @@ pub fn evaluate_gate_snapshot(
         verdict,
         issues,
         substance,
+    }
+}
+
+pub fn evaluate_profile_gate_snapshot(
+    snapshot: &GateSnapshot,
+    stage: GateStage,
+    policy: &Policy,
+    profile: &WorkflowSchemaPolicy,
+    evaluation: &WorkflowProfileEvaluation,
+    workflow_status: &WorkflowStatusReport,
+) -> GateReport {
+    // r[impl cairn.lifecycle_workflow_profiles.integration]
+    // r[impl cairn.lifecycle_workflow_profiles.no_spec]
+    let adjusted = profile_gate_snapshot(snapshot, profile, evaluation);
+    let mut report = evaluate_gate_snapshot(&adjusted, stage, policy);
+    for profile_issue in evaluation
+        .issues
+        .iter()
+        .filter(|issue| profile_issue_applies_to_stage(issue, stage.as_str()))
+    {
+        report.issues.push(GateIssue {
+            code: profile_issue.code.clone(),
+            message: profile_issue.message.clone(),
+            scope: policy.gate_finding_scope.clone(),
+            promoted: policy.gate_finding_promoted.clone(),
+        });
+    }
+    for status in workflow_status.artifacts.iter().filter(|status| {
+        let Some(artifact) = profile
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.id == status.id)
+        else {
+            return false;
+        };
+        profile_artifact_is_gate_specific(artifact.structural_admission.as_str())
+            && artifact_stage_applies(&artifact.stage, stage)
+            && status.state != WorkflowArtifactState::Done
+    }) {
+        report.issues.push(GateIssue {
+            code: "cairn.workflow.profile.artifact".to_string(),
+            message: format!(
+                "workflow profile artifact is not structurally complete: {} ({})",
+                status.id,
+                status.state.as_str()
+            ),
+            scope: policy.gate_finding_scope.clone(),
+            promoted: policy.gate_finding_promoted.clone(),
+        });
+    }
+    report.issues.sort_by(|left, right| {
+        left.code
+            .cmp(&right.code)
+            .then(left.message.cmp(&right.message))
+    });
+    report
+        .issues
+        .dedup_by(|left, right| left.code == right.code && left.message == right.message);
+    report.verdict = if report.issues.is_empty() {
+        "PASS"
+    } else {
+        "FAIL"
+    }
+    .to_string();
+    report
+}
+
+fn profile_gate_snapshot(
+    snapshot: &GateSnapshot,
+    profile: &WorkflowSchemaPolicy,
+    evaluation: &WorkflowProfileEvaluation,
+) -> GateSnapshot {
+    if profile.spec_effect != WORKFLOW_SPEC_EFFECT_NONE {
+        return snapshot.clone();
+    }
+    let mut adjusted = snapshot.clone();
+    let synthetic_path = format!("{}/acceptance.md#profile-adapter", adjusted.change.path);
+    adjusted.change.delta_specs = vec![synthetic_path.clone()];
+    adjusted.delta_specs = vec![GateArtifact {
+        path: synthetic_path,
+        markdown: synthetic_acceptance_spec(&evaluation.acceptance_ids),
+    }];
+    if let Some(tasks) = &mut adjusted.tasks {
+        tasks.markdown = tasks_with_requirement_links(&tasks.markdown);
+    }
+    adjusted
+}
+
+fn profile_artifact_is_gate_specific(admission: &str) -> bool {
+    !matches!(
+        admission,
+        WORKFLOW_ADMISSION_PROPOSAL
+            | WORKFLOW_ADMISSION_DELTA_SPECS
+            | WORKFLOW_ADMISSION_DESIGN
+            | WORKFLOW_ADMISSION_TASKS
+    )
+}
+
+fn artifact_stage_applies(artifact_stage: &str, gate_stage: GateStage) -> bool {
+    match gate_stage {
+        GateStage::Proposal => artifact_stage == GateStage::Proposal.as_str(),
+        GateStage::Design => matches!(artifact_stage, "proposal" | "design"),
+        GateStage::Tasks => matches!(artifact_stage, "proposal" | "design" | "tasks"),
     }
 }
 

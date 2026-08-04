@@ -1,3 +1,4 @@
+use crate::verified::artifact_workflow::{WORKFLOW_SPEC_EFFECT_DELTA, WORKFLOW_SPEC_EFFECT_NONE};
 use crate::verified::nominal_identity::ChangeId;
 use crate::verified::repo::{ChangeStatus, TaskCounts};
 
@@ -8,6 +9,7 @@ pub struct SyncPlan {
     pub mutated: bool,
     pub actions: Vec<PlanAction>,
     pub delta_specs: Vec<String>,
+    pub spec_effect: String,
     pub blocked: bool,
     pub reasons: Vec<String>,
 }
@@ -18,6 +20,7 @@ pub struct ArchivePlan {
     pub dry_run: bool,
     pub mutated: bool,
     pub actions: Vec<PlanAction>,
+    pub spec_effect: String,
     pub blocked: bool,
     pub reasons: Vec<String>,
 }
@@ -43,13 +46,27 @@ pub fn build_sync_plan_with_dependency_blockers(
     change: &ChangeStatus,
     dependency_blockers: &[String],
 ) -> SyncPlan {
+    build_sync_plan_for_effect_with_dependency_blockers(
+        change,
+        dependency_blockers,
+        WORKFLOW_SPEC_EFFECT_DELTA,
+    )
+}
+
+pub fn build_sync_plan_for_effect_with_dependency_blockers(
+    change: &ChangeStatus,
+    dependency_blockers: &[String],
+    spec_effect: &str,
+) -> SyncPlan {
     // r[impl sync_archive.plan.sync] r[impl sync_archive.plan.sync.delta_specs]
     // r[impl sync_archive.plan.purity] r[impl sync_archive.plan.purity.no_effects]
     // r[impl sync_archive.execute.sync] r[impl sync_archive.execute.sync.applies]
     // r[impl sync_archive.execute.sync.default_dry_run]
     // r[impl cairn.change_dependency_graph.mutation_block]
-    let reasons = sync_blockers(change, dependency_blockers);
-    let actions = if reasons.is_empty() {
+    // r[impl cairn.lifecycle_workflow_profiles.no_spec_sync]
+    // r[impl cairn.lifecycle_workflow_profiles.functional_boundary]
+    let reasons = sync_blockers(change, dependency_blockers, spec_effect);
+    let actions = if reasons.is_empty() && spec_effect == WORKFLOW_SPEC_EFFECT_DELTA {
         change
             .delta_specs
             .iter()
@@ -69,6 +86,7 @@ pub fn build_sync_plan_with_dependency_blockers(
         mutated: false,
         actions,
         delta_specs: change.delta_specs.clone(),
+        spec_effect: spec_effect.to_string(),
         blocked: !reasons.is_empty(),
         reasons,
     }
@@ -82,12 +100,24 @@ pub fn build_archive_plan_with_dependency_blockers(
     change: &ChangeStatus,
     dependency_blockers: &[String],
 ) -> ArchivePlan {
+    build_archive_plan_for_effect_with_dependency_blockers(
+        change,
+        dependency_blockers,
+        WORKFLOW_SPEC_EFFECT_DELTA,
+    )
+}
+
+pub fn build_archive_plan_for_effect_with_dependency_blockers(
+    change: &ChangeStatus,
+    dependency_blockers: &[String],
+    spec_effect: &str,
+) -> ArchivePlan {
     // r[impl sync_archive.plan.archive] r[impl sync_archive.plan.archive.blockers]
     // r[impl sync_archive.execute.archive] r[impl sync_archive.execute.archive.moves]
     // r[impl sync_archive.execute.archive.blocked_noop] r[impl sync_archive.execute.boundary]
     // r[impl sync_archive.execute.boundary.pure_core]
     // r[impl cairn.change_dependency_graph.mutation_block]
-    let reasons = archive_blockers(change, dependency_blockers);
+    let reasons = archive_blockers(change, dependency_blockers, spec_effect);
     let actions = if reasons.is_empty() {
         vec![PlanAction {
             kind: PlanActionKind::ArchiveChange,
@@ -103,15 +133,33 @@ pub fn build_archive_plan_with_dependency_blockers(
         dry_run: true,
         mutated: false,
         actions,
+        spec_effect: spec_effect.to_string(),
         blocked: !reasons.is_empty(),
         reasons,
     }
 }
 
-fn sync_blockers(change: &ChangeStatus, dependency_blockers: &[String]) -> Vec<String> {
+fn sync_blockers(
+    change: &ChangeStatus,
+    dependency_blockers: &[String],
+    spec_effect: &str,
+) -> Vec<String> {
     let mut reasons = required_artifact_blockers(change);
-    if change.delta_specs.is_empty() {
-        reasons.push(format!("{}: no delta specs to sync", change.name));
+    match spec_effect {
+        WORKFLOW_SPEC_EFFECT_DELTA if change.delta_specs.is_empty() => {
+            reasons.push(format!("{}: no delta specs to sync", change.name));
+        }
+        WORKFLOW_SPEC_EFFECT_NONE if !change.delta_specs.is_empty() => {
+            reasons.push(format!(
+                "{}: no-spec profile forbids delta specs",
+                change.name
+            ));
+        }
+        WORKFLOW_SPEC_EFFECT_DELTA | WORKFLOW_SPEC_EFFECT_NONE => {}
+        _ => reasons.push(format!(
+            "{}: unsupported workflow spec effect: {spec_effect}",
+            change.name
+        )),
     }
     reasons.extend(dependency_blockers.iter().cloned());
     reasons.sort();
@@ -119,8 +167,12 @@ fn sync_blockers(change: &ChangeStatus, dependency_blockers: &[String]) -> Vec<S
     reasons
 }
 
-fn archive_blockers(change: &ChangeStatus, dependency_blockers: &[String]) -> Vec<String> {
-    let mut reasons = sync_blockers(change, dependency_blockers);
+fn archive_blockers(
+    change: &ChangeStatus,
+    dependency_blockers: &[String],
+    spec_effect: &str,
+) -> Vec<String> {
+    let mut reasons = sync_blockers(change, dependency_blockers, spec_effect);
     if let Some(message) = incomplete_tasks_blocker(change.name.as_str(), change.task_counts) {
         reasons.push(message);
     }
@@ -243,6 +295,37 @@ mod tests {
         assert!(!plan.blocked);
         assert_eq!(plan.actions.len(), 1);
         assert_eq!(plan.actions[0].kind, PlanActionKind::ArchiveChange);
+    }
+
+    #[test]
+    fn no_spec_sync_is_an_explicit_unblocked_no_op() {
+        // r[verify cairn.lifecycle_workflow_profiles.no_spec_sync.preview]
+        let mut change = complete_change();
+        change.delta_specs.clear();
+        let plan = build_sync_plan_for_effect_with_dependency_blockers(
+            &change,
+            &[],
+            WORKFLOW_SPEC_EFFECT_NONE,
+        );
+        assert!(!plan.blocked);
+        assert!(plan.actions.is_empty());
+        assert_eq!(plan.spec_effect, WORKFLOW_SPEC_EFFECT_NONE);
+    }
+
+    #[test]
+    fn no_spec_effect_rejects_conflicting_delta_files() {
+        // r[verify cairn.lifecycle_workflow_profiles.no_spec.conflict]
+        let plan = build_sync_plan_for_effect_with_dependency_blockers(
+            &complete_change(),
+            &[],
+            WORKFLOW_SPEC_EFFECT_NONE,
+        );
+        assert!(plan.blocked);
+        assert!(plan.actions.is_empty());
+        assert!(plan
+            .reasons
+            .iter()
+            .any(|reason| reason.contains("no-spec profile forbids delta specs")));
     }
 
     #[test]

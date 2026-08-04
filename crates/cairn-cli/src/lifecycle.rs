@@ -1,9 +1,10 @@
 use std::{error::Error, path::PathBuf};
 
 use cairn_core::{
-    build_archive_plan_with_dependency_blockers, build_sync_plan_with_dependency_blockers,
-    canonical_json_hash, classify_gate_evidence, dependency_blockers_for_change,
-    evaluate_gate_snapshot, finalize_gate_report, GateIssue, GateStage, PlanAction, PlanActionKind,
+    build_archive_plan_for_effect_with_dependency_blockers,
+    build_sync_plan_for_effect_with_dependency_blockers, canonical_json_hash,
+    classify_gate_evidence, dependency_blockers_for_change, finalize_gate_report, GateIssue,
+    GateStage, PlanAction, PlanActionKind,
 };
 use serde_json::{json, Value};
 
@@ -39,7 +40,9 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, &change)?;
     let snapshot = read_gate_snapshot(&root, selected.layout, change_status)?;
-    let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
+    let profile_context =
+        crate::workflow::load_workflow_profile_context(&root, selected.layout, &change, &policy)?;
+    let report = profile_context.gate_report(&snapshot, stage, &policy);
     let mut external_issues = Vec::new();
     if run_probes_requested {
         external_issues.push(GateIssue {
@@ -59,9 +62,13 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let report = finalize_gate_report(report, external_issues);
     let mut gate_input = gate_input_json(selected.layout, stage, &policy, &snapshot);
     gate_input["probe_evidence"] = probe_evidence;
+    if !profile_context.selection.compatibility_fallback {
+        gate_input["workflow_profile"] = profile_context.receipt_fields();
+    }
     let input_hash = portable_json_hash(&root, &gate_input);
     let mut receipt = gate_report_json(selected.layout, &policy, &report, &input_hash);
     receipt["probe_evidence"] = gate_input["probe_evidence"].clone();
+    attach_profile_fields(&mut receipt, &profile_context);
     let evidence = classify_gate_evidence(&snapshot);
     receipt["evidence_summary"] = serde_json::json!({
         "mode": "advisory",
@@ -114,10 +121,28 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
         &policy_hash,
     ));
     dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+    let profile_context =
+        crate::workflow::load_workflow_profile_context(&root, selected.layout, change, &policy)?;
+    let profile_blockers = if profile_context.selection.compatibility_fallback {
+        Vec::new()
+    } else {
+        profile_context.completion_blockers()
+    };
     dependency_blockers.sort();
     dependency_blockers.dedup();
-    let mut plan = build_sync_plan_with_dependency_blockers(&change_status, &dependency_blockers);
+    let mut plan = build_sync_plan_for_effect_with_dependency_blockers(
+        &change_status,
+        &dependency_blockers,
+        &profile_context.schema.spec_effect,
+    );
     let base_plan_unblocked = !plan.blocked;
+    plan.reasons.extend(profile_blockers);
+    plan.reasons.sort();
+    plan.reasons.dedup();
+    plan.blocked = !plan.reasons.is_empty();
+    if plan.blocked {
+        plan.actions.clear();
+    }
 
     // Load and compute every destination before the first possible write.
     // Semantic blockers are all-or-nothing across a multi-spec change.
@@ -157,6 +182,7 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
             "probe_evidence": probe_binding,
             "cross_repo_dependencies": cross_repo_report.to_json(),
             "cross_repo_evidence_issues": loaded_evidence.issues,
+            "workflow_profile": profile_context.receipt_fields(),
             "policy": policy.name,
             "policy_hash": policy_hash,
         }),
@@ -167,6 +193,20 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
 
     if is_execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_profile = crate::workflow::load_workflow_profile_context(
+                &root,
+                selected.layout,
+                change,
+                &policy,
+            )?;
+            if current_profile.profile_identity_hash != profile_context.profile_identity_hash {
+                plan.blocked = true;
+                plan.reasons
+                    .push("workflow profile facts changed after preflight".to_string());
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let current_evidence = load_cross_repo_evidence(&root, &evidence_inputs);
             let current_report = evaluate_change_cross_repo_dependencies(
@@ -215,6 +255,7 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
     );
     value["cross_repo_dependencies"] = cross_repo_report.to_json();
     value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
+    attach_profile_fields(&mut value, &profile_context);
     print_json(with_portable_receipt_hash(&root, value))
 }
 
@@ -235,16 +276,6 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
         &policy_hash,
     );
     let probe_binding = observe_gate_probes(&root, selected.layout, change, &policy).binding;
-    let input_hash = portable_json_hash(
-        &root,
-        &json!({
-            "change": change_status_json(&change_status),
-            "probe_evidence": probe_binding,
-            "cross_repo_dependencies": cross_repo_report.to_json(),
-            "cross_repo_evidence_issues": loaded_evidence.issues,
-            "policy_hash": policy_hash,
-        }),
-    );
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
     let mut dependency_blockers = dependency_blockers_for_change(&dependency_graph, change);
     dependency_blockers.extend(cross_repo_blockers(
@@ -253,16 +284,45 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
         &policy_hash,
     ));
     dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+    let profile_context =
+        crate::workflow::load_workflow_profile_context(&root, selected.layout, change, &policy)?;
+    let profile_blockers = if profile_context.selection.compatibility_fallback {
+        Vec::new()
+    } else {
+        profile_context.completion_blockers()
+    };
+    let input_hash = portable_json_hash(
+        &root,
+        &json!({
+            "change": change_status_json(&change_status),
+            "probe_evidence": probe_binding,
+            "cross_repo_dependencies": cross_repo_report.to_json(),
+            "cross_repo_evidence_issues": loaded_evidence.issues,
+            "workflow_profile": profile_context.receipt_fields(),
+            "policy_hash": policy_hash,
+        }),
+    );
     dependency_blockers.sort();
     dependency_blockers.dedup();
-    let mut plan =
-        build_archive_plan_with_dependency_blockers(&change_status, &dependency_blockers);
+    let mut plan = build_archive_plan_for_effect_with_dependency_blockers(
+        &change_status,
+        &dependency_blockers,
+        &profile_context.schema.spec_effect,
+    );
+    let base_plan_unblocked = !plan.blocked;
+    plan.reasons.extend(profile_blockers);
+    plan.reasons.sort();
+    plan.reasons.dedup();
+    plan.blocked = !plan.reasons.is_empty();
+    if plan.blocked {
+        plan.actions.clear();
+    }
     let archive_source = PathBuf::from(&change_status.path);
     let before_paths =
         tree_content_paths(&root, &archive_source).unwrap_or_else(|_| vec![archive_source.clone()]);
     let before_manifest = file_content_manifest(&root, &before_paths);
     let mut mutation_manifest = Value::Null;
-    if policy.archive_require_gate && !plan.blocked {
+    if policy.archive_require_gate && base_plan_unblocked {
         plan.reasons.extend(mutation_gate_blockers(
             &root,
             selected.layout,
@@ -279,6 +339,20 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     }
     if is_execute {
         plan.dry_run = false;
+        if !plan.blocked {
+            let current_profile = crate::workflow::load_workflow_profile_context(
+                &root,
+                selected.layout,
+                change,
+                &policy,
+            )?;
+            if current_profile.profile_identity_hash != profile_context.profile_identity_hash {
+                plan.blocked = true;
+                plan.reasons
+                    .push("workflow profile facts changed after preflight".to_string());
+                plan.actions.clear();
+            }
+        }
         if !plan.blocked {
             let current_evidence = load_cross_repo_evidence(&root, &evidence_inputs);
             let current_report = evaluate_change_cross_repo_dependencies(
@@ -330,5 +404,25 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     );
     value["cross_repo_dependencies"] = cross_repo_report.to_json();
     value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
+    attach_profile_fields(&mut value, &profile_context);
     print_json(with_portable_receipt_hash(&root, value))
+}
+
+fn attach_profile_fields(value: &mut Value, context: &crate::workflow::WorkflowProfileContext) {
+    if context.selection.compatibility_fallback {
+        if let Some(target) = value.as_object_mut() {
+            target.remove("spec_effect");
+        }
+        return;
+    }
+    let Some(target) = value.as_object_mut() else {
+        return;
+    };
+    let fields = context.receipt_fields();
+    let Some(fields) = fields.as_object() else {
+        return;
+    };
+    for (key, field) in fields {
+        target.insert(key.clone(), field.clone());
+    }
 }

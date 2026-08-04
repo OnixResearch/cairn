@@ -105,7 +105,7 @@ mod tests {
             .expect("checked-in positive fixture Preserves hash");
         assert_eq!(
             hash,
-            "0a65226c18e7e6a3382a9dd60e2e327a3fc9703f6fae68a0c4d2bb6e68df37b9"
+            "cff579dc2f98ef1fe9140e253964c7697f2be02c589ed2547dddc3c8017548d2"
         );
     }
 

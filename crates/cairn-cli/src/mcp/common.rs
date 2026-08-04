@@ -23,6 +23,28 @@ pub(super) fn mcp_required_string<'a>(
         .ok_or_else(|| format!("missing string argument: {key}").into())
 }
 
+pub(super) fn attach_profile_fields(
+    value: &mut Value,
+    context: &crate::workflow::WorkflowProfileContext,
+) {
+    if context.selection.compatibility_fallback {
+        if let Some(target) = value.as_object_mut() {
+            target.remove("spec_effect");
+        }
+        return;
+    }
+    let Some(target) = value.as_object_mut() else {
+        return;
+    };
+    let fields = context.receipt_fields();
+    let Some(fields) = fields.as_object() else {
+        return;
+    };
+    for (key, field) in fields {
+        target.insert(key.clone(), field.clone());
+    }
+}
+
 pub(super) fn reject_selector_escape(selector: &str) -> Result<(), Box<dyn Error>> {
     if selector.starts_with('/')
         || selector.contains("..")

@@ -194,9 +194,8 @@ fn mcp_input_schema(name: &str) -> Value {
         }),
         "cairn_change_graph" => mcp_object_schema(&[], &["root"]),
         "cairn_read_spec" => mcp_object_schema(&["spec"], &["root"]),
-        "cairn_change_show" | "cairn_gate_context" | "cairn_change_create" => {
-            mcp_object_schema(&["change"], &["root"])
-        }
+        "cairn_change_show" | "cairn_gate_context" => mcp_object_schema(&["change"], &["root"]),
+        "cairn_change_create" => mcp_object_schema(&["change"], &["root", "policy", "profile"]),
         "cairn_workflow_status" => mcp_object_schema(&["change"], &["root", "policy", "schema"]),
         "cairn_workflow_instructions" => {
             mcp_object_schema(&["change", "artifact"], &["root", "policy", "schema"])
@@ -303,8 +302,11 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_validate" | "cairn_drain_plan" => validate_mcp_validate_args(name, object),
         "cairn_change_graph" => validate_string_args(name, object, &[], &["root"]),
         "cairn_read_spec" => validate_string_args(name, object, &["spec"], &["root"]),
-        "cairn_change_show" | "cairn_gate_context" | "cairn_change_create" => {
+        "cairn_change_show" | "cairn_gate_context" => {
             validate_string_args(name, object, &["change"], &["root"])
+        }
+        "cairn_change_create" => {
+            validate_string_args(name, object, &["change"], &["root", "policy", "profile"])
         }
         "cairn_workflow_status" => {
             validate_string_args(name, object, &["change"], &["root", "policy", "schema"])

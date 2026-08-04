@@ -188,25 +188,62 @@ pub(super) fn mcp_validate(input: &Value) -> Result<Value, Box<dyn Error>> {
     spec_substance.sort_by(|left, right| left.path.cmp(&right.path));
     let mut substance_issues = Vec::new();
     let mut substance = Vec::new();
+    let mut profile_issues = Vec::new();
+    let mut workflow_profiles = Vec::new();
     for change in &status.changes {
         let snapshot = read_gate_snapshot(&root, selected.layout, change.clone())?;
-        let report = evaluate_lifecycle_substance(&snapshot, &policy);
-        substance_issues.extend(report.issues);
-        substance.extend(report.artifacts);
+        match crate::workflow::load_workflow_profile_context(
+            &root,
+            selected.layout,
+            &change.name,
+            &policy,
+        ) {
+            Ok(profile_context) => {
+                let report = profile_context.gate_report(&snapshot, GateStage::Tasks, &policy);
+                substance_issues.extend(
+                    report
+                        .issues
+                        .iter()
+                        .map(|issue| format!("{}: {}", issue.code, issue.message)),
+                );
+                substance.extend(report.substance);
+                if !profile_context.selection.compatibility_fallback {
+                    profile_issues.extend(profile_context.completion_blockers());
+                    workflow_profiles.push(profile_context.receipt_fields());
+                }
+            }
+            Err(error) => profile_issues.push(format!(
+                "{}: cairn.workflow.profile.selection: {error}",
+                change.name
+            )),
+        }
     }
+    profile_issues.sort();
+    profile_issues.dedup();
     substance_issues.sort();
     substance_issues.dedup();
     substance.sort_by(|left, right| left.path.cmp(&right.path).then(left.kind.cmp(&right.kind)));
-    let mut issues =
-        Vec::with_capacity(change_issues.len() + spec_issues.len() + substance_issues.len());
+    let issue_capacity = change_issues
+        .len()
+        .saturating_add(spec_issues.len())
+        .saturating_add(substance_issues.len())
+        .saturating_add(profile_issues.len());
+    let mut issues = Vec::with_capacity(issue_capacity);
     issues.extend(change_issues.iter().cloned());
     issues.extend(spec_issues.iter().cloned());
     issues.extend(substance_issues.iter().cloned());
+    issues.extend(profile_issues.iter().cloned());
     issues.sort();
     issues.dedup();
-    Ok(with_receipt_hash(
-        json!({"valid": issues.is_empty(), "findings": validation_findings_json(&issues), "issues": issues, "change_issues": change_issues, "cross_repo_dependencies": crate::cross_repo_dependencies::reports_json(&cross_repo_reports), "cross_repo_evidence_issues": loaded_evidence.issues, "spec_findings": validation_findings_json(&spec_issues), "spec_issues": spec_issues, "spec_substance": spec_substance_inventory_json(&spec_substance), "substance_findings": validation_findings_json(&substance_issues), "substance_issues": substance_issues, "substance": substance_inventory_json(&substance), "changes": status.changes.len(), "specs_validated": spec_sources.len(), "policy": policy.name, "layout": layout_name(selected.layout), "mcp": {"read_only": true, "destructive": false}}),
-    ))
+    let mut receipt = json!({"valid": issues.is_empty(), "findings": validation_findings_json(&issues), "issues": issues, "change_issues": change_issues, "cross_repo_dependencies": crate::cross_repo_dependencies::reports_json(&cross_repo_reports), "cross_repo_evidence_issues": loaded_evidence.issues, "spec_findings": validation_findings_json(&spec_issues), "spec_issues": spec_issues, "spec_substance": spec_substance_inventory_json(&spec_substance), "substance_findings": validation_findings_json(&substance_issues), "substance_issues": substance_issues, "substance": substance_inventory_json(&substance), "changes": status.changes.len(), "specs_validated": spec_sources.len(), "policy": policy.name, "layout": layout_name(selected.layout), "mcp": {"read_only": true, "destructive": false}});
+    if !workflow_profiles.is_empty() || !profile_issues.is_empty() {
+        let object = receipt
+            .as_object_mut()
+            .expect("MCP validation receipt object");
+        object.insert("profile_issues".to_string(), json!(profile_issues));
+        object.insert("workflow_profiles".to_string(), json!(workflow_profiles));
+    }
+    Ok(with_receipt_hash(receipt))
 }
 
 pub(super) fn mcp_gate(input: &Value) -> Result<Value, Box<dyn Error>> {
@@ -221,7 +258,9 @@ pub(super) fn mcp_gate(input: &Value) -> Result<Value, Box<dyn Error>> {
         selected.layout,
         find_change(root.clone(), selected.layout, change)?,
     )?;
-    let report = evaluate_gate_snapshot(&snapshot, stage, &policy);
+    let profile_context =
+        crate::workflow::load_workflow_profile_context(&root, selected.layout, change, &policy)?;
+    let report = profile_context.gate_report(&snapshot, stage, &policy);
     let probe_evidence = if matches!(stage, GateStage::Tasks) {
         crate::probe::observe_gate_probes(&root, selected.layout, change, &policy)
     } else {
@@ -233,9 +272,13 @@ pub(super) fn mcp_gate(input: &Value) -> Result<Value, Box<dyn Error>> {
     let report = finalize_gate_report(report, probe_evidence.issues);
     let mut gate_input = gate_input_json(selected.layout, stage, &policy, &snapshot);
     gate_input["probe_evidence"] = probe_evidence.binding;
+    if !profile_context.selection.compatibility_fallback {
+        gate_input["workflow_profile"] = profile_context.receipt_fields();
+    }
     let input_hash = portable_json_hash(&root, &gate_input);
     let mut value = gate_report_json(selected.layout, &policy, &report, &input_hash);
     value["probe_evidence"] = gate_input["probe_evidence"].clone();
+    attach_profile_fields(&mut value, &profile_context);
     value["mcp"] = json!({"read_only": true, "destructive": false});
     Ok(with_portable_receipt_hash(&root, value))
 }
@@ -297,9 +340,17 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
             continue;
         };
         let snapshot = read_gate_snapshot(&root, selected.layout, change.clone())?;
-        let proposal_gate = drain_gate_summary(&snapshot, GateStage::Proposal, &policy);
-        let design_gate = drain_gate_summary(&snapshot, GateStage::Design, &policy);
-        let tasks_gate = drain_gate_summary(&snapshot, GateStage::Tasks, &policy);
+        let profile_context = crate::workflow::load_workflow_profile_context(
+            &root,
+            selected.layout,
+            &change.name,
+            &policy,
+        )?;
+        let proposal_gate =
+            drain_gate_summary(&snapshot, GateStage::Proposal, &policy, &profile_context);
+        let design_gate =
+            drain_gate_summary(&snapshot, GateStage::Design, &policy, &profile_context);
+        let tasks_gate = drain_gate_summary(&snapshot, GateStage::Tasks, &policy, &profile_context);
         let mut blockers = Vec::new();
         collect_gate_blocker(&mut blockers, "proposal_gate", &proposal_gate);
         collect_gate_blocker(&mut blockers, "design_gate", &design_gate);
@@ -326,10 +377,17 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
         }
         dependency_blockers.extend(cross_repo_blockers);
         dependency_blockers.extend(loaded_evidence.issues.iter().cloned());
+        if !profile_context.selection.compatibility_fallback {
+            dependency_blockers.extend(profile_context.completion_blockers());
+        }
         dependency_blockers.sort();
         dependency_blockers.dedup();
 
-        let mut sync_plan = build_sync_plan_with_dependency_blockers(change, &dependency_blockers);
+        let mut sync_plan = build_sync_plan_for_effect_with_dependency_blockers(
+            change,
+            &dependency_blockers,
+            &profile_context.schema.spec_effect,
+        );
         if policy.sync_require_gate && !sync_plan.blocked {
             sync_plan.reasons.extend(mutation_gate_blockers(
                 &root,
@@ -344,8 +402,11 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
         }
         append_plan_blockers(&mut blockers, "sync_blocked", &sync_plan.reasons);
 
-        let mut archive_plan =
-            build_archive_plan_with_dependency_blockers(change, &dependency_blockers);
+        let mut archive_plan = build_archive_plan_for_effect_with_dependency_blockers(
+            change,
+            &dependency_blockers,
+            &profile_context.schema.spec_effect,
+        );
         if policy.archive_require_gate && !archive_plan.blocked {
             archive_plan.reasons.extend(mutation_gate_blockers(
                 &root,
@@ -379,6 +440,7 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
             "dependency_issues": dependency_issues,
             "cross_repo_dependencies": cross_repo_report.to_json(),
             "cross_repo_evidence_issues": loaded_evidence.issues,
+            "workflow_profile": profile_context.receipt_fields(),
             "task_counts": change.task_counts.map(|counts| json!({
                 "total": counts.total,
                 "done": counts.done,
@@ -485,8 +547,9 @@ fn drain_gate_summary(
     snapshot: &cairn_core::GateSnapshot,
     stage: GateStage,
     policy: &cairn_core::Policy,
+    profile_context: &crate::workflow::WorkflowProfileContext,
 ) -> Value {
-    let report = evaluate_gate_snapshot(snapshot, stage, policy);
+    let report = profile_context.gate_report(snapshot, stage, policy);
     json!({
         "stage": report.stage,
         "valid": report.issues.is_empty(),

@@ -2810,7 +2810,7 @@
     }
   },
   "policy_schema_compatibility": {
-    "field_set_digest": "44243e4898d51a39da4c27c856d7e6c40447d1aad6f9f3c677d638a7d02a4c6b",
+    "field_set_digest": "99ef663c2b75b0dd51d5090c2a26d78fa5cb24e15b1b97368e5c5efb2381ae04",
     "producer": "cairn policy export",
     "refresh_command": "nix run path:$CAIRN_SOURCE#cairn -- policy export --output cairn-policy/generated/cairn-policy.json",
     "schema_version": "cairn.policy-schema.v1"
@@ -4498,19 +4498,394 @@
       },
       "description": "Cairn proposal, delta-spec, design, and tasks lifecycle",
       "id": "spec-driven",
+      "profile_version": 1,
+      "receipt_fields": [
+        "workflow_profile",
+        "workflow_profile_version",
+        "spec_effect",
+        "non_claims"
+      ],
       "required_non_claims": [
         "workflow state proves only the selected policy graph and observed structural artifact facts",
         "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
         "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
         "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
       ],
+      "review_obligations": [],
       "schema_version": "cairn.workflow-schema.v1",
+      "spec_effect": "delta",
       "states": [
         "done",
         "ready",
         "blocked",
         "skipped"
-      ]
+      ],
+      "task_link_class": "requirement"
+    },
+    {
+      "artifacts": [
+        {
+          "apply_prerequisites": [],
+          "constraints": [
+            "Use substantive text without placeholders.",
+            "Keep semantic claims bounded."
+          ],
+          "generates": "proposal.md",
+          "id": "proposal",
+          "instruction_template": "Write proposal.md for {{change}} and state the bounded assurance scope.",
+          "output_path": "proposal.md",
+          "path_kind": "file",
+          "requires": [],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "proposal",
+          "structural_admission": "proposal"
+        },
+        {
+          "apply_prerequisites": [
+            "gate:proposal"
+          ],
+          "constraints": [
+            "Use stable r[...] requirement IDs.",
+            "Give every scenario GIVEN, WHEN, and THEN clauses."
+          ],
+          "generates": "specs/**/*.md",
+          "id": "specs",
+          "instruction_template": "Write delta specs for {{change}} with stable requirements and scenarios.",
+          "output_path": "specs",
+          "path_kind": "spec_directory",
+          "requires": [
+            "proposal"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "design",
+          "structural_admission": "delta_specs"
+        },
+        {
+          "apply_prerequisites": [
+            "gate:proposal"
+          ],
+          "constraints": [
+            "Keep pure decisions separate from shell effects.",
+            "Name failure behavior."
+          ],
+          "generates": "design.md",
+          "id": "design",
+          "instruction_template": "Write design.md for {{change}} with deterministic decisions and claim boundaries.",
+          "output_path": "design.md",
+          "path_kind": "file",
+          "requires": [
+            "proposal"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "design",
+          "structural_admission": "design"
+        },
+        {
+          "apply_prerequisites": [
+            "gate:proposal"
+          ],
+          "constraints": [
+            "Do not infer risk truth from prose.",
+            "Name the review owner for each residual risk."
+          ],
+          "generates": "risk.md",
+          "id": "risk",
+          "instruction_template": "Write risk.md for {{change}} with assets, hazards, mitigations, residual risks, and non-claims.",
+          "output_path": "risk.md",
+          "path_kind": "file",
+          "requires": [
+            "proposal"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "design",
+          "structural_admission": "risk"
+        },
+        {
+          "apply_prerequisites": [
+            "gate:design"
+          ],
+          "constraints": [
+            "Link each task to a delta requirement.",
+            "Include positive and negative verification."
+          ],
+          "generates": "tasks.md",
+          "id": "tasks",
+          "instruction_template": "Write tasks.md for {{change}} with linked implementation and negative verification tasks.",
+          "output_path": "tasks.md",
+          "path_kind": "file",
+          "requires": [
+            "specs",
+            "design",
+            "risk"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "tasks",
+          "structural_admission": "tasks"
+        },
+        {
+          "apply_prerequisites": [
+            "artifact:tasks"
+          ],
+          "constraints": [
+            "Separate planned checks from observed receipts.",
+            "Do not claim test sufficiency."
+          ],
+          "generates": "verification.md",
+          "id": "verification",
+          "instruction_template": "Write verification.md for {{change}} with commands, expected evidence, negative cases, and residual gaps.",
+          "output_path": "verification.md",
+          "path_kind": "file",
+          "requires": [
+            "tasks"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "tasks",
+          "structural_admission": "verification"
+        },
+        {
+          "apply_prerequisites": [
+            "artifact:verification",
+            "gate:tasks"
+          ],
+          "constraints": [
+            "Use cairn.semantic-review.review-receipt.v1.",
+            "Bind exact current BLAKE3 artifact hashes."
+          ],
+          "generates": "reviews/assurance.json",
+          "id": "assurance-review",
+          "instruction_template": "Write a current approved semantic review receipt for {{change}} that binds every required assurance artifact.",
+          "output_path": "reviews/assurance.json",
+          "path_kind": "file",
+          "requires": [
+            "verification"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "tasks",
+          "structural_admission": "semantic_review"
+        }
+      ],
+      "bounds": {
+        "max_artifact_bytes": 1048576,
+        "max_artifacts": 16,
+        "max_constraints": 16,
+        "max_dependencies": 8,
+        "max_directory_depth": 8,
+        "max_directory_entries": 128,
+        "max_files_per_artifact": 64,
+        "max_issues": 64,
+        "max_non_claims": 16,
+        "max_path_bytes": 4096,
+        "max_template_bytes": 4096
+      },
+      "description": "Spec-driven lifecycle with risk, verification, and semantic-review obligations",
+      "id": "assurance",
+      "profile_version": 1,
+      "receipt_fields": [
+        "workflow_profile",
+        "workflow_profile_version",
+        "spec_effect",
+        "review_receipt_hashes",
+        "non_claims"
+      ],
+      "required_non_claims": [
+        "workflow state proves only the selected policy graph and observed structural artifact facts",
+        "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+        "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+        "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts",
+        "assurance profile conformance does not prove risk-analysis truth, test sufficiency, code correctness, or release eligibility"
+      ],
+      "review_obligations": [
+        {
+          "artifact_id": "assurance-review",
+          "id": "assurance-plan-review",
+          "required_artifacts": [
+            "proposal",
+            "specs",
+            "design",
+            "risk",
+            "tasks",
+            "verification"
+          ],
+          "review_kind": "plan"
+        }
+      ],
+      "schema_version": "cairn.workflow-schema.v1",
+      "spec_effect": "delta",
+      "states": [
+        "done",
+        "ready",
+        "blocked",
+        "skipped"
+      ],
+      "task_link_class": "requirement"
+    },
+    {
+      "artifacts": [
+        {
+          "apply_prerequisites": [],
+          "constraints": [
+            "Use substantive text without placeholders.",
+            "Do not claim zero behavior effect."
+          ],
+          "generates": "proposal.md",
+          "id": "proposal",
+          "instruction_template": "Write proposal.md for {{change}} and state why accepted specifications do not change.",
+          "output_path": "proposal.md",
+          "path_kind": "file",
+          "requires": [],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "proposal",
+          "structural_admission": "proposal"
+        },
+        {
+          "apply_prerequisites": [
+            "gate:proposal"
+          ],
+          "constraints": [
+            "Keep pure decisions separate from shell effects.",
+            "Name semantic review inputs."
+          ],
+          "generates": "design.md",
+          "id": "design",
+          "instruction_template": "Write design.md for {{change}} with the bounded no-spec classification rationale and failure behavior.",
+          "output_path": "design.md",
+          "path_kind": "file",
+          "requires": [
+            "proposal"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "design",
+          "structural_admission": "design"
+        },
+        {
+          "apply_prerequisites": [
+            "artifact:design"
+          ],
+          "constraints": [
+            "Use unique lowercase a[...] IDs.",
+            "Do not use r[...] IDs as local acceptance criteria."
+          ],
+          "generates": "acceptance.md",
+          "id": "acceptance",
+          "instruction_template": "Write acceptance.md for {{change}} with stable change-local a[...] criteria.",
+          "output_path": "acceptance.md",
+          "path_kind": "file",
+          "requires": [
+            "design"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "design",
+          "structural_admission": "acceptance"
+        },
+        {
+          "apply_prerequisites": [
+            "gate:design"
+          ],
+          "constraints": [
+            "Every checkbox task must reference a known a[...] criterion.",
+            "Include positive and negative verification."
+          ],
+          "generates": "tasks.md",
+          "id": "tasks",
+          "instruction_template": "Write tasks.md for {{change}} with every checkbox linked to a current a[...] criterion.",
+          "output_path": "tasks.md",
+          "path_kind": "file",
+          "requires": [
+            "acceptance"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "tasks",
+          "structural_admission": "tasks"
+        },
+        {
+          "apply_prerequisites": [
+            "artifact:tasks",
+            "gate:tasks"
+          ],
+          "constraints": [
+            "Use cairn.semantic-review.review-receipt.v1.",
+            "Bind exact current BLAKE3 artifact hashes."
+          ],
+          "generates": "reviews/no-spec-classification.json",
+          "id": "no-spec-review",
+          "instruction_template": "Write a current approved semantic review receipt for {{change}} that binds proposal, design, acceptance, and tasks.",
+          "output_path": "reviews/no-spec-classification.json",
+          "path_kind": "file",
+          "requires": [
+            "tasks"
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "tasks",
+          "structural_admission": "semantic_review"
+        }
+      ],
+      "bounds": {
+        "max_artifact_bytes": 1048576,
+        "max_artifacts": 16,
+        "max_constraints": 16,
+        "max_dependencies": 8,
+        "max_directory_depth": 8,
+        "max_directory_entries": 128,
+        "max_files_per_artifact": 64,
+        "max_issues": 64,
+        "max_non_claims": 16,
+        "max_path_bytes": 4096,
+        "max_template_bytes": 4096
+      },
+      "description": "Reviewed lifecycle for changes declared to have no accepted-spec effect",
+      "id": "no-spec-delta",
+      "profile_version": 1,
+      "receipt_fields": [
+        "workflow_profile",
+        "workflow_profile_version",
+        "spec_effect",
+        "spec_effect_rationale",
+        "acceptance_ids",
+        "review_receipt_hashes",
+        "non_claims"
+      ],
+      "required_non_claims": [
+        "workflow state proves only the selected policy graph and observed structural artifact facts",
+        "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+        "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+        "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts",
+        "no-spec profile conformance does not prove zero behavior effect or semantic correctness",
+        "change-local a[...] acceptance IDs are not accepted r[...] requirements and sync never promotes them"
+      ],
+      "review_obligations": [
+        {
+          "artifact_id": "no-spec-review",
+          "id": "no-spec-classification-review",
+          "required_artifacts": [
+            "proposal",
+            "design",
+            "acceptance",
+            "tasks"
+          ],
+          "review_kind": "plan"
+        }
+      ],
+      "schema_version": "cairn.workflow-schema.v1",
+      "spec_effect": "none",
+      "states": [
+        "done",
+        "ready",
+        "blocked",
+        "skipped"
+      ],
+      "task_link_class": "acceptance"
     }
   ],
   "stack_provenance_gate": {
@@ -4658,6 +5033,21 @@
     ]
   },
   "version": 1,
+  "workflow_profile_policy": {
+    "allowed_profiles": [
+      "spec-driven",
+      "assurance",
+      "no-spec-delta"
+    ],
+    "default_profile": "spec-driven",
+    "forbidden_selection_sources": [
+      "user-global",
+      "environment",
+      "agent-prompt",
+      "remote-package"
+    ],
+    "required_profiles_by_effect": []
+  },
   "workspace_contract_matrix_gate": {
     "accepted_matrix_hashes": [],
     "mode": "disabled",

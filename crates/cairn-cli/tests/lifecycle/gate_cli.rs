@@ -69,7 +69,7 @@ fn help_lists_commands() -> Result<(), Box<dyn Error>> {
     assert!(stdout.contains("usage: cairn <command> [args]"), "{stdout}");
     assert!(stdout.contains("init [--root PATH]"), "{stdout}");
     assert!(
-        stdout.contains("change create <name> [--root PATH]"),
+        stdout.contains("change create <name> [--profile PROFILE] [--root PATH] [--policy PATH]"),
         "{stdout}"
     );
     assert!(stdout.contains("change list [--root PATH]"), "{stdout}");

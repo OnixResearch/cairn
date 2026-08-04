@@ -1,8 +1,8 @@
 use std::{error::Error, path::Path};
 
 use cairn_core::{
-    canonical_json_hash, layout_name, WorkflowInstructionEnvelope, WorkflowSchemaPolicy,
-    WorkflowStatusReport,
+    canonical_json_hash, layout_name, WorkflowInstructionEnvelope, WorkflowProfileEvaluation,
+    WorkflowProfileSelection, WorkflowSchemaPolicy, WorkflowStatusReport,
 };
 use serde_json::{json, Value};
 
@@ -16,6 +16,9 @@ pub(super) struct WorkflowReceiptContext<'a> {
     pub policy_hash: &'a str,
     pub input_hash: &'a str,
     pub schema: &'a WorkflowSchemaPolicy,
+    pub selection: &'a WorkflowProfileSelection,
+    pub evaluation: &'a WorkflowProfileEvaluation,
+    pub profile_identity_hash: &'a str,
 }
 
 pub(super) fn status_receipt(
@@ -32,6 +35,14 @@ pub(super) fn status_receipt(
             "layout": layout_name(context.layout),
             "change": context.change,
             "workflow_schema": context.schema.id,
+            "workflow_profile": context.selection.profile_id,
+            "workflow_profile_version": context.selection.profile_version,
+            "workflow_profile_source": context.selection.source,
+            "workflow_profile_compatibility_fallback": context.selection.compatibility_fallback,
+            "profile_identity_hash": context.profile_identity_hash,
+            "spec_effect": context.evaluation.spec_effect,
+            "acceptance_ids": context.evaluation.acceptance_ids,
+            "review_receipt_hashes": context.evaluation.review_receipt_hashes,
             "workflow_description": report.schema_description,
             "artifacts": artifacts,
             "next_actions": report.next_actions,
@@ -61,6 +72,14 @@ pub(super) fn instructions_receipt(
             "layout": layout_name(context.layout),
             "change": context.change,
             "workflow_schema": context.schema.id,
+            "workflow_profile": context.selection.profile_id,
+            "workflow_profile_version": context.selection.profile_version,
+            "workflow_profile_source": context.selection.source,
+            "workflow_profile_compatibility_fallback": context.selection.compatibility_fallback,
+            "profile_identity_hash": context.profile_identity_hash,
+            "spec_effect": context.evaluation.spec_effect,
+            "acceptance_ids": context.evaluation.acceptance_ids,
+            "review_receipt_hashes": context.evaluation.review_receipt_hashes,
             "artifact": instruction_value,
             "valid": true,
             "policy": context.policy_name,
