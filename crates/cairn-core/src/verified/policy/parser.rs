@@ -1,5 +1,7 @@
 use serde_json::Value;
 
+use crate::verified::artifact_workflow::workflow_schemas_from_value;
+
 use super::{
     fields::{
         change_metadata_fields, exemption_marker_policy, gate_fields, mutation_policy_fields,
@@ -31,6 +33,12 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
     let name = super::fields::string_field(&value, "name")?;
     let version = version_field(&value)?;
     require_nonempty_array(&value, "schemas")?;
+    let workflow_schemas =
+        workflow_schemas_from_value(&value).map_err(|error| PolicyError::InvalidWorkflow {
+            code: error.code,
+            path: error.path,
+            message: error.message,
+        })?;
     let task_marker = task_marker_fields(&value)?;
     let task_marker_tokens = task_markers(&value)?;
     let gate = gate_fields(&value)?;
@@ -79,6 +87,7 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         gate_finding_scope: gate.finding_scope,
         gate_finding_promoted: gate.finding_promoted,
         artifact_substance_policy: gate.substance,
+        workflow_schemas,
         machine_contract_policy,
         sync_require_gate: mutation.sync_require_gate,
         archive_require_gate: mutation.archive_require_gate,

@@ -190,6 +190,8 @@ pub(crate) fn mcp_call_tool(
             "cairn_list_content" => mcp_list_content(input)?,
             "cairn_read_spec" => mcp_read_spec(input)?,
             "cairn_change_show" => mcp_change_show(input)?,
+            "cairn_workflow_status" => mcp_workflow_status(input)?,
+            "cairn_workflow_instructions" => mcp_workflow_instructions(input)?,
             "cairn_doctor" => mcp_doctor(input)?,
             "cairn_validate" => mcp_validate(input)?,
             "cairn_gate" => mcp_gate(input)?,

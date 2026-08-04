@@ -29,6 +29,17 @@ let MachineMaxTargetBytes = 256 in
 let MachineMaxFixBytes = 512 in
 let MachineMaxStdoutBytes = 4194304 in
 let MachineMaxStderrBytes = 1048576 in
+let WorkflowMaxArtifacts = 16 in
+let WorkflowMaxDependencies = 8 in
+let WorkflowMaxFilesPerArtifact = 64 in
+let WorkflowMaxPathBytes = 4096 in
+let WorkflowMaxArtifactBytes = 1048576 in
+let WorkflowMaxTemplateBytes = 4096 in
+let WorkflowMaxConstraints = 16 in
+let WorkflowMaxNonClaims = 16 in
+let WorkflowMaxIssues = 64 in
+let WorkflowMaxDirectoryDepth = 8 in
+let WorkflowMaxDirectoryEntries = 128 in
 let MinimumWorksetMembers = 1 in
 let StoreIdentityNonClaims = [
   "store identity proves only the observed checked projection and native lifecycle identity",
@@ -53,6 +64,12 @@ let LifecycleStoreRequiredNonClaims = [
   "portable hashes exclude absolute host paths and do not prove cross-machine trust",
   "lifecycle store outputs do not prove lifecycle readiness or release eligibility",
 ] in
+let WorkflowRequiredNonClaims = [
+  "workflow state proves only the selected policy graph and observed structural artifact facts",
+  "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+  "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+  "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts",
+] in
 {
   name = "cairn-default",
   version = 1,
@@ -65,14 +82,82 @@ let LifecycleStoreRequiredNonClaims = [
   },
 
   schemas = [{
+    schema_version = "cairn.workflow-schema.v1",
     id = "spec-driven",
-    description = "OpenSpec proposal/spec/design/tasks lifecycle",
+    description = "Cairn proposal, delta-spec, design, and tasks lifecycle",
+    states = ["done", "ready", "blocked", "skipped"],
+    bounds = {
+      max_artifacts = WorkflowMaxArtifacts,
+      max_dependencies = WorkflowMaxDependencies,
+      max_files_per_artifact = WorkflowMaxFilesPerArtifact,
+      max_path_bytes = WorkflowMaxPathBytes,
+      max_artifact_bytes = WorkflowMaxArtifactBytes,
+      max_template_bytes = WorkflowMaxTemplateBytes,
+      max_constraints = WorkflowMaxConstraints,
+      max_non_claims = WorkflowMaxNonClaims,
+      max_issues = WorkflowMaxIssues,
+      max_directory_depth = WorkflowMaxDirectoryDepth,
+      max_directory_entries = WorkflowMaxDirectoryEntries,
+    },
     artifacts = [
-      { id = "proposal", generates = "proposal.md", requires = [] },
-      { id = "specs", generates = "specs/**/*.md", requires = ["proposal"] },
-      { id = "design", generates = "design.md", requires = ["proposal"] },
-      { id = "tasks", generates = "tasks.md", requires = ["specs", "design"] },
+      {
+        id = "proposal",
+        generates = "proposal.md",
+        output_path = "proposal.md",
+        path_kind = "file",
+        structural_admission = "proposal",
+        requires = [],
+        stage = "proposal",
+        instruction_template = "Write proposal.md for {{change}} with Why, What Changes, Impact, and Out of Scope sections.",
+        constraints = ["Use substantive text without placeholders.", "Keep lifecycle authority and non-claims explicit."],
+        apply_prerequisites = [],
+        skipped = false,
+        skip_satisfies_dependencies = false,
+      },
+      {
+        id = "specs",
+        generates = "specs/**/*.md",
+        output_path = "specs",
+        path_kind = "spec_directory",
+        structural_admission = "delta_specs",
+        requires = ["proposal"],
+        stage = "design",
+        instruction_template = "Write one or more specs/<spec-id>/spec.md delta files for {{change}} with explicit requirement operations.",
+        constraints = ["Use stable r[...] requirement IDs.", "Give every scenario GIVEN, WHEN, and THEN clauses."],
+        apply_prerequisites = ["gate:proposal"],
+        skipped = false,
+        skip_satisfies_dependencies = false,
+      },
+      {
+        id = "design",
+        generates = "design.md",
+        output_path = "design.md",
+        path_kind = "file",
+        structural_admission = "design",
+        requires = ["proposal"],
+        stage = "design",
+        instruction_template = "Write design.md for {{change}} with decisions, rejected alternatives, tests, risks, and claim boundaries.",
+        constraints = ["Keep pure decisions separate from shell effects.", "Name deterministic ordering and failure behavior."],
+        apply_prerequisites = ["gate:proposal"],
+        skipped = false,
+        skip_satisfies_dependencies = false,
+      },
+      {
+        id = "tasks",
+        generates = "tasks.md",
+        output_path = "tasks.md",
+        path_kind = "file",
+        structural_admission = "tasks",
+        requires = ["specs", "design"],
+        stage = "tasks",
+        instruction_template = "Write tasks.md for {{change}} with substantive linked tasks, concurrency markers, and verification coverage.",
+        constraints = ["Link each task to a delta requirement or valid dependency marker.", "Include positive and negative verification tasks."],
+        apply_prerequisites = ["gate:design"],
+        skipped = false,
+        skip_satisfies_dependencies = false,
+      },
     ],
+    required_non_claims = WorkflowRequiredNonClaims,
   }],
 
   lifecycle_stages = ["proposal", "design", "tasks", "implementation", "archive"],

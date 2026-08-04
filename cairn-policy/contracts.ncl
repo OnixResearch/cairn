@@ -96,6 +96,18 @@ let SafeRelativePath = std.contract.from_predicate (fun value =>
   std.is_string value && std.string.length value > 0 && std.string.is_match "^[A-Za-z0-9][A-Za-z0-9._/-]*$" value
 ) in
 
+let WorkflowState = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "done" || value == "ready" || value == "blocked" || value == "skipped")
+) in
+
+let WorkflowPathKind = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "file" || value == "spec_directory")
+) in
+
+let WorkflowStructuralAdmission = std.contract.from_predicate (fun value =>
+  std.is_string value && (value == "proposal" || value == "delta_specs" || value == "design" || value == "tasks" || value == "markdown")
+) in
+
 let TraceabilityRequirementSourceKind = std.contract.from_predicate (fun value =>
   std.is_string value && (value == "accepted_specs" || value == "requirements_doc")
 ) in
@@ -153,16 +165,43 @@ let NominalIdentityOctetMode = std.contract.from_predicate (fun value =>
 ) in
 
 {
+  WorkflowBounds = {
+    max_artifacts | PositiveNumber,
+    max_dependencies | PositiveNumber,
+    max_files_per_artifact | PositiveNumber,
+    max_path_bytes | PositiveNumber,
+    max_artifact_bytes | PositiveNumber,
+    max_template_bytes | PositiveNumber,
+    max_constraints | PositiveNumber,
+    max_non_claims | PositiveNumber,
+    max_issues | PositiveNumber,
+    max_directory_depth | PositiveNumber,
+    max_directory_entries | PositiveNumber,
+  },
+
   Artifact = {
     id | NonEmptyString,
     generates | NonEmptyString,
+    output_path | SafeRelativePath,
+    path_kind | WorkflowPathKind,
+    structural_admission | WorkflowStructuralAdmission,
     requires | Array NonEmptyString | default = [],
+    stage | Stage,
+    instruction_template | NonEmptyString,
+    constraints | Array NonEmptyString | default = [],
+    apply_prerequisites | Array NonEmptyString | default = [],
+    skipped | Bool | default = false,
+    skip_satisfies_dependencies | Bool | default = false,
   },
 
   ArtifactSchema = {
+    schema_version | NonEmptyString,
     id | NonEmptyString,
     description | NonEmptyString,
-    artifacts | Array Artifact,
+    states | NonEmptyArray | Array WorkflowState,
+    bounds | WorkflowBounds,
+    artifacts | NonEmptyArray | Array Artifact,
+    required_non_claims | NonEmptyArray | Array NonEmptyString,
   },
 
   Marker = {

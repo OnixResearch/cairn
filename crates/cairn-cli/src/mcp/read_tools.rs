@@ -49,6 +49,39 @@ pub(super) fn mcp_read_spec(input: &Value) -> Result<Value, Box<dyn Error>> {
     Ok(with_portable_receipt_hash(&root, value))
 }
 
+// r[impl cairn.artifact_workflow_contract.mcp]
+pub(super) fn mcp_workflow_status(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let change = mcp_required_string(input, "change")?;
+    reject_selector_escape(change)?;
+    let schema = input.get("schema").and_then(Value::as_str);
+    let value = crate::workflow::workflow_status_value(&root, change, schema, &mcp_policy(input))?;
+    Ok(with_portable_receipt_hash(
+        &root,
+        crate::workflow::add_mcp_transport(value),
+    ))
+}
+
+pub(super) fn mcp_workflow_instructions(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let root = mcp_root(input);
+    let change = mcp_required_string(input, "change")?;
+    let artifact = mcp_required_string(input, "artifact")?;
+    reject_selector_escape(change)?;
+    reject_selector_escape(artifact)?;
+    let schema = input.get("schema").and_then(Value::as_str);
+    let value = crate::workflow::workflow_instructions_value(
+        &root,
+        change,
+        artifact,
+        schema,
+        &mcp_policy(input),
+    )?;
+    Ok(with_portable_receipt_hash(
+        &root,
+        crate::workflow::add_mcp_transport(value),
+    ))
+}
+
 pub(super) fn mcp_change_show(input: &Value) -> Result<Value, Box<dyn Error>> {
     let root = mcp_root(input);
     let change = mcp_required_string(input, "change")?;

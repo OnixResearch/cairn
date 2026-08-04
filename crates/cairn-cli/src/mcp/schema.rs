@@ -41,6 +41,18 @@ fn mcp_read_tools() -> Vec<Value> {
             "Read bounded active change metadata by id",
         ),
         mcp_tool(
+            "cairn_workflow_status",
+            true,
+            false,
+            "Return policy-owned artifact states and next actions for one change",
+        ),
+        mcp_tool(
+            "cairn_workflow_instructions",
+            true,
+            false,
+            "Return one bounded policy-owned artifact instruction envelope",
+        ),
+        mcp_tool(
             "cairn_doctor",
             true,
             false,
@@ -185,6 +197,10 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_change_show" | "cairn_gate_context" | "cairn_change_create" => {
             mcp_object_schema(&["change"], &["root"])
         }
+        "cairn_workflow_status" => mcp_object_schema(&["change"], &["root", "policy", "schema"]),
+        "cairn_workflow_instructions" => {
+            mcp_object_schema(&["change", "artifact"], &["root", "policy", "schema"])
+        }
         "cairn_gate" => mcp_schema_with_enum(
             &["change", "stage"],
             &["root", "policy"],
@@ -269,6 +285,8 @@ fn mcp_argument_description(key: &str) -> &'static str {
         "change" => "Active change lifecycle identifier",
         "stage" => "Gate stage: proposal, design, or tasks",
         "source" => "Legacy migration source: openspec or ironspec",
+        "schema" => "Policy-owned workflow schema identifier",
+        "artifact" => "Policy-owned workflow artifact identifier",
         _ => "String argument",
     }
 }
@@ -288,6 +306,15 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_change_show" | "cairn_gate_context" | "cairn_change_create" => {
             validate_string_args(name, object, &["change"], &["root"])
         }
+        "cairn_workflow_status" => {
+            validate_string_args(name, object, &["change"], &["root", "policy", "schema"])
+        }
+        "cairn_workflow_instructions" => validate_string_args(
+            name,
+            object,
+            &["change", "artifact"],
+            &["root", "policy", "schema"],
+        ),
         "cairn_gate" => {
             validate_string_args(name, object, &["change", "stage"], &["root", "policy"])?;
             validate_enum_arg(name, object, "stage", &["proposal", "design", "tasks"])

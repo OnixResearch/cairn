@@ -86,6 +86,7 @@ mod tests {
             gate_finding_scope: "tasks".to_string(),
             gate_finding_promoted: "no".to_string(),
             machine_contract_policy: generated_policy.machine_contract_policy,
+            workflow_schemas: generated_policy.workflow_schemas,
             artifact_substance_policy: ArtifactSubstancePolicy {
                 proposal_minimum_substantive_lines: 1,
                 design_minimum_substantive_lines: 1,

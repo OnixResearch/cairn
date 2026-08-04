@@ -110,6 +110,9 @@ Expected result: no matches.
   - lifecycle views are read-only projections over one deterministic semantic model; JSON is the automation default, Subwayrat-backed graph canvases are opt-in display shells, and visual layout state is excluded from receipt hashes.
   - `cairn spec list --root PATH`
   - `cairn spec show <id> --root PATH`
+  - `cairn workflow status <change> --root PATH [--schema ID]`
+  - `cairn workflow instructions <artifact> --change <change> --root PATH [--schema ID]`
+  - Workflow commands report bounded structural facts. They do not satisfy gates or mutate lifecycle artifacts.
   - local `depends_on` ordering dependencies are authored through preview-by-default `change depend add/remove`; archived dependencies satisfy blockers, active dependencies block sync/archive, and cross-repo receipt/evidence dependencies remain a separate evidence-input concept.
   - native `cairn/` layout is used for normal runtime commands; legacy layouts are migration-only and are not implicit fallbacks.
 - Diagnostics:
@@ -177,6 +180,9 @@ Expected result: no matches.
   - `cairn mcp --allow-mutations` is required for mutation-capable tools.
   - `cairn_change_graph` is the read-only MCP change dependency graph receipt: it reports dependency declarations, blockers, reverse `blocks`, graph issues, and dependency-first drain order.
   - `cairn_drain_plan` is the read-only MCP repository-wide drain planner: it summarizes every active change with gate/task readiness, dependency blockers, and safe next actions; ready changes still require explicit `cairn_sync_execute` / `cairn_archive_execute` calls under `--allow-mutations`.
+  - `cairn_workflow_status` returns policy-owned artifact states, blockers, unlocks, and next actions.
+  - `cairn_workflow_instructions` returns one policy-owned instruction envelope with upstream BLAKE3 identities.
+  - Both workflow tools are read-only. Their results do not prove approval, correctness, gate passage, or release eligibility.
   - MCP tool schemas are strict object schemas with `additionalProperties=false`.
   - Default mutation denial is checked before argument validation for mutation-capable tools.
   - `cairn agent-receipt validate <path>` validates deterministic agent-run receipt fixtures.

@@ -7,6 +7,11 @@ pub enum PolicyError {
     },
     MissingField(&'static str),
     InvalidField(&'static str),
+    InvalidWorkflow {
+        code: &'static str,
+        path: String,
+        message: String,
+    },
     UnsupportedVersion {
         found: u64,
         expected: u64,
@@ -23,6 +28,11 @@ impl fmt::Display for PolicyError {
             Self::Parse { source } => write!(f, "failed to parse policy: {source}"),
             Self::MissingField(field) => write!(f, "policy missing field {field}"),
             Self::InvalidField(field) => write!(f, "policy has invalid field {field}"),
+            Self::InvalidWorkflow {
+                code,
+                path,
+                message,
+            } => write!(f, "{code} at {path}: {message}"),
             Self::UnsupportedVersion { found, expected } => {
                 write!(f, "unsupported policy version {found}; expected {expected}")
             }

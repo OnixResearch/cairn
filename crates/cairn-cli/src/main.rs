@@ -44,6 +44,7 @@ mod test_harness;
 mod toolchain_profile_matrix;
 mod tracey;
 mod view;
+mod workflow;
 mod worksets;
 mod workspace_contract_matrix;
 
@@ -77,6 +78,7 @@ use support::{print_usage, usage_text};
 use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
 use view::run_view;
+use workflow::run_workflow;
 use workspace_contract_matrix::run_workspace_contract;
 
 fn main() {
@@ -158,6 +160,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 .ok_or("validate root resolution is unavailable")?,
         )?,
         "view" => run_view(args.collect())?,
+        "workflow" => run_workflow(args.collect())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-evidence" => release_evidence::run_release_evidence(args.collect())?,

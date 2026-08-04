@@ -3,9 +3,10 @@ use serde_json::Value;
 use super::PolicySchemaCompatibilityMetadata;
 
 use crate::verified::{
-    cli_machine::MachineContractPolicy, function_address_gates::FunctionAddressPolicy,
-    nominal_identity::NominalIdentityPolicy, runtime_evidence::RuntimeEvidencePolicy,
-    stack_provenance::StackProvenancePolicy, traceability::TraceabilityProfile,
+    artifact_workflow::WorkflowSchemaPolicy, cli_machine::MachineContractPolicy,
+    function_address_gates::FunctionAddressPolicy, nominal_identity::NominalIdentityPolicy,
+    runtime_evidence::RuntimeEvidencePolicy, stack_provenance::StackProvenancePolicy,
+    traceability::TraceabilityProfile,
 };
 
 pub const SUPPORTED_POLICY_VERSION: u64 = 1;
@@ -22,6 +23,7 @@ pub struct Policy {
     pub gate_finding_scope: String,
     pub gate_finding_promoted: String,
     pub artifact_substance_policy: ArtifactSubstancePolicy,
+    pub workflow_schemas: Vec<WorkflowSchemaPolicy>,
     pub machine_contract_policy: MachineContractPolicy,
     pub sync_require_gate: bool,
     pub archive_require_gate: bool,

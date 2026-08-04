@@ -6,7 +6,22 @@ const EXPECTED_MAX_STORE_ID_BYTES: usize = 64;
 const INVALID_MACHINE_SUCCESS_STATUS: u64 = 1;
 
 #[test]
+fn rejects_cyclic_generated_workflow_policy_with_a_stable_code() {
+    // r[verify cairn.artifact_workflow_contract.policy.invalid]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy value");
+    value["schemas"][0]["artifacts"][0]["requires"] = serde_json::json!(["tasks"]);
+    let error = validate_policy_json(value).expect_err("workflow cycle fails");
+    assert!(error
+        .to_string()
+        .contains(crate::verified::artifact_workflow::WORKFLOW_ISSUE_POLICY_CYCLE));
+}
+
+#[test]
 fn parses_generated_default_policy_text() {
+    // r[verify cairn.artifact_workflow_contract.policy.valid]
     // r[verify developer_experience.core_policy_parser_boundary_split.behavior]
     // r[verify cairn.supersede.traceability_ownership.configured_profiles.cairn_default]
     // r[verify cairn.cli_machine_contract.policy.valid]
@@ -33,6 +48,20 @@ fn parses_generated_default_policy_text() {
                 .any(|definition| definition.code == *required))
     );
     assert_eq!(policy.gate_stages, vec!["proposal", "design", "tasks"]);
+    assert_eq!(policy.workflow_schemas.len(), 1);
+    let workflow = &policy.workflow_schemas[0];
+    assert_eq!(workflow.id, "spec-driven");
+    assert_eq!(
+        workflow.states,
+        crate::verified::artifact_workflow::WORKFLOW_SUPPORTED_STATES
+            .map(ToOwned::to_owned)
+            .to_vec()
+    );
+    assert_eq!(
+        crate::verified::artifact_workflow::workflow_topological_order(workflow)
+            .expect("workflow order"),
+        vec!["proposal", "specs", "design", "tasks"]
+    );
     assert!(policy.gate_ignore_archives);
     assert_eq!(policy.gate_finding_scope, "tasks");
     assert_eq!(policy.gate_finding_promoted, "no");

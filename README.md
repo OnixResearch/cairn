@@ -83,6 +83,17 @@ Read the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md) or the [copyabl
 Direct CLI agents can use `cairn --machine <command> ...` for one versioned JSON outcome.
 Read the [CLI machine contract](docs/cli-machine-contract.md) before you depend on its status and failure rules.
 
+Inspect policy-owned artifact readiness and instructions without mutation:
+
+```bash
+nix run path:$PWD#cairn -- workflow status CHANGE --root .
+nix run path:$PWD#cairn -- workflow instructions ARTIFACT --change CHANGE --root .
+```
+
+Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, fields, MCP parity, and claim boundaries.
+
+<!-- r[impl cairn.artifact_workflow_contract.docs] -->
+
 ## Local checks
 
 ```bash

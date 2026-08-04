@@ -4402,35 +4402,115 @@
     {
       "artifacts": [
         {
+          "apply_prerequisites": [],
+          "constraints": [
+            "Use substantive text without placeholders.",
+            "Keep lifecycle authority and non-claims explicit."
+          ],
           "generates": "proposal.md",
           "id": "proposal",
-          "requires": []
+          "instruction_template": "Write proposal.md for {{change}} with Why, What Changes, Impact, and Out of Scope sections.",
+          "output_path": "proposal.md",
+          "path_kind": "file",
+          "requires": [],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "proposal",
+          "structural_admission": "proposal"
         },
         {
+          "apply_prerequisites": [
+            "gate:proposal"
+          ],
+          "constraints": [
+            "Use stable r[...] requirement IDs.",
+            "Give every scenario GIVEN, WHEN, and THEN clauses."
+          ],
           "generates": "specs/**/*.md",
           "id": "specs",
+          "instruction_template": "Write one or more specs/<spec-id>/spec.md delta files for {{change}} with explicit requirement operations.",
+          "output_path": "specs",
+          "path_kind": "spec_directory",
           "requires": [
             "proposal"
-          ]
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "design",
+          "structural_admission": "delta_specs"
         },
         {
+          "apply_prerequisites": [
+            "gate:proposal"
+          ],
+          "constraints": [
+            "Keep pure decisions separate from shell effects.",
+            "Name deterministic ordering and failure behavior."
+          ],
           "generates": "design.md",
           "id": "design",
+          "instruction_template": "Write design.md for {{change}} with decisions, rejected alternatives, tests, risks, and claim boundaries.",
+          "output_path": "design.md",
+          "path_kind": "file",
           "requires": [
             "proposal"
-          ]
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "design",
+          "structural_admission": "design"
         },
         {
+          "apply_prerequisites": [
+            "gate:design"
+          ],
+          "constraints": [
+            "Link each task to a delta requirement or valid dependency marker.",
+            "Include positive and negative verification tasks."
+          ],
           "generates": "tasks.md",
           "id": "tasks",
+          "instruction_template": "Write tasks.md for {{change}} with substantive linked tasks, concurrency markers, and verification coverage.",
+          "output_path": "tasks.md",
+          "path_kind": "file",
           "requires": [
             "specs",
             "design"
-          ]
+          ],
+          "skip_satisfies_dependencies": false,
+          "skipped": false,
+          "stage": "tasks",
+          "structural_admission": "tasks"
         }
       ],
-      "description": "OpenSpec proposal/spec/design/tasks lifecycle",
-      "id": "spec-driven"
+      "bounds": {
+        "max_artifact_bytes": 1048576,
+        "max_artifacts": 16,
+        "max_constraints": 16,
+        "max_dependencies": 8,
+        "max_directory_depth": 8,
+        "max_directory_entries": 128,
+        "max_files_per_artifact": 64,
+        "max_issues": 64,
+        "max_non_claims": 16,
+        "max_path_bytes": 4096,
+        "max_template_bytes": 4096
+      },
+      "description": "Cairn proposal, delta-spec, design, and tasks lifecycle",
+      "id": "spec-driven",
+      "required_non_claims": [
+        "workflow state proves only the selected policy graph and observed structural artifact facts",
+        "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+        "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+        "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+      ],
+      "schema_version": "cairn.workflow-schema.v1",
+      "states": [
+        "done",
+        "ready",
+        "blocked",
+        "skipped"
+      ]
     }
   ],
   "stack_provenance_gate": {
