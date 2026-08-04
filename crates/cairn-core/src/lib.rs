@@ -601,6 +601,7 @@ pub use verified::validation::{
     EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
     LifecycleSubstanceReport, SpecSubstanceInventory,
 };
+pub use verified::workflow_collaboration::*;
 pub use verified::workspace_contract_matrix::{
     evaluate_workspace_contract_matrix_readiness, is_workspace_contract_mode,
     validate_workspace_contract_matrix, validate_workspace_contract_matrix_value,

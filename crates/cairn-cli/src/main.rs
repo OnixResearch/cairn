@@ -49,6 +49,7 @@ mod test_harness;
 mod toolchain_profile_matrix;
 mod tracey;
 mod view;
+mod vo;
 mod workflow;
 mod worksets;
 mod workspace_contract_matrix;
@@ -87,6 +88,7 @@ use support::{print_usage, usage_text};
 use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
 use view::run_view;
+use vo::run_vo;
 use workflow::run_workflow;
 use workspace_contract_matrix::run_workspace_contract;
 
@@ -194,6 +196,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "probe" => probe::run_probe(args.collect())?,
         "runtime-evidence" => run_runtime_evidence(args.collect())?,
         "rfd" => run_rfd(args.collect())?,
+        "verification-obligation" => run_vo(args.collect())?,
         "collaboration" => run_collaboration(args.collect())?,
         "cob" => run_cob(args.collect())?,
         "radicle" => {

@@ -3,12 +3,16 @@
 mod adr;
 mod rfd;
 mod store;
+mod vo;
 
 pub use crate::adr::{
     create_adr, inspect_adr, update_adr, AdrCobError, AdrCobInspection, CairnAdrCob,
 };
 pub use crate::rfd::{
     create_rfd, inspect_rfd, update_rfd, CairnRfdCob, RfdCobError, RfdCobInspection,
+};
+pub use crate::vo::{
+    create_vo, inspect_vo, update_vo, CairnVerificationObligationCob, VoCobError, VoCobInspection,
 };
 
 use std::{

@@ -57,6 +57,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "probe",
     "runtime-evidence",
     "rfd",
+    "verification-obligation",
     "collaboration",
     "cob",
     "radicle",

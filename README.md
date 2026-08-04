@@ -106,6 +106,7 @@ Read [Generated agent workflows](docs/generated-agent-workflows.md) before you i
 Read [Developer-loop profiles](docs/developer-loop-profiles.md) before you define or verify a fast local loop.
 Read [RFD collaboration](docs/rfd-collaboration.md) before you use the RFD document commands.
 Read [ADR collaboration](docs/adr-collaboration.md) before you use the ADR document commands.
+Read [Verification-obligation collaboration](docs/verification-obligation.md) before you use the verification-obligation commands.
 
 <!-- r[impl cairn.artifact_workflow_contract.docs] -->
 <!-- r[impl cairn.lifecycle_workflow_profiles.docs] -->
