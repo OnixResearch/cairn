@@ -108,6 +108,7 @@ Read [RFD collaboration](docs/rfd-collaboration.md) before you use the RFD docum
 Read [ADR collaboration](docs/adr-collaboration.md) before you use the ADR document commands.
 Read [Verification-obligation collaboration](docs/verification-obligation.md) before you use the verification-obligation commands.
 Read [Release-decision collaboration](docs/release-decision.md) before you use the release-decision commands.
+Read [Policy-exception collaboration](docs/policy-exception.md) before you use the policy-exception commands.
 
 <!-- r[impl cairn.artifact_workflow_contract.docs] -->
 <!-- r[impl cairn.lifecycle_workflow_profiles.docs] -->

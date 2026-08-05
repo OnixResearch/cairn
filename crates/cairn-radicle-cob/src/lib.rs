@@ -1,6 +1,7 @@
 #![deny(clippy::unwrap_used)]
 
 mod adr;
+mod policy;
 mod release;
 mod rfd;
 mod store;
@@ -8,6 +9,10 @@ mod vo;
 
 pub use crate::adr::{
     create_adr, inspect_adr, update_adr, AdrCobError, AdrCobInspection, CairnAdrCob,
+};
+pub use crate::policy::{
+    create_exception, inspect_exception, update_exception, CairnPolicyExceptionCob,
+    PolicyExceptionCobError, PolicyExceptionInspection,
 };
 pub use crate::release::{
     create_release, inspect_release, update_release, CairnReleaseDecisionCob, ReleaseCobError,

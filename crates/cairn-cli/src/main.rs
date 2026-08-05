@@ -28,6 +28,7 @@ mod nickel_export_boundary;
 mod oxide_lifecycle_patterns;
 mod plan_receipts;
 mod policy;
+mod policy_exception;
 mod preserves_corpus;
 mod probe;
 mod radicle_change;
@@ -77,6 +78,7 @@ use machine::{
 use mcp::run_mcp;
 use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
 use policy::run_policy;
+use policy_exception::run_policy_exception;
 use radicle_change::run_cob;
 use receipt_preserves_diff::run_receipt_preserves_diff;
 use receipt_verify_content_hash::run_receipt_verify_content_hash;
@@ -195,6 +197,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "registry" => global_registry::run_global_registry(args.collect())?,
         "requirement-registry" => run_requirement_registry(args.collect())?,
         "policy" => run_policy(args.collect())?,
+        "policy-exception" => run_policy_exception(args.collect())?,
         "preserves-corpus" => preserves_corpus::run_preserves_corpus(args.collect())?,
         "probe" => probe::run_probe(args.collect())?,
         "runtime-evidence" => run_runtime_evidence(args.collect())?,

@@ -44,6 +44,7 @@ pub mod nominal_identity;
 pub mod oxide_lifecycle_patterns;
 pub mod plan;
 pub mod policy;
+pub mod policy_exception;
 pub mod preserves_evidence_ingest;
 pub mod probe;
 pub mod radicle_change;

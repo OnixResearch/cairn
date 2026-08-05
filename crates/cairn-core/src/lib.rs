@@ -451,6 +451,7 @@ pub use verified::policy::{
     CURRENT_POLICY_SCHEMA_VERSION, DEFAULT_POLICY_REFRESH_COMMAND,
     LIFECYCLE_STORE_POLICY_SCHEMA_V1, POLICY_SCHEMA_METADATA_FIELD, SUPPORTED_POLICY_VERSION,
 };
+pub use verified::policy_exception::*;
 pub use verified::preserves_evidence_ingest::{
     default_preserves_evidence_non_claims, measure_preserves_evidence_envelope_bytes,
     preserves_evidence_ingest_contracts, validate_preserves_evidence_ingest,

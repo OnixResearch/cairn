@@ -54,6 +54,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "registry",
     "requirement-registry",
     "policy",
+    "policy-exception",
     "preserves-corpus",
     "probe",
     "runtime-evidence",
