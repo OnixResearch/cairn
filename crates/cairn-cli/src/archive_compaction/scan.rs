@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use bounded_tree_core::RelativePath;
 use cairn_core::{
     object_path, pointer_path, safe_relative_path, validate_compaction_ledger, ArchiveFileInput,
     ArchiveInput, ArchivePointer, CompactionIssue, CompactionLedger, CompactionReceipt,
@@ -23,6 +24,11 @@ const ARCHIVE_SCAN_MAX_DEPTH: usize = 32;
 const ARCHIVE_SCAN_MAX_FILES: usize = 10_000;
 const ARCHIVE_FILE_MAX_BYTES: u64 = 64 * 1_048_576;
 const ARCHIVE_TOTAL_MAX_BYTES: u64 = 1_073_741_824;
+
+// r[impl cairn.bounded_tree_adoption.prerequisite]
+// r[impl cairn.bounded_tree_adoption.archive_policy]
+// r[impl cairn.bounded_tree_adoption.boundary]
+// r[impl cairn.bounded_tree_adoption.rollback]
 
 pub(super) struct RepositorySnapshot {
     pub(super) archives: Vec<ArchiveInput>,
@@ -213,6 +219,11 @@ fn collect_archive_files(
         } else {
             relative_directory.join(entry.file_name())
         };
+        // r[impl cairn.bounded_tree_adoption.archive_scan]
+        // r[impl cairn.bounded_tree_adoption.core_boundary]
+        if admit_shared_path(&relative, issues).is_none() {
+            continue;
+        }
         let full_path = archive_root.join(&relative);
         if entry.file_type().is_symlink() {
             issues.push(issue(
@@ -276,6 +287,39 @@ fn collect_archive_files(
             )),
         }
     }
+}
+
+/// Admits one repository-relative path with shared bounded-tree exact-byte rules.
+///
+/// Returns the path only when every exact byte component is admitted. A
+/// malformed path emits a bounded-path issue and yields `None` (permissive
+/// continue), so a single bad member never blocks the rest of an archive.
+fn admit_shared_path(relative: &Path, issues: &mut Vec<CompactionIssue>) -> Option<PathBuf> {
+    let components = shared_path_components(relative)?;
+    if RelativePath::new(components).is_err() {
+        issues.push(issue(
+            "archive_compaction.bounded_path_rejected",
+            &relative.to_string_lossy(),
+            "shared bounded observation rejected the exact component bytes",
+        ));
+        return None;
+    }
+    Some(relative.to_path_buf())
+}
+
+fn shared_path_components(relative: &Path) -> Option<Vec<Vec<u8>>> {
+    let mut components = Vec::new();
+    for component in relative.components() {
+        let bytes = component.as_os_str().as_encoded_bytes().to_vec();
+        if bytes.is_empty() {
+            return None;
+        }
+        components.push(bytes);
+    }
+    if components.is_empty() {
+        return None;
+    }
+    Some(components)
 }
 
 fn scan_pointers(

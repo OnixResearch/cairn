@@ -20,6 +20,8 @@ redb-registry = ["dep:redb"]
 [dependencies]
 artifact-auth-ed25519.workspace = true
 blake3.workspace = true
+bounded-tree-cap.workspace = true
+bounded-tree-core.workspace = true
 cairn-core = { path = "../cairn-core" }
 cap-std.workspace = true
 crossterm.workspace = true

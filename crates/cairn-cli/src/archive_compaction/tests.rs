@@ -11,6 +11,7 @@ use crate::support::load_policy_file;
 use super::{
     execute::execute_saved_plan,
     plan::{current_plan, run_compact_archive},
+    scan::scan_repository,
     unpack::unpack_archive,
     verify::verify_repository,
 };
@@ -230,4 +231,63 @@ fn unsafe_pointer_and_interrupted_state_fail_verification() {
     assert!(codes.contains(&"archive_compaction.pack_pointer_coverage_mismatch"));
     assert!(codes.contains(&"archive_compaction.interrupted_execution"));
     assert!(codes.contains(&"archive_compaction.orphan_pack"));
+}
+
+#[test]
+// r[verify cairn.bounded_tree_adoption.archive_scan]
+// r[verify cairn.bounded_tree_adoption.parity]
+fn shared_bounded_observation_preserves_accepted_archive_inputs_and_order() {
+    let root = TestRoot::create("parity-valid");
+    let snapshot = scan_repository(root.path(), "").expect("scan repository");
+    let archive = snapshot
+        .archives
+        .iter()
+        .find(|archive| archive.archive_id == ARCHIVE_ID)
+        .expect("discover scanned archive");
+
+    let paths = archive
+        .files
+        .iter()
+        .map(|file| file.path.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(paths, vec!["proposal.md", "tasks.md"]);
+    assert_eq!(archive.files[0].bytes, PROPOSAL_CONTENT);
+    assert_eq!(archive.files[1].bytes, TASKS_CONTENT);
+    assert!(snapshot.issues.is_empty());
+}
+
+#[test]
+// r[verify cairn.bounded_tree_adoption.archive_policy]
+// r[verify cairn.bounded_tree_adoption.parity]
+fn shared_bounded_observation_retains_link_and_special_file_policy() {
+    let root = TestRoot::create("parity-negative");
+    let archive = root.path().join("cairn/archive").join(ARCHIVE_ID);
+    std::os::unix::fs::symlink("proposal.md", archive.join("alias.md")).expect("create symlink");
+    let fifo = archive.join("pipe");
+    let status = std::process::Command::new("mkfifo")
+        .arg(&fifo)
+        .status()
+        .expect("create fifo");
+    assert!(status.success());
+
+    let snapshot = scan_repository(root.path(), "").expect("scan repository");
+    let codes = snapshot
+        .issues
+        .iter()
+        .map(|issue| issue.code.as_str())
+        .collect::<Vec<_>>();
+    assert!(codes.contains(&"archive_compaction.archive_symlink_rejected"));
+    assert!(codes.contains(&"archive_compaction.special_file_rejected"));
+
+    let archive = snapshot
+        .archives
+        .iter()
+        .find(|archive| archive.archive_id == ARCHIVE_ID)
+        .expect("discover scanned archive");
+    let paths = archive
+        .files
+        .iter()
+        .map(|file| file.path.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(paths, vec!["proposal.md", "tasks.md"]);
 }
