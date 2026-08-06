@@ -66,6 +66,7 @@ let positive_rows = std.array.map (fun kind => {
   "validation_receipt",
   "sync_receipt",
   "archive_receipt",
+  "radicle-issue.v1",
 ] in
 ({
   schema = "cairn.cross-repo-dependency-fixture-matrix.v1",

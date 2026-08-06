@@ -13,6 +13,15 @@ pub const CROSS_REPO_NON_CLAIM_UPSTREAM: &str =
 pub const CROSS_REPO_NON_CLAIM_DOWNSTREAM: &str =
     "dependency satisfaction does not prove downstream integration correctness or release eligibility";
 
+// r[impl cairn.radicle_issue_cross_repo.receipt_kind]
+// r[impl cairn.radicle_issue_cross_repo.contract]
+pub const RADICLE_ISSUE_RECEIPT_KIND: &str = "radicle-issue.v1";
+pub const RADICLE_ISSUE_RECEIPT_SCHEMA_V1: &str = "cairn.radicle-issue-receipt.v1";
+pub const RADICLE_ISSUE_NON_CLAIM_LINKAGE: &str =
+    "issue receipt proves bounded local observation of one Radicle issue only";
+pub const RADICLE_ISSUE_NON_CLAIM_AUTHORITY: &str =
+    "issue receipt does not prove closure authority, peer convergence, remote trust, semantic truth, or release eligibility";
+
 const BLAKE3_PREFIX: &str = "b3:";
 const HEX_CHARACTERS_PER_BYTE: usize = 2;
 const BLAKE3_HEX_LENGTH: usize = blake3::OUT_LEN * HEX_CHARACTERS_PER_BYTE;
@@ -25,6 +34,7 @@ const SUPPORTED_RECEIPT_KINDS: &[&str] = &[
     "validation_receipt",
     "sync_receipt",
     "archive_receipt",
+    RADICLE_ISSUE_RECEIPT_KIND,
 ];
 const NON_PASS_STATUSES: &[&str] = &[
     "failed",
@@ -137,6 +147,60 @@ pub fn cross_repo_dependency_contract() -> Value {
         "passing_status": PASS_STATUS,
         "non_passing_statuses": NON_PASS_STATUSES,
         "required_non_claims": default_non_claims(),
+    })
+}
+
+// r[impl cairn.radicle_issue_cross_repo.contract]
+// r[impl cairn.radicle_issue_cross_repo.contract.identity]
+// r[impl cairn.radicle_issue_cross_repo.contract.privacy]
+// r[impl cairn.radicle_issue_cross_repo.adapter_bounded]
+// r[impl cairn.radicle_issue_cross_repo.adapter_bounded.observe]
+// r[impl cairn.radicle_issue_cross_repo.adapter_bounded.non_claims]
+// r[impl cairn.radicle_issue_cross_repo.validation]
+// r[impl cairn.radicle_issue_cross_repo.validation.match]
+// r[impl cairn.radicle_issue_cross_repo.validation.mismatch]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RadicleIssueObservation {
+    pub repo: String,
+    pub issue_id: String,
+    pub object_id: String,
+    pub status: String,
+    pub subject_hash: String,
+}
+
+#[must_use]
+pub fn build_radicle_issue_receipt(
+    observation: &RadicleIssueObservation,
+) -> CrossRepoReceiptSummary {
+    CrossRepoReceiptSummary {
+        repo: observation.repo.clone(),
+        change: observation.issue_id.clone(),
+        receipt_kind: RADICLE_ISSUE_RECEIPT_KIND.to_string(),
+        status: PASS_STATUS.to_string(),
+        policy_hash: None,
+        subject_hash: Some(observation.subject_hash.clone()),
+        receipt_hash: canonical_json_hash(&json!({
+            "repo": observation.repo,
+            "issue_id": observation.issue_id,
+            "object_id": observation.object_id,
+            "observed_status": observation.status,
+            "subject_hash": observation.subject_hash,
+        })),
+        artifact_ref: Some(format!("radicle-issue:{}", observation.object_id)),
+        diagnostic_summary: None,
+    }
+}
+
+#[must_use]
+pub fn radicle_issue_receipt_contract() -> Value {
+    json!({
+        "schema": RADICLE_ISSUE_RECEIPT_SCHEMA_V1,
+        "receipt_kind": RADICLE_ISSUE_RECEIPT_KIND,
+        "passing_status": PASS_STATUS,
+        "non_claims": [
+            RADICLE_ISSUE_NON_CLAIM_LINKAGE,
+            RADICLE_ISSUE_NON_CLAIM_AUTHORITY,
+        ],
     })
 }
 
@@ -945,5 +1009,101 @@ mod tests {
         let (rows, issues) = parse_cross_repo_dependencies(Some(&json!({})));
         assert!(rows.is_empty());
         assert_eq!(issues, ["cross_repo_dependency.metadata.invalid_type"]);
+    }
+
+    #[test]
+    // r[impl cairn.radicle_issue_cross_repo.final_validation]
+    // r[impl cairn.radicle_issue_cross_repo.final_validation.positive]
+    // r[impl cairn.radicle_issue_cross_repo.final_validation.gates]
+    // r[verify cairn.radicle_issue_cross_repo.receipt_kind]
+    // r[verify cairn.radicle_issue_cross_repo.receipt_kind.valid]
+    // r[verify cairn.radicle_issue_cross_repo.contract]
+    // r[verify cairn.radicle_issue_cross_repo.contract.identity]
+    // r[verify cairn.radicle_issue_cross_repo.contract.privacy]
+    // r[verify cairn.radicle_issue_cross_repo.adapter_bounded]
+    // r[verify cairn.radicle_issue_cross_repo.adapter_bounded.observe]
+    // r[verify cairn.radicle_issue_cross_repo.adapter_bounded.non_claims]
+    // r[verify cairn.radicle_issue_cross_repo.validation]
+    // r[verify cairn.radicle_issue_cross_repo.validation.match]
+    // r[verify cairn.radicle_issue_cross_repo.final_validation]
+    // r[verify cairn.radicle_issue_cross_repo.final_validation.positive]
+    // r[verify cairn.radicle_issue_cross_repo.final_validation.gates]
+    fn issue_receipt_binds_identity_and_satisfies_matching_linkage() {
+        let contract = radicle_issue_receipt_contract();
+        assert_eq!(contract["schema"], RADICLE_ISSUE_RECEIPT_SCHEMA_V1);
+        assert_eq!(contract["receipt_kind"], RADICLE_ISSUE_RECEIPT_KIND);
+        assert!(contract["non_claims"]
+            .as_array()
+            .map(|claims| claims.contains(&json!(RADICLE_ISSUE_NON_CLAIM_AUTHORITY)))
+            .unwrap_or(false));
+
+        let observation = RadicleIssueObservation {
+            repo: "radicle-example".to_string(),
+            issue_id: "issue-3".to_string(),
+            object_id: HASH_B.to_string(),
+            status: "open".to_string(),
+            subject_hash: HASH_B.to_string(),
+        };
+        let summary = build_radicle_issue_receipt(&observation);
+        assert_eq!(summary.receipt_kind, RADICLE_ISSUE_RECEIPT_KIND);
+        assert_eq!(summary.repo, "radicle-example");
+        assert_eq!(summary.change, "issue-3");
+        assert_eq!(summary.subject_hash.as_deref(), Some(HASH_B));
+        assert_eq!(
+            summary.artifact_ref.as_deref(),
+            Some(format!("radicle-issue:{HASH_B}")).as_deref()
+        );
+
+        let mut dependency = dependency(RADICLE_ISSUE_RECEIPT_KIND);
+        dependency.change = "issue-3".to_string();
+        dependency.repo = "radicle-example".to_string();
+        dependency.expected_policy_hash = None;
+        dependency.expected_subject_hash = Some(HASH_B.to_string());
+        dependency.expected_receipt_hash = Some(summary.receipt_hash.clone());
+        let report = evaluate_cross_repo_dependencies(&[dependency], &[summary], HASH_A);
+        assert!(report.valid, "{:?}", report.rows);
+        assert_eq!(report.satisfied_count, 1);
+    }
+
+    #[test]
+    // r[impl cairn.radicle_issue_cross_repo.final_validation.negative]
+    // r[verify cairn.radicle_issue_cross_repo.receipt_kind.invalid]
+    // r[verify cairn.radicle_issue_cross_repo.adapter_bounded.non_claims]
+    // r[verify cairn.radicle_issue_cross_repo.validation.mismatch]
+    // r[verify cairn.radicle_issue_cross_repo.final_validation.negative]
+    fn issue_receipt_mismatch_fails_closed_and_unsupported_kind_stays_rejected() {
+        let mut dependency = dependency(RADICLE_ISSUE_RECEIPT_KIND);
+        dependency.change = "issue-3".to_string();
+        dependency.repo = "radicle-example".to_string();
+        dependency.expected_policy_hash = None;
+        dependency.expected_subject_hash = Some(HASH_B.to_string());
+
+        let mut summary = build_radicle_issue_receipt(&RadicleIssueObservation {
+            repo: "radicle-example".to_string(),
+            issue_id: "issue-3".to_string(),
+            object_id: HASH_B.to_string(),
+            status: "open".to_string(),
+            subject_hash: HASH_A.to_string(),
+        });
+        summary.receipt_hash = dependency
+            .expected_receipt_hash
+            .clone()
+            .unwrap_or_else(|| HASH_C.to_string());
+        let report = evaluate_cross_repo_dependencies(&[dependency.clone()], &[summary], HASH_A);
+        assert!(!report.valid, "mismatched subject unexpectedly passed");
+        assert_eq!(
+            report.rows[0].diagnostics[0].code,
+            "cross_repo_dependency.stale_subject"
+        );
+
+        let mut unsupported = dependency;
+        unsupported.receipt_kind = "radicle-patch.v1".to_string();
+        let report = evaluate_cross_repo_dependencies(&[unsupported], &[], HASH_A);
+        assert_eq!(report.rows[0].status, "malformed");
+        assert_eq!(
+            report.rows[0].diagnostics[0].code,
+            "cross_repo_dependency.unsupported_kind"
+        );
+        assert!(!RADICLE_ISSUE_NON_CLAIM_LINKAGE.is_empty());
     }
 }

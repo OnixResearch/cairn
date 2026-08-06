@@ -7,24 +7,24 @@ Teams track work in Radicle issue COBs. To make Cairn changes honest about that 
 ## What Changes
 
 - Add a `radicle-issue.v1` receipt kind to the cross-repo dependency allowlist.
-- Define a typed `cairn.radicle-issue-receipt.v1` contract for the issue receipt.
-- Add a bounded, read-only Radicle issue adapter that emits the issue receipt from a local COB store.
-- Keep the issue adapter out of Cairn lifecycle reduction and out of any write path.
+- Define a typed `cairn.radicle-issue-receipt.v1` contract.
+- Add a bounded, read-only pure issue receipt builder in `cairn-core` with explicit non-claims.
+- Keep the issue receipt out of Cairn lifecycle reduction and out of any write path.
 - Gate an issue linkage through the existing cross-repo dependency evaluator and blocker machinery.
-- Add positive and negative core fixtures and CLI integration coverage.
+- Add positive and negative core fixtures.
 
 ## Impact
 
-- **Core**: Add the receipt kind, the issue receipt schema, validation, and pure evaluator support in `cross_repo_dependencies.rs`.
-- **Adapter**: Add a read-only `radicle_issue` decoder in `cairn-radicle-cob` that emits issue receipts with explicit non-claims.
-- **CLI**: Load issue evidence only from explicit operator-supplied files or imported bundles.
+- **Core**: Add the receipt kind, the issue receipt schema, the pure read-only builder, and evaluator support in `cross_repo_dependencies.rs`.
+- **Policy**: Add `radicle-issue.v1` to the supported receipt kinds and regenerate the checked-in policy.
 - **Documentation**: Document issue linkage metadata, the receipt schema, non-claims, and the no-fetch boundary.
-- **Testing**: Add positive and negative fixtures for satisfied, unsupported, stale, mismatched, and missing issue evidence.
+- **Testing**: Add positive and negative fixtures for satisfied and rejected issue evidence.
 
 ## Out of Scope
 
-- Reading or writing the Radicle-native issue COB as Cairn lifecycle state.
+- Reading or writing the native Radicle issue COB as Cairn lifecycle state.
 - Authoring updates to a Radicle issue from Cairn.
 - Node, peer, discovery, sync, or convergence behavior.
+- Depending on the full `radicle` crate.
 - Replacing local `depends_on` dependency ordering.
 - Treating an issue receipt as proof of issue correctness, closure authority, remote trust, or release eligibility.

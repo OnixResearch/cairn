@@ -230,11 +230,14 @@ pub use verified::content_bound_requirement_registry::{
     CONTENT_BOUND_REVISION_KIND_JUJUTSU, CONTENT_BOUND_REVISION_KIND_OPAQUE,
 };
 pub use verified::cross_repo_dependencies::{
-    cross_repo_dependency_contract, dependency_blocker_messages, evaluate_cross_repo_dependencies,
-    parse_cross_repo_dependencies, summaries_by_identity, CrossRepoDependency,
+    build_radicle_issue_receipt, cross_repo_dependency_contract, dependency_blocker_messages,
+    evaluate_cross_repo_dependencies, parse_cross_repo_dependencies,
+    radicle_issue_receipt_contract, summaries_by_identity, CrossRepoDependency,
     CrossRepoDependencyDiagnostic, CrossRepoDependencyReport, CrossRepoDependencyRowResult,
-    CrossRepoReceiptSummary, CROSS_REPO_DEPENDENCY_SCHEMA_V1, CROSS_REPO_NON_CLAIM_DOWNSTREAM,
-    CROSS_REPO_NON_CLAIM_LINKAGE, CROSS_REPO_NON_CLAIM_UPSTREAM, CROSS_REPO_RECEIPT_SCHEMA_V1,
+    CrossRepoReceiptSummary, RadicleIssueObservation, CROSS_REPO_DEPENDENCY_SCHEMA_V1,
+    CROSS_REPO_NON_CLAIM_DOWNSTREAM, CROSS_REPO_NON_CLAIM_LINKAGE, CROSS_REPO_NON_CLAIM_UPSTREAM,
+    CROSS_REPO_RECEIPT_SCHEMA_V1, RADICLE_ISSUE_NON_CLAIM_AUTHORITY,
+    RADICLE_ISSUE_NON_CLAIM_LINKAGE, RADICLE_ISSUE_RECEIPT_KIND, RADICLE_ISSUE_RECEIPT_SCHEMA_V1,
 };
 pub use verified::delta_merge::{
     merge_delta_spec, DeltaMerge, DeltaMergeDiagnostic, DeltaOperation, DeltaOperationKind,

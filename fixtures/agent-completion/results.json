@@ -2,19 +2,32 @@
   {
     "check_id": "tests",
     "status": "passed",
-    "command": ["cargo", "test", "--workspace"],
+    "command": [
+      "cargo",
+      "test",
+      "--workspace"
+    ],
     "command_hash": "108c657f5483b5a83731f413b62146dece87980abb850a1019b643bc9b37a55f",
     "subject_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
     "registry_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "selection_hash": "b9da53c190687f8ff0bf2a465d6823056328363c7aa4b73f97ee0a10ff158581",
-    "policy_hash": "587d6dabf9e73c050ff15562797eef98cc2b348fc2383563565e7583803d44ed",
+    "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
     "evidence_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "execution_receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "artifacts": [{"path": "target/agent-completion/tests.json", "hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+    "artifacts": [
+      {
+        "path": "target/agent-completion/tests.json",
+        "hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    ],
     "diagnostic": {
       "remediation_label": "rerun-tests",
       "summary": "rerun the repository-owned workspace tests",
-      "reproduction_argv": ["cargo", "test", "--workspace"],
+      "reproduction_argv": [
+        "cargo",
+        "test",
+        "--workspace"
+      ],
       "working_root": "<repository-root>",
       "source": null
     }
@@ -22,19 +35,40 @@
   {
     "check_id": "clippy",
     "status": "passed",
-    "command": ["cargo", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings"],
+    "command": [
+      "cargo",
+      "clippy",
+      "--workspace",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
     "command_hash": "6abfeda462ce5dc98d1aac663c2de398f51bebd75a38bdbb7d01eba912df44e8",
     "subject_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
     "registry_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "selection_hash": "b9da53c190687f8ff0bf2a465d6823056328363c7aa4b73f97ee0a10ff158581",
-    "policy_hash": "587d6dabf9e73c050ff15562797eef98cc2b348fc2383563565e7583803d44ed",
+    "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
     "evidence_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "execution_receipt_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "artifacts": [{"path": "target/agent-completion/clippy.json", "hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+    "artifacts": [
+      {
+        "path": "target/agent-completion/clippy.json",
+        "hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    ],
     "diagnostic": {
       "remediation_label": "rerun-clippy",
       "summary": "rerun the repository-owned Clippy check",
-      "reproduction_argv": ["cargo", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings"],
+      "reproduction_argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
       "working_root": "<repository-root>",
       "source": null
     }

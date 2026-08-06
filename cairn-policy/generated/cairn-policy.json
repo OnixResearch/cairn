@@ -172,7 +172,8 @@
       "tasks_gate",
       "validation_receipt",
       "sync_receipt",
-      "archive_receipt"
+      "archive_receipt",
+      "radicle-issue.v1"
     ]
   },
   "determinism_replay_policy": {

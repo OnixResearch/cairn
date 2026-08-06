@@ -774,6 +774,7 @@ let WorkflowRequiredNonClaims = [
       "validation_receipt",
       "sync_receipt",
       "archive_receipt",
+      "radicle-issue.v1",
     ],
     passing_status = "pass",
     non_passing_statuses = [

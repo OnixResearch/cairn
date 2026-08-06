@@ -9,15 +9,16 @@ The `SUPPORTED_RECEIPT_KINDS` allowlist has only Cairn lifecycle kinds. There is
 ## Goals
 
 - Link a Cairn change to a Radicle issue as a first-class cross-repo dependency.
-- Keep issue evidence as a bounded read-only observation.
+- Keep issue evidence as a bounded read-only typed observation.
 - Reuse the existing cross-repo evaluator, blocker, and non-claim machinery.
-- Require explicit evidence inputs with no implicit transport.
+- Stay inside the existing dependency boundary with no `radicle` crate.
 
 ## Non-Goals
 
 - Model the Radicle-native issue COB as Cairn lifecycle state.
 - Let Cairn author or reduce an issue.
 - Add node, peer, discovery, sync, or convergence behavior.
+- Depend on the full `radicle` crate.
 - Change local `depends_on` ordering.
 
 ## Decisions
@@ -36,11 +37,11 @@ The contract reuses the existing `CrossRepoReceiptSummary` shape so the core eva
 
 **Rationale:** A typed contract keeps the linkage deterministic and auditable without new evaluator paths.
 
-### Decision: Keep the issue adapter read-only
+### Decision: Keep the issue adapter read-only in pure core
 
-**Choice:** Add a `radicle_issue` decoder to `cairn-radicle-cob`. It decodes a supported issue action history in a local COB store and emits a bounded observation. It does not reduce the issue into lifecycle state and it does not write an update.
+**Choice:** Add a pure `build_radicle_issue_receipt` builder to `cairn-core`. It takes a bounded typed `RadicleIssueObservation` and returns a `CrossRepoReceiptSummary` with kind `radicle-issue.v1`, explicit non-claims, and a deterministic receipt hash. It does not reduce the issue into lifecycle state and it does not write an update.
 
-**Rationale:** Cairn does not own the issue reducer. A read-only observation respects the claim boundary.
+**Rationale:** Cairn does not own the issue reducer. A pure read-only builder honors the functional-core boundary. Decoding the native Radicle issue COB in a local store is a store-I/O shell, which Cairn keeps behind the documented boundary to avoid depending on the `radicle` crate.
 
 ### Decision: Require explicit evidence inputs
 
@@ -62,7 +63,7 @@ This would duplicate the issue reducer and claim authority Cairn does not own. T
 
 ### Add the full `radicle` crate dependency
 
-This would pull profiles, identity documents, and node types across the existing boundary. The adapter stays COB-only.
+This would pull profiles, identity documents, and node types across the existing boundary. The pure core builder stays dependency-clean.
 
 ### Allow implicit issue fetching
 

@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "f988e043d1e935037d36485c4297ba0576c8dd4b1102e3bfbcaf7d6cc451be68",
+    "input_hash": "6f6519b2eb2790fa7eb746154b18883b54940425cfe197a84c946da243b156f1",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "587d6dabf9e73c050ff15562797eef98cc2b348fc2383563565e7583803d44ed",
-    "receipt_hash": "8cc4e570b545266c090181b8810f7dd057ea88e0a8c32bbfee5b38d3ccd1cc3c",
+    "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
+    "receipt_hash": "f7efe12db5a6c3794e85a3bc27272bc305488ff5ce1b34a650816e54f9070631",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -24,7 +24,7 @@
     "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "9099f706bad3774772fbc25a9d02c0ee8ce5fc706fd012134f7b9c61057a6750",
+  "input_hash": "d89f1cd18c56dfe21293f7293f3d618df4f8cde84d32450c1020ea991d950d69",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -58,12 +58,12 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "2b900e02adead1b917660cfa7bf9225cda9dd72e09b7b9598ecce6f3c4afc1c1",
+  "plan_hash": "c6a032b5170845a9a55d9dc866d239cb562c2fd780140f3ebd599a3074cec779",
   "policy": "cairn-default",
-  "policy_hash": "587d6dabf9e73c050ff15562797eef98cc2b348fc2383563565e7583803d44ed",
+  "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "f8d26346b795f34eaad054909df7fbd434be2481c7efa137169941e880d7bfca"
+  "receipt_hash": "73a36ca7478accda2e10517c11fd7a3a06da465e21a4d36774f074754e5bdc78"
 }

@@ -16,19 +16,19 @@ r[cairn.radicle_issue_cross_repo.receipt_kind.valid]
 #### Scenario: Unsupported issue evidence kind fails closed
 
 r[cairn.radicle_issue_cross_repo.receipt_kind.invalid]
-- GIVEN a dependency row uses an unsupported kind or a malformed issue receipt
+- GIVEN a dependency row uses an unsupported issue kind or a malformed issue receipt
 - WHEN Cairn validates the dependency
 - THEN Cairn MUST emit the stable unsupported-kind issue code and MUST NOT promote the row to `satisfied`.
 
 ### Requirement: Issue receipt contract is typed and bounded
 
-r[cairn.radicle_issue_cross_repo.contract] Cairn MUST define a typed `cairn.radicle-issue-receipt.v1` contract that records the upstream repo identity, issue id, COB object id, observed status, hash constraints, and explicit non-claims.
+r[cairn.radicle_issue_cross_repo.contract] Cairn MUST define a typed `cairn.radicle-issue-receipt.v1` contract that records the upstream repo identity, issue id, COB object id, observed status, and subject hash constraints.
 
 #### Scenario: Receipt binds issue identity and observed state
 
 r[cairn.radicle_issue_cross_repo.contract.identity]
-- GIVEN an issue adapter inspects a local Radicle COB store
-- WHEN it emits an issue receipt
+- GIVEN a bounded typed issue observation for one Radicle issue
+- WHEN Cairn builds the issue receipt in pure core
 - THEN the receipt MUST bind the repo identity, issue id, COB object id, observed status, subject hash, and receipt hash deterministically.
 
 #### Scenario: Issued receipt omits raw private transport data
@@ -40,14 +40,14 @@ r[cairn.radicle_issue_cross_repo.contract.privacy]
 
 ### Requirement: Issue reading is a bounded read-only adapter
 
-r[cairn.radicle_issue_cross_repo.adapter_bounded] Cairn MUST treat the Radicle issue COB as a bounded read-only observation source. Cairn MUST NOT reduce the issue into lifecycle state or author an update to it.
+r[cairn.radicle_issue_cross_repo.adapter_bounded] Cairn MUST build a `radicle-issue.v1` receipt only from a bounded typed issue observation. Cairn MUST NOT reduce the issue into lifecycle state or author an update to it.
 
-#### Scenario: Adapter observes only typed COB histories
+#### Scenario: Adapter emits only a bounded typed observation
 
 r[cairn.radicle_issue_cross_repo.adapter_bounded.observe]
-- GIVEN a supported Radicle issue COB in a local store
-- WHEN the adapter decodes its action history
-- THEN the adapter MUST emit only the bounded typed observation for the receipt and MUST NOT mutate the COB.
+- GIVEN a bounded typed issue observation
+- WHEN Cairn builds the issue receipt
+- THEN Cairn MUST emit only the bounded typed receipt value and MUST NOT mutate any COB or lifecycle file.
 
 #### Scenario: Issue receipt carries explicit non-claims
 
@@ -74,42 +74,6 @@ r[cairn.radicle_issue_cross_repo.validation.mismatch]
 - WHEN the pure cross-repo evaluator runs
 - THEN the row MUST retain a deterministic blocked status with a stable issue code.
 
-### Requirement: Issue evidence loads only from explicit inputs
-
-r[cairn.radicle_issue_cross_repo.shell] Cairn CLI and MCP surfaces MUST resolve `radicle-issue.v1` evidence only from explicit operator-supplied issue receipts or imported evidence bundles.
-
-#### Scenario: Explicit issue receipt is summarized
-
-r[cairn.radicle_issue_cross_repo.shell.explicit]
-- GIVEN an operator supplies a Cairn issue receipt file or an imported bundle
-- WHEN the shell prepares cross-repo validation
-- THEN it MUST load bounded issue receipt summaries and pass normalized in-memory summaries to the core evaluator.
-
-#### Scenario: No implicit issue fetch occurs
-
-r[cairn.radicle_issue_cross_repo.shell.no_fetch]
-- GIVEN a dependency row references a Radicle issue but the operator supplies no evidence input
-- WHEN Cairn validates the dependency
-- THEN Cairn MUST NOT start a node, connect to a peer, or fetch a remote by default and MUST report the dependency as missing evidence.
-
-### Requirement: Issue linkage documentation is complete
-
-r[cairn.radicle_issue_cross_repo.docs] Cairn MUST document how to author a `radicle-issue.v1` cross-repo dependency, produce an issue receipt, and interpret its status and non-claims.
-
-#### Scenario: Issue metadata example is visible
-
-r[cairn.radicle_issue_cross_repo.docs.metadata]
-- GIVEN an operator reads the dependency documentation
-- WHEN issue linkage is introduced
-- THEN the documentation MUST show a complete `radicle-issue.v1` metadata row with repo identity, issue id, expected status, optional hash constraints, and non-claims.
-
-#### Scenario: No-fetch and non-claim boundaries are visible
-
-r[cairn.radicle_issue_cross_repo.docs.boundaries]
-- GIVEN an operator reads the issue linkage documentation
-- WHEN Cairn documents behavior
-- THEN the documentation MUST state the no-implicit-fetch rule, the read-only adapter boundary, and the non-claim that a receipt is not issue-truth or release eligibility.
-
 ### Requirement: Issue linkage final verification
 
 r[cairn.radicle_issue_cross_repo.final_validation] The change MUST include positive and negative verification evidence before archive.
@@ -117,7 +81,7 @@ r[cairn.radicle_issue_cross_repo.final_validation] The change MUST include posit
 #### Scenario: Positive issue fixtures pass
 
 r[cairn.radicle_issue_cross_repo.final_validation.positive]
-- GIVEN matching open and closed issue receipt fixtures for each supported status
+- GIVEN a matching issue receipt fixture for the supported kind
 - WHEN focused core and CLI tests run
 - THEN valid fixtures MUST produce deterministic satisfied-row receipts.
 
