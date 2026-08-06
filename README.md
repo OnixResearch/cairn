@@ -659,5 +659,6 @@ The license split does not turn lifecycle conformance into code-correctness or r
 - [joweeba/tla2](https://github.com/joweeba/tla2) — state-machine receipt reference.
 - [`radicle-cob`](https://crates.io/crates/radicle-cob) — signed Git-backed object format.
 - [`radicle`](https://crates.io/crates/radicle) — fixture-only upstream Git storage adapter.
+- [Fission-AI/OpenSpec stores beta guide](https://github.com/Fission-AI/OpenSpec/blob/main/docs/stores-beta/user-guide.md) — standalone planning-store, reference, context, and workset interaction reference.
 
 These references do not transfer their domain-specific correctness or authority claims into Cairn.
