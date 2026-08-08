@@ -182,8 +182,10 @@ Expected result: no matches.
 - Migration:
   - Cairn migration commands emit dry-run copy plans from old lifecycle layouts to native `.cairn/`.
   - Use `cairn migrate cairn` for the old visible directory.
-  - `--execute` copies accepted specs, active changes, and archives. It never deletes old content.
-  - existing native destinations are blockers and must not be overwritten.
+  - Review the preview `plan_hash`. Pass that hash with `--execute --plan-hash HASH`.
+  - Execution copies accepted specs, active changes, and archives. It never deletes old content.
+  - Source, destination, action, or policy drift blocks execution.
+  - Existing native destinations are blockers and must not be overwritten.
   - stable public migration receipt fields are `command`, `root`, `source_layout`, `destination_layout`, `actions`, `conflicts`, `blocked`, `dry_run`, `mutated`, `policy`, `policy_hash`, `source_manifest_hash`, `destination_manifest_hash`, `manifest_hash`, and `receipt_hash`.
   - migration action entries expose stable `source`, `destination`, `source_hash`, and `destination_hash` fields.
 - MCP and agent receipts:

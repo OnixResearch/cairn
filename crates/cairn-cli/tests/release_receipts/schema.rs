@@ -208,7 +208,7 @@ fn public_receipt_schema_docs_list_stable_fields() -> Result<(), Box<dyn Error>>
         "{readme}"
     );
     assert!(
-        readme.contains("`source_hash`, and `destination_hash` fields"),
+        readme.contains("`source_hash` and `destination_hash` fields"),
         "{readme}"
     );
     assert!(

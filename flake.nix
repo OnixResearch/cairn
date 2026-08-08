@@ -439,7 +439,7 @@
             "--features"
             "redb-registry"
           ];
-          nativeCheckInputs = [ pkgs.nickel ];
+          nativeCheckInputs = [ pkgs.jq pkgs.nickel ];
           doCheck = true;
           checkPhase = ''
             runHook preCheck
@@ -472,18 +472,25 @@
             legacy_cairn=$(mktemp -d)
             cp -R fixtures/basic/. "$legacy_cairn"/
             mv "$legacy_cairn/.cairn" "$legacy_cairn/cairn"
-            $cairn status --root "$legacy_cairn" >/tmp/cairn-old-directory-status.json
+            if $cairn status --root "$legacy_cairn" >/tmp/cairn-old-directory-status.json 2>/tmp/cairn-old-directory-status.stderr; then
+              echo "legacy-only Cairn status unexpectedly succeeded" >&2
+              exit 1
+            fi
+            grep -F 'cairn.lifecycle_directory.migration_required' /tmp/cairn-old-directory-status.stderr
             $cairn migrate cairn --root "$legacy_cairn" >/tmp/cairn-migrate-old-directory-plan.json
-            $cairn migrate cairn --root "$legacy_cairn" --execute >/tmp/cairn-migrate-old-directory-execute.json
+            old_directory_plan_hash=$(jq -r .plan_hash /tmp/cairn-migrate-old-directory-plan.json)
+            $cairn migrate cairn --root "$legacy_cairn" --execute --plan-hash "$old_directory_plan_hash" >/tmp/cairn-migrate-old-directory-execute.json
             $cairn status --root "$legacy_cairn" >/tmp/cairn-migrated-old-directory-status.json
             legacy_ironspec=$(mktemp -d)
             cp -R fixtures/basic/. "$legacy_ironspec"/
             mv "$legacy_ironspec/.cairn" "$legacy_ironspec/ironspec"
             $cairn status --root "$legacy_ironspec" >/tmp/cairn-legacy-ironspec-status.json
             $cairn migrate ironspec --root "$legacy_ironspec" >/tmp/cairn-migrate-ironspec-plan.json
-            $cairn migrate ironspec --root "$legacy_ironspec" --execute >/tmp/cairn-migrate-ironspec-execute.json
+            ironspec_plan_hash=$(jq -r .plan_hash /tmp/cairn-migrate-ironspec-plan.json)
+            $cairn migrate ironspec --root "$legacy_ironspec" --execute --plan-hash "$ironspec_plan_hash" >/tmp/cairn-migrate-ironspec-execute.json
             $cairn migrate openspec --root "$legacy" >/tmp/cairn-migrate-plan.json
-            $cairn migrate openspec --root "$legacy" --execute >/tmp/cairn-migrate-execute.json
+            openspec_plan_hash=$(jq -r .plan_hash /tmp/cairn-migrate-plan.json)
+            $cairn migrate openspec --root "$legacy" --execute --plan-hash "$openspec_plan_hash" >/tmp/cairn-migrate-execute.json
             $cairn status --root "$legacy" >/tmp/cairn-native-status.json
             $cairn change list --root fixtures/basic >/tmp/cairn-fixture-change-list.json
             $cairn change show demo --root fixtures/basic >/tmp/cairn-fixture-change-show.json

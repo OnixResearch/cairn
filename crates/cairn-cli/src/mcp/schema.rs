@@ -219,8 +219,14 @@ fn mcp_input_schema(name: &str) -> Value {
         | "cairn_archive_plan"
         | "cairn_sync_execute"
         | "cairn_archive_execute" => mcp_schema_with_evidence(&["change"], &["root", "policy"]),
-        "cairn_migrate_plan" | "cairn_migrate_execute" => mcp_schema_with_enum(
+        "cairn_migrate_plan" => mcp_schema_with_enum(
             &["source"],
+            &["root", "policy"],
+            "source",
+            &["cairn", "openspec", "ironspec"],
+        ),
+        "cairn_migrate_execute" => mcp_schema_with_enum(
+            &["source", "plan_hash"],
             &["root", "policy"],
             "source",
             &["cairn", "openspec", "ironspec"],
@@ -293,6 +299,7 @@ fn mcp_argument_description(key: &str) -> &'static str {
         "change" => "Active change lifecycle identifier",
         "stage" => "Gate stage: proposal, design, or tasks",
         "source" => "Legacy migration source: cairn, openspec, or ironspec",
+        "plan_hash" => "BLAKE3 plan hash from a reviewed migration preview",
         "schema" => "Policy-owned workflow schema identifier",
         "artifact" => "Policy-owned workflow artifact identifier",
         _ => "String argument",
@@ -340,8 +347,12 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         | "cairn_archive_plan"
         | "cairn_sync_execute"
         | "cairn_archive_execute" => validate_lifecycle_mutation_args(name, object),
-        "cairn_migrate_plan" | "cairn_migrate_execute" => {
+        "cairn_migrate_plan" => {
             validate_string_args(name, object, &["source"], &["root", "policy"])?;
+            validate_enum_arg(name, object, "source", &["cairn", "openspec", "ironspec"])
+        }
+        "cairn_migrate_execute" => {
+            validate_string_args(name, object, &["source", "plan_hash"], &["root", "policy"])?;
             validate_enum_arg(name, object, "source", &["cairn", "openspec", "ironspec"])
         }
         "cairn_agent_receipt_validate" => validate_agent_receipt_args(name, object),

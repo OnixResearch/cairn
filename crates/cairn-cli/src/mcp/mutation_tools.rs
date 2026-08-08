@@ -325,6 +325,16 @@ pub(super) fn mcp_migrate(input: &Value, execute: bool) -> Result<Value, Box<dyn
         LifecycleLayout::LegacyIronspec => build_ironspec_migration_plan(inputs, execute),
         LifecycleLayout::Native => return Err("cannot migrate from canonical .cairn layout".into()),
     };
+    let actual_plan_hash = migration_plan_hash(&root, &policy, &plan);
+    if execute {
+        let expected_plan_hash = mcp_required_string(input, "plan_hash")?;
+        if expected_plan_hash != actual_plan_hash {
+            return Err(format!(
+                "migration plan hash mismatch: expected {expected_plan_hash}, actual {actual_plan_hash}"
+            )
+            .into());
+        }
+    }
     if execute && !plan.blocked {
         execute_migration_plan(&root, &plan)?;
         plan.mutated = !plan.actions.is_empty();

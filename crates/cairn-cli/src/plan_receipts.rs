@@ -1,13 +1,24 @@
 use std::path::Path;
 
 use cairn_core::{
-    canonical_json_hash, layout_name, ArchivePlan, GateArtifact, GateReport, GateSnapshot,
-    GateStage, LifecycleLayout, MigrationPlan, PlanAction, PlanActionKind, Policy, SyncPlan,
+    canonical_json_hash, layout_name, migration_plan_identity, ArchivePlan, GateArtifact,
+    GateReport, GateSnapshot, GateStage, LifecycleLayout, MigrationPlan, PlanAction,
+    PlanActionKind, Policy, SyncPlan,
 };
 use serde_json::{json, Value};
 
 use crate::native::change_status_json;
 use crate::support::{path_string, portable_json_hash};
+
+pub(crate) fn migration_plan_hash(root: &Path, policy: &Policy, plan: &MigrationPlan) -> String {
+    portable_json_hash(
+        root,
+        &json!({
+            "plan": migration_plan_identity(plan),
+            "policy_hash": canonical_json_hash(&policy.raw),
+        }),
+    )
+}
 
 pub(crate) fn migration_plan_json(
     root: &Path,
@@ -15,6 +26,7 @@ pub(crate) fn migration_plan_json(
     plan: &MigrationPlan,
     mutation_manifest: Value,
 ) -> Value {
+    let plan_hash = migration_plan_hash(root, policy, plan);
     let mut value = json!({
         "command": format!("migrate_{}", layout_name(plan.source_layout)),
         "root": path_string(root),
@@ -34,6 +46,7 @@ pub(crate) fn migration_plan_json(
         "conflicts": plan.conflicts,
         "policy": policy.name,
         "policy_hash": canonical_json_hash(&policy.raw),
+        "plan_hash": plan_hash,
         "mutation_manifest": mutation_manifest,
     });
     value["source_manifest_hash"] = json!(portable_json_hash(

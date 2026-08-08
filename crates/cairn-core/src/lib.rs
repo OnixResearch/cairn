@@ -326,9 +326,10 @@ pub use verified::kani_receipt::{
 pub use verified::lifecycle::{
     archive_dir, build_cairn_migration_plan, build_change_skeleton, build_change_skeleton_for,
     build_ironspec_migration_plan, build_openspec_migration_plan, changes_dir, design_template,
-    init_artifacts, init_artifacts_for, layout_name, layout_root, proposal_template, specs_dir,
-    tasks_template, validate_change_name, ChangeSkeleton, LifecycleArtifact, LifecycleArtifactKind,
-    LifecycleLayout, MigrationAction, MigrationInput, MigrationPlan,
+    init_artifacts, init_artifacts_for, layout_name, layout_root, migration_plan_identity,
+    proposal_template, specs_dir, tasks_template, validate_change_name, ChangeSkeleton,
+    LifecycleArtifact, LifecycleArtifactKind, LifecycleLayout, MigrationAction, MigrationInput,
+    MigrationPlan,
 };
 pub use verified::lifecycle_orchestration::{
     validate_steel_action_envelope, SteelActionIssue, SteelActionValidationReport,

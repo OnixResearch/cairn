@@ -92,7 +92,7 @@ fn help_lists_commands() -> Result<(), Box<dyn Error>> {
     );
     assert!(
         stdout.contains(
-            "migrate <cairn|openspec|ironspec> [--root PATH] [--policy PATH] [--execute]"
+            "migrate <cairn|openspec|ironspec> [--root PATH] [--policy PATH] [--execute --plan-hash HASH]"
         ),
         "{stdout}"
     );

@@ -39,17 +39,18 @@ use crate::native::{
     repo_status_json, spec_detail_json, write_new_file,
 };
 use crate::plan_receipts::{
-    archive_plan_json, gate_input_json, gate_report_json, migration_plan_json, sync_plan_json,
+    archive_plan_json, gate_input_json, gate_report_json, migration_plan_hash, migration_plan_json,
+    sync_plan_json,
 };
 use crate::support::{
     collect_archived_change_ids, collect_validation_spec_sources, default_policy_path,
     detect_layout, execute_archive_plan, execute_sync_snapshots, file_content_manifest,
     find_change, find_spec_source, has_flag, load_policy_file, load_sync_merge_snapshots,
     mutation_gate_blockers, path_string, portable_json_hash, print_json,
-    read_change_dependency_graph, read_gate_snapshot, scan_repo, spec_substance_inventory_json,
-    substance_inventory_json, sync_changed_paths, sync_merge_bindings, sync_merge_blockers,
-    sync_mutation_manifest, validation_findings_json, with_portable_receipt_hash,
-    with_receipt_hash,
+    read_change_dependency_graph, read_gate_snapshot, reject_legacy_only_lifecycle_root, scan_repo,
+    spec_substance_inventory_json, substance_inventory_json, sync_changed_paths,
+    sync_merge_bindings, sync_merge_blockers, sync_mutation_manifest, validation_findings_json,
+    with_portable_receipt_hash, with_receipt_hash,
 };
 
 const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
@@ -61,6 +62,7 @@ mod read_tools;
 mod schema;
 mod transport;
 
+use common::mcp_root;
 use mutation_tools::*;
 use read_tools::*;
 use schema::*;
@@ -173,6 +175,31 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
         "mcp": {"read_only": true, "destructive": false}
     })))
 }
+fn mcp_tool_requires_native_lifecycle(name: &str) -> bool {
+    matches!(
+        name,
+        "cairn_status"
+            | "cairn_list_content"
+            | "cairn_read_spec"
+            | "cairn_change_show"
+            | "cairn_context"
+            | "cairn_workflow_status"
+            | "cairn_workflow_instructions"
+            | "cairn_doctor"
+            | "cairn_validate"
+            | "cairn_gate"
+            | "cairn_gate_context"
+            | "cairn_change_graph"
+            | "cairn_drain_plan"
+            | "cairn_sync_plan"
+            | "cairn_archive_plan"
+            | "cairn_sync_execute"
+            | "cairn_archive_execute"
+            | "cairn_init"
+            | "cairn_change_create"
+    )
+}
+
 pub(crate) fn mcp_call_tool(
     name: &str,
     input: &Value,
@@ -185,6 +212,9 @@ pub(crate) fn mcp_call_tool(
         mutation_denied(name)
     } else {
         validate_mcp_tool_input(name, input)?;
+        if mcp_tool_requires_native_lifecycle(name) {
+            reject_legacy_only_lifecycle_root(&mcp_root(input))?;
+        }
         match name {
             "cairn_status" => mcp_status(input)?,
             "cairn_list_content" => mcp_list_content(input)?,

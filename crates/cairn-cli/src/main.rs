@@ -1,4 +1,4 @@
-use std::{env, error::Error};
+use std::{env, error::Error, path::Path};
 
 mod adr;
 mod agent_guidance_shell;
@@ -88,7 +88,7 @@ use rfd::run_rfd;
 use runtime_evidence::run_runtime_evidence;
 use semantic_review::run_review;
 use state_machine_receipt::run_state_machine_receipt;
-use support::{print_usage, usage_text};
+use support::{print_usage, read_option, reject_legacy_only_lifecycle_root, usage_text};
 use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
 use view::run_view;
@@ -126,12 +126,44 @@ fn finish_machine(result: Result<u8, MachineRunError>) {
     }
 }
 
+// r[impl cairn.lifecycle_directory.legacy_diagnostic.normal_command]
+fn command_requires_native_lifecycle(command: &str) -> bool {
+    matches!(
+        command,
+        "init"
+            | "change"
+            | "compact"
+            | "template"
+            | "scaffold"
+            | "discover-specs"
+            | "spec"
+            | "status"
+            | "context"
+            | "doctor"
+            | "validate"
+            | "view"
+            | "workflow"
+            | "release-readiness"
+            | "lifecycle"
+            | "traceability"
+            | "tracey"
+            | "gate"
+            | "gate-context"
+            | "sync"
+            | "archive"
+    )
+}
+
 fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(command) = all_args.first() else {
         print_usage();
         return Ok(());
     };
     let prepared = prepare_invocation(command, all_args[1..].to_vec())?;
+    if command_requires_native_lifecycle(command) {
+        let selected_root = read_option(prepared.args.clone(), "--root", ".");
+        reject_legacy_only_lifecycle_root(Path::new(&selected_root))?;
+    }
     let root_local = prepared.root_local;
     let mut args = prepared.args.into_iter();
 

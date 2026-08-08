@@ -77,7 +77,9 @@ pub(crate) fn substance_inventory_json(inventories: &[ArtifactSubstanceInventory
 
 pub(crate) use args::{has_flag, read_option, read_repeated_path_options, read_string_option};
 pub(crate) use capability::{CapabilityRoot, CapabilityRootKind};
-pub(crate) use layout::{default_policy_path, detect_layout, load_policy_file};
+pub(crate) use layout::{
+    default_policy_path, detect_layout, load_policy_file, reject_legacy_only_lifecycle_root,
+};
 pub(crate) use mutation::{
     archive_mutation_manifest, execute_archive_plan, execute_sync_snapshots,
     load_sync_merge_snapshots, sync_changed_paths, sync_merge_bindings, sync_merge_blockers,

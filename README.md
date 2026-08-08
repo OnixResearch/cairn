@@ -219,7 +219,7 @@ Stable public lifecycle
 receipt fields include the command result, actions, policy identity, and receipt identity. The sync receipts also include `delta_specs`.
 
 Stable public migration receipt
-fields include source and destination facts. The contract keeps `source_hash`, and `destination_hash` fields.
+fields include `plan_hash`, source facts, and destination facts. The contract keeps `source_hash` and `destination_hash` fields.
 
 Stable public determinism replay fields include case results, selected cases, selected groups, and receipt identities. Mismatch entries expose stable `case`, `comparison`, `field_path`, `class` fields.
 
@@ -621,12 +621,16 @@ Read [`docs/cairn-mcp.md`](docs/cairn-mcp.md).
 
 Migration uses dry-run mode by default. It never overwrites existing native files.
 
+Review the preview and copy its `plan_hash`. Execution requires that exact hash. Cairn rejects source, destination, action, or policy drift before mutation.
+
 ```bash
 cairn migrate cairn --root PATH
-cairn migrate cairn --root PATH --execute
+cairn migrate cairn --root PATH --execute --plan-hash HASH
 cairn migrate openspec --root PATH
-cairn migrate openspec --root PATH --execute
+cairn migrate openspec --root PATH --execute --plan-hash HASH
 ```
+
+Normal lifecycle commands reject a legacy-only `cairn/` root. Run the explicit migration preview before normal lifecycle work.
 
 ## Agent workflow source
 

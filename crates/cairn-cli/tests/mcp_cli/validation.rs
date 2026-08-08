@@ -66,6 +66,24 @@ fn mcp_rejects_invalid_arguments_before_dispatch() -> Result<(), Box<dyn Error>>
         stderr.contains("invalid arguments for cairn_migrate_plan: argument source must be one of cairn, openspec, ironspec"),
         "{stderr}"
     );
+
+    let missing_plan_hash = cairn()
+        .args([
+            "mcp",
+            "--allow-mutations",
+            "--call",
+            "cairn_migrate_execute",
+            r#"{"root":"fixtures/basic","source":"openspec"}"#,
+        ])
+        .output()?;
+    assert!(!missing_plan_hash.status.success());
+    let stderr = String::from_utf8_lossy(&missing_plan_hash.stderr);
+    assert!(
+        stderr.contains(
+            "invalid arguments for cairn_migrate_execute: missing required argument plan_hash"
+        ),
+        "{stderr}"
+    );
     Ok(())
 }
 

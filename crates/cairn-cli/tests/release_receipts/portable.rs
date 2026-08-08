@@ -53,6 +53,7 @@ fn portable_receipt_hashes_survive_distinct_roots() -> Result<(), Box<dyn Error>
             "source_manifest_hash",
             "destination_manifest_hash",
             "manifest_hash",
+            "plan_hash",
             "receipt_hash",
         ],
     )

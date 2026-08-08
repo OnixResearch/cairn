@@ -388,7 +388,7 @@ fn symlink_destination_is_blocked_without_outside_writes() -> Result<(), Box<dyn
 #[test]
 fn maintained_hermes_source_remains_byte_compatible() {
     const EXPECTED_HERMES_BLAKE3: &str =
-        "7dc27c4217077254659a0bc7ff5d2f48efafc7cfd430f828de5385c566cdea57";
+        "70ea834d431ac63c269a9de4ad400299701c4220902fc007299b4c9c324631d8";
     let bytes = include_bytes!("../../../docs/hermes/cairn-workflow-skill.md");
     assert_eq!(
         blake3::hash(bytes).to_hex().as_str(),

@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "710cc187abfc0e86424e3c83bb2b41ef3da5fd2bbbeaa8d3b432b8888de2db74",
+    "input_hash": "ad8c76912fb619a4684a92541db836108c8862f8bd5d565c4aeba0aa59265aa3",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "0c67e49a91323e0f44765c5f5f1911dd00305203faf7022a63c17239611aa711",
-    "receipt_hash": "3305ed678e9a247acca6411849fc88128fc392a8fc70575f243127154c62fe03",
+    "policy_hash": "2c0b44345b9d2e2b3eff5fa7db7a14b9681c6bfcf7a4bb651f13bcadc1f91757",
+    "receipt_hash": "89de1e126b225e38bb63b8284de0de14534e5297194f3f993e02660d23f852a0",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -24,7 +24,7 @@
     "fixtures/missing-artifacts/.cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "a25b940be16384faa27b412818c4265974a636f7ba97ee6776c5dc094dac3fe8",
+  "input_hash": "9aeaf2cacf249f7cc7c7dbea13757f4d46321ba8acd5c1444a76ce6ab1a572f3",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -58,12 +58,12 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "56e53619db8a74c66de4da1c30b421d8ce1e4287ebb79be8b01665fcb843e7cb",
+  "plan_hash": "b57c5028085c192cfc6e881250ad0ea4cfe9d41e76236d3d25e9b89892dfb72a",
   "policy": "cairn-default",
-  "policy_hash": "0c67e49a91323e0f44765c5f5f1911dd00305203faf7022a63c17239611aa711",
+  "policy_hash": "2c0b44345b9d2e2b3eff5fa7db7a14b9681c6bfcf7a4bb651f13bcadc1f91757",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "f2dfa17bd9c27c9d0bda2d79213660ae21c494b76abcca767865f75868d259f6"
+  "receipt_hash": "600b154e05cb05b984c8f5221e39fe1e6b24cfb618bd2f8602a27712f66c05a4"
 }

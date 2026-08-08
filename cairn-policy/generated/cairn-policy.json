@@ -466,6 +466,7 @@
           "source_manifest_hash",
           "destination_manifest_hash",
           "manifest_hash",
+          "plan_hash",
           "policy_hash",
           "receipt_hash"
         ],
@@ -3930,6 +3931,7 @@
       "hash_fields": [
         "destination_manifest_hash",
         "manifest_hash",
+        "plan_hash",
         "policy_hash",
         "receipt_hash",
         "source_manifest_hash"
@@ -3948,6 +3950,7 @@
         "manifest_hash",
         "mutated",
         "mutation_manifest",
+        "plan_hash",
         "policy",
         "policy_hash",
         "receipt_hash",

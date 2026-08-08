@@ -305,7 +305,7 @@ r[cairn.supersede.receipt_schema.lifecycle]
 r[cairn.supersede.receipt_schema.migration]
 - GIVEN `cairn migrate openspec` emits a JSON migration receipt
 - WHEN the maintained CLI regression suite runs
-- THEN the suite MUST fail if the migration receipt omits or renames required top-level fields for command, root, source layout, destination layout, actions, conflicts, dry-run and mutation state, policy, policy hash, source manifest hash, destination manifest hash, manifest hash, or receipt hash
+- THEN the suite MUST fail if the migration receipt omits or renames required top-level fields for command, root, source layout, destination layout, actions, conflicts, dry-run and mutation state, policy, policy hash, plan hash, source manifest hash, destination manifest hash, manifest hash, or receipt hash
 - AND the suite MUST fail if migration action entries omit or rename source, destination, source hash, or destination hash fields
 
 #### Scenario: Receipt schema is documented
@@ -349,19 +349,20 @@ r[cairn.supersede.migrate_openspec.dry_run]
 - GIVEN a repository with legacy `openspec/` lifecycle content
 - WHEN the operator runs `cairn migrate openspec --root <path>`
 - THEN the CLI emits a deterministic JSON migration plan from legacy `openspec/` paths into canonical `.cairn/` paths
+- AND the receipt includes a stable BLAKE3 `plan_hash`
 - AND no filesystem content is mutated
 
 #### Scenario: Execute legacy OpenSpec migration copy
 r[cairn.supersede.migrate_openspec.execute]
-- GIVEN a repository with legacy `openspec/` lifecycle content and no conflicting canonical destination files
-- WHEN the operator runs `cairn migrate openspec --root <path> --execute`
+- GIVEN a reviewed legacy `openspec/` migration preview without conflicting canonical destination files
+- WHEN the operator runs `cairn migrate openspec --root <path> --execute --plan-hash <hash>`
 - THEN the system copies planned files into matching canonical `.cairn/` paths
 - AND the JSON receipt reports `mutated=true`
 
 #### Scenario: Block conflicting legacy OpenSpec migration
 r[cairn.supersede.migrate_openspec.conflict]
 - GIVEN a repository with legacy `openspec/` lifecycle content and an existing canonical destination file
-- WHEN the operator runs `cairn migrate openspec --root <path> --execute`
+- WHEN the operator previews or executes migration
 - THEN the JSON receipt reports the migration as blocked
 - AND the existing canonical destination file is not overwritten
 
@@ -376,12 +377,13 @@ r[cairn.supersede.migrate_openspec.ironspec_dry_run]
 - GIVEN a repository with legacy `ironspec/` lifecycle content
 - WHEN the operator runs `cairn migrate ironspec --root <path>`
 - THEN the CLI emits a deterministic JSON migration plan from legacy `ironspec/` paths into canonical `.cairn/` paths
+- AND the receipt includes a stable BLAKE3 `plan_hash`
 - AND no filesystem content is mutated
 
 #### Scenario: Execute legacy Ironspec migration copy
 r[cairn.supersede.migrate_openspec.ironspec_execute]
-- GIVEN a repository with legacy `ironspec/` lifecycle content and no conflicting canonical destination files
-- WHEN the operator runs `cairn migrate ironspec --root <path> --execute`
+- GIVEN a reviewed legacy `ironspec/` migration preview without conflicting canonical destination files
+- WHEN the operator runs `cairn migrate ironspec --root <path> --execute --plan-hash <hash>`
 - THEN the system copies planned files into matching canonical `.cairn/` paths
 - AND the JSON receipt reports `mutated=true`
 
