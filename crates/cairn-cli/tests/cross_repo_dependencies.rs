@@ -54,7 +54,7 @@ fn fixture(name: &str) -> Result<(PathBuf, PathBuf), Box<dyn Error>> {
     )?)?;
     let row = &matrix["positive"][0];
     fs::write(
-        fixture.join("cairn/changes/ready/metadata.json"),
+        fixture.join(".cairn/changes/ready/metadata.json"),
         serde_json::to_vec_pretty(&json!({
             "cross_repo_dependencies": [row["dependency"].clone()]
         }))?,
@@ -155,7 +155,7 @@ fn explicit_matching_evidence_satisfies_cli_and_mcp_validation() -> Result<(), B
 // r[verify cairn.cross_repo_change_dependencies.validation.mismatch]
 fn absent_or_unsafe_evidence_blocks_without_mutation() -> Result<(), Box<dyn Error>> {
     let (fixture, evidence) = fixture("negative")?;
-    let accepted = fixture.join("cairn/specs/demo/spec.md");
+    let accepted = fixture.join(".cairn/specs/demo/spec.md");
     let before = fs::read(&accepted)?;
     let root_text = fixture.to_str().ok_or("fixture path")?;
 

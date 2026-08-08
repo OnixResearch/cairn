@@ -155,7 +155,7 @@ fn content_bound_registry_exports_deterministically_and_verifies_current_root(
     );
     assert_eq!(
         first_registry["specifications"][0]["path"],
-        "cairn/specs/example/spec.md"
+        ".cairn/specs/example/spec.md"
     );
     assert_eq!(
         first_registry["receipt"]["registry_blake3"],
@@ -216,7 +216,7 @@ fn content_bound_registry_fails_closed_for_duplicate_malformed_stale_and_cross_r
     ))?;
     assert!(issue_codes(&cross_repo).contains(&"content_requirement_registry.repository_mismatch"));
 
-    let spec_path = current_root.join("cairn/specs/example/spec.md");
+    let spec_path = current_root.join(".cairn/specs/example/spec.md");
     let source = fs::read_to_string(&spec_path)?;
     let changed = source.replace(
         "preserve the current requirement body",

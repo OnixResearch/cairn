@@ -1,7 +1,7 @@
 specs (
   {
     name cairn
-    include (cairn/specs/**/*.md)
+    include (.cairn/specs/**/*.md)
     impls (
       {
         name rust

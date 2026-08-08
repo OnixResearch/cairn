@@ -2,9 +2,9 @@
 
 <img width="400" height="400" alt="Cairn project logo" src="https://github.com/user-attachments/assets/5f3ecfb2-0abb-42c8-b03c-8cd35afa7b77" />
 
-Cairn is a Rust lifecycle engine for repository work. It uses a native `cairn/` layout and a Nickel-authored policy layer.
+Cairn is a Rust lifecycle engine for repository work. It uses a native `.cairn/` layout and a Nickel-authored policy layer.
 
-Legacy `openspec/` trees are migration inputs only. Normal commands do not use them as a fallback.
+Old `cairn/`, `ironspec/`, and `openspec/` trees are migration inputs only. Normal commands do not use them as a fallback.
 
 Cairn separates a pure core from an imperative shell:
 
@@ -37,9 +37,9 @@ tools/               Export and check tools
 A repository that uses Cairn has this lifecycle layout:
 
 ```text
-cairn/specs/         Accepted specifications
-cairn/changes/       Active changes
-cairn/archive/       Archived changes
+.cairn/specs/         Accepted specifications
+.cairn/changes/       Active changes
+.cairn/archive/       Archived changes
 ```
 
 `cairn init` and `cairn change create` create native artifacts. Only `migrate openspec` reads legacy OpenSpec content.
@@ -622,6 +622,8 @@ Read [`docs/cairn-mcp.md`](docs/cairn-mcp.md).
 Migration uses dry-run mode by default. It never overwrites existing native files.
 
 ```bash
+cairn migrate cairn --root PATH
+cairn migrate cairn --root PATH --execute
 cairn migrate openspec --root PATH
 cairn migrate openspec --root PATH --execute
 ```

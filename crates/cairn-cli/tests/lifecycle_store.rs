@@ -136,9 +136,9 @@ fn setup_is_preview_first_and_creates_only_native_artifacts() -> Result<(), Box<
     assert_eq!(executed["mutated"], true);
     assert!(store.join(STORE_SOURCE_PATH).is_file());
     assert!(store.join(STORE_PROJECTION_PATH).is_file());
-    assert!(store.join("cairn/specs").is_dir());
-    assert!(store.join("cairn/changes").is_dir());
-    assert!(store.join("cairn/archive").is_dir());
+    assert!(store.join(".cairn/specs").is_dir());
+    assert!(store.join(".cairn/changes").is_dir());
+    assert!(store.join(".cairn/archive").is_dir());
     assert!(!store.join(".git").exists());
     assert!(!store.join(".jj").exists());
 

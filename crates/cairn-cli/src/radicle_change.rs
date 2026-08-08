@@ -327,7 +327,7 @@ fn read_active_change_snapshot(
 ) -> Result<ChangeCobImportSnapshot, Box<dyn Error>> {
     validate_change_name(change).map_err(|reason| format!("invalid change name: {reason}"))?;
     let capability = CapabilityRoot::open(CapabilityRootKind::Repository, root)?;
-    let change_dir = PathBuf::from("cairn/changes").join(change);
+    let change_dir = PathBuf::from(".cairn/changes").join(change);
     let change_metadata = capability.symlink_metadata(&change_dir).map_err(|error| {
         format!(
             "active native change {} is unavailable: {error}",

@@ -24,7 +24,7 @@ Select a named policy schema when the policy contains more than one schema:
 cairn workflow status CHANGE --root PATH --schema spec-driven
 ```
 
-The command reads bounded artifact files under `cairn/changes/CHANGE/`. It does not write repository or local state.
+The command reads bounded artifact files under `.cairn/changes/CHANGE/`. It does not write repository or local state.
 
 The receipt includes these identity fields:
 

@@ -345,7 +345,7 @@ mod tests {
             label: "demo".to_string(),
             reference: Some("demo".to_string()),
             state: Some("current".to_string()),
-            path: Some("cairn/changes/demo".to_string()),
+            path: Some(".cairn/changes/demo".to_string()),
         };
         LifecycleViewModel {
             schema: "test".to_string(),

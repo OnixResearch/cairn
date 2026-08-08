@@ -2,7 +2,7 @@
   "changes": [
     {
       "delta_specs": [
-        "fixtures/basic/cairn/changes/demo/specs/demo/spec.md"
+        "fixtures/basic/.cairn/changes/demo/specs/demo/spec.md"
       ],
       "has_design": true,
       "has_proposal": true,
@@ -13,7 +13,7 @@
         "target_date": null
       },
       "name": "demo",
-      "path": "fixtures/basic/cairn/changes/demo",
+      "path": "fixtures/basic/.cairn/changes/demo",
       "task_counts": {
         "done": 0,
         "in_progress": 0,

@@ -44,7 +44,7 @@ fn probe_run_emits_receipt_and_gate_verifies_saved_receipt() -> Result<(), Box<d
     // r[verify cairn.probe_execution_boundary.authoritative_tests.positive]
     // r[verify cairn.probe_execution_boundary.gates_verify_receipts.coverage_class]
     let fixture = temp_fixture("probe-run-gate-valid", "fixtures/basic")?;
-    let fixture_file = "cairn/specs/demo/spec.md";
+    let fixture_file = ".cairn/specs/demo/spec.md";
     let fixture_hash = cairn_core::blake3_hex(&fs::read(fixture.join(fixture_file))?);
     let mut probe = valid_probe_declaration(None);
     probe["fixtures"] = json!([fixture_file]);
@@ -78,7 +78,7 @@ fn probe_run_emits_receipt_and_gate_verifies_saved_receipt() -> Result<(), Box<d
     assert_hash_field(&run, "lifecycle_bundle_hash")?;
     assert_hash_field(&run, "receipt_hash")?;
 
-    let probes_dir = fixture.join("cairn/changes/demo/probes");
+    let probes_dir = fixture.join(".cairn/changes/demo/probes");
     fs::create_dir_all(&probes_dir)?;
     let mut gate_probe = probe;
     gate_probe["receipt_path"] = Value::String(receipt_path.to_string());
@@ -106,7 +106,7 @@ fn default_gate_reports_missing_probe_receipt_without_running_probe() -> Result<
     // r[verify cairn.probe_execution_boundary.fail_closed]
     let fixture = temp_fixture("probe-gate-missing-receipt", "fixtures/basic")?;
     let receipt_path = "target/probes/missing.json";
-    let probes_dir = fixture.join("cairn/changes/demo/probes");
+    let probes_dir = fixture.join(".cairn/changes/demo/probes");
     fs::create_dir_all(&probes_dir)?;
     fs::write(
         probes_dir.join("probes.json"),
@@ -160,7 +160,7 @@ fn gate_messages_after_receipt_mutation(
     mutate_receipt(&mut receipt);
     fs::write(&full_receipt_path, serde_json::to_string_pretty(&receipt)?)?;
 
-    let probes_dir = fixture.join("cairn/changes/demo/probes");
+    let probes_dir = fixture.join(".cairn/changes/demo/probes");
     fs::create_dir_all(&probes_dir)?;
     fs::write(
         probes_dir.join("probes.json"),

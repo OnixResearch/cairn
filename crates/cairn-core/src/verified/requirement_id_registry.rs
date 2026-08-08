@@ -682,7 +682,7 @@ mod tests {
                 requirement_id: "cairn.requirement_id_registry.contract".to_string(),
                 namespace: "cairn.requirement_id_registry".to_string(),
                 owner_repo: "cairn".to_string(),
-                accepted_spec: "cairn/specs/requirement-id-registry/spec.md".to_string(),
+                accepted_spec: ".cairn/specs/requirement-id-registry/spec.md".to_string(),
                 status: STATUS_ACTIVE.to_string(),
                 aliases: vec![RequirementIdAlias {
                     id: "cairn.req_registry.contract".to_string(),
@@ -810,7 +810,7 @@ mod tests {
                     "requirement_id": "cairn.requirement_id_registry.contract",
                     "namespace": "cairn.requirement_id_registry",
                     "owner_repo": "cairn",
-                    "accepted_spec": "cairn/specs/requirement-id-registry/spec.md",
+                    "accepted_spec": ".cairn/specs/requirement-id-registry/spec.md",
                     "status": "active",
                     "aliases": [{"id": "cairn.req_registry.contract", "status": "active", "reason": "compatibility"}],
                     "allowed_consumers": ["cairn", "octet"]
@@ -835,7 +835,7 @@ mod tests {
                     "requirement_id": "cairn.requirement_id_registry.contract",
                     "namespace": "cairn.requirement_id_registry",
                     "owner_repo": "cairn",
-                    "accepted_spec": "cairn/specs/requirement-id-registry/spec.md",
+                    "accepted_spec": ".cairn/specs/requirement-id-registry/spec.md",
                     "status": "active",
                     "aliases": [],
                     "allowed_consumers": ["cairn"]

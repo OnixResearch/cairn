@@ -324,10 +324,10 @@ pub use verified::kani_receipt::{
     KANI_NON_CLAIM_VERIFIER_SOUNDNESS, KANI_NON_CLAIM_WHOLE_PROGRAM, KANI_RECEIPT_SCHEMA_V1,
 };
 pub use verified::lifecycle::{
-    archive_dir, build_change_skeleton, build_change_skeleton_for, build_ironspec_migration_plan,
-    build_openspec_migration_plan, changes_dir, design_template, init_artifacts,
-    init_artifacts_for, layout_name, layout_root, proposal_template, specs_dir, tasks_template,
-    validate_change_name, ChangeSkeleton, LifecycleArtifact, LifecycleArtifactKind,
+    archive_dir, build_cairn_migration_plan, build_change_skeleton, build_change_skeleton_for,
+    build_ironspec_migration_plan, build_openspec_migration_plan, changes_dir, design_template,
+    init_artifacts, init_artifacts_for, layout_name, layout_root, proposal_template, specs_dir,
+    tasks_template, validate_change_name, ChangeSkeleton, LifecycleArtifact, LifecycleArtifactKind,
     LifecycleLayout, MigrationAction, MigrationInput, MigrationPlan,
 };
 pub use verified::lifecycle_orchestration::{

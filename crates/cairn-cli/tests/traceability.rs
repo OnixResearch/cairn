@@ -91,7 +91,7 @@ fn assert_hash_field(value: &Value, field: &str) -> Result<(), Box<dyn Error>> {
 
 fn write_complete_cairn_fixture(root: &Path) -> Result<(), Box<dyn Error>> {
     write_text(
-        &root.join("cairn/specs/demo/spec.md"),
+        &root.join(".cairn/specs/demo/spec.md"),
         "r[cairn.demo.alpha] The system MUST keep alpha covered.\n",
     )?;
     write_text(
@@ -134,7 +134,7 @@ fn traceability_coverage_reports_missing_requirement_refs() -> Result<(), Box<dy
     // r[verify cairn.supersede.traceability_ownership.validation.fixtures]
     let root = temp_project("missing")?;
     write_text(
-        &root.join("cairn/specs/demo/spec.md"),
+        &root.join(".cairn/specs/demo/spec.md"),
         "r[cairn.demo.alpha] The system MUST keep alpha covered.\n",
     )?;
 
@@ -157,7 +157,7 @@ fn traceability_coverage_reports_dangling_refs() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.traceability_ownership.validation.fixtures]
     let root = temp_project("dangling")?;
     write_text(
-        &root.join("cairn/specs/demo/spec.md"),
+        &root.join(".cairn/specs/demo/spec.md"),
         "r[cairn.demo.alpha] The system MUST keep alpha covered.\n",
     )?;
     write_text(

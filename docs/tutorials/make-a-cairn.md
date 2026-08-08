@@ -6,7 +6,7 @@ End state:
 
 - `cairn/` lifecycle directories exist.
 - One quickstart document from an onboarding template exists.
-- One active change package exists under `cairn/changes/`.
+- One active change package exists under `.cairn/changes/`.
 - `validate` plus proposal/design/tasks gates pass.
 
 ## Prerequisites
@@ -35,9 +35,9 @@ nix run path:$CAIRN_SOURCE#cairn -- init --root "$REPO"
 Creates this native layout:
 
 ```text
-cairn/specs/
-cairn/changes/
-cairn/archive/
+.cairn/specs/
+.cairn/changes/
+.cairn/archive/
 ```
 
 Legacy `openspec/` content is not read as an implicit fallback. Use `migrate openspec` only when you explicitly want to import legacy lifecycle material.
@@ -94,10 +94,10 @@ nix run path:$CAIRN_SOURCE#cairn -- scaffold change add-friendly-start \
 The generated package contains:
 
 ```text
-cairn/changes/add-friendly-start/proposal.md
-cairn/changes/add-friendly-start/design.md
-cairn/changes/add-friendly-start/tasks.md
-cairn/changes/add-friendly-start/specs/developer-experience/spec.md
+.cairn/changes/add-friendly-start/proposal.md
+.cairn/changes/add-friendly-start/design.md
+.cairn/changes/add-friendly-start/tasks.md
+.cairn/changes/add-friendly-start/specs/developer-experience/spec.md
 ```
 
 ## Validate and gate the change

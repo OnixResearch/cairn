@@ -1,9 +1,9 @@
 {
   "actions": [
     {
-      "description": "merge delta spec into main specs: fixtures/basic/cairn/changes/demo/specs/demo/spec.md",
+      "description": "merge delta spec into main specs: fixtures/basic/.cairn/changes/demo/specs/demo/spec.md",
       "kind": "sync_delta_spec",
-      "path": "fixtures/basic/cairn/changes/demo/specs/demo/spec.md"
+      "path": "fixtures/basic/.cairn/changes/demo/specs/demo/spec.md"
     }
   ],
   "blocked": false,
@@ -11,14 +11,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "6f6519b2eb2790fa7eb746154b18883b54940425cfe197a84c946da243b156f1",
+    "input_hash": "710cc187abfc0e86424e3c83bb2b41ef3da5fd2bbbeaa8d3b432b8888de2db74",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
-    "receipt_hash": "f7efe12db5a6c3794e85a3bc27272bc305488ff5ce1b34a650816e54f9070631",
+    "policy_hash": "0c67e49a91323e0f44765c5f5f1911dd00305203faf7022a63c17239611aa711",
+    "receipt_hash": "3305ed678e9a247acca6411849fc88128fc392a8fc70575f243127154c62fe03",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -27,10 +27,10 @@
   },
   "cross_repo_evidence_issues": [],
   "delta_specs": [
-    "fixtures/basic/cairn/changes/demo/specs/demo/spec.md"
+    "fixtures/basic/.cairn/changes/demo/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "1d9379d6929b2d6c1979e6b7b0cab346d5abe260d4954e763150443b1ee9ad1f",
+  "input_hash": "cf3ce8e6949206b2c773653c0cd41b772564becd1bbe4ea2b296a383699dd76c",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -40,7 +40,7 @@
         "blocked": false,
         "changed": true,
         "delta_hash": "0597e17429f8fff8a325226eae381542e2cc357a702e1e1ece9c768a9ef1a9db",
-        "destination": "cairn/specs/demo/spec.md",
+        "destination": ".cairn/specs/demo/spec.md",
         "diagnostics": [],
         "expected_after_hash": "fdb7614934331d4cb17973fc0fee6b121d2e7d2695bf372ddc8bed0f933a7b3f",
         "operations": [
@@ -58,15 +58,15 @@
             "state": "applied"
           }
         ],
-        "source": "cairn/changes/demo/specs/demo/spec.md"
+        "source": ".cairn/changes/demo/specs/demo/spec.md"
       }
     ]
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "90d9ff125ef20fb5eb4a53781ec2f6bbe3861a7542eccedc00cba6d28ac608c5",
+  "plan_hash": "cc3fc3000857adcd7e12c2bb38a0ba657ea28665914eb6e18b980e32033fc0e6",
   "policy": "cairn-default",
-  "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
+  "policy_hash": "0c67e49a91323e0f44765c5f5f1911dd00305203faf7022a63c17239611aa711",
   "reasons": [],
-  "receipt_hash": "f9c6256866cbd8292bb5f480ae132abb8b633097ce7813e57ec05bdeefc93930"
+  "receipt_hash": "7e4982b0327d1bc5cbcf619219561b1648cc77b4826cf34f610820b58fc9b588"
 }

@@ -1257,7 +1257,7 @@ fn validate_specification_path(
         && components
             .iter()
             .all(|component| !component.is_empty() && *component != "." && *component != "..")
-        && path.starts_with("cairn/specs/")
+        && path.starts_with(".cairn/specs/")
         && path.ends_with("/spec.md");
     if !valid {
         push_issue(
@@ -1373,7 +1373,7 @@ mod tests {
     const REPOSITORY_ID: &str = "OnixResearch/example";
     const REVISION_VALUE: &str = "reviewed-revision-1";
     const POLICY_BYTES: &[u8] = br#"{"name":"fixture-policy"}"#;
-    const SPEC_PATH: &str = "cairn/specs/example/spec.md";
+    const SPEC_PATH: &str = ".cairn/specs/example/spec.md";
     const REQUIREMENT_ID: &str = "example.registry.current";
     const SECOND_REQUIREMENT_ID: &str = "example.registry.second";
 
@@ -1537,7 +1537,7 @@ mod tests {
 
         let mut changed_path_input =
             specification(REQUIREMENT_ID, "The registry MUST bind this body.");
-        changed_path_input.path = "cairn/specs/renamed/spec.md".to_string();
+        changed_path_input.path = ".cairn/specs/renamed/spec.md".to_string();
         let changed_path =
             evaluated_registry(changed_path_input, POLICY_BYTES, REPOSITORY_ID, revision());
         assert_eq!(
@@ -1560,9 +1560,9 @@ mod tests {
     fn duplicate_requirement_ids_fail_without_a_registry() {
         // r[verify cairn.requirement_registry.content_bound_export]
         let mut first = specification(REQUIREMENT_ID, "The registry MUST bind this body.");
-        first.path = "cairn/specs/first/spec.md".to_string();
+        first.path = ".cairn/specs/first/spec.md".to_string();
         let mut second = specification(REQUIREMENT_ID, "The registry MUST bind another body.");
-        second.path = "cairn/specs/second/spec.md".to_string();
+        second.path = ".cairn/specs/second/spec.md".to_string();
         let evaluation = evaluate_content_bound_requirement_registry(
             vec![second, first],
             POLICY_BYTES,

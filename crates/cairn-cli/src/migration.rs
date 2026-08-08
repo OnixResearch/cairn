@@ -5,8 +5,9 @@ use std::{
 };
 
 use cairn_core::{
-    blake3_hex, build_ironspec_migration_plan, build_openspec_migration_plan, init_artifacts_for,
-    layout_root, LifecycleArtifactKind, LifecycleLayout, MigrationInput, MigrationPlan,
+    blake3_hex, build_cairn_migration_plan, build_ironspec_migration_plan,
+    build_openspec_migration_plan, init_artifacts_for, layout_root, LifecycleArtifactKind,
+    LifecycleLayout, MigrationInput, MigrationPlan,
 };
 use serde_json::Value;
 
@@ -19,7 +20,7 @@ use crate::support::{
 pub(crate) fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut iter = args.into_iter();
     let Some(source) = iter.next() else {
-        return Err("migrate requires a source: openspec or ironspec".into());
+        return Err("migrate requires a source: cairn, openspec, or ironspec".into());
     };
     let rest = iter.collect::<Vec<_>>();
     let root = read_option(rest.clone(), "--root", ".");
@@ -29,9 +30,10 @@ pub(crate) fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let source_layout = migration_source_layout(&source)?;
     let inputs = collect_layout_migration_inputs(&root, source_layout)?;
     let mut plan = match source_layout {
+        LifecycleLayout::LegacyCairn => build_cairn_migration_plan(inputs, is_execute),
         LifecycleLayout::LegacyOpenSpec => build_openspec_migration_plan(inputs, is_execute),
         LifecycleLayout::LegacyIronspec => build_ironspec_migration_plan(inputs, is_execute),
-        LifecycleLayout::Native => return Err("cannot migrate from canonical cairn layout".into()),
+        LifecycleLayout::Native => return Err("cannot migrate from canonical .cairn layout".into()),
     };
     let mutation_paths = migration_mutation_paths(&plan);
     let before_manifest = file_content_manifest(&root, &mutation_paths);
@@ -91,6 +93,7 @@ fn native_migration_destination(source_layout: LifecycleLayout, relative: &Path)
 
 pub(crate) fn migration_source_layout(source: &str) -> Result<LifecycleLayout, Box<dyn Error>> {
     match source {
+        "cairn" => Ok(LifecycleLayout::LegacyCairn),
         "openspec" => Ok(LifecycleLayout::LegacyOpenSpec),
         "ironspec" => Ok(LifecycleLayout::LegacyIronspec),
         _ => Err(format!("unsupported migration source: {source}").into()),

@@ -19,6 +19,7 @@ pub struct ChangeSkeleton {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LifecycleLayout {
     Native,
+    LegacyCairn,
     LegacyIronspec,
     LegacyOpenSpec,
 }
@@ -95,6 +96,7 @@ pub fn layout_name(layout: LifecycleLayout) -> &'static str {
     // r[impl cairn.supersede.native_layout.prefer] r[impl cairn.supersede.native_layout.native_only]
     match layout {
         LifecycleLayout::Native => "cairn",
+        LifecycleLayout::LegacyCairn => "legacy-cairn",
         LifecycleLayout::LegacyIronspec => "ironspec",
         LifecycleLayout::LegacyOpenSpec => "openspec",
     }
@@ -102,7 +104,8 @@ pub fn layout_name(layout: LifecycleLayout) -> &'static str {
 
 pub fn layout_root(layout: LifecycleLayout) -> &'static str {
     match layout {
-        LifecycleLayout::Native => "cairn",
+        LifecycleLayout::Native => ".cairn",
+        LifecycleLayout::LegacyCairn => "cairn",
         LifecycleLayout::LegacyIronspec => "ironspec",
         LifecycleLayout::LegacyOpenSpec => "openspec",
     }
@@ -118,10 +121,16 @@ pub fn changes_dir(layout: LifecycleLayout) -> String {
 
 pub fn archive_dir(layout: LifecycleLayout) -> &'static str {
     match layout {
-        LifecycleLayout::Native => "cairn/archive",
+        LifecycleLayout::Native => ".cairn/archive",
+        LifecycleLayout::LegacyCairn => "cairn/archive",
         LifecycleLayout::LegacyIronspec => "ironspec/archive",
         LifecycleLayout::LegacyOpenSpec => "openspec/changes/archive",
     }
+}
+
+pub fn build_cairn_migration_plan(inputs: Vec<MigrationInput>, execute: bool) -> MigrationPlan {
+    // r[impl cairn.lifecycle_directory.legacy_migration]
+    build_migration_plan_from(LifecycleLayout::LegacyCairn, inputs, execute)
 }
 
 pub fn build_openspec_migration_plan(inputs: Vec<MigrationInput>, execute: bool) -> MigrationPlan {
@@ -251,7 +260,7 @@ mod tests {
             .collect::<Vec<_>>();
         assert_eq!(
             paths,
-            vec!["cairn", "cairn/specs", "cairn/changes", "cairn/archive"]
+            vec![".cairn", ".cairn/specs", ".cairn/changes", ".cairn/archive"]
         );
     }
 
@@ -262,8 +271,38 @@ mod tests {
         assert_eq!(skeleton.artifacts.len(), 5);
         assert_eq!(
             skeleton.artifacts[1].path,
-            "cairn/changes/replace-openspec/proposal.md"
+            ".cairn/changes/replace-openspec/proposal.md"
         );
+    }
+
+    #[test]
+    fn native_layout_uses_hidden_root_and_stable_receipt_name() {
+        // r[verify cairn.lifecycle_directory.hidden_default]
+        // r[verify cairn.lifecycle_directory.receipt_compatibility]
+        // r[verify cairn.lifecycle_directory.receipt_compatibility.paths]
+        assert_eq!(layout_root(LifecycleLayout::Native), ".cairn");
+        assert_eq!(layout_name(LifecycleLayout::Native), "cairn");
+        assert_eq!(layout_root(LifecycleLayout::LegacyCairn), "cairn");
+        assert_eq!(layout_name(LifecycleLayout::LegacyCairn), "legacy-cairn");
+    }
+
+    #[test]
+    fn builds_old_cairn_migration_plan() {
+        // r[verify cairn.lifecycle_directory.legacy_migration]
+        let plan = build_cairn_migration_plan(
+            vec![MigrationInput {
+                source: "cairn/specs/demo/spec.md".to_string(),
+                source_hash: "source-hash".to_string(),
+                destination: ".cairn/specs/demo/spec.md".to_string(),
+                destination_hash: None,
+                destination_exists: false,
+            }],
+            false,
+        );
+        assert_eq!(plan.source_layout, LifecycleLayout::LegacyCairn);
+        assert_eq!(plan.destination_layout, LifecycleLayout::Native);
+        assert!(plan.dry_run);
+        assert!(!plan.blocked);
     }
 
     #[test]
@@ -273,14 +312,14 @@ mod tests {
                 MigrationInput {
                     source: "openspec/specs/b/spec.md".to_string(),
                     source_hash: "hash-b".to_string(),
-                    destination: "cairn/specs/b/spec.md".to_string(),
+                    destination: ".cairn/specs/b/spec.md".to_string(),
                     destination_hash: None,
                     destination_exists: false,
                 },
                 MigrationInput {
                     source: "openspec/specs/a/spec.md".to_string(),
                     source_hash: "hash-a".to_string(),
-                    destination: "cairn/specs/a/spec.md".to_string(),
+                    destination: ".cairn/specs/a/spec.md".to_string(),
                     destination_hash: Some("existing-a".to_string()),
                     destination_exists: true,
                 },
@@ -289,8 +328,8 @@ mod tests {
         );
         assert!(plan.dry_run);
         assert!(plan.blocked);
-        assert_eq!(plan.conflicts, vec!["cairn/specs/a/spec.md"]);
-        assert_eq!(plan.actions[0].destination, "cairn/specs/a/spec.md");
+        assert_eq!(plan.conflicts, vec![".cairn/specs/a/spec.md"]);
+        assert_eq!(plan.actions[0].destination, ".cairn/specs/a/spec.md");
     }
 
     #[test]

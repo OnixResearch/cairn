@@ -150,7 +150,7 @@ pub fn plan_prompt_scaffold(
     let domain = normalize_domain(domain);
     let prefix = format!("cairn.developer_experience.{change}").replace('-', "_");
     let input_hash = blake3_hex(trimmed_request.as_bytes());
-    let base = format!("cairn/changes/{change}");
+    let base = format!(".cairn/changes/{change}");
     let files = if issues.is_empty() {
         vec![
             file(
@@ -243,7 +243,7 @@ fn build_file_plan(
             issues.push(format!("unsafe template path: {}", planned.path));
             continue;
         }
-        if !allow_change_paths && planned.path.starts_with("cairn/specs/") {
+        if !allow_change_paths && planned.path.starts_with(".cairn/specs/") {
             issues.push(format!(
                 "template cannot write accepted spec path: {}",
                 planned.path

@@ -91,7 +91,9 @@ fn help_lists_commands() -> Result<(), Box<dyn Error>> {
         "{stdout}"
     );
     assert!(
-        stdout.contains("migrate <openspec|ironspec> [--root PATH] [--policy PATH] [--execute]"),
+        stdout.contains(
+            "migrate <cairn|openspec|ironspec> [--root PATH] [--policy PATH] [--execute]"
+        ),
         "{stdout}"
     );
     assert!(
@@ -123,7 +125,7 @@ fn unknown_command_returns_usage_error() -> Result<(), Box<dyn Error>> {
 fn gate_context_reports_named_change() -> Result<(), Box<dyn Error>> {
     let value = run_json(&["gate-context", "demo", "--root", "fixtures/basic"])?;
     assert_eq!(value["name"], "demo");
-    assert_eq!(value["path"], "fixtures/basic/cairn/changes/demo");
+    assert_eq!(value["path"], "fixtures/basic/.cairn/changes/demo");
     assert_eq!(
         value["delta_specs"].as_array().ok_or("delta specs")?.len(),
         1
@@ -174,7 +176,7 @@ fn gate_checks_references_task_links_and_exemptions() -> Result<(), Box<dyn Erro
     // r[verify cairn.supersede.gate_policy.task_links]
     // r[verify cairn.supersede.gate_policy.exemptions]
     let fixture = temp_fixture("gate-reference-checks", "fixtures/basic")?;
-    let change_dir = fixture.join("cairn/changes/demo");
+    let change_dir = fixture.join(".cairn/changes/demo");
     fs::write(
         change_dir.join("proposal.md"),
         "## Why\n\nr[demo.unknown] gate-exempt[reason=test owner=agent]\n",
@@ -212,7 +214,7 @@ fn gate_accepts_bounded_exemptions_and_dependency_tasks() -> Result<(), Box<dyn 
     // r[verify cairn.supersede.gate_policy.task_links]
     // r[verify cairn.supersede.gate_policy.exemptions]
     let fixture = temp_fixture("gate-bounded-exemptions", "fixtures/basic")?;
-    let change_dir = fixture.join("cairn/changes/demo");
+    let change_dir = fixture.join(".cairn/changes/demo");
     fs::write(
         change_dir.join("proposal.md"),
         "## Why\n\nThis proposal has reviewed content. gate-exempt[reason=test owner=agent until=2026-12-31]\n",

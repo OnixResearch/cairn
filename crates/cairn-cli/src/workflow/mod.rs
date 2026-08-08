@@ -563,10 +563,10 @@ mod tests {
     }
 
     fn write_fixture(root: &Path) -> Result<(), Box<dyn Error>> {
-        let change = root.join("cairn/changes/demo");
+        let change = root.join(".cairn/changes/demo");
         fs::create_dir_all(change.join("specs/demo"))?;
-        fs::create_dir_all(root.join("cairn/specs"))?;
-        fs::create_dir_all(root.join("cairn/archive"))?;
+        fs::create_dir_all(root.join(".cairn/specs"))?;
+        fs::create_dir_all(root.join(".cairn/archive"))?;
         fs::write(change.join("proposal.md"), VALID_PROPOSAL)?;
         fs::write(change.join("design.md"), VALID_DESIGN)?;
         fs::write(change.join("tasks.md"), VALID_TASKS)?;
@@ -589,7 +589,7 @@ mod tests {
         let root = test_root("positive");
         remove_fixture(&root)?;
         write_fixture(&root)?;
-        let tasks_before = fs::read(root.join("cairn/changes/demo/tasks.md"))?;
+        let tasks_before = fs::read(root.join(".cairn/changes/demo/tasks.md"))?;
         let first = workflow_status_value(&root, "demo", None, &policy_path())?;
         let second = workflow_status_value(&root, "demo", None, &policy_path())?;
         assert_eq!(first, second);
@@ -600,7 +600,7 @@ mod tests {
         assert_eq!(instructions["artifact"]["artifact_id"], "tasks");
         assert_eq!(instructions["read_only"], true);
         assert_eq!(
-            fs::read(root.join("cairn/changes/demo/tasks.md"))?,
+            fs::read(root.join(".cairn/changes/demo/tasks.md"))?,
             tasks_before
         );
         remove_fixture(&root)?;
@@ -747,7 +747,7 @@ mod tests {
         remove_fixture(&root)?;
         write_fixture(&root)?;
         fs::write(
-            root.join("cairn/changes/demo/specs/demo/spec.md"),
+            root.join(".cairn/changes/demo/specs/demo/spec.md"),
             "CAIRN_PLACEHOLDER",
         )?;
         let status = workflow_status_value(&root, "demo", None, &policy_path())?;

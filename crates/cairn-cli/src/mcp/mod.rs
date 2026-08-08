@@ -13,11 +13,11 @@ use std::{
 
 use cairn_core::{
     archive_dir, build_archive_plan_for_effect_with_dependency_blockers,
-    build_change_dependency_graph, build_change_detail, build_doctor_report,
-    build_ironspec_migration_plan, build_openspec_migration_plan, build_spec_detail,
-    build_sync_plan_for_effect_with_dependency_blockers, canonical_json_hash, changes_dir,
-    dependency_blockers_for_change, finalize_gate_report, init_artifacts, layout_name, layout_root,
-    lifecycle_substance_issues, specs_dir, validate_changes_with_archives,
+    build_cairn_migration_plan, build_change_dependency_graph, build_change_detail,
+    build_doctor_report, build_ironspec_migration_plan, build_openspec_migration_plan,
+    build_spec_detail, build_sync_plan_for_effect_with_dependency_blockers, canonical_json_hash,
+    changes_dir, dependency_blockers_for_change, finalize_gate_report, init_artifacts, layout_name,
+    layout_root, lifecycle_substance_issues, specs_dir, validate_changes_with_archives,
     validate_spec_source_with_policy, validate_spec_sources_with_policy, ChangeDependencyGraph,
     ChangeStatus, DoctorSnapshot, GateStage, LifecycleArtifactKind, LifecycleLayout, PlanAction,
     PlanActionKind,

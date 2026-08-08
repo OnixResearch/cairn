@@ -6,15 +6,16 @@ use std::{
 };
 
 use cairn_core::{
-    admit_lifecycle_store_identity, admit_lifecycle_store_locator, build_lifecycle_store_context,
-    canonical_json_hash, lifecycle_store_source_identity, normalize_direct_references,
-    parse_policy_json, resolve_lifecycle_root, spec_title, AcceptedSpecMetadata,
-    AcceptedSpecSnapshot, AgentArtifactGuidance, AgentContextReference, AgentGuidanceRequest,
-    AgentGuidanceResult, AgentOperationGuidance, ContextObservations, ContextResult,
-    DirectStoreReference, DoctorFindingStatus, ExplicitLifecycleStoreSelector,
-    ExplicitRootSelector, FallbackFacts, LifecycleAuthorityEffect, LifecycleStoreDoctorFinding,
-    LifecycleStoreIdentity, LifecycleStoreIdentityProjection, LifecycleStoreLocatorProjection,
-    LocatorSnapshot, LocatorStoreObservation, NativeRootCandidate, ProjectPointerObservation,
+    admit_lifecycle_store_identity, admit_lifecycle_store_locator, archive_dir,
+    build_lifecycle_store_context, canonical_json_hash, changes_dir,
+    lifecycle_store_source_identity, normalize_direct_references, parse_policy_json,
+    resolve_lifecycle_root, spec_title, specs_dir, AcceptedSpecMetadata, AcceptedSpecSnapshot,
+    AgentArtifactGuidance, AgentContextReference, AgentGuidanceRequest, AgentGuidanceResult,
+    AgentOperationGuidance, ContextObservations, ContextResult, DirectStoreReference,
+    DoctorFindingStatus, ExplicitLifecycleStoreSelector, ExplicitRootSelector, FallbackFacts,
+    LifecycleAuthorityEffect, LifecycleLayout, LifecycleStoreDoctorFinding, LifecycleStoreIdentity,
+    LifecycleStoreIdentityProjection, LifecycleStoreLocatorProjection, LocatorSnapshot,
+    LocatorStoreObservation, NativeRootCandidate, ProjectPointerObservation,
     ReferenceContentBoundary, ReferenceTraversalBoundary, RegistryLookupBoundary,
     RootResolutionObservations, RootResolutionResult, RootResolutionSource,
     StoreIdentityObservation, VcsBoundaryFacts, AGENT_GUIDANCE_OPERATION_CONTEXT,
@@ -559,7 +560,20 @@ fn vcs_marker_is_present(root: &Path) -> io::Result<bool> {
 }
 
 fn native_lifecycle_root_is_present(root: &Path) -> io::Result<bool> {
-    path_is_directory(&root.join("cairn"))
+    // r[impl cairn.lifecycle_directory.hidden_default.runtime]
+    // r[impl cairn.lifecycle_directory.hidden_default.project_pointer]
+    let layout = LifecycleLayout::Native;
+    let lifecycle_directories = [
+        specs_dir(layout),
+        changes_dir(layout),
+        archive_dir(layout).to_string(),
+    ];
+    for directory in lifecycle_directories {
+        if path_is_directory(&root.join(directory))? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn observe_project(
@@ -726,7 +740,7 @@ fn read_accepted_spec_metadata(
     policy: &ShellPolicy,
 ) -> Result<Vec<AcceptedSpecMetadata>, Box<dyn Error>> {
     let capability = CapabilityRoot::open(CapabilityRootKind::Repository, store_root)?;
-    let accepted_root = PathBuf::from("cairn/specs");
+    let accepted_root = PathBuf::from(".cairn/specs");
     let mut pending = vec![accepted_root.clone()];
     let mut spec_paths = Vec::new();
     let directory_entry_limit = policy.max_context_specs_per_store.saturating_add(1);

@@ -162,7 +162,7 @@ mod tests {
             "actions": [{
                 "id": "write",
                 "host_function": "host.fs.write",
-                "args": {"path": "cairn/specs/example/spec.md"}
+                "args": {"path": ".cairn/specs/example/spec.md"}
             }]
         });
         let allowed = vec!["cairn.validate".to_string()];

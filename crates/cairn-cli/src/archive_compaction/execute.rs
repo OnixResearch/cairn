@@ -273,7 +273,7 @@ fn prune_and_finalize(
     let pointer_parent = Path::new(cairn_core::COMPACTION_ROOT).join("pointers");
     repository.create_dir_all(&pointer_parent)?;
     for pointer in &plan.planned_pointers {
-        let archive_path = PathBuf::from("cairn/archive").join(&pointer.archive_id);
+        let archive_path = PathBuf::from(".cairn/archive").join(&pointer.archive_id);
         repository.remove_dir_all(&archive_path)?;
         let prepared = prepared_pointer_path(&plan.pack.pack_root, &pointer.archive_id);
         let retained = pointer_path(&pointer.archive_id);

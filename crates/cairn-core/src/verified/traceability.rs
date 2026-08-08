@@ -636,7 +636,7 @@ mod tests {
         TraceabilityProfile {
             id: TRACEABILITY_PROFILE_CAIRN_DEFAULT.to_string(),
             requirement_sources: vec![TraceabilitySource {
-                root: "cairn/specs".to_string(),
+                root: ".cairn/specs".to_string(),
                 source_kind: "accepted_specs".to_string(),
                 extensions: vec!["md".to_string()],
             }],
@@ -702,7 +702,7 @@ mod tests {
                 requirement_id: "cairn.marker.contract".to_string(),
                 namespace: "cairn.marker".to_string(),
                 owner_repo: "cairn".to_string(),
-                accepted_spec: "cairn/specs/requirement-id-registry/spec.md".to_string(),
+                accepted_spec: ".cairn/specs/requirement-id-registry/spec.md".to_string(),
                 status: "active".to_string(),
                 aliases: vec![RequirementIdAlias {
                     id: "cairn.marker.compat".to_string(),
@@ -849,7 +849,7 @@ mod tests {
         let report = classify_traceability_coverage(
             &profile(),
             &[file(
-                "cairn/specs/demo/spec.md",
+                ".cairn/specs/demo/spec.md",
                 "r[cairn.demo.alpha] The system MUST work.\nr[cairn.demo.beta] The system MUST also work.",
             )],
             &[file(
@@ -874,7 +874,7 @@ mod tests {
         let report = classify_traceability_coverage(
             &profile(),
             &[file(
-                "cairn/specs/demo/spec.md",
+                ".cairn/specs/demo/spec.md",
                 "r[cairn.demo.alpha] The system MUST work.",
             )],
             &[file(
@@ -894,7 +894,7 @@ mod tests {
         let report = classify_traceability_coverage(
             &profile(),
             &[file(
-                "cairn/specs/demo/spec.md",
+                ".cairn/specs/demo/spec.md",
                 "r[cairn.demo.alpha] The system MUST work.",
             )],
             &[file(

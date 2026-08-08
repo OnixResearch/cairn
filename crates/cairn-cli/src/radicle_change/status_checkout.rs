@@ -28,8 +28,8 @@ use super::{
 const STANDARD_ROOT_ENTRY_LIMIT: usize = 5;
 const LOCAL_ROOT_ENTRY_LIMIT: usize = MAX_ARTIFACTS + STANDARD_ROOT_ENTRY_LIMIT;
 const SPEC_DIRECTORY_ENTRY_LIMIT: usize = 1;
-const CHANGES_DIRECTORY: &str = "cairn/changes";
-const CHECKOUT_PREPARED_DIRECTORY: &str = "cairn/.cob-checkout-prepared";
+const CHANGES_DIRECTORY: &str = ".cairn/changes";
+const CHECKOUT_PREPARED_DIRECTORY: &str = ".cairn/.cob-checkout-prepared";
 const STATUS_NON_CLAIM_LOCAL: &str =
     "typed status proves only reduction and observations in the selected local Git COB store";
 const CHECKOUT_NON_CLAIM_LOCAL: &str =
@@ -45,7 +45,7 @@ const NON_CLAIM_HOST: &str =
 const BLOCKER_INPUT_DRIFT: &str =
     "Git repository head, object, typed state, policy, or local destination changed after checkout preview";
 const BLOCKER_CHANGES_DIRECTORY: &str =
-    "native cairn/changes directory is missing, unsafe, or not a directory";
+    "native .cairn/changes directory is missing, unsafe, or not a directory";
 const BLOCKER_PREPARED_EXISTS: &str =
     "prepared checkout directory already exists; inspect interrupted local state before recovery";
 const BLOCKER_DESTINATION_APPEARED: &str =

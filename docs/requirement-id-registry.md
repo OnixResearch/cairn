@@ -17,7 +17,7 @@ cairn requirement-registry export \
   --out target/requirement-registry.json
 ```
 
-The export command reads only accepted specifications under `cairn/specs/`. It does not include active change deltas.
+The export command reads only accepted specifications under `.cairn/specs/`. It does not include active change deltas.
 
 The generated policy defaults to `cairn-policy/generated/cairn-policy.json` under the selected root. Use `--policy RELATIVE_PATH` for another reviewed file under that root.
 

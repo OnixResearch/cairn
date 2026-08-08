@@ -1091,7 +1091,7 @@ let WorkflowRequiredNonClaims = [
       {
         id = "cairn-default",
         requirement_sources = [
-          { root = "cairn/specs", source_kind = "accepted_specs", extensions = ["md"] },
+          { root = ".cairn/specs", source_kind = "accepted_specs", extensions = ["md"] },
         ],
         evidence_sources = [
           { root = "crates", source_kind = "rust_source", extensions = ["rs"] },
@@ -1581,7 +1581,7 @@ let WorkflowRequiredNonClaims = [
   sync_archive_policy = {
     require_all_tasks_done = true,
     archive_date_prefix = true,
-    default_archive_dir = "cairn/archive",
+    default_archive_dir = ".cairn/archive",
   },
 
   mutation_policy = {

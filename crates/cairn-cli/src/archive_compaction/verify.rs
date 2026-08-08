@@ -176,7 +176,7 @@ fn verify_no_orphaned_artifacts(
 ) -> Result<(), Box<dyn Error>> {
     verify_directory_members(
         repository,
-        Path::new("cairn/compaction/v1/packs"),
+        Path::new(".cairn/compaction/v1/packs"),
         pack_roots,
         true,
         "archive_compaction.orphan_pack",
@@ -184,7 +184,7 @@ fn verify_no_orphaned_artifacts(
     )?;
     verify_directory_members(
         repository,
-        Path::new("cairn/compaction/v1/objects/blake3"),
+        Path::new(".cairn/compaction/v1/objects/blake3"),
         object_hashes,
         false,
         "archive_compaction.orphan_object",
@@ -197,7 +197,7 @@ fn verify_no_orphaned_artifacts(
         .collect::<BTreeSet<_>>();
     verify_directory_members(
         repository,
-        Path::new("cairn/compaction/v1/receipts"),
+        Path::new(".cairn/compaction/v1/receipts"),
         &receipt_names,
         false,
         "archive_compaction.orphan_receipt",
@@ -210,7 +210,7 @@ fn verify_no_orphaned_artifacts(
         .collect::<BTreeSet<_>>();
     verify_directory_members(
         repository,
-        Path::new("cairn/compaction/v1/mutations"),
+        Path::new(".cairn/compaction/v1/mutations"),
         &mutation_names,
         false,
         "archive_compaction.orphan_mutation_manifest",

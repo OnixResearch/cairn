@@ -172,11 +172,11 @@ fn ready_artifact_instructions_bind_upstream_files() {
     )
     .expect("status derives");
     let instructions =
-        build_workflow_instructions(&schema, &report, "design", "cairn/changes/demo")
+        build_workflow_instructions(&schema, &report, "design", ".cairn/changes/demo")
             .expect("instructions derive");
 
     assert_eq!(instructions.state, WorkflowArtifactState::Ready);
-    assert_eq!(instructions.output_path, "cairn/changes/demo/design.md");
+    assert_eq!(instructions.output_path, ".cairn/changes/demo/design.md");
     assert_eq!(instructions.upstream[0].files[0].blake3, HASH_A);
     assert!(instructions.instruction_template.contains("design"));
 }
@@ -260,7 +260,7 @@ fn unknown_and_inconsistent_observations_fail_closed() {
 
     let report = derive_workflow_status(&schema, &[]).expect("empty observation set derives");
     assert_eq!(
-        build_workflow_instructions(&schema, &report, "unknown", "cairn/changes/demo")
+        build_workflow_instructions(&schema, &report, "unknown", ".cairn/changes/demo")
             .expect_err("unknown selector fails")
             .code,
         WORKFLOW_ISSUE_ARTIFACT_UNKNOWN

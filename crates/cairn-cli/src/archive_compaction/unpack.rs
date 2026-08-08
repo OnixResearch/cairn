@@ -21,7 +21,7 @@ use super::{
     verify::verify_repository,
 };
 
-const UNPACK_PREPARED_DIRECTORY: &str = "cairn/compaction/v1/unpack-prepared";
+const UNPACK_PREPARED_DIRECTORY: &str = ".cairn/compaction/v1/unpack-prepared";
 const PACK_ROOT_DISPLAY_PREFIX_LENGTH: usize = 12;
 
 pub(super) fn run_compact_unpack(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -62,7 +62,7 @@ pub(super) fn unpack_archive(
     let objects = loaded.objects;
     plan.blockers.sort();
     plan.blockers.dedup();
-    let destination = PathBuf::from("cairn/archive").join(archive_id);
+    let destination = PathBuf::from(".cairn/archive").join(archive_id);
     let already_restored = restored_archive_matches(root, policy, archive_id, &plan.archive_root)?;
     if path_exists(&repository, &destination)? && !already_restored {
         return Err("archive unpack destination exists with different content".into());
@@ -104,7 +104,7 @@ pub(super) fn unpack_archive(
             return Err(format!("restored archive file failed verification: {}", file.path).into());
         }
     }
-    repository.create_dir_all(Path::new("cairn/archive"))?;
+    repository.create_dir_all(Path::new(".cairn/archive"))?;
     repository.rename(&temporary, &repository, &destination)?;
     let post_verification = verify_repository(root, policy)?;
     if !post_verification.valid {

@@ -72,7 +72,7 @@ fn read_request(args: &[String]) -> Result<String, Box<dyn Error>> {
 }
 
 fn existing_change_paths(root: &Path, change: &str) -> Vec<String> {
-    let prefix = format!("cairn/changes/{change}");
+    let prefix = format!(".cairn/changes/{change}");
     ["proposal.md", "design.md", "tasks.md"]
         .into_iter()
         .map(|name| format!("{prefix}/{name}"))

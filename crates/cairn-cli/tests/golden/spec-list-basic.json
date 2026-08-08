@@ -17,7 +17,7 @@
   "specs": [
     {
       "id": "demo",
-      "path": "fixtures/basic/cairn/specs/demo/spec.md",
+      "path": "fixtures/basic/.cairn/specs/demo/spec.md",
       "title": "demo Specification"
     }
   ]

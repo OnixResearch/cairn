@@ -18,12 +18,12 @@ pub(super) const STORE_SOURCE_PATH: &str = ".cairn-store/store.ncl";
 pub(super) const STORE_PROJECTION_PATH: &str = ".cairn-store/store.json";
 const STORE_SOURCE_SCHEMA_V1: &str = "cairn.lifecycle-store-source.v1";
 const STORE_DIRECTORY: &str = ".cairn-store";
-const LIFECYCLE_DIRECTORIES: &[&str] = &["cairn/specs", "cairn/changes", "cairn/archive"];
+const LIFECYCLE_DIRECTORIES: &[&str] = &[".cairn/specs", ".cairn/changes", ".cairn/archive"];
 pub(super) const LIFECYCLE_DIRECTORIES_FOR_RECEIPT: &[&str] = &[
     STORE_DIRECTORY,
-    "cairn/specs",
-    "cairn/changes",
-    "cairn/archive",
+    ".cairn/specs",
+    ".cairn/changes",
+    ".cairn/archive",
 ];
 const STORE_FILE_MAX_BYTES: u64 = 1_048_576;
 const SETUP_SOURCE_TEMP_PATH: &str = ".cairn-store/.store.ncl.cairn-tmp";

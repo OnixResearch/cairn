@@ -16,11 +16,11 @@ use crate::{
     support::{CapabilityRoot, CapabilityRootKind},
 };
 
-const CHANGES_DIRECTORY: &str = "cairn/changes";
-const PREPARED_DIRECTORY: &str = "cairn/.collaboration-checkout-prepared";
-const REPOSITORY_CHECKOUT_LOCK_DIRECTORY: &str = "cairn/.collaboration-locks/checkout";
+const CHANGES_DIRECTORY: &str = ".cairn/changes";
+const PREPARED_DIRECTORY: &str = ".cairn/.collaboration-checkout-prepared";
+const REPOSITORY_CHECKOUT_LOCK_DIRECTORY: &str = ".cairn/.collaboration-locks/checkout";
 const BLOCKER_CHANGES_DIRECTORY: &str =
-    "native cairn/changes directory is missing, unsafe, or not a directory";
+    "native .cairn/changes directory is missing, unsafe, or not a directory";
 const BLOCKER_PREPARED_EXISTS: &str =
     "prepared collaboration checkout already exists; inspect interrupted local state before recovery";
 const BLOCKER_DESTINATION_APPEARED: &str =

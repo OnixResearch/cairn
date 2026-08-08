@@ -125,7 +125,7 @@ r[cairn.sync_archive.compaction.plan] Cairn MUST compute archive compaction plan
 
 #### Scenario: Compaction plan is read-only
 r[cairn.sync_archive.compaction.plan.read_only]
-- GIVEN a repository with completed changes under `cairn/archive/`
+- GIVEN a repository with completed changes under `.cairn/archive/`
 - WHEN an operator requests archive compaction without `--execute`
 - THEN Cairn MUST emit a deterministic plan with candidate archives, planned pack artifacts, planned retained pointers, blockers, input hash, policy hash, and plan hash
 - AND Cairn MUST NOT mutate repository files.

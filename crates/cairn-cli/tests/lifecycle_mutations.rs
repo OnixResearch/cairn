@@ -91,7 +91,7 @@ fn sync_execute_blocks_invalid_delta_specs() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.deterministic_gates]
     let fixture = temp_fixture("sync-invalid-delta", "fixtures/basic")?;
     fs::write(
-        fixture.join("cairn/changes/demo/specs/demo/spec.md"),
+        fixture.join(".cairn/changes/demo/specs/demo/spec.md"),
         "# Demo\n\n## Requirements\n\n### Requirement: Broken\n\nr[demo.add] This feature works.\n\n#### Scenario: Missing when\n\n- GIVEN a precondition\n- THEN an outcome occurs\n",
     )?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
@@ -149,7 +149,7 @@ fn archive_reports_ready_dry_run_plan_for_completed_change() -> Result<(), Box<d
     assert_eq!(actions[0]["kind"], "archive_change");
     assert_eq!(
         actions[0]["path"],
-        "fixtures/archive-ready/cairn/changes/ready"
+        "fixtures/archive-ready/.cairn/changes/ready"
     );
     Ok(())
 }
@@ -209,7 +209,7 @@ fn sync_execute_mutates_temp_fixture() -> Result<(), Box<dyn Error>> {
     assert_eq!(value["dry_run"], false);
     assert_eq!(value["mutated"], true);
     assert_eq!(value["blocked"], false);
-    let accepted = fs::read_to_string(fixture.join("cairn/specs/demo/spec.md"))?;
+    let accepted = fs::read_to_string(fixture.join(".cairn/specs/demo/spec.md"))?;
     assert!(accepted.contains("# Demo Specification"), "{accepted}");
     assert!(accepted.contains("## Purpose"), "{accepted}");
     assert!(accepted.contains("Fixture accepted spec"), "{accepted}");
@@ -225,7 +225,7 @@ fn sync_execute_mutates_temp_fixture() -> Result<(), Box<dyn Error>> {
 fn sync_execute_creates_wrapped_spec_for_new_domain() -> Result<(), Box<dyn Error>> {
     // r[verify sync_archive.execute.sync.merge_creates_spec]
     let fixture = temp_fixture("sync-new-domain", "fixtures/archive-ready")?;
-    let delta_dir = fixture.join("cairn/changes/ready/specs/new-domain");
+    let delta_dir = fixture.join(".cairn/changes/ready/specs/new-domain");
     fs::create_dir_all(&delta_dir)?;
     fs::write(
         delta_dir.join("spec.md"),
@@ -234,7 +234,7 @@ fn sync_execute_creates_wrapped_spec_for_new_domain() -> Result<(), Box<dyn Erro
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
     let value = run_json(&["sync", "ready", "--root", root, "--execute"])?;
     assert_eq!(value["mutated"], true);
-    let accepted = fs::read_to_string(fixture.join("cairn/specs/new-domain/spec.md"))?;
+    let accepted = fs::read_to_string(fixture.join(".cairn/specs/new-domain/spec.md"))?;
     assert!(
         accepted.starts_with("# New Domain Specification"),
         "{accepted}"
@@ -252,7 +252,7 @@ fn sync_replaces_a_renamed_requirement_by_stable_id() -> Result<(), Box<dyn Erro
     // r[verify cairn.sync_archive.delta_merge.identity.rename]
     // r[verify cairn.sync_archive.delta_merge.tests.positive]
     let fixture = temp_fixture("sync-rename", "fixtures/archive-ready")?;
-    let delta = fixture.join("cairn/changes/ready/specs/demo/spec.md");
+    let delta = fixture.join(".cairn/changes/ready/specs/demo/spec.md");
     fs::write(
         &delta,
         "## MODIFIED Requirements\n\n### Requirement: Renamed existing behavior\n\nr[demo.existing] The system MUST expose renamed fixture behavior.\n\n#### Scenario: Renamed demo scenario\n\nr[demo.existing.scenario]\n- GIVEN an accepted fixture spec\n- WHEN Cairn sync executes\n- THEN it replaces the requirement by stable ID\n\n## ADDED Requirements\n\n### Requirement: Ready behavior\n\nr[demo.ready] The system MUST parse archive-ready fixture delta specs.\n\n#### Scenario: Ready scenario\n\nr[demo.ready.scenario]\n- GIVEN a completed fixture change\n- WHEN Cairn plans archive\n- THEN it reports an archive action\n",
@@ -261,7 +261,7 @@ fn sync_replaces_a_renamed_requirement_by_stable_id() -> Result<(), Box<dyn Erro
     let value = run_json(&["sync", "ready", "--root", root, "--execute"])?;
     assert_eq!(value["blocked"], false);
     assert_eq!(value["mutated"], true);
-    let accepted = fs::read_to_string(fixture.join("cairn/specs/demo/spec.md"))?;
+    let accepted = fs::read_to_string(fixture.join(".cairn/specs/demo/spec.md"))?;
     assert!(accepted.contains("### Requirement: Renamed existing behavior"));
     assert!(!accepted.contains("### Requirement: Existing demo behavior"));
     assert_eq!(accepted.matches("r[demo.existing]").count(), 1);
@@ -277,7 +277,7 @@ fn sync_idempotent_replay_reports_no_mutation_or_manifest() -> Result<(), Box<dy
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
     let first = run_json(&["sync", "ready", "--root", root, "--execute"])?;
     assert_eq!(first["mutated"], true);
-    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_path = fixture.join(".cairn/specs/demo/spec.md");
     let after_first = fs::read_to_string(&accepted_path)?;
 
     let replay = run_json(&["sync", "ready", "--root", root, "--execute"])?;
@@ -298,9 +298,9 @@ fn sync_semantic_blocker_preserves_every_destination() -> Result<(), Box<dyn Err
     // r[verify cairn.sync_archive.delta_merge.mutation_truth.blocked]
     // r[verify cairn.sync_archive.delta_merge.tests.negative]
     let fixture = temp_fixture("sync-all-or-nothing", "fixtures/archive-ready")?;
-    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_path = fixture.join(".cairn/specs/demo/spec.md");
     let accepted_before = fs::read_to_string(&accepted_path)?;
-    let malformed_dir = fixture.join("cairn/changes/ready/specs/other");
+    let malformed_dir = fixture.join(".cairn/changes/ready/specs/other");
     fs::create_dir_all(&malformed_dir)?;
     fs::write(
         malformed_dir.join("spec.md"),
@@ -312,7 +312,7 @@ fn sync_semantic_blocker_preserves_every_destination() -> Result<(), Box<dyn Err
     assert_eq!(value["mutated"], false);
     assert!(value["actions"].as_array().ok_or("actions")?.is_empty());
     assert_eq!(fs::read_to_string(accepted_path)?, accepted_before);
-    assert!(!fixture.join("cairn/specs/other/spec.md").exists());
+    assert!(!fixture.join(".cairn/specs/other/spec.md").exists());
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
@@ -325,7 +325,7 @@ fn sync_plan_identity_binds_delta_and_accepted_bytes() -> Result<(), Box<dyn Err
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
     let first = run_json(&["sync", "ready", "--root", root])?;
 
-    let delta_path = fixture.join("cairn/changes/ready/specs/demo/spec.md");
+    let delta_path = fixture.join(".cairn/changes/ready/specs/demo/spec.md");
     let delta = fs::read_to_string(&delta_path)?;
     fs::write(
         &delta_path,
@@ -335,7 +335,7 @@ fn sync_plan_identity_binds_delta_and_accepted_bytes() -> Result<(), Box<dyn Err
     assert_ne!(first["input_hash"], changed_delta["input_hash"]);
     assert_ne!(first["plan_hash"], changed_delta["plan_hash"]);
 
-    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_path = fixture.join(".cairn/specs/demo/spec.md");
     let accepted = fs::read_to_string(&accepted_path)?;
     fs::write(
         accepted_path,
@@ -352,7 +352,7 @@ fn sync_plan_identity_binds_delta_and_accepted_bytes() -> Result<(), Box<dyn Err
 fn sync_duplicate_accepted_identity_fails_closed() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.sync_archive.delta_merge.identity.duplicate]
     let fixture = temp_fixture("sync-duplicate-accepted", "fixtures/archive-ready")?;
-    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_path = fixture.join(".cairn/specs/demo/spec.md");
     let mut accepted = fs::read_to_string(&accepted_path)?;
     accepted.push_str(
         "\n### Requirement: Duplicate existing\n\nr[demo.existing] The system MUST expose conflicting fixture behavior.\n",
@@ -383,7 +383,7 @@ fn missing_saved_probe_blocks_sync_and_binds_probe_evidence_without_writes(
     // r[verify cairn.probe_execution_boundary.authoritative_tests.negative]
     // r[verify cairn.probe_execution_boundary.authoritative_evidence_binding]
     let fixture = temp_fixture("authoritative-probe-sync", "fixtures/basic")?;
-    let probes_dir = fixture.join("cairn/changes/demo/probes");
+    let probes_dir = fixture.join(".cairn/changes/demo/probes");
     fs::create_dir_all(&probes_dir)?;
     let receipt_path = "target/probes/missing.json";
     fs::write(
@@ -399,7 +399,7 @@ fn missing_saved_probe_blocks_sync_and_binds_probe_evidence_without_writes(
             "receipt_path": receipt_path,
         }] }))?,
     )?;
-    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_path = fixture.join(".cairn/specs/demo/spec.md");
     let accepted_before = fs::read_to_string(&accepted_path)?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
     let missing = run_json(&["sync", "demo", "--root", root, "--execute"])?;
@@ -431,7 +431,7 @@ fn vacuous_lifecycle_package_blocks_sync_and_archive_without_writes() -> Result<
     // r[verify cairn.lifecycle_validation.task_substance.archive]
     // r[verify cairn.lifecycle_validation.tests.negative]
     let fixture = temp_fixture("vacuous-mutation", "fixtures/archive-ready")?;
-    let change = fixture.join("cairn/changes/ready");
+    let change = fixture.join(".cairn/changes/ready");
     fs::write(change.join("proposal.md"), "   \n")?;
     fs::write(change.join("design.md"), "CAIRN_PLACEHOLDER\n")?;
     fs::write(
@@ -439,7 +439,7 @@ fn vacuous_lifecycle_package_blocks_sync_and_archive_without_writes() -> Result<
         "- [x] [depends:] CAIRN_PLACEHOLDER\n",
     )?;
     fs::write(change.join("specs/demo/spec.md"), "\n")?;
-    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_path = fixture.join(".cairn/specs/demo/spec.md");
     let accepted_before = fs::read_to_string(&accepted_path)?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
 
@@ -473,7 +473,7 @@ fn vacuous_lifecycle_package_blocks_sync_and_archive_without_writes() -> Result<
     assert_eq!(archive["blocked"], true);
     assert_eq!(archive["mutated"], false);
     assert!(change.exists());
-    assert!(!fixture.join("cairn/archive/1970-01-01-ready").exists());
+    assert!(!fixture.join(".cairn/archive/1970-01-01-ready").exists());
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
@@ -485,9 +485,9 @@ fn sync_and_archive_block_unsatisfied_change_dependencies() -> Result<(), Box<dy
     // r[verify cairn.change_dependency_graph.mutation_block.unsatisfied]
     // r[verify cairn.change_dependency_graph.positive_negative_tests]
     let fixture = temp_fixture("dependency-blocked-mutation", "fixtures/archive-ready")?;
-    let ready_change = fixture.join("cairn/changes/ready");
-    let prereq_change = fixture.join("cairn/changes/z-prereq");
-    let dependent_change = fixture.join("cairn/changes/a-dependent");
+    let ready_change = fixture.join(".cairn/changes/ready");
+    let prereq_change = fixture.join(".cairn/changes/z-prereq");
+    let dependent_change = fixture.join(".cairn/changes/a-dependent");
     support::copy_dir(&ready_change, &prereq_change)?;
     support::copy_dir(&ready_change, &dependent_change)?;
     fs::write(
@@ -514,7 +514,7 @@ fn sync_and_archive_block_unsatisfied_change_dependencies() -> Result<(), Box<dy
     assert_eq!(archive["mutated"], false);
     assert!(dependent_change.exists());
     assert!(!fixture
-        .join("cairn/archive/1970-01-01-a-dependent")
+        .join(".cairn/archive/1970-01-01-a-dependent")
         .exists());
     fs::remove_dir_all(fixture)?;
     Ok(())
@@ -536,8 +536,8 @@ fn archive_execute_moves_temp_fixture_change() -> Result<(), Box<dyn Error>> {
     assert_eq!(value["dry_run"], false);
     assert_eq!(value["mutated"], true);
     assert_eq!(value["blocked"], false);
-    assert!(!fixture.join("cairn/changes/ready").exists());
-    assert!(fixture.join("cairn/archive/2026-05-17-ready").exists());
+    assert!(!fixture.join(".cairn/changes/ready").exists());
+    assert!(fixture.join(".cairn/archive/2026-05-17-ready").exists());
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
@@ -559,7 +559,7 @@ fn archive_rejects_malformed_archive_date_without_mutation() -> Result<(), Box<d
         stderr.contains("invalid archive date: expected YYYY-MM-DD"),
         "{stderr}"
     );
-    assert!(fixture.join("cairn/changes/ready").exists());
+    assert!(fixture.join(".cairn/changes/ready").exists());
     Ok(())
 }
 
@@ -571,7 +571,7 @@ fn execute_blocked_plan_does_not_mutate_temp_fixture() -> Result<(), Box<dyn Err
     assert_eq!(value["dry_run"], false);
     assert_eq!(value["mutated"], false);
     assert_eq!(value["blocked"], true);
-    assert!(fixture.join("cairn/changes/missing").exists());
+    assert!(fixture.join(".cairn/changes/missing").exists());
     fs::remove_dir_all(fixture)?;
     Ok(())
 }

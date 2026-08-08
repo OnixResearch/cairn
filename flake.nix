@@ -466,11 +466,19 @@
             $cairn registry verify --registry /tmp/cairn-registry-export.json >/tmp/cairn-registry-verify.json
             legacy=$(mktemp -d)
             cp -R fixtures/basic/. "$legacy"/
-            rm -rf "$legacy/cairn"
+            rm -rf "$legacy/.cairn"
             $cairn status --root "$legacy" >/tmp/cairn-legacy-status.json
+            # r[verify cairn.lifecycle_directory.legacy_migration]
+            legacy_cairn=$(mktemp -d)
+            cp -R fixtures/basic/. "$legacy_cairn"/
+            mv "$legacy_cairn/.cairn" "$legacy_cairn/cairn"
+            $cairn status --root "$legacy_cairn" >/tmp/cairn-old-directory-status.json
+            $cairn migrate cairn --root "$legacy_cairn" >/tmp/cairn-migrate-old-directory-plan.json
+            $cairn migrate cairn --root "$legacy_cairn" --execute >/tmp/cairn-migrate-old-directory-execute.json
+            $cairn status --root "$legacy_cairn" >/tmp/cairn-migrated-old-directory-status.json
             legacy_ironspec=$(mktemp -d)
             cp -R fixtures/basic/. "$legacy_ironspec"/
-            mv "$legacy_ironspec/cairn" "$legacy_ironspec/ironspec"
+            mv "$legacy_ironspec/.cairn" "$legacy_ironspec/ironspec"
             $cairn status --root "$legacy_ironspec" >/tmp/cairn-legacy-ironspec-status.json
             $cairn migrate ironspec --root "$legacy_ironspec" >/tmp/cairn-migrate-ironspec-plan.json
             $cairn migrate ironspec --root "$legacy_ironspec" --execute >/tmp/cairn-migrate-ironspec-execute.json

@@ -68,7 +68,7 @@ mod tests {
     fn filters_changes_by_metadata() {
         let matching = ChangeStatus {
             name: "matching".to_string(),
-            path: "cairn/changes/matching".to_string(),
+            path: ".cairn/changes/matching".to_string(),
             has_proposal: true,
             has_design: true,
             has_tasks: true,

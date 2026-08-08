@@ -545,7 +545,7 @@ mod tests {
     fn conflicted_store(name: &str) -> Result<(PathBuf, PathBuf), Box<dyn Error>> {
         let root = test_directory(name);
         remove_directory(&root)?;
-        fs::create_dir_all(root.join("cairn/changes").join(CHANGE_ID))?;
+        fs::create_dir_all(root.join(".cairn/changes").join(CHANGE_ID))?;
         let policy_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(TEST_POLICY_RELATIVE);
         let policy = load_policy_file(policy_path)?;
         let policy_hash = canonical_json_hash(&policy.raw);

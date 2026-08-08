@@ -57,7 +57,7 @@ pub(crate) fn read_active_change_artifacts(
 ) -> Result<ActiveChangeArtifacts, Box<dyn Error>> {
     validate_change_name(change).map_err(|reason| format!("invalid change name: {reason}"))?;
     let repository = CapabilityRoot::open(CapabilityRootKind::Repository, repository_root)?;
-    let change_directory = PathBuf::from("cairn/changes").join(change);
+    let change_directory = PathBuf::from(".cairn/changes").join(change);
     let metadata = repository
         .symlink_metadata(&change_directory)
         .map_err(|error| {

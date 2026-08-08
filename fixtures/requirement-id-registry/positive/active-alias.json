@@ -9,7 +9,7 @@
         "requirement_id": "cairn.requirement_id_registry.validation",
         "namespace": "cairn.requirement_id_registry",
         "owner_repo": "cairn",
-        "accepted_spec": "cairn/specs/requirement-id-registry/spec.md",
+        "accepted_spec": ".cairn/specs/requirement-id-registry/spec.md",
         "status": "active",
         "aliases": [
           {"id": "cairn.req_registry.validation", "status": "active", "reason": "legacy short namespace"}

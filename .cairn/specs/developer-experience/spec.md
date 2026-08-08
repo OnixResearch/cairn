@@ -47,7 +47,7 @@ r[cairn.developer_experience.onboarding_templates.quickstart] The system MUST do
 r[cairn.developer_experience.onboarding_templates.quickstart.follow]
 - GIVEN a user follows the documented onboarding template quickstart in a clean test repository
 - WHEN they run the listed Cairn commands
-- THEN the repository has a native `cairn/` lifecycle layout and at least one reviewable change package
+- THEN the repository has a native `.cairn/` lifecycle layout and at least one reviewable change package
 - AND the documented validation command emits a passing deterministic receipt
 
 ### Requirement: Onboarding template verification
@@ -91,7 +91,7 @@ r[cairn.developer_experience.prompt_to_change_scaffold.cli.preview]
 r[cairn.developer_experience.prompt_to_change_scaffold.cli.execute]
 - GIVEN a valid scaffold request and an initialized native Cairn repository
 - WHEN the operator runs the scaffold command in execute mode
-- THEN Cairn writes the planned change package files under `cairn/changes/<change>/`
+- THEN Cairn writes the planned change package files under `.cairn/changes/<change>/`
 - AND the mutation receipt records stable before and after file hashes
 
 ### Requirement: Gate-ready scaffold output
@@ -165,7 +165,7 @@ r[cairn.developer_experience.reverse_spec_discovery.cli.out]
 - GIVEN a valid discovery plan and an explicit safe output path
 - WHEN the operator requests draft artifact output
 - THEN Cairn writes only the draft files declared in the receipt
-- AND it does not modify `cairn/specs/` or promote candidates to accepted requirements
+- AND it does not modify `.cairn/specs/` or promote candidates to accepted requirements
 
 ### Requirement: Reverse-spec discovery documentation
 r[cairn.developer_experience.reverse_spec_discovery.docs] The system MUST document reverse-spec discovery as candidate generation requiring human or agent review.

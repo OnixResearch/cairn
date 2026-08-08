@@ -98,7 +98,7 @@ fn malformed_outline_and_dangling_task_link_fail_closed() {
         changes: vec![change],
         specs: vec![SpecSource {
             id: "broken".to_string(),
-            path: "cairn/specs/broken/spec.md".to_string(),
+            path: ".cairn/specs/broken/spec.md".to_string(),
             markdown: "# Broken\n\n### Requirement: Malformed marker r[bad/id]\nThe system MUST fail closed.\n\n#### Scenario: Compatibility identity\n- GIVEN malformed lifecycle input\n- WHEN Cairn builds a view\n- THEN it reports an issue\n".to_string(),
         }],
         dependency_graph: graph,
@@ -182,7 +182,7 @@ fn positive_input() -> LifecycleViewInput {
 fn accepted_spec() -> SpecSource {
     SpecSource {
         id: "demo".to_string(),
-        path: "cairn/specs/demo/spec.md".to_string(),
+        path: ".cairn/specs/demo/spec.md".to_string(),
         markdown: "# Demo Specification\n\n## Requirements\n\n### Requirement: Demonstrate lifecycle views\nr[demo.requirement] The system MUST expose lifecycle views.\n\n#### Scenario: Happy path\nr[demo.requirement.happy]\n- GIVEN valid lifecycle facts\n- WHEN Cairn builds a view\n- THEN the view is deterministic\n".to_string(),
     }
 }
@@ -197,11 +197,11 @@ fn change(
     LifecycleViewChangeInput {
         status: ChangeStatus {
             name: name.to_string(),
-            path: format!("cairn/changes/{name}"),
+            path: format!(".cairn/changes/{name}"),
             has_proposal: true,
             has_design: true,
             has_tasks: tasks_markdown.is_some(),
-            delta_specs: vec![format!("cairn/changes/{name}/specs/demo/spec.md")],
+            delta_specs: vec![format!(".cairn/changes/{name}/specs/demo/spec.md")],
             task_counts,
             metadata: ChangeMetadata {
                 groups: Vec::new(),
@@ -227,7 +227,7 @@ fn traceability_profile() -> TraceabilityProfile {
     TraceabilityProfile {
         id: "test".to_string(),
         requirement_sources: vec![TraceabilitySource {
-            root: "cairn/specs".to_string(),
+            root: ".cairn/specs".to_string(),
             source_kind: "accepted_spec".to_string(),
             extensions: vec!["md".to_string()],
         }],

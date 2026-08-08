@@ -88,7 +88,7 @@ r[cairn.lifecycle_stores.root_resolution.conflict]
 #### Scenario: Native root wins over a project pointer
 
 r[cairn.lifecycle_stores.root_resolution.native_precedence]
-- GIVEN the current VCS boundary contains native `cairn/` content and a checked external-store pointer
+- GIVEN the current VCS boundary contains native `.cairn/` content and a checked external-store pointer
 - WHEN Cairn resolves an implicit root
 - THEN Cairn MUST select the nearest native root
 - AND it MUST report the pointer as stale without following or changing it.

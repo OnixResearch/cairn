@@ -20,7 +20,7 @@ use crate::support::{
     with_receipt_hash, CapabilityRoot, CapabilityRootKind,
 };
 
-const ACCEPTED_SPECIFICATIONS_DIRECTORY: &str = "cairn/specs";
+const ACCEPTED_SPECIFICATIONS_DIRECTORY: &str = ".cairn/specs";
 const GENERATED_POLICY_RELATIVE_PATH: &str = "cairn-policy/generated/cairn-policy.json";
 const SPECIFICATION_FILE_NAME: &str = "spec.md";
 const CONTENT_BOUND_EXPORT_RECEIPT_SCHEMA_V1: &str = "cairn.requirement-registry.export-receipt.v1";

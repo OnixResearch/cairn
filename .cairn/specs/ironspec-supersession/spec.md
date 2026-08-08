@@ -38,13 +38,13 @@ r[cairn.supersede.validate_ears.boundary]
 - THEN it consumes only caller-provided markdown strings and performs no filesystem, environment, process, time, stdout/stderr, or JSON presentation effects
 
 ### Requirement: Cairn repository initialization
-r[cairn.supersede.init] The system MUST initialize the native `cairn/` repository layout without requiring the upstream OpenSpec CLI.
+r[cairn.supersede.init] The system MUST initialize the native `.cairn/` repository layout without requiring the upstream OpenSpec CLI.
 
 #### Scenario: Initialize empty repository
 r[cairn.supersede.init.empty]
-- GIVEN a writable project root without an `cairn/` directory
+- GIVEN a writable project root without a `.cairn/` directory
 - WHEN the operator runs `cairn init --root <path>`
-- THEN the system creates `cairn/specs`, `cairn/changes`, and `cairn/archive`
+- THEN the system creates `.cairn/specs`, `.cairn/changes`, and `.cairn/archive`
 - AND the JSON receipt identifies the `cairn` layout
 
 #### Scenario: Initialize existing repository idempotently
@@ -55,13 +55,13 @@ r[cairn.supersede.init.idempotent]
 - AND the JSON receipt reports existing paths, the selected `cairn` layout, and `mutated=false`
 
 ### Requirement: Cairn change creation
-r[cairn.supersede.change_create] The system MUST create a named active change skeleton in the selected native `cairn/` layout by default.
+r[cairn.supersede.change_create] The system MUST create a named active change skeleton in the selected native `.cairn/` layout by default.
 
 #### Scenario: Create change skeleton
 r[cairn.supersede.change_create.skeleton]
 - GIVEN an initialized native repository
 - WHEN the operator runs `cairn change create <name> --root <path>`
-- THEN the system creates `cairn/changes/<name>/proposal.md`, `design.md`, `tasks.md`, and `specs/`
+- THEN the system creates `.cairn/changes/<name>/proposal.md`, `design.md`, `tasks.md`, and `specs/`
 - AND the JSON receipt reports `mutated=true`, the selected `cairn` layout, and the created artifacts
 
 #### Scenario: Reject invalid change names
@@ -315,47 +315,47 @@ r[cairn.supersede.receipt_schema.docs]
 - THEN the documentation MUST list the stable public fields for gate, sync, archive, and migration receipts
 
 ### Requirement: Cairn native lifecycle layout
-r[cairn.supersede.native_layout] The system MUST use the canonical `cairn/` lifecycle layout for normal runtime commands after the rename and MUST NOT silently fall back to legacy `ironspec/` or `openspec/` lifecycle content.
+r[cairn.supersede.native_layout] The system MUST use the canonical `.cairn/` lifecycle layout for normal runtime commands and MUST NOT silently fall back to old `cairn/`, `ironspec/`, or `openspec/` lifecycle content.
 
 #### Scenario: Initialize canonical Cairn layout
 r[cairn.supersede.native_layout.init_cairn]
 r[cairn.supersede.native_layout.init]
-- GIVEN a writable project root without a `cairn/` directory
+- GIVEN a writable project root without a `.cairn/` directory
 - WHEN the operator runs `cairn init --root <path>`
-- THEN the system creates `cairn/specs`, `cairn/changes`, and `cairn/archive`
+- THEN the system creates `.cairn/specs`, `.cairn/changes`, and `.cairn/archive`
 - AND the JSON receipt identifies the `cairn` layout
 
 #### Scenario: Prefer canonical layout over compatibility layout
 r[cairn.supersede.native_layout.prefer_cairn]
 r[cairn.supersede.native_layout.prefer]
-- GIVEN a repository containing both canonical `cairn/` lifecycle content and legacy `ironspec/` lifecycle content
+- GIVEN a repository containing canonical `.cairn/` content and old `cairn/` or `ironspec/` content
 - WHEN the operator runs read, status, doctor, validate, gate, sync, or archive commands
-- THEN the system uses the canonical `cairn/` layout
+- THEN the system uses the canonical `.cairn/` layout
 - AND the JSON receipt identifies the selected layout
 
 #### Scenario: Reject implicit legacy fallback
 r[cairn.supersede.native_layout.no_implicit_legacy_after_rename]
 r[cairn.supersede.native_layout.native_only]
-- GIVEN a repository containing only legacy `ironspec/` lifecycle content
-- WHEN the operator runs `cairn` read, status, doctor, validate, gate, sync, or archive commands without an explicit compatibility flag or migration command
-- THEN the command evaluates the canonical `cairn/` layout
-- AND it does not silently read legacy lifecycle content
+- GIVEN a repository containing only old `cairn/`, `ironspec/`, or `openspec/` lifecycle content
+- WHEN the operator runs `cairn` read, status, doctor, validate, gate, sync, or archive commands without an explicit migration command
+- THEN the command evaluates the canonical `.cairn/` layout
+- AND it does not silently read old lifecycle content
 
 ### Requirement: OpenSpec migration bridge
-r[cairn.supersede.migrate_openspec] The system MUST provide deterministic migration bridges from legacy `openspec/` and `ironspec/` layouts to canonical `cairn/` layout without using legacy content as an implicit runtime fallback.
+r[cairn.supersede.migrate_openspec] The system MUST provide deterministic migration bridges from old `cairn/`, `openspec/`, and `ironspec/` layouts to canonical `.cairn/` without an implicit runtime fallback.
 
 #### Scenario: Dry-run legacy OpenSpec migration plan
 r[cairn.supersede.migrate_openspec.dry_run]
 - GIVEN a repository with legacy `openspec/` lifecycle content
 - WHEN the operator runs `cairn migrate openspec --root <path>`
-- THEN the CLI emits a deterministic JSON migration plan from legacy `openspec/` paths into canonical `cairn/` paths
+- THEN the CLI emits a deterministic JSON migration plan from legacy `openspec/` paths into canonical `.cairn/` paths
 - AND no filesystem content is mutated
 
 #### Scenario: Execute legacy OpenSpec migration copy
 r[cairn.supersede.migrate_openspec.execute]
 - GIVEN a repository with legacy `openspec/` lifecycle content and no conflicting canonical destination files
 - WHEN the operator runs `cairn migrate openspec --root <path> --execute`
-- THEN the system copies planned files into matching canonical `cairn/` paths
+- THEN the system copies planned files into matching canonical `.cairn/` paths
 - AND the JSON receipt reports `mutated=true`
 
 #### Scenario: Block conflicting legacy OpenSpec migration
@@ -369,20 +369,20 @@ r[cairn.supersede.migrate_openspec.conflict]
 r[cairn.supersede.migrate_openspec.boundary]
 - GIVEN legacy migration support exists
 - WHEN normal read, status, doctor, validate, gate, sync, or archive commands run without an explicit migration command
-- THEN the commands evaluate the canonical `cairn/` layout rather than using legacy `openspec/` as an implicit runtime fallback
+- THEN the commands evaluate the canonical `.cairn/` layout rather than using old content as an implicit runtime fallback
 
 #### Scenario: Dry-run legacy Ironspec migration plan
 r[cairn.supersede.migrate_openspec.ironspec_dry_run]
 - GIVEN a repository with legacy `ironspec/` lifecycle content
 - WHEN the operator runs `cairn migrate ironspec --root <path>`
-- THEN the CLI emits a deterministic JSON migration plan from legacy `ironspec/` paths into canonical `cairn/` paths
+- THEN the CLI emits a deterministic JSON migration plan from legacy `ironspec/` paths into canonical `.cairn/` paths
 - AND no filesystem content is mutated
 
 #### Scenario: Execute legacy Ironspec migration copy
 r[cairn.supersede.migrate_openspec.ironspec_execute]
 - GIVEN a repository with legacy `ironspec/` lifecycle content and no conflicting canonical destination files
 - WHEN the operator runs `cairn migrate ironspec --root <path> --execute`
-- THEN the system copies planned files into matching canonical `cairn/` paths
+- THEN the system copies planned files into matching canonical `.cairn/` paths
 - AND the JSON receipt reports `mutated=true`
 
 ### Requirement: Rename identity and compatibility
@@ -497,7 +497,7 @@ r[cairn.supersede.mcp_server.read_tools] The system MUST expose bounded read-onl
 
 #### Scenario: List lifecycle state through MCP
 r[cairn.supersede.mcp_server.read_tools.status]
-- GIVEN a repository with native `cairn/` lifecycle content
+- GIVEN a repository with native `.cairn/` lifecycle content
 - WHEN an MCP client calls the Cairn status or content-listing tool
 - THEN the tool returns structured content with accepted specs, active changes, archived changes, selected layout, and validation summary fields
 - AND the tool is annotated as read-only and non-destructive
@@ -731,7 +731,7 @@ r[cairn.supersede.release_readiness_bundle.schema]
 
 #### Scenario: Bundle runs locally without mutation
 r[cairn.supersede.release_readiness_bundle.local]
-- GIVEN a checkout with native `cairn/` lifecycle content
+- GIVEN a checkout with native `.cairn/` lifecycle content
 - WHEN the operator runs the release-readiness bundle command without mutation flags
 - THEN the command MUST NOT create, edit, sync, archive, migrate, or delete lifecycle artifacts
 - AND it MUST complete using local repository evidence rather than requiring a network service or long-running MCP client
@@ -2482,7 +2482,7 @@ r[cairn.supersede.repo_native_only] The Cairn repository MUST NOT keep a top-lev
 
 #### Scenario: Native-only repository doctor
 r[cairn.supersede.repo_native_only.doctor]
-- GIVEN the Cairn repository contains its native lifecycle content under `cairn/`
+- GIVEN the Cairn repository contains its native lifecycle content under `.cairn/`
 - WHEN an operator runs `cairn doctor --root .`
 - THEN the selected layout is `cairn`
 - AND the layout selection check does not warn that legacy and native roots are both present
@@ -2580,7 +2580,7 @@ Cairn MUST define traceability scan profiles in reviewed Nickel policy data or r
 r[cairn.supersede.traceability_ownership.configured_profiles.cairn_default]
 - GIVEN the default Cairn repository profile
 - WHEN Cairn loads traceability configuration
-- THEN the profile MUST scan accepted specs under `cairn/specs` and implementation or verification markers in Rust and Nickel source roots used by the current maintained gate.
+- THEN the profile MUST scan accepted specs under `.cairn/specs` and implementation or verification markers in Rust and Nickel source roots used by the current maintained gate.
 
 #### Scenario: Trellis-style profile is representable
 r[cairn.supersede.traceability_ownership.configured_profiles.trellis]

@@ -21,7 +21,7 @@ Use this Hermes skill for work in `/home/brittonr/git/cairn`. Cairn is the canon
 - Rust workspace with Nix flake workflow.
 - CLI shell: `crates/cairn-cli`.
 - Pure deterministic core: `crates/cairn-core`.
-- Native lifecycle content lives under `cairn/`.
+- Native lifecycle content lives under `.cairn/`.
 - Legacy lifecycle content is an explicit import/migration source, not a runtime fallback layout.
 - Fixtures live under `fixtures/` and are part of the behavior contract.
 - Slotcar input MUST stay `github:OnixResearch/slotcar`.
@@ -29,7 +29,7 @@ Use this Hermes skill for work in `/home/brittonr/git/cairn`. Cairn is the canon
 
 ## Operating mode
 
-- For public CLI behavior, compatibility semantics, mutation, architecture, receipt schemas, or roadmap work, write a native `cairn/changes/<slug>/` package first.
+- For public CLI behavior, compatibility semantics, mutation, architecture, receipt schemas, or roadmap work, write a native `.cairn/changes/<slug>/` package first.
 - Small fixture/test/doc hardening can be direct when it does not alter public behavior.
 - Prefer one narrow ROI slice at a time, then verify, sync/archive the change when applicable, commit, and integrate it.
 - Treat compatibility surfaces as import-only product behavior; native Cairn remains the sole planning authority.
@@ -125,7 +125,7 @@ Expected result: no matches.
   - Workflow commands report the immutable selected profile and bounded structural facts. `--schema` is an assertion, not a profile override.
   - Profile conformance does not prove zero behavior effect, risk-analysis truth, test sufficiency, code correctness, or release eligibility.
   - local `depends_on` ordering dependencies are authored through preview-by-default `change depend add/remove`; archived dependencies satisfy blockers, active dependencies block sync/archive, and cross-repo receipt/evidence dependencies remain a separate evidence-input concept.
-  - native `cairn/` layout is used for normal runtime commands; legacy layouts are migration-only and are not implicit fallbacks.
+  - Native `.cairn/` content is used for normal runtime commands. Old `cairn/`, `ironspec/`, and `openspec/` content is migration-only.
 - Diagnostics:
   - `cairn doctor --root PATH [--policy PATH]`
   - read-only receipt fields include `valid`, `layout`, spec/change counts, validation issue count, and named checks.
@@ -180,8 +180,9 @@ Expected result: no matches.
   - Ordinary update refuses content and lifecycle conflicts. Explicit resolution never uses local bytes as an implicit winner, rewrites history, permits partial choices, carries approval-like lifecycle state forward, or claims semantic merge correctness.
   - Portable and COB locks serialize cooperating local Cairn processes. Stale locks/prepared state require deliberate recovery; no backend receipt proves losing-head invalidity, lifecycle approval, evidence truth, network publication, synchronization, peer convergence, future authority, archive execution, release eligibility, or resistance to unrelated processes with equivalent host authority.
 - Migration:
-  - Cairn migration commands emit dry-run copy plans from legacy lifecycle layouts to native `cairn/`.
-  - `--execute` copies accepted specs, active changes, and archives; it never deletes legacy content.
+  - Cairn migration commands emit dry-run copy plans from old lifecycle layouts to native `.cairn/`.
+  - Use `cairn migrate cairn` for the old visible directory.
+  - `--execute` copies accepted specs, active changes, and archives. It never deletes old content.
   - existing native destinations are blockers and must not be overwritten.
   - stable public migration receipt fields are `command`, `root`, `source_layout`, `destination_layout`, `actions`, `conflicts`, `blocked`, `dry_run`, `mutated`, `policy`, `policy_hash`, `source_manifest_hash`, `destination_manifest_hash`, `manifest_hash`, and `receipt_hash`.
   - migration action entries expose stable `source`, `destination`, `source_hash`, and `destination_hash` fields.

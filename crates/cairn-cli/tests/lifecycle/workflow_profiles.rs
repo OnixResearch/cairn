@@ -31,7 +31,7 @@ fn profile_scaffolds_are_exact_and_unknown_profiles_do_not_mutate() -> Result<()
         root_text,
     ])?;
     assert_eq!(assurance["workflow_profile"], "assurance");
-    let assurance_root = root.join("cairn/changes/assurance-demo");
+    let assurance_root = root.join(".cairn/changes/assurance-demo");
     for path in [
         "proposal.md",
         "design.md",
@@ -56,7 +56,7 @@ fn profile_scaffolds_are_exact_and_unknown_profiles_do_not_mutate() -> Result<()
         root_text,
     ])?;
     assert_eq!(no_spec["workflow_profile"], "no-spec-delta");
-    let no_spec_root = root.join("cairn/changes/no-spec-demo");
+    let no_spec_root = root.join(".cairn/changes/no-spec-demo");
     assert!(no_spec_root.join("acceptance.md").is_file());
     assert!(no_spec_root
         .join("reviews/no-spec-classification.json")
@@ -80,7 +80,7 @@ fn profile_scaffolds_are_exact_and_unknown_profiles_do_not_mutate() -> Result<()
         ])
         .output()?;
     assert!(!output.status.success());
-    assert!(!root.join("cairn/changes/unknown-demo").exists());
+    assert!(!root.join(".cairn/changes/unknown-demo").exists());
 
     let ambient = cairn()
         .env("CAIRN_WORKFLOW_PROFILE", "no-spec-delta")
@@ -88,7 +88,7 @@ fn profile_scaffolds_are_exact_and_unknown_profiles_do_not_mutate() -> Result<()
         .output()?;
     assert!(ambient.status.success());
     let ambient_metadata: serde_json::Value = serde_json::from_slice(&fs::read(
-        root.join("cairn/changes/ambient-demo/metadata.json"),
+        root.join(".cairn/changes/ambient-demo/metadata.json"),
     )?)?;
     assert_eq!(ambient_metadata["workflow_profile"]["id"], "spec-driven");
 
@@ -129,7 +129,7 @@ fn assurance_profile_requires_current_reviewed_obligations() -> Result<(), Box<d
         "--root",
         root_text,
     ])?;
-    let change = root.join("cairn/changes/assurance-demo");
+    let change = root.join(".cairn/changes/assurance-demo");
     write_assurance_artifacts(&change)?;
     write_review(
         &change,
@@ -186,7 +186,7 @@ fn no_spec_profile_syncs_as_no_op_and_rechecks_before_archive() -> Result<(), Bo
         "--root",
         root_text,
     ])?;
-    let change = root.join("cairn/changes/no-spec-demo");
+    let change = root.join(".cairn/changes/no-spec-demo");
     write_no_spec_artifacts(&change)?;
     write_review(
         &change,
@@ -206,7 +206,7 @@ fn no_spec_profile_syncs_as_no_op_and_rechecks_before_archive() -> Result<(), Bo
     );
     let executed = run_json(&["sync", "no-spec-demo", "--root", root_text, "--execute"])?;
     assert_eq!(executed["mutated"], false);
-    assert!(fs::read_dir(root.join("cairn/specs"))?.next().is_none());
+    assert!(fs::read_dir(root.join(".cairn/specs"))?.next().is_none());
 
     fs::write(
         change.join("acceptance.md"),
@@ -227,7 +227,7 @@ fn no_spec_profile_syncs_as_no_op_and_rechecks_before_archive() -> Result<(), Bo
     assert_eq!(archived["mutated"], true);
     assert!(!change.exists());
     assert!(
-        fs::read_dir(root.join("cairn/archive"))?.any(|entry| entry.ok().is_some_and(|entry| {
+        fs::read_dir(root.join(".cairn/archive"))?.any(|entry| entry.ok().is_some_and(|entry| {
             entry
                 .file_name()
                 .to_string_lossy()

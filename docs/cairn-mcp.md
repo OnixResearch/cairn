@@ -47,13 +47,13 @@ All default tools include MCP annotations equivalent to `readOnlyHint=true` and 
 - `cairn_drain_plan`: optional `root`, `policy`; return a read-only repository-wide drain plan for all active changes, including task counts, proposal/design/tasks gate summaries, blockers, and explicit next actions. It recommends `cairn_sync_execute`/`cairn_archive_execute` for ready changes but never performs mutations itself. r[verify cairn.mcp_drain_all.plan.read_only] r[verify cairn.mcp_drain_all.plan.readiness] r[verify cairn.mcp_drain_all.plan.next_actions] r[verify cairn.mcp_drain_all.plan.mutation_boundary]
 - `cairn_sync_plan`: required `change`, optional `root`, `policy`; return a dry-run sync plan.
 - `cairn_archive_plan`: required `change`, optional `root`, `policy`; return a dry-run archive plan.
-- `cairn_migrate_plan`: required `source`, optional `root`, `policy`; `source` must be `openspec` or `ironspec`.
+- `cairn_migrate_plan`: required `source`, optional `root`, `policy`; `source` must be `cairn`, `openspec`, or `ironspec`.
 
 ## Mutation guard
 
 Without `--allow-mutations`, calls to `cairn_init`, `cairn_change_create`, `cairn_sync_execute`, `cairn_archive_execute`, and `cairn_migrate_execute` return a structured capability error with `mutated=false`; this default denial does not depend on otherwise-valid tool arguments.
 
-With `--allow-mutations`, execution tools are listed with `readOnlyHint=false`, `destructiveHint=true`, and strict schemas: `cairn_init` accepts optional `root`/`policy`, `cairn_change_create` requires `change`, sync/archive execute require `change` plus optional `root`/`policy`, and migrate execute requires `source` (`openspec` or `ironspec`) plus optional `root`/`policy`. Mutation-enabled calls use the same Cairn receipt fields as the CLI execution paths.
+With `--allow-mutations`, execution tools are listed with `readOnlyHint=false`, `destructiveHint=true`, and strict schemas: `cairn_init` accepts optional `root`/`policy`, `cairn_change_create` requires `change`, sync/archive execute require `change` plus optional `root`/`policy`, and migrate execute requires `source` (`cairn`, `openspec`, or `ironspec`) plus optional `root`/`policy`. Mutation-enabled calls use the same Cairn receipt fields as the CLI execution paths.
 
 ## Boundaries
 

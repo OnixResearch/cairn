@@ -63,7 +63,7 @@ fn mcp_drain_plan_recommends_explicit_mutation_tools_for_ready_changes(
     let temp_root = env::temp_dir().join(format!("cairn-mcp-drain-ready-{}", std::process::id()));
     let _ = fs::remove_dir_all(&temp_root);
     copy_dir_recursive(&repo_root().join("fixtures/basic"), &temp_root)?;
-    let tasks_path = temp_root.join("cairn/changes/demo/tasks.md");
+    let tasks_path = temp_root.join(".cairn/changes/demo/tasks.md");
     let tasks = fs::read_to_string(&tasks_path)?.replace("- [ ]", "- [x]");
     fs::write(&tasks_path, tasks)?;
 
@@ -97,9 +97,9 @@ fn mcp_drain_plan_orders_active_dependencies_before_dependents() -> Result<(), B
     ));
     let _ = fs::remove_dir_all(&temp_root);
     copy_dir_recursive(&repo_root().join("fixtures/archive-ready"), &temp_root)?;
-    let ready_change = temp_root.join("cairn/changes/ready");
-    let prereq_change = temp_root.join("cairn/changes/z-prereq");
-    let dependent_change = temp_root.join("cairn/changes/a-dependent");
+    let ready_change = temp_root.join(".cairn/changes/ready");
+    let prereq_change = temp_root.join(".cairn/changes/z-prereq");
+    let dependent_change = temp_root.join(".cairn/changes/a-dependent");
     copy_dir_recursive(&ready_change, &prereq_change)?;
     copy_dir_recursive(&ready_change, &dependent_change)?;
     fs::write(

@@ -84,7 +84,7 @@ fn read_outputs_match_canonical_goldens() -> Result<(), Box<dyn Error>> {
 fn legacy_openspec_is_not_runtime_fallback() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.native_layout.native_only]
     let fixture = temp_fixture("legacy-no-fallback", "fixtures/basic")?;
-    fs::remove_dir_all(fixture.join("cairn"))?;
+    fs::remove_dir_all(fixture.join(".cairn"))?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
 
     let status = run_json(&["status", "--root", root])?;
@@ -154,7 +154,7 @@ fn validate_rejects_weak_ears_style_specs() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.lifecycle_validation.spec_substance.borrowed_strength]
     // r[verify cairn.lifecycle_validation.spec_substance.identity]
     let root = temp_project("weak-ears")?;
-    let spec_dir = root.join("cairn/specs/weak");
+    let spec_dir = root.join(".cairn/specs/weak");
     fs::create_dir_all(&spec_dir)?;
     fs::write(
         spec_dir.join("spec.md"),

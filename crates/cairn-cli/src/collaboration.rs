@@ -923,7 +923,7 @@ mod tests {
     fn fixture(name: &str) -> Result<(PathBuf, PathBuf), Box<dyn Error>> {
         let root = test_directory(name);
         remove_directory(&root)?;
-        let change = root.join("cairn/changes").join(CHANGE_ID);
+        let change = root.join(".cairn/changes").join(CHANGE_ID);
         fs::create_dir_all(change.join("specs"))?;
         fs::write(change.join("proposal.md"), PROPOSAL)?;
         Ok((root.clone(), root.join("portable-store.json")))
@@ -1034,7 +1034,7 @@ mod tests {
         assert_eq!(status["backend"], PORTABLE_COLLABORATION_BACKEND_V1);
 
         fs::write(
-            root.join("cairn/changes")
+            root.join(".cairn/changes")
                 .join(CHANGE_ID)
                 .join("proposal.md"),
             UPDATED_PROPOSAL,
@@ -1055,7 +1055,7 @@ mod tests {
         assert_eq!(noop["noop"], true);
         assert_eq!(noop["mutated"], false);
 
-        fs::remove_dir_all(root.join("cairn/changes").join(CHANGE_ID))?;
+        fs::remove_dir_all(root.join(".cairn/changes").join(CHANGE_ID))?;
         let checkout_preview = portable_checkout(&options(
             CollaborationCommand::Checkout,
             &root,
@@ -1075,7 +1075,7 @@ mod tests {
         assert_eq!(checkout["mutated"], true);
         assert_eq!(
             fs::read_to_string(
-                root.join("cairn/changes")
+                root.join(".cairn/changes")
                     .join(CHANGE_ID)
                     .join("proposal.md")
             )?,
@@ -1101,7 +1101,7 @@ mod tests {
         assert_eq!(repeated["mutated"], false);
 
         fs::write(
-            root.join("cairn/changes")
+            root.join(".cairn/changes")
                 .join(CHANGE_ID)
                 .join("proposal.md"),
             "# Divergent\n",
@@ -1139,7 +1139,7 @@ mod tests {
             portable_import(&options(CollaborationCommand::Import, &root, &store, true))?;
         assert_eq!(imported["valid"], true);
         fs::write(
-            root.join("cairn/changes")
+            root.join(".cairn/changes")
                 .join(CHANGE_ID)
                 .join("proposal.md"),
             UPDATED_PROPOSAL,
@@ -1204,7 +1204,7 @@ mod tests {
         let imported =
             portable_import(&options(CollaborationCommand::Import, &root, &store, true))?;
         assert_eq!(imported["valid"], true);
-        fs::remove_dir_all(root.join("cairn/changes").join(CHANGE_ID))?;
+        fs::remove_dir_all(root.join(".cairn/changes").join(CHANGE_ID))?;
 
         let guard = RepositoryCheckoutLock::acquire(&root, CHANGE_ID)?;
         let blocked = portable_checkout(&options(
@@ -1215,7 +1215,7 @@ mod tests {
         ))?;
         assert_eq!(blocked["blocked"], true);
         assert_eq!(blocked["mutated"], false);
-        assert!(!root.join("cairn/changes").join(CHANGE_ID).exists());
+        assert!(!root.join(".cairn/changes").join(CHANGE_ID).exists());
         guard.release()?;
         remove_directory(&root)?;
         Ok(())

@@ -157,9 +157,9 @@ fn rename_classification_bucket(path: &str, line: &str) -> &'static str {
         "ironspec = {",
         "\"ironspec\" =>",
         "\"ironspec\",",
-        "[\"openspec\", \"ironspec\"]",
-        "openspec or ironspec",
-        "<openspec|ironspec>",
+        "[\"cairn\", \"openspec\", \"ironspec\"]",
+        "cairn, openspec, or ironspec",
+        "<cairn|openspec|ironspec>",
     ];
     if text.contains("ironspec")
         && compatibility_tokens

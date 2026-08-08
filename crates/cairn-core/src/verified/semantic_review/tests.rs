@@ -245,11 +245,11 @@ fn review_metrics_guidance_sync_accepts_documented_diagnostic_and_refs() {
             "diagnostics": ["missing-auto-fix-task"]
         }],
         "tasks": [{
-            "path": "cairn/changes/example/tasks.md",
+            "path": ".cairn/changes/example/tasks.md",
             "requirement_ids": ["project.review.auto_fix"]
         }],
         "specs": [{
-            "path": "cairn/changes/example/specs/review/spec.md",
+            "path": ".cairn/changes/example/specs/review/spec.md",
             "requirement_ids": ["project.review.auto_fix"]
         }]
     });
@@ -269,11 +269,11 @@ fn review_metrics_guidance_sync_rejects_missing_diagnostic_anchor_and_refs() {
             "diagnostics": ["other-diagnostic"]
         }],
         "tasks": [{
-            "path": "cairn/changes/example/tasks.md",
+            "path": ".cairn/changes/example/tasks.md",
             "requirement_ids": ["project.review.other"]
         }],
         "specs": [{
-            "path": "cairn/changes/example/specs/review/spec.md",
+            "path": ".cairn/changes/example/specs/review/spec.md",
             "requirement_ids": ["project.review.other"]
         }]
     });

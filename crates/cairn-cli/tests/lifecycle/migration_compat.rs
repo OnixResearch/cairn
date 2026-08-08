@@ -12,7 +12,7 @@ fn migrate_execute_copies_legacy_to_native_and_prefers_native() -> Result<(), Bo
     // r[verify cairn.supersede.native_layout.native_only] r[verify cairn.supersede.migrate_openspec.boundary]
     // r[verify cairn.supersede.repo_native_verification] r[verify cairn.supersede.repo_native_verification.import]
     let fixture = temp_fixture("migrate-execute", "fixtures/basic")?;
-    fs::remove_dir_all(fixture.join("cairn"))?;
+    fs::remove_dir_all(fixture.join(".cairn"))?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
 
     let value = run_json(&["migrate", "openspec", "--root", root, "--execute"])?;
@@ -24,16 +24,16 @@ fn migrate_execute_copies_legacy_to_native_and_prefers_native() -> Result<(), Bo
     assert_hash_field(&value, "manifest_hash")?;
     assert_hash_field(&value, "receipt_hash")?;
     assert_hash_field(&value["actions"][0], "source_hash")?;
-    assert!(fixture.join("cairn/specs/demo/spec.md").is_file());
+    assert!(fixture.join(".cairn/specs/demo/spec.md").is_file());
     assert!(fixture
-        .join("cairn/changes/demo/specs/demo/spec.md")
+        .join(".cairn/changes/demo/specs/demo/spec.md")
         .is_file());
 
     let status = run_json(&["status", "--root", root])?;
     assert_eq!(status["layout"], "cairn");
     assert_eq!(
         status["changes"][0]["path"],
-        format!("{root}/cairn/changes/demo")
+        format!("{root}/.cairn/changes/demo")
     );
     fs::remove_dir_all(fixture)?;
     Ok(())
@@ -43,9 +43,9 @@ fn migrate_execute_copies_legacy_to_native_and_prefers_native() -> Result<(), Bo
 fn migrate_execute_blocks_existing_native_destination() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.migrate_openspec.conflict]
     let fixture = temp_fixture("migrate-conflict", "fixtures/basic")?;
-    fs::remove_dir_all(fixture.join("cairn"))?;
-    fs::create_dir_all(fixture.join("cairn/specs/demo"))?;
-    fs::write(fixture.join("cairn/specs/demo/spec.md"), "existing")?;
+    fs::remove_dir_all(fixture.join(".cairn"))?;
+    fs::create_dir_all(fixture.join(".cairn/specs/demo"))?;
+    fs::write(fixture.join(".cairn/specs/demo/spec.md"), "existing")?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
 
     let value = run_json(&["migrate", "openspec", "--root", root, "--execute"])?;
@@ -62,7 +62,7 @@ fn migrate_execute_blocks_existing_native_destination() -> Result<(), Box<dyn Er
             .len()
             == 64));
     assert_eq!(
-        fs::read_to_string(fixture.join("cairn/specs/demo/spec.md"))?,
+        fs::read_to_string(fixture.join(".cairn/specs/demo/spec.md"))?,
         "existing"
     );
     fs::remove_dir_all(fixture)?;
@@ -86,12 +86,67 @@ fn legacy_ironspec_alias_warns_and_runs_cairn_behavior() -> Result<(), Box<dyn E
 }
 
 #[test]
+fn migrate_old_cairn_directory_explicitly_without_runtime_fallback() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.lifecycle_directory.legacy_migration]
+    // r[verify cairn.lifecycle_directory.legacy_migration.preview]
+    // r[verify cairn.lifecycle_directory.legacy_migration.execute]
+    // r[verify cairn.lifecycle_directory.hidden_default.runtime]
+    let root = temp_fixture("migrate-old-cairn", "fixtures/basic")?;
+    fs::rename(root.join(".cairn"), root.join("cairn"))?;
+    let root_text = root.to_string_lossy().to_string();
+
+    let status = run_json(&["status", "--root", &root_text])?;
+    assert_eq!(status["layout"], "cairn");
+    assert_eq!(status["specs"].as_array().ok_or("specs")?.len(), 0);
+    assert_eq!(status["changes"].as_array().ok_or("changes")?.len(), 0);
+
+    let dry_run = run_json(&["migrate", "cairn", "--root", &root_text])?;
+    assert_eq!(dry_run["command"], "migrate_legacy-cairn");
+    assert_eq!(dry_run["source_layout"], "legacy-cairn");
+    assert_eq!(dry_run["destination_layout"], "cairn");
+    assert_eq!(dry_run["dry_run"], true);
+    assert_eq!(dry_run["mutated"], false);
+    assert!(!dry_run["actions"].as_array().ok_or("actions")?.is_empty());
+    assert!(!root.join(".cairn").exists());
+
+    let executed = run_json(&["migrate", "cairn", "--root", &root_text, "--execute"])?;
+    assert_eq!(executed["dry_run"], false);
+    assert_eq!(executed["mutated"], true);
+    assert!(root.join("cairn/specs/demo/spec.md").is_file());
+    assert!(root.join(".cairn/specs/demo/spec.md").is_file());
+    let migrated = run_json(&["status", "--root", &root_text])?;
+    assert_eq!(migrated["layout"], "cairn");
+    assert_eq!(migrated["specs"].as_array().ok_or("specs")?.len(), 1);
+    Ok(())
+}
+
+#[test]
+fn migrate_old_cairn_directory_blocks_existing_destination() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.lifecycle_directory.legacy_migration.conflict]
+    let root = temp_fixture("migrate-old-cairn-conflict", "fixtures/basic")?;
+    fs::rename(root.join(".cairn"), root.join("cairn"))?;
+    fs::create_dir_all(root.join(".cairn/specs/demo"))?;
+    fs::write(root.join(".cairn/specs/demo/spec.md"), "existing")?;
+    let root_text = root.to_string_lossy().to_string();
+
+    let executed = run_json(&["migrate", "cairn", "--root", &root_text, "--execute"])?;
+    assert_eq!(executed["blocked"], true);
+    assert_eq!(executed["mutated"], false);
+    assert_eq!(
+        fs::read_to_string(root.join(".cairn/specs/demo/spec.md"))?,
+        "existing"
+    );
+    assert!(root.join("cairn/specs/demo/spec.md").is_file());
+    Ok(())
+}
+
+#[test]
 fn migrate_legacy_ironspec_to_cairn_explicitly() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.migrate_openspec.ironspec_dry_run]
     // r[verify cairn.supersede.migrate_openspec.ironspec_execute]
     // r[verify cairn.supersede.native_layout.no_implicit_legacy_after_rename]
     let root = temp_fixture("migrate-ironspec", "fixtures/basic")?;
-    fs::rename(root.join("cairn"), root.join("ironspec"))?;
+    fs::rename(root.join(".cairn"), root.join("ironspec"))?;
     let root_text = root.to_string_lossy().to_string();
 
     let status = run_json(&["status", "--root", &root_text])?;

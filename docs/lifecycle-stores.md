@@ -13,9 +13,9 @@ A lifecycle store contains these artifacts:
 ```text
 .cairn-store/store.ncl
 .cairn-store/store.json
-cairn/specs/
-cairn/changes/
-cairn/archive/
+.cairn/specs/
+.cairn/changes/
+.cairn/archive/
 ```
 
 `.cairn-store/store.ncl` is the typed Nickel source. `.cairn-store/store.json` is the checked JSON projection for runtime use.
@@ -97,7 +97,7 @@ Registration validates these inputs:
 
 - the typed store source
 - the current JSON projection
-- the native `cairn/` root
+- the native `.cairn/` root
 - the exact store identity
 - path safety
 - conflicts in the local locator
@@ -175,7 +175,7 @@ Existing `--store PATH` options keep their command-specific meanings. Cairn does
 Cairn resolves a lifecycle root in this order:
 
 1. Use an explicit `--root PATH` or `--lifecycle-store ID` selector.
-2. Use the nearest native `cairn/` root inside the current VCS boundary.
+2. Use the nearest native `.cairn/` root inside the current VCS boundary.
 3. Use the nearest checked `.cairn/project.json` store pointer inside that boundary.
 4. Use the current directory through the classic fallback.
 

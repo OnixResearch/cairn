@@ -33,17 +33,19 @@ impl TestRoot {
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&root);
-        fs::create_dir_all(root.join("cairn/archive").join(ARCHIVE_ID))
+        fs::create_dir_all(root.join(".cairn/archive").join(ARCHIVE_ID))
             .expect("create archive fixture");
         fs::write(
-            root.join("cairn/archive")
+            root.join(".cairn/archive")
                 .join(ARCHIVE_ID)
                 .join("proposal.md"),
             PROPOSAL_CONTENT,
         )
         .expect("write proposal fixture");
         fs::write(
-            root.join("cairn/archive").join(ARCHIVE_ID).join("tasks.md"),
+            root.join(".cairn/archive")
+                .join(ARCHIVE_ID)
+                .join("tasks.md"),
             TASKS_CONTENT,
         )
         .expect("write tasks fixture");
@@ -95,8 +97,8 @@ fn dry_run_command_writes_only_the_requested_plan_output() {
     .expect("run dry compaction plan");
 
     assert!(out.is_file());
-    assert!(root.path().join("cairn/archive").join(ARCHIVE_ID).is_dir());
-    assert!(!root.path().join("cairn/compaction").exists());
+    assert!(root.path().join(".cairn/archive").join(ARCHIVE_ID).is_dir());
+    assert!(!root.path().join(".cairn/compaction").exists());
 }
 
 #[test]
@@ -117,7 +119,7 @@ fn lossless_pack_verifies_and_unpack_restores_exact_bytes() {
     let plan_path = save_plan(root.path(), &plan);
 
     execute_saved_plan(root.path(), &policy, &plan_path).expect("execute compaction");
-    assert!(!root.path().join("cairn/archive").join(ARCHIVE_ID).exists());
+    assert!(!root.path().join(".cairn/archive").join(ARCHIVE_ID).exists());
     let verification = verify_repository(root.path(), &policy).expect("verify compacted state");
     assert!(verification.valid, "{:?}", verification.issues);
 
@@ -129,7 +131,7 @@ fn lossless_pack_verifies_and_unpack_restores_exact_bytes() {
     assert_eq!(
         fs::read(
             root.path()
-                .join("cairn/archive")
+                .join(".cairn/archive")
                 .join(ARCHIVE_ID)
                 .join("proposal.md")
         )
@@ -139,7 +141,7 @@ fn lossless_pack_verifies_and_unpack_restores_exact_bytes() {
     assert_eq!(
         fs::read(
             root.path()
-                .join("cairn/archive")
+                .join(".cairn/archive")
                 .join(ARCHIVE_ID)
                 .join("tasks.md")
         )
@@ -161,7 +163,7 @@ fn stale_plan_is_rejected_before_mutation() {
     let plan_path = save_plan(root.path(), &plan);
     fs::write(
         root.path()
-            .join("cairn/archive")
+            .join(".cairn/archive")
             .join(ARCHIVE_ID)
             .join("tasks.md"),
         b"changed after planning\n",
@@ -171,8 +173,8 @@ fn stale_plan_is_rejected_before_mutation() {
     let result = execute_saved_plan(root.path(), &policy, &plan_path);
 
     assert!(result.is_err());
-    assert!(root.path().join("cairn/archive").join(ARCHIVE_ID).is_dir());
-    assert!(!root.path().join("cairn/compaction").exists());
+    assert!(root.path().join(".cairn/archive").join(ARCHIVE_ID).is_dir());
+    assert!(!root.path().join(".cairn/compaction").exists());
 }
 
 #[test]
@@ -182,7 +184,7 @@ fn stale_plan_is_rejected_before_mutation() {
 // r[verify cairn.sync_archive.compaction.tests.negative]
 fn unsafe_pointer_and_interrupted_state_fail_verification() {
     let root = TestRoot::create("negative");
-    let second_archive = root.path().join("cairn/archive").join(SECOND_ARCHIVE_ID);
+    let second_archive = root.path().join(".cairn/archive").join(SECOND_ARCHIVE_ID);
     fs::create_dir_all(&second_archive).expect("create second archive");
     fs::write(second_archive.join("proposal.md"), PROPOSAL_CONTENT).expect("write second archive");
     let policy = policy();
@@ -191,7 +193,7 @@ fn unsafe_pointer_and_interrupted_state_fail_verification() {
     execute_saved_plan(root.path(), &policy, &plan_path).expect("execute compaction");
     let pointer_path = root
         .path()
-        .join("cairn/compaction/v1/pointers")
+        .join(".cairn/compaction/v1/pointers")
         .join(format!("{ARCHIVE_ID}.json"));
     let mut pointer: serde_json::Value =
         serde_json::from_slice(&fs::read(&pointer_path).expect("read pointer"))
@@ -206,15 +208,18 @@ fn unsafe_pointer_and_interrupted_state_fail_verification() {
     .expect("write unsafe pointer");
     fs::remove_file(
         root.path()
-            .join("cairn/compaction/v1/pointers")
+            .join(".cairn/compaction/v1/pointers")
             .join(format!("{SECOND_ARCHIVE_ID}.json")),
     )
     .expect("remove second retained pointer");
-    fs::create_dir_all(root.path().join("cairn/compaction/v1/prepared/interrupted"))
-        .expect("create interrupted state");
+    fs::create_dir_all(
+        root.path()
+            .join(".cairn/compaction/v1/prepared/interrupted"),
+    )
+    .expect("create interrupted state");
     let orphan_pack = root
         .path()
-        .join("cairn/compaction/v1/packs")
+        .join(".cairn/compaction/v1/packs")
         .join("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     fs::create_dir_all(&orphan_pack).expect("create orphan pack directory");
     fs::write(orphan_pack.join("manifest.json"), b"{}\n").expect("write orphan pack");
@@ -261,7 +266,7 @@ fn shared_bounded_observation_preserves_accepted_archive_inputs_and_order() {
 // r[verify cairn.bounded_tree_adoption.parity]
 fn shared_bounded_observation_retains_link_and_special_file_policy() {
     let root = TestRoot::create("parity-negative");
-    let archive = root.path().join("cairn/archive").join(ARCHIVE_ID);
+    let archive = root.path().join(".cairn/archive").join(ARCHIVE_ID);
     std::os::unix::fs::symlink("proposal.md", archive.join("alias.md")).expect("create symlink");
     let fifo = archive.join("pipe");
     let status = std::process::Command::new("mkfifo")

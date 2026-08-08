@@ -34,9 +34,9 @@ fn test_root(name: &str) -> Result<PathBuf, Box<dyn Error>> {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
         Err(error) => return Err(error.into()),
     }
-    fs::create_dir_all(root.join("cairn/specs"))?;
-    fs::create_dir_all(root.join("cairn/changes"))?;
-    fs::create_dir_all(root.join("cairn/archive"))?;
+    fs::create_dir_all(root.join(".cairn/specs"))?;
+    fs::create_dir_all(root.join(".cairn/changes"))?;
+    fs::create_dir_all(root.join(".cairn/archive"))?;
     fs::create_dir_all(root.join("docs"))?;
     Ok(root)
 }

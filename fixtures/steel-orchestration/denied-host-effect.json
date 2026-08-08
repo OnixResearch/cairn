@@ -7,7 +7,7 @@
       "id": "write-secret",
       "host_function": "host.fs.write",
       "args": {
-        "path": "cairn/specs/demo/spec.md",
+        "path": ".cairn/specs/demo/spec.md",
         "contents": "must-not-run"
       }
     }

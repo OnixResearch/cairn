@@ -15,11 +15,11 @@ use crate::support::{CapabilityRoot, CapabilityRootKind};
 
 use super::io::{path_exists, read_json, read_json_if_exists};
 
-const ARCHIVE_DIRECTORY: &str = "cairn/archive";
-const POINTER_DIRECTORY: &str = "cairn/compaction/v1/pointers";
-const PREPARED_DIRECTORY: &str = "cairn/compaction/v1/prepared";
-const UNPACK_PREPARED_DIRECTORY: &str = "cairn/compaction/v1/unpack-prepared";
-const LEDGER_FILE: &str = "cairn/compaction/v1/ledger.json";
+const ARCHIVE_DIRECTORY: &str = ".cairn/archive";
+const POINTER_DIRECTORY: &str = ".cairn/compaction/v1/pointers";
+const PREPARED_DIRECTORY: &str = ".cairn/compaction/v1/prepared";
+const UNPACK_PREPARED_DIRECTORY: &str = ".cairn/compaction/v1/unpack-prepared";
+const LEDGER_FILE: &str = ".cairn/compaction/v1/ledger.json";
 const ARCHIVE_SCAN_MAX_DEPTH: usize = 32;
 const ARCHIVE_SCAN_MAX_FILES: usize = 10_000;
 const ARCHIVE_FILE_MAX_BYTES: u64 = 64 * 1_048_576;

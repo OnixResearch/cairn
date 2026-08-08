@@ -14,7 +14,7 @@
         "requirement_id": "cairn.requirement_id_registry.contract",
         "namespace": "cairn.requirement_id_registry",
         "owner_repo": "cairn",
-        "accepted_spec": "cairn/specs/requirement-id-registry/spec.md",
+        "accepted_spec": ".cairn/specs/requirement-id-registry/spec.md",
         "status": "active",
         "aliases": [],
         "allowed_consumers": ["cairn", "octet"]

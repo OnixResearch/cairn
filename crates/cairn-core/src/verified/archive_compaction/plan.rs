@@ -17,7 +17,7 @@ use super::model::{
     LOSSLESS_PACK_PROFILE,
 };
 
-pub const COMPACTION_ROOT: &str = "cairn/compaction/v1";
+pub const COMPACTION_ROOT: &str = ".cairn/compaction/v1";
 pub const HASH_HEX_LENGTH: usize = 64;
 const LOSSINESS_LOSSLESS: &str = "lossless";
 const GENESIS_DOMAIN: &[u8] = b"cairn.archive-compaction.genesis.v1\0";
@@ -186,7 +186,7 @@ pub fn build_compaction_plan(
     if candidate_manifests.is_empty() {
         blockers.push(issue(
             "archive_compaction.no_candidates",
-            "cairn/archive",
+            ".cairn/archive",
             "at least one expanded archive without a retained pointer is required",
         ));
     }
@@ -683,7 +683,7 @@ fn build_mutation_manifest(
     for pointer in planned_pointers {
         actions.push(MutationAction {
             kind: "prune_expanded_archive".to_string(),
-            path: format!("cairn/archive/{}", pointer.archive_id),
+            path: format!(".cairn/archive/{}", pointer.archive_id),
             content_hash: Some(pointer.archive_root.clone()),
         });
         actions.push(MutationAction {

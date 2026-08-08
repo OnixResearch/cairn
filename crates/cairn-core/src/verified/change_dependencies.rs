@@ -819,11 +819,11 @@ mod tests {
     fn change(name: &str, depends_on: &[&str]) -> ChangeStatus {
         ChangeStatus {
             name: name.to_string(),
-            path: format!("cairn/changes/{name}"),
+            path: format!(".cairn/changes/{name}"),
             has_proposal: true,
             has_design: true,
             has_tasks: true,
-            delta_specs: vec![format!("cairn/changes/{name}/specs/demo/spec.md")],
+            delta_specs: vec![format!(".cairn/changes/{name}/specs/demo/spec.md")],
             task_counts: Some(TaskCounts {
                 total: TASK_TOTAL,
                 done: TASK_TOTAL,

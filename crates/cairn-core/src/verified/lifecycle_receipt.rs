@@ -825,7 +825,7 @@ mod tests {
         let profile = default_lifecycle_receipt_hash_profile();
         let mut receipt = json!({
             "actions": [
-                {"kind": "archive_change", "path": "./cairn/archive/demo", "description": "archive demo"}
+                {"kind": "archive_change", "path": "./.cairn/archive/demo", "description": "archive demo"}
             ],
             "blocked": false,
             "change": "demo",

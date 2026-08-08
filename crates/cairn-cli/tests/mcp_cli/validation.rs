@@ -57,13 +57,13 @@ fn mcp_rejects_invalid_arguments_before_dispatch() -> Result<(), Box<dyn Error>>
             "mcp",
             "--call",
             "cairn_migrate_plan",
-            r#"{"root":"fixtures/basic","source":"cairn"}"#,
+            r#"{"root":"fixtures/basic","source":"native"}"#,
         ])
         .output()?;
     assert!(!bad_source.status.success());
     let stderr = String::from_utf8_lossy(&bad_source.stderr);
     assert!(
-        stderr.contains("invalid arguments for cairn_migrate_plan: argument source must be one of openspec, ironspec"),
+        stderr.contains("invalid arguments for cairn_migrate_plan: argument source must be one of cairn, openspec, ironspec"),
         "{stderr}"
     );
     Ok(())
@@ -79,7 +79,7 @@ fn mcp_vacuous_validation_and_mutation_share_fail_closed_diagnostics() -> Result
         fs::remove_dir_all(&fixture)?;
     }
     copy_dir_recursive(&repo_root().join("fixtures/archive-ready"), &fixture)?;
-    let change = fixture.join("cairn/changes/ready");
+    let change = fixture.join(".cairn/changes/ready");
     fs::write(change.join("proposal.md"), "\n")?;
     fs::write(change.join("design.md"), "CAIRN_PLACEHOLDER\n")?;
     fs::write(
@@ -87,7 +87,7 @@ fn mcp_vacuous_validation_and_mutation_share_fail_closed_diagnostics() -> Result
         "- [x] [depends:] CAIRN_PLACEHOLDER\n",
     )?;
     fs::write(change.join("specs/demo/spec.md"), "\n")?;
-    let accepted_path = fixture.join("cairn/specs/demo/spec.md");
+    let accepted_path = fixture.join(".cairn/specs/demo/spec.md");
     let accepted_before = fs::read_to_string(&accepted_path)?;
     let root = fixture.display().to_string();
 

@@ -20,7 +20,7 @@ Observed result:
 active changes
 ```
 
-No active `cairn/changes/<name>/` directory existed, so this evidence hardening did not belong to an active Cairn change package.
+No active `.cairn/changes/<name>/` directory existed, so this evidence hardening did not belong to an active Cairn change package.
 
 ### Push verification
 

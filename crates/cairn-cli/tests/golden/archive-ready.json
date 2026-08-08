@@ -3,7 +3,7 @@
     {
       "description": "move active change to archive: ready",
       "kind": "archive_change",
-      "path": "fixtures/archive-ready/cairn/changes/ready"
+      "path": "fixtures/archive-ready/.cairn/changes/ready"
     }
   ],
   "blocked": false,
@@ -11,14 +11,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "6f6519b2eb2790fa7eb746154b18883b54940425cfe197a84c946da243b156f1",
+    "input_hash": "710cc187abfc0e86424e3c83bb2b41ef3da5fd2bbbeaa8d3b432b8888de2db74",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
-    "receipt_hash": "f7efe12db5a6c3794e85a3bc27272bc305488ff5ce1b34a650816e54f9070631",
+    "policy_hash": "0c67e49a91323e0f44765c5f5f1911dd00305203faf7022a63c17239611aa711",
+    "receipt_hash": "3305ed678e9a247acca6411849fc88128fc392a8fc70575f243127154c62fe03",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -27,13 +27,13 @@
   },
   "cross_repo_evidence_issues": [],
   "dry_run": true,
-  "input_hash": "9396b5654b04e4fc0609844362335e7d55d5eec87358a9521d657b7d5b1032c7",
+  "input_hash": "849f35e3947a8e198cef85deeba220536c603ef4b88c318d21289876d7405cb3",
   "layout": "cairn",
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "43ab1042b27a2a56a6892892743edbcbf41d8de4bd9f84d78e3433047a4c0e2b",
+  "plan_hash": "3f0694101e284e6ed0c8fb3c67878df38595b3a84d1fd09bd279cb2acb39a773",
   "policy": "cairn-default",
-  "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
+  "policy_hash": "0c67e49a91323e0f44765c5f5f1911dd00305203faf7022a63c17239611aa711",
   "reasons": [],
-  "receipt_hash": "ee824e5e579db87c422c3782d0b5df2e00fd2bfae227ade4dfae9fd50a4f9629"
+  "receipt_hash": "895e69d4c073dda63bc95c493e85ff3e95caa8200abc923baaa952eebdfcd413"
 }

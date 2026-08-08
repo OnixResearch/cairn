@@ -79,14 +79,14 @@ fn run_failure(command: &mut Command) -> Result<Output, Box<dyn Error>> {
 }
 
 fn create_native_root(root: &Path) -> Result<(), Box<dyn Error>> {
-    fs::create_dir_all(root.join("cairn/specs"))?;
-    fs::create_dir_all(root.join("cairn/changes"))?;
-    fs::create_dir_all(root.join("cairn/archive"))?;
+    fs::create_dir_all(root.join(".cairn/specs"))?;
+    fs::create_dir_all(root.join(".cairn/changes"))?;
+    fs::create_dir_all(root.join(".cairn/archive"))?;
     Ok(())
 }
 
 fn write_spec(root: &Path, id: &str, title: &str) -> Result<(), Box<dyn Error>> {
-    let directory = root.join("cairn/specs").join(id);
+    let directory = root.join(".cairn/specs").join(id);
     fs::create_dir_all(&directory)?;
     fs::write(
         directory.join("spec.md"),
@@ -337,6 +337,8 @@ fn native_root_precedes_pointer_and_unknown_boundary_stays_local() -> Result<(),
 #[test]
 fn checked_project_pointer_selects_registered_store() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.lifecycle_stores.project_config.pointer]
+    // r[verify cairn.lifecycle_directory.hidden_default.runtime]
+    // r[verify cairn.lifecycle_directory.hidden_default.project_pointer]
     let base = test_root("project-pointer")?;
     let store = base.join("shared");
     let project = base.join("project");
@@ -391,9 +393,9 @@ fn context_reads_only_direct_accepted_specs_without_authority() -> Result<(), Bo
     create_native_root(&subject)?;
     write_project(&subject, None, &[("shared", None)], PROJECT_SOURCE)?;
     let shared_identity = write_store(&shared, "shared", &[("alpha", "Alpha")])?;
-    fs::create_dir_all(shared.join("cairn/changes/ready/specs/secret"))?;
+    fs::create_dir_all(shared.join(".cairn/changes/ready/specs/secret"))?;
     fs::write(
-        shared.join("cairn/changes/ready/specs/secret/spec.md"),
+        shared.join(".cairn/changes/ready/specs/secret/spec.md"),
         "# Secret active change\n",
     )?;
     fs::create_dir_all(shared.join(".cairn"))?;

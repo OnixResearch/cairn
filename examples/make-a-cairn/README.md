@@ -24,10 +24,10 @@ nix run path:$CAIRN_SOURCE#cairn -- gate tasks add-friendly-start --root "$REPO"
 Expected files:
 
 ```text
-cairn/changes/add-friendly-start/design.md
-cairn/changes/add-friendly-start/proposal.md
-cairn/changes/add-friendly-start/specs/developer-experience/spec.md
-cairn/changes/add-friendly-start/tasks.md
+.cairn/changes/add-friendly-start/design.md
+.cairn/changes/add-friendly-start/proposal.md
+.cairn/changes/add-friendly-start/specs/developer-experience/spec.md
+.cairn/changes/add-friendly-start/tasks.md
 docs/cairn-quickstart.md
 ```
 

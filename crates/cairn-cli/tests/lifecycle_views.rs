@@ -17,7 +17,7 @@ fn static_lifecycle_views_are_deterministic_and_read_only() -> Result<(), Box<dy
     // r[verify cairn.lifecycle_views.verification.positive]
     // r[verify cairn.lifecycle_views.cli.formats]
     let fixture = view_fixture("static")?;
-    let tasks_path = fixture.join("cairn/changes/demo/tasks.md");
+    let tasks_path = fixture.join(".cairn/changes/demo/tasks.md");
     let tasks_before = fs::read_to_string(&tasks_path)?;
 
     let first = run_json(&fixture, &["kanban"])?;
@@ -40,8 +40,8 @@ fn static_lifecycle_views_are_deterministic_and_read_only() -> Result<(), Box<dy
 
     let graph_json = run_json(&fixture, &["graph"])?;
     let graph_json_text = serde_json::to_string(&graph_json)?;
-    assert!(!graph_json_text.contains("cairn/specs/cairn/specs"));
-    assert!(!graph_json_text.contains("cairn/changes/demo/specs/cairn/changes"));
+    assert!(!graph_json_text.contains(".cairn/specs/.cairn/specs"));
+    assert!(!graph_json_text.contains(".cairn/changes/demo/specs/.cairn/changes"));
 
     let graph = run_text(&fixture, &["graph", "--format", "dot"])?;
     assert!(graph.contains("digraph cairn_lifecycle"));
@@ -132,28 +132,28 @@ fn view_fixture(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     if root.exists() {
         fs::remove_dir_all(&root)?;
     }
-    fs::create_dir_all(root.join("cairn/specs/demo"))?;
-    fs::create_dir_all(root.join("cairn/changes/demo/specs/demo"))?;
-    fs::create_dir_all(root.join("cairn/archive"))?;
+    fs::create_dir_all(root.join(".cairn/specs/demo"))?;
+    fs::create_dir_all(root.join(".cairn/changes/demo/specs/demo"))?;
+    fs::create_dir_all(root.join(".cairn/archive"))?;
     fs::create_dir_all(root.join("crates"))?;
     fs::write(
-        root.join("cairn/specs/demo/spec.md"),
+        root.join(".cairn/specs/demo/spec.md"),
         "# Demo Specification\n\n## Requirements\n\n### Requirement: Demo requirement\nr[demo.requirement] The system MUST expose a view.\n\n#### Scenario: Demo scenario\nr[demo.requirement.scenario]\n- GIVEN lifecycle state\n- WHEN Cairn renders it\n- THEN the view is deterministic\n",
     )?;
     fs::write(
-        root.join("cairn/changes/demo/proposal.md"),
+        root.join(".cairn/changes/demo/proposal.md"),
         "## Why\n\nDemonstrate lifecycle views.\n",
     )?;
     fs::write(
-        root.join("cairn/changes/demo/design.md"),
+        root.join(".cairn/changes/demo/design.md"),
         "## Context\n\nUse a deterministic projection.\n",
     )?;
     fs::write(
-        root.join("cairn/changes/demo/tasks.md"),
+        root.join(".cairn/changes/demo/tasks.md"),
         "- [~] [serial] Implement the demo. r[demo.requirement]\n",
     )?;
     fs::write(
-        root.join("cairn/changes/demo/specs/demo/spec.md"),
+        root.join(".cairn/changes/demo/specs/demo/spec.md"),
         "## ADDED Requirements\n\n### Requirement: Proposed detail\nr[demo.proposed] The system MUST preserve proposed facts.\n\n#### Scenario: Proposed scenario\nr[demo.proposed.scenario]\n- GIVEN a proposed requirement\n- WHEN Cairn renders it\n- THEN the change owns its delta spec\n",
     )?;
     fs::write(

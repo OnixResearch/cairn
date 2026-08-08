@@ -141,7 +141,7 @@ fn run_review_completeness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let root = read_root(&args);
     let change = read_string_option(&args, "--change");
     let scope = if let Some(change) = change {
-        root.join("cairn/changes").join(change)
+        root.join(".cairn/changes").join(change)
     } else {
         root.clone()
     };

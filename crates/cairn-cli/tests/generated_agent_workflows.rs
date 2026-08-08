@@ -71,9 +71,9 @@ fn test_root(name: &str) -> Result<PathBuf, Box<dyn Error>> {
         Err(error) => return Err(error.into()),
     }
     fs::create_dir_all(root.join(".cairn"))?;
-    fs::create_dir_all(root.join("cairn/specs"))?;
-    fs::create_dir_all(root.join("cairn/changes"))?;
-    fs::create_dir_all(root.join("cairn/archive"))?;
+    fs::create_dir_all(root.join(".cairn/specs"))?;
+    fs::create_dir_all(root.join(".cairn/changes"))?;
+    fs::create_dir_all(root.join(".cairn/archive"))?;
     Ok(root)
 }
 
@@ -361,7 +361,7 @@ fn rejects_unsafe_destination_unknown_adapter_and_ambient_home_path() -> Result<
         assert!(!output.status.success());
         assert!(receipt.is_none());
     }
-    assert_eq!(fs::read_dir(&root)?.count(), 2);
+    assert_eq!(fs::read_dir(&root)?.count(), 1);
     Ok(())
 }
 
@@ -381,14 +381,14 @@ fn symlink_destination_is_blocked_without_outside_writes() -> Result<(), Box<dyn
     assert!(preview["files"].as_array().is_some_and(|files| files
         .iter()
         .all(|file| file["freshness"] == "symlink-conflict")));
-    assert_eq!(fs::read_dir(&outside)?.count(), 2);
+    assert_eq!(fs::read_dir(&outside)?.count(), 1);
     Ok(())
 }
 
 #[test]
 fn maintained_hermes_source_remains_byte_compatible() {
     const EXPECTED_HERMES_BLAKE3: &str =
-        "834efe19f34115f4b456b255f3310fd0a1ed46746c1955de1717d6831cb148e4";
+        "7dc27c4217077254659a0bc7ff5d2f48efafc7cfd430f828de5385c566cdea57";
     let bytes = include_bytes!("../../../docs/hermes/cairn-workflow-skill.md");
     assert_eq!(
         blake3::hash(bytes).to_hex().as_str(),

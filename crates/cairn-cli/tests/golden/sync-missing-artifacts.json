@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "6f6519b2eb2790fa7eb746154b18883b54940425cfe197a84c946da243b156f1",
+    "input_hash": "710cc187abfc0e86424e3c83bb2b41ef3da5fd2bbbeaa8d3b432b8888de2db74",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
-    "receipt_hash": "f7efe12db5a6c3794e85a3bc27272bc305488ff5ce1b34a650816e54f9070631",
+    "policy_hash": "0c67e49a91323e0f44765c5f5f1911dd00305203faf7022a63c17239611aa711",
+    "receipt_hash": "3305ed678e9a247acca6411849fc88128fc392a8fc70575f243127154c62fe03",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -21,10 +21,10 @@
   },
   "cross_repo_evidence_issues": [],
   "delta_specs": [
-    "fixtures/missing-artifacts/cairn/changes/missing/specs/demo/spec.md"
+    "fixtures/missing-artifacts/.cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "d89f1cd18c56dfe21293f7293f3d618df4f8cde84d32450c1020ea991d950d69",
+  "input_hash": "a25b940be16384faa27b412818c4265974a636f7ba97ee6776c5dc094dac3fe8",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -34,7 +34,7 @@
         "blocked": false,
         "changed": true,
         "delta_hash": "955cf3001768246f8a989dcd7792271b38d849dae791e484a93b4b2e00d10b76",
-        "destination": "cairn/specs/demo/spec.md",
+        "destination": ".cairn/specs/demo/spec.md",
         "diagnostics": [],
         "expected_after_hash": "f374c9bb541461cb167851b2e670e1ff641ccb5b7f573431bdd692d4c679fb04",
         "operations": [
@@ -52,18 +52,18 @@
             "state": "applied"
           }
         ],
-        "source": "cairn/changes/missing/specs/demo/spec.md"
+        "source": ".cairn/changes/missing/specs/demo/spec.md"
       }
     ]
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "c6a032b5170845a9a55d9dc866d239cb562c2fd780140f3ebd599a3074cec779",
+  "plan_hash": "56e53619db8a74c66de4da1c30b421d8ce1e4287ebb79be8b01665fcb843e7cb",
   "policy": "cairn-default",
-  "policy_hash": "8a5420a51b8967b7b314ba54fa6886667f6914f5f0dc23e47b3e7be250e5bbbd",
+  "policy_hash": "0c67e49a91323e0f44765c5f5f1911dd00305203faf7022a63c17239611aa711",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "73a36ca7478accda2e10517c11fd7a3a06da465e21a4d36774f074754e5bdc78"
+  "receipt_hash": "f2dfa17bd9c27c9d0bda2d79213660ae21c494b76abcca767865f75868d259f6"
 }

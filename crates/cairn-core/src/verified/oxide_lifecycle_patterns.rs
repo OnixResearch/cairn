@@ -154,7 +154,7 @@ pub fn positive_oxide_lifecycle_patterns_fixture() -> Value {
             "operator_decision": null
         }],
         "document_plans": [{
-            "source_path": "cairn/specs/demo/spec.md",
+            "source_path": ".cairn/specs/demo/spec.md",
             "source_revision": fixture_hash('c'),
             "observed_revision": fixture_hash('c'),
             "renderer_profile": "markdown-index-v1",

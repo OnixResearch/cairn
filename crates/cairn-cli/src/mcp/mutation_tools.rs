@@ -320,9 +320,10 @@ pub(super) fn mcp_migrate(input: &Value, execute: bool) -> Result<Value, Box<dyn
     let source_layout = migration_source_layout(source)?;
     let inputs = collect_layout_migration_inputs(&root, source_layout)?;
     let mut plan = match source_layout {
+        LifecycleLayout::LegacyCairn => build_cairn_migration_plan(inputs, execute),
         LifecycleLayout::LegacyOpenSpec => build_openspec_migration_plan(inputs, execute),
         LifecycleLayout::LegacyIronspec => build_ironspec_migration_plan(inputs, execute),
-        LifecycleLayout::Native => return Err("cannot migrate from canonical cairn layout".into()),
+        LifecycleLayout::Native => return Err("cannot migrate from canonical .cairn layout".into()),
     };
     if execute && !plan.blocked {
         execute_migration_plan(&root, &plan)?;

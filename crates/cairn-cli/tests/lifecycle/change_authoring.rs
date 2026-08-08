@@ -7,6 +7,7 @@ fn init_creates_native_layout_and_is_idempotent() -> Result<(), Box<dyn Error>> 
     // r[verify cairn.supersede.init] r[verify cairn.supersede.init.empty] r[verify cairn.supersede.init.idempotent]
     // r[verify cairn.supersede.native_layout] r[verify cairn.supersede.native_layout.init]
     // r[verify cairn.supersede.native_layout.init_cairn]
+    // r[verify cairn.lifecycle_directory.hidden_default.init]
     let root = temp_project("init")?;
     let root_text = root.to_str().ok_or("utf8 root")?;
 
@@ -14,8 +15,8 @@ fn init_creates_native_layout_and_is_idempotent() -> Result<(), Box<dyn Error>> 
     assert_eq!(first["command"], "init");
     assert_eq!(first["mutated"], true);
     assert_eq!(first["layout"], "cairn");
-    assert!(root.join("cairn/specs").is_dir());
-    assert!(root.join("cairn/archive").is_dir());
+    assert!(root.join(".cairn/specs").is_dir());
+    assert!(root.join(".cairn/archive").is_dir());
     assert_eq!(first["created"].as_array().ok_or("created")?.len(), 4);
 
     let second = run_json(&["init", "--root", root_text])?;
@@ -38,15 +39,15 @@ fn change_create_creates_compatible_skeleton() -> Result<(), Box<dyn Error>> {
     assert_eq!(receipt["mutated"], true);
     assert_eq!(receipt["layout"], "cairn");
     assert!(root
-        .join("cairn/changes/replace-openspec/proposal.md")
+        .join(".cairn/changes/replace-openspec/proposal.md")
         .is_file());
     assert!(root
-        .join("cairn/changes/replace-openspec/design.md")
+        .join(".cairn/changes/replace-openspec/design.md")
         .is_file());
     assert!(root
-        .join("cairn/changes/replace-openspec/tasks.md")
+        .join(".cairn/changes/replace-openspec/tasks.md")
         .is_file());
-    assert!(root.join("cairn/changes/replace-openspec/specs").is_dir());
+    assert!(root.join(".cairn/changes/replace-openspec/specs").is_dir());
 
     let status = run_json(&["status", "--root", root_text])?;
     assert_eq!(status["changes"][0]["name"], "replace-openspec");
@@ -71,7 +72,7 @@ fn change_create_rejects_invalid_name_without_mutation() -> Result<(), Box<dyn E
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("invalid change name"), "{stderr}");
-    assert!(!root.join("cairn/changes").exists());
+    assert!(!root.join(".cairn/changes").exists());
     Ok(())
 }
 
@@ -154,7 +155,7 @@ fn onboarding_template_apply_and_scaffold_are_deterministic() -> Result<(), Box<
     assert_eq!(scaffold["valid"], true);
     assert_eq!(scaffold["mutated"], true);
     assert!(root
-        .join("cairn/changes/add-friendly-start/specs/developer-experience/spec.md")
+        .join(".cairn/changes/add-friendly-start/specs/developer-experience/spec.md")
         .is_file());
     let gate = run_json(&["gate", "tasks", "add-friendly-start", "--root", root_text])?;
     assert_eq!(gate["verdict"], "PASS");
@@ -251,7 +252,7 @@ fn change_metadata_is_validated_and_filterable() -> Result<(), Box<dyn Error>> {
     let fixture = temp_fixture("change-metadata", "fixtures/basic")?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
     fs::write(
-        fixture.join("cairn/changes/demo/metadata.json"),
+        fixture.join(".cairn/changes/demo/metadata.json"),
         "{\"groups\":[\"feature:registry\",\"current\"],\"target_date\":\"2026-06-01\",\"status\":\"planned\"}\n",
     )?;
 
@@ -282,7 +283,7 @@ fn change_metadata_is_validated_and_filterable() -> Result<(), Box<dyn Error>> {
     assert!(excluded["changes"].as_array().ok_or("changes")?.is_empty());
 
     fs::write(
-        fixture.join("cairn/changes/demo/metadata.json"),
+        fixture.join(".cairn/changes/demo/metadata.json"),
         "{\"groups\":[\"unknown\"],\"target_date\":\"not-a-date\",\"status\":\"unknown\"}\n",
     )?;
     let invalid = run_json(&["validate", "--root", root])?;
@@ -314,9 +315,9 @@ fn change_dependency_metadata_is_validated_and_reported() -> Result<(), Box<dyn 
     // r[verify cairn.change_dependency_graph.validation.repository_checks]
     let fixture = temp_fixture("change-dependencies", "fixtures/basic")?;
     let root = fixture.to_str().ok_or("utf8 fixture path")?;
-    fs::create_dir_all(fixture.join("cairn/archive/2026-05-21-finished-prereq"))?;
+    fs::create_dir_all(fixture.join(".cairn/archive/2026-05-21-finished-prereq"))?;
     fs::write(
-        fixture.join("cairn/changes/demo/metadata.json"),
+        fixture.join(".cairn/changes/demo/metadata.json"),
         "{\"depends_on\":[\"finished-prereq\"]}\n",
     )?;
 
@@ -334,7 +335,7 @@ fn change_dependency_metadata_is_validated_and_reported() -> Result<(), Box<dyn 
     assert_eq!(graph["nodes"][0]["dependency_ready"], true);
 
     fs::write(
-        fixture.join("cairn/changes/demo/metadata.json"),
+        fixture.join(".cairn/changes/demo/metadata.json"),
         "{\"depends_on\":[\"\",\"bad/name\",\"missing\",\"missing\",\"demo\"]}\n",
     )?;
     let invalid = run_json(&["validate", "--root", root])?;
@@ -347,7 +348,7 @@ fn change_dependency_metadata_is_validated_and_reported() -> Result<(), Box<dyn 
     assert!(issue_text.contains("change_dependency.self_dependency"));
 
     fs::write(
-        fixture.join("cairn/changes/demo/metadata.json"),
+        fixture.join(".cairn/changes/demo/metadata.json"),
         "{\"depends_on\":\"not-an-array\"}\n",
     )?;
     let invalid_type = run_json(&["validate", "--root", root])?;
@@ -374,7 +375,7 @@ fn change_dependency_authoring_preview_execute_and_remove_are_safe() -> Result<(
     assert_eq!(preview["valid"], true);
     assert_eq!(preview["dry_run"], true);
     assert_eq!(preview["mutated"], false);
-    assert!(!fixture.join("cairn/changes/demo/metadata.json").exists());
+    assert!(!fixture.join(".cairn/changes/demo/metadata.json").exists());
 
     let executed = run_json(&[
         "change",
@@ -389,7 +390,7 @@ fn change_dependency_authoring_preview_execute_and_remove_are_safe() -> Result<(
     assert_eq!(executed["valid"], true);
     assert_eq!(executed["mutated"], true);
     assert_eq!(executed["after"][0], "prereq");
-    let metadata = fs::read_to_string(fixture.join("cairn/changes/demo/metadata.json"))?;
+    let metadata = fs::read_to_string(fixture.join(".cairn/changes/demo/metadata.json"))?;
     assert!(metadata.contains("depends_on"));
     assert!(metadata.contains("prereq"));
 
@@ -410,7 +411,7 @@ fn change_dependency_authoring_preview_execute_and_remove_are_safe() -> Result<(
     ])?;
     assert_eq!(removed["valid"], true);
     assert_eq!(removed["mutated"], true);
-    let metadata = fs::read_to_string(fixture.join("cairn/changes/demo/metadata.json"))?;
+    let metadata = fs::read_to_string(fixture.join(".cairn/changes/demo/metadata.json"))?;
     assert!(!metadata.contains("depends_on"));
     fs::remove_dir_all(fixture)?;
     Ok(())
@@ -517,7 +518,7 @@ fn change_dependency_authoring_rejects_bad_edits_without_mutation() -> Result<()
     assert!(!unknown_format.status.success());
     assert!(String::from_utf8_lossy(&unknown_format.stderr).contains("unknown change graph format"));
 
-    let metadata = fs::read_to_string(fixture.join("cairn/changes/demo/metadata.json"))?;
+    let metadata = fs::read_to_string(fixture.join(".cairn/changes/demo/metadata.json"))?;
     assert_eq!(metadata.matches("prereq").count(), 1);
     fs::remove_dir_all(fixture)?;
     Ok(())
