@@ -8,6 +8,7 @@ The content-bound trace-index trial passes isolated tests, but Cairn cannot expo
 
 - Make requirement-row identity come from the leading declaration marker, not marker-like prose in the remaining requirement body.
 - Preserve fail-closed handling for missing, malformed, and duplicated declaration markers.
+- Limit the selected trace index to markers that resolve to rows in its supplied content-bound registry; keep full-corpus dangling-reference checks in the existing coverage rail.
 - Add a repository-scale Nix check that exports the current requirement registry and trace index, verifies the index, and queries one accepted requirement.
 - Keep the generated proof artifacts in the Nix store so operators can inspect the receipts.
 

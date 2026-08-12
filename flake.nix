@@ -413,6 +413,81 @@
               touch $out
             '';
 
+        # r[impl cairn.trace_index.live_proof.repository_check]
+        # r[impl cairn.trace_index.live_proof.receipts]
+        trace-index-live-proof =
+          pkgs.runCommand "cairn-trace-index-live-proof"
+            {
+              nativeBuildInputs = [ pkgs.gnugrep ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              cairn=${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn
+              proof=proof
+              stale_source=stale-source
+              mkdir -p "$proof"
+
+              "$cairn" requirement-registry export \
+                --root . \
+                --repository-id onixresearch/cairn \
+                --revision-kind opaque \
+                --revision nix-source-snapshot \
+                --out "$proof/requirement-registry.json" \
+                > "$proof/requirement-registry-export-receipt.json"
+              "$cairn" traceability export \
+                --root . \
+                --registry "$proof/requirement-registry.json" \
+                --out "$proof/trace-index.json" \
+                > "$proof/trace-index-export-receipt.json"
+              "$cairn" traceability verify \
+                --root . \
+                --registry "$proof/requirement-registry.json" \
+                --index "$proof/trace-index.json" \
+                > "$proof/trace-index-verify-receipt.json"
+              "$cairn" traceability show cairn.trace_index.query \
+                --index "$proof/trace-index.json" \
+                > "$proof/trace-index-show-receipt.json"
+
+              for receipt in \
+                "$proof/requirement-registry-export-receipt.json" \
+                "$proof/trace-index-export-receipt.json" \
+                "$proof/trace-index-verify-receipt.json" \
+                "$proof/trace-index-show-receipt.json"
+              do
+                grep -q '"valid": true' "$receipt"
+                grep -q '"verdict": "pass"' "$receipt"
+              done
+              grep -Eq '"link_count": [1-9][0-9]*' \
+                "$proof/trace-index-export-receipt.json"
+              grep -Eq '"links": \[' \
+                "$proof/trace-index-show-receipt.json"
+
+              cp -r ${self} "$stale_source"
+              chmod -R u+w "$stale_source"
+              printf '\n// r[impl cairn.trace_index.query]\n' \
+                >> "$stale_source/crates/cairn-cli/src/trace_index.rs"
+              if "$cairn" traceability verify \
+                --root "$stale_source" \
+                --registry "$proof/requirement-registry.json" \
+                --index "$proof/trace-index.json" \
+                > "$proof/trace-index-stale-verify-receipt.json"
+              then
+                echo "expected stale trace-index verification to fail" >&2
+                exit 1
+              fi
+              grep -q '"valid": false' \
+                "$proof/trace-index-stale-verify-receipt.json"
+              grep -q '"verdict": "fail"' \
+                "$proof/trace-index-stale-verify-receipt.json"
+              grep -Eq 'trace_index\.(link_stale|source_stale|source_unexpected)' \
+                "$proof/trace-index-stale-verify-receipt.json"
+
+              mkdir -p "$out"
+              cp "$proof"/*.json "$out"/
+            '';
+
         rename-classification =
           pkgs.runCommand "cairn-rename-classification"
             {
@@ -439,7 +514,10 @@
             "--features"
             "redb-registry"
           ];
-          nativeCheckInputs = [ pkgs.jq pkgs.nickel ];
+          nativeCheckInputs = [
+            pkgs.jq
+            pkgs.nickel
+          ];
           doCheck = true;
           checkPhase = ''
             runHook preCheck

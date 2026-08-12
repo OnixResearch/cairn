@@ -4,7 +4,7 @@
 
 ### Requirement: Declaration marker owns requirement identity
 
-r[cairn.trace_index.live_proof.declaration_marker] Cairn MUST derive a content-bound requirement row identity from exactly one bare marker in the requirement declaration region and MUST treat later marker-like prose as hashed content without identity authority.
+r[cairn.trace_index.live_proof.declaration_marker] Cairn MUST derive a content-bound requirement row identity from exactly one bare marker on the first marker-bearing line of the requirement block and MUST treat later marker-like prose as hashed content without identity authority.
 
 #### Scenario: Marker example in prose is not a second identity
 
@@ -15,13 +15,13 @@ r[cairn.trace_index.live_proof.declaration_marker] Cairn MUST derive a content-b
 
 #### Scenario: Conflicting declaration markers fail
 
-- GIVEN the requirement heading and first nonblank body line declare distinct bare markers
+- GIVEN the first marker-bearing line declares distinct bare markers
 - WHEN Cairn exports the content-bound requirement registry
 - THEN the export MUST fail with a deterministic duplicate-declaration issue
 
 #### Scenario: Missing declaration marker fails
 
-- GIVEN a requirement declaration region has no bare marker
+- GIVEN a requirement block has no bare marker
 - WHEN Cairn exports the content-bound requirement registry
 - THEN the export MUST fail without selecting an identity from later prose
 
@@ -41,6 +41,13 @@ r[cairn.trace_index.live_proof.repository_check] Cairn MUST maintain a Nix check
 - GIVEN the check exported a valid trace index
 - WHEN a copied evidence source adds a new declared marker after export
 - THEN trace-index verification MUST fail with a stale-link or unexpected-source issue
+
+#### Scenario: Registry selection excludes unrelated markers
+
+- GIVEN an evidence source contains a valid marker for an accepted ID that is not a row in the selected content-bound registry
+- WHEN Cairn builds the selected trace index
+- THEN Cairn MUST omit that marker from the selected index
+- AND the authoritative full-corpus traceability coverage rail MUST remain responsible for dangling-reference rejection
 
 ### Requirement: Inspectable live proof receipts
 

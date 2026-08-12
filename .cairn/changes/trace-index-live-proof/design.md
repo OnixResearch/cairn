@@ -18,9 +18,15 @@ A requirement block can discuss marker syntax or name another requirement as an 
 
 ## Decision: A declaration marker owns row identity
 
-The parser will inspect the requirement heading and the first nonblank body line for declaration markers. Exactly one distinct marker must exist in that declaration region. Later prose remains part of the exact hashed requirement body, but marker-like examples in that prose do not define row identity.
+The parser will use the first requirement line that contains a bare marker. Exactly one distinct marker must exist on that declaration line. Later prose remains part of the exact hashed requirement body, but marker-like examples in later lines do not define row identity.
 
-This keeps identity explicit and prevents examples from becoming accidental authority. Missing declaration markers still fail. Distinct markers on the heading and first body line still fail. Duplicate accepted IDs across rows still fail.
+This keeps identity explicit and supports existing accepted formats where the marker is on the heading, before normative prose, or after introductory prose. Missing declaration markers still fail. Distinct markers on the first marker-bearing line still fail. Duplicate accepted IDs across rows still fail.
+
+## Decision: Registry selection bounds indexed markers
+
+The content-bound registry has one row for each accepted requirement block. Cairn's broader coverage model also recognizes scenario and evidence sub-requirements. The trace index binds only markers whose IDs have content-bound rows in the selected registry. It ignores other valid markers during index construction.
+
+The separate full-corpus traceability coverage rail remains authoritative for dangling markers across all accepted bare IDs. This keeps the index usable for one selected registry without weakening repository-wide linkage checks.
 
 ## Decision: Nix owns the durable live proof
 

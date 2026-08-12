@@ -426,13 +426,8 @@ fn collect_file_links<'a>(
             Err(_) => continue,
         };
         for marker in located_reference_markers(segment, &profile.marker_verbs) {
+            // r[impl cairn.trace_index.live_proof.repository_check]
             let Some(requirement_row) = requirement_rows.get(marker.requirement_id) else {
-                push_issue(
-                    issues,
-                    ISSUE_MARKER_DANGLING,
-                    &format!("links.{}.{}", file.path, marker.start_byte),
-                    "trace marker requirement ID is absent from the content-bound registry",
-                );
                 continue;
             };
             let start = line_start_byte.saturating_add(marker.start_byte);
@@ -1290,7 +1285,7 @@ mod tests {
     }
 
     #[test]
-    fn unsafe_duplicate_and_dangling_sources_fail_closed() {
+    fn unsafe_and_duplicate_sources_fail_closed_while_unselected_markers_are_ignored() {
         // r[verify cairn.trace_index.validation]
         let registry = registry(POLICY_BYTES);
         let unsafe_path = evaluate_content_bound_trace_index(
@@ -1307,7 +1302,7 @@ mod tests {
         );
         assert!(issue_codes(&duplicate.issues).contains(&ISSUE_SOURCE_DUPLICATE.to_string()));
 
-        let dangling = evaluate_content_bound_trace_index(
+        let unselected = evaluate_content_bound_trace_index(
             &registry,
             &profile(),
             vec![TraceabilityFile {
@@ -1315,7 +1310,9 @@ mod tests {
                 text: format!("// r[{} cairn.trace.missing]\n", TRACEABILITY_VERB_IMPL),
             }],
         );
-        assert!(issue_codes(&dangling.issues).contains(&ISSUE_MARKER_DANGLING.to_string()));
+        let index = unselected.index.expect("index with no selected links");
+        assert!(unselected.issues.is_empty());
+        assert!(index.links.is_empty());
     }
 
     #[test]

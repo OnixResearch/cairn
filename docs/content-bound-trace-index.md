@@ -57,8 +57,12 @@ cairn traceability verify \
 ```
 
 Verification rebuilds the index from current bounded inputs.
-It rejects policy drift, requirement-registry drift, changed files, moved markers, copied markers, and changed links.
-It also rejects unsafe paths, duplicate source paths, dangling markers, invalid hashes, and noncanonical order.
+It rejects policy drift, requirement-registry drift, changed files, moved selected markers, copied selected markers, and changed selected links.
+It also rejects unsafe paths, duplicate source paths, invalid hashes, and noncanonical order.
+
+The index includes only markers that resolve to rows in its supplied content-bound registry.
+It ignores other valid markers during selected-index construction.
+Run `cairn traceability coverage --root .` to reject dangling references across the complete accepted marker corpus.
 
 ## Query one requirement
 
@@ -83,6 +87,25 @@ This version supports `assurance_level = "declared"` and `anchor_kind = "exact_m
 The declared assurance level records marker linkage only.
 It does not provide an AST-resolved symbol, executed test result, or proof result.
 A future adapter can add structural or executed evidence through a new versioned contract.
+
+## Inspect Cairn's maintained live proof
+
+Build the repository-scale check:
+
+```bash
+nix build .#checks.x86_64-linux.trace-index-live-proof --print-out-paths
+```
+
+The output contains:
+
+- `requirement-registry.json` and its export receipt.
+- `trace-index.json` and its export receipt.
+- the current-root verification receipt.
+- the exact-query receipt for `cairn.trace_index.query`.
+- a failing stale-source verification receipt.
+
+The Nix output binds one source snapshot and uses the packaged Cairn binary.
+The stale receipt is retained as expected negative evidence.
 
 ## Claim boundary
 

@@ -178,7 +178,7 @@ cairn traceability show cairn.trace_index.query \
   --index target/trace-index.json
 ```
 
-Read [Content-bound trace index](docs/content-bound-trace-index.md) for identities, workflow, freshness checks, and non-claims.
+Read [Content-bound trace index](docs/content-bound-trace-index.md) for identities, workflow, freshness checks, retained live-proof receipts, and non-claims.
 
 <!-- r[impl cairn.trace_index.docs] -->
 
