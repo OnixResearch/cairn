@@ -11,6 +11,6 @@
 
 ## Phase 3: Completion
 
-- [ ] [serial] Run focused and full repository checks for r[cairn.trace_index.live_proof.validation].
-- [ ] [serial] Document the proof path and claim boundary for r[cairn.trace_index.live_proof.docs].
-- [ ] [serial] Sync the accepted requirements and archive this change for r[cairn.trace_index.live_proof.docs].
+- [x] [serial] Run focused and full repository checks for r[cairn.trace_index.live_proof.validation].
+- [x] [serial] Document the proof path and claim boundary for r[cairn.trace_index.live_proof.docs].
+- [x] [serial] Sync the accepted requirements and archive this change for r[cairn.trace_index.live_proof.docs].
