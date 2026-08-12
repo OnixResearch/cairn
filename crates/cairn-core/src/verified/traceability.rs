@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use serde::{Deserialize, Serialize};
+
 use crate::verified::requirement_id_registry::{
     validate_requirement_id_registry, RequirementIdRegistry, RequirementReference,
 };
@@ -38,15 +40,19 @@ const TRACEABILITY_MARKER_ISSUE_DUPLICATE: &str = "traceability_marker.duplicate
 const TRACEABILITY_MARKER_ISSUE_MISSING_REGISTRY: &str = "traceability_marker.missing_registry";
 const TRACEABILITY_MARKER_ISSUE_OVERCLAIM: &str = "traceability_marker.overclaim";
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct TraceabilityProfile {
     pub id: String,
     pub requirement_sources: Vec<TraceabilitySource>,
     pub evidence_sources: Vec<TraceabilitySource>,
     pub marker_verbs: Vec<String>,
+    pub assurance_level: String,
+    pub anchor_kind: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct TraceabilitySource {
     pub root: String,
     pub source_kind: String,
@@ -651,6 +657,8 @@ mod tests {
                 TRACEABILITY_VERB_DEPENDS.to_string(),
                 TRACEABILITY_VERB_RELATED.to_string(),
             ],
+            assurance_level: "declared".to_string(),
+            anchor_kind: "exact_marker_bytes".to_string(),
         }
     }
 

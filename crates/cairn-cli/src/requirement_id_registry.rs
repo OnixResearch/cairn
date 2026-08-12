@@ -236,7 +236,7 @@ fn required_string_option(
         .ok_or_else(|| format!("requirement-registry {command} requires {option} <VALUE>").into())
 }
 
-fn read_accepted_specifications(
+pub(crate) fn read_accepted_specifications(
     repository: &CapabilityRoot,
 ) -> Result<Vec<ContentBoundSpecificationInput>, Box<dyn Error>> {
     let accepted_root = PathBuf::from(ACCEPTED_SPECIFICATIONS_DIRECTORY);

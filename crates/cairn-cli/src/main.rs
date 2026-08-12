@@ -49,6 +49,7 @@ mod steel_orchestration;
 mod support;
 mod test_harness;
 mod toolchain_profile_matrix;
+mod trace_index;
 mod tracey;
 mod view;
 mod vo;

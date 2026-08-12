@@ -235,6 +235,9 @@ fn parses_generated_default_policy_text() {
         .profiles
         .iter()
         .any(|profile| profile.id == "trellis-rust"));
+    assert!(policy.traceability_policy.profiles.iter().all(|profile| {
+        profile.assurance_level == "declared" && profile.anchor_kind == "exact_marker_bytes"
+    }));
     assert_eq!(policy.stack_provenance_policy.mode, "optional");
     assert!(policy
         .stack_provenance_policy
@@ -760,6 +763,42 @@ fn rejects_unsupported_traceability_source_kind() {
         validate_policy_json(value),
         Err(PolicyError::InvalidField(
             "traceability_policy.profiles.sources.source_kind"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_unsupported_traceability_assurance_level() {
+    // r[verify cairn.trace_index.policy]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["traceability_policy"]["profiles"][0]["assurance_level"] =
+        Value::String("structural".to_string());
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "traceability_policy.profiles.assurance_level"
+        ))
+    ));
+}
+
+#[test]
+fn rejects_unsupported_traceability_anchor_kind() {
+    // r[verify cairn.trace_index.policy]
+    let mut value: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/cairn-policy.json"
+    ))
+    .expect("generated policy json");
+    value["traceability_policy"]["profiles"][0]["anchor_kind"] =
+        Value::String("line_number".to_string());
+
+    assert!(matches!(
+        validate_policy_json(value),
+        Err(PolicyError::InvalidField(
+            "traceability_policy.profiles.anchor_kind"
         ))
     ));
 }

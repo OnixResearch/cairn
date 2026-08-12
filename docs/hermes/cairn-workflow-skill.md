@@ -246,10 +246,14 @@ Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix c
 
 ## Traceability coverage rail
 
-- Requirement markers in accepted specs use `r[...]`; implementation and test comments should use `r[impl ...]` and `r[verify ...]`.
-- `cairn traceability coverage --root .` is the deterministic repo-owned rail used by `nix flake check`; it loads Nickel-authored scan profiles from generated policy and ensures every accepted requirement has at least one source-controlled implementation or verification reference.
-- `cairn tracey coverage --root .` remains a compatibility alias only. External `tracey query ...` commands are optional developer diagnostics and are not required by maintained gates, release-readiness evidence, or Nix checks.
-- Marker coverage does not prove behavioral correctness; cite executable tests, proofs, or stronger receipts for behavioral claims.
+- Requirement markers in accepted specs use `r[...]`. Implementation and test comments use `r[impl ...]` and `r[verify ...]`.
+- `cairn traceability coverage --root .` is the deterministic repo-owned rail used by `nix flake check`. It loads Nickel-authored scan profiles from generated policy.
+- `cairn traceability export --root . --registry FILE --out FILE` writes a canonical content-bound trace index from a current requirement registry.
+- `cairn traceability verify --root . --registry FILE --index FILE` compares the saved index with current inputs.
+- `cairn traceability show REQUIREMENT_ID --index FILE` returns one exact requirement row and its sorted declared links.
+- Each traceability profile declares its assurance level and anchor kind. The current marker adapter uses declared assurance and exact marker bytes.
+- `cairn tracey coverage --root .` remains a compatibility alias only. External `tracey query ...` commands are optional diagnostics.
+- Marker coverage and trace indexes do not prove behavioral correctness. Cite executable tests, proofs, or stronger receipts for behavioral claims.
 
 ## Known pitfalls
 

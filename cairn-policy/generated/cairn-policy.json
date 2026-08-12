@@ -5509,6 +5509,8 @@
     "default_profile": "cairn-default",
     "profiles": [
       {
+        "anchor_kind": "exact_marker_bytes",
+        "assurance_level": "declared",
         "evidence_sources": [
           {
             "extensions": [
@@ -5551,6 +5553,8 @@
         ]
       },
       {
+        "anchor_kind": "exact_marker_bytes",
+        "assurance_level": "declared",
         "evidence_sources": [
           {
             "extensions": [

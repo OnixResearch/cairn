@@ -138,6 +138,14 @@ let TraceabilityMarkerVerb = std.contract.from_predicate (fun value =>
   std.is_string value && (value == "impl" || value == "verify" || value == "depends" || value == "related")
 ) in
 
+let TraceabilityAssuranceLevel = std.contract.from_predicate (fun value =>
+  std.is_string value && value == "declared"
+) in
+
+let TraceabilityAnchorKind = std.contract.from_predicate (fun value =>
+  std.is_string value && value == "exact_marker_bytes"
+) in
+
 let TraceabilityExtension = std.contract.from_predicate (fun value =>
   std.is_string value && std.string.length value > 0 && std.string.is_match "^[A-Za-z0-9_-]+$" value
 ) in
@@ -561,6 +569,8 @@ let DeveloperLoopStatusClass = std.contract.from_predicate (fun value =>
     requirement_sources | NonEmptyArray | Array TraceabilityRequirementSource,
     evidence_sources | NonEmptyArray | Array TraceabilityEvidenceSource,
     marker_verbs | NonEmptyArray | Array TraceabilityMarkerVerb,
+    assurance_level | TraceabilityAssuranceLevel,
+    anchor_kind | TraceabilityAnchorKind,
   },
 
   TraceabilityPolicy = {

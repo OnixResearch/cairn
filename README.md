@@ -165,6 +165,23 @@ The marker core parses `r[...]`, `r[impl ...]`, `r[verify ...]`, `r[depends ...]
 
 A passing marker result proves syntax, vocabulary, and declared linkage only. It does not prove requirement satisfaction or implementation correctness.
 
+Export, verify, and query a content-bound trace index:
+
+```bash
+cairn traceability export --root . \
+  --registry target/requirement-registry.json \
+  --out target/trace-index.json
+cairn traceability verify --root . \
+  --registry target/requirement-registry.json \
+  --index target/trace-index.json
+cairn traceability show cairn.trace_index.query \
+  --index target/trace-index.json
+```
+
+Read [Content-bound trace index](docs/content-bound-trace-index.md) for identities, workflow, freshness checks, and non-claims.
+
+<!-- r[impl cairn.trace_index.docs] -->
+
 ## Policy and deterministic enforcement
 
 Nickel policy source is in `cairn-policy/`. Runtime commands do not run Nickel.
@@ -666,5 +683,7 @@ The license split does not turn lifecycle conformance into code-correctness or r
 - [`radicle-cob`](https://crates.io/crates/radicle-cob) — signed Git-backed object format.
 - [`radicle`](https://crates.io/crates/radicle) — fixture-only upstream Git storage adapter.
 - [Fission-AI/OpenSpec stores beta guide](https://github.com/Fission-AI/OpenSpec/blob/main/docs/stores-beta/user-guide.md) — standalone planning-store, reference, context, and workset interaction reference.
+- [OnixResearch/Ambient](https://github.com/OnixResearch/ambient) — content identity, source occurrence, canonical snapshot, and deterministic diff implementation reference.
+- [Unison](https://github.com/unisonweb/unison) — immutable definition identity, mutable naming, recursive component, and dependency identity model reference.
 
 These references do not transfer their domain-specific correctness or authority claims into Cairn.

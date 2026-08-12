@@ -229,6 +229,16 @@ pub use verified::content_bound_requirement_registry::{
     CONTENT_BOUND_REQUIREMENT_REGISTRY_SCHEMA_V1, CONTENT_BOUND_REVISION_KIND_GIT,
     CONTENT_BOUND_REVISION_KIND_JUJUTSU, CONTENT_BOUND_REVISION_KIND_OPAQUE,
 };
+pub use verified::content_bound_trace_index::{
+    evaluate_content_bound_trace_index, parse_content_bound_trace_index_value,
+    query_content_bound_trace_index, validate_content_bound_trace_index,
+    verify_content_bound_trace_index, ContentBoundTraceIndex, ContentBoundTraceIndexEvaluation,
+    ContentBoundTraceIndexIssue, ContentBoundTraceIndexVerification, ContentBoundTraceLink,
+    ContentBoundTraceMarkerSpan, ContentBoundTraceQuery, ContentBoundTraceQueryEvaluation,
+    ContentBoundTraceSourceIdentity, CONTENT_BOUND_TRACE_INDEX_BOUNDARY,
+    CONTENT_BOUND_TRACE_INDEX_NON_CLAIMS, CONTENT_BOUND_TRACE_INDEX_SCHEMA_V1,
+    TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES, TRACEABILITY_ASSURANCE_DECLARED,
+};
 pub use verified::cross_repo_dependencies::{
     build_radicle_issue_receipt, cross_repo_dependency_contract, dependency_blocker_messages,
     evaluate_cross_repo_dependencies, parse_cross_repo_dependencies,

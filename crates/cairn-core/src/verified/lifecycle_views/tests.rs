@@ -242,6 +242,8 @@ fn traceability_profile() -> TraceabilityProfile {
             TRACEABILITY_VERB_DEPENDS.to_string(),
             TRACEABILITY_VERB_RELATED.to_string(),
         ],
+        assurance_level: "declared".to_string(),
+        anchor_kind: "exact_marker_bytes".to_string(),
     }
 }
 

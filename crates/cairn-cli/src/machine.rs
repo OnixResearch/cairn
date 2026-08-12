@@ -198,7 +198,9 @@ fn has_incompatible_presentation(command: &str, args: &[String]) -> bool {
     if command == "policy" && args.first().map(String::as_str) == Some("export") {
         return true;
     }
-    matches!(command, "traceability" | "tracey") && !args.iter().any(|arg| arg == "--json")
+    (command == "tracey"
+        || (command == "traceability" && args.first().map(String::as_str) == Some("coverage")))
+        && !args.iter().any(|arg| arg == "--json")
 }
 
 fn execute_machine_invocation(

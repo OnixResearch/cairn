@@ -61,7 +61,13 @@ pub(crate) fn repository_gate_summary() -> Value {
 pub(crate) fn run_traceability(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.traceability_ownership.command]
     // r[impl cairn.supersede.traceability_ownership.command.maintained]
-    run_coverage_command(args, "traceability")
+    let Some(command) = args.first().cloned() else {
+        return Err("traceability requires a command: coverage, export, verify, or show".into());
+    };
+    if command == "coverage" {
+        return run_coverage_command(args, "traceability");
+    }
+    crate::trace_index::run_trace_index(&command, args.into_iter().skip(1).collect())
 }
 
 pub(crate) fn run_tracey(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -123,7 +129,7 @@ fn traceability_coverage_report(
     }))
 }
 
-fn selected_traceability_profile(
+pub(crate) fn selected_traceability_profile(
     policy: &Policy,
     profile_id: Option<&str>,
 ) -> Result<TraceabilityProfile, Box<dyn Error>> {
@@ -137,7 +143,7 @@ fn selected_traceability_profile(
         .ok_or_else(|| format!("traceability profile not found: {selected_id}").into())
 }
 
-fn collect_traceability_files(
+pub(crate) fn collect_traceability_files(
     root: &Path,
     sources: &[TraceabilitySource],
 ) -> Result<Vec<TraceabilityFile>, Box<dyn Error>> {
@@ -226,6 +232,8 @@ fn traceability_profile_json(profile: &TraceabilityProfile) -> Value {
         "requirement_sources": traceability_sources_json(&profile.requirement_sources),
         "evidence_sources": traceability_sources_json(&profile.evidence_sources),
         "marker_verbs": profile.marker_verbs.clone(),
+        "assurance_level": profile.assurance_level.clone(),
+        "anchor_kind": profile.anchor_kind.clone(),
     })
 }
 

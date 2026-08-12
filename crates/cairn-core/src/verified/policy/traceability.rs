@@ -2,10 +2,15 @@ use std::collections::BTreeSet;
 
 use serde_json::Value;
 
-use crate::verified::traceability::{
-    TraceabilityProfile, TraceabilitySource, TRACEABILITY_PROFILE_CAIRN_DEFAULT,
-    TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_RELATED,
-    TRACEABILITY_VERB_VERIFY,
+use crate::verified::{
+    content_bound_trace_index::{
+        TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES, TRACEABILITY_ASSURANCE_DECLARED,
+    },
+    traceability::{
+        TraceabilityProfile, TraceabilitySource, TRACEABILITY_PROFILE_CAIRN_DEFAULT,
+        TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_RELATED,
+        TRACEABILITY_VERB_VERIFY,
+    },
 };
 
 use super::{fields::string_field, PolicyError, TraceabilityPolicy};
@@ -18,6 +23,8 @@ const TRACEABILITY_REQUIREMENT_SOURCES_FIELD: &str =
     "traceability_policy.profiles.requirement_sources";
 const TRACEABILITY_EVIDENCE_SOURCES_FIELD: &str = "traceability_policy.profiles.evidence_sources";
 const TRACEABILITY_MARKER_VERBS_FIELD: &str = "traceability_policy.profiles.marker_verbs";
+const TRACEABILITY_ASSURANCE_LEVEL_FIELD: &str = "traceability_policy.profiles.assurance_level";
+const TRACEABILITY_ANCHOR_KIND_FIELD: &str = "traceability_policy.profiles.anchor_kind";
 const TRACEABILITY_SOURCE_ROOT_FIELD: &str = "traceability_policy.profiles.sources.root";
 const TRACEABILITY_SOURCE_KIND_FIELD: &str = "traceability_policy.profiles.sources.source_kind";
 const TRACEABILITY_SOURCE_EXTENSIONS_FIELD: &str =
@@ -94,11 +101,23 @@ fn parse_profile(value: &Value) -> Result<TraceabilityProfile, PolicyError> {
         TRACEABILITY_EVIDENCE_SOURCE_KINDS,
     )?;
     let marker_verbs = parse_marker_verbs(value)?;
+    let assurance_level = string_field(value, TRACEABILITY_ASSURANCE_LEVEL_FIELD)?;
+    let anchor_kind = string_field(value, TRACEABILITY_ANCHOR_KIND_FIELD)?;
+    if assurance_level != TRACEABILITY_ASSURANCE_DECLARED {
+        return Err(PolicyError::InvalidField(
+            TRACEABILITY_ASSURANCE_LEVEL_FIELD,
+        ));
+    }
+    if anchor_kind != TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES {
+        return Err(PolicyError::InvalidField(TRACEABILITY_ANCHOR_KIND_FIELD));
+    }
     Ok(TraceabilityProfile {
         id,
         requirement_sources,
         evidence_sources,
         marker_verbs,
+        assurance_level,
+        anchor_kind,
     })
 }
 

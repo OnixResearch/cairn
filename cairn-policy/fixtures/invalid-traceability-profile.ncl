@@ -9,5 +9,7 @@ let Contracts = import "../contracts.ncl" in
       { root = "src", source_kind = "ambient_source", extensions = ["rs"] },
     ],
     marker_verbs = ["claims"],
+    assurance_level = "declared",
+    anchor_kind = "exact_marker_bytes",
   }],
 } | Contracts.Policy

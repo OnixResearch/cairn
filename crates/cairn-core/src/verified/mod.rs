@@ -16,6 +16,7 @@ pub mod collaboration_resolution;
 pub mod collaboration_update;
 pub mod content_addressed;
 pub mod content_bound_requirement_registry;
+pub mod content_bound_trace_index;
 pub mod cross_repo_dependencies;
 pub mod delta_merge;
 pub mod developer_experience;
