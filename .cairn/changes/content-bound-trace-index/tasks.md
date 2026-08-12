@@ -20,5 +20,5 @@
 ## Phase 4: Documentation and completion
 
 - [x] [serial] Document commands, evidence boundaries, and the Ambient and Unison precedents for r[cairn.trace_index.docs].
-- [ ] [serial] Run focused and full repository checks for r[cairn.trace_index.validation].
-- [ ] [serial] Sync the accepted specification and archive the completed change for r[cairn.trace_index.docs].
+- [x] [serial] Run focused and full repository checks for r[cairn.trace_index.validation].
+- [x] [serial] Sync the accepted specification and archive the completed change for r[cairn.trace_index.docs].
