@@ -12,5 +12,5 @@
 ## Phase 3: Completion
 
 - [x] [serial] Document bundle artifacts and claim boundaries for r[cairn.trace_index.evidence_bundle.docs].
-- [ ] [serial] Run focused and full repository checks for r[cairn.trace_index.evidence_bundle.validation].
-- [ ] [serial] Sync accepted requirements and archive the change for r[cairn.trace_index.evidence_bundle.docs].
+- [x] [serial] Run focused and full repository checks for r[cairn.trace_index.evidence_bundle.validation].
+- [x] [serial] Sync accepted requirements and archive the change for r[cairn.trace_index.evidence_bundle.docs].
