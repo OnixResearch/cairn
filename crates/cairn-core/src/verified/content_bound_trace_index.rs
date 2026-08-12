@@ -426,7 +426,6 @@ fn collect_file_links<'a>(
             Err(_) => continue,
         };
         for marker in located_reference_markers(segment, &profile.marker_verbs) {
-            // r[impl cairn.trace_index.live_proof.repository_check]
             let Some(requirement_row) = requirement_rows.get(marker.requirement_id) else {
                 continue;
             };

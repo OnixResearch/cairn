@@ -413,8 +413,6 @@
               touch $out
             '';
 
-        # r[impl cairn.trace_index.live_proof.repository_check]
-        # r[impl cairn.trace_index.live_proof.receipts]
         trace-index-live-proof =
           pkgs.runCommand "cairn-trace-index-live-proof"
             {
