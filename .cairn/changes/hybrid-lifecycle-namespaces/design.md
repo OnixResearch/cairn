@@ -201,6 +201,22 @@ The compatibility adapter converts one legacy namespace-and-key pair into one ca
 
 **Rationale:** The registry provides useful cross-repository discovery. It must remain a derived projection rather than the taxonomy owner.
 
+### Decision: Reuse the existing storage adapter when needed
+
+**Choice:** Memory and portable JSON remain the conformance baseline. An explicit profile can select the existing optional `redb` adapter for durable derived indexes.
+
+The `redb` adapter stores admitted namespace records, subject indexes, value indexes, repository-target indexes, catalog identity, and snapshot metadata.
+
+Each transaction checks the expected prior snapshot identity. Reload must reproduce the same canonical snapshot as memory and portable JSON adapters.
+
+The database remains local, optional, disposable, and rebuildable from canonical repository files. It never stores the sole copy of a lifecycle artifact.
+
+Cairn adds no namespace-specific database port or storage subsystem. Namespace records use the current global-registry storage adapter contract and conformance harness.
+
+An operator profile or measured query need can select `redb`. Cairn does not enable it through an unexplained size threshold or ambient default.
+
+**Rationale:** The existing adapter already owns transactional local registry indexes. Reuse avoids duplicate persistence rules and a second authority boundary.
+
 ### Decision: Preserve the functional-core boundary
 
 **Choice:** `cairn-core` owns these pure decisions:

@@ -14,7 +14,8 @@
 - [ ] [depends:namespace-core] Add read-only namespace list, show, validate, and typed query CLI commands for explicit roots and lifecycle-store IDs. r[cairn.lifecycle_namespaces.query]
 - [ ] [depends:namespace-cli] Add strict read-only MCP tools with CLI-equivalent namespace results and deterministic receipts. r[cairn.lifecycle_namespaces.query] r[cairn.lifecycle_namespaces.verification]
 - [ ] [depends:target-core] Add explicit repository-evidence loading to central validation, sync, archive, and release-readiness preflight without sibling or network discovery. r[cairn.lifecycle_namespaces.repository_evidence] r[cairn.lifecycle_namespaces.hybrid_targets]
-- [ ] [depends:namespace-core] Add namespace-native global-registry records, ingest policy, typed selectors, and snapshot-bound query receipts. r[cairn.lifecycle_namespaces.registry_projection] r[cairn.global_registry.lifecycle_namespaces] r[cairn.global_registry.lifecycle_namespace_queries]
+- [ ] [depends:namespace-core] Add namespace-native registry records, ingest policy, typed selectors, and snapshot-bound query receipts through the existing adapter boundary. r[cairn.lifecycle_namespaces.registry_projection] r[cairn.global_registry.lifecycle_namespaces] r[cairn.global_registry.lifecycle_namespace_queries]
+- [ ] [depends:namespace-registry] Extend the existing memory, portable JSON, and optional `redb` conformance suites for namespace records and indexes. r[cairn.global_registry.lifecycle_namespace_storage]
 - [ ] [depends:namespace-registry] Add import-only version-one tag compatibility with preserved source identity, legacy-text values, and collision rejection. r[cairn.lifecycle_namespaces.compatibility] r[cairn.global_registry.legacy_tag_compatibility]
 
 ## Phase 3: Verification and documentation

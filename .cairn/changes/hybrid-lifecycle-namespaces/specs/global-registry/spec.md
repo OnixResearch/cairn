@@ -42,6 +42,26 @@ r[cairn.global_registry.lifecycle_namespace_queries.boundary]
 - THEN the query result MUST NOT satisfy the gate or target
 - AND explicit repository-owned evidence MUST remain necessary.
 
+### Requirement: Namespace persistence reuses existing storage adapters
+
+r[cairn.global_registry.lifecycle_namespace_storage] Cairn MUST use the existing global-registry storage contract for namespace records. The optional `redb` adapter MUST remain a rebuildable derived index.
+
+#### Scenario: Explicit redb profile persists one derived snapshot
+
+r[cairn.global_registry.lifecycle_namespace_storage.redb]
+- GIVEN an admitted namespace snapshot, an explicit `redb` profile, and the expected prior snapshot identity
+- WHEN the existing storage adapter commits the candidate snapshot
+- THEN records and namespace indexes MUST become visible in one transaction
+- AND reload MUST reproduce the same canonical snapshot identity as memory and portable JSON adapters.
+
+#### Scenario: Database absence does not remove lifecycle authority
+
+r[cairn.global_registry.lifecycle_namespace_storage.rebuild]
+- GIVEN a `redb` file is absent, corrupt, stale, or uses an unsupported storage schema
+- WHEN the operator selects verification or rebuild from canonical repository artifacts
+- THEN Cairn MUST preserve or reconstruct the canonical namespace snapshot without database-owned meaning
+- AND Cairn MUST NOT add a separate namespace database, hidden migration, or last-writer-wins replacement path.
+
 ### Requirement: Legacy tags have a bounded compatibility path
 
 r[cairn.global_registry.legacy_tag_compatibility] Cairn MUST isolate legacy tag parsing from namespace-native records. New namespace sources MUST NOT produce legacy tag assignments.

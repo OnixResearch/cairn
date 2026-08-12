@@ -17,6 +17,8 @@ Cairn needs lifecycle namespaces for central planning across repositories. Repos
 - Add explicit repository targets for central changes and BLAKE3-bound repository completion evidence.
 - Add deterministic namespace inspection and query receipts for CLI and MCP clients.
 - Add an explicit global-registry adapter for namespace projections and import-only compatibility for legacy tag records.
+- Reuse the existing optional `redb` adapter when an explicit profile needs a durable derived index.
+- Do not add a second database subsystem or make database state authoritative.
 - Add positive and negative fixtures for type admission, stale projections, target evidence, compatibility, and claim boundaries.
 
 ## Impact
@@ -25,7 +27,7 @@ Cairn needs lifecycle namespaces for central planning across repositories. Repos
 - **Core**: Add pure newtypes, typestate admission, assignment validation, target-evidence binding, queries, and receipt identities.
 - **CLI**: Add namespace export, inspection, query, and explicit repository-evidence inputs.
 - **MCP**: Add read-only namespace inspection and query tools with strict schemas.
-- **Registry**: Add namespace records and a compatibility adapter for legacy tag assignments.
+- **Registry**: Add namespace records and reuse existing memory, portable JSON, and optional `redb` storage adapters.
 - **Documentation**: Add a central-store namespace guide and migration notes.
 - **Testing**: Add focused policy, core, CLI, MCP, registry, mutation-preflight, and receipt tests.
 
@@ -37,3 +39,4 @@ Cairn needs lifecycle namespaces for central planning across repositories. Repos
 - Encoding dependencies, lifecycle state, authorization, or evidence truth as namespace values.
 - Generating Rust types from operator-defined namespace catalogs.
 - Treating global-registry membership or namespace query results as gate satisfaction.
+- Making `redb` mandatory or storing the sole copy of lifecycle artifacts in a database.
