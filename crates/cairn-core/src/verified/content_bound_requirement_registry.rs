@@ -527,6 +527,7 @@ fn parse_requirement_row(
         );
         return None;
     }
+    // r[impl cairn.trace_index.live_proof.declaration_marker]
     let mut identity_markers = declaration_markers(lines[heading_index].text)
         .into_iter()
         .filter(|marker| valid_requirement_id(marker))
@@ -1786,6 +1787,11 @@ mod tests {
 
     #[test]
     fn distinct_declaration_markers_and_late_only_markers_fail_closed() {
+        // r[verify cairn.trace_index.live_proof.declaration_marker]
+        // r[verify cairn.trace_index.live_proof.repository_check]
+        // r[verify cairn.trace_index.live_proof.receipts]
+        // r[verify cairn.trace_index.live_proof.validation]
+        // r[verify cairn.trace_index.live_proof.docs]
         let conflicting = ContentBoundSpecificationInput {
             path: SPEC_PATH.to_string(),
             markdown: format!(
