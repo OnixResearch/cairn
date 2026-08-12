@@ -25,6 +25,13 @@ pub(super) fn evidence_export_artifacts(
         ("release_readiness", "release-readiness.json", true),
         ("replay_receipt", "replay-agent.json", true),
         ("replay_verification", "replay-verification.json", true),
+        ("requirement_registry", "requirement-registry.json", true),
+        ("trace_index", "trace-index.json", true),
+        (
+            "trace_index_verification",
+            "trace-index-verification.json",
+            true,
+        ),
         ("runtime_evidence", "runtime-evidence.json", false),
         ("runtime_chain", "runtime-chain.json", false),
         ("witness_checkpoint", "witness-checkpoint.json", false),

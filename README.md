@@ -579,9 +579,13 @@ cairn evidence import --root . --bundle target/cairn-evidence/ --into target/cai
 cairn evidence republish --root . --imported target/cairn-imported-evidence/ --out target/cairn-republished-evidence/
 ```
 
-Cairn can index bundles, build registries, select entries, produce fetch plans, and copy verified artifacts from an offline source.
+Each normal evidence export includes `requirement-registry.json`, `trace-index.json`, and `trace-index-verification.json`. The manifest binds the trace index to the exact registry. Evidence verification also compares the saved index with the current root.
 
-These commands do not perform network transport or credential handling. They do not establish remote trust.
+Cairn preserves these artifacts through import, republish, indexing, registry selection, mirror verification, and local fetch workflows.
+
+These commands do not perform network transport or credential handling. They do not establish remote trust. Trace artifacts record declared linkage and freshness only. They do not prove requirement satisfaction or implementation correctness.
+
+<!-- r[impl cairn.trace_index.evidence_bundle.docs] -->
 
 Generate release evidence for a clean current revision:
 

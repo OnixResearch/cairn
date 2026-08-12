@@ -88,6 +88,29 @@ The declared assurance level records marker linkage only.
 It does not provide an AST-resolved symbol, executed test result, or proof result.
 A future adapter can add structural or executed evidence through a new versioned contract.
 
+## Use the normal evidence bundle
+
+Export and verify Cairn's portable evidence bundle:
+
+```bash
+cairn evidence export --root . --out target/cairn-evidence/
+cairn evidence verify --root . --bundle target/cairn-evidence/
+```
+
+Each export includes:
+
+- `requirement-registry.json`.
+- `trace-index.json`.
+- `trace-index-verification.json`.
+
+The evidence manifest records typed roles for all three artifacts. It binds the index to the exact registry BLAKE3. It also binds the verification receipt to the exact index BLAKE3.
+
+Evidence verification checks artifact hashes and closed schemas. It also reruns trace-index verification against the supplied current root. Source changes after export make verification fail.
+
+Generic evidence workflows preserve all three artifacts. These workflows include import, republish, indexing, registry selection, mirror verification, and local fetch.
+
+The registry uses deterministic local evidence-scope labels. These labels do not claim remote repository identity or revision authenticity.
+
 ## Inspect Cairn's maintained live proof
 
 Build the repository-scale check:

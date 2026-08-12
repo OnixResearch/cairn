@@ -25,6 +25,8 @@ pub(crate) struct EvidenceManifestGenerateOptions {
     pub(crate) release_readiness: Option<PathBuf>,
     pub(crate) coverage_audit: Option<PathBuf>,
     pub(crate) requirement_registry: Option<PathBuf>,
+    pub(crate) trace_index: Option<PathBuf>,
+    pub(crate) trace_index_verification: Option<PathBuf>,
     pub(crate) registry: Option<PathBuf>,
     pub(crate) registry_verification: Option<PathBuf>,
     pub(crate) registry_selection: Option<PathBuf>,
@@ -98,6 +100,8 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             | "--release-readiness"
             | "--coverage-audit"
             | "--requirement-registry"
+            | "--trace-index"
+            | "--trace-index-verification"
             | "--registry"
             | "--registry-verification"
             | "--registry-selection"
@@ -126,6 +130,12 @@ fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenera
             }
             ("--requirement-registry", Some(value)) => {
                 options.requirement_registry = Some(PathBuf::from(value));
+            }
+            ("--trace-index", Some(value)) => {
+                options.trace_index = Some(PathBuf::from(value));
+            }
+            ("--trace-index-verification", Some(value)) => {
+                options.trace_index_verification = Some(PathBuf::from(value));
             }
             ("--registry", Some(value)) => {
                 options.registry = Some(PathBuf::from(value));
@@ -181,6 +191,11 @@ pub(crate) fn evidence_manifest_generate_manifest(
             "requirement_registry",
             options.requirement_registry.as_deref(),
         ),
+        ("trace_index", options.trace_index.as_deref()),
+        (
+            "trace_index_verification",
+            options.trace_index_verification.as_deref(),
+        ),
         ("evidence_registry", options.registry.as_deref()),
         (
             "evidence_registry_verification",
@@ -220,6 +235,8 @@ pub(crate) fn evidence_manifest_generate_manifest(
             "release_readiness",
             "coverage_audit",
             "requirement_registry",
+            "trace_index",
+            "trace_index_verification",
             "evidence_registry",
             "evidence_registry_verification",
             "evidence_registry_selection",

@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use cairn_core::canonical_json_hash;
+use cairn_core::{canonical_json_hash, parse_content_bound_trace_index_value};
 use serde_json::{json, Value};
 
 use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
@@ -13,6 +13,7 @@ use crate::support::{
 
 use super::artifact::{
     read_manifest_artifact, requirement_registry_receipt_hash, REQUIREMENT_REGISTRY_ROLE,
+    TRACE_INDEX_ROLE, TRACE_INDEX_VERIFICATION_ROLE,
 };
 use super::issues::evidence_manifest_issue;
 use super::metadata::optional_metadata_hash;
@@ -109,6 +110,7 @@ pub(crate) fn evidence_manifest_verification_receipt(root: &Path, manifest_path:
                     &mut issues,
                 ));
             }
+            validate_trace_artifact_bindings(root, base, entries, &mut issues);
         }
         _ => issues.push(evidence_manifest_issue(
             "manifest.artifacts_missing",
@@ -247,6 +249,129 @@ fn verify_evidence_manifest_artifact(
         "hash": actual_hash,
         "schema": schema,
         "valid": artifact_valid,
+    })
+}
+
+// r[impl cairn.trace_index.evidence_bundle.verification]
+fn validate_trace_artifact_bindings(
+    root: &Path,
+    base: &Path,
+    entries: &[Value],
+    issues: &mut Vec<Value>,
+) {
+    let registry_entry = entries
+        .iter()
+        .find(|entry| entry.get("role").and_then(Value::as_str) == Some(REQUIREMENT_REGISTRY_ROLE));
+    let index_entry = entries
+        .iter()
+        .find(|entry| entry.get("role").and_then(Value::as_str) == Some(TRACE_INDEX_ROLE));
+    if registry_entry.is_some() && index_entry.is_none() {
+        return;
+    }
+    let verification_entry = entries.iter().find(|entry| {
+        entry.get("role").and_then(Value::as_str) == Some(TRACE_INDEX_VERIFICATION_ROLE)
+    });
+    if index_entry.is_none() && verification_entry.is_none() {
+        return;
+    }
+    let Some(registry_entry) = registry_entry else {
+        issues.push(evidence_manifest_issue(
+            "artifact.trace_index_registry_missing",
+            REQUIREMENT_REGISTRY_ROLE,
+            "requirement registry paired with trace index",
+            "missing",
+        ));
+        return;
+    };
+    let Some(index_entry) = index_entry else {
+        issues.push(evidence_manifest_issue(
+            "artifact.trace_index_missing",
+            TRACE_INDEX_ROLE,
+            "trace index paired with verification receipt",
+            "missing",
+        ));
+        return;
+    };
+    let Some(verification_entry) = verification_entry else {
+        issues.push(evidence_manifest_issue(
+            "artifact.trace_index_verification_missing",
+            TRACE_INDEX_VERIFICATION_ROLE,
+            "trace-index verification paired with trace index",
+            "missing",
+        ));
+        return;
+    };
+    let Some(registry_path) = manifest_entry_path(base, registry_entry) else {
+        return;
+    };
+    let Some(index_path) = manifest_entry_path(base, index_entry) else {
+        return;
+    };
+    let Some(verification_path) = manifest_entry_path(base, verification_entry) else {
+        return;
+    };
+    let Ok((registry_value, _)) =
+        read_manifest_artifact(root, REQUIREMENT_REGISTRY_ROLE, &registry_path)
+    else {
+        return;
+    };
+    let Ok((index_value, _)) = read_manifest_artifact(root, TRACE_INDEX_ROLE, &index_path) else {
+        return;
+    };
+    let Ok((verification_value, _)) =
+        read_manifest_artifact(root, TRACE_INDEX_VERIFICATION_ROLE, &verification_path)
+    else {
+        return;
+    };
+    let registry_blake3 = registry_value
+        .get("registry_blake3")
+        .and_then(Value::as_str);
+    let parsed_index = parse_content_bound_trace_index_value(&index_value).ok();
+    let index_registry_blake3 = parsed_index
+        .as_ref()
+        .map(|index| index.requirement_registry_blake3.as_str());
+    let declared_registry_blake3 = index_entry
+        .get("requirement_registry_blake3")
+        .and_then(Value::as_str);
+    if registry_blake3.is_none()
+        || registry_blake3 != index_registry_blake3
+        || registry_blake3 != declared_registry_blake3
+    {
+        issues.push(evidence_manifest_issue(
+            "artifact.trace_index_registry_mismatch",
+            TRACE_INDEX_ROLE,
+            "trace index and manifest bind the declared requirement registry",
+            "mismatch",
+        ));
+    }
+    let index_blake3 = parsed_index
+        .as_ref()
+        .map(|index| index.index_blake3.as_str());
+    let verification_index_blake3 = verification_value
+        .get("index_blake3")
+        .and_then(Value::as_str);
+    let declared_index_blake3 = verification_entry
+        .get("index_blake3")
+        .and_then(Value::as_str);
+    if index_blake3.is_none()
+        || index_blake3 != verification_index_blake3
+        || index_blake3 != declared_index_blake3
+    {
+        issues.push(evidence_manifest_issue(
+            "artifact.trace_index_verification_mismatch",
+            TRACE_INDEX_VERIFICATION_ROLE,
+            "verification receipt and manifest bind the declared trace index",
+            "mismatch",
+        ));
+    }
+}
+
+fn manifest_entry_path(base: &Path, entry: &Value) -> Option<PathBuf> {
+    let path = PathBuf::from(entry.get("path")?.as_str()?);
+    Some(if path.is_absolute() {
+        path
+    } else {
+        base.join(path)
     })
 }
 

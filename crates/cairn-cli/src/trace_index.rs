@@ -24,7 +24,7 @@ use crate::{
 };
 
 const TRACE_INDEX_EXPORT_RECEIPT_SCHEMA_V1: &str = "cairn.trace-index.export-receipt.v1";
-const TRACE_INDEX_VERIFY_RECEIPT_SCHEMA_V1: &str = "cairn.trace-index.verify-receipt.v1";
+pub(crate) const TRACE_INDEX_VERIFY_RECEIPT_SCHEMA_V1: &str = "cairn.trace-index.verify-receipt.v1";
 const TRACE_INDEX_SHOW_RECEIPT_SCHEMA_V1: &str = "cairn.trace-index.show-receipt.v1";
 const BYTES_PER_KIBIBYTE: u64 = 1_024;
 const KIBIBYTES_PER_MEBIBYTE: u64 = 1_024;
@@ -109,13 +109,46 @@ fn run_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let profile_id = read_string_option(&args, "--profile");
     let registry_path = required_path_option(&args, "--registry", "verify")?;
     let index_path = required_path_option(&args, "--index", "verify")?;
-    let policy = crate::support::load_policy_file(policy_path.clone())?;
-    let profile = selected_traceability_profile(&policy, profile_id.as_deref())?;
-    let evidence_files = collect_traceability_files(&root, &profile.evidence_sources)?;
-    let policy_bytes = read_bounded_file(&policy_path, MAX_POLICY_BYTES, "traceability policy")?;
-    let repository = CapabilityRoot::open(CapabilityRootKind::Repository, &root)?;
+    let receipt = current_root_trace_index_verification_receipt(
+        &root,
+        &policy_path,
+        profile_id.as_deref(),
+        &registry_path,
+        &index_path,
+        &index_path,
+    )?;
+    let valid = receipt.get("valid").and_then(Value::as_bool) == Some(true);
+    print_json(receipt)?;
+    if !valid {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+pub(crate) fn current_root_trace_index_verification_receipt(
+    root: &Path,
+    policy_path: &Path,
+    profile_id: Option<&str>,
+    registry_path: &Path,
+    index_path: &Path,
+    displayed_index_path: &Path,
+) -> Result<Value, Box<dyn Error>> {
+    let resolved_policy_path = if policy_path.is_absolute() {
+        policy_path.to_path_buf()
+    } else {
+        root.join(policy_path)
+    };
+    let policy = crate::support::load_policy_file(resolved_policy_path.clone())?;
+    let profile = selected_traceability_profile(&policy, profile_id)?;
+    let evidence_files = collect_traceability_files(root, &profile.evidence_sources)?;
+    let policy_bytes = read_bounded_file(
+        &resolved_policy_path,
+        MAX_POLICY_BYTES,
+        "traceability policy",
+    )?;
+    let repository = CapabilityRoot::open(CapabilityRootKind::Repository, root)?;
     let specifications = read_accepted_specifications(&repository)?;
-    let registry = read_registry(&registry_path)?;
+    let registry = read_registry(registry_path)?;
     let registry_report = verify_content_bound_requirement_registry(
         &registry,
         specifications,
@@ -123,29 +156,23 @@ fn run_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         &registry.repository_id,
     );
     if !registry_report.valid {
-        print_json(verify_receipt(
-            &root,
-            &index_path,
+        return Ok(trace_index_verify_receipt(
+            root,
+            displayed_index_path,
             None,
             Vec::new(),
             registry_report.issues,
-        ))?;
-        std::process::exit(1);
+        ));
     }
-    let index = read_index(&index_path)?;
+    let index = read_index(index_path)?;
     let report = verify_content_bound_trace_index(&index, &registry, &profile, evidence_files);
-    let valid = report.valid;
-    print_json(verify_receipt(
-        &root,
-        &index_path,
+    Ok(trace_index_verify_receipt(
+        root,
+        displayed_index_path,
         Some(&index),
         report.issues,
         Vec::new(),
-    ))?;
-    if !valid {
-        std::process::exit(1);
-    }
-    Ok(())
+    ))
 }
 
 fn run_show(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -218,7 +245,7 @@ fn export_receipt(
     )
 }
 
-fn verify_receipt(
+pub(crate) fn trace_index_verify_receipt(
     root: &Path,
     index_path: &Path,
     index: Option<&ContentBoundTraceIndex>,

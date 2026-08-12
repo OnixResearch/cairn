@@ -8,6 +8,8 @@ pub(crate) fn verify(
     chain: &EvidenceChain,
     registry_chain: &RegistryChain,
 ) -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.trace_index.evidence_bundle.freshness]
+    // r[verify cairn.trace_index.evidence_bundle.validation]
     let dir = &chain.dir;
     let export_dir = &chain.export_dir;
     let import_dir = &chain.import_dir;
@@ -234,6 +236,126 @@ pub(crate) fn verify(
         !verify_failure_text.contains(&dir.display().to_string()),
         "{verify_failure_text}"
     );
+
+    let manifest_path = export_dir.join("evidence-manifest.json");
+    let manifest: Value = serde_json::from_slice(&fs::read(&manifest_path)?)?;
+    let mut registry_mismatch_manifest = manifest.clone();
+    let registry_binding = registry_mismatch_manifest["artifacts"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|artifact| artifact["role"] == "trace_index")
+        .unwrap();
+    registry_binding["requirement_registry_blake3"] =
+        json!("0000000000000000000000000000000000000000000000000000000000000000");
+    let registry_mismatch_path = export_dir.join("registry-mismatch-manifest.json");
+    fs::write(
+        &registry_mismatch_path,
+        serde_json::to_string_pretty(&registry_mismatch_manifest)? + "\n",
+    )?;
+    let registry_mismatch = run_json_failure_strings(&[
+        "evidence-manifest".into(),
+        "verify".into(),
+        registry_mismatch_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    let registry_mismatch_codes = registry_mismatch["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(registry_mismatch_codes.contains(&"artifact.trace_index_registry_mismatch"));
+    fs::remove_file(&registry_mismatch_path)?;
+
+    let mut verification_mismatch_manifest = manifest;
+    let verification_binding = verification_mismatch_manifest["artifacts"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|artifact| artifact["role"] == "trace_index_verification")
+        .unwrap();
+    verification_binding["index_blake3"] =
+        json!("0000000000000000000000000000000000000000000000000000000000000000");
+    let verification_mismatch_path = export_dir.join("verification-mismatch-manifest.json");
+    fs::write(
+        &verification_mismatch_path,
+        serde_json::to_string_pretty(&verification_mismatch_manifest)? + "\n",
+    )?;
+    let verification_mismatch = run_json_failure_strings(&[
+        "evidence-manifest".into(),
+        "verify".into(),
+        verification_mismatch_path.display().to_string(),
+        "--root".into(),
+        ".".into(),
+    ])?;
+    let verification_mismatch_codes = verification_mismatch["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(verification_mismatch_codes.contains(&"artifact.trace_index_verification_mismatch"));
+    fs::remove_file(&verification_mismatch_path)?;
+
+    let stale_root = dir.join("stale-root");
+    super::support::copy_dir(
+        &repo_root().join(".cairn/specs"),
+        &stale_root.join(".cairn/specs"),
+    )?;
+    super::support::copy_dir(
+        &repo_root().join("cairn-policy"),
+        &stale_root.join("cairn-policy"),
+    )?;
+    super::support::copy_dir(&repo_root().join("crates"), &stale_root.join("crates"))?;
+    super::support::copy_dir(&repo_root().join("tools"), &stale_root.join("tools"))?;
+    fs::write(
+        stale_root.join("crates/cairn-cli/src/trace_index.rs"),
+        format!(
+            "{}\n// changed after trace export\n",
+            fs::read_to_string(repo_root().join("crates/cairn-cli/src/trace_index.rs"))?
+        ),
+    )?;
+    let stale_verify = run_json_failure_strings(&[
+        "evidence".into(),
+        "verify".into(),
+        "--root".into(),
+        stale_root.display().to_string(),
+        "--bundle".into(),
+        export_dir.display().to_string(),
+    ])?;
+    let stale_codes = stale_verify["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(stale_codes.contains(&"evidence_verify.trace_index_stale"));
+
+    let mut malformed_index: Value =
+        serde_json::from_slice(&fs::read(export_dir.join("trace-index.json"))?)?;
+    malformed_index["schema_version"] = json!("wrong");
+    fs::write(
+        export_dir.join("trace-index.json"),
+        serde_json::to_string_pretty(&malformed_index)? + "\n",
+    )?;
+    let malformed_verify = run_json_failure_strings(&[
+        "evidence".into(),
+        "verify".into(),
+        "--root".into(),
+        ".".into(),
+        "--bundle".into(),
+        export_dir.display().to_string(),
+    ])?;
+    let malformed_codes = malformed_verify["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|issue| issue["code"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(malformed_codes.contains(&"evidence_verify.artifact_hash_mismatch"));
+    assert!(malformed_codes.contains(&"evidence_verify.manifest_rerun_invalid"));
 
     let bad_agent = dir.join("bad-agent.json");
     let mut stale_agent: Value = serde_json::from_str(&fs::read_to_string(

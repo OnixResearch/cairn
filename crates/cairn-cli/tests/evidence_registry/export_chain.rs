@@ -7,6 +7,9 @@ use super::support::{
 };
 
 pub(crate) fn materialize() -> Result<EvidenceChain, Box<dyn Error>> {
+    // r[verify cairn.trace_index.evidence_bundle.export]
+    // r[verify cairn.trace_index.evidence_bundle.portability]
+    // r[verify cairn.trace_index.evidence_bundle.verification]
     // r[verify cairn.supersede.evidence_export_bundle.command]
     // r[verify cairn.supersede.evidence_export_bundle.artifacts]
     // r[verify cairn.supersede.evidence_export_bundle.failures]
@@ -89,6 +92,9 @@ pub(crate) fn materialize() -> Result<EvidenceChain, Box<dyn Error>> {
             "release_readiness",
             "replay_receipt",
             "replay_verification",
+            "requirement_registry",
+            "trace_index",
+            "trace_index_verification",
         ]
     );
     for artifact in receipt["artifacts"].as_array().unwrap() {
@@ -101,6 +107,27 @@ pub(crate) fn materialize() -> Result<EvidenceChain, Box<dyn Error>> {
             "missing exported artifact: {path}"
         );
     }
+    let registry: Value =
+        serde_json::from_slice(&fs::read(export_dir.join("requirement-registry.json"))?)?;
+    let trace_index: Value =
+        serde_json::from_slice(&fs::read(export_dir.join("trace-index.json"))?)?;
+    let trace_verification: Value =
+        serde_json::from_slice(&fs::read(export_dir.join("trace-index-verification.json"))?)?;
+    assert_eq!(
+        trace_index["requirement_registry_blake3"],
+        registry["registry_blake3"]
+    );
+    assert_eq!(
+        trace_verification["index_blake3"],
+        trace_index["index_blake3"]
+    );
+    assert_eq!(trace_verification["valid"], true);
+    assert_eq!(trace_verification["verdict"], "pass");
+    assert_eq!(
+        trace_verification["schema"],
+        "cairn.trace-index.verify-receipt.v1"
+    );
+
     let saved_receipt: Value =
         serde_json::from_slice(&fs::read(export_dir.join("evidence-export-receipt.json"))?)?;
     assert_eq!(saved_receipt["receipt_hash"], receipt["receipt_hash"]);

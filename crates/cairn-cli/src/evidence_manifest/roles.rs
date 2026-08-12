@@ -1,7 +1,8 @@
 use std::path::Path;
 
 use cairn_core::{
-    parse_content_bound_requirement_registry_value, validate_content_bound_requirement_registry,
+    parse_content_bound_requirement_registry_value, parse_content_bound_trace_index_value,
+    validate_content_bound_requirement_registry, validate_content_bound_trace_index,
 };
 use serde_json::Value;
 
@@ -13,7 +14,7 @@ use crate::evidence_registry::{evidence_registry_verify_receipt, EvidenceRegistr
 use crate::runtime_evidence::{
     runtime_evidence_verification_receipt, RuntimeEvidenceVerifyOptions,
 };
-use crate::support::{default_policy_path, load_policy_file};
+use crate::support::{default_policy_path, load_policy_file, portable_json_hash};
 
 use super::issues::evidence_manifest_issue;
 
@@ -121,6 +122,59 @@ pub(super) fn validate_manifest_artifact_role(
                 false
             }
         },
+        "trace_index" => match parse_content_bound_trace_index_value(value) {
+            Ok(index) if validate_content_bound_trace_index(&index).is_empty() => true,
+            Ok(_) | Err(_) => {
+                issues.push(evidence_manifest_issue(
+                    "artifact.trace_index_invalid",
+                    role,
+                    "valid self-bound content trace index",
+                    "invalid",
+                ));
+                false
+            }
+        },
+        "trace_index_verification" => {
+            let valid = value.get("valid").and_then(Value::as_bool) == Some(true);
+            let verdict = value.get("verdict").and_then(Value::as_str) == Some("pass");
+            let command =
+                value.get("command").and_then(Value::as_str) == Some("traceability verify");
+            let schema = value.get("schema").and_then(Value::as_str)
+                == Some(crate::trace_index::TRACE_INDEX_VERIFY_RECEIPT_SCHEMA_V1);
+            let issues_empty = value
+                .get("issues")
+                .and_then(Value::as_array)
+                .is_some_and(Vec::is_empty);
+            let registry_issues_empty = value
+                .get("registry_issues")
+                .and_then(Value::as_array)
+                .is_some_and(Vec::is_empty);
+            let stated_hash = value.get("receipt_hash").and_then(Value::as_str);
+            let mut material = value.clone();
+            if let Some(object) = material.as_object_mut() {
+                object.remove("receipt_hash");
+            }
+            let computed_hash = portable_json_hash(root, &material);
+            let receipt_hash_valid = stated_hash == Some(computed_hash.as_str());
+            if valid
+                && verdict
+                && command
+                && schema
+                && issues_empty
+                && registry_issues_empty
+                && receipt_hash_valid
+            {
+                true
+            } else {
+                issues.push(evidence_manifest_issue(
+                    "artifact.trace_index_verification_invalid",
+                    role,
+                    "passing trace-index verification receipt",
+                    "invalid",
+                ));
+                false
+            }
+        }
         "evidence_registry" => {
             let receipt = evidence_registry_verify_receipt(&EvidenceRegistryVerifyOptions {
                 root: root.to_path_buf(),

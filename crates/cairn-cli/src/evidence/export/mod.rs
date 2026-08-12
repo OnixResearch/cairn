@@ -7,6 +7,7 @@ mod issue;
 mod manifest;
 mod options;
 mod receipt;
+mod trace;
 
 pub(crate) use options::EvidenceExportOptions;
 pub(crate) use receipt::evidence_export_final_receipt;
@@ -24,6 +25,7 @@ use artifacts::evidence_export_artifacts;
 use issue::{evidence_export_issue, evidence_export_nested_issue};
 use manifest::evidence_manifest_with_relative_paths;
 use options::evidence_export_options;
+use trace::export_trace_evidence;
 
 pub(super) fn run_evidence_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.evidence_export_bundle.command]
@@ -86,7 +88,8 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         }
     };
 
-    let policy = match load_policy_file(default_policy_path().into()) {
+    let policy_path = root.join(default_policy_path());
+    let policy = match load_policy_file(policy_path.clone()) {
         Ok(policy) => policy,
         Err(_) => {
             issues.push(evidence_export_issue(
@@ -122,6 +125,16 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
     let bundle_verification_path = out_dir.join("agent-evidence-bundle-verification.json");
     let manifest_path = out_dir.join("evidence-manifest.json");
     let manifest_verification_path = out_dir.join("evidence-manifest-verification.json");
+
+    let trace_evidence = export_trace_evidence(
+        &root,
+        &policy_path,
+        &policy,
+        &repository_root,
+        &output_root,
+        &out_dir,
+        &mut issues,
+    );
 
     let coverage = determinism_coverage_audit_receipt(&root, &policy);
     write_evidence_json(
@@ -307,7 +320,15 @@ pub(crate) fn evidence_export_receipt(options: &EvidenceExportOptions) -> Value 
         replay_verification: Some(replay_verification_path.clone()),
         release_readiness: Some(release_path.clone()),
         coverage_audit: Some(coverage_path.clone()),
-        requirement_registry: None,
+        requirement_registry: trace_evidence
+            .as_ref()
+            .map(|evidence| evidence.registry.clone()),
+        trace_index: trace_evidence
+            .as_ref()
+            .map(|evidence| evidence.index.clone()),
+        trace_index_verification: trace_evidence
+            .as_ref()
+            .map(|evidence| evidence.verification.clone()),
         registry: None,
         registry_verification: None,
         registry_selection: None,

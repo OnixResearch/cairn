@@ -19,7 +19,7 @@
 
 ## Decision: Export three required trace artifacts
 
-Evidence export will create `requirement-registry.json`, `trace-index.json`, and `trace-index-verification.json`. The registry uses the repository identity `onixresearch/cairn` and a deterministic opaque evidence-snapshot revision label. The trace index binds to the exact registry BLAKE3. The verification receipt binds the index to the current repository source.
+Evidence export will create `requirement-registry.json`, `trace-index.json`, and `trace-index-verification.json`. The registry uses a deterministic local evidence-scope label and an opaque evidence-snapshot revision label. These labels do not claim remote repository identity or revision authenticity. The trace index binds to the exact registry BLAKE3. The verification receipt binds the index to the current repository source.
 
 The generated evidence manifest and export receipt will declare all three artifacts. Existing import, republish, index, registry, mirror, and local fetch paths will preserve them through their generic artifact handling.
 
