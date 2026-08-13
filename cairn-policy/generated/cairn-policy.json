@@ -3840,6 +3840,7 @@
         "receipt_hash",
         "stage",
         "substance",
+        "task_ordering",
         "valid",
         "verdict"
       ]

@@ -14,4 +14,4 @@
 ## Phase 3: Completion
 
 - [x] [serial] [task:docs] [after:shell-tests] Document marker syntax, compatibility, and claim boundaries. r[cairn.task_ordering.markers]
-- [~] [serial] [task:verify] [after:docs] Run focused and full verification, then sync and archive the change. r[cairn.task_ordering.tests]
+- [x] [serial] [task:verify] [after:docs] Run focused and full verification, then sync and archive the change. r[cairn.task_ordering.tests]

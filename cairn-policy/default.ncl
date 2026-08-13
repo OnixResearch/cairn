@@ -1260,7 +1260,7 @@ let WorkflowRequiredNonClaims = [
     },
     {
       command = "gate",
-      top_level_keys = ["change", "evidence_summary", "input_hash", "issues", "layout", "policy", "policy_hash", "probe_evidence", "receipt_hash", "stage", "substance", "valid", "verdict"],
+      top_level_keys = ["change", "evidence_summary", "input_hash", "issues", "layout", "policy", "policy_hash", "probe_evidence", "receipt_hash", "stage", "substance", "task_ordering", "valid", "verdict"],
       issue_keys = ["code", "message", "promoted", "scope"],
       hash_fields = ["input_hash", "policy_hash", "receipt_hash"],
     },

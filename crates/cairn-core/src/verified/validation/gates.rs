@@ -118,6 +118,7 @@ pub fn evaluate_gate_snapshot(
     policy: &Policy,
 ) -> GateReport {
     // r[impl cairn.supersede.gate_policy]
+    // r[impl cairn.task_ordering.gate]
     // r[impl cairn.supersede.gate_policy.references]
     // r[impl cairn.supersede.gate_policy.task_links]
     // r[impl cairn.supersede.gate_policy.exemptions]

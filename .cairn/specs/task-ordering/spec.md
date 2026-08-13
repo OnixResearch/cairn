@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define optional, deterministic task dependency ordering for Cairn change packages.
+Defines optional, deterministic task dependency ordering for Cairn change packages.
 
 ## Requirements
 

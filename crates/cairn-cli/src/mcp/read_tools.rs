@@ -359,6 +359,7 @@ pub(super) fn mcp_change_graph(input: &Value) -> Result<Value, Box<dyn Error>> {
 
 pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.mcp_drain_all.plan]
+    // r[impl cairn.task_ordering.drain]
     // r[impl cairn.mcp_drain_all.plan.read_only]
     // r[impl cairn.mcp_drain_all.plan.readiness]
     // r[impl cairn.mcp_drain_all.plan.next_actions]

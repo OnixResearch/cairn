@@ -4,7 +4,7 @@
   "registry_id": "cairn-release-checks",
   "registry_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "selection_hash": "b9da53c190687f8ff0bf2a465d6823056328363c7aa4b73f97ee0a10ff158581",
-  "policy_hash": "214e6ef68b03daf96c42f32f05b8235c92c4b52078dc1f41896f0785f83fb37a",
+  "policy_hash": "8280151b7a53822eed460149ecb600bf11418d7463c935e0742009b334f4e7dd",
   "final_subject_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
   "required_checks": [
     {

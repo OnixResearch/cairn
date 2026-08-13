@@ -95,6 +95,7 @@ struct MarkerObservation {
 }
 
 pub fn build_task_ordering_graph(markdown: &str, policy: &Policy) -> TaskOrderingGraph {
+    // r[impl cairn.task_ordering.markers]
     // r[impl cairn.task_ordering.graph]
     // r[impl cairn.task_ordering.progress]
     let Some(identity_marker) = configured_marker(policy, TASK_IDENTITY_MARKER_ID) else {
@@ -578,6 +579,7 @@ mod tests {
 
     #[test]
     fn orders_valid_tasks_and_reports_only_unblocked_work_as_ready() {
+        // r[verify cairn.task_ordering.tests]
         // r[verify cairn.task_ordering.graph.valid]
         // r[verify cairn.task_ordering.progress.ready]
         // r[verify cairn.task_ordering.tests.coverage]
@@ -605,6 +607,7 @@ mod tests {
 
     #[test]
     fn rejects_missing_malformed_multiple_and_duplicate_identities() {
+        // r[verify cairn.task_ordering.markers.complete]
         // r[verify cairn.task_ordering.graph.invalid]
         let markdown = "\
 - [ ] [serial] Missing\n\

@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "de0b417f94935a4f960c414d12f1cdb958b32e008f0724faec188923a4d8e416",
+    "input_hash": "e890d3bebd6f9f984387d26d4c6685963b96d2172fdf1df42756927cfa255a9c",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "214e6ef68b03daf96c42f32f05b8235c92c4b52078dc1f41896f0785f83fb37a",
-    "receipt_hash": "ce5ab7dbdf81d7351f996cd1411ae6811a2efc6e7874b4bcd59ec79397847192",
+    "policy_hash": "8280151b7a53822eed460149ecb600bf11418d7463c935e0742009b334f4e7dd",
+    "receipt_hash": "b37bae535823028673cb011a8f08a9b26fbfca1414a5b5141892f75699ce5c01",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -24,7 +24,7 @@
     "fixtures/missing-artifacts/.cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "f91410455b36188d8f50944d59961873100b1e4f0d7ed99f0a2e4a659793a41a",
+  "input_hash": "259c5c1414ae6383911594d90104cd991d9f9c3944a0ff61f8dfa624d4ea88b0",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -58,12 +58,12 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "67f10e26764f13d0a0f92fe3aa6ff1223f03d4594bf3b7fbaffded063a3f0935",
+  "plan_hash": "98ca7c9bdabc78f0d4ecb6d5385c7d3446002506d3e7fc50eb377d85fdff0aaa",
   "policy": "cairn-default",
-  "policy_hash": "214e6ef68b03daf96c42f32f05b8235c92c4b52078dc1f41896f0785f83fb37a",
+  "policy_hash": "8280151b7a53822eed460149ecb600bf11418d7463c935e0742009b334f4e7dd",
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "719349ab4307c0cadda816adc9cea8bf35d8160e94715900316e268cef44a192"
+  "receipt_hash": "267663f61098119163fcdaec514d874ca547d22e363b98009a925e5a350a0731"
 }
