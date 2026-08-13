@@ -77,7 +77,7 @@ pub(super) fn marker_prefix(token: &str) -> &str {
     token.split('<').next().unwrap_or(token)
 }
 
-pub(super) fn valid_lifecycle_id(candidate: &str) -> bool {
+pub(crate) fn valid_lifecycle_id(candidate: &str) -> bool {
     let bytes = candidate.as_bytes();
     bytes.first().is_some_and(u8::is_ascii_alphanumeric)
         && bytes.last().is_some_and(u8::is_ascii_alphanumeric)

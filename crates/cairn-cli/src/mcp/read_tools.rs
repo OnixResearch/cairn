@@ -398,6 +398,7 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
         let design_gate =
             drain_gate_summary(&snapshot, GateStage::Design, &policy, &profile_context);
         let tasks_gate = drain_gate_summary(&snapshot, GateStage::Tasks, &policy, &profile_context);
+        let task_ordering = tasks_gate["task_ordering"].clone();
         let mut blockers = Vec::new();
         collect_gate_blocker(&mut blockers, "proposal_gate", &proposal_gate);
         collect_gate_blocker(&mut blockers, "design_gate", &design_gate);
@@ -472,7 +473,8 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
         if is_ready {
             ready_change_count += 1;
         }
-        let change_next_actions = drain_next_actions(&change.name, is_ready, &blockers);
+        let change_next_actions =
+            drain_next_actions(&change.name, is_ready, &blockers, &task_ordering);
         next_actions.extend(change_next_actions.iter().cloned());
         let dependency_node = dependency_graph.node(&change.name);
         let dependency_issues = dependency_issues_for_change(&dependency_graph, &change.name);
@@ -495,6 +497,7 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
                 "todo": counts.todo,
                 "unmarked": counts.unmarked,
             })),
+            "task_ordering": task_ordering,
             "gates": {
                 "proposal": proposal_gate,
                 "design": design_gate,
@@ -603,10 +606,12 @@ fn drain_gate_summary(
         "verdict": report.verdict,
         "issue_count": report.issues.len(),
         "issues": report.issues.iter().map(|issue| json!({
+            "code": issue.code,
             "message": issue.message,
             "scope": issue.scope,
             "promoted": issue.promoted,
         })).collect::<Vec<_>>(),
+        "task_ordering": report.task_ordering.as_ref().map(task_ordering_graph_json),
     })
 }
 
@@ -637,7 +642,12 @@ fn tasks_are_complete(counts: Option<cairn_core::TaskCounts>) -> bool {
         .unwrap_or(false)
 }
 
-fn drain_next_actions(change: &str, is_ready: bool, blockers: &[Value]) -> Vec<Value> {
+fn drain_next_actions(
+    change: &str,
+    is_ready: bool,
+    blockers: &[Value],
+    task_ordering: &Value,
+) -> Vec<Value> {
     if is_ready {
         return vec![
             json!({"change": change, "tool": "cairn_sync_execute", "requires_allow_mutations": true}),
@@ -663,11 +673,27 @@ fn drain_next_actions(change: &str, is_ready: bool, blockers: &[Value]) -> Vec<V
     {
         actions.push(json!({"change": change, "tool": "cairn_gate", "arguments": {"change": change, "stage": "tasks"}}));
     }
+    let task_ordering_is_invalid = task_ordering["valid"].as_bool() == Some(false);
+    if task_ordering_is_invalid {
+        actions.push(json!({
+            "change": change,
+            "action": "repair task ordering before implementation",
+        }));
+    }
     if blockers
         .iter()
         .any(|blocker| blocker["class"] == "unfinished_tasks")
+        && !task_ordering_is_invalid
     {
-        actions.push(json!({"change": change, "action": "complete implementation tasks and mark tasks.md checkboxes"}));
+        if task_ordering["active"].as_bool() == Some(true) {
+            actions.push(json!({
+                "change": change,
+                "action": "complete ready implementation tasks and mark tasks.md checkboxes",
+                "ready_tasks": task_ordering["ready_tasks"],
+            }));
+        } else {
+            actions.push(json!({"change": change, "action": "complete implementation tasks and mark tasks.md checkboxes"}));
+        }
     }
     if blockers
         .iter()

@@ -231,3 +231,66 @@ fn gate_accepts_bounded_exemptions_and_dependency_tasks() -> Result<(), Box<dyn 
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
+
+#[test]
+fn task_gate_reports_valid_order_and_ready_tasks() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.task_ordering.gate.valid]
+    // r[verify cairn.task_ordering.tests.coverage]
+    let fixture = temp_fixture("gate-task-ordering-valid", "fixtures/basic")?;
+    let tasks_path = fixture.join(".cairn/changes/demo/tasks.md");
+    fs::write(
+        tasks_path,
+        "## Phase 1\n\n- [x] [serial] [task:build] Build r[demo.behavior]\n- [ ] [serial] [task:test] [after:build] Test r[demo.behavior]\n",
+    )?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+
+    let value = run_json(&["gate", "tasks", "demo", "--root", root])?;
+
+    assert_eq!(value["verdict"], "PASS");
+    assert_eq!(value["task_ordering"]["active"], true);
+    assert_eq!(value["task_ordering"]["valid"], true);
+    assert_eq!(
+        value["task_ordering"]["order"],
+        serde_json::json!(["build", "test"])
+    );
+    assert_eq!(
+        value["task_ordering"]["ready_tasks"],
+        serde_json::json!(["test"])
+    );
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn task_gate_rejects_cycles_without_actionable_order() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.task_ordering.gate.invalid]
+    // r[verify cairn.task_ordering.tests.coverage]
+    let fixture = temp_fixture("gate-task-ordering-cycle", "fixtures/basic")?;
+    let tasks_path = fixture.join(".cairn/changes/demo/tasks.md");
+    fs::write(
+        tasks_path,
+        "## Phase 1\n\n- [ ] [serial] [task:a] [after:b] A r[demo.behavior]\n- [ ] [serial] [task:b] [after:a] B r[demo.behavior]\n",
+    )?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+
+    let value = run_json(&["gate", "tasks", "demo", "--root", root])?;
+
+    assert_eq!(value["verdict"], "FAIL");
+    assert_eq!(value["task_ordering"]["active"], true);
+    assert_eq!(value["task_ordering"]["valid"], false);
+    assert!(value["task_ordering"]["order"]
+        .as_array()
+        .ok_or("order")?
+        .is_empty());
+    assert!(value["task_ordering"]["ready_tasks"]
+        .as_array()
+        .ok_or("ready tasks")?
+        .is_empty());
+    assert!(value["issues"]
+        .as_array()
+        .ok_or("issues")?
+        .iter()
+        .any(|issue| issue["code"] == "task_ordering.cycle"));
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}

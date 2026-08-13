@@ -1,6 +1,7 @@
 mod dependency;
 mod tasks;
 
+pub(crate) use dependency::valid_lifecycle_id;
 use tasks::task_inventory;
 
 const PROPOSAL_ARTIFACT_KIND: &str = "proposal";

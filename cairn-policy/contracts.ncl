@@ -39,11 +39,15 @@ let Strictness = std.contract.from_predicate (fun value =>
 ) in
 
 let MarkerToken = std.contract.from_predicate (fun value =>
-  std.is_string value && std.string.is_match "^\\[(parallel|serial|depends:[^\\]]+)\\]$" value
+  std.is_string value && std.string.is_match "^\\[(parallel|serial|depends:[^\\]]+|task:[^\\]]+|after:[^\\]]+)\\]$" value
 ) in
 
 let MarkerKind = std.contract.from_predicate (fun value =>
-  std.is_string value && (value == "literal" || value == "depends-prefix")
+  std.is_string value
+  && (value == "literal"
+    || value == "depends-prefix"
+    || value == "task-id-prefix"
+    || value == "task-predecessor-prefix")
 ) in
 
 let Severity = std.contract.from_predicate (fun value =>

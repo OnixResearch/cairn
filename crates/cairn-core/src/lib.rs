@@ -464,6 +464,7 @@ pub use verified::policy::{
     CURRENT_POLICY_FIELD_SET_DIGEST, CURRENT_POLICY_FIELD_SET_DIGEST_MATERIAL,
     CURRENT_POLICY_SCHEMA_VERSION, DEFAULT_POLICY_REFRESH_COMMAND,
     LIFECYCLE_STORE_POLICY_SCHEMA_V1, POLICY_SCHEMA_METADATA_FIELD, SUPPORTED_POLICY_VERSION,
+    TASK_IDENTITY_MARKER_ID, TASK_PREDECESSOR_MARKER_ID,
 };
 pub use verified::policy_exception::*;
 pub use verified::preserves_evidence_ingest::{
@@ -609,13 +610,19 @@ pub use verified::trellis_proof_readiness::{
     TRELLIS_PROOF_ROLE_RECORDED,
 };
 pub use verified::validation::{
-    change_issues, classify_gate_evidence, evaluate_gate, evaluate_gate_snapshot,
-    evaluate_lifecycle_substance, evaluate_profile_gate_snapshot, finalize_gate_report,
-    lifecycle_substance_issues, validate_changes, validate_changes_with_archives,
-    validate_spec_source, validate_spec_source_with_policy, validate_spec_sources,
-    validate_spec_sources_with_policy, validation_issue_code, ArtifactSubstanceInventory,
-    EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport, GateSnapshot, GateStage,
-    LifecycleSubstanceReport, SpecSubstanceInventory,
+    build_task_ordering_graph, change_issues, classify_gate_evidence, evaluate_gate,
+    evaluate_gate_snapshot, evaluate_lifecycle_substance, evaluate_profile_gate_snapshot,
+    finalize_gate_report, lifecycle_substance_issues, validate_changes,
+    validate_changes_with_archives, validate_spec_source, validate_spec_source_with_policy,
+    validate_spec_sources, validate_spec_sources_with_policy, validation_issue_code,
+    ArtifactSubstanceInventory, EvidenceStrengthSummary, GateArtifact, GateIssue, GateReport,
+    GateSnapshot, GateStage, LifecycleSubstanceReport, SpecSubstanceInventory, TaskOrderingEdge,
+    TaskOrderingGraph, TaskOrderingIssue, TaskOrderingNode, TaskOrderingState,
+    TASK_ORDER_ISSUE_CYCLE, TASK_ORDER_ISSUE_ID_DUPLICATE, TASK_ORDER_ISSUE_ID_MALFORMED,
+    TASK_ORDER_ISSUE_ID_MISSING, TASK_ORDER_ISSUE_ID_MULTIPLE, TASK_ORDER_ISSUE_MARKER_POLICY,
+    TASK_ORDER_ISSUE_PREDECESSOR_DUPLICATE, TASK_ORDER_ISSUE_PREDECESSOR_MALFORMED,
+    TASK_ORDER_ISSUE_PREDECESSOR_SELF, TASK_ORDER_ISSUE_PREDECESSOR_UNKNOWN,
+    TASK_ORDER_ISSUE_PROGRESS,
 };
 pub use verified::workflow_collaboration::*;
 pub use verified::workspace_contract_matrix::{

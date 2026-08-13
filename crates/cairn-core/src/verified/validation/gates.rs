@@ -13,6 +13,7 @@ use super::changes::change_issues;
 use super::{
     references::reference_hygiene_issues,
     substance::{artifact_substance_issues, ArtifactSubstanceInventory},
+    task_ordering::{build_task_ordering_graph, TaskOrderingGraph, TaskOrderingIssue},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -47,6 +48,7 @@ pub struct GateReport {
     pub verdict: String,
     pub issues: Vec<GateIssue>,
     pub substance: Vec<ArtifactSubstanceInventory>,
+    pub task_ordering: Option<TaskOrderingGraph>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -132,6 +134,20 @@ pub fn evaluate_gate_snapshot(
         ));
     }
     issues.extend(required_artifact_issues(change, stage, policy));
+    let task_ordering = if matches!(stage, GateStage::Tasks) {
+        snapshot.tasks.as_ref().map(|tasks| {
+            let graph = build_task_ordering_graph(&tasks.markdown, policy);
+            issues.extend(
+                graph
+                    .issues
+                    .iter()
+                    .map(|issue| task_ordering_gate_issue(&tasks.path, issue, policy)),
+            );
+            graph
+        })
+    } else {
+        None
+    };
     if matches!(stage, GateStage::Tasks) {
         issues.extend(
             change_issues(change, policy)
@@ -149,6 +165,7 @@ pub fn evaluate_gate_snapshot(
         verdict,
         issues,
         substance,
+        task_ordering,
     }
 }
 
@@ -331,6 +348,18 @@ pub(super) fn gate_issue(message: String, policy: &Policy) -> GateIssue {
     GateIssue {
         code: validation_issue_code(&message),
         message,
+        scope: policy.gate_finding_scope.clone(),
+        promoted: policy.gate_finding_promoted.clone(),
+    }
+}
+
+fn task_ordering_gate_issue(path: &str, issue: &TaskOrderingIssue, policy: &Policy) -> GateIssue {
+    let location = issue
+        .line
+        .map_or_else(|| path.to_string(), |line| format!("{path}:{line}"));
+    GateIssue {
+        code: issue.code.clone(),
+        message: format!("{location}: {}", issue.message),
         scope: policy.gate_finding_scope.clone(),
         promoted: policy.gate_finding_promoted.clone(),
     }

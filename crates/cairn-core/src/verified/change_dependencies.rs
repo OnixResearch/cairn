@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::verified::{
+    dag::topological_order,
     lifecycle::validate_change_name,
     repo::{ChangeMetadata, ChangeStatus},
 };
@@ -92,12 +93,6 @@ pub struct ChangeDependencyIssue {
     pub code: String,
     pub dependency: Option<String>,
     pub message: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct TopologicalOrder {
-    order: Vec<String>,
-    cyclic_nodes: Vec<String>,
 }
 
 struct GraphBuildContext {
@@ -523,8 +518,8 @@ pub fn build_change_dependency_graph(
             .then(left.dependency.cmp(&right.dependency))
     });
 
-    let topological = topological_drain_order(&active_names, &context.topological_edges);
-    for cyclic_node in &topological.cyclic_nodes {
+    let topological = topological_order(&active_names, &context.topological_edges);
+    for cyclic_node in &topological.blocked_nodes {
         context.issues.push(ChangeDependencyIssue {
             change: cyclic_node.clone(),
             code: DEPENDENCY_ISSUE_CYCLE.to_string(),
@@ -738,70 +733,6 @@ fn mark_dependency_readiness(
         .collect::<BTreeSet<_>>();
     for node in nodes.values_mut() {
         node.dependency_ready = node.blocked_by.is_empty() && !issue_changes.contains(&node.name);
-    }
-}
-
-fn topological_drain_order(
-    active_names: &[String],
-    dependency_edges: &[(String, String)],
-) -> TopologicalOrder {
-    // r[impl cairn.change_dependency_graph.trellis_primitives]
-    let mut indegrees = active_names
-        .iter()
-        .map(|name| (name.clone(), 0usize))
-        .collect::<BTreeMap<_, _>>();
-    let mut dependents = active_names
-        .iter()
-        .map(|name| (name.clone(), Vec::new()))
-        .collect::<BTreeMap<_, _>>();
-
-    for (dependency, dependent) in dependency_edges {
-        if let Some(indegree) = indegrees.get_mut(dependent) {
-            *indegree += 1;
-        }
-        if let Some(dependent_list) = dependents.get_mut(dependency) {
-            dependent_list.push(dependent.clone());
-        }
-    }
-    for dependent_list in dependents.values_mut() {
-        dependent_list.sort();
-        dependent_list.dedup();
-    }
-
-    let mut ready = indegrees
-        .iter()
-        .filter(|(_name, indegree)| **indegree == 0)
-        .map(|(name, _indegree)| name.clone())
-        .collect::<BTreeSet<_>>();
-    let mut order = Vec::with_capacity(active_names.len());
-
-    while let Some(name) = ready.iter().next().cloned() {
-        ready.remove(&name);
-        order.push(name.clone());
-        if let Some(dependent_list) = dependents.get(&name) {
-            for dependent in dependent_list {
-                if let Some(indegree) = indegrees.get_mut(dependent) {
-                    if *indegree > 0 {
-                        *indegree -= 1;
-                    }
-                    if *indegree == 0 {
-                        ready.insert(dependent.clone());
-                    }
-                }
-            }
-        }
-    }
-
-    let ordered = order.iter().cloned().collect::<BTreeSet<_>>();
-    let cyclic_nodes = active_names
-        .iter()
-        .filter(|name| !ordered.contains(*name))
-        .cloned()
-        .collect::<Vec<_>>();
-
-    TopologicalOrder {
-        order,
-        cyclic_nodes,
     }
 }
 

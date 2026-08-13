@@ -40,7 +40,7 @@ use crate::native::{
 };
 use crate::plan_receipts::{
     archive_plan_json, gate_input_json, gate_report_json, migration_plan_hash, migration_plan_json,
-    sync_plan_json,
+    sync_plan_json, task_ordering_graph_json,
 };
 use crate::support::{
     collect_archived_change_ids, collect_validation_spec_sources, default_policy_path,

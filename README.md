@@ -477,6 +477,19 @@ cairn change next --root fixtures/basic
 
 Archived dependencies count as satisfied. Active dependencies block sync and archive.
 
+A task list can declare local order with `[task:<id>]` and `[after:<task-id>]`:
+
+```markdown
+- [x] [serial] [task:core] Implement the core. r[example.core]
+- [ ] [serial] [task:cli] [after:core] Add the CLI. r[example.cli]
+```
+
+Ordering stays inactive when both markers are absent. If ordering is active, every checkbox task needs exactly one task identity.
+
+Cairn rejects malformed markers, missing tasks, duplicates, self-dependencies, cycles, and progress before predecessor completion. Task-gate and drain-plan receipts report stable order and ready tasks.
+
+The existing `[depends:...]` marker keeps its lifecycle-link meaning. It does not create a local task-order edge.
+
 Review receipt commands check structure, hashes, and policy vocabulary. They do not run reviewers or interpret model output.
 
 ```bash
@@ -492,6 +505,8 @@ Read [`docs/preserves-receipts.md`](docs/preserves-receipts.md), [`docs/preserve
 r[impl cairn.change_dependency_graph.docs.discoverability]
 r[verify cairn.change_dependency_graph.docs.discoverability.local]
 r[verify cairn.change_dependency_graph.docs.discoverability.boundary]
+r[impl cairn.task_ordering.markers]
+r[impl cairn.task_ordering.drain]
 r[impl cairn.determinism.preserves_operator_docs.discoverability]
 r[impl cairn.determinism.preserves_dependency_bump_runbook.discoverability]
 r[impl cairn.semantic_review.semantic_review_receipts.docs]

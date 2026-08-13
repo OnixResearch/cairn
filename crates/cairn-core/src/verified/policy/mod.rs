@@ -32,7 +32,7 @@ pub use types::{
     LifecycleStoreProjectionPolicy, LifecycleStoreReceiptPolicy,
     LifecycleStoreRootResolutionPolicy, LifecycleStoreWorksetPolicy, Policy, ReceiptSchema,
     SteelOrchestrationPolicy, SteelOrchestrationProfile, TaskMarker, TraceabilityPolicy,
-    SUPPORTED_POLICY_VERSION,
+    SUPPORTED_POLICY_VERSION, TASK_IDENTITY_MARKER_ID, TASK_PREDECESSOR_MARKER_ID,
 };
 
 #[cfg(test)]

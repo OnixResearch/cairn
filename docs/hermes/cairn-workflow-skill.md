@@ -81,6 +81,8 @@ nix run path:$PWD#cairn -- gate tasks <slug> --root .
 
 Replace every generated `CAIRN_PLACEHOLDER` before gating. Requirement blocks need exactly one bare `r[...]` ID and normative requirement-body prose. Checkbox tasks need a substantive label plus a delta requirement reference or a structurally valid dependency marker; checked state does not override substance failures. Cross-spec refs to already-accepted IDs can fail the tasks gate.
 
+Use `[task:<id>]` and `[after:<task-id>]` when tasks need local ordering. If either marker appears, give every checkbox task exactly one identity. Start only tasks listed in the gate or drain receipt's `ready_tasks`. Existing `[depends:...]` markers remain lifecycle links and do not create local ordering edges.
+
 ## FCIS boundary
 
 - `cairn-core` is the functional core: pure deterministic transforms only.

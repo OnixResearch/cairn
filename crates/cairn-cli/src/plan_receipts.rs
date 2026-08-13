@@ -3,7 +3,7 @@ use std::path::Path;
 use cairn_core::{
     canonical_json_hash, layout_name, migration_plan_identity, ArchivePlan, GateArtifact,
     GateReport, GateSnapshot, GateStage, LifecycleLayout, MigrationPlan, PlanAction,
-    PlanActionKind, Policy, SyncPlan,
+    PlanActionKind, Policy, SyncPlan, TaskOrderingGraph,
 };
 use serde_json::{json, Value};
 
@@ -174,6 +174,7 @@ pub(crate) fn gate_report_json(
                 "promoted": issue.promoted,
             })
         }).collect::<Vec<_>>(),
+        "task_ordering": report.task_ordering.as_ref().map(task_ordering_graph_json),
         "substance": report.substance.iter().map(|inventory| json!({
             "kind": inventory.kind,
             "path": inventory.path,
@@ -192,6 +193,35 @@ pub(crate) fn gate_report_json(
         "policy_hash": canonical_json_hash(&policy.raw),
         "input_hash": input_hash,
         "layout": layout_name(layout),
+    })
+}
+
+pub(crate) fn task_ordering_graph_json(graph: &TaskOrderingGraph) -> Value {
+    json!({
+        "active": graph.active,
+        "valid": graph.valid,
+        "nodes": graph.nodes.iter().map(|node| json!({
+            "id": node.id,
+            "line": node.line,
+            "state": node.state.as_str(),
+            "predecessors": node.predecessors,
+            "blocked_by": node.blocked_by,
+            "blocks": node.blocks,
+            "ready": node.ready,
+        })).collect::<Vec<_>>(),
+        "edges": graph.edges.iter().map(|edge| json!({
+            "task": edge.task,
+            "predecessor": edge.predecessor,
+        })).collect::<Vec<_>>(),
+        "issues": graph.issues.iter().map(|issue| json!({
+            "code": issue.code,
+            "line": issue.line,
+            "task": issue.task,
+            "predecessor": issue.predecessor,
+            "message": issue.message,
+        })).collect::<Vec<_>>(),
+        "order": graph.order,
+        "ready_tasks": graph.ready_tasks,
     })
 }
 

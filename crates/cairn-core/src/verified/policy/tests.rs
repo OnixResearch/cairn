@@ -215,6 +215,13 @@ fn parses_generated_default_policy_text() {
         .iter()
         .any(|marker| marker.token == "[serial]"));
     assert!(policy
+        .task_marker_tokens
+        .iter()
+        .any(|marker| { marker.id == TASK_IDENTITY_MARKER_ID && marker.kind == "task-id-prefix" }));
+    assert!(policy.task_marker_tokens.iter().any(|marker| {
+        marker.id == TASK_PREDECESSOR_MARKER_ID && marker.kind == "task-predecessor-prefix"
+    }));
+    assert!(policy
         .receipt_schemas
         .iter()
         .any(|schema| schema.command == "gate"
@@ -621,6 +628,16 @@ fn rejects_invalid_artifact_substance_policy() {
         Err(PolicyError::InvalidField(
             "gate_policy.substance.dependency_marker_id"
         ))
+    ));
+
+    let mut missing_task_marker: Value = serde_json::from_str(source).expect("policy JSON");
+    missing_task_marker["task_marker_policy"]["markers"]
+        .as_array_mut()
+        .expect("marker array")
+        .retain(|marker| marker["id"] != TASK_IDENTITY_MARKER_ID);
+    assert!(matches!(
+        validate_policy_json(missing_task_marker),
+        Err(PolicyError::InvalidField("task_marker_policy.markers"))
     ));
 
     let mut unsupported_target: Value = serde_json::from_str(source).expect("policy JSON");

@@ -17,6 +17,8 @@ use crate::verified::{
 };
 
 pub const SUPPORTED_POLICY_VERSION: u64 = 1;
+pub const TASK_IDENTITY_MARKER_ID: &str = "task";
+pub const TASK_PREDECESSOR_MARKER_ID: &str = "after";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Policy {

@@ -199,7 +199,7 @@ fn task_state_and_label(trimmed: &str) -> Option<(TaskState, &str)> {
 fn task_semantic_label(label: &str, policy: &crate::verified::policy::Policy) -> String {
     let mut semantic = label.to_string();
     for marker in &policy.task_marker_tokens {
-        if marker.id == policy.artifact_substance_policy.dependency_marker_id {
+        if marker.kind == "prefix" || marker.kind.ends_with("-prefix") {
             remove_prefixed_marker(&mut semantic, marker_prefix(&marker.token));
         } else {
             semantic = semantic.replace(&marker.token, " ");

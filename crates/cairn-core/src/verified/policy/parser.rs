@@ -22,7 +22,7 @@ use super::{
     stack_provenance::stack_provenance_policy,
     steel::steel_orchestration_policy,
     traceability::traceability_policy,
-    Policy, PolicyError,
+    Policy, PolicyError, TASK_IDENTITY_MARKER_ID, TASK_PREDECESSOR_MARKER_ID,
 };
 
 pub fn parse_policy_json(text: &str) -> Result<Policy, PolicyError> {
@@ -64,6 +64,14 @@ pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
         return Err(PolicyError::InvalidField(
             "gate_policy.substance.dependency_marker_id",
         ));
+    }
+    for marker_id in [TASK_IDENTITY_MARKER_ID, TASK_PREDECESSOR_MARKER_ID] {
+        if !task_marker_tokens
+            .iter()
+            .any(|marker| marker.id == marker_id)
+        {
+            return Err(PolicyError::InvalidField("task_marker_policy.markers"));
+        }
     }
     if gate.substance.dependency_target_class != "lifecycle-id" {
         return Err(PolicyError::InvalidField(

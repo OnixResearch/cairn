@@ -45,5 +45,8 @@ fn increment_state(counts: &mut TaskCounts, state: &str) {
 }
 
 fn has_concurrency_marker(trimmed: &str) -> bool {
-    trimmed.contains("[parallel]") || trimmed.contains("[serial]") || trimmed.contains("[depends:")
+    trimmed.contains("[parallel]")
+        || trimmed.contains("[serial]")
+        || trimmed.contains("[depends:")
+        || trimmed.contains("[after:")
 }

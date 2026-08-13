@@ -10,6 +10,7 @@ mod markdown;
 mod references;
 mod spec;
 mod substance;
+mod task_ordering;
 
 pub use changes::{change_issues, validate_changes, validate_changes_with_archives};
 pub use gates::{
@@ -24,6 +25,14 @@ pub use spec::{
 pub use substance::{
     evaluate_lifecycle_substance, lifecycle_substance_issues, ArtifactSubstanceInventory,
     LifecycleSubstanceReport,
+};
+pub use task_ordering::{
+    build_task_ordering_graph, TaskOrderingEdge, TaskOrderingGraph, TaskOrderingIssue,
+    TaskOrderingNode, TaskOrderingState, TASK_ORDER_ISSUE_CYCLE, TASK_ORDER_ISSUE_ID_DUPLICATE,
+    TASK_ORDER_ISSUE_ID_MALFORMED, TASK_ORDER_ISSUE_ID_MISSING, TASK_ORDER_ISSUE_ID_MULTIPLE,
+    TASK_ORDER_ISSUE_MARKER_POLICY, TASK_ORDER_ISSUE_PREDECESSOR_DUPLICATE,
+    TASK_ORDER_ISSUE_PREDECESSOR_MALFORMED, TASK_ORDER_ISSUE_PREDECESSOR_SELF,
+    TASK_ORDER_ISSUE_PREDECESSOR_UNKNOWN, TASK_ORDER_ISSUE_PROGRESS,
 };
 
 #[cfg(test)]
@@ -75,6 +84,16 @@ mod tests {
                     id: "depends".to_string(),
                     token: "[depends:".to_string(),
                     kind: "prefix".to_string(),
+                },
+                TaskMarker {
+                    id: "task".to_string(),
+                    token: "[task:<id>]".to_string(),
+                    kind: "task-id-prefix".to_string(),
+                },
+                TaskMarker {
+                    id: "after".to_string(),
+                    token: "[after:<task-id>]".to_string(),
+                    kind: "task-predecessor-prefix".to_string(),
                 },
             ],
             gate_stages: vec![

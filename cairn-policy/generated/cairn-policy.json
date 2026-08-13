@@ -5498,6 +5498,16 @@
         "id": "depends",
         "kind": "depends-prefix",
         "token": "[depends:<task-or-id>]"
+      },
+      {
+        "id": "task",
+        "kind": "task-id-prefix",
+        "token": "[task:<id>]"
+      },
+      {
+        "id": "after",
+        "kind": "task-predecessor-prefix",
+        "token": "[after:<task-id>]"
       }
     ],
     "stages": [

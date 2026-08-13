@@ -131,3 +131,79 @@ fn mcp_drain_plan_orders_active_dependencies_before_dependents() -> Result<(), B
     fs::remove_dir_all(&temp_root)?;
     Ok(())
 }
+
+#[test]
+fn mcp_drain_plan_names_only_ready_ordered_tasks() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.task_ordering.drain.ready]
+    // r[verify cairn.task_ordering.tests.coverage]
+    let temp_root = env::temp_dir().join(format!(
+        "cairn-mcp-task-ordering-ready-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&temp_root);
+    copy_dir_recursive(&repo_root().join("fixtures/basic"), &temp_root)?;
+    fs::write(
+        temp_root.join(".cairn/changes/demo/tasks.md"),
+        "## Phase 1\n\n- [x] [serial] [task:build] Build r[demo.behavior]\n- [ ] [serial] [task:test] [after:build] Test r[demo.behavior]\n",
+    )?;
+
+    let request = format!(r#"{{"root":"{}"}}"#, temp_root.display());
+    let value = run_json(&["mcp", "--call", "cairn_drain_plan", &request])?;
+    let change = &value["structuredContent"]["changes"][0];
+
+    assert_eq!(change["task_ordering"]["active"], true);
+    assert_eq!(change["task_ordering"]["valid"], true);
+    assert_eq!(
+        change["task_ordering"]["order"],
+        serde_json::json!(["build", "test"])
+    );
+    assert_eq!(
+        change["task_ordering"]["ready_tasks"],
+        serde_json::json!(["test"])
+    );
+    let action = change["next_actions"]
+        .as_array()
+        .ok_or("next actions")?
+        .iter()
+        .find(|action| action.get("ready_tasks").is_some())
+        .ok_or("ready-task action")?;
+    assert_eq!(action["ready_tasks"], serde_json::json!(["test"]));
+    fs::remove_dir_all(&temp_root)?;
+    Ok(())
+}
+
+#[test]
+fn mcp_drain_plan_requires_task_order_repair_before_work() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.task_ordering.drain.invalid]
+    // r[verify cairn.task_ordering.tests.coverage]
+    let temp_root = env::temp_dir().join(format!(
+        "cairn-mcp-task-ordering-invalid-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&temp_root);
+    copy_dir_recursive(&repo_root().join("fixtures/basic"), &temp_root)?;
+    fs::write(
+        temp_root.join(".cairn/changes/demo/tasks.md"),
+        "## Phase 1\n\n- [x] [serial] [task:a] [after:b] A r[demo.behavior]\n- [x] [serial] [task:b] [after:a] B r[demo.behavior]\n",
+    )?;
+
+    let request = format!(r#"{{"root":"{}"}}"#, temp_root.display());
+    let value = run_json(&["mcp", "--call", "cairn_drain_plan", &request])?;
+    let change = &value["structuredContent"]["changes"][0];
+
+    assert_eq!(change["drain_ready"], false);
+    assert_eq!(change["task_ordering"]["valid"], false);
+    assert!(change["task_ordering"]["ready_tasks"]
+        .as_array()
+        .ok_or("ready tasks")?
+        .is_empty());
+    let actions = change["next_actions"].as_array().ok_or("next actions")?;
+    assert!(actions
+        .iter()
+        .any(|action| action["action"] == "repair task ordering before implementation"));
+    assert!(actions
+        .iter()
+        .all(|action| action.get("ready_tasks").is_none()));
+    fs::remove_dir_all(&temp_root)?;
+    Ok(())
+}

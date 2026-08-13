@@ -18,6 +18,7 @@ pub mod content_addressed;
 pub mod content_bound_requirement_registry;
 pub mod content_bound_trace_index;
 pub mod cross_repo_dependencies;
+pub(crate) mod dag;
 pub mod delta_merge;
 pub mod developer_experience;
 pub mod developer_loop;
