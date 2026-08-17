@@ -17,4 +17,4 @@
 ## Validation
 
 - [x] [serial] Record the exact evaluator identity in relevant policy evidence. r[cairn.nickel_toolchain.validation]
-- [ ] [serial] Run policy freshness, self-dogfood, focused tests, formatting, Clippy, Cairn gates, and `nix flake check -L`. r[cairn.nickel_toolchain.validation]
+- [x] [serial] Run policy freshness, self-dogfood, focused tests, formatting, Clippy, Cairn gates, and `nix flake check -L`. r[cairn.nickel_toolchain.validation]
