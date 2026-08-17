@@ -13,10 +13,15 @@ use nickel_export_core::{
 };
 
 pub(crate) const STANDALONE_SOURCE_REVISION: &str = "257fafc1c746f1faf156207043a4c826bfb16d49";
-pub(crate) const NICKEL_EVALUATOR_IDENTITY: &str = "nixpkgs:nickel";
-pub(crate) const NICKEL_EVALUATOR_VERSION: &str = "nickel-lang-cli-1.16.0";
+// r[impl cairn.nickel_toolchain.cohort]
+pub(crate) const NICKEL_EVALUATOR_SOURCE_REVISION: &str =
+    "1320a983e6c3d1e2fb53dd2464b084b4903b1426";
+pub(crate) const NICKEL_EVALUATOR_IDENTITY: &str =
+    "github:nickel-lang/nickel@1320a983e6c3d1e2fb53dd2464b084b4903b1426";
+pub(crate) const NICKEL_EVALUATOR_VERSION: &str = "nickel-lang-cli-1.17.0";
 const EXPORT_FORMAT_OPTION: &str = "format=json";
 const SOURCE_REVISION_OPTION_PREFIX: &str = "source-revision=";
+const EXPORTER_SOURCE_REVISION_OPTION_PREFIX: &str = "exporter-source-revision=";
 const GIT_SHA_HEX_LENGTH: usize = 40;
 const NON_CLAIM: &str = "Nickel export parity proves exact declared input and output identity only; Cairn retains lifecycle semantics, gate authority, generated destinations, replay, and release readiness";
 
@@ -73,7 +78,12 @@ fn export_json_dual_run_inner(
     contract: Option<&Path>,
     allow_reviewed_secret_markers: bool,
 ) -> Result<DualRunExport, Box<dyn Error>> {
-    validate_pinned_cohort(STANDALONE_SOURCE_REVISION, NICKEL_EVALUATOR_VERSION)?;
+    validate_pinned_cohort(
+        STANDALONE_SOURCE_REVISION,
+        NICKEL_EVALUATOR_SOURCE_REVISION,
+        NICKEL_EVALUATOR_IDENTITY,
+        NICKEL_EVALUATOR_VERSION,
+    )?;
     let source_path = portable_relative_path(source)?;
     let destination_path = portable_relative_path(destination)?;
     reject_symlink_components(source)?;
@@ -126,7 +136,8 @@ fn export_json_dual_run_inner(
         version: NICKEL_EVALUATOR_VERSION.to_string(),
         options: vec![
             EXPORT_FORMAT_OPTION.to_string(),
-            format!("{SOURCE_REVISION_OPTION_PREFIX}{STANDALONE_SOURCE_REVISION}"),
+            format!("{SOURCE_REVISION_OPTION_PREFIX}{NICKEL_EVALUATOR_SOURCE_REVISION}"),
+            format!("{EXPORTER_SOURCE_REVISION_OPTION_PREFIX}{STANDALONE_SOURCE_REVISION}"),
         ],
         import_path_policy: ImportPathPolicy::DeclaredOnly,
     };
@@ -155,13 +166,28 @@ fn export_json_dual_run_inner(
     })
 }
 
-fn validate_pinned_cohort(revision: &str, evaluator_version: &str) -> Result<(), Box<dyn Error>> {
-    let revision_is_hex = revision.len() == GIT_SHA_HEX_LENGTH
-        && revision.bytes().all(|byte| byte.is_ascii_hexdigit());
-    if !revision_is_hex {
+fn validate_pinned_cohort(
+    exporter_revision: &str,
+    evaluator_revision: &str,
+    evaluator_identity: &str,
+    evaluator_version: &str,
+) -> Result<(), Box<dyn Error>> {
+    let exporter_revision_is_hex = exporter_revision.len() == GIT_SHA_HEX_LENGTH
+        && exporter_revision
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit());
+    if !exporter_revision_is_hex {
         return Err("standalone Nickel export source must use an exact Git revision".into());
     }
-    if evaluator_version != NICKEL_EVALUATOR_VERSION {
+    let evaluator_revision_is_hex = evaluator_revision.len() == GIT_SHA_HEX_LENGTH
+        && evaluator_revision
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit());
+    if !evaluator_revision_is_hex
+        || evaluator_revision != NICKEL_EVALUATOR_SOURCE_REVISION
+        || evaluator_identity != NICKEL_EVALUATOR_IDENTITY
+        || evaluator_version != NICKEL_EVALUATOR_VERSION
+    {
         return Err("Nickel evaluator cohort drift".into());
     }
     Ok(())
@@ -459,10 +485,40 @@ mod tests {
     #[test]
     // r[verify cairn.nickel_export_cutover.source]
     fn source_pin_and_evaluator_cohort_are_exact() {
-        assert!(
-            validate_pinned_cohort(STANDALONE_SOURCE_REVISION, NICKEL_EVALUATOR_VERSION).is_ok()
-        );
-        assert!(validate_pinned_cohort("main", NICKEL_EVALUATOR_VERSION).is_err());
-        assert!(validate_pinned_cohort(STANDALONE_SOURCE_REVISION, "nickel-floating").is_err());
+        assert!(validate_pinned_cohort(
+            STANDALONE_SOURCE_REVISION,
+            NICKEL_EVALUATOR_SOURCE_REVISION,
+            NICKEL_EVALUATOR_IDENTITY,
+            NICKEL_EVALUATOR_VERSION,
+        )
+        .is_ok());
+        assert!(validate_pinned_cohort(
+            "main",
+            NICKEL_EVALUATOR_SOURCE_REVISION,
+            NICKEL_EVALUATOR_IDENTITY,
+            NICKEL_EVALUATOR_VERSION,
+        )
+        .is_err());
+        assert!(validate_pinned_cohort(
+            STANDALONE_SOURCE_REVISION,
+            "main",
+            NICKEL_EVALUATOR_IDENTITY,
+            NICKEL_EVALUATOR_VERSION,
+        )
+        .is_err());
+        assert!(validate_pinned_cohort(
+            STANDALONE_SOURCE_REVISION,
+            NICKEL_EVALUATOR_SOURCE_REVISION,
+            "ambient:nickel",
+            NICKEL_EVALUATOR_VERSION,
+        )
+        .is_err());
+        assert!(validate_pinned_cohort(
+            STANDALONE_SOURCE_REVISION,
+            NICKEL_EVALUATOR_SOURCE_REVISION,
+            NICKEL_EVALUATOR_IDENTITY,
+            "nickel-floating",
+        )
+        .is_err());
     }
 }

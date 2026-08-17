@@ -1,6 +1,8 @@
 # Standalone Nickel export boundary
 
-Cairn pins `OnixResearch/nickel-export` at revision `257fafc1c746f1faf156207043a4c826bfb16d49` in Cargo and Nix inputs. The supported evaluator cohort is `nickel-lang-cli-1.16.0` from the pinned Cairn Nix input.
+Cairn pins `OnixResearch/nickel-export` at revision `257fafc1c746f1faf156207043a4c826bfb16d49`. It pins `nickel-lang-cli 1.17.0` from `nickel-lang/nickel` revision `1320a983e6c3d1e2fb53dd2464b084b4903b1426`.
+
+The evaluator descriptor records identity `github:nickel-lang/nickel@1320a983e6c3d1e2fb53dd2464b084b4903b1426`, version `nickel-lang-cli-1.17.0`, and the separate exporter source revision.
 
 `cairn policy export` and Nickel-backed `cairn lifecycle` reads use a Cairn-owned shell. The shell:
 
@@ -19,7 +21,10 @@ The wrapper rejects parent traversal, absolute paths, undeclared or unreadable i
 nix run path:$PWD#cairn --option secret-key-files '' --option builders '' -- policy export --check
 nix develop --option secret-key-files '' --option builders '' -c \
   cairn lifecycle check --source fixtures/structured-lifecycle/positive-bundle.ncl
-nix build path:$PWD#checks.x86_64-linux.nickel-export-cutover \
+nix build path:$PWD#checks.x86_64-linux.nickel-cohort-exact \
+  path:$PWD#checks.x86_64-linux.nickel-toolchain-fixtures \
+  path:$PWD#checks.x86_64-linux.runtime-generated-policy-only \
+  path:$PWD#checks.x86_64-linux.nickel-export-cutover \
   --option secret-key-files '' --option builders '' --no-link -L
 ```
 
@@ -27,4 +32,6 @@ nix build path:$PWD#checks.x86_64-linux.nickel-export-cutover \
 
 The legacy command remains authoritative during the checked dual-run cohort. Any unexplained byte, status, diagnostic, identity, freshness, or semantic drift blocks generation. A retry requires paired positive and negative regression evidence.
 
-Standalone admission proves only exact declared input/output identity under the recorded evaluator descriptor. It does not prove evaluator equivalence, Cairn policy correctness, gate soundness, replay correctness, deployability, or release eligibility.
+Normal runtime commands read checked-in generated policy. The `runtime-generated-policy-only` check uses a fail-closed poison evaluator and proves that a representative runtime command does not start Nickel.
+
+Standalone admission proves only exact declared input/output identity under the recorded evaluator descriptor. The runtime check covers only the tested command and inputs. Neither check proves evaluator equivalence, Cairn policy correctness, gate soundness, replay correctness, deployability, or release eligibility.

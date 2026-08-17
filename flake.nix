@@ -10,6 +10,9 @@
     url = "github:OnixResearch/nickel-export/257fafc1c746f1faf156207043a4c826bfb16d49";
     inputs.nixpkgs.follows = "nixpkgs";
   };
+  # Exact stack Nickel 1.17.0 cohort, pinned to the reviewed upstream commit.
+  # r[impl cairn.nickel_toolchain.cohort] r[impl cairn.nickel_toolchain.lockfile]
+  inputs.nickel-1-17-0.url = "github:nickel-lang/nickel/1320a983e6c3d1e2fb53dd2464b084b4903b1426";
   inputs.slotcar.url = "github:OnixResearch/slotcar";
 
   outputs =
@@ -18,6 +21,7 @@
       nixpkgs,
       artifact,
       nickel-export,
+      nickel-1-17-0,
       slotcar,
     }:
     let
@@ -26,6 +30,7 @@
         "aarch64-linux"
       ];
       eachSystem = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+      nickelCohort = system: nickel-1-17-0.packages.${system}.default;
       rustCargoLock = {
         lockFile = ./Cargo.lock;
         allowBuiltinFetchGit = true;
@@ -62,6 +67,7 @@
     in
     {
       packages = eachSystem (pkgs: {
+        nickel-1-17-0 = nickelCohort pkgs.stdenv.hostPlatform.system;
         cairn = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn";
           version = "0.1.0";
@@ -79,14 +85,14 @@
             wrapProgram $out/bin/cairn \
               --prefix PATH : ${
                 pkgs.lib.makeBinPath [
-                  pkgs.nickel
+                  (nickelCohort pkgs.stdenv.hostPlatform.system)
                   nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
                 ]
               }
             wrapProgram $out/bin/ironspec \
               --prefix PATH : ${
                 pkgs.lib.makeBinPath [
-                  pkgs.nickel
+                  (nickelCohort pkgs.stdenv.hostPlatform.system)
                   nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
                 ]
               }
@@ -141,11 +147,98 @@
                 printf '%s\n' '${validation.revision}' > "$out"
               '';
 
+        # r[impl cairn.nickel_toolchain.cohort]
+        # r[verify cairn.nickel_toolchain.cohort]
+        nickel-cohort-exact =
+          let
+            exactNickel = nickelCohort pkgs.stdenv.hostPlatform.system;
+          in
+          pkgs.runCommand "cairn-nickel-cohort-exact"
+            {
+              nativeBuildInputs = [ exactNickel ];
+            }
+            ''
+              test '${nickel-1-17-0.rev}' = '1320a983e6c3d1e2fb53dd2464b084b4903b1426'
+              test "$(command -v nickel)" = '${exactNickel}/bin/nickel'
+              test "$(nickel --version)" = 'nickel-lang-cli 1.17.0'
+              if grep -q 'pkgs\.nickel' ${self}/flake.nix; then
+                echo 'older, floating, ambient, or mixed Nickel evaluator reference found' >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
+        # r[impl cairn.nickel_toolchain.compatibility]
+        # r[verify cairn.nickel_toolchain.compatibility]
+        nickel-toolchain-fixtures =
+          pkgs.runCommand "cairn-nickel-toolchain-fixtures"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
+            }
+            ''
+              fixtures=${self}/fixtures/nickel-toolchain
+              for fixture in "$fixtures"/positive/*.ncl; do
+                nickel typecheck "$fixture"
+                nickel export --format json "$fixture" > /dev/null
+              done
+
+              for fixture in \
+                "$fixtures"/negative/malformed.ncl \
+                "$fixtures"/negative/unknown-field.ncl \
+                "$fixtures"/negative/missing-import.ncl \
+                "$fixtures"/negative/contract-violation.ncl \
+                "$fixtures"/negative/type-mismatch.ncl
+              do
+                if nickel eval "$fixture" >negative.out 2>negative.err; then
+                  echo "negative Nickel fixture unexpectedly passed: $fixture" >&2
+                  exit 1
+                fi
+                test -s negative.err
+              done
+
+              nickel export --format json "$fixtures"/negative/stale.ncl > stale.json
+              if cmp -s stale.json "$fixtures"/negative/stale.expected.json; then
+                echo 'stale Nickel fixture unexpectedly matched current cohort output' >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
+        # r[impl cairn.nickel_toolchain.runtime_boundary]
+        # r[verify cairn.nickel_toolchain.runtime_boundary]
+        runtime-generated-policy-only =
+          pkgs.runCommand "cairn-runtime-generated-policy-only"
+            {
+              nativeBuildInputs = [ ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              poison="$TMPDIR/poison"
+              sentinel="$TMPDIR/nickel-started"
+              mkdir -p "$poison"
+              cat > "$poison/nickel" <<EOF
+              #!${pkgs.runtimeShell}
+              touch "$sentinel"
+              exit 1
+              EOF
+              chmod +x "$poison/nickel"
+              ${pkgs.coreutils}/bin/env -i \
+                HOME="$TMPDIR" \
+                PATH="$poison" \
+                ${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/.cairn-wrapped \
+                status --root fixtures/basic > runtime-status.json
+              grep -q '"valid": true' runtime-status.json
+              test ! -e "$sentinel"
+              touch $out
+            '';
+
         # r[verify cairn.supersede.rust_nickel_only_gates.no_python_scripts]
         policy-fresh =
           pkgs.runCommand "cairn-policy-fresh"
             {
-              nativeBuildInputs = [ pkgs.nickel ];
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
             }
             ''
               cp -r ${self} source
@@ -158,7 +251,7 @@
         authenticated-policy-profiles-fresh =
           pkgs.runCommand "cairn-authenticated-policy-profiles-fresh"
             {
-              nativeBuildInputs = [ pkgs.nickel ];
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
             }
             ''
               cp -r ${self} source
@@ -175,7 +268,7 @@
         policy-stale-detects-drift =
           pkgs.runCommand "cairn-policy-stale-detects-drift"
             {
-              nativeBuildInputs = [ pkgs.nickel ];
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
             }
             ''
               cp -r ${self} source
@@ -217,7 +310,7 @@
           pkgs.runCommand "cairn-nickel-export-cutover"
             {
               nativeBuildInputs = [
-                pkgs.nickel
+                (nickelCohort pkgs.stdenv.hostPlatform.system)
                 nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
               ];
             }
@@ -317,7 +410,7 @@
           ];
           nativeCheckInputs = [
             pkgs.git
-            pkgs.nickel
+            (nickelCohort pkgs.stdenv.hostPlatform.system)
             nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
           ];
           preCheck = ''
@@ -352,7 +445,7 @@
           ];
           nativeCheckInputs = [
             pkgs.git
-            pkgs.nickel
+            (nickelCohort pkgs.stdenv.hostPlatform.system)
             pkgs.rustfmt
           ];
           doCheck = true;
@@ -514,7 +607,7 @@
           ];
           nativeCheckInputs = [
             pkgs.jq
-            pkgs.nickel
+            (nickelCohort pkgs.stdenv.hostPlatform.system)
           ];
           doCheck = true;
           checkPhase = ''
@@ -617,7 +710,7 @@
             pkgs.rustc
             pkgs.rustfmt
             pkgs.clippy
-            pkgs.nickel
+            (nickelCohort pkgs.stdenv.hostPlatform.system)
             nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
             slotcar.packages.${pkgs.stdenv.hostPlatform.system}.cargo-tigerstyle
           ];

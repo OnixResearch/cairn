@@ -73,7 +73,8 @@ fn packaged_policy_export_runtime_is_documented_and_checked() {
     assert!(flake.contains("pkgs.makeWrapper"));
     assert!(flake.contains("wrapProgram $out/bin/cairn"));
     assert!(flake.contains("wrapProgram $out/bin/ironspec"));
-    assert!(flake.contains("pkgs.nickel"));
+    assert!(flake.contains("nickelCohort"));
+    assert!(!flake.contains("pkgs.nickel"));
     assert!(flake.contains("cairn-packaged-policy-export-runtime"));
     assert!(flake.contains("env -i"));
 
