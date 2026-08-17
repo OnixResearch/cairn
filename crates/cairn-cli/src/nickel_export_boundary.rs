@@ -13,7 +13,7 @@ use nickel_export_core::{
 };
 
 pub(crate) const STANDALONE_SOURCE_REVISION: &str = "257fafc1c746f1faf156207043a4c826bfb16d49";
-// r[impl cairn.nickel_toolchain.cohort]
+// r[impl cairn.nickel_toolchain.cohort] r[impl cairn.nickel_toolchain.lockfile]
 pub(crate) const NICKEL_EVALUATOR_SOURCE_REVISION: &str =
     "1320a983e6c3d1e2fb53dd2464b084b4903b1426";
 pub(crate) const NICKEL_EVALUATOR_IDENTITY: &str =
@@ -484,6 +484,7 @@ mod tests {
 
     #[test]
     // r[verify cairn.nickel_export_cutover.source]
+    // r[verify cairn.nickel_toolchain.cohort] r[verify cairn.nickel_toolchain.lockfile]
     fn source_pin_and_evaluator_cohort_are_exact() {
         assert!(validate_pinned_cohort(
             STANDALONE_SOURCE_REVISION,

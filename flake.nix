@@ -160,7 +160,7 @@
             ''
               test '${nickel-1-17-0.rev}' = '1320a983e6c3d1e2fb53dd2464b084b4903b1426'
               test "$(command -v nickel)" = '${exactNickel}/bin/nickel'
-              test "$(nickel --version)" = 'nickel-lang-cli 1.17.0'
+              test "$(nickel --version)" = 'nickel-lang-cli nickel 1.17.0 (rev 1320a98)'
               if grep -q 'pkgs\.nickel' ${self}/flake.nix; then
                 echo 'older, floating, ambient, or mixed Nickel evaluator reference found' >&2
                 exit 1

@@ -69,12 +69,20 @@ fn packaged_policy_export_runtime_is_documented_and_checked() {
     // r[verify cairn.supersede.policy_export_packaged_runtime.check]
     // r[verify cairn.supersede.policy_export_packaged_runtime.docs]
     // r[verify cairn.supersede.policy_export_packaged_runtime.validation]
+    // r[impl cairn.nickel_toolchain.runtime_boundary]
+    // r[verify cairn.nickel_toolchain.compatibility]
+    // r[verify cairn.nickel_toolchain.runtime_boundary]
+    // r[verify cairn.nickel_toolchain.validation]
     let flake = read_workspace_file("flake.nix");
     assert!(flake.contains("pkgs.makeWrapper"));
     assert!(flake.contains("wrapProgram $out/bin/cairn"));
     assert!(flake.contains("wrapProgram $out/bin/ironspec"));
     assert!(flake.contains("nickelCohort"));
+    assert!(flake.contains("1320a983e6c3d1e2fb53dd2464b084b4903b1426"));
     assert!(!flake.contains("pkgs.nickel"));
+    assert!(flake.contains("cairn-nickel-cohort-exact"));
+    assert!(flake.contains("cairn-nickel-toolchain-fixtures"));
+    assert!(flake.contains("cairn-runtime-generated-policy-only"));
     assert!(flake.contains("cairn-packaged-policy-export-runtime"));
     assert!(flake.contains("env -i"));
 
