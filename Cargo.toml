@@ -2,6 +2,7 @@
 members = [
   "crates/cairn-core",
   "crates/cairn-cli",
+  "crates/cairn-gate-contract",
   "crates/cairn-radicle-cob",
 ]
 resolver = "2"

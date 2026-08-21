@@ -376,6 +376,78 @@
               touch $out
             '';
 
+        # r[verify cairn.gate_interchange.conformance]
+        gate-contract = pkgs.rustPlatform.buildRustPackage {
+          pname = "cairn-gate-contract-tests";
+          version = "0.1.0";
+          src = self;
+          cargoLock = rustCargoLock;
+          cargoBuildFlags = [
+            "-p"
+            "cairn-gate-contract"
+            "--all-targets"
+          ];
+          cargoTestFlags = [
+            "-p"
+            "cairn-gate-contract"
+            "--all-targets"
+          ];
+          postCheck = ''
+            # r[verify cairn.gate_interchange.conformance.scenario.drift]
+            cargo run --quiet -p cairn-gate-contract --example emit-fixtures \
+              > "$TMPDIR/cairn-gate-fixtures-v1.json"
+            cmp "$TMPDIR/cairn-gate-fixtures-v1.json" \
+              fixtures/cairn-gate-contract/producer/fixtures-v1.json
+          '';
+          installPhase = ''
+            runHook preInstall
+            touch $out
+            runHook postInstall
+          '';
+        };
+
+        # r[verify cairn.gate_interchange.conformance]
+        gate-contract-wasm = pkgs.rustPlatform.buildRustPackage {
+          pname = "cairn-gate-contract-wasm";
+          version = "0.1.0";
+          src = self;
+          cargoLock = rustCargoLock;
+          cargoBuildFlags = [
+            "-p"
+            "cairn-gate-contract"
+            "--lib"
+            "--target"
+            "wasm32-unknown-unknown"
+          ];
+          doCheck = false;
+          installPhase = ''
+            runHook preInstall
+            touch $out
+            runHook postInstall
+          '';
+        };
+
+        # r[verify cairn.gate_interchange.conformance]
+        gate-contract-nickel =
+          pkgs.runCommand "cairn-gate-contract-nickel"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
+            }
+            ''
+              for fixture in ${self}/fixtures/cairn-gate-contract/positive/*.ncl; do
+                nickel typecheck "$fixture"
+                nickel export --format json "$fixture" > /dev/null
+              done
+              for fixture in ${self}/fixtures/cairn-gate-contract/negative/*.ncl; do
+                if nickel export --format json "$fixture" >negative.out 2>negative.err; then
+                  echo "negative gate-contract fixture unexpectedly passed: $fixture" >&2
+                  exit 1
+                fi
+                test -s negative.err
+              done
+              touch $out
+            '';
+
         rustfmt =
           pkgs.runCommand "cairn-rustfmt-check"
             {

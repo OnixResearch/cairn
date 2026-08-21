@@ -10,6 +10,7 @@ Cairn separates a pure core from an imperative shell:
 
 - Nickel owns policy, schemas, stages, gates, reports, markers, and bounded exemptions.
 - `cairn-core` owns deterministic transforms over loaded values.
+- `cairn-gate-contract` owns host-independent external gate request and result binding.
 - `cairn-cli` owns arguments, files, policy loading, output, exits, and mutation.
 - Runtime commands use checked-in generated policy JSON.
 
@@ -24,10 +25,12 @@ A passing Cairn gate proves conformance to selected policy and inputs. It does n
 ## Repository layout
 
 ```text
-cairn-policy/        Nickel policy, contracts, fixtures, and generated JSON
-crates/cairn-core/   Pure Rust models and lifecycle logic
-crates/cairn-cli/    CLI and MCP shell
-fixtures/            Native and legacy lifecycle fixtures
+cairn-policy/                Nickel policy, contracts, fixtures, and generated JSON
+contracts/                   Consumer-facing typed Nickel contracts
+crates/cairn-core/           Pure Rust models and lifecycle logic
+crates/cairn-gate-contract/  Pure gate interchange contract
+crates/cairn-cli/            CLI and MCP shell
+fixtures/                    Native, interchange, and legacy lifecycle fixtures
 docs/tutorials/      Operator tutorials
 docs/hermes/         Copyable agent workflow source
 examples/            Copyable command examples
@@ -82,6 +85,8 @@ Read the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md) or the [copyabl
 
 Direct CLI agents can use `cairn --machine <command> ...` for one versioned JSON outcome.
 Read the [CLI machine contract](docs/cli-machine-contract.md) before you depend on its status and failure rules.
+
+External CI consumers can bind one native gate receipt to an exact candidate, policy, evidence set, and tool cohort. Read the [gate interchange contract](docs/gate-interchange.md) before you consume this boundary.
 
 Select a policy-owned workflow profile when you create a change:
 
