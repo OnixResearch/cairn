@@ -6,20 +6,24 @@ use std::{
 };
 
 use cairn_core::{
-    build_workflow_instructions, canonical_json_hash, changes_dir, derive_workflow_status,
-    evaluate_workflow_profile, select_workflow_profile, validate_change_name,
-    validate_review_receipt, workflow_change_profile_metadata_from_value, AgentGuidanceRequest,
-    GateSnapshot, GateStage, LifecycleLayout, Policy, WorkflowArtifactObservation,
-    WorkflowArtifactState, WorkflowChangeProfileMetadata, WorkflowProfileArtifactHash,
-    WorkflowProfileEvaluation, WorkflowProfileEvidence, WorkflowProfileRef,
-    WorkflowProfileSelection, WorkflowReviewEvidence, WorkflowReviewInputEvidence,
-    WorkflowSchemaPolicy, WorkflowStatusReport, AGENT_GUIDANCE_OPERATION_WORKFLOW_INSTRUCTIONS,
-    MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT, WORKFLOW_ADMISSION_ACCEPTANCE,
-    WORKFLOW_ADMISSION_DELTA_SPECS, WORKFLOW_ADMISSION_TASKS, WORKFLOW_PROFILE_SOURCE_CREATE,
+    blake3_hex, build_workflow_instructions, canonical_json_hash, changes_dir,
+    derive_workflow_status, evaluate_workflow_profile, outcome_machine_evidence_paths,
+    select_workflow_profile, validate_change_name, validate_review_receipt,
+    workflow_change_profile_metadata_from_value, AgentGuidanceRequest, GateSnapshot, GateStage,
+    LifecycleLayout, Policy, WorkflowArtifactObservation, WorkflowArtifactState,
+    WorkflowChangeProfileMetadata, WorkflowOutcomeMachineEvidenceObservation,
+    WorkflowProfileArtifactHash, WorkflowProfileEvaluation, WorkflowProfileEvidence,
+    WorkflowProfileRef, WorkflowProfileSelection, WorkflowReviewEvidence,
+    WorkflowReviewInputEvidence, WorkflowSchemaPolicy, WorkflowStatusReport,
+    AGENT_GUIDANCE_OPERATION_WORKFLOW_INSTRUCTIONS, MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT,
+    WORKFLOW_ADMISSION_ACCEPTANCE, WORKFLOW_ADMISSION_DELTA_SPECS,
+    WORKFLOW_ADMISSION_OUTCOME_MACHINE, WORKFLOW_ADMISSION_TASKS, WORKFLOW_PROFILE_SOURCE_CREATE,
 };
 use serde_json::{json, Value};
 
-use crate::support::{detect_layout, load_policy_file, path_string, print_json};
+use crate::support::{
+    detect_layout, load_policy_file, path_string, print_json, CapabilityRoot, CapabilityRootKind,
+};
 
 pub(crate) mod observe;
 mod options;
@@ -276,6 +280,19 @@ pub(crate) fn load_workflow_profile_context(
     )?;
     let tasks_markdown =
         read_admission_artifact(root, &change_relative, &schema, WORKFLOW_ADMISSION_TASKS)?;
+    let outcome_machine_review = read_admission_artifact(
+        root,
+        &change_relative,
+        &schema,
+        WORKFLOW_ADMISSION_OUTCOME_MACHINE,
+    )?
+    .and_then(|text| serde_json::from_str::<Value>(&text).ok());
+    let outcome_machine_evidence = observe_outcome_machine_evidence(
+        root,
+        &change_relative,
+        outcome_machine_review.as_ref(),
+        schema.bounds.max_artifact_bytes,
+    )?;
     let reviews = read_review_evidence(root, &change_relative, &schema, &artifact_hashes)?;
     let delta_spec_paths = observations
         .iter()
@@ -293,18 +310,22 @@ pub(crate) fn load_workflow_profile_context(
         delta_spec_paths,
         acceptance_markdown,
         tasks_markdown,
+        outcome_machine_review,
+        outcome_machine_evidence: outcome_machine_evidence.clone(),
         artifact_hashes,
         reviews,
     };
     let evaluation = evaluate_workflow_profile(&schema, &evidence);
     apply_profile_evaluation(&mut report, &evaluation);
-    let input_hash = workflow_input_hash(change, &schema, &observations)?;
+    let input_hash =
+        workflow_input_hash(change, &schema, &observations, &outcome_machine_evidence)?;
     let policy_hash = canonical_json_hash(&policy.raw);
     let profile_identity_hash = canonical_json_hash(&json!({
         "selection": selection,
         "schema": schema,
         "evaluation": evaluation,
         "observations": observations,
+        "outcome_machine_evidence": outcome_machine_evidence,
     }));
     Ok(WorkflowProfileContext {
         layout,
@@ -495,6 +516,34 @@ fn apply_profile_evaluation(
     report.issues.sort();
     report.issues.dedup();
     report.valid = evaluation.issues.is_empty();
+}
+
+fn observe_outcome_machine_evidence(
+    root: &Path,
+    change_relative: &Path,
+    review: Option<&Value>,
+    max_artifact_bytes: usize,
+) -> Result<Vec<WorkflowOutcomeMachineEvidenceObservation>, Box<dyn Error>> {
+    // r[impl cairn.outcome_machine_profile.completion]
+    // r[impl cairn.outcome_machine_profile.fresh_state]
+    let evidence_paths = outcome_machine_evidence_paths(review);
+    if evidence_paths.is_empty() {
+        return Ok(Vec::new());
+    }
+    let capability = CapabilityRoot::open(CapabilityRootKind::Scan, root)?;
+    let max_artifact_bytes = u64::try_from(max_artifact_bytes)?;
+    let observations = evidence_paths
+        .into_iter()
+        .map(|path| {
+            let relative = change_relative.join(&path);
+            let blake3 = capability
+                .read_bounded(&relative, max_artifact_bytes)
+                .ok()
+                .map(|bytes| blake3_hex(&bytes));
+            WorkflowOutcomeMachineEvidenceObservation { path, blake3 }
+        })
+        .collect();
+    Ok(observations)
 }
 
 fn read_bounded_text(

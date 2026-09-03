@@ -18,6 +18,8 @@ mod change_authoring;
 mod gate_cli;
 #[path = "lifecycle/migration_compat.rs"]
 mod migration_compat;
+#[path = "lifecycle/outcome_machine_profile.rs"]
+mod outcome_machine_profile;
 #[path = "lifecycle/probe_execution.rs"]
 mod probe_execution;
 #[path = "lifecycle/read_validation.rs"]

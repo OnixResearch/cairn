@@ -99,10 +99,12 @@ pub(super) fn workflow_input_hash(
     change: &str,
     schema: &WorkflowSchemaPolicy,
     observations: &[cairn_core::WorkflowArtifactObservation],
+    outcome_machine_evidence: &[cairn_core::WorkflowOutcomeMachineEvidenceObservation],
 ) -> Result<String, Box<dyn Error>> {
     Ok(canonical_json_hash(&json!({
         "change": change,
         "schema": schema,
         "observations": observations,
+        "outcome_machine_evidence": outcome_machine_evidence,
     })))
 }

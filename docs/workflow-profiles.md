@@ -35,6 +35,48 @@ The review receipt uses `cairn.semantic-review.review-receipt.v1`. It must appro
 
 Update every `reviewed_inputs` BLAKE3 hash after an input changes. A missing or stale review blocks the tasks gate, sync, and archive.
 
+### `outcome-machine`
+
+<!-- r[impl cairn.outcome_machine_profile.docs] -->
+
+This profile includes all `spec-driven` artifacts. It also requires `outcome-machine.json` before design work.
+
+Select one route:
+
+- `delivery` connects an immediate outcome and current consumer to a durable capability contribution.
+- `foundation` connects a current consumer and target outcome to an adoption path.
+- `bounded_exception` records urgent work, its reason, recurrence decision, revisit trigger, and capability non-claim.
+
+Every route names a maintenance owner, tracked inputs, deterministic checks, AI-state facts, fresh-state disposition, completion state, and non-claims.
+
+The scaffold starts with `planned` completion and fresh-state states. Replace every `CAIRN_PLACEHOLDER` before the design gate.
+
+Planning gates can pass while completion remains planned. Sync, archive, validation, and drain readiness remain blocked until completion has BLAKE3-bound observed evidence.
+
+Fresh-state reproduction must become `observed` with BLAKE3-bound evidence or `not_applicable` with a bounded rationale. It cannot depend on hidden session state.
+
+Each evidence reference contains a supported kind, safe change-local path, and 64-character BLAKE3 identity:
+
+```json
+{
+  "kind": "test",
+  "path": "evidence/focused-test.json",
+  "blake3": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+}
+```
+
+Supported kinds are `test`, `proof`, `receipt`, `replay`, `observation`, and `review`.
+
+Cairn reads each referenced file through the change directory capability. A missing, unsafe, oversized, or changed file blocks completion.
+
+At completion, set `completion.status` to `observed`. Then add at least one evidence reference.
+
+Resolve the fresh-state disposition in the same update.
+
+Completion authority must remain `repository`. Commit counts, task counts, archive counts, and generated-code volume cannot establish completion.
+
+Cairn validates structure, bounds, route consistency, and evidence-reference presence. Repository checks and reviewers retain authority over value, truth, and release readiness.
+
 ### `no-spec-delta`
 
 This profile creates no `specs/` directory. It requires:
@@ -86,5 +128,7 @@ The `--schema` workflow option is an assertion only. It cannot replace the profi
 Profile conformance proves only that Cairn applied one admitted workflow contract to observed structural facts and review links.
 
 A no-spec profile does not prove zero behavior effect. An assurance profile does not prove risk-analysis truth, test sufficiency, code correctness, or release eligibility.
+
+An outcome-machine profile does not prove product value, evidence truth, semantic correctness, reuse quality, maintenance quality, or release eligibility.
 
 Domain checks and reviewers keep their authority.

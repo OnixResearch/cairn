@@ -7,10 +7,11 @@ use cairn_core::{
     workflow_change_profile_metadata_from_value, workflow_markdown_is_structurally_present,
     ChangeDependencyEditAction, LifecycleArtifactKind, LifecycleLayout, Policy,
     WorkflowArtifactPolicy, WorkflowProfileRef, WorkflowSchemaPolicy,
-    WORKFLOW_ADMISSION_ACCEPTANCE, WORKFLOW_ADMISSION_DESIGN, WORKFLOW_ADMISSION_PROPOSAL,
-    WORKFLOW_ADMISSION_RISK, WORKFLOW_ADMISSION_SEMANTIC_REVIEW, WORKFLOW_ADMISSION_TASKS,
-    WORKFLOW_ADMISSION_VERIFICATION, WORKFLOW_PATH_KIND_FILE, WORKFLOW_PATH_KIND_SPEC_DIRECTORY,
-    WORKFLOW_PROFILE_SOURCE_CREATE, WORKFLOW_SPEC_EFFECT_NONE, WORKFLOW_TASK_LINK_ACCEPTANCE,
+    OUTCOME_MACHINE_REVIEW_SCHEMA_V1, WORKFLOW_ADMISSION_ACCEPTANCE, WORKFLOW_ADMISSION_DESIGN,
+    WORKFLOW_ADMISSION_OUTCOME_MACHINE, WORKFLOW_ADMISSION_PROPOSAL, WORKFLOW_ADMISSION_RISK,
+    WORKFLOW_ADMISSION_SEMANTIC_REVIEW, WORKFLOW_ADMISSION_TASKS, WORKFLOW_ADMISSION_VERIFICATION,
+    WORKFLOW_PATH_KIND_FILE, WORKFLOW_PATH_KIND_SPEC_DIRECTORY, WORKFLOW_PROFILE_SOURCE_CREATE,
+    WORKFLOW_SPEC_EFFECT_NONE, WORKFLOW_TASK_LINK_ACCEPTANCE,
 };
 use serde_json::{json, Value};
 
@@ -285,12 +286,51 @@ fn profile_artifact_template(
         WORKFLOW_ADMISSION_VERIFICATION => Ok(format!(
             "# Verification plan for {change}\n\n## Positive checks\n\nCAIRN_PLACEHOLDER: list commands and expected evidence.\n\n## Negative checks and gaps\n\nCAIRN_PLACEHOLDER: list failure cases and residual gaps.\n"
         )),
+        WORKFLOW_ADMISSION_OUTCOME_MACHINE => outcome_machine_template(),
         WORKFLOW_ADMISSION_SEMANTIC_REVIEW => semantic_review_template(artifact, schema),
         _ => Ok(format!(
             "# {}\n\nCAIRN_PLACEHOLDER: complete this workflow artifact for `{change}`.\n",
             artifact.id
         )),
     }
+}
+
+fn outcome_machine_template() -> Result<String, Box<dyn Error>> {
+    // r[impl cairn.outcome_machine_profile.scaffold]
+    let value = json!({
+        "schema": OUTCOME_MACHINE_REVIEW_SCHEMA_V1,
+        "route": {
+            "kind": "delivery",
+            "details": {
+                "immediate_outcome": "CAIRN_PLACEHOLDER: name the current result",
+                "current_consumer": "CAIRN_PLACEHOLDER: name the current consumer",
+                "durable_capability_contribution": "CAIRN_PLACEHOLDER: name the durable capability contribution",
+                "repeatability_plan": "CAIRN_PLACEHOLDER: name the repeatability plan"
+            }
+        },
+        "maintenance_owner": "CAIRN_PLACEHOLDER: name the maintenance owner",
+        "tracked_inputs": ["CAIRN_PLACEHOLDER: name each tracked input"],
+        "deterministic_checks": ["CAIRN_PLACEHOLDER: name each deterministic check"],
+        "ai_assistance": {
+            "used": false,
+            "hidden_session_state_required": false,
+            "completion_authority": "repository"
+        },
+        "fresh_state_reproduction": {
+            "status": "planned",
+            "evidence": [],
+            "rationale": "CAIRN_PLACEHOLDER: describe the fresh-state plan"
+        },
+        "completion": {
+            "status": "planned",
+            "evidence": []
+        },
+        "activity_counts_are_completion_evidence": false,
+        "non_claims": [
+            "This record does not prove product value, evidence truth, semantic correctness, or release eligibility."
+        ]
+    });
+    Ok(format!("{}\n", serde_json::to_string_pretty(&value)?))
 }
 
 fn semantic_review_template(
