@@ -289,15 +289,19 @@ fn workflow_profile_guide_names_authority_and_non_claims() -> Result<(), Box<dyn
     // r[verify cairn.lifecycle_workflow_profiles.docs]
     // r[verify cairn.lifecycle_workflow_profiles.docs.selection]
     // r[verify cairn.lifecycle_workflow_profiles.boundary.nonclaim]
+    // r[verify cairn.outcome_machine_profile.docs]
     let guide = fs::read_to_string(
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/workflow-profiles.md"),
     )?;
     assert!(guide.contains("spec-driven"));
     assert!(guide.contains("assurance"));
+    assert!(guide.contains("outcome-machine"));
     assert!(guide.contains("no-spec-delta"));
     assert!(guide
         .contains("user-global files, environment variables, agent prompts, or remote packages"));
     assert!(guide.contains("does not prove zero behavior effect"));
+    assert!(guide.contains("Completion authority must remain `repository`"));
+    assert!(guide.contains("64-character BLAKE3 identity"));
     assert!(guide.contains("release eligibility"));
     Ok(())
 }

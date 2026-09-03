@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
 
-use super::model::*;
+use super::{model::*, outcome_machine::evaluate_outcome_machine_review};
 
 const PROFILE_SOURCE_COMPATIBILITY: &str = "compatibility_fallback";
 const PROFILE_STAGE_PROPOSAL: &str = "proposal";
@@ -141,6 +141,11 @@ pub fn evaluate_workflow_profile(
         Vec::new()
     };
     evaluate_reviews(profile, evidence, &mut issues);
+    issues.extend(evaluate_outcome_machine_review(
+        profile,
+        evidence.outcome_machine_review.as_ref(),
+        &evidence.outcome_machine_evidence,
+    ));
     issues.sort_by(|left, right| {
         left.code
             .cmp(&right.code)
@@ -445,7 +450,8 @@ pub fn tasks_with_requirement_links(tasks_markdown: &str) -> String {
 }
 
 pub fn profile_issue_applies_to_stage(issue: &WorkflowProfileIssue, stage: &str) -> bool {
-    stage_rank(&issue.stage) <= stage_rank(stage)
+    issue.stage != WORKFLOW_PROFILE_STAGE_COMPLETION
+        && stage_rank(&issue.stage) <= stage_rank(stage)
 }
 
 fn stage_rank(stage: &str) -> u8 {

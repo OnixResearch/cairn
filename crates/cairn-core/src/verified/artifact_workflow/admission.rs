@@ -415,6 +415,7 @@ fn validate_artifact_shape(
             | WORKFLOW_ADMISSION_RISK
             | WORKFLOW_ADMISSION_VERIFICATION
             | WORKFLOW_ADMISSION_SEMANTIC_REVIEW
+            | WORKFLOW_ADMISSION_OUTCOME_MACHINE
     ) {
         return Err(admission_error(
             WORKFLOW_ISSUE_POLICY_ADMISSION,
@@ -753,11 +754,76 @@ fn validate_forbidden_profile_sources(
 fn validate_initial_profiles(
     schemas: &[WorkflowSchemaPolicy],
 ) -> Result<(), WorkflowAdmissionError> {
-    for required in ["spec-driven", "assurance", "no-spec-delta"] {
+    const OUTCOME_MACHINE_PROFILE_ID: &str = "outcome-machine";
+    for required in [
+        "spec-driven",
+        "assurance",
+        "no-spec-delta",
+        OUTCOME_MACHINE_PROFILE_ID,
+    ] {
         if !schemas.iter().any(|schema| schema.id == required) {
             return Err(profile_registry_error(
                 "schemas",
                 format!("initial workflow profile is missing: {required}"),
+            ));
+        }
+    }
+    let outcome_machine = schemas
+        .iter()
+        .find(|schema| schema.id == OUTCOME_MACHINE_PROFILE_ID)
+        .ok_or_else(|| {
+            profile_registry_error("schemas", "outcome-machine workflow profile is missing")
+        })?;
+    validate_outcome_machine_profile(outcome_machine)
+}
+
+fn validate_outcome_machine_profile(
+    profile: &WorkflowSchemaPolicy,
+) -> Result<(), WorkflowAdmissionError> {
+    // r[impl cairn.outcome_machine_profile.selection]
+    // r[impl cairn.outcome_machine_profile.verification]
+    const OUTCOME_MACHINE_ARTIFACT_ID: &str = "outcome-machine";
+    const OUTCOME_MACHINE_PATH: &str = "outcome-machine.json";
+    const DESIGN_ARTIFACT_ID: &str = "design";
+    const TASKS_ARTIFACT_ID: &str = "tasks";
+    let artifacts = profile
+        .artifacts
+        .iter()
+        .filter(|artifact| artifact.structural_admission == WORKFLOW_ADMISSION_OUTCOME_MACHINE)
+        .collect::<Vec<_>>();
+    let valid_review_artifact = artifacts.len() == 1
+        && artifacts[0].id == OUTCOME_MACHINE_ARTIFACT_ID
+        && artifacts[0].output_path == OUTCOME_MACHINE_PATH
+        && artifacts[0].path_kind == WORKFLOW_PATH_KIND_FILE
+        && artifacts[0].stage == "design"
+        && !artifacts[0].skipped;
+    if !valid_review_artifact {
+        return Err(profile_registry_error(
+            "schemas",
+            "outcome-machine profile requires one design-stage outcome-machine.json artifact",
+        ));
+    }
+    for dependent_id in [DESIGN_ARTIFACT_ID, TASKS_ARTIFACT_ID] {
+        let Some(dependent) = profile
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.id == dependent_id)
+        else {
+            return Err(profile_registry_error(
+                "schemas",
+                format!("outcome-machine profile is missing required artifact: {dependent_id}"),
+            ));
+        };
+        if !dependent
+            .requires
+            .iter()
+            .any(|required| required == OUTCOME_MACHINE_ARTIFACT_ID)
+        {
+            return Err(profile_registry_error(
+                "schemas",
+                format!(
+                    "outcome-machine profile artifact must depend on the review record: {dependent_id}"
+                ),
             ));
         }
     }

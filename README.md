@@ -93,6 +93,7 @@ Select a policy-owned workflow profile when you create a change:
 ```bash
 nix run path:$PWD#cairn -- change create NAME --profile spec-driven --root .
 nix run path:$PWD#cairn -- change create NAME --profile assurance --root .
+nix run path:$PWD#cairn -- change create NAME --profile outcome-machine --root .
 nix run path:$PWD#cairn -- change create NAME --profile no-spec-delta --root .
 ```
 

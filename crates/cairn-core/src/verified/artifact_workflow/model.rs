@@ -1,6 +1,7 @@
 use std::{error::Error, fmt};
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 pub const WORKFLOW_SCHEMA_VERSION_V1: &str = "cairn.workflow-schema.v1";
 pub const WORKFLOW_STATUS_SCHEMA_V1: &str = "cairn.workflow-status.v1";
@@ -26,6 +27,10 @@ pub const WORKFLOW_ADMISSION_ACCEPTANCE: &str = "acceptance";
 pub const WORKFLOW_ADMISSION_RISK: &str = "risk";
 pub const WORKFLOW_ADMISSION_VERIFICATION: &str = "verification";
 pub const WORKFLOW_ADMISSION_SEMANTIC_REVIEW: &str = "semantic_review";
+pub const WORKFLOW_ADMISSION_OUTCOME_MACHINE: &str = "outcome_machine";
+
+pub const OUTCOME_MACHINE_REVIEW_SCHEMA_V1: &str = "cairn.outcome-machine-review.v1";
+pub const WORKFLOW_PROFILE_STAGE_COMPLETION: &str = "completion";
 
 pub const WORKFLOW_SPEC_EFFECT_DELTA: &str = "delta";
 pub const WORKFLOW_SPEC_EFFECT_NONE: &str = "none";
@@ -63,6 +68,14 @@ pub const WORKFLOW_ISSUE_PROFILE_ACCEPTANCE: &str = "cairn.workflow.profile.acce
 pub const WORKFLOW_ISSUE_PROFILE_TASK_LINK: &str = "cairn.workflow.profile.task_link";
 pub const WORKFLOW_ISSUE_PROFILE_REVIEW: &str = "cairn.workflow.profile.review";
 pub const WORKFLOW_ISSUE_PROFILE_ARTIFACT: &str = "cairn.workflow.profile.artifact";
+pub const WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE: &str = "cairn.workflow.outcome_machine.shape";
+pub const WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE: &str = "cairn.workflow.outcome_machine.route";
+pub const WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY: &str =
+    "cairn.workflow.outcome_machine.authority";
+pub const WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE: &str =
+    "cairn.workflow.outcome_machine.fresh_state";
+pub const WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION: &str =
+    "cairn.workflow.outcome_machine.completion";
 pub const WORKFLOW_ISSUE_OBSERVATION_UNKNOWN: &str = "cairn.workflow.observation.unknown";
 pub const WORKFLOW_ISSUE_OBSERVATION_DUPLICATE: &str = "cairn.workflow.observation.duplicate";
 pub const WORKFLOW_ISSUE_OBSERVATION_INCONSISTENT: &str = "cairn.workflow.observation.inconsistent";
@@ -211,12 +224,20 @@ pub struct WorkflowReviewEvidence {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkflowOutcomeMachineEvidenceObservation {
+    pub path: String,
+    pub blake3: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkflowProfileEvidence {
     pub spec_effect: Option<String>,
     pub spec_effect_rationale: Option<String>,
     pub delta_spec_paths: Vec<String>,
     pub acceptance_markdown: Option<String>,
     pub tasks_markdown: Option<String>,
+    pub outcome_machine_review: Option<Value>,
+    pub outcome_machine_evidence: Vec<WorkflowOutcomeMachineEvidenceObservation>,
     pub artifact_hashes: Vec<WorkflowProfileArtifactHash>,
     pub reviews: Vec<WorkflowReviewEvidence>,
 }

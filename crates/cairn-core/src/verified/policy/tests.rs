@@ -3,7 +3,7 @@ use serde_json::Value;
 use super::*;
 
 const EXPECTED_MAX_STORE_ID_BYTES: usize = 64;
-const EXPECTED_INITIAL_PROFILE_COUNT: usize = 3;
+const EXPECTED_INITIAL_PROFILE_COUNT: usize = 4;
 const INVALID_MACHINE_SUCCESS_STATUS: u64 = 1;
 
 #[test]
@@ -124,6 +124,40 @@ fn rejects_duplicate_workflow_profiles_and_ambient_sources() {
 }
 
 #[test]
+fn rejects_missing_or_malformed_outcome_machine_profile() {
+    // r[verify cairn.outcome_machine_profile.selection]
+    // r[verify cairn.outcome_machine_profile.verification]
+    let source = include_str!("../../../../../cairn-policy/generated/cairn-policy.json");
+
+    let mut missing: Value = serde_json::from_str(source).expect("generated policy value");
+    missing["schemas"]
+        .as_array_mut()
+        .expect("schemas")
+        .retain(|schema| schema["id"] != "outcome-machine");
+    let missing_error =
+        validate_policy_json(missing).expect_err("missing outcome-machine profile fails");
+    assert!(missing_error.to_string().contains("outcome-machine"));
+
+    let mut malformed: Value = serde_json::from_str(source).expect("generated policy value");
+    let outcome_machine = malformed["schemas"]
+        .as_array_mut()
+        .expect("schemas")
+        .iter_mut()
+        .find(|schema| schema["id"] == "outcome-machine")
+        .expect("outcome-machine profile");
+    let review_artifact = outcome_machine["artifacts"]
+        .as_array_mut()
+        .expect("artifacts")
+        .iter_mut()
+        .find(|artifact| artifact["id"] == "outcome-machine")
+        .expect("outcome-machine artifact");
+    review_artifact["stage"] = serde_json::json!("tasks");
+    let malformed_error =
+        validate_policy_json(malformed).expect_err("malformed outcome-machine profile fails");
+    assert!(malformed_error.to_string().contains("design-stage"));
+}
+
+#[test]
 fn parses_generated_default_policy_text() {
     // r[verify cairn.artifact_workflow_contract.policy.valid]
     // r[verify developer_experience.core_policy_parser_boundary_split.behavior]
@@ -133,6 +167,7 @@ fn parses_generated_default_policy_text() {
     // r[verify cairn.lifecycle_workflow_profiles.initial_profiles]
     // r[verify cairn.lifecycle_workflow_profiles.initial_profiles.spec_driven]
     // r[verify cairn.lifecycle_workflow_profiles.selection.compatibility]
+    // r[verify cairn.outcome_machine_profile.selection]
     let text = include_str!("../../../../../cairn-policy/generated/cairn-policy.json");
     let policy = parse_policy_json(text).expect("generated policy parses");
     assert_eq!(policy.name, "cairn-default");
@@ -162,7 +197,12 @@ fn parses_generated_default_policy_text() {
     );
     assert_eq!(
         policy.workflow_profile_policy.allowed_profiles,
-        vec!["spec-driven", "assurance", "no-spec-delta"]
+        vec![
+            "spec-driven",
+            "assurance",
+            "no-spec-delta",
+            "outcome-machine"
+        ]
     );
     let (compatibility, _) = crate::verified::artifact_workflow::select_workflow_profile(
         &policy.workflow_profile_policy,
