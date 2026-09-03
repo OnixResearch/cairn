@@ -47,12 +47,18 @@ The workspace test suite passed all tests through the evidence-registry test. Re
 
 This state is expected before sync and archive. Cairn traceability scans accepted specifications, while implementation markers already reference the active delta requirements.
 
-The Slotcar check and the full Nix check reached the pinned Octet dependency. Both stopped on the existing `rust-src` fixed-output hash mismatch:
+Remote-builder Slotcar and full Nix attempts stopped on the existing `rust-src` fixed-output hash mismatch:
 
 ```text
 specified: sha256-q/gu/3mAuLgNfJlxV/Sw1jttbi4PIBjN+XH0bGmB5NQ=
 got:       sha256-WTRv7eyiu+VOfb8+90cALNJrUa3uLwRFIaeEr+tAIjQ=
 ```
+
+A local-only Slotcar run bypassed the transfer mismatch and exited successfully. It emitted 25,001 Octet findings across existing workspace and interoperability sources.
+
+This warning-only result is not strict Octet acceptance evidence.
+
+A local-only full Nix run reached the traceability check. It failed only because the active delta requirement IDs remain outside accepted specifications.
 
 A full workspace Clippy attempt also found six `unnecessary_sort_by` findings in untouched `cairn-radicle-cob` files. Focused no-dependency Clippy passed for the changed crates.
 
