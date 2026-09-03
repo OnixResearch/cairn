@@ -289,6 +289,7 @@ fn workflow_profile_guide_names_authority_and_non_claims() -> Result<(), Box<dyn
     // r[verify cairn.lifecycle_workflow_profiles.docs]
     // r[verify cairn.lifecycle_workflow_profiles.docs.selection]
     // r[verify cairn.lifecycle_workflow_profiles.boundary.nonclaim]
+    // r[verify cairn.outcome_machine_profile.docs]
     let guide = fs::read_to_string(
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/workflow-profiles.md"),
     )?;

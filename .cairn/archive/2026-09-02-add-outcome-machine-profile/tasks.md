@@ -24,5 +24,5 @@
 - [x] [serial] Document profile selection, routes, completion evidence, fresh-state disposition, and non-claims for r[cairn.outcome_machine_profile.docs].
 - [x] [serial] Refresh generated policy and bound fixture identities for r[cairn.outcome_machine_profile.verification].
 - [x] [serial] Run focused policy, core, CLI, gate, sync, archive, and compatibility checks for r[cairn.outcome_machine_profile.verification].
-- [ ] [serial] Run Cairn validation, traceability, strict Clippy, Slotcar, and full Nix checks for r[cairn.outcome_machine_profile.verification].
-- [ ] [serial] Sync the accepted specification and archive the completed change for r[cairn.outcome_machine_profile.docs].
+- [x] [serial] Run Cairn validation, traceability, strict Clippy, Slotcar, and full Nix checks for r[cairn.outcome_machine_profile.verification].
+- [x] [serial] Sync the accepted specification and archive the completed change for r[cairn.outcome_machine_profile.docs].
