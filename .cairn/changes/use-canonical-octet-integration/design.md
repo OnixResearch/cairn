@@ -29,6 +29,19 @@ Do not rename recorded log files, edit archived commands, or rewrite old signed 
 The saved function-address smoke receipt remains a historical producer observation.
 Its documentation must distinguish it from a newly generated report.
 
+## Source repair required by verification
+
+The warning-only producer run does not satisfy strict acceptance.
+The pinned catalog includes allow-level lints, so `-D warnings` alone does not select the full catalog.
+Use the pinned `hooks/octet-deny-all.sh` entry point for the complete diagnostic.
+Keep producer sources, compiler pins, fixture identities, and workspace scope unchanged.
+
+Repair the gate-contract source without changing root exports, schema fields, canonical values, or identity framing.
+Separate bounded scalar admission from wire records and qualify concrete owner paths.
+Keep exhaustive decisions for closed schema enums.
+Use narrow, explained source exceptions for closed-enum policy and compiler-confirmed non-const operations.
+Do not add blanket exceptions, disabled lints, or finding budgets.
+
 ## Verification
 
 Establish the existing Rust-test baseline before product edits.
@@ -39,6 +52,8 @@ Sync the reviewed spec through an unblocked Cairn plan before the full tests tha
 This sync accepts requirements, not completed implementation or successful producer execution.
 Run focused Nix checks and attempt the actual Octet build.
 A failure before consumer analysis remains an external blocker, not a passing lint result.
+The gate-contract repair also needs exact fixture-byte parity and accepted and rejected scalar and wire cases.
+Its focused deny-all result does not replace the full workspace result.
 
 ## Risks and non-claims
 

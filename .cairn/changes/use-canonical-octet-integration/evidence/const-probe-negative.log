@@ -1,0 +1,69 @@
+error[E0379]: functions in trait impls cannot be declared const
+  --> .cairn/changes/use-canonical-octet-integration/evidence/const-probe.rs:23:15
+   |
+23 |             $($constant)? fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+   |               ^^^^^^^^^
+   |               |
+   |               functions in trait impls cannot be const
+   |               help: remove the `const`
+
+error[E0015]: cannot call non-const operator in constant functions
+  --> .cairn/changes/use-canonical-octet-integration/evidence/const-probe.rs:11:13
+   |
+11 |             value == "schema"
+   |             ^^^^^^^^^^^^^^^^^
+...
+34 | define_candidates!(const);
+   | ------------------------- in this macro invocation
+   |
+   = note: calls in constant functions are limited to constant functions, tuple structs and tuple variants
+   = note: this error originates in the macro `define_candidates` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0015]: cannot call non-const method `core::str::<impl str>::starts_with::<&str>` in constant functions
+  --> .cairn/changes/use-canonical-octet-integration/evidence/const-probe.rs:15:19
+   |
+15 |             value.starts_with("b3:")
+   |                   ^^^^^^^^^^^^^^^^^^
+...
+34 | define_candidates!(const);
+   | ------------------------- in this macro invocation
+   |
+   = note: calls in constant functions are limited to constant functions, tuple structs and tuple variants
+   = note: this error originates in the macro `define_candidates` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0015]: cannot call non-const method `core::str::<impl str>::bytes` in constant functions
+  --> .cairn/changes/use-canonical-octet-integration/evidence/const-probe.rs:19:20
+   |
+19 |             !value.bytes().any(|byte| byte < ASCII_CONTROL_END_EXCLUSIVE)
+   |                    ^^^^^^^
+...
+34 | define_candidates!(const);
+   | ------------------------- in this macro invocation
+   |
+   = note: calls in constant functions are limited to constant functions, tuple structs and tuple variants
+   = note: this error originates in the macro `define_candidates` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0015]: cannot call non-const method `<core::str::Bytes<'_> as Iterator>::any::<{closure@.cairn/changes/use-canonical-octet-integration/evidence/const-probe.rs:19:32: 19:38}>` in constant functions
+  --> .cairn/changes/use-canonical-octet-integration/evidence/const-probe.rs:19:28
+   |
+19 |             !value.bytes().any(|byte| byte < ASCII_CONTROL_END_EXCLUSIVE)
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+34 | define_candidates!(const);
+   | ------------------------- in this macro invocation
+   |
+note: method `any` is not const because trait `Iterator` is not const
+  --> library/core/src/iter/traits/iterator.rs:40:0
+   |
+   = note: this trait is not const
+  ::: library/core/src/iter/traits/iterator.rs:2825:37
+   |
+   = note: this method is not const
+   = help: const traits are not yet supported on stable Rust
+   = note: calls in constant functions are limited to constant functions, tuple structs and tuple variants
+   = note: this error originates in the macro `define_candidates` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: aborting due to 5 previous errors
+
+Some errors have detailed explanations: E0015, E0379.
+For more information about an error, try `rustc --explain E0015`.

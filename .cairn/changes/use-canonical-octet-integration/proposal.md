@@ -13,6 +13,8 @@ Current guidance must name that tool without a repository redirect or legacy CLI
 - Use Octet config tables and list the canonical check in release-readiness reports.
 - Update current documentation and add positive and negative regression controls.
 - Preserve archived commands and recorded receipt bytes as historical evidence.
+- Repair prerequisite gate-contract source without changing its public types or canonical bytes.
+- Keep the change active until the full workspace passes the pinned deny-all hook.
 
 ## Impact
 
