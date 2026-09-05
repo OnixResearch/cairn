@@ -78,7 +78,7 @@ Compare original validators with the report for successful and blocked fixtures.
 Include failed probes, incomplete tasks, invalid order, stale reviews, missing completion rows, dependency conflicts, and unavailable evidence.
 Require exact CLI/MCP semantic parity and zero product effects during inspection.
 Negative transport fixtures retain blocked lifecycle state under a valid machine envelope.
-Run focused tests, Nickel fixtures, strict Clippy, Slotcar, existing traceability, Cairn gates, and full Nix checks.
+Run focused tests, Nickel fixtures, strict Clippy, Octet, existing traceability, Cairn gates, and full Nix checks.
 
 ## Migration and completion
 
