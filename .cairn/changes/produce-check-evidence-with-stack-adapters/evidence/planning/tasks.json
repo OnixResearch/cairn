@@ -1,0 +1,301 @@
+{
+  "acceptance_ids": [],
+  "change": "produce-check-evidence-with-stack-adapters",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "b0c531c6cb651b173f4827619fb2c8d48a32afc242394bcdd5682ddd42f6e41d",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "probe_evidence": {
+    "declarations_present": false,
+    "probes": []
+  },
+  "profile_identity_hash": "f65d0482ecb99ab5bf00e403c06b4dfcfb2f1506bfa9adbc1e14ddce8fc04397",
+  "receipt_hash": "6150dc7d91ce930fba4e12e1865055c23dc9c6fd6ae99e4b3915249f72f730f6",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "tasks",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "design",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/produce-check-evidence-with-stack-adapters/design.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 60,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/produce-check-evidence-with-stack-adapters/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 28,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/produce-check-evidence-with-stack-adapters/specs/check-evidence-producer/spec.md",
+      "requirement_blocks": 6,
+      "scenario_blocks": 12,
+      "substantive_lines": 42,
+      "substantive_requirement_blocks": 6,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 10,
+      "kind": "tasks",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/produce-check-evidence-with-stack-adapters/tasks.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 12,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 10,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 10
+    }
+  ],
+  "task_ordering": {
+    "active": true,
+    "edges": [
+      {
+        "predecessor": "controls",
+        "task": "consumers"
+      },
+      {
+        "predecessor": "baseline",
+        "task": "contracts"
+      },
+      {
+        "predecessor": "publication",
+        "task": "controls"
+      },
+      {
+        "predecessor": "contracts",
+        "task": "core"
+      },
+      {
+        "predecessor": "local",
+        "task": "imports"
+      },
+      {
+        "predecessor": "reuse",
+        "task": "local"
+      },
+      {
+        "predecessor": "imports",
+        "task": "publication"
+      },
+      {
+        "predecessor": "core",
+        "task": "reuse"
+      },
+      {
+        "predecessor": "consumers",
+        "task": "verification"
+      }
+    ],
+    "issues": [],
+    "nodes": [
+      {
+        "blocked_by": [],
+        "blocks": [
+          "contracts"
+        ],
+        "id": "baseline",
+        "line": 5,
+        "predecessors": [],
+        "ready": true,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "controls"
+        ],
+        "blocks": [
+          "verification"
+        ],
+        "id": "consumers",
+        "line": 19,
+        "predecessors": [
+          "controls"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "baseline"
+        ],
+        "blocks": [
+          "core"
+        ],
+        "id": "contracts",
+        "line": 6,
+        "predecessors": [
+          "baseline"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "publication"
+        ],
+        "blocks": [
+          "consumers"
+        ],
+        "id": "controls",
+        "line": 18,
+        "predecessors": [
+          "publication"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "contracts"
+        ],
+        "blocks": [
+          "reuse"
+        ],
+        "id": "core",
+        "line": 7,
+        "predecessors": [
+          "contracts"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "local"
+        ],
+        "blocks": [
+          "publication"
+        ],
+        "id": "imports",
+        "line": 13,
+        "predecessors": [
+          "local"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "reuse"
+        ],
+        "blocks": [
+          "imports"
+        ],
+        "id": "local",
+        "line": 12,
+        "predecessors": [
+          "reuse"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "imports"
+        ],
+        "blocks": [
+          "controls"
+        ],
+        "id": "publication",
+        "line": 14,
+        "predecessors": [
+          "imports"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "core"
+        ],
+        "blocks": [
+          "local"
+        ],
+        "id": "reuse",
+        "line": 11,
+        "predecessors": [
+          "core"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "consumers"
+        ],
+        "blocks": [],
+        "id": "verification",
+        "line": 20,
+        "predecessors": [
+          "consumers"
+        ],
+        "ready": false,
+        "state": "todo"
+      }
+    ],
+    "order": [
+      "baseline",
+      "contracts",
+      "core",
+      "reuse",
+      "local",
+      "imports",
+      "publication",
+      "controls",
+      "consumers",
+      "verification"
+    ],
+    "ready_tasks": [
+      "baseline"
+    ],
+    "valid": true
+  },
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}
