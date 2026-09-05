@@ -1,0 +1,53 @@
+{
+  "acceptance_ids": [],
+  "change": "use-canonical-octet-integration",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "dc44961e00b64033caafdc836a5a7e87ffa8a9faba117051077ecd410bfecbee",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "probe_evidence": null,
+  "profile_identity_hash": "a62af4892d473a637a8a63621fc3655877fb4b5201c6f1fba6e238f906b17c57",
+  "receipt_hash": "1c04e97b734234036fdc0cff510434993fe34ec72598e1c461a208a39a7207f9",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "proposal",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/use-canonical-octet-integration/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 14,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    }
+  ],
+  "task_ordering": null,
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

@@ -1,0 +1,131 @@
+{
+  "acceptance_ids": [],
+  "actions": [
+    {
+      "description": "merge delta spec into main specs: ./.cairn/changes/use-canonical-octet-integration/specs/octet-consumer-integration/spec.md",
+      "kind": "sync_delta_spec",
+      "path": "./.cairn/changes/use-canonical-octet-integration/specs/octet-consumer-integration/spec.md"
+    }
+  ],
+  "blocked": false,
+  "change": "use-canonical-octet-integration",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "da089c8ce440e796590048b06cadac574ae7b81910ba727f45b5ccb6433bcf5d",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+    "receipt_hash": "ddd8b0ca042c1dcdeb7be5c99360796c8a1f1c101ace754a2eae78db9bb164c1",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "delta_specs": [
+    "./.cairn/changes/use-canonical-octet-integration/specs/octet-consumer-integration/spec.md"
+  ],
+  "dry_run": false,
+  "input_hash": "145bdeec8a196e7d55f211c966e7ac4dd4dc9d52fafa7e6855e3d537929ac4e4",
+  "layout": "cairn",
+  "merge_preflight": {
+    "documents": [
+      {
+        "accepted_before_exists": false,
+        "accepted_before_hash": "7f84bd79dad573e4cbc11a43d722a812876e30c60ecedcfd791853621d81f175",
+        "blocked": false,
+        "changed": true,
+        "delta_hash": "fc79cfc5e672e58746dcbcf426654f846abae7b453dff4b91f5a93890fa33437",
+        "destination": ".cairn/specs/octet-consumer-integration/spec.md",
+        "diagnostics": [],
+        "expected_after_hash": "3204cd0edc47bcbe409db6be22dce731241210f192e29bde471f04e31cc013e6",
+        "operations": [
+          {
+            "block_hash": "1ff2c53940eee17a4b514d956f46d34874375aa8100fb6aaf2f7d72fce518ea8",
+            "heading": "### Requirement: Canonical pinned consumer integration",
+            "kind": "added",
+            "requirement_id": "cairn.octet_integration.canonical"
+          },
+          {
+            "block_hash": "4fb8d7c6ac4b5a70dc51aaa9b1cd95afd268dbe0e7d6f9fd84afc691912a7c19",
+            "heading": "### Requirement: Canonical operator guidance",
+            "kind": "added",
+            "requirement_id": "cairn.octet_integration.guidance"
+          },
+          {
+            "block_hash": "6c1715f4887f5e4fa7d53b16530bc6a4f2d98c875a976854e7f55930f0514a23",
+            "heading": "### Requirement: Preserve producer identity and historical evidence",
+            "kind": "added",
+            "requirement_id": "cairn.octet_integration.evidence"
+          }
+        ],
+        "outcomes": [
+          {
+            "kind": "added",
+            "requirement_id": "cairn.octet_integration.canonical",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.octet_integration.guidance",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.octet_integration.evidence",
+            "state": "applied"
+          }
+        ],
+        "source": ".cairn/changes/use-canonical-octet-integration/specs/octet-consumer-integration/spec.md"
+      }
+    ]
+  },
+  "mutated": true,
+  "mutation_manifest": {
+    "after": {
+      "entries": [
+        {
+          "content_hash": "3204cd0edc47bcbe409db6be22dce731241210f192e29bde471f04e31cc013e6",
+          "exists": true,
+          "path": "./.cairn/specs/octet-consumer-integration/spec.md"
+        }
+      ],
+      "manifest_hash": "49edd344463f9ad48a27fde2307b14d05901c620e5a601523712d1e4ac9c1b97"
+    },
+    "before": {
+      "entries": [
+        {
+          "content_hash": null,
+          "exists": false,
+          "path": "./.cairn/specs/octet-consumer-integration/spec.md"
+        }
+      ],
+      "manifest_hash": "b742943b240d10d21aa0eb1e8c0ce0406d7db2ceb402fbaa8776a601378eac6e"
+    },
+    "kind": "sync",
+    "manifest_hash": "cca177842ea8c824da87b7c4311165ba4d7bcc1c3eb3fed0d2a18e5f25ea17b4"
+  },
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "21c250096069f4c479b230640e46c88c8cd60e896b464cde5d133126cf417648",
+  "policy": "cairn-default",
+  "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "profile_identity_hash": "a37e9e35b78cb21c08abc11ae8e52285238612e1771029ba826832994bbd95ce",
+  "reasons": [],
+  "receipt_hash": "bd377fb7c67246b6e58b8cf33d2ae48ff4ff25bce9398a68da36381b696e1ecf",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}
