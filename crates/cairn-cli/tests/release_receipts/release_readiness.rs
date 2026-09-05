@@ -21,6 +21,38 @@ fn release_readiness_lists_replay_oracle_preflight() -> Result<(), Box<dyn Error
 }
 
 #[test]
+fn release_readiness_lists_canonical_octet_gate() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.octet_integration.guidance.valid]
+    let receipt = run_json(&["release-readiness", "--root", "."])?;
+    assert_eq!(
+        receipt["repository_gate_summary"]["required_commands"],
+        json!([
+            "cargo fmt --check",
+            "cargo test --workspace",
+            "cargo clippy --workspace --all-targets -- -D warnings",
+            "nix build .#checks.x86_64-linux.octet --no-link -L",
+            "nix flake check path:$PWD -L"
+        ])
+    );
+    Ok(())
+}
+
+#[test]
+fn release_readiness_does_not_list_legacy_lint_gates() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.octet_integration.guidance.legacy]
+    let receipt = run_json(&["release-readiness", "--root", "."])?;
+    let commands = receipt["repository_gate_summary"]["required_commands"]
+        .as_array()
+        .ok_or("required commands array")?;
+    for command in commands {
+        let command = command.as_str().ok_or("required command string")?;
+        assert!(!command.contains("slotcar"), "legacy command: {command}");
+        assert!(!command.contains("tigerstyle"), "legacy command: {command}");
+    }
+    Ok(())
+}
+
+#[test]
 fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.traceability_ownership.validation.gates]
     // r[verify cairn.supersede.release_readiness_bundle.schema]

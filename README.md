@@ -14,7 +14,7 @@ Cairn separates a pure core from an imperative shell:
 - `cairn-cli` owns arguments, files, policy loading, output, exits, and mutation.
 - Runtime commands use checked-in generated policy JSON.
 
-The strict core is in `crates/cairn-core/src/verified/`. Slotcar checks its purity boundary.
+The strict core is in `crates/cairn-core/src/verified/`. Octet checks its purity boundary.
 
 ## Project status
 
@@ -128,14 +128,22 @@ nix run path:$PWD#cairn -- policy export --check
 cargo fmt --check
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
-cargo tigerstyle check --output-format json --artifact-dir artifacts/slotcar-run
+nix develop -c cargo octet check --output-format json --artifact-dir artifacts/octet-run
+nix build path:$PWD#checks.x86_64-linux.octet --no-link -L
 nix run path:$PWD#cairn -- validate --root .
 nix flake check path:$PWD -L
 nix run path:$PWD#cairn -- doctor --root fixtures/basic
 nix run path:$PWD#cairn -- status --root fixtures/basic
 ```
 
-`nix flake check` covers policy freshness, formatting, tests, lifecycle checks, traceability, Clippy, Slotcar, and self-dogfood.
+`nix flake check` covers policy freshness, formatting, tests, lifecycle checks, traceability, Clippy, Octet, and self-dogfood.
+
+The Octet input uses an immutable revision from `OnixResearch/octet`.
+`checks.<system>.octet-integration` verifies its source identity, canonical config, command, and consumer scope with positive and negative controls.
+That integration check does not replace `checks.<system>.octet`, which runs the producer check.
+Historical receipts retain their original command text.
+
+<!-- r[verify cairn.octet_integration.guidance] r[verify cairn.octet_integration.evidence] -->
 
 Cairn keeps maintained gates in Rust and Nickel. It does not use checked-in Python or shell helpers for these checks.
 

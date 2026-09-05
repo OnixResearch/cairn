@@ -13,16 +13,18 @@
   # Exact stack Nickel 1.17.0 cohort, pinned to the reviewed upstream commit.
   # r[impl cairn.nickel_toolchain.cohort] r[impl cairn.nickel_toolchain.lockfile]
   inputs.nickel-1-17-0.url = "github:nickel-lang/nickel/1320a983e6c3d1e2fb53dd2464b084b4903b1426";
-  inputs.slotcar.url = "github:OnixResearch/slotcar";
+  # Keep the existing producer revision while using its canonical repository.
+  # r[impl cairn.octet_integration.canonical] r[impl cairn.octet_integration.evidence]
+  inputs.octet.url = "github:OnixResearch/octet/2f8213a88781d9d38bb81319d06a50805d48ccd3";
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       artifact,
       nickel-export,
       nickel-1-17-0,
-      slotcar,
+      octet,
     }:
     let
       systems = [
@@ -766,13 +768,29 @@
           doCheck = false;
         };
 
-        slotcar = slotcar.lib.mkConsumerCheck {
+        octet = octet.lib.mkConsumerCheck {
           system = pkgs.stdenv.hostPlatform.system;
           src = self;
           cargoLock = ./Cargo.lock;
           cargoExtraArgs = "--all-targets --features redb-registry";
           nativeBuildInputs = [ pkgs.stdenv.cc ];
         };
+
+        octet-integration =
+          let
+            system = pkgs.stdenv.hostPlatform.system;
+            report = import ./nix/octet-integration.nix {
+              inherit inputs system;
+              root = self;
+              checks = self.checks.${system};
+              devShell = self.devShells.${system}.default;
+            };
+          in
+          assert report.valid;
+          pkgs.runCommand "cairn-octet-integration" { } ''
+            mkdir -p "$out"
+            cp ${pkgs.writeText "cairn-octet-integration.json" (builtins.toJSON report)} "$out/report.json"
+          '';
       });
 
       devShells = eachSystem (pkgs: {
@@ -784,7 +802,7 @@
             pkgs.clippy
             (nickelCohort pkgs.stdenv.hostPlatform.system)
             nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
-            slotcar.packages.${pkgs.stdenv.hostPlatform.system}.cargo-tigerstyle
+            octet.packages.${pkgs.stdenv.hostPlatform.system}.cargo-octet
           ];
         };
       });

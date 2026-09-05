@@ -1,8 +1,8 @@
 //! Pure, deterministic core types for cairn.
 //!
 //! Filesystem access, environment reads, process control, and presentation live
-//! in shell crates. Modules under `verified/` are kept pure and are checked by
-//! Slotcar's `verified_purity` lint.
+//! in shell crates. Octet checks modules under `verified/` with its
+//! `verified_purity` lint.
 //! r[impl cairn.supersede.boundary.pure_core]
 //! r[impl cairn.supersede.migrate_openspec.boundary]
 //! r[impl cairn.supersede.tracey_coverage.boundary]

@@ -45,13 +45,14 @@ pub(crate) fn repository_gate_summary() -> Value {
     // r[impl cairn.supersede.traceability_ownership.optional_tracey]
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.gates]
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.docs]
+    // r[impl cairn.octet_integration.guidance]
     json!({
         "policy": "maintained-local-gates",
         "required_commands": [
             "cargo fmt --check",
             "cargo test --workspace",
             "cargo clippy --workspace --all-targets -- -D warnings",
-            "nix build .#checks.x86_64-linux.slotcar --no-link -L",
+            "nix build .#checks.x86_64-linux.octet --no-link -L",
             "nix flake check path:$PWD -L"
         ],
         "note": "The bundle records the maintained release gate policy; operators still run heavyweight repository gates outside this local receipt command. The maintained traceability gate is Cairn-owned and does not require the external Tracey binary."

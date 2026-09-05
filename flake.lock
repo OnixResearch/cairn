@@ -67,10 +67,10 @@
     "cairn_3": {
       "inputs": {
         "nixpkgs": [
-          "slotcar",
+          "octet",
           "nixpkgs"
         ],
-        "slotcar": "slotcar_4"
+        "slotcar": "slotcar_3"
       },
       "locked": {
         "lastModified": 1779500840,
@@ -499,6 +499,30 @@
         "type": "github"
       }
     },
+    "octet": {
+      "inputs": {
+        "cairn": "cairn_3",
+        "crane": "crane_5",
+        "dylint-src": "dylint-src_4",
+        "flake-utils": "flake-utils_5",
+        "nixpkgs": "nixpkgs_6",
+        "rust-overlay": "rust-overlay_6"
+      },
+      "locked": {
+        "lastModified": 1783449144,
+        "narHash": "sha256-OvqB00mDIsGDOcuK5jvPJUModVz9WbIBuM/l06TABHc=",
+        "owner": "OnixResearch",
+        "repo": "octet",
+        "rev": "2f8213a88781d9d38bb81319d06a50805d48ccd3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "OnixResearch",
+        "repo": "octet",
+        "rev": "2f8213a88781d9d38bb81319d06a50805d48ccd3",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -528,7 +552,7 @@
         "nickel-1-17-0": "nickel-1-17-0",
         "nickel-export": "nickel-export",
         "nixpkgs": "nixpkgs_4",
-        "slotcar": "slotcar_3"
+        "octet": "octet"
       }
     },
     "rust-overlay": {
@@ -624,7 +648,7 @@
     "rust-overlay_5": {
       "inputs": {
         "nixpkgs": [
-          "slotcar",
+          "octet",
           "cairn",
           "slotcar",
           "nixpkgs"
@@ -647,7 +671,7 @@
     "rust-overlay_6": {
       "inputs": {
         "nixpkgs": [
-          "slotcar",
+          "octet",
           "nixpkgs"
         ]
       },
@@ -711,29 +735,6 @@
       }
     },
     "slotcar_3": {
-      "inputs": {
-        "cairn": "cairn_3",
-        "crane": "crane_5",
-        "dylint-src": "dylint-src_4",
-        "flake-utils": "flake-utils_5",
-        "nixpkgs": "nixpkgs_6",
-        "rust-overlay": "rust-overlay_6"
-      },
-      "locked": {
-        "lastModified": 1783449144,
-        "narHash": "sha256-OvqB00mDIsGDOcuK5jvPJUModVz9WbIBuM/l06TABHc=",
-        "owner": "OnixResearch",
-        "repo": "slotcar",
-        "rev": "2f8213a88781d9d38bb81319d06a50805d48ccd3",
-        "type": "github"
-      },
-      "original": {
-        "owner": "OnixResearch",
-        "repo": "slotcar",
-        "type": "github"
-      }
-    },
-    "slotcar_4": {
       "inputs": {
         "crane": "crane_4",
         "dylint-src": "dylint-src_3",

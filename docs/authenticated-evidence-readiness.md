@@ -70,7 +70,7 @@ r[cairn.artifact_auth.repository_extraction.cutover] Review the candidate standa
 1. Set the exact SSH URL and full commit in root `Cargo.toml` and the exact matching non-flake input revision in `flake.nix`; never use a branch, tag, sibling path, abbreviated revision, or duplicate source.
 2. Regenerate `Cargo.lock` with Cargo and `flake.lock` with `nix flake lock`/`nix flake update`; never edit either lock manually.
 3. Run `nix build .#checks.x86_64-linux.artifact-auth-source-pin -L`. It rejects Cargo/Nix revision drift, duplicate or widened consumer packages, source-workspace drift, floating or workspace-relative sources, incompatible licensing, profile mismatch, and synthetic negative mutations.
-4. Run positive and tamper dual-run fixtures, strict Cargo checks, Slotcar, Cairn lifecycle validation/traceability, and the full Nix rail. The historical `artifact-auth` revision remains rollback evidence only. Keep Cairn product policy authoritative.
+4. Run positive and tamper dual-run fixtures, strict Cargo checks, Octet, Cairn lifecycle validation/traceability, and the full Nix rail. The historical `artifact-auth` revision remains rollback evidence only. Keep Cairn product policy authoritative.
 
 ### Rollback procedure
 

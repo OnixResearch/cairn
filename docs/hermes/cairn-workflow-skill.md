@@ -3,7 +3,7 @@ name: cairn-workflow
 description: >
   Work on the Cairn Rust/Nix lifecycle engine in /home/brittonr/git/cairn:
   native Cairn specs and archives, MCP tools, deterministic receipts,
-  release-readiness evidence, Cairn-owned traceability coverage, Slotcar FCIS checks, and Nix
+  release-readiness evidence, Cairn-owned traceability coverage, Octet FCIS checks, and Nix
   verification. Use for Cairn CLI/core/spec/test/flake/docs work.
 ---
 
@@ -24,7 +24,7 @@ Use this Hermes skill for work in `/home/brittonr/git/cairn`. Cairn is the canon
 - Native lifecycle content lives under `.cairn/`.
 - Legacy lifecycle content is an explicit import/migration source, not a runtime fallback layout.
 - Fixtures live under `fixtures/` and are part of the behavior contract.
-- Slotcar input MUST stay `github:OnixResearch/slotcar`.
+- Pin the Octet input to an immutable `github:OnixResearch/octet/<revision>` source.
 - Run the CLI through Nix as `nix run path:$PWD#cairn -- ...`.
 
 ## Operating mode
@@ -86,7 +86,7 @@ Use `[task:<id>]` and `[after:<task-id>]` when tasks need local ordering. If eit
 ## FCIS boundary
 
 - `cairn-core` is the functional core: pure deterministic transforms only.
-- Keep pure code under `crates/cairn-core/src/verified/` so Slotcar checks cover it.
+- Keep pure code under `crates/cairn-core/src/verified/` so Octet checks cover it.
 - Filesystem, environment, process execution, stdout/stderr, mutation, probe execution, and JSON presentation belong in `crates/cairn-cli`.
 - Structured lifecycle source uses Nickel contracts plus generated JSON bundles; Markdown is a render/import projection once structured source exists.
 - Default gates do not execute probe commands. Run `cairn probe run ... --out ...` first, then let gates verify saved probe receipts; `--run-probes` is explicit and denied by default until policy enables a bounded profile.
@@ -243,7 +243,8 @@ nix run "path:$PWD#cairn" -- validate --root .
 nix run "path:$PWD#cairn" -- release-readiness --root .
 nix build "path:$PWD#checks.x86_64-linux.self-dogfood" --no-link -L
 nix build "path:$PWD#checks.x86_64-linux.tracey-coverage" --no-link -L
-nix build "path:$PWD#checks.x86_64-linux.slotcar" --no-link -L
+nix build "path:$PWD#checks.x86_64-linux.octet" --no-link -L
+nix build "path:$PWD#checks.x86_64-linux.octet-integration" --no-link -L
 ```
 
 Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix continues locally and the requested checks pass.
@@ -267,7 +268,7 @@ Remote builder warnings for `ssh-ng://root@10.10.10.1` are non-blocking if Nix c
 - Nix flakes snapshot tracked/staged files. Stage new source/doc files before `nix flake check` if the check needs them.
 - `cairn sync <change>` requires explicit `## ADDED Requirements`, `## MODIFIED Requirements`, or `## REMOVED Requirements` operations with one stable bare requirement ID per block. If `merge_preflight` reports blockers, repair the delta shape or identity conflict and rerun the dry-run; never substitute a manual post-sync accepted-spec patch for a blocked semantic plan. See `docs/sync-delta-merge.md`.
 - Historical archives and compatibility code may mention legacy lifecycle names; do not churn those unless the task is explicitly a migration/rename cleanup.
-- Slotcar Nix checks need a C compiler/linker; keep `pkgs.stdenv.cc` in check inputs.
+- Keep `pkgs.stdenv.cc` in Octet check inputs to supply the C compiler and linker.
 - The canonical repo uses `git@github.com:OnixResearch/cairn.git`. Complete verified slices through the required worktree, branch, and `main` integration workflow.
 
 ## Skill maintenance

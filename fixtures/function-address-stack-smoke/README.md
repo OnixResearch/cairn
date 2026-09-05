@@ -17,7 +17,7 @@ The positive test recomputes the source identity, validates the Octet function-a
 - **Kamacite** owns canonical Preserves receipt bytes. Its repository command is `nix run .#kamacite -- validate --root . --manifest fixtures/manifest.json`; `positive/kamacite.json` is the bounded compatibility projection consumed here.
 - **Valence** owns Evidence IR linkage. Validate a producer artifact with `valence function-address validate --artifact-root <ROOT> --input <FILE>`; the expected Cairn-facing receipt and graph are `positive/valence.json` and `positive/graph.json`.
 - **Mantle** owns the build/release binding. Its first-class command is `mantle --json release function-address-bind <BUNDLE> ... --receipt-out <FILE>`; the expected binding is `positive/mantle.json`.
-- **Cairn** owns lifecycle readiness. `positive/cairn-readiness.json` records the current expected receipt from the command exercised by the integration test.
+- **Cairn** owns lifecycle readiness. `positive/cairn-readiness.json` records a historical receipt from the command exercised by the integration test. Its legacy command names remain part of those recorded bytes. Current reports emit the canonical Octet check command.
 
 The Octet regeneration attempt on 2026-07-14 was blocked before execution because the Octet Nix package could not fetch its exact `https://github.com/OnixResearch/valence.git` dependency. The committed Octet projection was therefore copied from Octet's existing first-class `target/strict-profile-smoke` output whose source bytes exactly match `source/src/lib.rs`. This is an explicit environment blocker, not permission to weaken or fabricate producer validation.
 
