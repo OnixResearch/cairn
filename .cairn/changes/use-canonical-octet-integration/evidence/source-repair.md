@@ -44,6 +44,9 @@ No blanket exception, disabled lint, or finding budget is present.
 - The fixture generator output matched the checked-in producer fixture with `cmp`.
 - The official deny-all hook passed for the package, all targets, and all features.
 - The unchanged `cairn-core` test baseline passed 561 tests.
+- The fresh Nix workspace Rust-test, Clippy, and formatting checks passed after the source repair.
+- The proposal, design, and tasks gates passed. Lifecycle validation passed.
+- The archive preview remained blocked, dry-run, and non-mutating.
 
 The read-only subagent review exceeded its time limit and supplied no acceptance evidence.
 The current diagnostic and review passes are correlated.
@@ -57,7 +60,7 @@ The failures include file decomposition, owner paths, assertions, and further ca
 This repair does not suppress those findings or mark workspace verification complete.
 
 The original warning-only full flake result does not establish strict acceptance.
-Broad Rust, Clippy, and formatting checks also need a fresh replay after the source repair.
+The fresh broad Rust, Clippy, and formatting checks passed, but they do not replace the failed workspace deny-all gate.
 The earlier local store-integrity and all-system Nickel observations remain separate from this scoped result.
 No archive, push, main integration, or worktree removal occurred for this repair.
 
@@ -94,3 +97,4 @@ These paths locate local evidence. They are not product dependencies.
 | `gate-contract-deny-all-replay.log` | `c75fbfa07de647407205c394f16feb8ee627626eb88ee08ff8eabd7ed554f734` |
 | `workspace-deny-all-replay.log` | `59c453bda7002b628cfd4d8a204369c0decec49dc797061c0525e455b6222a22` |
 | `core-before.log` | `f3e034f7cd9ac28bbd623d95fb6d5acedff342b350366255f52ae05a1e1415c2` |
+| `contract-workspace-replay.log` | `191170d95dd94c52d60392e26a9116b730198b47b1a2bfab5b14c5acfce74d58` |
