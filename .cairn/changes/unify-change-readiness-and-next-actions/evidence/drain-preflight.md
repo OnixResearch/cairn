@@ -20,13 +20,15 @@ The tests therefore cover existing product code, not an implementation of unifie
 | Readiness-worktree lifecycle validation | Valid before implementation |
 | Focused Cargo baseline through the development shell | Did not reach Cargo. Nix rejected a modified Rust source input |
 | `checks.x86_64-linux.rust-tests` | Passed, including existing positive and negative Rust tests |
-| `checks.x86_64-linux.slotcar` | Failed before consumer analysis on the same Rust source hash mismatch |
+| Octet (`checks.x86_64-linux.slotcar`) | Failed before consumer analysis on the same Rust source hash mismatch |
 | Direct Nix content verification | Reported the Rust source path as modified |
 | `nix store repair` | Failed because the daemon store does not support `repairPath` |
 | Exact derivation repair followed by content verification | The Rust source path still failed content verification |
 | Non-interactive administrator availability | `sudo -n true` failed because a password is required |
 
-The successful Rust test derivation does not replace the mandatory Slotcar check or establish implementation acceptance.
+Octet is the current product name. This checkout retains `slotcar` as the Nix input and check attribute.
+The commands and log names in this report preserve those exact identifiers.
+The successful Rust test derivation does not replace the mandatory Octet check or establish implementation acceptance.
 
 ## Exact blocking input
 
@@ -86,7 +88,7 @@ After restoration, run content verification against the exact path:
 nix store verify --no-trust /nix/store/3r2nwafkx9xha0y6xsd0w0557ba0c294-rust-src-1.96.0-nightly-2026-03-21-x86_64-unknown-linux-gnu
 ```
 
-Then rerun the development-shell baseline and the standalone Slotcar check in the readiness worktree.
+Then rerun the development-shell baseline and the standalone Octet check in the readiness worktree.
 When reliable verification is available, resume implementation with the baseline failure recorded.
 The normal drain still requires implementation, acceptance evidence, sync, archive, change-branch publication, and fresh origin main integration.
 
