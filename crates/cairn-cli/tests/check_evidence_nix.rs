@@ -79,6 +79,20 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
         "NIX_CONFIG".into(),
         "experimental-features = nix-command flakes".into(),
     );
+    // Diagnostic capture: mirror the exact profile command so a sandbox-only
+    // failure reports the real nix diagnostics in the panic message.
+    {
+        let mut diagnostic = Command::new(&nix);
+        diagnostic
+            .current_dir(&root)
+            .args(["eval", "--offline", "--json", "--file", "./check.nix"]);
+        for (key, value) in &environment {
+            diagnostic.env(key, value);
+        }
+        let output = diagnostic.output()?;
+        fs::write(root.join("evidence/nix-stderr.txt"), &output.stderr)?;
+        fs::write(root.join("evidence/nix-stdout.txt"), &output.stdout)?;
+    }
     let profile = CheckProfile {
         schema: PROFILE_SCHEMA.into(),
         check_id: "build".into(),
