@@ -239,6 +239,7 @@ A matching witness checkpoint proves only a bounded witnessed prefix. Cairn does
 ### Stable receipt compatibility
 
 Stable public gate fields include `change`, `stage`, `verdict`, `valid`, issues, and receipt hashes.
+CLI gates also report `policy_selection` with the exact source, locator, and BLAKE3 identity. This field does not certify installation.
 
 Stable public lifecycle
 receipt fields include the command result, actions, policy identity, and receipt identity. The sync receipts also include `delta_specs`.

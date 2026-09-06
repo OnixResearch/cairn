@@ -3838,6 +3838,7 @@
         "layout",
         "policy",
         "policy_hash",
+        "policy_selection",
         "probe_evidence",
         "receipt_hash",
         "stage",
