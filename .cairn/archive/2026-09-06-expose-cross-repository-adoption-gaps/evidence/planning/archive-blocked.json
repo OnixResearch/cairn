@@ -1,0 +1,50 @@
+{
+  "acceptance_ids": [],
+  "actions": [],
+  "blocked": true,
+  "change": "expose-cross-repository-adoption-gaps",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "da089c8ce440e796590048b06cadac574ae7b81910ba727f45b5ccb6433bcf5d",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+    "receipt_hash": "ddd8b0ca042c1dcdeb7be5c99360796c8a1f1c101ace754a2eae78db9bb164c1",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "dry_run": true,
+  "input_hash": "7a577f3fe7207163ad37860822b7af3fe3dfc7a3f4fb27d3b8acae16a2098536",
+  "layout": "cairn",
+  "mutated": false,
+  "mutation_manifest": null,
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "d9d82937630080360f320281e04b4d591827bf8630f4d7ef4d9629941ca6e2f9",
+  "policy": "cairn-default",
+  "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "profile_identity_hash": "18dd54a6837be143453946297b15ed832709f6ce9613550ae2870395cc9c397d",
+  "reasons": [
+    "expose-cross-repository-adoption-gaps: change_dependency.unsatisfied_dependency: dependency unify-change-readiness-and-next-actions is not archived",
+    "expose-cross-repository-adoption-gaps: tasks not archive-ready (todo: 10, in_progress: 0, unmarked: 0)"
+  ],
+  "receipt_hash": "26d86d0257511318b418e4a87a9515f9a454dae264141ccffb73e1d675cfebc0",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

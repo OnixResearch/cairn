@@ -1,0 +1,238 @@
+{
+  "actions": [
+    {
+      "argv": [],
+      "authority": "advisory",
+      "causes": [
+        "0e154794dfe25924ae5f4ef7fc66851184a3843a68e4bc8a1d6af87b28d4c6b5",
+        "23e2eba54209305820d123669335f37114868c1635f07ca955060f0bbfa32502",
+        "24e99089cd2bd5cabdb8c22977435b8773d13513f73e5bc16e50649a982697f5",
+        "39bd531e8786aeda5eab434664a8c6241927c6e0817fa0b2f62a6d4931d98e2f",
+        "9a63193a125be78719066ef99af5dc8b35221fbd46acc940e97ec692d0b92fad",
+        "b45da25f0f99784e611fca3aecb29a4dd21690fef08265596f2d4c1d9211ccdf",
+        "f133ae034f424e2552ebc8a53f31eafae3fb5e9dd1d466780fa5944689e5005f"
+      ],
+      "expected_observation": "reviewed remediation rule for this exact diagnostic",
+      "id": "2c1f634809cac1e521cd9e44a1b10d7bfae5b7137c1ca8e280d04b1049d77e23",
+      "kind": "unresolved",
+      "prerequisites": [
+        "03f88b99c3d8073bba8948d6e762aac443b265f606cc05abd4d172f03a4def6a",
+        "58e7cac7c655b4b046ef541fa7596fbfd72fbb95f2dffcbebe245a23ab471362",
+        "ab9c8cb9f4fef0aa156f8ab221850d7605da6497f902b7427c7c99cefb038654"
+      ],
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "argv": [],
+      "authority": "advisory",
+      "causes": [
+        "022d69e82b7a3478a0225440e083dcc04f728386d61faef7c1932e9e2dc4c6ab",
+        "05a60c26eb0bdd8025d5ba5db2abc7a7f9beb89a8e0ac3ee6c78fe857905d2eb",
+        "4c46aaac6549470040602439aab708c49a4c6e4dd54513d4b1e20851382eaf1f",
+        "7eda189e33d76818aa8af55846271f8398b63efc9957ffd8ebee62c662106f7d",
+        "a4cb56c5f481d44fbd4fec13eb16a989581d8afb85a194c5e3bbb2296feed150",
+        "c172fea58cd261c91abfec5a0bdbbe5467a8dade42560ce7d68777a11a8516ce",
+        "cfa540ae16f5ba357611c9219ac7b8df6ca610da6e441f52d1f0b4c0e9b1b467"
+      ],
+      "expected_observation": "reviewed remediation rule for this exact diagnostic",
+      "id": "bd3ad83dfab7df4c1739ad0715e0bda1a47d7ae39931534055bcd902662f4db0",
+      "kind": "unresolved",
+      "prerequisites": [
+        "03f88b99c3d8073bba8948d6e762aac443b265f606cc05abd4d172f03a4def6a",
+        "58e7cac7c655b4b046ef541fa7596fbfd72fbb95f2dffcbebe245a23ab471362",
+        "ab9c8cb9f4fef0aa156f8ab221850d7605da6497f902b7427c7c99cefb038654"
+      ],
+      "target": "expose-cross-repository-adoption-gaps"
+    }
+  ],
+  "blockers": [
+    {
+      "code": "observation.load_failed",
+      "id": "7eda189e33d76818aa8af55846271f8398b63efc9957ffd8ebee62c662106f7d",
+      "message": "The selected observation could not be admitted",
+      "stage": "archive",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "c172fea58cd261c91abfec5a0bdbbe5467a8dade42560ce7d68777a11a8516ce",
+      "message": "The selected observation could not be admitted",
+      "stage": "artifact",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "022d69e82b7a3478a0225440e083dcc04f728386d61faef7c1932e9e2dc4c6ab",
+      "message": "The selected observation could not be admitted",
+      "stage": "completion",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "05a60c26eb0bdd8025d5ba5db2abc7a7f9beb89a8e0ac3ee6c78fe857905d2eb",
+      "message": "The selected observation could not be admitted",
+      "stage": "design",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "4c46aaac6549470040602439aab708c49a4c6e4dd54513d4b1e20851382eaf1f",
+      "message": "The selected observation could not be admitted",
+      "stage": "proposal",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "cfa540ae16f5ba357611c9219ac7b8df6ca610da6e441f52d1f0b4c0e9b1b467",
+      "message": "The selected observation could not be admitted",
+      "stage": "sync",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "a4cb56c5f481d44fbd4fec13eb16a989581d8afb85a194c5e3bbb2296feed150",
+      "message": "The selected observation could not be admitted",
+      "stage": "tasks",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "f133ae034f424e2552ebc8a53f31eafae3fb5e9dd1d466780fa5944689e5005f",
+      "message": "Observation is unavailable",
+      "stage": "artifact",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "9a63193a125be78719066ef99af5dc8b35221fbd46acc940e97ec692d0b92fad",
+      "message": "Observation is unavailable",
+      "stage": "proposal",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "b45da25f0f99784e611fca3aecb29a4dd21690fef08265596f2d4c1d9211ccdf",
+      "message": "Observation is unavailable",
+      "stage": "design",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "23e2eba54209305820d123669335f37114868c1635f07ca955060f0bbfa32502",
+      "message": "Observation is unavailable",
+      "stage": "tasks",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "39bd531e8786aeda5eab434664a8c6241927c6e0817fa0b2f62a6d4931d98e2f",
+      "message": "Observation is unavailable",
+      "stage": "completion",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "24e99089cd2bd5cabdb8c22977435b8773d13513f73e5bc16e50649a982697f5",
+      "message": "Observation is unavailable",
+      "stage": "sync",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "0e154794dfe25924ae5f4ef7fc66851184a3843a68e4bc8a1d6af87b28d4c6b5",
+      "message": "Observation is unavailable",
+      "stage": "archive",
+      "target": "expose-cross-repository-adoption-gaps"
+    }
+  ],
+  "classification": "unavailable",
+  "diagnostics": [],
+  "input_hash": "9175d3707b26a00b408c1a836928b7a1db4a05f846a289430c332384684c08d8",
+  "mutation_authorized": false,
+  "non_claims": [
+    "Readiness does not authorize mutation or execute checks",
+    "Readiness does not prove evidence truth, code correctness, or release eligibility"
+  ],
+  "readiness_policy_hash": "3daf5296f1c72472fa26cb1aa80b6c661ecf791b500443457c6f1c256669ad98",
+  "receipt_hash": "a4f84e5cc1757a7f20281ed21cbd05fde6e702a8fdb08f8dd3342e245156adae",
+  "schema": "cairn.readiness.v1",
+  "scope": {
+    "change": "expose-cross-repository-adoption-gaps",
+    "evidence_hash": "ab9c8cb9f4fef0aa156f8ab221850d7605da6497f902b7427c7c99cefb038654",
+    "policy_hash": "03f88b99c3d8073bba8948d6e762aac443b265f606cc05abd4d172f03a4def6a",
+    "source_hash": "58e7cac7c655b4b046ef541fa7596fbfd72fbb95f2dffcbebe245a23ab471362"
+  },
+  "stages": [
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false,
+        "metadata": {
+          "cross_repo_dependencies": [],
+          "depends_on": [
+            "unify-change-readiness-and-next-actions"
+          ],
+          "input_hash": "30debae0cb8a2146b961d76c4d69a25d48001d8c0f366fd61add199281825346"
+        }
+      },
+      "decision_hash": "69e1bc68d05c05dd6878d323b6572dd977517faed9187fb115217319bd243cc4",
+      "stage": "artifact",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "proposal",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "design",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "tasks",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "completion",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "sync",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "archive",
+      "state": "unavailable"
+    }
+  ],
+  "valid": true
+}

@@ -16,6 +16,7 @@
 
 pub mod verified;
 
+pub use verified::adoption_report::*;
 pub use verified::agent_guidance::{
     admit_agent_guidance_declaration, admit_portable_agent_guidance_result,
     build_agent_guidance_result, portable_agent_guidance_result, safe_relative_context_path,
