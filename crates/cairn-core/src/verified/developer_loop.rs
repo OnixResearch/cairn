@@ -736,10 +736,10 @@ fn evaluate_cache(
 }
 
 fn developer_loop_receipt_hash_valid(receipt: &Value) -> bool {
-    debug_assert_eq!(
-        receipt.get("schema").and_then(Value::as_str),
-        Some(DEVELOPER_LOOP_RECEIPT_SCHEMA_V1)
-    );
+    // This is untrusted saved input, not an internal schema invariant.
+    if receipt.get("schema").and_then(Value::as_str) != Some(DEVELOPER_LOOP_RECEIPT_SCHEMA_V1) {
+        return false;
+    }
     let mut material = receipt.clone();
     if let Some(object) = material.as_object_mut() {
         object.remove("receipt_hash");
@@ -1177,6 +1177,31 @@ mod tests {
         assert!(summary.budget_met);
         assert_eq!(summary.budget_id, "budget");
         assert_eq!(summary.full_gate_status, "outstanding");
+    }
+
+    #[test]
+    fn foreign_receipts_fail_with_schema_diagnostics_without_panicking() {
+        let admitted = admitted();
+        for value in [
+            json!([]),
+            json!(null),
+            json!("receipt"),
+            json!({"schema":"foreign.v1"}),
+        ] {
+            let summary = validate_developer_loop_receipt(
+                &admitted,
+                INITIAL_DEVELOPER_LOOP_PROFILE,
+                &"d".repeat(BLAKE3_HEX_LENGTH),
+                &subject_hash(),
+                &BTreeSet::new(),
+                &value,
+            );
+            assert!(!summary.valid);
+            assert!(summary
+                .issues
+                .iter()
+                .any(|issue| issue.code == "developer_loop.receipt.schema"));
+        }
     }
 
     #[test]
