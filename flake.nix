@@ -159,12 +159,18 @@
               inputs = self.inputs;
             };
             changed = facts // {
-              inputs = facts.inputs // { bounded-exec = { rev = "substituted"; }; };
+              inputs = facts.inputs // {
+                bounded-exec = {
+                  rev = "substituted";
+                };
+              };
             };
             mantle = self.inputs.mantle-build-contract;
             packaging = {
               workspace = builtins.fromTOML (builtins.readFile "${mantle}/Cargo.toml");
-              manifest = builtins.fromTOML (builtins.readFile "${mantle}/crates/mantle-build-contract/Cargo.toml");
+              manifest = builtins.fromTOML (
+                builtins.readFile "${mantle}/crates/mantle-build-contract/Cargo.toml"
+              );
             };
             vendor = import ./nix/producer-cargo-vendor.nix {
               inherit pkgs;
@@ -175,13 +181,27 @@
           in
           assert checker.validate facts;
           assert !(checker.validate changed);
-          assert !(checker.validate (facts // {
-            inputs = facts.inputs // { mantle-build-contract = { rev = "substituted"; }; };
-          }));
+          assert
+            !(checker.validate (
+              facts
+              // {
+                inputs = facts.inputs // {
+                  mantle-build-contract = {
+                    rev = "substituted";
+                  };
+                };
+              }
+            ));
           assert checker.validateMantlePackaging packaging;
-          assert !(checker.validateMantlePackaging (packaging // {
-            workspace.workspace.package = packaging.workspace.workspace.package // { license = "substituted"; };
-          }));
+          assert
+            !(checker.validateMantlePackaging (
+              packaging
+              // {
+                workspace.workspace.package = packaging.workspace.workspace.package // {
+                  license = "substituted";
+                };
+              }
+            ));
           pkgs.runCommand "cairn-check-producer-source-pins" { } ''
             test -f ${vendor}/config.toml
             touch "$out"
@@ -575,7 +595,9 @@
             "redb-registry"
           ];
           nativeCheckInputs = [
+            pkgs.bash
             pkgs.git
+            pkgs.nix
             (nickelCohort pkgs.stdenv.hostPlatform.system)
             nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
           ];
@@ -882,7 +904,8 @@
               export CARGO_HOME="$TMPDIR/cairn-cargo-home"
               mkdir -p "$CARGO_HOME"
               cp ${vendor}/config.toml "$CARGO_HOME/config.toml"
-            '' + old.buildCommand;
+            ''
+            + old.buildCommand;
           });
       });
 

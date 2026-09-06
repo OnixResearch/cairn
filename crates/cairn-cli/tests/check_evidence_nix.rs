@@ -61,6 +61,10 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
             environment.insert(key.into(), v);
         }
     }
+    environment.insert(
+        "NIX_CONFIG".into(),
+        "experimental-features = nix-command flakes".into(),
+    );
     let profile = CheckProfile {
         schema: PROFILE_SCHEMA.into(),
         check_id: "build".into(),
