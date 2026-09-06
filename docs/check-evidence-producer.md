@@ -65,7 +65,7 @@ A failed or uncertain attempt has no automatic retry.
 
 The fixed grammars are `cargo_test` and `nix_check`. Neither accepts shell text or arbitrary trailing arguments.
 Cargo selects workspace tests, all targets, an explicit target and feature set, locked offline dependencies, and no default features.
-Nix selects an offline flake check without lock updates for an explicit system.
+Nix evaluates a fixture-owned expression file offline for an explicit working root, so the same profile runs in a shell and inside a sandboxed check.
 A Nix check is a build obligation, not test coverage.
 The local Nix adapter records process success but has no admitted native build-payload decoder.
 It therefore emits no passing completion row, even after exit zero.

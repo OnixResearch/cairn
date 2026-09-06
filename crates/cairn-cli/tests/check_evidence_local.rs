@@ -82,7 +82,8 @@ impl Fixture {
                 environment.insert(key.into(), value);
             }
         }
-        environment.insert("RUSTC_WRAPPER".into(), String::new());
+        // The cleared environment already drops the ambient sccache wrapper;
+        // inserting an empty RUSTC_WRAPPER breaks rustc's linker discovery.
         environment.insert(
             "CARGO_TARGET_DIR".into(),
             root.join("build").to_str().ok_or("path")?.into(),

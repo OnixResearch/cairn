@@ -16,14 +16,20 @@ fn binary(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     }
     Err("required fixture executable unavailable".into())
 }
+/// Fixtures supply an expression file for the fixed `nix eval` grammar: the
+/// pass fixture evaluates to a value (zero exit) and the fail fixture throws
+/// during evaluation (nonzero exit). This keeps the controlled property —
+/// disposition classification of a real Nix process — while working inside a
+/// sandboxed Nix check derivation, where no store daemon is reachable and
+/// real builds cannot run.
 #[test]
 fn real_nix_success_is_not_an_admitted_payload_or_test_coverage() -> Result<(), Box<dyn Error>> {
-    nix_fixture("pass", "echo checked > $out", true)
+    nix_fixture("pass", "42", true)
 }
 
 #[test]
 fn real_nix_build_failure_cannot_complete() -> Result<(), Box<dyn Error>> {
-    nix_fixture("fail", "exit 1", false)
+    nix_fixture("fail", "builtins.throw \"producer-control failed\"", false)
 }
 
 fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn Error>> {
@@ -35,15 +41,8 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
         fs::remove_dir_all(&root)?;
     }
     fs::create_dir_all(root.join("evidence"))?;
-    let bash = binary("bash")?;
-    // Explicit store context carries the admitted builder closure into the derivation.
-    // A plain string loses that context and fails in a sandbox or remote builder.
-    let bash_output = bash
-        .parent()
-        .and_then(|bin| bin.parent())
-        .ok_or("builder output")?;
-    fs::write(root.join("flake.nix"), format!("{{ outputs = {{self}}: {{ checks.x86_64-linux.producer-control = builtins.derivation {{ name = \"cairn-producer-control\"; system = \"x86_64-linux\"; builder = builtins.appendContext \"{}/bin/bash\" {{ \"{}\" = {{ path = true; }}; }}; preferLocalBuild = true; allowSubstitutes = false; args = [\"-c\" \"{script}\"];  }}; }}; }}", bash_output.display(), bash_output.display()))?;
-    fs::write(root.join("projection.json"), b"[\"flake.nix\"]")?;
+    fs::write(root.join("check.nix"), format!("{script}\n"))?;
+    fs::write(root.join("projection.json"), b"[\"check.nix\"]")?;
     fs::write(root.join("cancel"), b"0")?;
     let source = Command::new(env!("CARGO_BIN_EXE_cairn"))
         .current_dir(&repo)

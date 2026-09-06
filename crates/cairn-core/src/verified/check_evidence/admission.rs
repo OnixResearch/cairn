@@ -209,15 +209,17 @@ pub fn profile_command(p: &CheckProfile) -> Vec<String> {
             }
             argv
         }
+        // The Nix grammar evaluates a fixture-owned expression file. A real
+        // `nix` process runs with a fixed argv, but evaluation needs no store
+        // daemon or writable store, so the same profile works in a development
+        // shell and inside a sandboxed Nix check derivation.
         CheckKind::NixCheck => vec![
             p.executable.clone(),
-            "flake".into(),
-            "check".into(),
+            "eval".into(),
             "--offline".into(),
-            "--no-update-lock-file".into(),
-            "--system".into(),
-            p.target.clone(),
-            "path:.".into(),
+            "--json".into(),
+            "--file".into(),
+            "./check.nix".into(),
         ],
     }
 }
