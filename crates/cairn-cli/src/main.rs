@@ -5,6 +5,8 @@ mod agent_guidance_shell;
 mod agent_receipt;
 mod archive_compaction;
 mod authenticated_inputs;
+mod bootstrap;
+mod bootstrap_fs;
 mod check_evidence;
 mod cross_repo_dependencies;
 mod determinism;
@@ -32,6 +34,7 @@ mod policy;
 mod policy_exception;
 mod preserves_corpus;
 mod probe;
+mod project_policy;
 mod radicle_change;
 mod receipt_preserves_diff;
 mod receipt_verify_content_hash;
@@ -172,6 +175,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
     match command.as_str() {
         "--help" | "-h" | "help" => print_usage(),
         "init" => run_init(args.collect())?,
+        "setup" => bootstrap::run(args.collect())?,
         "change" => run_change(args.collect())?,
         "check-evidence" => check_evidence::run_check_evidence(args.collect())?,
         "compact" => archive_compaction::run_compact(args.collect())?,

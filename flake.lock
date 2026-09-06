@@ -103,6 +103,23 @@
         "type": "github"
       }
     },
+    "cap-root": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784443737,
+        "narHash": "sha256-2eiyxmhW8/qj30ALccgkt5hatRMk2OcazmU3SCI/Opo=",
+        "ref": "refs/heads/main",
+        "rev": "8991e2572578c16e590c2f1c0915db6c46c5d9cb",
+        "revCount": 2,
+        "type": "git",
+        "url": "https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git"
+      },
+      "original": {
+        "rev": "8991e2572578c16e590c2f1c0915db6c46c5d9cb",
+        "type": "git",
+        "url": "https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1765145449,
@@ -187,12 +204,12 @@
         "rev": "951c27f59003cea9bfdb40ed4d89653d50fada1f",
         "revCount": 9,
         "type": "git",
-        "url": "https://git.onix.computer/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git"
+        "url": "https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git"
       },
       "original": {
         "rev": "951c27f59003cea9bfdb40ed4d89653d50fada1f",
         "type": "git",
-        "url": "https://git.onix.computer/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git"
+        "url": "https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git"
       }
     },
     "dylint-src": {
@@ -594,6 +611,7 @@
       "inputs": {
         "artifact": "artifact",
         "bounded-exec": "bounded-exec",
+        "cap-root": "cap-root",
         "durable-file-publication": "durable-file-publication",
         "kiln-core": "kiln-core",
         "mantle-build-contract": "mantle-build-contract",

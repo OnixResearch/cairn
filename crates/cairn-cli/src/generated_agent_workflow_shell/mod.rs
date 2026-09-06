@@ -153,6 +153,28 @@ fn destination_options(
     Ok((root, adapter, destination))
 }
 
+// Bootstrap composes the same renderer, observer, and ownership classifier as
+// the standalone installer. Bootstrap owns durable publication of these writes.
+pub(crate) fn bootstrap_plan(
+    root_path: &Path,
+    policy: &Policy,
+    adapter: &str,
+    destination: &str,
+) -> Result<cairn_core::GeneratedWorkflowInstallPlan, Box<dyn Error>> {
+    let catalog = admit_generated_agent_workflow_policy(&policy.generated_agent_workflow_policy)
+        .map_err(workflow_issues)?;
+    let root = CapabilityRoot::open(CapabilityRootKind::Repository, root_path)?;
+    let snapshot = observe_generated_workflow_destination(&root, &catalog, adapter, destination)?;
+    Ok(plan_generated_agent_workflow_install(
+        &catalog,
+        adapter,
+        destination,
+        &canonical_json_hash(&policy.raw),
+        &snapshot,
+    )
+    .map_err(workflow_issues)?)
+}
+
 fn workflow_issues(issues: Vec<cairn_core::GeneratedWorkflowIssue>) -> String {
     format!("generated workflow operation failed: {issues:?}")
 }

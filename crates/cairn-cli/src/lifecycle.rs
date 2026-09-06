@@ -35,8 +35,8 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let rest = iter.collect::<Vec<_>>();
     let run_probes_requested = has_flag(&rest, "--run-probes");
     let root = read_option(rest.clone(), "--root", ".");
-    let policy_path = read_option(rest, "--policy", default_policy_path());
-    let policy = load_policy_file(policy_path)?;
+    let selected_policy = crate::project_policy::load(&root, &rest)?;
+    let policy = selected_policy.policy;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, &change)?;
     let snapshot = read_gate_snapshot(&root, selected.layout, change_status)?;
@@ -68,6 +68,7 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let input_hash = portable_json_hash(&root, &gate_input);
     let mut receipt = gate_report_json(selected.layout, &policy, &report, &input_hash);
     receipt["probe_evidence"] = gate_input["probe_evidence"].clone();
+    receipt["policy_selection"] = selected_policy.selection;
     attach_profile_fields(&mut receipt, &profile_context);
     let evidence = classify_gate_evidence(&snapshot);
     receipt["evidence_summary"] = serde_json::json!({

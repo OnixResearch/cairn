@@ -18,11 +18,13 @@ artifact-auth-core = { git = "ssh://git@github.com/OnixResearch/onix-artifact.gi
 artifact-auth-ed25519 = { git = "ssh://git@github.com/OnixResearch/onix-artifact.git", rev = "e41340bec587b6d049b5cc518ec7db925dde84be", default-features = false }
 blake3 = "1.5"
 bounded-exec = { git = "https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git", rev = "29dac88ecded94457572db3fdfaaaab95fa91525" }
-durable-file-publication = { git = "https://git.onix.computer/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git", rev = "951c27f59003cea9bfdb40ed4d89653d50fada1f" }
 bounded-tree-core = { path = "vendor/bounded-tree-core" }
 bounded-tree-cap = { path = "vendor/bounded-tree-cap" }
+cap-root-core = { git = "https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git", rev = "8991e2572578c16e590c2f1c0915db6c46c5d9cb" }
+cap-fs-ext = "=4.0.2"
 cap-std = "4.0.2"
 crossterm = "0.28"
+durable-file-publication = { git = "https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git", rev = "951c27f59003cea9bfdb40ed4d89653d50fada1f" }
 ed25519-dalek = "2.2"
 git-ref-format-core = "0.6.0"
 git2 = { version = "0.20.4", features = ["vendored-libgit2"], default-features = false }
