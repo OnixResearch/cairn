@@ -26,6 +26,11 @@ The compiler reported 4,033 library diagnostics and 4,660 library-test diagnosti
 Those counts overlap and exclude downstream targets that the failure prevented from analysis.
 No warning budget, disabled catalog entry, or producer pin change enters this increment.
 
+The default-system `nix flake check` passed on source commit `d188272` in task 2617.
+Its persistent log ends with `flake_check_exit=0`.
+That check retains the normal producer defaults. It does not supersede the failed full-catalog deny-all replay.
+It also does not establish all-systems evaluation or repaired local Rust-source contents.
+
 ## Adversarial review and helper limits
 
 The review established no concrete product defect. It did not approve general equivalence.
@@ -57,5 +62,6 @@ Older helper files remain unchanged for historical reproduction.
 | `absolute-owner-workspace.log` | `3d73134b7b72b20e1e6e4e1ad477e4d03ae9765591787dd5642380d943da10fc` |
 | `absolute-owner-workspace-clippy.log` | `5ff6cfbef88f2eb8be5acdf16921949ad64eb5a64289771d16b1d7d7a7c48ca3` |
 | `absolute-owner-strict.log` | `a2124a22af1c0ae889d7ef1cc2de0908a38715fb025c0743edfe63300c295231` |
+| `continue-2384-flake.log` | `1b70322fe60c84fd22bcdff20f1f43502b24faaca1a74979bf5e3aa295c953ae` |
 
 The change remains active. No archive or publication claim follows from these checks.
