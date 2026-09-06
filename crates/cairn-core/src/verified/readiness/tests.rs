@@ -160,6 +160,101 @@ fn profile_gate_inputs_include_dependency_closure_without_later_unrelated_artifa
 }
 
 #[test]
+fn schema_inputs_follow_review_bindings_and_custom_stages() {
+    let policy = crate::validate_policy_json(
+        serde_json::from_str(include_str!(
+            "../../../../../cairn-policy/generated/cairn-policy.json"
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    let stages = [
+        crate::GateStage::Proposal,
+        crate::GateStage::Design,
+        crate::GateStage::Tasks,
+    ];
+    for profile in ["no-spec-delta", "assurance", "outcome-machine"] {
+        let mut schema = policy
+            .workflow_schemas
+            .iter()
+            .find(|schema| schema.id == profile)
+            .unwrap()
+            .clone();
+        // Custom stage assignment is independent of structural admission.
+        for artifact in &mut schema.artifacts {
+            artifact.stage = "archive".into();
+            artifact.requires.clear();
+        }
+        for stage in stages {
+            crate::admit_workflow_schemas(
+                &[schema.clone()],
+                &[
+                    "archive".into(),
+                    "proposal".into(),
+                    "design".into(),
+                    "tasks".into(),
+                ],
+            )
+            .unwrap();
+            let selected = readiness_gate_artifact_ids(&schema, stage);
+            for artifact in &schema.artifacts {
+                let required = matches!(
+                    artifact.structural_admission.as_str(),
+                    crate::WORKFLOW_ADMISSION_ACCEPTANCE | crate::WORKFLOW_ADMISSION_DELTA_SPECS
+                ) || (stage != crate::GateStage::Proposal
+                    && artifact.structural_admission == crate::WORKFLOW_ADMISSION_OUTCOME_MACHINE)
+                    || (stage == crate::GateStage::Tasks
+                        && schema.review_obligations.iter().any(|review| {
+                            review.artifact_id == artifact.id
+                                || review.required_artifacts.contains(&artifact.id)
+                        }));
+                assert_eq!(
+                    selected.contains(&artifact.id),
+                    required,
+                    "{profile}/{stage:?}/{}",
+                    artifact.id
+                );
+            }
+        }
+        if let Some(review) = schema.review_obligations.first().cloned() {
+            schema
+                .artifacts
+                .iter_mut()
+                .find(|artifact| artifact.id == review.artifact_id)
+                .unwrap()
+                .stage = "proposal".into();
+            let selected = readiness_gate_artifact_ids(&schema, crate::GateStage::Proposal);
+            assert!(selected.contains(&review.artifact_id));
+            assert!(review
+                .required_artifacts
+                .iter()
+                .all(|id| selected.contains(id)));
+            // A required review input can itself have a later prerequisite.
+            let extra = schema
+                .artifacts
+                .iter()
+                .find(|artifact| !selected.contains(&artifact.id))
+                .map(|artifact| artifact.id.clone());
+            if let Some(extra) = extra {
+                schema
+                    .artifacts
+                    .iter_mut()
+                    .find(|artifact| artifact.id == review.required_artifacts[0])
+                    .unwrap()
+                    .requires
+                    .push(extra.clone());
+                let expanded = readiness_gate_artifact_ids(&schema, crate::GateStage::Proposal);
+                assert!(expanded.contains(&extra));
+                assert_eq!(
+                    expanded,
+                    readiness_gate_artifact_ids(&schema, crate::GateStage::Proposal)
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn current_and_stale_reviews_select_exact_artifact_repairs() {
     let policy: Value = serde_json::from_str(include_str!(
         "../../../../../cairn-policy/generated/cairn-policy.json"

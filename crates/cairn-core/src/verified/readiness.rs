@@ -113,12 +113,20 @@ pub fn readiness_gate_artifact_ids(
                 matches!(artifact.stage.as_str(), "proposal" | "design" | "tasks")
             }
         };
-        if applies
-            || matches!(
-                artifact.structural_admission.as_str(),
-                crate::WORKFLOW_ADMISSION_ACCEPTANCE | crate::WORKFLOW_ADMISSION_DELTA_SPECS
-            )
-        {
+        // Acceptance and delta sources feed the original gate's reference
+        // adapter. Outcome-machine evaluation emits design-stage issues even
+        // when its artifact is assigned a later stage in a custom schema.
+        let evaluator_input = matches!(
+            artifact.structural_admission.as_str(),
+            crate::WORKFLOW_ADMISSION_ACCEPTANCE | crate::WORKFLOW_ADMISSION_DELTA_SPECS
+        ) || (stage != crate::GateStage::Proposal
+            && artifact.structural_admission == crate::WORKFLOW_ADMISSION_OUTCOME_MACHINE);
+        let review_input = stage == crate::GateStage::Tasks
+            && schema
+                .review_obligations
+                .iter()
+                .any(|review| review.artifact_id == artifact.id);
+        if applies || evaluator_input || review_input {
             selected.insert(artifact.id.clone());
         }
     }
@@ -129,6 +137,13 @@ pub fn readiness_gate_artifact_ids(
         for artifact in &schema.artifacts {
             if selected.contains(&artifact.id) {
                 selected.extend(artifact.requires.iter().cloned());
+            }
+        }
+        // Review freshness binds required_artifacts, not only the artifact
+        // workflow's requires edges. Follow both edge kinds to a fixed point.
+        for review in &schema.review_obligations {
+            if selected.contains(&review.artifact_id) {
+                selected.extend(review.required_artifacts.iter().cloned());
             }
         }
         if before == selected.len() {

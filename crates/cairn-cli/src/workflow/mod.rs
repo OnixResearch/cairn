@@ -315,36 +315,23 @@ fn load_profile_observations(
     )?;
     let mut report = derive_workflow_status(&schema, &observations)?;
     let artifact_hashes = profile_artifact_hashes(&change_relative, &observations);
-    let acceptance_markdown = read_admission_artifact(
-        root,
-        &change_relative,
-        &schema,
-        WORKFLOW_ADMISSION_ACCEPTANCE,
-        budget,
-    )?;
-    let tasks_markdown = if gate_stage.is_none_or(|stage| stage == GateStage::Tasks) {
-        read_admission_artifact(
-            root,
-            &change_relative,
-            &schema,
-            WORKFLOW_ADMISSION_TASKS,
-            budget,
-        )?
-    } else {
-        None
+    let read_selected_admission = |admission| {
+        let admitted = schema.artifacts.iter().any(|artifact| {
+            artifact.structural_admission == admission
+                && selected
+                    .as_ref()
+                    .is_none_or(|ids| ids.contains(&artifact.id))
+        });
+        if admitted {
+            read_admission_artifact(root, &change_relative, &schema, admission, budget)
+        } else {
+            Ok(None)
+        }
     };
-    let outcome_machine_review = if gate_stage != Some(GateStage::Proposal) {
-        read_admission_artifact(
-            root,
-            &change_relative,
-            &schema,
-            WORKFLOW_ADMISSION_OUTCOME_MACHINE,
-            budget,
-        )?
-        .and_then(|text| serde_json::from_str::<Value>(&text).ok())
-    } else {
-        None
-    };
+    let acceptance_markdown = read_selected_admission(WORKFLOW_ADMISSION_ACCEPTANCE)?;
+    let tasks_markdown = read_selected_admission(WORKFLOW_ADMISSION_TASKS)?;
+    let outcome_machine_review = read_selected_admission(WORKFLOW_ADMISSION_OUTCOME_MACHINE)?
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok());
     let outcome_machine_evidence = observe_outcome_machine_evidence(
         root,
         &change_relative,
@@ -352,11 +339,14 @@ fn load_profile_observations(
         schema.bounds.max_artifact_bytes,
         budget,
     )?;
-    let reviews = if gate_stage.is_none_or(|stage| stage == GateStage::Tasks) {
-        read_review_evidence(root, &change_relative, &schema, &artifact_hashes, budget)?
-    } else {
-        Vec::new()
-    };
+    let reviews = read_review_evidence(
+        root,
+        &change_relative,
+        &schema,
+        &artifact_hashes,
+        budget,
+        selected.as_deref(),
+    )?;
     let delta_spec_paths = observations
         .iter()
         .filter(|observation| {
@@ -482,6 +472,7 @@ fn read_review_evidence(
     schema: &WorkflowSchemaPolicy,
     artifact_hashes: &[WorkflowProfileArtifactHash],
     budget: Option<&crate::support::observation_budget::ObservationBudget>,
+    selected: Option<&[String]>,
 ) -> Result<Vec<WorkflowReviewEvidence>, Box<dyn Error>> {
     let observed_hashes = artifact_hashes
         .iter()
@@ -489,6 +480,9 @@ fn read_review_evidence(
         .collect::<Vec<_>>();
     let mut reviews = Vec::new();
     for obligation in &schema.review_obligations {
+        if selected.is_some_and(|ids| !ids.contains(&obligation.artifact_id)) {
+            continue;
+        }
         let Some(artifact) = schema
             .artifacts
             .iter()
@@ -705,6 +699,176 @@ mod tests {
             );
         }
         fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[test]
+    // r[verify cairn.unified_readiness.decisions]
+    fn stage_local_profile_reads_follow_custom_admission_and_review_topology(
+    ) -> Result<(), Box<dyn Error>> {
+        for profile in ["no-spec-delta", "assurance", "outcome-machine"] {
+            for artifact_stage in ["proposal", "design", "tasks", "archive"] {
+                let root = test_root(&format!("readiness-{profile}-{artifact_stage}"));
+                write_fixture(&root)?;
+                let change = root.join(".cairn/changes/demo");
+                let mut policy = load_policy_file(policy_path())?;
+                let mut schema = policy
+                    .workflow_schemas
+                    .iter()
+                    .find(|schema| schema.id == profile)
+                    .unwrap()
+                    .clone();
+                schema.id = format!("readiness-{profile}");
+                for artifact in &mut schema.artifacts {
+                    // Admission is independent of configured lifecycle stage.
+                    if matches!(
+                        artifact.structural_admission.as_str(),
+                        WORKFLOW_ADMISSION_ACCEPTANCE | WORKFLOW_ADMISSION_OUTCOME_MACHINE
+                    ) || schema
+                        .review_obligations
+                        .iter()
+                        .any(|review| review.artifact_id == artifact.id)
+                    {
+                        artifact.stage = artifact_stage.into();
+                        artifact.requires.clear();
+                    }
+                }
+                // Review-only late inputs need not appear in requires edges.
+                if let Some(review) = schema.review_obligations.first_mut() {
+                    review.required_artifacts = vec!["design".into()];
+                }
+                cairn_core::admit_workflow_schemas(
+                    &[schema.clone()],
+                    &[
+                        "proposal".into(),
+                        "design".into(),
+                        "tasks".into(),
+                        "archive".into(),
+                    ],
+                )?;
+                policy.raw["schemas"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(json!(schema));
+                policy.raw["workflow_profile_policy"]["allowed_profiles"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(json!(schema.id));
+                let policy = cairn_core::validate_policy_json(policy.raw)?;
+                fs::write(
+                    change.join("metadata.json"),
+                    serde_json::to_vec(&json!({
+                        "workflow_profile": {"id": schema.id, "version": 1, "source": "change_create"},
+                        "spec_effect": schema.spec_effect,
+                        "spec_effect_rationale": "Internal fixture leaves accepted requirements unchanged."
+                    }))?,
+                )?;
+                if profile == "no-spec-delta" {
+                    fs::remove_dir_all(change.join("specs"))?;
+                    fs::write(
+                        change.join("acceptance.md"),
+                        "# Acceptance\n\na[demo] Keep the fixture deterministic.\n",
+                    )?;
+                    fs::write(
+                        change.join("tasks.md"),
+                        "- [ ] [serial] Check the fixture. a[demo]\n",
+                    )?;
+                }
+                for artifact in &schema.artifacts {
+                    let path = change.join(&artifact.output_path);
+                    if artifact.structural_admission == WORKFLOW_ADMISSION_OUTCOME_MACHINE {
+                        fs::write(
+                            &path,
+                            serde_json::to_vec(&json!({
+                                "schema": "cairn.outcome-machine-review.v1",
+                                "route": {"kind": "delivery", "details": {
+                                    "immediate_outcome": "A bounded readiness report.",
+                                    "current_consumer": "repository operator",
+                                    "durable_capability_contribution": "Repeatable observation admission.",
+                                    "repeatability_plan": "Run maintained controls from tracked inputs."
+                                }},
+                                "maintenance_owner": "Cairn maintainers", "tracked_inputs": ["source", "policy"],
+                                "deterministic_checks": ["cargo test"],
+                                "ai_assistance": {"used": false, "hidden_session_state_required": false, "completion_authority": "repository"},
+                                "fresh_state_reproduction": {"status": "planned", "evidence": [], "rationale": "Run from a clean checkout."},
+                                "completion": {"status": "planned", "evidence": []},
+                                "activity_counts_are_completion_evidence": false,
+                                "non_claims": ["This record does not prove product correctness."]
+                            }))?,
+                        )?;
+                    }
+                }
+                for review in &schema.review_obligations {
+                    let artifact = schema
+                        .artifacts
+                        .iter()
+                        .find(|artifact| artifact.id == review.artifact_id)
+                        .unwrap();
+                    let inputs = review.required_artifacts.iter().filter_map(|id| schema.artifacts.iter().find(|artifact| &artifact.id == id))
+                        .filter_map(|artifact| fs::read(change.join(&artifact.output_path)).ok().map(|bytes| json!({"path": artifact.output_path, "hash": blake3_hex(&bytes)}))).collect::<Vec<_>>();
+                    let path = change.join(&artifact.output_path);
+                    fs::create_dir_all(path.parent().unwrap())?;
+                    fs::write(
+                        path,
+                        serde_json::to_vec(&json!({
+                            "schema_version": "cairn.semantic-review.review-receipt.v1", "review_kind": review.review_kind,
+                            "decision": "approved", "reviewed_inputs": inputs,
+                            "reviewer": {"source": "manual", "id": "readiness-test"}, "findings": []
+                        }))?,
+                    )?;
+                }
+                let status = crate::support::read_selected_change_with_budget(
+                    &root,
+                    LifecycleLayout::Native,
+                    "demo",
+                    None,
+                )?;
+                let snapshot = crate::support::read_gate_snapshot_with_budget(
+                    &root,
+                    LifecycleLayout::Native,
+                    status,
+                    None,
+                )?;
+                for stale in [false, true] {
+                    if stale {
+                        fs::write(
+                            change.join("design.md"),
+                            format!("{VALID_DESIGN}\nChanged review input.\n"),
+                        )?;
+                        if profile == "outcome-machine" {
+                            fs::write(change.join("outcome-machine.json"), "{}")?;
+                        }
+                        if profile == "no-spec-delta" {
+                            fs::write(change.join("acceptance.md"), "a[broken")?;
+                        }
+                    }
+                    let full = load_workflow_profile_context(
+                        &root,
+                        LifecycleLayout::Native,
+                        "demo",
+                        &policy,
+                    )?;
+                    for stage in [GateStage::Proposal, GateStage::Design, GateStage::Tasks] {
+                        let local = load_workflow_gate_context_with_budget(
+                            &root,
+                            LifecycleLayout::Native,
+                            "demo",
+                            &policy,
+                            None,
+                            stage,
+                        )?;
+                        assert_eq!(local.selection, full.selection);
+                        assert_eq!(local.schema, full.schema);
+                        assert_eq!(
+                            local.gate_report(&snapshot, stage, &policy),
+                            full.gate_report(&snapshot, stage, &policy),
+                            "{profile}/{artifact_stage}/{stage:?}/stale={stale}"
+                        );
+                    }
+                }
+                fs::remove_dir_all(root)?;
+            }
+        }
         Ok(())
     }
 

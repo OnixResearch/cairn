@@ -361,7 +361,9 @@ pub(crate) fn read_selected_metadata_with_budget(
     cairn_core::validate_change_name(change)?;
     let mut reader = SourceReader::open_with_budget(root, budget)?;
     let relative = PathBuf::from(changes_dir(layout)).join(change);
-    reader.entries(&relative)?;
+    // Admit the selected directory itself, not unrelated children. A linked
+    // review directory must not discard independently readable metadata.
+    CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, &root.join(&relative))?;
     let text = read_optional_text(&mut reader, &relative.join("metadata.json"))?;
     let (metadata, issues) =
         cairn_core::verified::repo::parse_change_metadata(change, text.as_deref());

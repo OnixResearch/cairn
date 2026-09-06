@@ -7,6 +7,9 @@ use std::{
     process::Command,
 };
 
+#[path = "readiness_isolation/profile_admission.rs"]
+mod profile_admission;
+
 type TestResult<T = ()> = Result<T, Box<dyn Error>>;
 const GATES: [(usize, &str); 3] = [(1, "proposal"), (2, "design"), (3, "tasks")];
 
