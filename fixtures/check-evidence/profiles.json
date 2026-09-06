@@ -1,0 +1,21 @@
+[
+  {
+    "bounds": {
+      "deadline_ms": 1000,
+      "id": "short",
+      "stderr_bytes": 4096,
+      "stdout_bytes": 4096,
+      "teardown_ms": 100
+    },
+    "check_id": "tests",
+    "environment": {},
+    "executable": "/nix/store/reviewed-cargo/bin/cargo",
+    "executable_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "features": [],
+    "kind": "cargo_test",
+    "schema": "cairn.check-profile.v1",
+    "target": "x86_64-unknown-linux-gnu",
+    "tool_cohort_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "working_root": "."
+  }
+]

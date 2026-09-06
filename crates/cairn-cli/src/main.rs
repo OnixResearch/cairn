@@ -5,6 +5,7 @@ mod agent_guidance_shell;
 mod agent_receipt;
 mod archive_compaction;
 mod authenticated_inputs;
+mod check_evidence;
 mod cross_repo_dependencies;
 mod determinism;
 mod developer_experience;
@@ -172,6 +173,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "--help" | "-h" | "help" => print_usage(),
         "init" => run_init(args.collect())?,
         "change" => run_change(args.collect())?,
+        "check-evidence" => check_evidence::run_check_evidence(args.collect())?,
         "compact" => archive_compaction::run_compact(args.collect())?,
         "template" => developer_experience::run_template(args.collect())?,
         "scaffold" => developer_experience::run_scaffold(args.collect())?,

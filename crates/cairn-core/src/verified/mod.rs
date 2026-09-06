@@ -7,6 +7,7 @@ pub mod artifact_workflow;
 pub mod ast_grep_gate;
 pub mod authenticated_inputs;
 pub mod change_dependencies;
+pub mod check_evidence;
 pub mod cli_machine;
 pub mod collaboration_change;
 pub mod collaboration_checkout;

@@ -110,6 +110,7 @@ Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, field
 Read [Agent guidance context](docs/agent-guidance-context.md) before you declare local context or advisory text.
 Read [Generated agent workflows](docs/generated-agent-workflows.md) before you install project-local agent guidance.
 Read [Developer-loop profiles](docs/developer-loop-profiles.md) before you define or verify a fast local loop.
+Read [Check evidence producer](docs/check-evidence-producer.md) for pure admission, read-only planning, and the current execution/import blockers.
 Read [RFD collaboration](docs/rfd-collaboration.md) before you use the RFD document commands.
 Read [ADR collaboration](docs/adr-collaboration.md) before you use the ADR document commands.
 Read [Verification-obligation collaboration](docs/verification-obligation.md) before you use the verification-obligation commands.

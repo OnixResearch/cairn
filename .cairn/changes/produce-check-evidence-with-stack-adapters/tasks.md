@@ -2,8 +2,8 @@
 
 ## Contract and core
 
-- [ ] [serial] [task:baseline] Record completion, developer-loop, and gate-interchange baselines with current and rejected evidence. r[cairn.check_evidence_producer.conformance]
-- [ ] [serial] [task:contracts] [after:baseline] Define typed Nickel producer profiles, command grammars, required scope, safe diagnostics, and named execution bounds. r[cairn.check_evidence_producer.contract] r[cairn.check_evidence_producer.local_run]
+- [x] [serial] [task:baseline] Record completion, developer-loop, and gate-interchange baselines with current and rejected evidence. r[cairn.check_evidence_producer.conformance]
+- [x] [serial] [task:contracts] [after:baseline] Define typed Nickel producer profiles, command grammars, required scope, safe diagnostics, and named execution bounds. r[cairn.check_evidence_producer.contract] r[cairn.check_evidence_producer.local_run]
 - [ ] [serial] [task:core] [after:contracts] Implement pure plan admission, status normalization, applicability, and publication decisions with positive and negative unit tests. r[cairn.check_evidence_producer.contract] r[cairn.check_evidence_producer.applicability] r[cairn.check_evidence_producer.publication]
 
 ## Stack adapters and effects
@@ -19,5 +19,7 @@
 - [ ] [serial] [task:consumers] [after:controls] Replay fresh Cairn and pinned Kiln consumer fixtures through the original completion and loop validators without manual result edits. r[cairn.check_evidence_producer.conformance]
 - [ ] [serial] [task:verification] [after:consumers] Publish checked recipes, run full checks, retain consumer receipts, and prepare reviewed sync and archive plans. r[cairn.check_evidence_producer.contract] r[cairn.check_evidence_producer.conformance]
 
-All tasks describe future implementation. Planning gates do not complete these tasks.
+The first-pass evidence is in `evidence/implementation-first-pass.md`.
+The core task remains open for final adapter and publication integration review.
+Only recorded implementation checks complete tasks. Planning gates do not complete these tasks.
 Archive execution is not a prerequisite of any task. Use the normal lifecycle after implementation evidence passes.
