@@ -25,7 +25,9 @@ Source reads reject symbolic-link components, non-regular members, and oversized
 On Linux x86_64 and aarch64, capability-relative `O_PATH | O_NOFOLLOW` opens hold each component before metadata inspection.
 A symlink descriptor fails admission. Only a regular-file descriptor is reopened through `/proc/self/fd` for bounded reads.
 This fail-closed equivalent prevents symlink substitution and avoids device or FIFO read effects before file-type admission.
-Missing procfs support and unsupported platform ABIs fail closed. Input files, cancellation controls, and publication readback use the same mechanism.
+Missing procfs support and unsupported platform ABIs fail closed.
+Contract, profile, applicability, projection, and saved-observation inputs use this mechanism, as do cancellation controls and publication readback.
+Policy loading still uses the existing ambient loader. Its no-follow and bounded-read conversion remains an open local-execution task.
 The selected file set does not prove source-closure completeness.
 Consumers retain projection review, including build inputs and exclusions for evidence and build output.
 

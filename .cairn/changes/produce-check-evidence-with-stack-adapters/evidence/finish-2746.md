@@ -34,7 +34,9 @@ The shell rejects symlink descriptors and non-directory parents before traversal
 It reopens only a verified regular-file descriptor through `/proc/self/fd`, while the original descriptor remains held.
 This is a fail-closed equivalent to an ordinary no-follow read open. It avoids FIFO or device read effects before type admission.
 Unsupported ABIs and unavailable procfs fail closed. No new external dependency supplies this mechanism.
-Source projections, JSON inputs, cancellation controls, and publication readback use this path.
+Source projections, contract/profile/applicability/projection inputs, saved observations, cancellation controls, and publication readback use this path.
+The producer still calls the existing ambient `load_policy_file` for policy input. Its bounded no-follow conversion and redacted-error controls remain open.
+The next action is a producer-specific policy loader over the same descriptor reader plus `validate_policy_json`, without changing policy meaning.
 Tests cover regular files, bounds, leaf and parent symlinks, sockets, directories, traversal, missing members, and concurrent symlink substitution.
 
 Root selection remains explicit ambient operator authority. The mechanism does not provide hostile same-authority protection, source-closure completeness, or immutable regular-file contents.
@@ -97,7 +99,56 @@ The failed logs are `core.log` and `local.log`. Their successful replays are sep
 | Producer/completion/loop integration cohort | PASS: 20 tests | `integration-expanded.log` |
 | Focused Clippy before final translator additions | PASS, not final-increment evidence | `focused-clippy.log` |
 
-Final battery results and commits follow below after their commands finish.
+### Final battery at implementation commit `3b185481fb9a8431fdcc75385b5facfb93bf4646`
+
+Commit subject: `Reject substituted producer artifacts before completion`.
+The final report-only increment preserves this tested source snapshot.
+
+| Command | Exit and observed result | Log suffix |
+|---|---|---|
+| `cargo clippy --workspace --all-targets -- -D warnings` | 0, PASS | `full-clippy.log` |
+| `cargo fmt --all -- --check` | 0, PASS | `full-format.log` |
+| `./target/debug/cairn policy export --check` in the dev shell | 0, fresh generated policy | `policy-independent.log` |
+| `./target/debug/cairn validate --root .` | 0, valid | `validate-independent.json` |
+| `./target/debug/cairn traceability coverage --root . --json` | 0, valid; 2,295 requirements, no missing or dangling IDs | `traceability-independent.json` |
+| `./target/debug/cairn gate tasks produce-check-evidence-with-stack-adapters --root .` | 0, structural PASS; next task `reuse`, seven unchecked tasks | `task-gate.json` |
+| `cargo test --workspace --all-targets --all-features` | INCOMPLETE: Pueue task 2913 was operator-cancelled after 18 minutes to meet the pass deadline. No Cargo exit status or full-suite verdict exists. | `workspace-tests.log` |
+| `nix flake check "path:$PWD" --option min-free 0 -L` | Initial exit 102: source changed during evaluation while Cargo ran. Stable replay exit 1: pinned Mantle vendoring failure. | `flake.log`, `flake-stable.log` |
+| Immutable Git replay of the same Nix check at the full implementation revision | 1: same Mantle vendoring failure | `flake-committed-full.log` |
+| `git diff --check` | 0 | Pueue task 2909 |
+
+The all-feature Cargo command passed the touched producer integration cohort and preceding test binaries before the long determinism cohort.
+The replay receipt verification test eventually passed. Two other determinism replay tests had no final verdict when the operator stopped the task.
+This is cancellation evidence, not a test failure diagnosis or a passing workspace battery.
+A future full replay needs a longer execution budget. No test or gate was skipped to manufacture acceptance.
+An initial supplemental Nix command used an abbreviated revision and failed before evaluation. The full-revision replay uses a separate log.
+
+### Exact Nix blocker
+
+Both the required path check and the immutable Git check reach the pinned Mantle source, then fail in Git-source vendoring.
+The failing derivation is `cargo-git-ssh-git-github.com-OnixResearch-mantle.git-0bbab77e23ab95caa4e4184b9945cfaa5c8040e2`.
+Cargo reports nested example packages outside their declared workspace, including `examples/projects/wasm-component-hello/source` and `examples/projects/cargo-import-offline/workspace`.
+The decisive final error is `invalid inclusion of reserved file name Cargo.toml.orig in package source`.
+This occurs before complete lint/build acceptance. It is not a BLAKE3 resolution failure or a reason to change either producer pin.
+The next action is a reviewed consumer vendoring path restricted to the admitted contract crate, with original notices and workspace inheritance intact.
+The vendoring gate must still validate the exact published source identity. Do not filter checks or patch producer semantics to bypass the failure.
+
+The evaluated check names include `slotcar`, `check-producer-source-pins`, `artifact-auth-source-pin`, `nickel-cohort-exact`, `nickel-toolchain-fixtures`,
+`runtime-generated-policy-only`, `policy-fresh`, `authenticated-policy-profiles-fresh`, `policy-stale-detects-drift`, `packaged-policy-export-runtime`,
+`nickel-export-cutover`, `preserves-corpus-fresh`, `preserves-corpus-stale-detects-drift`, `gate-contract`, `gate-contract-wasm`, `gate-contract-nickel`,
+`rustfmt`, `rust-tests`, `radicle-cob-format-compatibility`, `cairn-validate`, `tracey-coverage`, `trace-index-live-proof`, `rename-classification`, `self-dogfood`, and `clippy`.
+Nix reports 35 check derivations. Evaluation is not a passing check verdict.
+The historical `slotcar` attribute resolves to an `octet-consumer-check` derivation. No strict Octet acceptance or warning-level lint pass is claimed.
+
+### Upstream Octet fixture replay
+
+`git -C .pi/upstream-octet rev-parse HEAD` confirmed the exact reviewed revision.
+The pinned producer's `standards/receipts/fixtures/valid/acceptance_receipt.ncl` exported with Nickel, exit 0.
+Cairn imported that unedited exported fixture, exit 0, with native status `passed`, empty completion rows, and `completion_eligible: false`.
+Its canonical native receipt identity is `c9c5b1c345443d586a80ec8689219a08b5a1bb949257f9e4e7ba643c45b3cb17`.
+The producer's `invalid/missing_config_digest.ncl` fixture failed export with exit 1, as required by its published contract.
+Logs use `octet-native-positive.json`, `octet-native-admission.json`, `octet-export.log`, and `octet-native-negative.log` under the shared prefix.
+This confirms native fixture translation, not full-catalog strict scope or completion eligibility.
 
 ## Remaining work
 
