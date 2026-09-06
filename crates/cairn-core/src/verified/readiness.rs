@@ -40,6 +40,8 @@ pub struct ReadinessCause {
     pub code: String,
     pub target: String,
     pub message: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub prerequisites: Vec<String>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReadinessObservation {
@@ -61,6 +63,8 @@ pub struct ReadinessBlocker {
     pub code: String,
     pub target: String,
     pub message: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub prerequisites: Vec<String>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReadinessAction {
@@ -158,6 +162,21 @@ pub fn readiness_cause(code: &str, target: &str, message: &str) -> ReadinessCaus
         code: code.into(),
         target: target.into(),
         message: message.into(),
+        prerequisites: Vec::new(),
+    }
+}
+
+fn readiness_cause_with_prerequisites(
+    code: &str,
+    target: &str,
+    message: &str,
+    prerequisites: Vec<String>,
+) -> ReadinessCause {
+    ReadinessCause {
+        code: code.into(),
+        target: target.into(),
+        message: message.into(),
+        prerequisites,
     }
 }
 
@@ -329,6 +348,29 @@ pub fn readiness_profile_causes(
     report.decision["profile_evaluation"] = json!(evaluation);
 }
 
+fn completion_producer_prerequisites(contract: &Value, check_id: &str) -> Vec<String> {
+    contract
+        .get("required_checks")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter(|check| check.get("check_id").and_then(Value::as_str) == Some(check_id))
+        .flat_map(|check| {
+            let mut prerequisites = Vec::new();
+            if let Some(command_hash) = check.get("command_hash").and_then(Value::as_str) {
+                prerequisites.push(format!("producer-contract:{check_id}:{command_hash}"));
+            }
+            prerequisites.extend(
+                string_array(&check["prerequisites"])
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|value| format!("producer-prerequisite:{check_id}:{value}")),
+            );
+            prerequisites
+        })
+        .collect()
+}
+
 pub fn readiness_completion(
     scope: &ReadinessScope,
     contract: &Value,
@@ -341,10 +383,12 @@ pub fn readiness_completion(
         .diagnostics
         .iter()
         .map(|d| {
-            readiness_cause(
+            let target = d.check_id.as_deref().unwrap_or("verification-contract");
+            readiness_cause_with_prerequisites(
                 &d.code,
-                d.check_id.as_deref().unwrap_or("verification-contract"),
+                target,
                 &d.summary,
+                completion_producer_prerequisites(contract, target),
             )
         })
         .collect();
@@ -548,6 +592,7 @@ pub fn derive_readiness(snapshot: &ReadinessSnapshot) -> ReadinessReport {
                     code: cause.code.clone(),
                     target: cause.target.clone(),
                     message: cause.message.clone(),
+                    prerequisites: cause.prerequisites.clone(),
                 });
             }
         } else if observations.len() > 1 {
@@ -614,6 +659,7 @@ pub fn derive_readiness(snapshot: &ReadinessSnapshot) -> ReadinessReport {
             code: "observation.unavailable".into(),
             target: snapshot.scope.change.clone(),
             message: "Observation is unavailable".into(),
+            prerequisites: Vec::new(),
         };
         if blockers.len() < MAX_READINESS_BLOCKERS {
             actions.push(action_for(&cause, &snapshot.scope, &policy));
@@ -632,11 +678,13 @@ pub fn derive_readiness(snapshot: &ReadinessSnapshot) -> ReadinessReport {
             prerequisites: vec![stage.decision_hash.clone()],
             authority: "advisory".into(),
             expected_observation: "fresh existing mutation preflight".into(),
-            argv: vec![
-                "cairn".into(),
-                stage.stage.clone(),
-                snapshot.scope.change.clone(),
-            ],
+            argv: string_array(&stage.decision["preview_argv"]).unwrap_or_else(|| {
+                vec![
+                    "cairn".into(),
+                    stage.stage.clone(),
+                    snapshot.scope.change.clone(),
+                ]
+            }),
         });
     }
     let actions = merge_actions(actions);
@@ -714,6 +762,17 @@ fn action_for(
         "dependency_wait" => "upstream dependency accepted by its existing validator",
         _ => "reviewed remediation rule for this exact diagnostic",
     };
+    let mut prerequisites = vec![
+        scope.source_hash.clone(),
+        scope.policy_hash.clone(),
+        scope.evidence_hash.clone(),
+    ];
+    if kind == "dependency_wait" {
+        prerequisites.push(format!("predecessor-change:{}", blocker.target));
+    }
+    prerequisites.extend(blocker.prerequisites.iter().cloned());
+    prerequisites.sort();
+    prerequisites.dedup();
     ReadinessAction {
         id: canonical_json_hash(&json!([
             scope,
@@ -730,15 +789,21 @@ fn action_for(
         kind: kind.into(),
         causes: vec![blocker.id.clone()],
         target: blocker.target.clone(),
-        prerequisites: vec![
-            scope.source_hash.clone(),
-            scope.policy_hash.clone(),
-            scope.evidence_hash.clone(),
-        ],
+        prerequisites,
         authority: "advisory".into(),
         expected_observation: expected.into(),
         argv: Vec::new(),
     }
+}
+
+fn string_array(value: &Value) -> Option<Vec<String>> {
+    value.as_array().map(|values| {
+        values
+            .iter()
+            .filter_map(Value::as_str)
+            .map(str::to_owned)
+            .collect()
+    })
 }
 
 #[cfg(test)]

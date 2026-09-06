@@ -38,6 +38,9 @@ fn admission_failures_preserve_only_independent_profile_gates() -> TestResult {
                     .find(|schema| schema["id"] == profile)
                     .ok_or("schema")?;
                 schema["bounds"]["max_artifact_bytes"] = json!(ARTIFACT_BOUND);
+                if profile == "assurance" {
+                    schema["review_obligations"][0]["required_artifacts"] = json!(["proposal"]);
+                }
                 let artifact = schema["artifacts"]
                     .as_array_mut()
                     .ok_or("artifacts")?

@@ -477,6 +477,60 @@ fn repair_targets_and_unknown_causes_remain_advisory() {
 }
 
 #[test]
+// r[verify cairn.unified_readiness.actions]
+fn actions_bind_producer_contracts_predecessors_and_unresolved_probe_declarations() {
+    let contract: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-completion/contract.json"
+    ))
+    .unwrap();
+    let mut s = snapshot();
+    s.scope.policy_hash = contract["policy_hash"].as_str().unwrap().into();
+    for observation in &mut s.observations {
+        observation.scope = s.scope.clone();
+    }
+    s.observations[4] = readiness_completion(&s.scope, &contract, &json!([]), &"c".repeat(64));
+    s.observations[5].state = ReadinessState::Blocked;
+    s.observations[5].causes = vec![readiness_cause(
+        "dependency.blocked",
+        "upstream-change",
+        "The upstream change is still active",
+    )];
+    s.observations[3].state = ReadinessState::Blocked;
+    s.observations[3].causes = vec![readiness_cause(
+        "probe.declarations.malformed",
+        ".cairn/changes/demo/probes/probes.json",
+        "saved probe declarations are not valid JSON",
+    )];
+    let report = derive_readiness(&s);
+    let missing = report
+        .actions
+        .iter()
+        .find(|action| action.kind == "evidence_refresh" && action.target == "tests")
+        .expect("missing tests refresh action");
+    assert!(missing
+        .prerequisites
+        .iter()
+        .any(|value| value.starts_with("producer-contract:tests:")));
+    let dependency = report
+        .actions
+        .iter()
+        .find(|action| action.kind == "dependency_wait")
+        .expect("dependency wait action");
+    assert!(dependency
+        .prerequisites
+        .iter()
+        .any(|value| value == "predecessor-change:upstream-change"));
+    let unresolved = report
+        .actions
+        .iter()
+        .find(|action| {
+            action.kind == "unresolved" && action.target == ".cairn/changes/demo/probes/probes.json"
+        })
+        .expect("declaration-wide probe failure must stay unresolved");
+    assert!(unresolved.argv.is_empty());
+}
+
+#[test]
 // r[verify cairn.unified_readiness.decisions]
 fn authoritative_class_does_not_override_stale_subject_or_missing_rows() {
     let contract: Value = serde_json::from_str(include_str!(

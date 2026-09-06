@@ -486,6 +486,13 @@ fn gather_once(
                 .as_ref()
                 .map(|cross| cross.to_json())
                 .unwrap_or(Value::Null);
+            observation.decision["preview_argv"] = json!(preview_argv(
+                &observation.stage,
+                change,
+                root,
+                policy_path,
+                input,
+            ));
         }
         Ok(mutations)
     })();
@@ -517,6 +524,31 @@ fn gather_once(
         scope,
         observations,
     })
+}
+
+fn preview_argv(
+    stage: &str,
+    change: &str,
+    root: &Path,
+    policy_path: &Path,
+    input: &Value,
+) -> Vec<String> {
+    let mut argv = vec![
+        "cairn".to_string(),
+        stage.to_string(),
+        change.to_string(),
+        "--root".to_string(),
+        root.display().to_string(),
+        "--policy".to_string(),
+        policy_path.display().to_string(),
+    ];
+    if let Some(paths) = input.get("cross_repo_evidence").and_then(Value::as_array) {
+        for path in paths.iter().filter_map(Value::as_str) {
+            argv.push("--cross-repo-evidence".to_string());
+            argv.push(path.to_string());
+        }
+    }
+    argv
 }
 
 fn gather_partial_gates(

@@ -245,7 +245,43 @@ fn original_mutation_previews_and_independent_gate_admission_agree() -> TestResu
             policy["mutation_policy"]["sync"]["require_passing_gate"] = json!(sync_gate);
             policy["mutation_policy"]["archive"]["require_passing_gate"] = json!(archive_gate);
             fs::write(&policy_path, serde_json::to_vec(&policy)?)?;
+            let policy_hash = cairn_core::canonical_json_hash(&policy);
+            let contract_path = root.join("contract.json");
+            let mut contract: Value = serde_json::from_slice(&fs::read(&contract_path)?)?;
+            contract["policy_hash"] = json!(policy_hash.clone());
+            fs::write(&contract_path, serde_json::to_vec(&contract)?)?;
+            let results_path = root.join("results.json");
+            let mut results: Value = serde_json::from_slice(&fs::read(&results_path)?)?;
+            for result in results.as_array_mut().ok_or("results")? {
+                result["policy_hash"] = json!(policy_hash);
+            }
+            fs::write(&results_path, serde_json::to_vec(&results)?)?;
             let before = observe(&root)?;
+            if checked {
+                let mut preview_count = 0;
+                for stage in ["sync", "archive"] {
+                    if let Some(action) = before["actions"]
+                        .as_array()
+                        .ok_or("actions")?
+                        .iter()
+                        .find(|action| action["kind"] == format!("{stage}_preview"))
+                    {
+                        preview_count += 1;
+                        let argv = action["argv"].as_array().ok_or("preview argv")?;
+                        assert_eq!(argv[0], "cairn");
+                        assert_eq!(argv[1], stage);
+                        assert_eq!(argv[2], "demo");
+                        assert!(argv.iter().any(|arg| arg == "--root"));
+                        assert!(argv.iter().any(|arg| arg == "--policy"));
+                        assert!(argv.iter().any(|arg| arg == "--cross-repo-evidence"));
+                        assert!(!argv.iter().any(|arg| arg == "--execute"));
+                    }
+                }
+                assert!(
+                    preview_count > 0,
+                    "checked fixture should offer a preview action: {before}"
+                );
+            }
             let unchanged = tree(&root)?;
             for (index, stage) in [(5, "sync"), (6, "archive")] {
                 let original = run(&[

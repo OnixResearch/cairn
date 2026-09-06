@@ -59,12 +59,17 @@ Its semantic observation limit is 16 MiB. Existing loaders retain their own limi
 
 ## Reproduction and limits
 
-The maintained tests are `crates/cairn-core/src/verified/readiness/tests.rs`, `crates/cairn-cli/tests/readiness.rs`, and `readiness_completion.rs`.
+The maintained tests are `crates/cairn-core/src/verified/readiness/tests.rs`, `crates/cairn-cli/tests/readiness.rs`, `readiness_completion.rs`, and `readiness_isolation.rs`.
 The basic fixture compares three direct gate calls with one readiness call. All three gate verdicts and issue counts agree.
 The completion fixture also compares direct completion decisions with both transports for passing, stale-subject, and missing-result cases.
 The symlink case compares both transports and confirms that inspection does not change the task file.
-This is a bounded command-count comparison, not a latency or general productivity claim.
-The complete diagnostic-call study remains open.
+The isolation fixture compares original gate, completion, sync, archive, and cross-repository validators with both readiness transports.
+
+The bounded diagnostic-call study keeps command counts only. It does not measure latency or claim a general productivity gain.
+For the maintained basic fixture, the legacy diagnostic sequence uses three gate commands to prove that proposal, design, and tasks match their original validators, then still needs one separate completion diagnostic when execution evidence is absent or stale. The unified sequence uses one readiness call and returns the same three gate decisions plus the explicit completion state.
+For the stale-subject and missing-result completion fixtures, the legacy sequence uses one `agent-receipt complete` call after the caller already knows which contract, results, subject, and policy to select. The unified sequence uses one readiness call with those same selected inputs and additionally keeps sync and archive blocked.
+For malformed saved-probe declarations, the legacy sequence uses the tasks gate to surface the declaration failure. The unified sequence uses one readiness call, carries the same tasks-gate issue, and leaves the declaration-wide remediation as `unresolved` because no reviewed safe repair command exists.
+For ready checked mutation fixtures with current completion and cross-repository evidence, the unified report returns advisory `sync` or `archive` preview argv with the selected `--root`, `--policy`, and repeated `--cross-repo-evidence` arguments. These argv values omit `--execute` and do not grant mutation authority.
 
 Drain presentation is deliberately outside this increment. The full unified compatibility matrix remains incomplete.
 Passing legacy drain tests do not establish compatibility for a shared-model replacement. Legacy receipts remain unchanged.
@@ -92,8 +97,8 @@ Profile admission failure retains the cross-repository decision when its inputs 
 Stage-local reads preserve earlier gates when a later artifact is unreadable. Each preserved gate binds its exact admitted source bytes.
 This path uses an available profile or the existing metadata-selected compatibility profile. It never substitutes that profile for an unknown or explicit profile.
 
-Complete independent loading for failed explicit profiles, policy admission failures, producer-specific commands, and drain adoption remain open.
-Repeated reads detect observed differences but do not protect against arbitrary concurrent filesystem changes. These gaps prevent change completion.
+Independent loading now covers failed explicit profiles, policy admission failures, stage-local profile admission, producer-specific evidence-refresh contracts, and supported preview argv. Drain adoption remains outside this increment.
+Repeated reads detect observed differences but do not protect against arbitrary concurrent filesystem changes.
 
 Saved probe observation admits at most 64 declarations and 64 KiB per declaration document or receipt.
 It reads each receipt once for validation and binding. The read uses the no-follow bounded reader.
