@@ -5,6 +5,8 @@ use cairn_core::{canonical_json_hash, AgentVerificationContract};
 use serde_json::json;
 use std::{collections::BTreeMap, error::Error, path::Path};
 
+const ATTEMPT_DIGEST_HEX_BYTES: usize = 64;
+
 #[derive(Default)]
 struct AttemptState {
     attempts: Vec<NormalizedAttempt>,
@@ -84,7 +86,7 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
     let plan = admit_plan(&contract, &profiles, &applicability)?;
     let reviewed = required("--plan-hash")?;
     let attempt = required("--attempt")?;
-    if attempt.len() != 64
+    if attempt.len() != ATTEMPT_DIGEST_HEX_BYTES
         || !attempt
             .bytes()
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
@@ -93,7 +95,7 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
     }
     let cancel = required("--cancel-file")?;
     if root
-        .read_bounded(Path::new(cancel), 1)
+        .read_bounded(Path::new(cancel), local::CANCEL_BYTES)
         .map_err(|_| "cancellation control unavailable")?
         != b"0"
     {

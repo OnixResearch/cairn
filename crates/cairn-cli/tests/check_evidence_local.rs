@@ -323,6 +323,7 @@ fn real_cancellation_and_source_drift_withhold_success() -> Result<(), Box<dyn E
     );
     let result: Value = serde_json::from_slice(&output.stdout)?;
     assert_eq!(result["valid"], false);
+    assert_eq!(result["results"][0]["status"], "cancelled");
     assert_eq!(f.completion()?["valid"], false);
     assert!(!f.out.join("manifest.json").exists());
     let drift = Fixture::new(

@@ -24,6 +24,7 @@ const MAX_SOURCE_TOTAL_BYTES: usize = 64 * 1024 * 1024;
 const MAX_EXECUTABLE_BYTES: usize = 256 * 1024 * 1024;
 const HASH_BUFFER_BYTES: usize = 8192;
 const CONTROL_POLL_MS: u64 = 10;
+const NULL_STDIN_LIMIT: usize = 1;
 
 pub(super) fn source_hash(
     root: &CapabilityRoot,
@@ -118,7 +119,7 @@ pub(super) fn request(profile: &CheckProfile, cwd: &Path) -> Result<RunRequest, 
         },
         limits: ExecutionLimits {
             timeout_ms: profile.bounds.deadline_ms,
-            stdin_max_bytes: 1,
+            stdin_max_bytes: NULL_STDIN_LIMIT,
             stdout_max_bytes: usize::try_from(profile.bounds.stdout_bytes)?,
             stderr_max_bytes: usize::try_from(profile.bounds.stderr_bytes)?,
             poll_interval_ms: profile.bounds.deadline_ms.min(CONTROL_POLL_MS),
@@ -178,7 +179,9 @@ pub(super) fn observation(
             let coverage = cargo_coverage(&output.stdout.bytes);
             let payload = match profile.kind {
                 CheckKind::CargoTest => coverage.passed,
-                CheckKind::NixCheck => output.disposition == Disposition::Succeeded,
+                // Nix exit zero is not a separately admitted build payload.
+                // Until a native payload contract is available, retain the process fact only.
+                CheckKind::NixCheck => false,
             };
             let facts = json!({"outcome": outcome, "exit_code": output.exit_code, "signal": output.signal,
                 "stdout_hash": blake3::hash(&output.stdout.bytes).to_hex().to_string(),

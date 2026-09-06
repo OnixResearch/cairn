@@ -59,7 +59,10 @@ A failed or uncertain attempt has no automatic retry.
 The fixed grammars are `cargo_test` and `nix_check`. Neither accepts shell text or arbitrary trailing arguments.
 Cargo selects workspace tests, all targets, an explicit target and feature set, locked offline dependencies, and no default features.
 Nix selects an offline flake check without lock updates for an explicit system.
-A Nix check is a build obligation, not test coverage. Its process success does not establish nonempty executed-test coverage.
+A Nix check is a build obligation, not test coverage.
+The local Nix adapter records process success but has no admitted native build-payload decoder.
+It therefore emits no passing completion row, even after exit zero.
+Its process success also does not establish nonempty executed-test coverage.
 
 Profiles bind a Nix-store executable, byte identity, declared cohort identity, explicit environment, working root, and named bounds.
 The environment is cleared before explicit entries are applied. Profiles must not contain secrets.

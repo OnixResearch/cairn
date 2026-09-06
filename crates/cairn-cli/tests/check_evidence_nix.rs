@@ -17,7 +17,7 @@ fn binary(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     Err("required fixture executable unavailable".into())
 }
 #[test]
-fn real_nix_check_is_a_build_observation_not_test_coverage() -> Result<(), Box<dyn Error>> {
+fn real_nix_success_is_not_an_admitted_payload_or_test_coverage() -> Result<(), Box<dyn Error>> {
     nix_fixture("pass", "echo checked > $out", true)
 }
 
@@ -148,8 +148,8 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
         String::from_utf8_lossy(&output.stderr)
     );
     let result: Value = serde_json::from_slice(&output.stdout)?;
-    assert_eq!(result["valid"], expected, "{result}");
-    assert_eq!(root.join("evidence/manifest.json").exists(), expected);
+    assert_eq!(result["valid"], false, "{result}");
+    assert!(!root.join("evidence/manifest.json").exists());
     let completion = Command::new(env!("CARGO_BIN_EXE_cairn"))
         .current_dir(&repo)
         .args(["agent-receipt", "complete", "--contract"])
@@ -160,10 +160,19 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
         .output()?;
     assert!(completion.status.success());
     let completion: Value = serde_json::from_slice(&completion.stdout)?;
-    assert_eq!(completion["valid"], expected);
+    assert_eq!(completion["valid"], false);
     let observations: Value =
         serde_json::from_slice(&fs::read(root.join("evidence/observations.json"))?)?;
     assert_eq!(observations[0]["role"], "build");
+    assert_eq!(
+        observations[0]["outcome"],
+        if expected {
+            "exited_zero"
+        } else {
+            "exited_nonzero"
+        }
+    );
+    assert_eq!(observations[0]["payload_passed"], false);
     assert_eq!(observations[0]["executed_tests"], json!(0));
     Ok(())
 }
