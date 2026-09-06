@@ -14,8 +14,6 @@ pub fn cargo_coverage(bytes: &[u8]) -> CargoCoverage {
     })
 }
 
-const SUMMARY_FIELDS: usize = 6;
-
 fn parse(bytes: &[u8]) -> Option<CargoCoverage> {
     let text = std::str::from_utf8(bytes).ok()?;
     // A prefix ending inside the final summary is not a complete payload.
@@ -40,10 +38,12 @@ fn parse(bytes: &[u8]) -> Option<CargoCoverage> {
                 return None;
             }
             let fields: Vec<_> = counts.split("; ").collect();
-            if fields.len() != SUMMARY_FIELDS {
+            let [passed_field, failed_field, ignored_field, measured_field, filtered_field, elapsed_field] =
+                fields.as_slice()
+            else {
                 return None;
-            }
-            let elapsed = fields[SUMMARY_FIELDS - 1]
+            };
+            let elapsed = elapsed_field
                 .strip_prefix("finished in ")?
                 .strip_suffix('s')?;
             let (seconds, fraction) = elapsed.split_once('.')?;
@@ -54,14 +54,13 @@ fn parse(bytes: &[u8]) -> Option<CargoCoverage> {
             {
                 return None;
             }
-            let number = |index: usize, suffix: &str| {
-                fields[index].strip_suffix(suffix)?.parse::<u64>().ok()
-            };
-            let good = number(0, " passed")?;
-            let failed = number(1, " failed")?;
-            let ignored = number(2, " ignored")?;
-            let measured = number(3, " measured")?;
-            number(4, " filtered out")?;
+            let number =
+                |field: &str, suffix: &str| field.strip_suffix(suffix)?.parse::<u64>().ok();
+            let good = number(passed_field, " passed")?;
+            let failed = number(failed_field, " failed")?;
+            let ignored = number(ignored_field, " ignored")?;
+            let measured = number(measured_field, " measured")?;
+            number(filtered_field, " filtered out")?;
             if pending.take()?
                 != good
                     .checked_add(failed)?
@@ -87,6 +86,9 @@ fn parse(bytes: &[u8]) -> Option<CargoCoverage> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const INVALID_UTF8_BYTE: u8 = u8::MAX;
+
     #[test]
     fn complete_nonempty_summary_and_negative_grammar_controls() {
         let good = "running 1 test\n.\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n";
@@ -110,6 +112,9 @@ mod tests {
             good.replace("0.00s", "0."),
             good.replace("0.00s", "NaNs"),
             good.replace("0.00s", "0.00s unreviewed"),
+            good.replace("0 ignored; 0 measured", "0 measured; 0 ignored"),
+            good.replace("0 measured; ", ""),
+            good.replace("0 measured; ", "0 measured; 0 retired; "),
         ] {
             assert!(!cargo_coverage(invalid.as_bytes()).passed);
         }
@@ -117,6 +122,6 @@ mod tests {
             .replace("running 1 test", "running 0 tests")
             .replace("1 passed", "0 passed");
         assert!(!cargo_coverage(empty.as_bytes()).passed);
-        assert!(!cargo_coverage(&[255]).passed);
+        assert!(!cargo_coverage(&[INVALID_UTF8_BYTE]).passed);
     }
 }
