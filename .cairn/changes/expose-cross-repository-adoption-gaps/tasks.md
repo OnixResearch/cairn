@@ -2,9 +2,9 @@
 
 ## Contract and core
 
-- [ ] [serial] [task:baseline] Record dependency-receipt, registry, and unified-readiness baselines with current, incomplete, and rejected inputs. r[cairn.adoption_report.conformance]
-- [ ] [serial] [task:contracts] [after:baseline] Define typed snapshot, stage, coverage, provenance, and query contracts with explicit producer cohorts and named bounds. r[cairn.adoption_report.inputs] r[cairn.adoption_report.stages]
-- [ ] [serial] [task:core] [after:contracts] Implement pure relationship joins, independent adoption stages, unknown-state preservation, and deterministic report identities. r[cairn.adoption_report.stages] r[cairn.adoption_report.unknowns]
+- [x] [serial] [task:baseline] Record dependency-receipt, registry, and unified-readiness baselines with current, incomplete, and rejected inputs. r[cairn.adoption_report.conformance]
+- [x] [serial] [task:contracts] [after:baseline] Define typed snapshot, stage, coverage, provenance, and query contracts with explicit producer cohorts and named bounds. r[cairn.adoption_report.inputs] r[cairn.adoption_report.stages]
+- [x] [serial] [task:core] [after:contracts] Implement pure relationship joins, independent adoption stages, unknown-state preservation, and deterministic report identities. r[cairn.adoption_report.stages] r[cairn.adoption_report.unknowns]
 
 ## Stack adapters and queries
 

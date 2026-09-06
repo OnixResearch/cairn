@@ -1,0 +1,210 @@
+{
+  "actions": [
+    {
+      "argv": [],
+      "authority": "advisory",
+      "causes": [
+        "06f8c24c794d5f5ec25c20687825d8e24dc4f40ba4a7d8ed0ef00aaf69f3d721",
+        "3098c5ed4677c73426af20653513a6828aa2424455bd7d8da05daf7d15ba936f",
+        "633002b19bd492427f60ebae55b80ef8213bb9df376358a68a487f29f73e6d14",
+        "7be1e8eb6ca614dd7c6752dc76e7742f07f79a4a26158a5c0fc3b4ecb9250513",
+        "8d546b91923d44715a6dea136f92a50cdc5fadc415eae783409a53f314fd39a3",
+        "8f5d88901e416f57106ae7427ae923721271d781bd64a876e915a5be9d3d4a80",
+        "fa53042f8843f46a705474718247e71872cd145887667fff2dd51f56030a19bc"
+      ],
+      "expected_observation": "reviewed remediation rule for this exact diagnostic",
+      "id": "0b8ccdb11817690c1783163424cb56929d8ea8a5c08bc2f7d84d637b6bcb0a31",
+      "kind": "unresolved",
+      "prerequisites": [
+        "0f079a934dfc907043e09798505c7209ce9975785bc87a9bb391f2a55ecab20c",
+        "26f47a3b38e4e0e9316fb2d482f89f0c3e33536cff1503c4062bcaee06a9bfc0",
+        "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d"
+      ],
+      "target": "missing-change"
+    },
+    {
+      "argv": [],
+      "authority": "advisory",
+      "causes": [
+        "28485456fbfafd5468ec55dddb8e154279d38bc520d4a695982d56d4e993c7d0",
+        "6ace8e0b7aa20a91aed4ddbe8ce038303b44f27f29abf18970f4564425c8c5ad",
+        "8be11b5d2bbf3533eb2bba63eee8dc2fc5b7b590622e5f41922425e329819e51",
+        "9f01a41b26e472abea1ef62f12427f766c9444de742f4f0f0a4c0b1955877a29",
+        "d9782e21fcb6f8c7b0278c74cd9c0f39c3ad460c2c3ad87d728550c42a57b4ca"
+      ],
+      "expected_observation": "reviewed remediation rule for this exact diagnostic",
+      "id": "426f6e4a945b7b1bbb0c4a8d816fcc1e698a2b380c39c9bbc602f155e69bf3da",
+      "kind": "unresolved",
+      "prerequisites": [
+        "0f079a934dfc907043e09798505c7209ce9975785bc87a9bb391f2a55ecab20c",
+        "26f47a3b38e4e0e9316fb2d482f89f0c3e33536cff1503c4062bcaee06a9bfc0",
+        "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d"
+      ],
+      "target": "missing-change"
+    }
+  ],
+  "blockers": [
+    {
+      "code": "observation.load_failed",
+      "id": "28485456fbfafd5468ec55dddb8e154279d38bc520d4a695982d56d4e993c7d0",
+      "message": "The selected observation could not be admitted",
+      "stage": "artifact",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "6ace8e0b7aa20a91aed4ddbe8ce038303b44f27f29abf18970f4564425c8c5ad",
+      "message": "The selected observation could not be admitted",
+      "stage": "completion",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "9f01a41b26e472abea1ef62f12427f766c9444de742f4f0f0a4c0b1955877a29",
+      "message": "The selected observation could not be admitted",
+      "stage": "design",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "8be11b5d2bbf3533eb2bba63eee8dc2fc5b7b590622e5f41922425e329819e51",
+      "message": "The selected observation could not be admitted",
+      "stage": "proposal",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.load_failed",
+      "id": "d9782e21fcb6f8c7b0278c74cd9c0f39c3ad460c2c3ad87d728550c42a57b4ca",
+      "message": "The selected observation could not be admitted",
+      "stage": "tasks",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "7be1e8eb6ca614dd7c6752dc76e7742f07f79a4a26158a5c0fc3b4ecb9250513",
+      "message": "Observation is unavailable",
+      "stage": "artifact",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "633002b19bd492427f60ebae55b80ef8213bb9df376358a68a487f29f73e6d14",
+      "message": "Observation is unavailable",
+      "stage": "proposal",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "fa53042f8843f46a705474718247e71872cd145887667fff2dd51f56030a19bc",
+      "message": "Observation is unavailable",
+      "stage": "design",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "8d546b91923d44715a6dea136f92a50cdc5fadc415eae783409a53f314fd39a3",
+      "message": "Observation is unavailable",
+      "stage": "tasks",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "8f5d88901e416f57106ae7427ae923721271d781bd64a876e915a5be9d3d4a80",
+      "message": "Observation is unavailable",
+      "stage": "completion",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "3098c5ed4677c73426af20653513a6828aa2424455bd7d8da05daf7d15ba936f",
+      "message": "Observation is unavailable",
+      "stage": "sync",
+      "target": "missing-change"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "06f8c24c794d5f5ec25c20687825d8e24dc4f40ba4a7d8ed0ef00aaf69f3d721",
+      "message": "Observation is unavailable",
+      "stage": "archive",
+      "target": "missing-change"
+    }
+  ],
+  "classification": "unavailable",
+  "diagnostics": [],
+  "input_hash": "eed1c80d3b192be100aff9b08844e99fa8e0ed84b6b5dcdbd355be7d25cf2cf3",
+  "mutation_authorized": false,
+  "non_claims": [
+    "Readiness does not authorize mutation or execute checks",
+    "Readiness does not prove evidence truth, code correctness, or release eligibility"
+  ],
+  "readiness_policy_hash": "3daf5296f1c72472fa26cb1aa80b6c661ecf791b500443457c6f1c256669ad98",
+  "receipt_hash": "500c6c96f91f547880f3b409ea76102a1885f27b6cbf7487700fa42b49dabd00",
+  "schema": "cairn.readiness.v1",
+  "scope": {
+    "change": "missing-change",
+    "evidence_hash": "0f079a934dfc907043e09798505c7209ce9975785bc87a9bb391f2a55ecab20c",
+    "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+    "source_hash": "26f47a3b38e4e0e9316fb2d482f89f0c3e33536cff1503c4062bcaee06a9bfc0"
+  },
+  "stages": [
+    {
+      "decision": {
+        "cross_repo_dependencies": null,
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "b051ce41ab86005cf0073ad425a43a98084c593c1cca5afaa27a9c895a30329d",
+      "stage": "artifact",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "proposal",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "design",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "tasks",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "error_class": "ObservationAdmission",
+        "evaluated": false
+      },
+      "decision_hash": "218e118f5c9d75bd07918ebb77eb6e1574ec92efb1115d0fb37deafde07ab3f2",
+      "stage": "completion",
+      "state": "unavailable"
+    },
+    {
+      "decision": null,
+      "decision_hash": "03f88b99c3d8073bba8948d6e762aac443b265f606cc05abd4d172f03a4def6a",
+      "stage": "sync",
+      "state": "unavailable"
+    },
+    {
+      "decision": null,
+      "decision_hash": "03f88b99c3d8073bba8948d6e762aac443b265f606cc05abd4d172f03a4def6a",
+      "stage": "archive",
+      "state": "unavailable"
+    }
+  ],
+  "valid": true
+}

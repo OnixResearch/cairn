@@ -320,6 +320,26 @@
               touch $out
             '';
 
+        # r[verify cairn.adoption_report.inputs]
+        # r[verify cairn.adoption_report.stages]
+        adoption-report-contracts =
+          pkgs.runCommand "cairn-adoption-report-contracts"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
+            }
+            ''
+              cp -r ${self}/cairn-policy policy
+              chmod -R u+w policy
+              nickel export --format json --field policy policy/adoption-report.ncl > adoption-policy.json
+              nickel export --format json policy/fixtures/adoption-report-positive.ncl > positive.json
+              if nickel export --format json policy/fixtures/adoption-report-negative.ncl > negative.json 2> negative.err; then
+                echo "expected adoption report bound rejection" >&2
+                exit 1
+              fi
+              grep -q 'max_relationships' negative.err
+              touch $out
+            '';
+
         authenticated-policy-profiles-fresh =
           pkgs.runCommand "cairn-authenticated-policy-profiles-fresh"
             {
