@@ -1,12 +1,12 @@
-use serde_json::Value;
-
 use crate::verified::function_address_gates::{
     is_blake3_hex, is_function_address_mode, FunctionAddressPolicy,
 };
 
 use super::{fields::string_array_field, fields::string_field, PolicyError};
 
-pub(super) fn function_address_policy(value: &Value) -> Result<FunctionAddressPolicy, PolicyError> {
+pub(super) fn function_address_policy(
+    value: &serde_json::Value,
+) -> Result<FunctionAddressPolicy, PolicyError> {
     // r[impl cairn.function_address_gates.policy]
     let policy = value
         .get("function_address_gate")

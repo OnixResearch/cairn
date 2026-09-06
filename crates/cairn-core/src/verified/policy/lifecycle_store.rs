@@ -1,7 +1,3 @@
-use std::collections::BTreeSet;
-
-use serde_json::Value;
-
 use super::{
     LifecycleStoreBounds, LifecycleStoreLocalStateSchema, LifecycleStoreOpenerProfile,
     LifecycleStorePolicy, LifecycleStoreProjectionPolicy, LifecycleStoreReceiptPolicy,
@@ -289,7 +285,9 @@ const WORKSET_STATE_FIELDS: LocalStateFields = LocalStateFields {
     symlink_paths_allowed: "lifecycle_store_policy.worksets.state.symlink_paths_allowed",
 };
 
-pub(super) fn lifecycle_store_policy(value: &Value) -> Result<LifecycleStorePolicy, PolicyError> {
+pub(super) fn lifecycle_store_policy(
+    value: &serde_json::Value,
+) -> Result<LifecycleStorePolicy, PolicyError> {
     let policy = object_field(value, "lifecycle_store_policy", POLICY_FIELD)?;
     let schema = exact_string_field(
         policy,
@@ -352,7 +350,7 @@ pub(super) fn lifecycle_store_policy(value: &Value) -> Result<LifecycleStorePoli
     Ok(parsed)
 }
 
-fn parse_bounds(policy: &Value) -> Result<LifecycleStoreBounds, PolicyError> {
+fn parse_bounds(policy: &serde_json::Value) -> Result<LifecycleStoreBounds, PolicyError> {
     let bounds = object_field(policy, "bounds", FIELD_BOUNDS)?;
     Ok(LifecycleStoreBounds {
         max_store_id_bytes: positive_usize_field(
@@ -404,7 +402,7 @@ fn parse_bounds(policy: &Value) -> Result<LifecycleStoreBounds, PolicyError> {
 }
 
 fn parse_projection_policy(
-    policy: &Value,
+    policy: &serde_json::Value,
     lookup: &str,
     fields: &ProjectionFields,
     expected: &ProjectionExpected,
@@ -480,7 +478,7 @@ fn parse_projection_policy(
 }
 
 fn parse_root_resolution(
-    policy: &Value,
+    policy: &serde_json::Value,
 ) -> Result<LifecycleStoreRootResolutionPolicy, PolicyError> {
     let resolution = object_field(policy, "root_resolution", FIELD_ROOT_RESOLUTION)?;
     let root_flag = exact_string_field(resolution, "root_flag", FIELD_ROOT_FLAG, ROOT_FLAG)?;
@@ -545,7 +543,7 @@ fn parse_root_resolution(
 }
 
 fn parse_local_state_schema(
-    parent: &Value,
+    parent: &serde_json::Value,
     lookup: &str,
     fields: &LocalStateFields,
     expected: &LocalStateExpected,
@@ -605,7 +603,9 @@ fn parse_local_state_schema(
     })
 }
 
-fn parse_workset_policy(policy: &Value) -> Result<LifecycleStoreWorksetPolicy, PolicyError> {
+fn parse_workset_policy(
+    policy: &serde_json::Value,
+) -> Result<LifecycleStoreWorksetPolicy, PolicyError> {
     let worksets = object_field(policy, "worksets", FIELD_WORKSETS)?;
     let state = parse_local_state_schema(
         worksets,
@@ -642,13 +642,15 @@ fn parse_workset_policy(policy: &Value) -> Result<LifecycleStoreWorksetPolicy, P
     })
 }
 
-fn parse_opener_profiles(policy: &Value) -> Result<Vec<LifecycleStoreOpenerProfile>, PolicyError> {
+fn parse_opener_profiles(
+    policy: &serde_json::Value,
+) -> Result<Vec<LifecycleStoreOpenerProfile>, PolicyError> {
     let values = array_field(policy, "opener_profiles", FIELD_OPENER_PROFILES)?;
     if values.is_empty() {
         return Err(PolicyError::InvalidField(FIELD_OPENER_PROFILES));
     }
     let mut profiles = Vec::with_capacity(values.len());
-    let mut ids = BTreeSet::new();
+    let mut ids = std::collections::BTreeSet::new();
     for value in values {
         let object = value
             .as_object()
@@ -693,7 +695,9 @@ fn parse_opener_profiles(policy: &Value) -> Result<Vec<LifecycleStoreOpenerProfi
     Ok(profiles)
 }
 
-fn parse_receipt_policy(policy: &Value) -> Result<LifecycleStoreReceiptPolicy, PolicyError> {
+fn parse_receipt_policy(
+    policy: &serde_json::Value,
+) -> Result<LifecycleStoreReceiptPolicy, PolicyError> {
     let receipts = object_field(policy, "receipts", FIELD_RECEIPTS)?;
     let schema = exact_string_field(
         receipts,
@@ -854,10 +858,10 @@ fn validate_policy_relationships(policy: &LifecycleStorePolicy) -> Result<(), Po
 }
 
 fn object_field<'a>(
-    value: &'a Value,
+    value: &'a serde_json::Value,
     lookup: &str,
     field: &'static str,
-) -> Result<&'a Value, PolicyError> {
+) -> Result<&'a serde_json::Value, PolicyError> {
     let selected = value.get(lookup).ok_or(PolicyError::MissingField(field))?;
     if !selected.is_object() {
         return Err(PolicyError::InvalidField(field));
@@ -866,10 +870,10 @@ fn object_field<'a>(
 }
 
 fn array_field<'a>(
-    value: &'a Value,
+    value: &'a serde_json::Value,
     lookup: &str,
     field: &'static str,
-) -> Result<&'a Vec<Value>, PolicyError> {
+) -> Result<&'a Vec<serde_json::Value>, PolicyError> {
     value
         .get(lookup)
         .ok_or(PolicyError::MissingField(field))?
@@ -877,7 +881,11 @@ fn array_field<'a>(
         .ok_or(PolicyError::InvalidField(field))
 }
 
-fn string_field(value: &Value, lookup: &str, field: &'static str) -> Result<String, PolicyError> {
+fn string_field(
+    value: &serde_json::Value,
+    lookup: &str,
+    field: &'static str,
+) -> Result<String, PolicyError> {
     let text = value
         .get(lookup)
         .ok_or(PolicyError::MissingField(field))?
@@ -890,7 +898,7 @@ fn string_field(value: &Value, lookup: &str, field: &'static str) -> Result<Stri
 }
 
 fn exact_string_field(
-    value: &Value,
+    value: &serde_json::Value,
     lookup: &str,
     field: &'static str,
     expected: &str,
@@ -902,7 +910,11 @@ fn exact_string_field(
     Ok(actual)
 }
 
-fn bool_field(value: &Value, lookup: &str, field: &'static str) -> Result<bool, PolicyError> {
+fn bool_field(
+    value: &serde_json::Value,
+    lookup: &str,
+    field: &'static str,
+) -> Result<bool, PolicyError> {
     value
         .get(lookup)
         .ok_or(PolicyError::MissingField(field))?
@@ -911,7 +923,7 @@ fn bool_field(value: &Value, lookup: &str, field: &'static str) -> Result<bool, 
 }
 
 fn exact_bool_field(
-    value: &Value,
+    value: &serde_json::Value,
     lookup: &str,
     field: &'static str,
     expected: bool,
@@ -924,7 +936,7 @@ fn exact_bool_field(
 }
 
 fn positive_usize_field(
-    value: &Value,
+    value: &serde_json::Value,
     lookup: &str,
     field: &'static str,
 ) -> Result<usize, PolicyError> {
@@ -940,7 +952,7 @@ fn positive_usize_field(
 }
 
 fn string_array_field(
-    value: &Value,
+    value: &serde_json::Value,
     lookup: &str,
     field: &'static str,
 ) -> Result<Vec<String>, PolicyError> {
@@ -956,7 +968,7 @@ fn string_array_field(
 }
 
 fn nonempty_string_array_field(
-    value: &Value,
+    value: &serde_json::Value,
     lookup: &str,
     field: &'static str,
 ) -> Result<Vec<String>, PolicyError> {
@@ -968,7 +980,7 @@ fn nonempty_string_array_field(
 }
 
 fn validate_unique(values: &[String], field: &'static str) -> Result<(), PolicyError> {
-    let unique = values.iter().collect::<BTreeSet<_>>();
+    let unique = values.iter().collect::<std::collections::BTreeSet<_>>();
     if unique.len() != values.len() {
         return Err(PolicyError::InvalidField(field));
     }

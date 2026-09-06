@@ -42,6 +42,14 @@ Keep exhaustive decisions for closed schema enums.
 Use narrow, explained source exceptions for closed-enum policy and compiler-confirmed non-const operations.
 Do not add blanket exceptions, disabled lints, or finding budgets.
 
+The next source batches cover the core and shell findings from the complete catalog.
+First, qualify concrete collection and JSON imports without changing their owning types.
+A bounded source helper preserves comments, strings, public re-exports, and shadowed bindings.
+Its positive and negative controls precede source application. Compiler checks and behavioral tests remain the acceptance authority.
+Split the large root export facade by capability while retaining its exact export set.
+Later batches preserve existing decisions and public receipt fields while they repair each remaining catalog category.
+Do not treat a lower finding count as completion evidence.
+
 ## Verification
 
 Establish the existing Rust-test baseline before product edits.

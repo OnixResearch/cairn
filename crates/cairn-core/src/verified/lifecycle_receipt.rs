@@ -1,7 +1,3 @@
-use std::collections::BTreeSet;
-
-use serde_json::Value;
-
 use super::evidence::canonical_json_hash;
 use super::nominal_identity::{
     ArtifactDigestRole, Blake3Digest, ChainDigestRole, DigestRoleMarker, InputDigestRole,
@@ -140,7 +136,7 @@ pub struct LifecycleReceiptEnvelope {
 pub struct LifecycleReceiptValidationInput {
     pub envelope: LifecycleReceiptEnvelope,
     pub hash_profile: LifecycleReceiptHashProfile,
-    pub hash_material: Value,
+    pub hash_material: serde_json::Value,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -178,9 +174,9 @@ pub fn default_lifecycle_receipt_non_claims() -> Vec<String> {
 }
 
 pub fn lifecycle_receipt_hash_material(
-    receipt: &Value,
+    receipt: &serde_json::Value,
     profile: &LifecycleReceiptHashProfile,
-) -> Value {
+) -> serde_json::Value {
     // r[impl cairn.release_evidence.lifecycle_receipt_core.hash_profiles]
     // r[impl cairn.release_evidence.lifecycle_receipt_core.hash_profiles.self_hash]
     let mut material = receipt.clone();
@@ -192,7 +188,10 @@ pub fn lifecycle_receipt_hash_material(
     material
 }
 
-pub fn lifecycle_receipt_hash(receipt: &Value, profile: &LifecycleReceiptHashProfile) -> String {
+pub fn lifecycle_receipt_hash(
+    receipt: &serde_json::Value,
+    profile: &LifecycleReceiptHashProfile,
+) -> String {
     let material = lifecycle_receipt_hash_material(receipt, profile);
     canonical_json_hash(&material)
 }
@@ -223,13 +222,15 @@ pub fn validate_lifecycle_receipt_envelope(
     }
 }
 
-pub fn adapt_cairn_gate_receipt(receipt: &Value) -> LifecycleReceiptValidationReport {
+pub fn adapt_cairn_gate_receipt(receipt: &serde_json::Value) -> LifecycleReceiptValidationReport {
     // r[impl cairn.release_evidence.lifecycle_receipt_core.adapters]
     // r[impl cairn.release_evidence.lifecycle_receipt_core.adapters.family]
     adapt_lifecycle_receipt_value(CAIRN_GATE_FAMILY, COMMAND_GATE, DEFAULT_TOOL_ID, receipt)
 }
 
-pub fn adapt_cairn_validate_receipt(receipt: &Value) -> LifecycleReceiptValidationReport {
+pub fn adapt_cairn_validate_receipt(
+    receipt: &serde_json::Value,
+) -> LifecycleReceiptValidationReport {
     // r[impl cairn.release_evidence.lifecycle_receipt_core.adapters]
     adapt_lifecycle_receipt_value(
         CAIRN_VALIDATE_FAMILY,
@@ -239,7 +240,9 @@ pub fn adapt_cairn_validate_receipt(receipt: &Value) -> LifecycleReceiptValidati
     )
 }
 
-pub fn adapt_cairn_sync_archive_receipt(receipt: &Value) -> LifecycleReceiptValidationReport {
+pub fn adapt_cairn_sync_archive_receipt(
+    receipt: &serde_json::Value,
+) -> LifecycleReceiptValidationReport {
     // r[impl cairn.release_evidence.lifecycle_receipt_core.adapters]
     adapt_lifecycle_receipt_value(
         CAIRN_SYNC_ARCHIVE_FAMILY,
@@ -251,13 +254,13 @@ pub fn adapt_cairn_sync_archive_receipt(receipt: &Value) -> LifecycleReceiptVali
 
 pub fn adapt_downstream_lifecycle_receipt(
     family: &str,
-    receipt: &Value,
+    receipt: &serde_json::Value,
 ) -> LifecycleReceiptValidationReport {
     // r[impl cairn.release_evidence.lifecycle_receipt_core.adapters]
     let tool = family.split('.').next().unwrap_or("downstream");
     let command = receipt
         .get(FIELD_COMMAND)
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or("receipt");
     adapt_lifecycle_receipt_value(family, command, tool, receipt)
 }
@@ -266,7 +269,7 @@ pub fn adapt_lifecycle_receipt_value(
     family: &str,
     command: &str,
     tool: &str,
-    receipt: &Value,
+    receipt: &serde_json::Value,
 ) -> LifecycleReceiptValidationReport {
     let profile = default_lifecycle_receipt_hash_profile();
     let envelope = lifecycle_receipt_envelope_from_value(family, command, tool, receipt, &profile);
@@ -282,12 +285,12 @@ pub fn lifecycle_receipt_envelope_from_value(
     family: &str,
     command: &str,
     tool: &str,
-    receipt: &Value,
+    receipt: &serde_json::Value,
     profile: &LifecycleReceiptHashProfile,
 ) -> LifecycleReceiptEnvelope {
     let receipt_hash = receipt
         .get(LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH)
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .map(str::to_string)
         .unwrap_or_else(|| lifecycle_receipt_hash(receipt, profile));
     let diagnostics = lifecycle_receipt_diagnostics_from_value(receipt);
@@ -488,7 +491,7 @@ fn validate_hash_fields(
         .hash_fields
         .iter()
         .map(|field| field.name.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     for required in &input.hash_profile.required_hash_fields {
         if !field_names.contains(required.as_str()) {
             push_lifecycle_receipt_issue(
@@ -577,7 +580,9 @@ fn validate_non_claims(
     }
 }
 
-fn lifecycle_receipt_diagnostics_from_value(receipt: &Value) -> Vec<LifecycleReceiptDiagnostic> {
+fn lifecycle_receipt_diagnostics_from_value(
+    receipt: &serde_json::Value,
+) -> Vec<LifecycleReceiptDiagnostic> {
     let mut diagnostics = Vec::new();
     collect_diagnostics_from_field(receipt, FIELD_ISSUES, &mut diagnostics);
     collect_diagnostics_from_field(receipt, FIELD_CHANGE_ISSUES, &mut diagnostics);
@@ -596,46 +601,46 @@ fn lifecycle_receipt_diagnostics_from_value(receipt: &Value) -> Vec<LifecycleRec
 }
 
 fn collect_diagnostics_from_field(
-    receipt: &Value,
+    receipt: &serde_json::Value,
     field: &str,
     diagnostics: &mut Vec<LifecycleReceiptDiagnostic>,
 ) {
-    let Some(items) = receipt.get(field).and_then(Value::as_array) else {
+    let Some(items) = receipt.get(field).and_then(serde_json::Value::as_array) else {
         return;
     };
     for (index, item) in items.iter().enumerate() {
         let default_path = format!("/{field}/{index}");
         diagnostics.push(match item {
-            Value::Object(object) => LifecycleReceiptDiagnostic {
+            serde_json::Value::Object(object) => LifecycleReceiptDiagnostic {
                 code: object
                     .get(FIELD_CODE)
-                    .and_then(Value::as_str)
+                    .and_then(serde_json::Value::as_str)
                     .unwrap_or(field)
                     .to_string(),
                 message: object
                     .get(FIELD_MESSAGE)
                     .or_else(|| object.get(FIELD_DESCRIPTION))
-                    .and_then(Value::as_str)
+                    .and_then(serde_json::Value::as_str)
                     .unwrap_or(field)
                     .to_string(),
                 scope: object
                     .get(FIELD_SCOPE)
-                    .and_then(Value::as_str)
+                    .and_then(serde_json::Value::as_str)
                     .unwrap_or(field)
                     .to_string(),
                 field_path: object
                     .get(FIELD_FIELD_PATH)
                     .or_else(|| object.get(FIELD_PATH))
-                    .and_then(Value::as_str)
+                    .and_then(serde_json::Value::as_str)
                     .unwrap_or(&default_path)
                     .to_string(),
                 severity: object
                     .get(FIELD_SEVERITY)
-                    .and_then(Value::as_str)
+                    .and_then(serde_json::Value::as_str)
                     .unwrap_or_else(|| default_severity(receipt))
                     .to_string(),
             },
-            Value::String(message) => LifecycleReceiptDiagnostic {
+            serde_json::Value::String(message) => LifecycleReceiptDiagnostic {
                 code: field.to_string(),
                 message: message.clone(),
                 scope: field.to_string(),
@@ -654,7 +659,7 @@ fn collect_diagnostics_from_field(
 }
 
 fn lifecycle_receipt_hash_fields_from_value(
-    receipt: &Value,
+    receipt: &serde_json::Value,
     receipt_hash: &str,
 ) -> Vec<LifecycleReceiptHashField> {
     let mut fields = Vec::new();
@@ -687,43 +692,52 @@ fn lifecycle_receipt_hash_fields_from_value(
     fields
 }
 
-fn receipt_verdict(receipt: &Value) -> String {
-    if let Some(verdict) = receipt.get(FIELD_VERDICT).and_then(Value::as_str) {
+fn receipt_verdict(receipt: &serde_json::Value) -> String {
+    if let Some(verdict) = receipt
+        .get(FIELD_VERDICT)
+        .and_then(serde_json::Value::as_str)
+    {
         return verdict.to_string();
     }
-    if let Some(valid) = receipt.get(FIELD_VALID).and_then(Value::as_bool) {
+    if let Some(valid) = receipt
+        .get(FIELD_VALID)
+        .and_then(serde_json::Value::as_bool)
+    {
         return if valid { "PASS" } else { "FAIL" }.to_string();
     }
-    if let Some(blocked) = receipt.get(FIELD_BLOCKED).and_then(Value::as_bool) {
+    if let Some(blocked) = receipt
+        .get(FIELD_BLOCKED)
+        .and_then(serde_json::Value::as_bool)
+    {
         return if blocked { "FAIL" } else { "PASS" }.to_string();
     }
     String::new()
 }
 
-fn checked_count(receipt: &Value) -> usize {
+fn checked_count(receipt: &serde_json::Value) -> usize {
     integer_count(receipt, FIELD_COUNT_CHANGES)
         + integer_count(receipt, FIELD_COUNT_SPECS_VALIDATED)
         + array_count(receipt, FIELD_ACTIONS)
         + array_count(receipt, FIELD_ARTIFACTS)
 }
 
-fn integer_count(receipt: &Value, field: &str) -> usize {
+fn integer_count(receipt: &serde_json::Value, field: &str) -> usize {
     receipt
         .get(field)
-        .and_then(Value::as_u64)
+        .and_then(serde_json::Value::as_u64)
         .and_then(|value| usize::try_from(value).ok())
         .unwrap_or_default()
 }
 
-fn array_count(receipt: &Value, field: &str) -> usize {
+fn array_count(receipt: &serde_json::Value, field: &str) -> usize {
     receipt
         .get(field)
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .map(Vec::len)
         .unwrap_or_default()
 }
 
-fn default_severity(receipt: &Value) -> &'static str {
+fn default_severity(receipt: &serde_json::Value) -> &'static str {
     match receipt_verdict(receipt).as_str() {
         "WARN" | "warn" => "warning",
         "FAIL" | "fail" => "error",
@@ -731,7 +745,7 @@ fn default_severity(receipt: &Value) -> &'static str {
     }
 }
 
-fn receipt_has_self_hash(receipt: &Value) -> bool {
+fn receipt_has_self_hash(receipt: &serde_json::Value) -> bool {
     receipt
         .as_object()
         .map(|object| object.contains_key(LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH))
@@ -803,7 +817,7 @@ mod tests {
         canonical_json_hash(&json!({"label": label}))
     }
 
-    fn valid_gate_receipt() -> Value {
+    fn valid_gate_receipt() -> serde_json::Value {
         let profile = default_lifecycle_receipt_hash_profile();
         let mut receipt = json!({
             "change": "demo",
@@ -821,7 +835,7 @@ mod tests {
         receipt
     }
 
-    fn valid_sync_receipt() -> Value {
+    fn valid_sync_receipt() -> serde_json::Value {
         let profile = default_lifecycle_receipt_hash_profile();
         let mut receipt = json!({
             "actions": [
@@ -844,7 +858,7 @@ mod tests {
         receipt
     }
 
-    fn valid_downstream_receipt() -> Value {
+    fn valid_downstream_receipt() -> serde_json::Value {
         let profile = default_lifecycle_receipt_hash_profile();
         let mut receipt = json!({
             "command": "policy-check",

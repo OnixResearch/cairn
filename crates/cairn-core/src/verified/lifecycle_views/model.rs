@@ -1,4 +1,4 @@
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
+use std::collections::btree_map::Entry;
 
 use crate::verified::{
     change_dependencies::{ChangeDependencyGraph, ChangeDependencyNode},
@@ -41,8 +41,8 @@ struct ScenarioDeclaration {
 
 #[derive(Debug, Default)]
 struct ViewBuilder {
-    nodes: BTreeMap<String, LifecycleViewNode>,
-    edges: BTreeMap<EdgeKey, BTreeSet<String>>,
+    nodes: std::collections::BTreeMap<String, LifecycleViewNode>,
+    edges: std::collections::BTreeMap<EdgeKey, std::collections::BTreeSet<String>>,
     issues: Vec<LifecycleViewIssue>,
 }
 
@@ -251,8 +251,8 @@ fn add_spec_nodes(specs: &[ParsedSpec], builder: &mut ViewBuilder) {
 fn add_requirement_nodes(
     specs: &[ParsedSpec],
     builder: &mut ViewBuilder,
-) -> BTreeMap<String, String> {
-    let mut declarations = BTreeMap::<String, Vec<RequirementDeclaration>>::new();
+) -> std::collections::BTreeMap<String, String> {
+    let mut declarations = std::collections::BTreeMap::<String, Vec<RequirementDeclaration>>::new();
     for spec in specs {
         for requirement in &spec.requirements {
             declarations
@@ -267,7 +267,7 @@ fn add_requirement_nodes(
         }
     }
 
-    let mut reference_targets = BTreeMap::new();
+    let mut reference_targets = std::collections::BTreeMap::new();
     for (requirement_id, mut rows) in declarations {
         rows.sort_by(|left, right| {
             right
@@ -320,10 +320,10 @@ fn add_requirement_nodes(
 fn add_scenario_nodes(
     requirement_id: &str,
     requirement_rows: &[RequirementDeclaration],
-    reference_targets: &mut BTreeMap<String, String>,
+    reference_targets: &mut std::collections::BTreeMap<String, String>,
     builder: &mut ViewBuilder,
 ) {
-    let mut declarations = BTreeMap::<String, Vec<ScenarioDeclaration>>::new();
+    let mut declarations = std::collections::BTreeMap::<String, Vec<ScenarioDeclaration>>::new();
     for row in requirement_rows {
         for scenario in &row.requirement.scenarios {
             declarations
@@ -377,7 +377,7 @@ fn add_scenario_nodes(
 fn register_reference(
     reference: &str,
     node_id: &str,
-    reference_targets: &mut BTreeMap<String, String>,
+    reference_targets: &mut std::collections::BTreeMap<String, String>,
 ) {
     if let Entry::Vacant(entry) = reference_targets.entry(reference.to_string()) {
         entry.insert(node_id.to_string());
@@ -386,7 +386,7 @@ fn register_reference(
 
 fn add_traceability_requirement_targets(
     report: &TraceabilityCoverageReport,
-    reference_targets: &mut BTreeMap<String, String>,
+    reference_targets: &mut std::collections::BTreeMap<String, String>,
     builder: &mut ViewBuilder,
 ) {
     for (reference, occurrences) in &report.requirements {
@@ -411,7 +411,7 @@ fn add_traceability_requirement_targets(
 
 fn add_task_nodes(
     changes: &[LifecycleViewChangeInput],
-    reference_targets: &BTreeMap<String, String>,
+    reference_targets: &std::collections::BTreeMap<String, String>,
     builder: &mut ViewBuilder,
 ) {
     for change in changes {
@@ -459,7 +459,7 @@ fn add_task_nodes(
 
 fn add_traceability_edges(
     report: &TraceabilityCoverageReport,
-    reference_targets: &BTreeMap<String, String>,
+    reference_targets: &std::collections::BTreeMap<String, String>,
     builder: &mut ViewBuilder,
 ) {
     for (reference, occurrences) in &report.all_references {
@@ -539,7 +539,7 @@ fn build_kanban_board(
     changes: &[LifecycleViewChangeInput],
     graph: &ChangeDependencyGraph,
 ) -> KanbanBoard {
-    let mut lanes = BTreeMap::<KanbanColumnKind, Vec<KanbanCard>>::new();
+    let mut lanes = std::collections::BTreeMap::<KanbanColumnKind, Vec<KanbanCard>>::new();
     for kind in KanbanColumnKind::ORDERED {
         lanes.insert(kind, Vec::new());
     }
@@ -661,12 +661,14 @@ fn work_started(counts: Option<TaskCounts>) -> bool {
 }
 
 fn build_mindmap(
-    nodes: &BTreeMap<String, LifecycleViewNode>,
-    edges: &BTreeMap<EdgeKey, BTreeSet<String>>,
+    nodes: &std::collections::BTreeMap<String, LifecycleViewNode>,
+    edges: &std::collections::BTreeMap<EdgeKey, std::collections::BTreeSet<String>>,
     issues: &mut Vec<LifecycleViewIssue>,
 ) -> LifecycleMindmapNode {
-    let mut parents = BTreeMap::<String, BTreeSet<String>>::new();
-    let mut children = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut parents =
+        std::collections::BTreeMap::<String, std::collections::BTreeSet<String>>::new();
+    let mut children =
+        std::collections::BTreeMap::<String, std::collections::BTreeSet<String>>::new();
     for key in edges
         .keys()
         .filter(|key| key.kind == LifecycleViewEdgeKind::Contains)
@@ -690,7 +692,7 @@ fn build_mindmap(
             });
         }
     }
-    let mut ancestors = BTreeSet::new();
+    let mut ancestors = std::collections::BTreeSet::new();
     build_mindmap_node(
         REPOSITORY_NODE_ID,
         nodes,
@@ -709,9 +711,9 @@ fn build_mindmap(
 
 fn build_mindmap_node(
     node_id: &str,
-    nodes: &BTreeMap<String, LifecycleViewNode>,
-    children: &BTreeMap<String, BTreeSet<String>>,
-    ancestors: &mut BTreeSet<String>,
+    nodes: &std::collections::BTreeMap<String, LifecycleViewNode>,
+    children: &std::collections::BTreeMap<String, std::collections::BTreeSet<String>>,
+    ancestors: &mut std::collections::BTreeSet<String>,
     depth: usize,
     issues: &mut Vec<LifecycleViewIssue>,
 ) -> Option<LifecycleMindmapNode> {

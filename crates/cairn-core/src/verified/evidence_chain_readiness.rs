@@ -3,7 +3,6 @@
 
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::json;
 
 use super::evidence::canonical_json_hash;
 use super::nominal_identity::{
@@ -658,7 +657,7 @@ pub fn evidence_chain_readiness_hash(
     projections.sort_by(|left, right| left.role.cmp(&right.role));
     let mut non_claims = evidence.non_claims.clone();
     non_claims.sort();
-    canonical_json_hash(&json!({
+    canonical_json_hash(&serde_json::json!({
         "evidence_kind": evidence.evidence_kind,
         "profile_version": evidence.profile_version,
         "canonical_envelope_hash": evidence.canonical_envelope_hash,

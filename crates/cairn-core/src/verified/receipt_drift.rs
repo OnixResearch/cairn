@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-use serde_json::Value;
-
 use super::evidence::canonical_preserves_bytes;
 
 /// Classification of a field-level difference between two receipt snapshots.
@@ -68,9 +64,9 @@ pub struct DriftReport {
 /// - `source_map` maps field paths (RFC 6901 pointers) to requirement IDs.
 ///   Unmapped paths are reported with `source_id: None`.
 pub fn receipt_field_drift(
-    baseline: &Value,
-    candidate: &Value,
-    source_map: &HashMap<String, String>,
+    baseline: &serde_json::Value,
+    candidate: &serde_json::Value,
+    source_map: &std::collections::HashMap<String, String>,
 ) -> DriftReport {
     let baseline_bytes = canonical_preserves_bytes(baseline);
     let candidate_bytes = canonical_preserves_bytes(candidate);
@@ -103,9 +99,14 @@ fn blake3_hex(bytes: &[u8]) -> String {
     blake3::hash(bytes).to_hex().to_string()
 }
 
-fn compute_drift(prefix: &str, baseline: &Value, candidate: &Value, entries: &mut Vec<DriftEntry>) {
+fn compute_drift(
+    prefix: &str,
+    baseline: &serde_json::Value,
+    candidate: &serde_json::Value,
+    entries: &mut Vec<DriftEntry>,
+) {
     match (baseline, candidate) {
-        (Value::Object(b_map), Value::Object(c_map)) => {
+        (serde_json::Value::Object(b_map), serde_json::Value::Object(c_map)) => {
             // Collect all keys from both objects.
             let mut all_keys: Vec<&str> = b_map
                 .keys()
@@ -147,7 +148,7 @@ fn compute_drift(prefix: &str, baseline: &Value, candidate: &Value, entries: &mu
                 }
             }
         }
-        (Value::Array(b_items), Value::Array(c_items)) => {
+        (serde_json::Value::Array(b_items), serde_json::Value::Array(c_items)) => {
             // Compare element-by-element up to min length.
             let min_len = b_items.len().min(c_items.len());
             for i in 0..min_len {
@@ -203,32 +204,32 @@ fn json_pointer_escape(key: &str) -> String {
 }
 
 /// Return a short string summary of a JSON value suitable for drift reporting.
-fn value_summary(value: &Value) -> String {
+fn value_summary(value: &serde_json::Value) -> String {
     match value {
-        Value::Null => "null".to_string(),
-        Value::Bool(b) => b.to_string(),
-        Value::Number(n) => n.to_string(),
-        Value::String(s) => {
+        serde_json::Value::Null => "null".to_string(),
+        serde_json::Value::Bool(b) => b.to_string(),
+        serde_json::Value::Number(n) => n.to_string(),
+        serde_json::Value::String(s) => {
             if s.len() <= 80 {
                 format!("\"{s}\"")
             } else {
                 format!("\"{}…\"", &s[..77])
             }
         }
-        Value::Array(_) => "[array]".to_string(),
-        Value::Object(_) => "{{object}}".to_string(),
+        serde_json::Value::Array(_) => "[array]".to_string(),
+        serde_json::Value::Object(_) => "{{object}}".to_string(),
     }
 }
 
 /// Return the JSON type name for classification.
-fn json_type_name(value: &Value) -> &'static str {
+fn json_type_name(value: &serde_json::Value) -> &'static str {
     match value {
-        Value::Null => "null",
-        Value::Bool(_) => "boolean",
-        Value::Number(_) => "number",
-        Value::String(_) => "string",
-        Value::Array(_) => "array",
-        Value::Object(_) => "object",
+        serde_json::Value::Null => "null",
+        serde_json::Value::Bool(_) => "boolean",
+        serde_json::Value::Number(_) => "number",
+        serde_json::Value::String(_) => "string",
+        serde_json::Value::Array(_) => "array",
+        serde_json::Value::Object(_) => "object",
     }
 }
 
@@ -238,11 +239,11 @@ mod tests {
 
     use super::*;
 
-    fn empty_map() -> HashMap<String, String> {
-        HashMap::new()
+    fn empty_map() -> std::collections::HashMap<String, String> {
+        std::collections::HashMap::new()
     }
 
-    fn map_from_pairs(pairs: &[(&str, &str)]) -> HashMap<String, String> {
+    fn map_from_pairs(pairs: &[(&str, &str)]) -> std::collections::HashMap<String, String> {
         pairs
             .iter()
             .map(|(k, v)| (k.to_string(), v.to_string()))

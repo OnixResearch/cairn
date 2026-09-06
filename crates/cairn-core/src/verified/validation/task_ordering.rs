@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use crate::verified::{
     dag::topological_order,
     policy::{Policy, TaskMarker, TASK_IDENTITY_MARKER_ID, TASK_PREDECESSOR_MARKER_ID},
@@ -339,8 +337,8 @@ fn malformed_marker_issue(code: &str, line: usize, message: String) -> TaskOrder
 fn identify_nodes(
     raw_tasks: &[RawTask],
     issues: &mut Vec<TaskOrderingIssue>,
-) -> BTreeMap<String, TaskOrderingNode> {
-    let mut nodes = BTreeMap::<String, TaskOrderingNode>::new();
+) -> std::collections::BTreeMap<String, TaskOrderingNode> {
+    let mut nodes = std::collections::BTreeMap::<String, TaskOrderingNode>::new();
     for task in raw_tasks {
         if task.identity.occurrences == 0 {
             issues.push(TaskOrderingIssue {
@@ -395,10 +393,13 @@ fn identify_nodes(
 
 fn admit_edges(
     raw_tasks: &[RawTask],
-    nodes: &mut BTreeMap<String, TaskOrderingNode>,
+    nodes: &mut std::collections::BTreeMap<String, TaskOrderingNode>,
     issues: &mut Vec<TaskOrderingIssue>,
 ) -> Vec<TaskOrderingEdge> {
-    let known_ids = nodes.keys().cloned().collect::<BTreeSet<_>>();
+    let known_ids = nodes
+        .keys()
+        .cloned()
+        .collect::<std::collections::BTreeSet<_>>();
     let mut edges = Vec::new();
     for task in raw_tasks {
         if task.identity.occurrences != 1 {
@@ -410,7 +411,7 @@ fn admit_edges(
         if !known_ids.contains(task_id) {
             continue;
         }
-        let mut seen = BTreeSet::new();
+        let mut seen = std::collections::BTreeSet::new();
         for predecessor in &task.predecessors.targets {
             if !seen.insert(predecessor.clone()) {
                 issues.push(TaskOrderingIssue {
@@ -459,7 +460,7 @@ fn admit_edges(
     edges
 }
 
-fn sort_node_edges(nodes: &mut BTreeMap<String, TaskOrderingNode>) {
+fn sort_node_edges(nodes: &mut std::collections::BTreeMap<String, TaskOrderingNode>) {
     for node in nodes.values_mut() {
         node.predecessors.sort();
         node.predecessors.dedup();
@@ -469,13 +470,13 @@ fn sort_node_edges(nodes: &mut BTreeMap<String, TaskOrderingNode>) {
 }
 
 fn observe_progress(
-    nodes: &mut BTreeMap<String, TaskOrderingNode>,
+    nodes: &mut std::collections::BTreeMap<String, TaskOrderingNode>,
     issues: &mut Vec<TaskOrderingIssue>,
 ) {
     let states = nodes
         .iter()
         .map(|(task_id, node)| (task_id.clone(), node.state))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     for node in nodes.values_mut() {
         node.blocked_by = node
             .predecessors
@@ -621,7 +622,7 @@ mod tests {
             .issues
             .iter()
             .map(|issue| issue.code.as_str())
-            .collect::<BTreeSet<_>>();
+            .collect::<std::collections::BTreeSet<_>>();
 
         assert!(!graph.valid);
         assert!(graph.order.is_empty());
@@ -653,7 +654,7 @@ mod tests {
             .issues
             .iter()
             .map(|issue| issue.code.as_str())
-            .collect::<BTreeSet<_>>();
+            .collect::<std::collections::BTreeSet<_>>();
 
         assert!(!graph.valid);
         for expected in [

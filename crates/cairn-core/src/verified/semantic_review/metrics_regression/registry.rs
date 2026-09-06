@@ -1,7 +1,4 @@
 // r[impl cairn.semantic_review.metrics_regression_split.focused_helpers]
-use std::collections::BTreeSet;
-
-use serde_json::Value;
 
 use super::super::common::push_issue;
 use super::super::{SemanticReviewIssue, REVIEW_CATEGORIES, REVIEW_SOURCES};
@@ -23,8 +20,14 @@ const METRICS_STAGES: &[&str] = &[
     "proposal", "design", "tasks", "spec", "plan", "code", "diff",
 ];
 
-pub(super) fn validate_categories(value: &Value, issues: &mut Vec<SemanticReviewIssue>) {
-    let Some(categories) = value.get("categories").and_then(Value::as_array) else {
+pub(super) fn validate_categories(
+    value: &serde_json::Value,
+    issues: &mut Vec<SemanticReviewIssue>,
+) {
+    let Some(categories) = value
+        .get("categories")
+        .and_then(serde_json::Value::as_array)
+    else {
         push_issue(
             issues,
             "missing_registry_categories",
@@ -43,9 +46,9 @@ pub(super) fn validate_categories(value: &Value, issues: &mut Vec<SemanticReview
         return;
     }
 
-    let mut codes = BTreeSet::new();
-    let mut diagnostics = BTreeSet::new();
-    let mut requirement_ids = BTreeSet::new();
+    let mut codes = std::collections::BTreeSet::new();
+    let mut diagnostics = std::collections::BTreeSet::new();
+    let mut requirement_ids = std::collections::BTreeSet::new();
     for (index, category) in categories.iter().enumerate() {
         validate_category_fields(category, index, issues);
         track_unique(category, index, "code", &mut codes, issues);
@@ -60,7 +63,11 @@ pub(super) fn validate_categories(value: &Value, issues: &mut Vec<SemanticReview
     }
 }
 
-fn validate_category_fields(category: &Value, index: usize, issues: &mut Vec<SemanticReviewIssue>) {
+fn validate_category_fields(
+    category: &serde_json::Value,
+    index: usize,
+    issues: &mut Vec<SemanticReviewIssue>,
+) {
     if !category.is_object() {
         push_issue(
             issues,
@@ -71,7 +78,7 @@ fn validate_category_fields(category: &Value, index: usize, issues: &mut Vec<Sem
         return;
     }
     for field in REQUIRED_CATEGORY_FIELDS {
-        match category.get(*field).and_then(Value::as_str) {
+        match category.get(*field).and_then(serde_json::Value::as_str) {
             Some(text) if !text.trim().is_empty() => {}
             Some(_) | None => push_issue(
                 issues,
@@ -87,13 +94,13 @@ fn validate_category_fields(category: &Value, index: usize, issues: &mut Vec<Sem
 }
 
 fn validate_allowed(
-    category: &Value,
+    category: &serde_json::Value,
     index: usize,
     field: &str,
     allowed: &[&str],
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    if let Some(actual) = category.get(field).and_then(Value::as_str) {
+    if let Some(actual) = category.get(field).and_then(serde_json::Value::as_str) {
         if !actual.trim().is_empty() && !allowed.contains(&actual) {
             push_issue(
                 issues,
@@ -106,13 +113,13 @@ fn validate_allowed(
 }
 
 fn track_unique(
-    category: &Value,
+    category: &serde_json::Value,
     index: usize,
     field: &str,
-    seen: &mut BTreeSet<String>,
+    seen: &mut std::collections::BTreeSet<String>,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    if let Some(actual) = category.get(field).and_then(Value::as_str) {
+    if let Some(actual) = category.get(field).and_then(serde_json::Value::as_str) {
         if actual.trim().is_empty() {
             return;
         }

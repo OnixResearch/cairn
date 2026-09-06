@@ -1,16 +1,14 @@
-use serde_json::{json, Value};
-
 use super::{
     REVIEW_CATEGORIES, REVIEW_DECISIONS, REVIEW_KINDS, REVIEW_SEVERITIES, REVIEW_SOURCES,
     REVISION_DISPOSITIONS,
 };
 
-pub fn semantic_review_policy_profile_json() -> Value {
+pub fn semantic_review_policy_profile_json() -> serde_json::Value {
     // r[impl cairn.semantic_review.review_gate_policy_profiles.profiles]
     // r[impl cairn.semantic_review.review_gate_policy_profiles.profiles.profiles.kinds]
     // r[impl cairn.semantic_review.review_gate_policy_profiles.profiles.profiles.criteria]
     // r[impl cairn.semantic_review.review_gate_policy_profiles.sources]
-    json!({
+    serde_json::json!({
         "schema": "cairn.semantic-review.policy-profile.v1",
         "review_kinds": REVIEW_KINDS,
         "decisions": REVIEW_DECISIONS,

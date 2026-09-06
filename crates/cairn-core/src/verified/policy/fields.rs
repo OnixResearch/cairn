@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use super::{
     ArtifactSubstancePolicy, ExemptionMarkerPolicy, PolicyError, ReceiptSchema, TaskMarker,
     SUPPORTED_POLICY_VERSION,
@@ -34,10 +32,10 @@ pub(super) struct ChangeMetadataFields {
     pub(super) statuses: Vec<String>,
 }
 
-pub(super) fn version_field(value: &Value) -> Result<u64, PolicyError> {
+pub(super) fn version_field(value: &serde_json::Value) -> Result<u64, PolicyError> {
     let version = value
         .get("version")
-        .and_then(Value::as_u64)
+        .and_then(serde_json::Value::as_u64)
         .ok_or(PolicyError::MissingField("version"))?;
     if version != SUPPORTED_POLICY_VERSION {
         return Err(PolicyError::UnsupportedVersion {
@@ -49,12 +47,12 @@ pub(super) fn version_field(value: &Value) -> Result<u64, PolicyError> {
 }
 
 pub(super) fn require_nonempty_array(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
 ) -> Result<(), PolicyError> {
     let values = value
         .get(field)
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField(field))?;
     if values.is_empty() {
         return Err(PolicyError::InvalidField(field));
@@ -62,26 +60,28 @@ pub(super) fn require_nonempty_array(
     Ok(())
 }
 
-pub(super) fn task_marker_fields(value: &Value) -> Result<TaskMarkerFields, PolicyError> {
+pub(super) fn task_marker_fields(
+    value: &serde_json::Value,
+) -> Result<TaskMarkerFields, PolicyError> {
     let marker_policy = value
         .get("task_marker_policy")
         .ok_or(PolicyError::MissingField("task_marker_policy"))?;
     Ok(TaskMarkerFields {
         is_enabled: marker_policy
             .get("enabled")
-            .and_then(Value::as_bool)
+            .and_then(serde_json::Value::as_bool)
             .ok_or(PolicyError::MissingField("task_marker_policy.enabled"))?,
         strictness: string_field(marker_policy, "task_marker_policy.strictness")?,
     })
 }
 
-pub(super) fn task_markers(value: &Value) -> Result<Vec<TaskMarker>, PolicyError> {
+pub(super) fn task_markers(value: &serde_json::Value) -> Result<Vec<TaskMarker>, PolicyError> {
     let marker_policy = value
         .get("task_marker_policy")
         .ok_or(PolicyError::MissingField("task_marker_policy"))?;
     let markers = marker_policy
         .get("markers")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField("task_marker_policy.markers"))?;
     if markers.is_empty() {
         return Err(PolicyError::InvalidField("task_marker_policy.markers"));
@@ -98,14 +98,14 @@ pub(super) fn task_markers(value: &Value) -> Result<Vec<TaskMarker>, PolicyError
         .collect()
 }
 
-pub(super) fn gate_fields(value: &Value) -> Result<GateFields, PolicyError> {
+pub(super) fn gate_fields(value: &serde_json::Value) -> Result<GateFields, PolicyError> {
     let gate_policy = value
         .get("gate_policy")
         .ok_or(PolicyError::MissingField("gate_policy"))?;
     let stages = gate_stages(gate_policy)?;
     let is_gate_ignore_archives = gate_policy
         .get("ignore_archives")
-        .and_then(Value::as_bool)
+        .and_then(serde_json::Value::as_bool)
         .ok_or(PolicyError::MissingField("gate_policy.ignore_archives"))?;
     let gate_finding = gate_policy
         .get("finding")
@@ -155,7 +155,9 @@ pub(super) fn gate_fields(value: &Value) -> Result<GateFields, PolicyError> {
     })
 }
 
-pub(super) fn mutation_policy_fields(value: &Value) -> Result<MutationPolicyFields, PolicyError> {
+pub(super) fn mutation_policy_fields(
+    value: &serde_json::Value,
+) -> Result<MutationPolicyFields, PolicyError> {
     let mutation = value
         .get("mutation_policy")
         .ok_or(PolicyError::MissingField("mutation_policy"))?;
@@ -175,11 +177,11 @@ pub(super) fn mutation_policy_fields(value: &Value) -> Result<MutationPolicyFiel
     })
 }
 
-fn usize_field(value: &Value, field: &'static str) -> Result<usize, PolicyError> {
+fn usize_field(value: &serde_json::Value, field: &'static str) -> Result<usize, PolicyError> {
     let lookup = field.rsplit('.').next().unwrap_or(field);
     let raw = value
         .get(lookup)
-        .and_then(Value::as_u64)
+        .and_then(serde_json::Value::as_u64)
         .ok_or(PolicyError::MissingField(field))?;
     if raw == 0 {
         return Err(PolicyError::InvalidField(field));
@@ -187,22 +189,25 @@ fn usize_field(value: &Value, field: &'static str) -> Result<usize, PolicyError>
     usize::try_from(raw).map_err(|_| PolicyError::InvalidField(field))
 }
 
-pub(super) fn bool_field(value: &Value, field: &'static str) -> Result<bool, PolicyError> {
+pub(super) fn bool_field(
+    value: &serde_json::Value,
+    field: &'static str,
+) -> Result<bool, PolicyError> {
     let lookup = field.rsplit('.').next().unwrap_or(field);
     value
         .get(lookup)
-        .and_then(Value::as_bool)
+        .and_then(serde_json::Value::as_bool)
         .ok_or(PolicyError::MissingField(field))
 }
 
 pub(super) fn string_array_field(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
 ) -> Result<Vec<String>, PolicyError> {
     let lookup = field.rsplit('.').next().unwrap_or(field);
     value
         .get(lookup)
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField(field))?
         .iter()
         .map(|item| {
@@ -213,10 +218,12 @@ pub(super) fn string_array_field(
         .collect()
 }
 
-pub(super) fn receipt_schemas(value: &Value) -> Result<Vec<ReceiptSchema>, PolicyError> {
+pub(super) fn receipt_schemas(
+    value: &serde_json::Value,
+) -> Result<Vec<ReceiptSchema>, PolicyError> {
     let schemas = value
         .get("receipt_schemas")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField("receipt_schemas"))?;
     if schemas.is_empty() {
         return Err(PolicyError::InvalidField("receipt_schemas"));
@@ -235,7 +242,9 @@ pub(super) fn receipt_schemas(value: &Value) -> Result<Vec<ReceiptSchema>, Polic
         .collect()
 }
 
-pub(super) fn exemption_marker_policy(value: &Value) -> Result<ExemptionMarkerPolicy, PolicyError> {
+pub(super) fn exemption_marker_policy(
+    value: &serde_json::Value,
+) -> Result<ExemptionMarkerPolicy, PolicyError> {
     let marker_policy = value
         .get("exemption_marker_policy")
         .ok_or(PolicyError::MissingField("exemption_marker_policy"))?;
@@ -252,7 +261,9 @@ pub(super) fn exemption_marker_policy(value: &Value) -> Result<ExemptionMarkerPo
     })
 }
 
-pub(super) fn change_metadata_fields(value: &Value) -> Result<ChangeMetadataFields, PolicyError> {
+pub(super) fn change_metadata_fields(
+    value: &serde_json::Value,
+) -> Result<ChangeMetadataFields, PolicyError> {
     let change_metadata_policy = value
         .get("change_metadata_policy")
         .ok_or(PolicyError::MissingField("change_metadata_policy"))?;
@@ -269,10 +280,10 @@ pub(super) fn change_metadata_fields(value: &Value) -> Result<ChangeMetadataFiel
     })
 }
 
-fn gate_stages(gate_policy: &Value) -> Result<Vec<String>, PolicyError> {
+fn gate_stages(gate_policy: &serde_json::Value) -> Result<Vec<String>, PolicyError> {
     let stages = gate_policy
         .get("stages")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField("gate_policy.stages"))?
         .iter()
         .map(|stage| {
@@ -288,11 +299,14 @@ fn gate_stages(gate_policy: &Value) -> Result<Vec<String>, PolicyError> {
     Ok(stages)
 }
 
-pub(super) fn string_field(value: &Value, field: &'static str) -> Result<String, PolicyError> {
+pub(super) fn string_field(
+    value: &serde_json::Value,
+    field: &'static str,
+) -> Result<String, PolicyError> {
     let lookup = field.rsplit('.').next().unwrap_or(field);
     value
         .get(lookup)
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .map(str::to_string)
         .ok_or(PolicyError::MissingField(field))
 }

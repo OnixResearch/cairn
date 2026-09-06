@@ -10,7 +10,6 @@
 //! r[verify cairn.release_evidence.formal_proof_readiness_fixture.docs]
 
 use serde_json::json;
-use serde_json::Value;
 
 use super::nominal_identity::{
     ArtifactDigestRole, Blake3Digest, DigestRoleMarker, GraphDigestRole, InputDigestRole,
@@ -83,7 +82,7 @@ pub struct FormalProofReadinessReport {
 
 impl FormalProofReadinessReport {
     #[must_use]
-    pub fn to_json(&self) -> Value {
+    pub fn to_json(&self) -> serde_json::Value {
         json!({
             "valid": self.valid,
             "issues": self.issues.iter().map(FormalProofReadinessIssue::to_json).collect::<Vec<_>>(),
@@ -108,7 +107,7 @@ impl FormalProofReadinessIssue {
     }
 
     #[must_use]
-    pub fn to_json(&self) -> Value {
+    pub fn to_json(&self) -> serde_json::Value {
         json!({"code": self.code, "field": self.field})
     }
 }

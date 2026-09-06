@@ -1,6 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
-
-use serde_json::json;
+use std::collections::VecDeque;
 
 use crate::verified::evidence::canonical_json_hash;
 
@@ -29,7 +27,7 @@ pub fn evaluate_registry_graph(
         .iter()
         .filter(|node| profile.allowed_node_kinds.contains(&node.kind))
         .map(|node| node.stable_id.clone())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     if profile.id.is_empty() || profile.allowed_edge_kinds.is_empty() {
         issues.push(issue(
             "registry.graph_profile_invalid",
@@ -61,8 +59,8 @@ pub fn evaluate_registry_graph(
         .filter(|edge| profile.allowed_edge_kinds.contains(&edge.kind))
         .cloned()
         .collect::<Vec<_>>();
-    let mut unresolved = BTreeSet::new();
-    let mut edge_keys = BTreeSet::new();
+    let mut unresolved = std::collections::BTreeSet::new();
+    let mut edge_keys = std::collections::BTreeSet::new();
     for edge in &selected_edges {
         for endpoint in [&edge.from_id, &edge.to_id] {
             if !allowed_nodes.contains(endpoint) {
@@ -138,7 +136,7 @@ pub fn evaluate_registry_graph(
     selected_edge_ids.sort();
     selected_edge_ids.dedup();
     issues.sort_by(issue_order);
-    let result_hash = canonical_json_hash(&json!({
+    let result_hash = canonical_json_hash(&serde_json::json!({
         "profile_id": profile.id,
         "snapshot_hash": snapshot.snapshot_hash,
         "selected_nodes": selected_nodes,
@@ -168,19 +166,21 @@ pub fn evaluate_registry_graph(
 }
 
 fn traversal_set(
-    nodes: &BTreeSet<String>,
+    nodes: &std::collections::BTreeSet<String>,
     edges: &[RegistryEdge],
     start_id: Option<&str>,
     direction: RegistryGraphDirection,
-) -> BTreeSet<String> {
+) -> std::collections::BTreeSet<String> {
     let Some(start) = start_id else {
         return nodes.clone();
     };
     if !nodes.contains(start) {
-        return BTreeSet::new();
+        return std::collections::BTreeSet::new();
     }
-    let mut forward: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
-    let mut reverse: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+    let mut forward: std::collections::BTreeMap<&str, Vec<&str>> =
+        std::collections::BTreeMap::new();
+    let mut reverse: std::collections::BTreeMap<&str, Vec<&str>> =
+        std::collections::BTreeMap::new();
     for edge in edges {
         forward.entry(&edge.from_id).or_default().push(&edge.to_id);
         reverse.entry(&edge.to_id).or_default().push(&edge.from_id);
@@ -189,7 +189,7 @@ fn traversal_set(
         values.sort();
         values.dedup();
     }
-    let mut selected = BTreeSet::from([start.to_string()]);
+    let mut selected = std::collections::BTreeSet::from([start.to_string()]);
     let mut queue = VecDeque::from([start]);
     while let Some(current) = queue.pop_front() {
         let neighbors = match direction {
@@ -214,12 +214,16 @@ fn traversal_set(
     selected
 }
 
-fn stable_topological_order(nodes: &BTreeSet<String>, edges: &[RegistryEdge]) -> Vec<String> {
+fn stable_topological_order(
+    nodes: &std::collections::BTreeSet<String>,
+    edges: &[RegistryEdge],
+) -> Vec<String> {
     let mut indegree = nodes
         .iter()
         .map(|node| (node.as_str(), 0_usize))
-        .collect::<BTreeMap<_, _>>();
-    let mut adjacency: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut adjacency: std::collections::BTreeMap<&str, Vec<&str>> =
+        std::collections::BTreeMap::new();
     for edge in edges {
         if let Some(value) = indegree.get_mut(edge.from_id.as_str()) {
             *value += 1;
@@ -237,7 +241,7 @@ fn stable_topological_order(nodes: &BTreeSet<String>, edges: &[RegistryEdge]) ->
         .iter()
         .filter(|(_, count)| **count == 0)
         .map(|(node, _)| *node)
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let mut order = Vec::new();
     while let Some(next) = ready.pop_first() {
         order.push(next.to_string());
@@ -253,8 +257,12 @@ fn stable_topological_order(nodes: &BTreeSet<String>, edges: &[RegistryEdge]) ->
     order
 }
 
-fn canonical_cycle_witness(nodes: &BTreeSet<String>, edges: &[RegistryEdge]) -> Vec<String> {
-    let mut adjacency: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+fn canonical_cycle_witness(
+    nodes: &std::collections::BTreeSet<String>,
+    edges: &[RegistryEdge],
+) -> Vec<String> {
+    let mut adjacency: std::collections::BTreeMap<&str, Vec<&str>> =
+        std::collections::BTreeMap::new();
     for edge in edges {
         adjacency
             .entry(&edge.from_id)
@@ -265,7 +273,7 @@ fn canonical_cycle_witness(nodes: &BTreeSet<String>, edges: &[RegistryEdge]) -> 
         values.sort();
         values.dedup();
     }
-    let mut state = BTreeMap::new();
+    let mut state = std::collections::BTreeMap::new();
     let mut stack = Vec::new();
     for node in nodes {
         if state.get(node.as_str()).copied().unwrap_or(0) == 0 {
@@ -279,8 +287,8 @@ fn canonical_cycle_witness(nodes: &BTreeSet<String>, edges: &[RegistryEdge]) -> 
 
 fn visit_cycle<'a>(
     node: &'a str,
-    adjacency: &BTreeMap<&'a str, Vec<&'a str>>,
-    state: &mut BTreeMap<&'a str, u8>,
+    adjacency: &std::collections::BTreeMap<&'a str, Vec<&'a str>>,
+    state: &mut std::collections::BTreeMap<&'a str, u8>,
     stack: &mut Vec<&'a str>,
 ) -> Option<Vec<String>> {
     state.insert(node, 1);

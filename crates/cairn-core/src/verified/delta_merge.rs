@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::Serialize;
 
 use super::evidence::blake3_hex;
@@ -206,7 +204,7 @@ fn extract_delta_sections(
 ) -> Vec<DeltaSection> {
     let mut sections = Vec::new();
     let mut current: Option<DeltaSection> = None;
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     let mut fenced = false;
 
     for line in delta.lines() {
@@ -378,7 +376,7 @@ fn parse_accepted_document(
     };
     let (preamble, raw_blocks) = accepted_requirement_blocks(&requirements);
     let mut blocks = Vec::new();
-    let mut locations = BTreeMap::<String, Vec<String>>::new();
+    let mut locations = std::collections::BTreeMap::<String, Vec<String>>::new();
 
     for block in raw_blocks {
         let heading = block.lines().next().unwrap_or_default().trim().to_string();
@@ -519,7 +517,7 @@ fn diagnose_duplicate_operation_ids(
     operations: &[DeltaOperation],
     diagnostics: &mut Vec<DeltaMergeDiagnostic>,
 ) {
-    let mut locations = BTreeMap::<&str, Vec<String>>::new();
+    let mut locations = std::collections::BTreeMap::<&str, Vec<String>>::new();
     for operation in operations {
         locations
             .entry(&operation.requirement_id)

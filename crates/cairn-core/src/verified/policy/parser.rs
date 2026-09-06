@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use crate::verified::artifact_workflow::{
     workflow_profile_registry_from_value, workflow_schemas_from_value,
 };
@@ -26,12 +24,12 @@ use super::{
 };
 
 pub fn parse_policy_json(text: &str) -> Result<Policy, PolicyError> {
-    let value: Value =
+    let value: serde_json::Value =
         serde_json::from_str(text).map_err(|source| PolicyError::Parse { source })?;
     validate_policy_json(value)
 }
 
-pub fn validate_policy_json(value: Value) -> Result<Policy, PolicyError> {
+pub fn validate_policy_json(value: serde_json::Value) -> Result<Policy, PolicyError> {
     // r[impl cairn.supersede.nickel_contracts] r[impl cairn.supersede.nickel_contracts.boundary]
     // r[impl cairn.supersede.nickel_contracts.exemptions] r[impl cairn.supersede.nickel_contracts.export]
     // r[impl developer_experience.core_policy_parser_boundary_split.modules]

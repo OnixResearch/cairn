@@ -3,8 +3,6 @@
 //! The shell supplies every path, boundary, locator, pointer, and spec observation.
 //! This module has no global-registry input and no transitive-reference input.
 
-use std::collections::BTreeSet;
-
 pub const ROOT_SELECTOR_CONFLICT: &str = "lifecycle_store.root.selector_conflict";
 pub const ROOT_STORE_MISSING: &str = "lifecycle_store.root.store_missing";
 pub const ROOT_STORE_AMBIGUOUS: &str = "lifecycle_store.root.store_ambiguous";
@@ -342,8 +340,8 @@ pub fn normalize_direct_references(
             .then(left.remote_hint.cmp(&right.remote_hint))
     });
 
-    let mut seen = BTreeSet::new();
-    let mut duplicate_ids = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
+    let mut duplicate_ids = std::collections::BTreeSet::new();
     let mut normalized = Vec::new();
     let mut findings = Vec::new();
 
@@ -721,7 +719,7 @@ fn index_direct_reference(
 }
 
 fn accepted_spec_ids_have_duplicates(specs: &[AcceptedSpecMetadata]) -> bool {
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for spec in specs {
         if !seen.insert(&spec.spec_id) {
             return true;
@@ -1120,7 +1118,7 @@ mod tests {
             .doctor_findings
             .iter()
             .map(|finding| finding.code.as_str())
-            .collect::<BTreeSet<_>>();
+            .collect::<std::collections::BTreeSet<_>>();
 
         assert!(!result.valid);
         assert!(!result.healthy);

@@ -1,10 +1,10 @@
-use serde_json::{json, Map, Value};
+use serde_json::Map;
 
 use super::common::{count_string_field, increment_count, issues_json, sort_count_map};
 use super::{review_receipt_hash, validate_review_receipt, REVIEW_ANALYTICS_SCHEMA_V1};
 use crate::verified::evidence::canonical_json_hash;
 
-pub fn review_ledger_analytics(receipts: &[Value]) -> Value {
+pub fn review_ledger_analytics(receipts: &[serde_json::Value]) -> serde_json::Value {
     // r[impl cairn.semantic_review.review_ledger_analytics.aggregate]
     // r[impl cairn.semantic_review.review_ledger_analytics.aggregate.aggregate.counts]
     // r[impl cairn.semantic_review.review_ledger_analytics.aggregate.aggregate.hashes]
@@ -15,7 +15,7 @@ pub fn review_ledger_analytics(receipts: &[Value]) -> Value {
         if validation.valid {
             valid_receipts.push(receipt.clone());
         } else {
-            invalid_inputs.push(json!({
+            invalid_inputs.push(serde_json::json!({
                 "index": index,
                 "issues": issues_json(&validation.issues),
             }));
@@ -23,11 +23,15 @@ pub fn review_ledger_analytics(receipts: &[Value]) -> Value {
     }
     let by_kind = count_string_field(&valid_receipts, "review_kind");
     let by_decision = count_string_field(&valid_receipts, "decision");
-    let mut by_category: Map<String, Value> = Map::new();
+    let mut by_category: Map<String, serde_json::Value> = Map::new();
     for receipt in &valid_receipts {
-        if let Some(findings) = receipt.get("findings").and_then(Value::as_array) {
+        if let Some(findings) = receipt
+            .get("findings")
+            .and_then(serde_json::Value::as_array)
+        {
             for finding in findings {
-                if let Some(category) = finding.get("category").and_then(Value::as_str) {
+                if let Some(category) = finding.get("category").and_then(serde_json::Value::as_str)
+                {
                     increment_count(&mut by_category, category);
                 }
             }
@@ -42,10 +46,10 @@ pub fn review_ledger_analytics(receipts: &[Value]) -> Value {
     let mut warnings = Vec::new();
     if valid_receipts.len() < 5 {
         warnings.push(
-            json!({"code": "small_sample", "message": "fewer than five valid review receipts"}),
+            serde_json::json!({"code": "small_sample", "message": "fewer than five valid review receipts"}),
         );
     }
-    let mut receipt = json!({
+    let mut receipt = serde_json::json!({
         "schema_version": REVIEW_ANALYTICS_SCHEMA_V1,
         "valid": invalid_inputs.is_empty(),
         "verdict": if invalid_inputs.is_empty() {"PASS"} else {"FAIL"},
@@ -61,6 +65,6 @@ pub fn review_ledger_analytics(receipts: &[Value]) -> Value {
         "warnings": warnings,
     });
     let hash = canonical_json_hash(&receipt);
-    receipt["receipt_hash"] = json!(hash);
+    receipt["receipt_hash"] = serde_json::json!(hash);
     receipt
 }

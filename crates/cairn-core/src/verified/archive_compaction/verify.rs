@@ -1,7 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
-use serde_json::json;
-
 use crate::verified::evidence::{blake3_hex, canonical_json_hash};
 use crate::verified::nominal_identity::{ArchiveDigestRole, ArtifactDigestRole, PackDigestRole};
 
@@ -29,8 +25,8 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
         "packed_archives_root",
         &mut issues,
     );
-    let mut seen_archives = BTreeSet::new();
-    let mut expected_objects = BTreeMap::<String, u64>::new();
+    let mut seen_archives = std::collections::BTreeSet::new();
+    let mut expected_objects = std::collections::BTreeMap::<String, u64>::new();
     if !pack
         .archives
         .windows(2)
@@ -62,7 +58,7 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
                 "pack archive identities must be unique",
             ));
         }
-        let mut seen_paths = BTreeSet::new();
+        let mut seen_paths = std::collections::BTreeSet::new();
         if !archive
             .entries
             .windows(2)
@@ -109,7 +105,7 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
                 }
             }
         }
-        let expected_archive_root = canonical_json_hash(&json!({
+        let expected_archive_root = canonical_json_hash(&serde_json::json!({
             "archive_id": archive.archive_id,
             "entries": archive.entries,
         }));
@@ -120,12 +116,12 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
                 "archive root must match canonical manifest entries",
             ));
         }
-        archive_roots.push(json!({
+        archive_roots.push(serde_json::json!({
             "archive_id": archive.archive_id,
             "archive_root": archive.archive_root,
         }));
     }
-    let expected_packed_root = canonical_json_hash(&json!({"archives": archive_roots}));
+    let expected_packed_root = canonical_json_hash(&serde_json::json!({"archives": archive_roots}));
     if !same_digest::<ArchiveDigestRole>(&pack.packed_archives_root, &expected_packed_root) {
         issues.push(issue(
             "archive_compaction.packed_archives_root_mismatch",
@@ -137,7 +133,7 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
         .objects
         .iter()
         .map(|object| (object.content_hash.clone(), object.byte_length))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     if declared_objects != expected_objects || declared_objects.len() != pack.objects.len() {
         issues.push(issue(
             "archive_compaction.object_manifest_mismatch",
@@ -166,7 +162,7 @@ pub fn verify_pack_objects(
     // r[impl cairn.sync_archive.compaction.verify]
     // r[impl cairn.sync_archive.compaction.verify.tampered_object]
     let mut issues = validate_pack_manifest(pack);
-    let mut observed = BTreeMap::<String, &[u8]>::new();
+    let mut observed = std::collections::BTreeMap::<String, &[u8]>::new();
     for object in objects {
         if observed
             .insert(object.content_hash.clone(), &object.bytes)

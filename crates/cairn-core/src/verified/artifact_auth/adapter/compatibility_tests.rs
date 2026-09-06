@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use crate::{
     AuthenticatedEvidenceIssue, AuthenticatedEvidenceReport, AUTHENTICATED_EVIDENCE_BOUNDARY,
 };
@@ -45,7 +43,7 @@ fn passing_dual_run_classifies_every_dimension_without_admitting_authority() {
         .classifications
         .iter()
         .map(|item| item.dimension)
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     assert_eq!(dimensions.len(), 5);
     assert!(report.classifications.iter().any(|item| {
         item.dimension == CairnArtifactAuthCompatibilityDimension::Preimage

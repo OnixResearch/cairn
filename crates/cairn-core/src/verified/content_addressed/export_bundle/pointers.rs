@@ -1,13 +1,16 @@
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_pointer_issues(
-    object: &Map<String, Value>,
+    object: &Map<String, serde_json::Value>,
     object_hashes: &[String],
 ) -> Vec<ExportBundleIssue> {
-    let Some(pointers) = object.get("name_pointers").and_then(Value::as_array) else {
+    let Some(pointers) = object
+        .get("name_pointers")
+        .and_then(serde_json::Value::as_array)
+    else {
         return vec![bundle_issue(
             "export_bundle.invalid_name_pointers",
             "name_pointers must be an array",
@@ -25,11 +28,11 @@ pub(super) fn export_bundle_pointer_issues(
         };
         let name = pointer
             .get("name")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
         let object_hash = pointer
             .get("object_hash")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
         if name.is_empty() {
             issues.push(bundle_issue(

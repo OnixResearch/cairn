@@ -1,7 +1,3 @@
-use std::collections::BTreeSet;
-
-use serde_json::json;
-
 use crate::verified::evidence::canonical_json_hash;
 
 use super::{
@@ -81,7 +77,7 @@ pub fn query_registry_tags(
                         tag.namespace == *namespace && tag.key == *key && tag.value == *value
                     })
                     .map(|tag| tag.subject_id.clone())
-                    .collect::<BTreeSet<_>>()
+                    .collect::<std::collections::BTreeSet<_>>()
             })
             .collect::<Vec<_>>();
         by_selector
@@ -118,7 +114,7 @@ fn finalize_query(
     selected_ids.dedup();
     issues.sort_by(issue_order);
     let valid = issues.is_empty();
-    let result_hash = canonical_json_hash(&json!({
+    let result_hash = canonical_json_hash(&serde_json::json!({
         "snapshot_hash": snapshot.snapshot_hash,
         "selector": selector,
         "selected_ids": selected_ids,

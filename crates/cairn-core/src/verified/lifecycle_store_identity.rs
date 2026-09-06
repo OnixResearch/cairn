@@ -5,10 +5,7 @@
 //! This module treats checkout paths as opaque local display facts. It performs
 //! no I/O and makes no claim about path existence, ownership, or safety.
 
-use std::collections::BTreeSet;
-
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 use super::evidence::{blake3_hex, canonical_json, canonical_json_hash};
 
@@ -666,7 +663,7 @@ fn parse_non_claims(
         );
     }
     let mut accepted = Vec::new();
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for (index, value) in values.iter().enumerate() {
         let field = format!("non_claims[{index}]");
         if !is_safe_bounded_text(value, LIFECYCLE_STORE_NON_CLAIM_MAX_BYTES) {
@@ -745,7 +742,7 @@ fn canonical_store_identity_material(
     non_claims: &[String],
     source_identity: &str,
 ) -> String {
-    canonical_json(&json!({
+    canonical_json(&serde_json::json!({
         "domain": STORE_IDENTITY_DOMAIN,
         "schema": schema,
         "store_id": store_id,
@@ -887,8 +884,8 @@ fn validate_mapping_uniqueness(
     mappings: &[LifecycleStoreLocatorMapping],
     diagnostics: &mut Vec<LifecycleStoreDiagnostic>,
 ) {
-    let mut ids = BTreeSet::new();
-    let mut paths = BTreeSet::new();
+    let mut ids = std::collections::BTreeSet::new();
+    let mut paths = std::collections::BTreeSet::new();
     for mapping in mappings {
         if !ids.insert(mapping.store_id.as_str()) {
             push_diagnostic(
@@ -1006,7 +1003,7 @@ fn build_locator_state(
 }
 
 fn local_locator_state_identity(mappings: &[LifecycleStoreLocatorMapping]) -> String {
-    canonical_json_hash(&json!({
+    canonical_json_hash(&serde_json::json!({
         "domain": LOCATOR_LOCAL_STATE_DOMAIN,
         "schema": LIFECYCLE_STORE_LOCATOR_SCHEMA_V1,
         "mappings": mappings,
@@ -1017,13 +1014,13 @@ fn portable_locator_state_identity(mappings: &[LifecycleStoreLocatorMapping]) ->
     let portable = mappings
         .iter()
         .map(|mapping| {
-            json!({
+            serde_json::json!({
                 "store_id": mapping.store_id.as_str(),
                 "store_identity": mapping.store_identity.as_str(),
             })
         })
         .collect::<Vec<_>>();
-    canonical_json_hash(&json!({
+    canonical_json_hash(&serde_json::json!({
         "domain": LOCATOR_PORTABLE_STATE_DOMAIN,
         "schema": LIFECYCLE_STORE_LOCATOR_SCHEMA_V1,
         "mappings": portable,
@@ -1034,7 +1031,7 @@ fn mapping_ids_are_unique(mappings: &[LifecycleStoreLocatorMapping]) -> bool {
     let ids = mappings
         .iter()
         .map(|mapping| mapping.store_id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     ids.len() == mappings.len()
 }
 
@@ -1042,7 +1039,7 @@ fn mapping_paths_are_unique(mappings: &[LifecycleStoreLocatorMapping]) -> bool {
     let paths = mappings
         .iter()
         .map(|mapping| mapping.checkout_path.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     paths.len() == mappings.len()
 }
 
@@ -1285,10 +1282,13 @@ mod tests {
         assert_eq!(report.diagnostics, sorted);
         let emitted_codes = codes(&report.diagnostics)
             .into_iter()
-            .collect::<BTreeSet<_>>();
+            .collect::<std::collections::BTreeSet<_>>();
         assert_eq!(
             emitted_codes,
-            BTreeSet::from([DIAGNOSTIC_SCHEMA_UNSUPPORTED, DIAGNOSTIC_REMOTE_HINT_UNSAFE,])
+            std::collections::BTreeSet::from([
+                DIAGNOSTIC_SCHEMA_UNSUPPORTED,
+                DIAGNOSTIC_REMOTE_HINT_UNSAFE,
+            ])
         );
         assert!(report
             .diagnostics
@@ -1491,8 +1491,8 @@ mod tests {
         assert_eq!(
             codes(&report.diagnostics)
                 .into_iter()
-                .collect::<BTreeSet<_>>(),
-            BTreeSet::from([
+                .collect::<std::collections::BTreeSet<_>>(),
+            std::collections::BTreeSet::from([
                 DIAGNOSTIC_DUPLICATE_ID,
                 DIAGNOSTIC_DUPLICATE_PATH,
                 DIAGNOSTIC_LOCATOR_STATE_IDENTITY_STALE,

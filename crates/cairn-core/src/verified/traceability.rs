@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::{Deserialize, Serialize};
 
 use crate::verified::requirement_id_registry::{
@@ -123,9 +121,10 @@ pub struct TraceabilityMarkerValidationReport {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TraceabilityCoverageReport {
-    pub requirements: BTreeMap<String, Vec<TraceabilityRequirementOccurrence>>,
-    pub coverage_references: BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
-    pub all_references: BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
+    pub requirements: std::collections::BTreeMap<String, Vec<TraceabilityRequirementOccurrence>>,
+    pub coverage_references:
+        std::collections::BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
+    pub all_references: std::collections::BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
     pub missing: Vec<String>,
     pub dangling: Vec<String>,
     pub requirement_count: usize,
@@ -456,7 +455,7 @@ fn validate_duplicate_links(
     if allow_duplicate_links {
         return;
     }
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for link in links {
         let key = format!("{}:{}", link.verb, link.requirement_id);
         if !seen.insert(key) {
@@ -538,8 +537,8 @@ fn sort_marker_issues(issues: &mut [TraceabilityMarkerIssue]) {
 
 fn collect_requirement_markers(
     files: &[TraceabilityFile],
-) -> BTreeMap<String, Vec<TraceabilityRequirementOccurrence>> {
-    let mut requirements = BTreeMap::new();
+) -> std::collections::BTreeMap<String, Vec<TraceabilityRequirementOccurrence>> {
+    let mut requirements = std::collections::BTreeMap::new();
     for file in files {
         for (line_index, line) in file.text.lines().enumerate() {
             if let Some(requirement_id) = traceability_spec_marker(line.trim()) {
@@ -559,8 +558,8 @@ fn collect_requirement_markers(
 fn collect_reference_markers(
     files: &[TraceabilityFile],
     allowed_verbs: &[String],
-) -> BTreeMap<String, Vec<TraceabilityReferenceOccurrence>> {
-    let mut references = BTreeMap::new();
+) -> std::collections::BTreeMap<String, Vec<TraceabilityReferenceOccurrence>> {
+    let mut references = std::collections::BTreeMap::new();
     for file in files {
         for (line_index, line) in file.text.lines().enumerate() {
             for marker in traceability_ref_markers(line, allowed_verbs) {
@@ -579,8 +578,8 @@ fn collect_reference_markers(
 }
 
 fn coverage_references(
-    all_references: &BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
-) -> BTreeMap<String, Vec<TraceabilityReferenceOccurrence>> {
+    all_references: &std::collections::BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
+) -> std::collections::BTreeMap<String, Vec<TraceabilityReferenceOccurrence>> {
     all_references
         .iter()
         .filter_map(|(requirement_id, references)| {
@@ -599,8 +598,8 @@ fn coverage_references(
 }
 
 fn missing_requirements(
-    requirements: &BTreeMap<String, Vec<TraceabilityRequirementOccurrence>>,
-    coverage_references: &BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
+    requirements: &std::collections::BTreeMap<String, Vec<TraceabilityRequirementOccurrence>>,
+    coverage_references: &std::collections::BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
 ) -> Vec<String> {
     requirements
         .keys()
@@ -610,8 +609,8 @@ fn missing_requirements(
 }
 
 fn dangling_references(
-    requirements: &BTreeMap<String, Vec<TraceabilityRequirementOccurrence>>,
-    all_references: &BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
+    requirements: &std::collections::BTreeMap<String, Vec<TraceabilityRequirementOccurrence>>,
+    all_references: &std::collections::BTreeMap<String, Vec<TraceabilityReferenceOccurrence>>,
 ) -> Vec<String> {
     all_references
         .keys()
@@ -624,7 +623,7 @@ pub fn unique_sorted_strings(values: &[String]) -> Vec<String> {
     values
         .iter()
         .cloned()
-        .collect::<BTreeSet<_>>()
+        .collect::<std::collections::BTreeSet<_>>()
         .into_iter()
         .collect()
 }

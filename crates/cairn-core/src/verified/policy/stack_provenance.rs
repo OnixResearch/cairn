@@ -1,12 +1,12 @@
-use serde_json::Value;
-
 use crate::verified::stack_provenance::{
     is_blake3_hex, is_stack_provenance_mode, StackProvenancePolicy,
 };
 
 use super::{fields::string_array_field, fields::string_field, PolicyError};
 
-pub(super) fn stack_provenance_policy(value: &Value) -> Result<StackProvenancePolicy, PolicyError> {
+pub(super) fn stack_provenance_policy(
+    value: &serde_json::Value,
+) -> Result<StackProvenancePolicy, PolicyError> {
     // r[impl cairn.stack_provenance_gates.policy]
     let policy = value
         .get("stack_provenance_gate")

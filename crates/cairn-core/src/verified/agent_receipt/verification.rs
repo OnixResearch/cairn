@@ -1,4 +1,4 @@
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 use super::common::issue;
 use super::types::AgentRunGateIssue;
@@ -8,8 +8,13 @@ use super::types::AgentRunGateIssue;
 // r[impl cairn.supersede.agent_run_receipts.schema_migration]
 // r[impl cairn.supersede.agent_run_receipts.schema_migration.legacy]
 // r[impl cairn.supersede.agent_run_receipts.verification_contract.self_authored]
-pub(super) fn verification_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue> {
-    let verdict = object.get("verdict").and_then(Value::as_str).unwrap_or("");
+pub(super) fn verification_issues(
+    object: &Map<String, serde_json::Value>,
+) -> Vec<AgentRunGateIssue> {
+    let verdict = object
+        .get("verdict")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
     if verdict != "success" && verdict != "PASS" {
         return Vec::new();
     }

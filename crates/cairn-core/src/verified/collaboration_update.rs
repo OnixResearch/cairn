@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -35,7 +33,7 @@ pub struct ChangeCollaborationUpdateSnapshot {
     pub design: Option<String>,
     pub tasks: Option<String>,
     pub metadata: Option<String>,
-    pub delta_specs: BTreeMap<String, String>,
+    pub delta_specs: std::collections::BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -277,8 +275,8 @@ fn require_conflict_free_state(state: &ChangeCollaborationState) -> Result<Strin
 
 fn desired_artifacts(
     snapshot: &ChangeCollaborationUpdateSnapshot,
-) -> Result<BTreeMap<ChangeArtifactId, String>, ChangeCobError> {
-    let mut artifacts = BTreeMap::new();
+) -> Result<std::collections::BTreeMap<ChangeArtifactId, String>, ChangeCobError> {
+    let mut artifacts = std::collections::BTreeMap::new();
     insert_present_artifact(
         &mut artifacts,
         ChangeArtifactId::proposal(),
@@ -306,7 +304,7 @@ fn desired_artifacts(
 }
 
 fn insert_present_artifact(
-    artifacts: &mut BTreeMap<ChangeArtifactId, String>,
+    artifacts: &mut std::collections::BTreeMap<ChangeArtifactId, String>,
     artifact: ChangeArtifactId,
     content: Option<String>,
 ) {
@@ -317,14 +315,14 @@ fn insert_present_artifact(
 
 fn artifact_update_actions(
     state: &ChangeCollaborationState,
-    desired: BTreeMap<ChangeArtifactId, String>,
+    desired: std::collections::BTreeMap<ChangeArtifactId, String>,
 ) -> Result<Vec<ChangeCollaborationAction>, ChangeCobError> {
     let artifact_ids = state
         .artifacts
         .keys()
         .chain(desired.keys())
         .cloned()
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let mut actions = Vec::new();
     for artifact in artifact_ids {
         let (current, basis) = match state.artifacts.get(&artifact) {
@@ -342,7 +340,7 @@ fn artifact_update_actions(
                 };
                 (revision.value.clone(), history.head_ids())
             }
-            None => (None, BTreeSet::new()),
+            None => (None, std::collections::BTreeSet::new()),
         };
         let next = desired.get(&artifact).cloned();
         if current != next {
@@ -430,7 +428,10 @@ mod tests {
             design: None,
             tasks: None,
             metadata: None,
-            delta_specs: BTreeMap::from([(CHANGE_ID.to_string(), "# Delta\n".to_string())]),
+            delta_specs: std::collections::BTreeMap::from([(
+                CHANGE_ID.to_string(),
+                "# Delta\n".to_string(),
+            )]),
         })
         .unwrap();
         initialize_change_collaboration_import(init, CREATOR).unwrap()
@@ -446,7 +447,7 @@ mod tests {
             design: Some("# Design\n".to_string()),
             tasks: None,
             metadata: None,
-            delta_specs: BTreeMap::new(),
+            delta_specs: std::collections::BTreeMap::new(),
         }
     }
 
@@ -499,7 +500,10 @@ mod tests {
                 design: None,
                 tasks: None,
                 metadata: None,
-                delta_specs: BTreeMap::from([(CHANGE_ID.to_string(), "# Delta\n".to_string())]),
+                delta_specs: std::collections::BTreeMap::from([(
+                    CHANGE_ID.to_string(),
+                    "# Delta\n".to_string(),
+                )]),
             },
         )
         .unwrap();
@@ -560,7 +564,7 @@ mod tests {
                     actions: vec![ChangeCollaborationAction::SetArtifact {
                         artifact: ChangeArtifactId::proposal(),
                         content: Some(content.to_string()),
-                        basis: BTreeSet::from([root.clone()]),
+                        basis: std::collections::BTreeSet::from([root.clone()]),
                     }],
                 },
             )
@@ -587,8 +591,8 @@ mod tests {
                     actions: vec![ChangeCollaborationAction::SetLifecycle {
                         status,
                         subject_root: subject_root.clone(),
-                        evidence: BTreeSet::new(),
-                        basis: BTreeSet::from([root.clone()]),
+                        evidence: std::collections::BTreeSet::new(),
+                        basis: std::collections::BTreeSet::from([root.clone()]),
                     }],
                 },
             )

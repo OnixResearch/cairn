@@ -1,7 +1,3 @@
-use std::collections::BTreeSet;
-
-use serde_json::Value;
-
 use super::PolicyError;
 
 pub const DOCUMENT_COLLABORATION_SCHEMA_V1: &str = "cairn.document-collaboration-policy.v1";
@@ -28,7 +24,7 @@ pub struct DocumentCollaborationPolicy {
 }
 
 pub(super) fn document_collaboration_policy(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<DocumentCollaborationPolicy, PolicyError> {
     let field = value
         .get("document_collaboration_policy")
@@ -41,7 +37,7 @@ pub(super) fn document_collaboration_policy(
         });
     }
     let kinds = str_array_field(field, "kinds")?;
-    let kind_set = kinds.iter().collect::<BTreeSet<_>>();
+    let kind_set = kinds.iter().collect::<std::collections::BTreeSet<_>>();
     if kinds.is_empty()
         || kinds.len() != kind_set.len()
         || kinds
@@ -87,18 +83,22 @@ pub(super) fn document_collaboration_policy(
     })
 }
 
-fn str_field(value: &Value, key: &str, field: &'static str) -> Result<String, PolicyError> {
+fn str_field(
+    value: &serde_json::Value,
+    key: &str,
+    field: &'static str,
+) -> Result<String, PolicyError> {
     value
         .get(key)
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .map(str::to_string)
         .ok_or(PolicyError::MissingField(field))
 }
 
-fn str_array_field(value: &Value, key: &str) -> Result<Vec<String>, PolicyError> {
+fn str_array_field(value: &serde_json::Value, key: &str) -> Result<Vec<String>, PolicyError> {
     value
         .get(key)
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .map(|values| {
             values
                 .iter()
@@ -110,13 +110,14 @@ fn str_array_field(value: &Value, key: &str) -> Result<Vec<String>, PolicyError>
         ))
 }
 
-fn pos_usize(value: &Value, key: &str) -> Result<usize, PolicyError> {
-    let raw = value
-        .get(key)
-        .and_then(Value::as_u64)
-        .ok_or(PolicyError::MissingField(
-            "document_collaboration_policy.profile.bounds",
-        ))?;
+fn pos_usize(value: &serde_json::Value, key: &str) -> Result<usize, PolicyError> {
+    let raw =
+        value
+            .get(key)
+            .and_then(serde_json::Value::as_u64)
+            .ok_or(PolicyError::MissingField(
+                "document_collaboration_policy.profile.bounds",
+            ))?;
     if raw == 0 {
         return Err(PolicyError::InvalidField(
             "document_collaboration_policy.profile.bounds",
@@ -126,13 +127,14 @@ fn pos_usize(value: &Value, key: &str) -> Result<usize, PolicyError> {
         .map_err(|_| PolicyError::InvalidField("document_collaboration_policy.profile.bounds"))
 }
 
-fn pos_u64(value: &Value, key: &str) -> Result<u64, PolicyError> {
-    let raw = value
-        .get(key)
-        .and_then(Value::as_u64)
-        .ok_or(PolicyError::MissingField(
-            "document_collaboration_policy.profile.bounds",
-        ))?;
+fn pos_u64(value: &serde_json::Value, key: &str) -> Result<u64, PolicyError> {
+    let raw =
+        value
+            .get(key)
+            .and_then(serde_json::Value::as_u64)
+            .ok_or(PolicyError::MissingField(
+                "document_collaboration_policy.profile.bounds",
+            ))?;
     if raw == 0 {
         return Err(PolicyError::InvalidField(
             "document_collaboration_policy.profile.bounds",

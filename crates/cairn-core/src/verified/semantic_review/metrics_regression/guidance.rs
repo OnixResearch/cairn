@@ -1,21 +1,18 @@
 // r[impl cairn.semantic_review.metrics_regression_split.focused_helpers]
-use std::collections::BTreeSet;
-
-use serde_json::Value;
 
 use super::super::common::push_issue;
 use super::super::SemanticReviewIssue;
 use super::common::non_empty_string;
 
 pub(super) struct GuidanceSyncSurfaces {
-    guidance_diagnostics: BTreeSet<String>,
-    guidance_anchors: BTreeSet<String>,
-    task_requirements: BTreeSet<String>,
-    spec_requirements: BTreeSet<String>,
+    guidance_diagnostics: std::collections::BTreeSet<String>,
+    guidance_anchors: std::collections::BTreeSet<String>,
+    task_requirements: std::collections::BTreeSet<String>,
+    spec_requirements: std::collections::BTreeSet<String>,
 }
 
 pub(super) fn guidance_sync_surfaces(
-    sync_surfaces: &Value,
+    sync_surfaces: &serde_json::Value,
     issues: &mut Vec<SemanticReviewIssue>,
 ) -> GuidanceSyncSurfaces {
     let guidance_diagnostics = string_set_from_entries(
@@ -59,11 +56,14 @@ pub(super) fn guidance_sync_surfaces(
 }
 
 pub(super) fn validate_guidance_sync(
-    registry: &Value,
+    registry: &serde_json::Value,
     sync: &GuidanceSyncSurfaces,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    let Some(categories) = registry.get("categories").and_then(Value::as_array) else {
+    let Some(categories) = registry
+        .get("categories")
+        .and_then(serde_json::Value::as_array)
+    else {
         return;
     };
     for (index, category) in categories.iter().enumerate() {
@@ -80,12 +80,12 @@ pub(super) fn validate_guidance_sync(
 }
 
 fn validate_category_guidance_sync(
-    category: &Value,
+    category: &serde_json::Value,
     index: usize,
-    guidance_diagnostics: &BTreeSet<String>,
-    guidance_anchors: &BTreeSet<String>,
-    task_requirements: &BTreeSet<String>,
-    spec_requirements: &BTreeSet<String>,
+    guidance_diagnostics: &std::collections::BTreeSet<String>,
+    guidance_anchors: &std::collections::BTreeSet<String>,
+    task_requirements: &std::collections::BTreeSet<String>,
+    spec_requirements: &std::collections::BTreeSet<String>,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
     if let Some(diagnostic_code) = non_empty_string(category, "diagnostic_code") {
@@ -129,15 +129,15 @@ fn validate_category_guidance_sync(
 }
 
 fn string_set_from_entries(
-    value: &Value,
+    value: &serde_json::Value,
     array_field: &str,
     values_field: &str,
     missing_code: &str,
     missing_message: &str,
     issues: &mut Vec<SemanticReviewIssue>,
-) -> BTreeSet<String> {
-    let mut values = BTreeSet::new();
-    let Some(entries) = value.get(array_field).and_then(Value::as_array) else {
+) -> std::collections::BTreeSet<String> {
+    let mut values = std::collections::BTreeSet::new();
+    let Some(entries) = value.get(array_field).and_then(serde_json::Value::as_array) else {
         push_issue(issues, missing_code, array_field, missing_message);
         return values;
     };
@@ -159,15 +159,15 @@ fn string_set_from_entries(
 }
 
 fn string_set_from_scalar_entries(
-    value: &Value,
+    value: &serde_json::Value,
     array_field: &str,
     scalar_field: &str,
     missing_code: &str,
     missing_message: &str,
     issues: &mut Vec<SemanticReviewIssue>,
-) -> BTreeSet<String> {
-    let mut values = BTreeSet::new();
-    let Some(entries) = value.get(array_field).and_then(Value::as_array) else {
+) -> std::collections::BTreeSet<String> {
+    let mut values = std::collections::BTreeSet::new();
+    let Some(entries) = value.get(array_field).and_then(serde_json::Value::as_array) else {
         push_issue(issues, missing_code, array_field, missing_message);
         return values;
     };
@@ -176,7 +176,7 @@ fn string_set_from_scalar_entries(
         return values;
     }
     for (entry_index, entry) in entries.iter().enumerate() {
-        match entry.get(scalar_field).and_then(Value::as_str) {
+        match entry.get(scalar_field).and_then(serde_json::Value::as_str) {
             Some(text) if !text.trim().is_empty() => {
                 values.insert(text.to_string());
             }
@@ -192,14 +192,17 @@ fn string_set_from_scalar_entries(
 }
 
 fn collect_entry_strings(
-    entry: &Value,
+    entry: &serde_json::Value,
     entry_index: usize,
     array_field: &str,
     values_field: &str,
-    values: &mut BTreeSet<String>,
+    values: &mut std::collections::BTreeSet<String>,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    let Some(strings) = entry.get(values_field).and_then(Value::as_array) else {
+    let Some(strings) = entry
+        .get(values_field)
+        .and_then(serde_json::Value::as_array)
+    else {
         push_issue(
             issues,
             "invalid_guidance_sync",

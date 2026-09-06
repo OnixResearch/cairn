@@ -1,4 +1,4 @@
-use serde_json::{json, Value};
+use serde_json::json;
 
 use super::evidence::canonical_json_hash;
 use super::evidence_chain_readiness::{EvidenceChainReadiness, EvidenceChainReadinessIssue};
@@ -77,10 +77,10 @@ pub struct FunctionAddressPolicy {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionAddressEvidence {
-    pub valence_receipt: Option<Value>,
-    pub mantle_binding: Option<Value>,
-    pub kamacite_receipt: Option<Value>,
-    pub graph_summary: Option<Value>,
+    pub valence_receipt: Option<serde_json::Value>,
+    pub mantle_binding: Option<serde_json::Value>,
+    pub kamacite_receipt: Option<serde_json::Value>,
+    pub graph_summary: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -126,7 +126,7 @@ pub struct FunctionAddressReadiness {
     pub evidence_chain_hash: Option<String>,
     pub json_projection_authority: Option<String>,
     pub claim_scope: Option<String>,
-    pub graph_summary: Option<Value>,
+    pub graph_summary: Option<serde_json::Value>,
     pub boundary: String,
 }
 
@@ -142,7 +142,7 @@ struct FunctionAddressReadinessParts {
     evidence_chain_hash: Option<String>,
     json_projection_authority: Option<String>,
     claim_scope: Option<String>,
-    graph_summary: Option<Value>,
+    graph_summary: Option<serde_json::Value>,
 }
 
 struct DigestFieldRule {
@@ -155,7 +155,7 @@ struct DigestFieldRule {
 
 impl FunctionAddressReadiness {
     #[must_use]
-    pub fn to_json(&self) -> Value {
+    pub fn to_json(&self) -> serde_json::Value {
         json!({
             "name": FUNCTION_ADDRESS_CHECK_NAME,
             "mode": self.mode,
@@ -179,7 +179,7 @@ impl FunctionAddressReadiness {
 
 impl FunctionAddressIssue {
     #[must_use]
-    pub fn to_json(&self) -> Value {
+    pub fn to_json(&self) -> serde_json::Value {
         json!({
             "code": self.code,
             "field_path": self.field_path,
@@ -449,7 +449,7 @@ pub fn evaluate_function_address_evidence(
 fn function_address_preserves_readiness(
     policy: &FunctionAddressPolicy,
     evidence: &FunctionAddressEvidence,
-    valence_receipt: &Value,
+    valence_receipt: &serde_json::Value,
 ) -> EvidenceChainReadiness {
     let gate_policy_identity = canonical_json_hash(&json!({
         "mode": policy.mode,
@@ -494,20 +494,20 @@ fn function_address_preserves_readiness(
     evaluate_function_address_preserves_readiness(&chain_policy, Some(&input))
 }
 
-fn optional_receipt_string(value: Option<&Value>, field: &str) -> String {
+fn optional_receipt_string(value: Option<&serde_json::Value>, field: &str) -> String {
     value
         .and_then(|value| receipt_string(value, field))
         .unwrap_or_default()
 }
 
-fn optional_receipt_strings(value: Option<&Value>, field: &str) -> Vec<String> {
+fn optional_receipt_strings(value: Option<&serde_json::Value>, field: &str) -> Vec<String> {
     value
         .and_then(|value| value.get(field))
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .map(|values| {
             values
                 .iter()
-                .filter_map(Value::as_str)
+                .filter_map(serde_json::Value::as_str)
                 .map(str::to_string)
                 .collect()
         })
@@ -548,7 +548,7 @@ fn function_address_readiness(
 
 fn validate_input_schemas(
     evidence: &FunctionAddressEvidence,
-    valence_receipt: &Value,
+    valence_receipt: &serde_json::Value,
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
     // r[impl cairn.stack_provenance_gates.function_address_input_schema.validation]
@@ -588,12 +588,15 @@ fn validate_input_schemas(
 }
 
 fn validate_optional_schema_version(
-    value: &Value,
+    value: &serde_json::Value,
     object_path: &str,
     expected: &str,
     issues: &mut Vec<FunctionAddressIssue>,
 ) -> bool {
-    let Some(actual) = value.get(FIELD_SCHEMA_VERSION).and_then(Value::as_str) else {
+    let Some(actual) = value
+        .get(FIELD_SCHEMA_VERSION)
+        .and_then(serde_json::Value::as_str)
+    else {
         return false;
     };
     if actual != expected {
@@ -607,10 +610,13 @@ fn validate_optional_schema_version(
     true
 }
 
-fn validate_direct_mantle_disposition(value: &Value, issues: &mut Vec<FunctionAddressIssue>) {
+fn validate_direct_mantle_disposition(
+    value: &serde_json::Value,
+    issues: &mut Vec<FunctionAddressIssue>,
+) {
     let disposition = value
         .get(FIELD_DISPOSITION)
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     if !matches!(
         disposition,
@@ -631,12 +637,12 @@ fn validate_direct_mantle_disposition(value: &Value, issues: &mut Vec<FunctionAd
 
 fn validate_valence_receipt(
     policy: &FunctionAddressPolicy,
-    receipt: &Value,
+    receipt: &serde_json::Value,
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
-    if receipt.get("valid").and_then(Value::as_bool) != Some(true)
+    if receipt.get("valid").and_then(serde_json::Value::as_bool) != Some(true)
         || !matches!(
-            receipt.get("verdict").and_then(Value::as_str),
+            receipt.get("verdict").and_then(serde_json::Value::as_str),
             Some("pass" | "PASS")
         )
     {
@@ -679,7 +685,7 @@ fn validate_valence_receipt(
 
 fn validate_mantle_binding(
     policy: &FunctionAddressPolicy,
-    binding: Option<&Value>,
+    binding: Option<&serde_json::Value>,
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
     let Some(binding) = binding else {
@@ -691,7 +697,7 @@ fn validate_mantle_binding(
         ));
         return;
     };
-    if binding.get("valid").and_then(Value::as_bool) != Some(true) {
+    if binding.get("valid").and_then(serde_json::Value::as_bool) != Some(true) {
         issues.push(function_address_issue(
             "function_address.mantle_binding_failed",
             "mantle_binding.valid",
@@ -708,7 +714,7 @@ fn validate_mantle_binding(
     );
     let claim_scope = binding
         .get("claim_scope")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     if !policy
         .allowed_claim_scopes
@@ -742,11 +748,14 @@ fn validate_mantle_binding(
     }
 }
 
-fn validate_kamacite_receipt(receipt: Option<&Value>, issues: &mut Vec<FunctionAddressIssue>) {
+fn validate_kamacite_receipt(
+    receipt: Option<&serde_json::Value>,
+    issues: &mut Vec<FunctionAddressIssue>,
+) {
     let Some(receipt) = receipt else {
         return;
     };
-    if receipt.get("valid").and_then(Value::as_bool) != Some(true) {
+    if receipt.get("valid").and_then(serde_json::Value::as_bool) != Some(true) {
         issues.push(function_address_issue(
             "function_address.kamacite_receipt_failed",
             "kamacite_receipt.valid",
@@ -763,8 +772,8 @@ fn validate_kamacite_receipt(receipt: Option<&Value>, issues: &mut Vec<FunctionA
     );
     let non_claims_are_strings = receipt
         .get("non_claims")
-        .and_then(Value::as_array)
-        .is_some_and(|values| values.iter().all(Value::is_string));
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|values| values.iter().all(serde_json::Value::is_string));
     if !non_claims_are_strings {
         issues.push(function_address_issue(
             "function_address.kamacite_non_claims_malformed",
@@ -776,7 +785,7 @@ fn validate_kamacite_receipt(receipt: Option<&Value>, issues: &mut Vec<FunctionA
 }
 
 fn validate_cross_links(
-    receipt: &Value,
+    receipt: &serde_json::Value,
     evidence: &FunctionAddressEvidence,
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
@@ -803,13 +812,13 @@ fn validate_cross_links(
 
 fn validate_boundary(
     policy: &FunctionAddressPolicy,
-    receipt: &Value,
-    binding: Option<&Value>,
+    receipt: &serde_json::Value,
+    binding: Option<&serde_json::Value>,
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
     let receipt_boundary = receipt
         .get("non_claim_boundary")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     if receipt_boundary != policy.required_boundary {
         issues.push(function_address_issue(
@@ -826,7 +835,7 @@ fn validate_boundary(
     if let Some(binding) = binding {
         let binding_boundary = binding
             .get("non_claim_boundary")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
         if binding_boundary != policy.required_boundary {
             issues.push(function_address_issue(
@@ -845,7 +854,7 @@ fn validate_boundary(
         receipt_boundary,
         binding
             .and_then(|value| value.get("non_claim_boundary"))
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or_default(),
     ] {
         if function_address_text_overclaims(text) {
@@ -860,13 +869,17 @@ fn validate_boundary(
 }
 
 fn validate_graph_summary(
-    graph: Option<&Value>,
+    graph: Option<&serde_json::Value>,
     issues: &mut Vec<FunctionAddressIssue>,
-) -> Option<Value> {
+) -> Option<serde_json::Value> {
     let graph = graph?;
     let mut valid = true;
     for field in GRAPH_U64_FIELDS {
-        if graph.get(*field).and_then(Value::as_u64).is_none() {
+        if graph
+            .get(*field)
+            .and_then(serde_json::Value::as_u64)
+            .is_none()
+        {
             issues.push(function_address_issue(
                 "function_address.graph_summary_malformed",
                 &format!("graph_summary.{field}"),
@@ -878,7 +891,7 @@ fn validate_graph_summary(
     }
     let report_hash = graph
         .get("report_hash")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     if !is_blake3_hex(report_hash) {
         issues.push(function_address_issue(
@@ -898,12 +911,12 @@ fn validate_graph_summary(
 
 fn validate_required_roles(
     policy: &FunctionAddressPolicy,
-    receipt: &Value,
+    receipt: &serde_json::Value,
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
     let roles = receipt
         .get("roles")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .cloned()
         .unwrap_or_default();
     for required in &policy.required_roles {
@@ -923,12 +936,12 @@ fn validate_required_roles(
 
 fn validate_required_schemas(
     policy: &FunctionAddressPolicy,
-    receipt: &Value,
+    receipt: &serde_json::Value,
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
     let schemas = receipt
         .get("schemas")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .cloned()
         .unwrap_or_default();
     for required in &policy.required_schemas {
@@ -946,7 +959,10 @@ fn validate_required_schemas(
     }
 }
 
-fn validate_verification_role_summary(receipt: &Value, issues: &mut Vec<FunctionAddressIssue>) {
+fn validate_verification_role_summary(
+    receipt: &serde_json::Value,
+    issues: &mut Vec<FunctionAddressIssue>,
+) {
     let Some(summary) = receipt.get("verification_role_summary") else {
         issues.push(function_address_issue(
             "function_address.verification_role_summary_missing",
@@ -956,9 +972,15 @@ fn validate_verification_role_summary(receipt: &Value, issues: &mut Vec<Function
         ));
         return;
     };
-    let property_count = summary.get("property_count").and_then(Value::as_u64);
-    let recorded_only_count = summary.get("recorded_only_count").and_then(Value::as_u64);
-    let verified_count = summary.get("verified_count").and_then(Value::as_u64);
+    let property_count = summary
+        .get("property_count")
+        .and_then(serde_json::Value::as_u64);
+    let recorded_only_count = summary
+        .get("recorded_only_count")
+        .and_then(serde_json::Value::as_u64);
+    let verified_count = summary
+        .get("verified_count")
+        .and_then(serde_json::Value::as_u64);
     if property_count.is_none()
         || recorded_only_count.is_none()
         || verified_count.is_none()
@@ -974,13 +996,16 @@ fn validate_verification_role_summary(receipt: &Value, issues: &mut Vec<Function
 }
 
 fn validate_hash_field(
-    value: &Value,
+    value: &serde_json::Value,
     field: &str,
     field_path: &str,
     code: &str,
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
-    let actual = value.get(field).and_then(Value::as_str).unwrap_or_default();
+    let actual = value
+        .get(field)
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default();
     if !is_blake3_hex(actual) {
         issues.push(function_address_issue(
             code,
@@ -1012,7 +1037,7 @@ fn validate_equal_hashes(
     }
 }
 
-fn claim_scope(evidence: &FunctionAddressEvidence, receipt: &Value) -> Option<String> {
+fn claim_scope(evidence: &FunctionAddressEvidence, receipt: &serde_json::Value) -> Option<String> {
     evidence
         .mantle_binding
         .as_ref()
@@ -1034,10 +1059,10 @@ fn function_address_issue(
     }
 }
 
-fn receipt_string(receipt: &Value, field: &str) -> Option<String> {
+fn receipt_string(receipt: &serde_json::Value, field: &str) -> Option<String> {
     receipt
         .get(field)
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .map(str::to_string)
 }
 
@@ -1117,12 +1142,12 @@ fn accepted_digest_spellings(rule: &DigestFieldRule) -> Vec<String> {
 }
 
 fn normalize_digest_object(
-    value: Option<&mut Value>,
+    value: Option<&mut serde_json::Value>,
     object_path: &'static str,
     fields: &'static [&'static str],
     issues: &mut Vec<FunctionAddressIssue>,
 ) {
-    let Some(object) = value.and_then(Value::as_object_mut) else {
+    let Some(object) = value.and_then(serde_json::Value::as_object_mut) else {
         return;
     };
     for field in fields {
@@ -1137,14 +1162,14 @@ fn normalize_digest_object(
             allow_b3_prefix: true,
         };
         match normalize_digest_value(slot, &rule) {
-            Ok(normalized) => *slot = Value::String(normalized),
+            Ok(normalized) => *slot = serde_json::Value::String(normalized),
             Err(issue) => issues.push(issue),
         }
     }
 }
 
 fn normalize_digest_value(
-    value: &Value,
+    value: &serde_json::Value,
     rule: &DigestFieldRule,
 ) -> Result<String, FunctionAddressIssue> {
     let Some(raw) = value.as_str() else {
@@ -1263,7 +1288,7 @@ mod tests {
         }
     }
 
-    fn valence_receipt() -> Value {
+    fn valence_receipt() -> serde_json::Value {
         json!({
             "valid": true,
             "verdict": "PASS",
@@ -1286,7 +1311,7 @@ mod tests {
         })
     }
 
-    fn mantle_binding() -> Value {
+    fn mantle_binding() -> serde_json::Value {
         json!({
             "schema_version": FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1,
             "disposition": DISPOSITION_VALUE_PRESENT,
@@ -1301,7 +1326,7 @@ mod tests {
         })
     }
 
-    fn kamacite_receipt() -> Value {
+    fn kamacite_receipt() -> serde_json::Value {
         json!({
             "schema_version": FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1,
             "valid": true,
@@ -1315,7 +1340,7 @@ mod tests {
         })
     }
 
-    fn graph_summary() -> Value {
+    fn graph_summary() -> serde_json::Value {
         json!({
             "function_count": 2,
             "source_count": 1,

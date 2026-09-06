@@ -1,5 +1,4 @@
 use super::evidence::{blake3_hex, canonical_preserves_bytes};
-use serde_json::Value;
 
 pub const PRESERVES_EVIDENCE_INGEST_SCHEMA_V1: &str = "cairn.preserves-evidence-ingest.v1";
 pub const PRESERVES_EVIDENCE_OPAQUE_SCHEMA_V1: &str = "preserves.evidence-envelope.opaque.v1";
@@ -183,7 +182,7 @@ pub fn default_preserves_evidence_non_claims() -> Vec<String> {
 pub fn measure_preserves_evidence_envelope_bytes(
     envelope_path: &str,
     source_bytes: &[u8],
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<PreservesEvidenceEnvelopeMeasurement, PreservesEvidenceIngestIssue> {
     // r[impl cairn.preserves_evidence_ingest.validation]
     let canonical_bytes = canonical_preserves_bytes(value).map_err(|error| {
@@ -477,7 +476,7 @@ mod tests {
 
     const ENVELOPE_PATH: &str = "evidence/preserves/function-address.preserves";
 
-    fn envelope_value() -> Value {
+    fn envelope_value() -> serde_json::Value {
         json!({
             "schema": PRESERVES_EVIDENCE_OPAQUE_SCHEMA_V1,
             "producer_repo": "kamacite",

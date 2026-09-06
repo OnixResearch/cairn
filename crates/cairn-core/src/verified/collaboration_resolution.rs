@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -291,7 +289,7 @@ pub fn plan_change_collaboration_resolution(
         actions.push(ChangeCollaborationAction::SetLifecycle {
             status: ChangeLifecycleStatus::Open,
             subject_root: resolved_content_root,
-            evidence: BTreeSet::new(),
+            evidence: std::collections::BTreeSet::new(),
             basis: state.lifecycle.head_ids(),
         });
     }
@@ -465,8 +463,9 @@ fn validate_resolution_context(
 
 fn unique_selections(
     selections: &[ChangeArtifactHeadSelection],
-) -> Result<BTreeMap<ChangeArtifactId, ChangeArtifactHeadSelection>, ChangeCobError> {
-    let mut unique = BTreeMap::new();
+) -> Result<std::collections::BTreeMap<ChangeArtifactId, ChangeArtifactHeadSelection>, ChangeCobError>
+{
+    let mut unique = std::collections::BTreeMap::new();
     for selection in selections {
         if unique
             .insert(selection.artifact.clone(), selection.clone())
@@ -483,14 +482,17 @@ fn unique_selections(
 
 fn validate_complete_selections(
     inspection: &ChangeCollaborationConflictInspection,
-    selections: &BTreeMap<ChangeArtifactId, ChangeArtifactHeadSelection>,
+    selections: &std::collections::BTreeMap<ChangeArtifactId, ChangeArtifactHeadSelection>,
 ) -> Result<(), ChangeCobError> {
     let conflicted = inspection
         .artifact_conflicts
         .iter()
         .map(|conflict| conflict.artifact.clone())
-        .collect::<BTreeSet<_>>();
-    let selected = selections.keys().cloned().collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
+    let selected = selections
+        .keys()
+        .cloned()
+        .collect::<std::collections::BTreeSet<_>>();
     if conflicted != selected {
         let missing = conflicted
             .difference(&selected)
@@ -686,7 +688,7 @@ mod tests {
             design: Some("# Design\n".to_string()),
             tasks: None,
             metadata: None,
-            delta_specs: BTreeMap::new(),
+            delta_specs: std::collections::BTreeMap::new(),
         })
         .unwrap();
         initialize_change_collaboration_import(init, CREATOR).unwrap()
@@ -796,7 +798,7 @@ mod tests {
             ChangeCollaborationAction::SetArtifact {
                 artifact: ChangeArtifactId::design(),
                 content: None,
-                basis: BTreeSet::from([
+                basis: std::collections::BTreeSet::from([
                     LEFT_DESIGN_OPERATION.to_string(),
                     RIGHT_DESIGN_OPERATION.to_string(),
                 ]),
@@ -838,7 +840,7 @@ mod tests {
                     actions: vec![ChangeCollaborationAction::SetLifecycle {
                         status: ChangeLifecycleStatus::ReviewRequested,
                         subject_root: content_root.clone(),
-                        evidence: BTreeSet::new(),
+                        evidence: std::collections::BTreeSet::new(),
                         basis: basis.clone(),
                     }],
                 },

@@ -1,7 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
-use serde_json::Value;
-
 use super::{model::*, outcome_machine::evaluate_outcome_machine_review};
 
 const PROFILE_SOURCE_COMPATIBILITY: &str = "compatibility_fallback";
@@ -23,7 +19,7 @@ const SYNTHETIC_REQUIREMENT_PREFIX: &str = "r[";
 // r[impl cairn.lifecycle_workflow_profiles.functional_boundary]
 // r[impl cairn.lifecycle_workflow_profiles.functional_boundary.pure]
 pub fn workflow_change_profile_metadata_from_value(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<WorkflowChangeProfileMetadata, WorkflowAdmissionError> {
     let Some(object) = value.as_object() else {
         return Err(profile_error(
@@ -287,12 +283,12 @@ fn evaluate_reviews(
                     .flat_map(|values| values.iter())
             })
             .map(|value| (value.path.clone(), value.blake3.clone()))
-            .collect::<BTreeMap<_, _>>();
+            .collect::<std::collections::BTreeMap<_, _>>();
         let observed = review
             .reviewed_inputs
             .iter()
             .map(|input| (input.path.clone(), input.hash.clone()))
-            .collect::<BTreeMap<_, _>>();
+            .collect::<std::collections::BTreeMap<_, _>>();
         if expected.is_empty() || expected != observed {
             issues.push(issue(
                 WORKFLOW_ISSUE_PROFILE_REVIEW,
@@ -309,8 +305,8 @@ fn evaluate_reviews(
 
 fn artifact_hashes_by_artifact(
     hashes: &[WorkflowProfileArtifactHash],
-) -> BTreeMap<&str, Vec<&WorkflowProfileArtifactHash>> {
-    let mut grouped = BTreeMap::<&str, Vec<&WorkflowProfileArtifactHash>>::new();
+) -> std::collections::BTreeMap<&str, Vec<&WorkflowProfileArtifactHash>> {
+    let mut grouped = std::collections::BTreeMap::<&str, Vec<&WorkflowProfileArtifactHash>>::new();
     for hash in hashes {
         grouped
             .entry(hash.artifact_id.as_str())
@@ -380,7 +376,7 @@ fn validate_acceptance_task_links(
     let known = acceptance_ids
         .iter()
         .map(String::as_str)
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let mut issues = Vec::new();
     for (line_index, line) in tasks_markdown.lines().enumerate() {
         let trimmed = line.trim_start();
@@ -474,12 +470,12 @@ fn profile_artifact_id(profile: &WorkflowSchemaPolicy, admission: &str) -> Optio
 }
 
 fn optional_string_field(
-    value: Option<&Value>,
+    value: Option<&serde_json::Value>,
     field: &'static str,
 ) -> Result<Option<String>, WorkflowAdmissionError> {
     match value {
         None => Ok(None),
-        Some(Value::String(value)) => Ok(Some(value.clone())),
+        Some(serde_json::Value::String(value)) => Ok(Some(value.clone())),
         Some(_) => Err(profile_error(
             WORKFLOW_ISSUE_PROFILE_SELECTION,
             format!("metadata.json.{field}"),

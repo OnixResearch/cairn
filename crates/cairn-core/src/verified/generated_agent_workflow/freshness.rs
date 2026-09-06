@@ -1,7 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
-use serde_json::json;
-
 use crate::verified::evidence::canonical_json_hash;
 
 use super::model::{
@@ -13,7 +9,7 @@ use super::model::{
 
 pub(super) fn observation_map(
     files: &[GeneratedWorkflowFileObservation],
-) -> BTreeMap<&str, &GeneratedWorkflowFileObservation> {
+) -> std::collections::BTreeMap<&str, &GeneratedWorkflowFileObservation> {
     files
         .iter()
         .map(|file| (file.relative_path.as_str(), file))
@@ -102,7 +98,7 @@ pub(super) fn classify_manifest(
 }
 
 pub fn generated_workflow_manifest_identity(manifest: &GeneratedWorkflowManifest) -> String {
-    canonical_json_hash(&json!({
+    canonical_json_hash(&serde_json::json!({
         "schema": manifest.schema,
         "generator_version": manifest.generator_version,
         "policy_hash": manifest.policy_hash,
@@ -122,17 +118,17 @@ pub fn validate_generated_workflow_manifest(manifest: &GeneratedWorkflowManifest
         .files
         .iter()
         .map(|file| file.relative_path.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let workflow_ids = manifest
         .files
         .iter()
         .map(|file| file.workflow_id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let removal_paths = manifest
         .removal_candidates
         .iter()
         .map(String::as_str)
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     manifest.schema == GENERATED_AGENT_WORKFLOW_MANIFEST_SCHEMA_V1
         && manifest.generator_version == GENERATED_AGENT_WORKFLOW_GENERATOR_VERSION
         && !manifest.adapter_id.is_empty()

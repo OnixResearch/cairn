@@ -1,10 +1,9 @@
 // r[impl cairn.nominal_evidence_identities.lifecycle]
 // r[verify cairn.nominal_evidence_identities.lifecycle.validation]
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use super::nominal_identity::{
     ActorId, ChangeId, IdentityIssue, OperationId, PolicyDigest, WorkspaceId, RAW_BLAKE3_PROFILE,
@@ -31,7 +30,7 @@ struct AdmittedCollaborationInit {
     change_id: ChangeId,
     workspace_id: WorkspaceId,
     policy_hash: PolicyDigest,
-    delegates: BTreeSet<ActorId>,
+    delegates: std::collections::BTreeSet<ActorId>,
 }
 
 #[derive(Debug)]
@@ -46,8 +45,8 @@ struct AdmittedCollaborationState {
     workspace_id: WorkspaceId,
     policy_hash: PolicyDigest,
     creator: ActorId,
-    delegates: BTreeSet<ActorId>,
-    operations: BTreeSet<OperationId>,
+    delegates: std::collections::BTreeSet<ActorId>,
+    operations: std::collections::BTreeSet<OperationId>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -58,8 +57,8 @@ pub struct ChangeCollaborationInit {
     pub base_revision: ChangeBaseRevision,
     pub policy_hash: String,
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    pub delegates: BTreeSet<String>,
-    pub artifacts: BTreeMap<ChangeArtifactId, String>,
+    pub delegates: std::collections::BTreeSet<String>,
+    pub artifacts: std::collections::BTreeMap<ChangeArtifactId, String>,
 }
 
 impl ChangeCollaborationInit {
@@ -68,7 +67,7 @@ impl ChangeCollaborationInit {
         workspace_id: impl Into<String>,
         base_revision: ChangeBaseRevision,
         policy_hash: impl Into<String>,
-        artifacts: BTreeMap<ChangeArtifactId, String>,
+        artifacts: std::collections::BTreeMap<ChangeArtifactId, String>,
     ) -> Self {
         Self {
             schema: CHANGE_COLLABORATION_SCHEMA_V1.to_string(),
@@ -76,12 +75,12 @@ impl ChangeCollaborationInit {
             workspace_id: workspace_id.into(),
             base_revision,
             policy_hash: policy_hash.into(),
-            delegates: BTreeSet::new(),
+            delegates: std::collections::BTreeSet::new(),
             artifacts,
         }
     }
 
-    pub fn with_delegates(mut self, delegates: BTreeSet<String>) -> Self {
+    pub fn with_delegates(mut self, delegates: std::collections::BTreeSet<String>) -> Self {
         self.delegates = delegates;
         self
     }
@@ -96,7 +95,7 @@ pub enum ChangeCollaborationAction {
     SetArtifact {
         artifact: ChangeArtifactId,
         content: Option<String>,
-        basis: BTreeSet<String>,
+        basis: std::collections::BTreeSet<String>,
     },
     AttachEvidence {
         evidence: ChangeCollaborationEvidence,
@@ -104,8 +103,8 @@ pub enum ChangeCollaborationAction {
     SetLifecycle {
         status: ChangeLifecycleStatus,
         subject_root: String,
-        evidence: BTreeSet<String>,
-        basis: BTreeSet<String>,
+        evidence: std::collections::BTreeSet<String>,
+        basis: std::collections::BTreeSet<String>,
     },
 }
 
@@ -126,11 +125,11 @@ pub struct ChangeCollaborationState {
     pub policy_hash: String,
     pub creator: String,
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    pub delegates: BTreeSet<String>,
-    pub artifacts: BTreeMap<ChangeArtifactId, ChangeRevisionSet<Option<String>>>,
-    pub evidence: BTreeMap<String, ChangeCollaborationEvidence>,
+    pub delegates: std::collections::BTreeSet<String>,
+    pub artifacts: std::collections::BTreeMap<ChangeArtifactId, ChangeRevisionSet<Option<String>>>,
+    pub evidence: std::collections::BTreeMap<String, ChangeCollaborationEvidence>,
     pub lifecycle: ChangeRevisionSet<ChangeLifecycleRecord>,
-    pub operations: BTreeSet<String>,
+    pub operations: std::collections::BTreeSet<String>,
 }
 
 pub fn initialize_change_collaboration(
@@ -205,7 +204,7 @@ pub fn change_collaboration_lifecycle_view(
 
 pub fn change_collaboration_action_json(
     action: &ChangeCollaborationAction,
-) -> Result<Value, ChangeCollaborationError> {
+) -> Result<serde_json::Value, ChangeCollaborationError> {
     serde_json::to_value(action).map_err(|error| ChangeCobError::Serialization {
         reason: error.to_string(),
     })
@@ -423,14 +422,14 @@ fn admit_collaboration_state(
             .map(|value| {
                 OperationId::parse(value, "collaboration.operations").map_err(nominal_error)
             })
-            .collect::<Result<BTreeSet<_>, _>>()?,
+            .collect::<Result<std::collections::BTreeSet<_>, _>>()?,
     })
 }
 
 fn admit_actor_set(
-    values: &BTreeSet<String>,
+    values: &std::collections::BTreeSet<String>,
     field: &'static str,
-) -> Result<BTreeSet<ActorId>, ChangeCollaborationError> {
+) -> Result<std::collections::BTreeSet<ActorId>, ChangeCollaborationError> {
     values
         .iter()
         .map(|value| ActorId::parse(value, field).map_err(nominal_error))
@@ -484,7 +483,10 @@ mod tests {
             WORKSPACE_ID,
             ChangeBaseRevision::new(BASE_REVISION_KIND, BASE_REVISION_VALUE).unwrap(),
             POLICY_HASH,
-            BTreeMap::from([(ChangeArtifactId::proposal(), "# Proposal\n".to_string())]),
+            std::collections::BTreeMap::from([(
+                ChangeArtifactId::proposal(),
+                "# Proposal\n".to_string(),
+            )]),
         )
     }
 
@@ -548,25 +550,25 @@ mod tests {
             base_git_oid: LEGACY_GIT_OID.to_string(),
             policy_hash: POLICY_HASH.to_string(),
             creator: ACTOR.to_string(),
-            delegates: BTreeSet::new(),
-            artifacts: BTreeMap::from([(
+            delegates: std::collections::BTreeSet::new(),
+            artifacts: std::collections::BTreeMap::from([(
                 ChangeArtifactId::proposal(),
                 ChangeRevisionSet {
-                    revisions: BTreeMap::from([(
+                    revisions: std::collections::BTreeMap::from([(
                         LEGACY_GIT_OID.to_string(),
                         super::super::radicle_change::ChangeRevision {
                             actor: ACTOR.to_string(),
-                            basis: BTreeSet::new(),
+                            basis: std::collections::BTreeSet::new(),
                             value: Some("# Proposal\n".to_string()),
                         },
                     )]),
                 },
             )]),
-            evidence: BTreeMap::new(),
+            evidence: std::collections::BTreeMap::new(),
             lifecycle: ChangeRevisionSet {
-                revisions: BTreeMap::new(),
+                revisions: std::collections::BTreeMap::new(),
             },
-            operations: BTreeSet::from([LEGACY_GIT_OID.to_string()]),
+            operations: std::collections::BTreeSet::from([LEGACY_GIT_OID.to_string()]),
         };
         let expected_state_hash = canonical_json_hash(&serde_json::to_value(&legacy).unwrap());
         assert_eq!(change_cob_state_hash(&legacy).unwrap(), expected_state_hash);

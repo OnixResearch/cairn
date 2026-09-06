@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use crate::verified::generated_agent_workflow::{
     admit_generated_agent_workflow_policy, GeneratedAgentWorkflowPolicy,
     GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
@@ -8,7 +6,7 @@ use crate::verified::generated_agent_workflow::{
 use super::PolicyError;
 
 pub(super) fn generated_agent_workflow_policy(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<GeneratedAgentWorkflowPolicy, PolicyError> {
     let field = value
         .get("generated_agent_workflow_policy")

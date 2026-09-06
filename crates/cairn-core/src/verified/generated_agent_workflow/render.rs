@@ -1,5 +1,3 @@
-use serde_json::json;
-
 use crate::verified::evidence::{blake3_hex, canonical_json_hash};
 
 // r[impl cairn.generated_agent_workflows.catalog]
@@ -48,7 +46,7 @@ pub fn render_generated_agent_workflows(
                 "adapter output exceeds the policy file bound",
             )]);
         }
-        let descriptor_identity = canonical_json_hash(&json!({
+        let descriptor_identity = canonical_json_hash(&serde_json::json!({
             "descriptor": descriptor,
             "generator_version": catalog.policy.generator_version,
         }));

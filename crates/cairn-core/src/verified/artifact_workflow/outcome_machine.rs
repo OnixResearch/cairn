@@ -1,7 +1,4 @@
-use std::collections::BTreeSet;
-
 use serde::Deserialize;
-use serde_json::Value;
 
 use super::model::{
     WorkflowOutcomeMachineEvidenceObservation, WorkflowProfileIssue, WorkflowSchemaPolicy,
@@ -134,7 +131,7 @@ enum EvidenceKind {
     Review,
 }
 
-pub fn outcome_machine_evidence_paths(value: Option<&Value>) -> Vec<String> {
+pub fn outcome_machine_evidence_paths(value: Option<&serde_json::Value>) -> Vec<String> {
     let Some(value) = value else {
         return Vec::new();
     };
@@ -155,7 +152,7 @@ pub fn outcome_machine_evidence_paths(value: Option<&Value>) -> Vec<String> {
 
 pub fn evaluate_outcome_machine_review(
     profile: &WorkflowSchemaPolicy,
-    value: Option<&Value>,
+    value: Option<&serde_json::Value>,
     observed_evidence: &[WorkflowOutcomeMachineEvidenceObservation],
 ) -> Vec<WorkflowProfileIssue> {
     // r[impl cairn.outcome_machine_profile.routes]
@@ -460,7 +457,7 @@ fn validate_completion_evidence(
         ));
         return;
     }
-    let mut unique_paths = BTreeSet::new();
+    let mut unique_paths = std::collections::BTreeSet::new();
     for item in evidence {
         let observed = observed_evidence
             .iter()
@@ -639,7 +636,11 @@ mod tests {
         }
     }
 
-    fn common(route: Value, fresh_status: &str, completion_status: &str) -> Value {
+    fn common(
+        route: serde_json::Value,
+        fresh_status: &str,
+        completion_status: &str,
+    ) -> serde_json::Value {
         let fresh_evidence = if fresh_status == "observed" {
             vec![json!({
                 "kind": "replay",
@@ -683,7 +684,9 @@ mod tests {
         })
     }
 
-    fn observed_evidence(value: &Value) -> Vec<WorkflowOutcomeMachineEvidenceObservation> {
+    fn observed_evidence(
+        value: &serde_json::Value,
+    ) -> Vec<WorkflowOutcomeMachineEvidenceObservation> {
         ["fresh_state_reproduction", "completion"]
             .iter()
             .flat_map(|section| value[*section]["evidence"].as_array().into_iter().flatten())

@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use super::PolicyError;
 use crate::verified::nominal_identity::{
     nominal_identity_policy_diagnostics, NominalIdentityPolicy,
@@ -7,7 +5,9 @@ use crate::verified::nominal_identity::{
 
 const NOMINAL_IDENTITY_POLICY_FIELD: &str = "nominal_identity_policy";
 
-pub(super) fn nominal_identity_policy(value: &Value) -> Result<NominalIdentityPolicy, PolicyError> {
+pub(super) fn nominal_identity_policy(
+    value: &serde_json::Value,
+) -> Result<NominalIdentityPolicy, PolicyError> {
     // r[impl cairn.nominal_evidence_identities.policy]
     let raw = value
         .get(NOMINAL_IDENTITY_POLICY_FIELD)

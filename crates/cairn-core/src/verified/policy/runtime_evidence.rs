@@ -1,12 +1,12 @@
-use serde_json::Value;
-
 use crate::verified::runtime_evidence::{
     is_runtime_capture_origin, RuntimeEvidencePolicy, RUNTIME_HASH_ALGORITHM_BLAKE3,
 };
 
 use super::{fields::string_array_field, PolicyError};
 
-pub(super) fn runtime_evidence_policy(value: &Value) -> Result<RuntimeEvidencePolicy, PolicyError> {
+pub(super) fn runtime_evidence_policy(
+    value: &serde_json::Value,
+) -> Result<RuntimeEvidencePolicy, PolicyError> {
     // r[impl cairn.runtime_evidence.policy_schema]
     let policy = value
         .get("runtime_evidence_policy")
@@ -35,7 +35,7 @@ pub(super) fn runtime_evidence_policy(value: &Value) -> Result<RuntimeEvidencePo
     }
     let max_summary_bytes = policy
         .get("max_summary_bytes")
-        .and_then(Value::as_u64)
+        .and_then(serde_json::Value::as_u64)
         .ok_or(PolicyError::MissingField(
             "runtime_evidence_policy.max_summary_bytes",
         ))?;

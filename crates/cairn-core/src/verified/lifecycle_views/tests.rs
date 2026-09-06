@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use crate::verified::{
     change_dependencies::build_change_dependency_graph,
     repo::{count_tasks, ChangeMetadata, ChangeStatus, SpecSource},
@@ -41,7 +39,7 @@ fn valid_lifecycle_facts_build_all_views_deterministically() {
         .edges
         .iter()
         .map(|edge| edge.kind)
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     assert!(edge_kinds.contains(&LifecycleViewEdgeKind::Contains));
     assert!(edge_kinds.contains(&LifecycleViewEdgeKind::Covers));
     assert!(edge_kinds.contains(&LifecycleViewEdgeKind::DependsOn));
@@ -110,7 +108,7 @@ fn malformed_outline_and_dangling_task_link_fail_closed() {
         .issues
         .iter()
         .map(|issue| issue.code.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     assert!(codes.contains("lifecycle_view.marker.malformed"));
     assert!(codes.contains("lifecycle_view.task.dangling_reference"));
     assert!(model.nodes.iter().any(|node| {

@@ -1,10 +1,10 @@
-use serde_json::Value;
-
 use crate::verified::developer_loop::{admit_developer_loop_policy, DeveloperLoopPolicy};
 
 use super::PolicyError;
 
-pub(super) fn developer_loop_policy(value: &Value) -> Result<DeveloperLoopPolicy, PolicyError> {
+pub(super) fn developer_loop_policy(
+    value: &serde_json::Value,
+) -> Result<DeveloperLoopPolicy, PolicyError> {
     let field = value
         .get("developer_loop_policy")
         .ok_or(PolicyError::MissingField("developer_loop_policy"))?;

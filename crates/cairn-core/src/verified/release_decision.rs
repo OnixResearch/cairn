@@ -69,17 +69,17 @@ pub struct ReleaseDecisionState {
     pub candidate_root: String,
     pub policy_identity: String,
     pub candidate: ReleaseCandidate,
-    pub proposers: BTreeSet<String>,
-    pub reviewers: BTreeSet<String>,
-    pub approvers: BTreeSet<String>,
-    pub withdrawers: BTreeSet<String>,
-    pub invalidators: BTreeSet<String>,
-    pub evidence: BTreeMap<String, ReleaseEvidenceSummary>,
-    pub findings: BTreeMap<String, ReleaseFinding>,
-    pub votes: BTreeMap<String, ReleaseVote>,
+    pub proposers: std::collections::BTreeSet<String>,
+    pub reviewers: std::collections::BTreeSet<String>,
+    pub approvers: std::collections::BTreeSet<String>,
+    pub withdrawers: std::collections::BTreeSet<String>,
+    pub invalidators: std::collections::BTreeSet<String>,
+    pub evidence: std::collections::BTreeMap<String, ReleaseEvidenceSummary>,
+    pub findings: std::collections::BTreeMap<String, ReleaseFinding>,
+    pub votes: std::collections::BTreeMap<String, ReleaseVote>,
     pub lifecycle: String,
     pub review_basis: String,
-    pub operations: BTreeSet<String>,
+    pub operations: std::collections::BTreeSet<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -92,11 +92,11 @@ pub struct ReleaseDecisionInit {
     pub candidate_root: String,
     pub policy_identity: String,
     pub candidate: ReleaseCandidate,
-    pub proposers: BTreeSet<String>,
-    pub reviewers: BTreeSet<String>,
-    pub approvers: BTreeSet<String>,
-    pub withdrawers: BTreeSet<String>,
-    pub invalidators: BTreeSet<String>,
+    pub proposers: std::collections::BTreeSet<String>,
+    pub reviewers: std::collections::BTreeSet<String>,
+    pub approvers: std::collections::BTreeSet<String>,
+    pub withdrawers: std::collections::BTreeSet<String>,
+    pub invalidators: std::collections::BTreeSet<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -1,4 +1,4 @@
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 use crate::verified::nominal_identity::{InputDigestRole, PlanDigestRole};
 
@@ -9,10 +9,12 @@ use super::types::AgentRunGateIssue;
 // r[impl cairn.supersede.agent_run_receipts.plan_link]
 // r[impl cairn.supersede.agent_run_receipts.plan_link.side_effects]
 // r[impl cairn.supersede.agent_run_receipts.plan_link.read_only]
-pub(super) fn plan_linkage_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue> {
+pub(super) fn plan_linkage_issues(
+    object: &Map<String, serde_json::Value>,
+) -> Vec<AgentRunGateIssue> {
     let input_hash = object
         .get("input_hash")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     if !is_digest::<InputDigestRole>(input_hash) {
         return vec![issue(
@@ -22,12 +24,12 @@ pub(super) fn plan_linkage_issues(object: &Map<String, Value>) -> Vec<AgentRunGa
     }
     let has_side_effects = object
         .get("mutation_manifest")
-        .and_then(Value::as_object)
+        .and_then(serde_json::Value::as_object)
         .map(mutation_manifest_has_side_effects)
         .unwrap_or(false);
     let plan_hash = object
         .get("plan_hash")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or("");
     if has_side_effects && plan_hash.is_empty() {
         return vec![issue(
@@ -50,19 +52,19 @@ pub(super) fn plan_linkage_issues(object: &Map<String, Value>) -> Vec<AgentRunGa
     Vec::new()
 }
 
-fn mutation_manifest_has_side_effects(manifest: &Map<String, Value>) -> bool {
+fn mutation_manifest_has_side_effects(manifest: &Map<String, serde_json::Value>) -> bool {
     SIDE_EFFECT_FIELDS
         .iter()
         .any(|field| manifest.get(*field).map(value_has_entries).unwrap_or(false))
 }
 
-fn value_has_entries(value: &Value) -> bool {
+fn value_has_entries(value: &serde_json::Value) -> bool {
     match value {
-        Value::Array(entries) => !entries.is_empty(),
-        Value::Object(entries) => !entries.is_empty(),
-        Value::String(text) => !text.is_empty(),
-        Value::Bool(flag) => *flag,
-        Value::Number(_) => true,
-        Value::Null => false,
+        serde_json::Value::Array(entries) => !entries.is_empty(),
+        serde_json::Value::Object(entries) => !entries.is_empty(),
+        serde_json::Value::String(text) => !text.is_empty(),
+        serde_json::Value::Bool(flag) => *flag,
+        serde_json::Value::Number(_) => true,
+        serde_json::Value::Null => false,
     }
 }

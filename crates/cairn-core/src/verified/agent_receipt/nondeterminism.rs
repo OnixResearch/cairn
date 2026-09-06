@@ -1,4 +1,4 @@
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 use super::common::issue;
 use super::constants::KNOWN_ENTROPY_CLASSES;
@@ -7,21 +7,23 @@ use super::types::AgentRunGateIssue;
 // r[impl cairn.supersede.agent_run_receipts.nondeterminism]
 // r[impl cairn.supersede.agent_run_receipts.nondeterminism.captured]
 // r[impl cairn.supersede.agent_run_receipts.nondeterminism.hidden]
-pub(super) fn nondeterminism_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue> {
+pub(super) fn nondeterminism_issues(
+    object: &Map<String, serde_json::Value>,
+) -> Vec<AgentRunGateIssue> {
     let Some(manifest) = object
         .get("nondeterminism_manifest")
-        .and_then(Value::as_object)
+        .and_then(serde_json::Value::as_object)
     else {
         return Vec::new();
     };
     let captured = manifest
         .get("captured")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .map(|entries| entries.as_slice())
         .unwrap_or(&[]);
     let forbidden = manifest
         .get("forbidden_uncaptured")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .map(|entries| entries.as_slice())
         .unwrap_or(&[]);
     let mut issues = Vec::with_capacity(captured.len().saturating_add(forbidden.len()));
@@ -36,7 +38,7 @@ pub(super) fn nondeterminism_issues(object: &Map<String, Value>) -> Vec<AgentRun
     for entry in forbidden {
         let class = entry
             .get("class")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or("unknown");
         issues.push(issue(
             "nondeterminism.uncaptured",
@@ -46,8 +48,8 @@ pub(super) fn nondeterminism_issues(object: &Map<String, Value>) -> Vec<AgentRun
     issues
 }
 
-fn captured_entropy_is_valid(entry: &Value) -> bool {
-    let Some(class) = entry.get("class").and_then(Value::as_str) else {
+fn captured_entropy_is_valid(entry: &serde_json::Value) -> bool {
+    let Some(class) = entry.get("class").and_then(serde_json::Value::as_str) else {
         return false;
     };
     KNOWN_ENTROPY_CLASSES.contains(&class)

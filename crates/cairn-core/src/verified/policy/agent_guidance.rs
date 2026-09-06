@@ -1,10 +1,10 @@
-use serde_json::Value;
-
 use crate::verified::agent_guidance::{validate_agent_guidance_policy, AgentGuidancePolicy};
 
 use super::PolicyError;
 
-pub(super) fn agent_guidance_policy(value: &Value) -> Result<AgentGuidancePolicy, PolicyError> {
+pub(super) fn agent_guidance_policy(
+    value: &serde_json::Value,
+) -> Result<AgentGuidancePolicy, PolicyError> {
     // r[impl cairn.agent_guidance_context.project_config]
     let policy = value
         .get("agent_guidance_policy")

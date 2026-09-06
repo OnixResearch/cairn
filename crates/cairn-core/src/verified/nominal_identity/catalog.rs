@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -145,8 +143,8 @@ fn validate_runtime_domains(
         ));
         return;
     }
-    let mut domain_ids = BTreeSet::new();
-    let mut symbols = BTreeSet::<String>::new();
+    let mut domain_ids = std::collections::BTreeSet::new();
+    let mut symbols = std::collections::BTreeSet::<String>::new();
     let mut previous = None;
     for domain in domains {
         if !domain_ids.insert(domain.domain_id.as_str()) {
@@ -168,7 +166,7 @@ fn validate_runtime_domains(
 
 fn validate_runtime_domain(
     domain: &NominalIdentityDomainPolicy,
-    symbols: &mut BTreeSet<String>,
+    symbols: &mut std::collections::BTreeSet<String>,
     issues: &mut Vec<IdentityIssue>,
 ) {
     if domain.domain_id.is_empty()
@@ -232,7 +230,7 @@ fn validate_octet_domains(octet: &NominalIdentityOctetProjection, issues: &mut V
     if octet.heuristic_suffixes.is_empty() {
         issues.push(IdentityIssue::new(FIELD_OCTET, "octet_suffixes_empty"));
     }
-    let mut domain_ids = BTreeSet::new();
+    let mut domain_ids = std::collections::BTreeSet::new();
     for domain in &octet.domains {
         if domain.domain_id.is_empty() || !domain_ids.insert(domain.domain_id.as_str()) {
             issues.push(IdentityIssue::new(FIELD_OCTET, "octet_domain_invalid"));

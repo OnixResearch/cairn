@@ -1,7 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
-use serde_json::json;
-
 use crate::verified::evidence::canonical_json_hash;
 
 use super::model::{
@@ -68,7 +64,7 @@ pub fn admit_generated_agent_workflow_policy(
         normalize_strings(&mut descriptor.constraints);
         normalize_strings(&mut descriptor.non_claims);
     }
-    let catalog_identity = canonical_json_hash(&json!({
+    let catalog_identity = canonical_json_hash(&serde_json::json!({
         "generator_version": normalized.generator_version,
         "command_classes": normalized.command_classes,
         "descriptors": normalized.descriptors,
@@ -183,8 +179,8 @@ fn validate_policy_header(policy: &GeneratedAgentWorkflowPolicy) -> Vec<Generate
 fn validate_command_classes(
     policy: &GeneratedAgentWorkflowPolicy,
     issues: &mut Vec<GeneratedWorkflowIssue>,
-) -> BTreeMap<String, GeneratedWorkflowPermission> {
-    let mut permissions = BTreeMap::new();
+) -> std::collections::BTreeMap<String, GeneratedWorkflowPermission> {
+    let mut permissions = std::collections::BTreeMap::new();
     for (index, command) in policy.command_classes.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.command_classes[{index}]");
         if !valid_id(&command.id)
@@ -211,10 +207,10 @@ fn validate_command_classes(
 
 fn validate_descriptors(
     policy: &GeneratedAgentWorkflowPolicy,
-    command_permissions: &BTreeMap<String, GeneratedWorkflowPermission>,
+    command_permissions: &std::collections::BTreeMap<String, GeneratedWorkflowPermission>,
     issues: &mut Vec<GeneratedWorkflowIssue>,
 ) {
-    let mut ids = BTreeSet::new();
+    let mut ids = std::collections::BTreeSet::new();
     for (index, descriptor) in policy.descriptors.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.descriptors[{index}]");
         validate_descriptor_shape(descriptor, &path, policy, &mut ids, issues);
@@ -269,7 +265,7 @@ fn validate_descriptor_shape(
     descriptor: &GeneratedWorkflowDescriptor,
     path: &str,
     policy: &GeneratedAgentWorkflowPolicy,
-    ids: &mut BTreeSet<String>,
+    ids: &mut std::collections::BTreeSet<String>,
     issues: &mut Vec<GeneratedWorkflowIssue>,
 ) {
     if !valid_id(&descriptor.id)
@@ -325,7 +321,7 @@ fn validate_adapters(
     policy: &GeneratedAgentWorkflowPolicy,
     issues: &mut Vec<GeneratedWorkflowIssue>,
 ) {
-    let mut ids = BTreeSet::new();
+    let mut ids = std::collections::BTreeSet::new();
     for (index, adapter) in policy.adapters.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.adapters[{index}]");
         let expected_shape = match adapter.format {
@@ -398,7 +394,11 @@ fn safe_path_fragment(value: &str) -> bool {
 fn unique_nonempty(values: &[String]) -> bool {
     !values.is_empty()
         && values.iter().all(|value| !value.is_empty())
-        && values.iter().collect::<BTreeSet<_>>().len() == values.len()
+        && values
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            == values.len()
 }
 
 fn contains_required(values: &[String], required: &[&str]) -> bool {

@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use super::PolicyError;
 
 pub const POLICY_SCHEMA_METADATA_FIELD: &str = "policy_schema_compatibility";
@@ -97,7 +95,7 @@ pub fn default_policy_schema_metadata() -> PolicySchemaCompatibilityMetadata {
 }
 
 pub fn policy_schema_metadata(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<Option<PolicySchemaCompatibilityMetadata>, PolicyError> {
     let Some(metadata) = value.get(POLICY_SCHEMA_METADATA_FIELD) else {
         return Ok(None);
@@ -127,7 +125,7 @@ pub fn policy_schema_metadata(
 
 #[must_use]
 pub fn classify_policy_schema_compatibility(
-    value: &Value,
+    value: &serde_json::Value,
     parse_error: Option<&PolicyError>,
 ) -> PolicySchemaCompatibilityReport {
     if let Some(error) = parse_error {
@@ -143,7 +141,7 @@ pub fn classify_policy_schema_compatibility(
 
 #[must_use]
 pub fn policy_schema_compatibility_diagnostic(
-    value: &Value,
+    value: &serde_json::Value,
     parse_error: &PolicyError,
 ) -> Option<String> {
     let report = classify_policy_schema_compatibility(value, Some(parse_error));
@@ -161,7 +159,7 @@ pub fn policy_schema_compatibility_diagnostic(
 }
 
 fn classify_policy_schema_parse_error(
-    value: &Value,
+    value: &serde_json::Value,
     parse_error: &PolicyError,
 ) -> PolicySchemaCompatibilityReport {
     match parse_error {
@@ -233,10 +231,13 @@ fn refresh_required_report(
     }
 }
 
-fn metadata_string_field(value: &Value, field: &'static str) -> Result<String, PolicyError> {
+fn metadata_string_field(
+    value: &serde_json::Value,
+    field: &'static str,
+) -> Result<String, PolicyError> {
     value
         .get(field)
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .filter(|text| !text.is_empty())
         .map(str::to_string)
         .ok_or_else(|| metadata_field_error(field))
@@ -265,11 +266,11 @@ fn refresh_required_field(field: &str) -> bool {
     REFRESH_REQUIRED_FIELDS.contains(&field)
 }
 
-fn refresh_command_from_value(value: &Value) -> String {
+fn refresh_command_from_value(value: &serde_json::Value) -> String {
     value
         .get(POLICY_SCHEMA_METADATA_FIELD)
         .and_then(|metadata| metadata.get(FIELD_REFRESH_COMMAND))
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .filter(|text| !text.is_empty())
         .map(str::to_string)
         .unwrap_or_else(|| DEFAULT_POLICY_REFRESH_COMMAND.to_string())

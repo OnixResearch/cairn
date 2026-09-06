@@ -1,9 +1,7 @@
-use serde_json::Value;
-
 use super::{fields::*, PolicyError, SteelOrchestrationPolicy, SteelOrchestrationProfile};
 
 pub(super) fn steel_orchestration_policy(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<SteelOrchestrationPolicy, PolicyError> {
     let policy = value
         .get("steel_orchestration_policy")
@@ -19,15 +17,14 @@ pub(super) fn steel_orchestration_policy(
 }
 
 fn steel_orchestration_profiles(
-    policy: &Value,
+    policy: &serde_json::Value,
 ) -> Result<Vec<SteelOrchestrationProfile>, PolicyError> {
-    let profiles =
-        policy
-            .get("profiles")
-            .and_then(Value::as_array)
-            .ok_or(PolicyError::MissingField(
-                "steel_orchestration_policy.profiles",
-            ))?;
+    let profiles = policy
+        .get("profiles")
+        .and_then(serde_json::Value::as_array)
+        .ok_or(PolicyError::MissingField(
+            "steel_orchestration_policy.profiles",
+        ))?;
     profiles
         .iter()
         .map(|profile| {

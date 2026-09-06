@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use super::{admission::workflow_topological_order, model::*};
 
 const WORKFLOW_PLACEHOLDER_TOKEN: &str = "CAIRN_PLACEHOLDER";
@@ -21,7 +19,7 @@ pub fn derive_workflow_status(
 ) -> Result<WorkflowStatusReport, WorkflowAdmissionError> {
     let order = workflow_topological_order(schema)?;
     let observations = normalize_observations(schema, observations)?;
-    let mut statuses = BTreeMap::new();
+    let mut statuses = std::collections::BTreeMap::new();
     let mut issues = Vec::new();
 
     for artifact_id in &order {
@@ -132,13 +130,14 @@ pub fn build_workflow_instructions(
 fn normalize_observations(
     schema: &WorkflowSchemaPolicy,
     observations: &[WorkflowArtifactObservation],
-) -> Result<BTreeMap<String, WorkflowArtifactObservation>, WorkflowAdmissionError> {
+) -> Result<std::collections::BTreeMap<String, WorkflowArtifactObservation>, WorkflowAdmissionError>
+{
     let known = schema
         .artifacts
         .iter()
         .map(|artifact| artifact.id.as_str())
-        .collect::<BTreeSet<_>>();
-    let mut normalized = BTreeMap::new();
+        .collect::<std::collections::BTreeSet<_>>();
+    let mut normalized = std::collections::BTreeMap::new();
     for observation in observations {
         if !known.contains(observation.artifact_id.as_str()) {
             return Err(WorkflowAdmissionError::new(
@@ -181,7 +180,7 @@ fn derive_artifact_status(
     schema: &WorkflowSchemaPolicy,
     artifact: &WorkflowArtifactPolicy,
     observation: &WorkflowArtifactObservation,
-    prior: &BTreeMap<String, WorkflowArtifactStatus>,
+    prior: &std::collections::BTreeMap<String, WorkflowArtifactStatus>,
 ) -> WorkflowArtifactStatus {
     let missing = missing_dependencies(schema, artifact, prior);
     let mut blockers = dependency_blockers(&missing);
@@ -218,7 +217,7 @@ fn derive_artifact_status(
 fn missing_dependencies(
     schema: &WorkflowSchemaPolicy,
     artifact: &WorkflowArtifactPolicy,
-    prior: &BTreeMap<String, WorkflowArtifactStatus>,
+    prior: &std::collections::BTreeMap<String, WorkflowArtifactStatus>,
 ) -> Vec<String> {
     artifact
         .requires

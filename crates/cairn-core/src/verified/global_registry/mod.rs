@@ -5,8 +5,6 @@ mod graph;
 mod query;
 mod types;
 
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::Serialize;
 use serde_json::json;
 
@@ -73,7 +71,7 @@ pub fn build_global_registry_snapshot(
     let node_ids = nodes
         .iter()
         .map(|node| node.stable_id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     for edge in &edges {
         if node_ids.contains(edge.stable_id.as_str()) {
             issues.push(issue(
@@ -282,7 +280,7 @@ fn normalize_nodes(
     let source_ids = sources
         .iter()
         .map(|row| row.source_id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let mut normalized = Vec::new();
     for mut value in values {
         validate_common(
@@ -351,11 +349,11 @@ fn normalize_edges(
     let source_ids = sources
         .iter()
         .map(|row| row.source_id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let node_ids = nodes
         .iter()
         .map(|row| row.stable_id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let mut normalized = Vec::new();
     for mut value in values {
         if value.stable_id.is_empty() || value.kind.is_empty() || value.non_claims.is_empty() {
@@ -451,15 +449,15 @@ fn normalize_tags(
     let source_by_id = sources
         .iter()
         .map(|row| (row.source_id.as_str(), row))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     let node_ids = nodes
         .iter()
         .map(|row| row.stable_id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let edge_ids = edges
         .iter()
         .map(|row| row.stable_id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let mut normalized = Vec::new();
     for mut value in values {
         if value.assignment_id.is_empty()
@@ -675,7 +673,7 @@ fn require_reference(
     id: &str,
     field: &str,
     reference: &str,
-    present: &BTreeSet<&str>,
+    present: &std::collections::BTreeSet<&str>,
     issues: &mut Vec<RegistryIssue>,
 ) {
     if !present.contains(reference) {

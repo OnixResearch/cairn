@@ -1,7 +1,6 @@
 use std::{error::Error, fmt};
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 pub const WORKFLOW_SCHEMA_VERSION_V1: &str = "cairn.workflow-schema.v1";
 pub const WORKFLOW_STATUS_SCHEMA_V1: &str = "cairn.workflow-status.v1";
@@ -236,7 +235,7 @@ pub struct WorkflowProfileEvidence {
     pub delta_spec_paths: Vec<String>,
     pub acceptance_markdown: Option<String>,
     pub tasks_markdown: Option<String>,
-    pub outcome_machine_review: Option<Value>,
+    pub outcome_machine_review: Option<serde_json::Value>,
     pub outcome_machine_evidence: Vec<WorkflowOutcomeMachineEvidenceObservation>,
     pub artifact_hashes: Vec<WorkflowProfileArtifactHash>,
     pub reviews: Vec<WorkflowReviewEvidence>,

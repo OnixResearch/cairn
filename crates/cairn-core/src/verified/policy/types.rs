@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use super::document_collaboration::DocumentCollaborationPolicy;
 use super::PolicySchemaCompatibilityMetadata;
 
@@ -56,7 +54,7 @@ pub struct Policy {
     pub nominal_identity_policy: NominalIdentityPolicy,
     pub lifecycle_store_policy: LifecycleStorePolicy,
     pub policy_schema_compatibility: Option<PolicySchemaCompatibilityMetadata>,
-    pub raw: Value,
+    pub raw: serde_json::Value,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

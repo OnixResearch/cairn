@@ -1,7 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::verified::{
     content_bound_requirement_registry::{
@@ -202,7 +199,7 @@ pub fn evaluate_content_bound_trace_index(
         .rows
         .iter()
         .map(|row| (row.requirement_id.as_str(), row))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     let mut sources = Vec::with_capacity(evidence_files.len());
     let mut links = Vec::new();
 
@@ -400,7 +397,7 @@ pub fn query_content_bound_trace_index(
 }
 
 pub fn parse_content_bound_trace_index_value(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<ContentBoundTraceIndex, ContentBoundTraceIndexIssue> {
     serde_json::from_value(value.clone()).map_err(|error| {
         issue(
@@ -415,7 +412,7 @@ fn collect_file_links<'a>(
     file: &TraceabilityFile,
     source_file_blake3: &str,
     profile: &TraceabilityProfile,
-    requirement_rows: &BTreeMap<&'a str, &'a ContentBoundRequirementRow>,
+    requirement_rows: &std::collections::BTreeMap<&'a str, &'a ContentBoundRequirementRow>,
     links: &mut Vec<ContentBoundTraceLink>,
     issues: &mut Vec<ContentBoundTraceIndexIssue>,
 ) {
@@ -554,7 +551,7 @@ fn reject_duplicate_links(
     links: &[ContentBoundTraceLink],
     issues: &mut Vec<ContentBoundTraceIndexIssue>,
 ) {
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for link in links {
         if !seen.insert(link.link_blake3.as_str()) {
             push_issue(
@@ -590,7 +587,7 @@ fn validate_requirement_rows(
     index: &ContentBoundTraceIndex,
     issues: &mut Vec<ContentBoundTraceIndexIssue>,
 ) {
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for (row_index, row) in index.requirements.iter().enumerate() {
         validate_hash(
             &row.row_blake3,
@@ -609,7 +606,7 @@ fn validate_requirement_rows(
 }
 
 fn validate_sources(index: &ContentBoundTraceIndex, issues: &mut Vec<ContentBoundTraceIndexIssue>) {
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for (source_index, source) in index.sources.iter().enumerate() {
         if !safe_relative_path(&source.path) {
             push_issue(
@@ -640,13 +637,13 @@ fn validate_links(index: &ContentBoundTraceIndex, issues: &mut Vec<ContentBoundT
         .requirements
         .iter()
         .map(|row| (row.requirement_id.as_str(), row))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     let sources = index
         .sources
         .iter()
         .map(|source| (source.path.as_str(), source))
-        .collect::<BTreeMap<_, _>>();
-    let mut seen = BTreeSet::new();
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut seen = std::collections::BTreeSet::new();
     for (link_index, link) in index.links.iter().enumerate() {
         let field_path = format!("links[{link_index}]");
         validate_hash(
@@ -864,11 +861,11 @@ fn compare_sources(
     let saved_by_path = saved
         .iter()
         .map(|source| (source.path.as_str(), source))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     let current_by_path = current
         .iter()
         .map(|source| (source.path.as_str(), source))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     for (path, saved_source) in &saved_by_path {
         match current_by_path.get(path) {
             None => push_issue(

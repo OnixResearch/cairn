@@ -1,7 +1,4 @@
-use std::collections::BTreeSet;
-
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 use super::{
     evidence::canonical_json_hash,
@@ -139,7 +136,7 @@ pub fn trellis_proof_readiness_hash(
     properties.sort();
     let mut assumptions = input.assumptions.clone();
     assumptions.sort();
-    canonical_json_hash(&json!({
+    canonical_json_hash(&serde_json::json!({
         "mode": policy.mode,
         "gate_policy_identity": policy.evidence_chain_policy.gate_policy_identity,
         "evidence_chain": input.evidence_chain,
@@ -347,7 +344,7 @@ fn validate_unique_values(
             "empty",
         ));
     }
-    let unique = values.iter().collect::<BTreeSet<_>>();
+    let unique = values.iter().collect::<std::collections::BTreeSet<_>>();
     if unique.len() != values.len() {
         issues.push(issue(
             "trellis_proof.value_duplicate",

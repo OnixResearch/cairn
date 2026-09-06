@@ -1,4 +1,4 @@
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 use crate::verified::nominal_identity::{ArtifactDigestRole, PolicyDigestRole, ReceiptDigestRole};
 
@@ -6,14 +6,19 @@ use super::common::{is_digest, issue};
 use super::types::AgentRunGateIssue;
 
 // r[impl cairn.supersede.agent_receipt_replay_evidence.schema]
-pub(super) fn replay_evidence_issues(object: &Map<String, Value>) -> Vec<AgentRunGateIssue> {
-    let Some(evidence) = object.get("replay_evidence").and_then(Value::as_object) else {
+pub(super) fn replay_evidence_issues(
+    object: &Map<String, serde_json::Value>,
+) -> Vec<AgentRunGateIssue> {
+    let Some(evidence) = object
+        .get("replay_evidence")
+        .and_then(serde_json::Value::as_object)
+    else {
         return Vec::new();
     };
     let mut issues = Vec::new();
     let replay_hash = evidence
         .get("replay_receipt_hash")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     if !is_digest::<ReceiptDigestRole>(replay_hash) {
         issues.push(issue(
@@ -23,7 +28,7 @@ pub(super) fn replay_evidence_issues(object: &Map<String, Value>) -> Vec<AgentRu
     }
     let policy_hash = evidence
         .get("replay_policy_hash")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     if !is_digest::<PolicyDigestRole>(policy_hash) {
         issues.push(issue(
@@ -33,7 +38,7 @@ pub(super) fn replay_evidence_issues(object: &Map<String, Value>) -> Vec<AgentRu
     }
     if evidence
         .get("replay_verdict")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default()
         != "pass"
     {
@@ -55,8 +60,8 @@ pub(super) fn replay_evidence_issues(object: &Map<String, Value>) -> Vec<AgentRu
     }
     let has_cases = evidence
         .get("replay_selected_cases")
-        .and_then(Value::as_array)
-        .map(|cases| !cases.is_empty() && cases.iter().all(Value::is_string))
+        .and_then(serde_json::Value::as_array)
+        .map(|cases| !cases.is_empty() && cases.iter().all(serde_json::Value::is_string))
         .unwrap_or(false);
     if !has_cases {
         issues.push(issue(
@@ -66,8 +71,8 @@ pub(super) fn replay_evidence_issues(object: &Map<String, Value>) -> Vec<AgentRu
     }
     let has_groups = evidence
         .get("replay_selected_groups")
-        .and_then(Value::as_array)
-        .map(|groups| !groups.is_empty() && groups.iter().all(Value::is_string))
+        .and_then(serde_json::Value::as_array)
+        .map(|groups| !groups.is_empty() && groups.iter().all(serde_json::Value::is_string))
         .unwrap_or(false);
     if !has_groups {
         issues.push(issue(

@@ -1,7 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
-use serde_json::json;
-
 use crate::verified::evidence::{canonical_json, canonical_json_hash};
 
 use super::{
@@ -45,7 +41,7 @@ pub fn plan_generated_agent_workflow_install(
     let observed = observation_map(&snapshot.files);
     let prior = supported_prior_manifest(snapshot, adapter_id, adapter.version);
     let prior_files = prior_file_map(prior.as_ref());
-    let mut desired_paths = BTreeSet::new();
+    let mut desired_paths = std::collections::BTreeSet::new();
     let mut blockers = Vec::new();
     let mut files = Vec::with_capacity(rendered.len());
 
@@ -136,7 +132,7 @@ pub fn plan_generated_agent_workflow_install(
 }
 
 pub fn generated_workflow_plan_identity(plan: &GeneratedWorkflowInstallPlan) -> String {
-    canonical_json_hash(&json!({
+    canonical_json_hash(&serde_json::json!({
         "schema": plan.schema,
         "adapter_id": plan.adapter_id,
         "adapter_version": plan.adapter_version,
@@ -144,7 +140,7 @@ pub fn generated_workflow_plan_identity(plan: &GeneratedWorkflowInstallPlan) -> 
         "policy_hash": plan.policy_hash,
         "catalog_identity": plan.catalog_identity,
         "max_file_bytes": plan.max_file_bytes,
-        "files": plan.files.iter().map(|file| json!({
+        "files": plan.files.iter().map(|file| serde_json::json!({
             "workflow_id": file.workflow_id,
             "relative_path": file.relative_path,
             "generated_blake3": file.generated_blake3,
@@ -177,7 +173,9 @@ fn validate_destination(
     )])
 }
 
-fn prior_file_map(prior: Option<&GeneratedWorkflowManifest>) -> BTreeMap<String, String> {
+fn prior_file_map(
+    prior: Option<&GeneratedWorkflowManifest>,
+) -> std::collections::BTreeMap<String, String> {
     prior
         .map(|manifest| {
             manifest
@@ -191,7 +189,7 @@ fn prior_file_map(prior: Option<&GeneratedWorkflowManifest>) -> BTreeMap<String,
 
 fn removal_candidates(
     prior: Option<&GeneratedWorkflowManifest>,
-    desired_paths: &BTreeSet<String>,
+    desired_paths: &std::collections::BTreeSet<String>,
 ) -> Vec<String> {
     let Some(manifest) = prior else {
         return Vec::new();

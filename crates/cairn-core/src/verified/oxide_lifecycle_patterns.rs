@@ -1,7 +1,4 @@
-use std::collections::BTreeSet;
-
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use super::evidence::canonical_json_hash;
 
@@ -110,7 +107,9 @@ pub struct OxideLifecyclePatternReport {
 }
 
 #[must_use]
-pub fn validate_oxide_lifecycle_patterns_value(value: &Value) -> OxideLifecyclePatternReport {
+pub fn validate_oxide_lifecycle_patterns_value(
+    value: &serde_json::Value,
+) -> OxideLifecyclePatternReport {
     let input_hash = canonical_json_hash(value);
     let Ok(bundle) = serde_json::from_value::<OxideLifecyclePatternBundle>(value.clone()) else {
         return OxideLifecyclePatternReport {
@@ -133,7 +132,7 @@ pub fn validate_oxide_lifecycle_patterns_value(value: &Value) -> OxideLifecycleP
 }
 
 #[must_use]
-pub fn positive_oxide_lifecycle_patterns_fixture() -> Value {
+pub fn positive_oxide_lifecycle_patterns_fixture() -> serde_json::Value {
     serde_json::json!({
         "schema_version": OXIDE_LIFECYCLE_PATTERN_SCHEMA_V1,
         "references": REQUIRED_REFERENCE_REPOS.iter().map(|repository| serde_json::json!({
@@ -232,7 +231,7 @@ fn validate_references(
     // r[impl cairn.lifecycle_orchestration.oxide_patterns.reference_inventory.non_adoption]
     // r[impl cairn.lifecycle_orchestration.oxide_patterns.reference_inventory.study_only]
     validate_bound(references.len(), MAX_REFERENCE_ROWS, "references", issues);
-    let mut repositories = BTreeSet::new();
+    let mut repositories = std::collections::BTreeSet::new();
     for (index, reference) in references.iter().enumerate() {
         let field_path = format!("references[{index}]");
         validate_text(
@@ -300,7 +299,7 @@ fn validate_saga_steps(steps: &[LifecycleSagaStep], issues: &mut Vec<OxideLifecy
     // r[impl cairn.lifecycle_orchestration.oxide_patterns.saga_logs.recoverable]
     // r[impl cairn.lifecycle_orchestration.oxide_patterns.saga_logs.missing_compensation]
     validate_bound(steps.len(), MAX_SAGA_STEPS, "saga_steps", issues);
-    let mut ids = BTreeSet::new();
+    let mut ids = std::collections::BTreeSet::new();
     for (index, step) in steps.iter().enumerate() {
         let field_path = format!("saga_steps[{index}]");
         validate_text(&step.id, &format!("{field_path}.id"), issues);
@@ -681,27 +680,34 @@ mod tests {
             let mut value = positive_oxide_lifecycle_patterns_fixture();
             match case {
                 "missing-compensation" => {
-                    value["saga_steps"][0]["compensation_action"] = Value::Null
+                    value["saga_steps"][0]["compensation_action"] = serde_json::Value::Null
                 }
                 "missing-operator-decision" => {
-                    value["saga_steps"][0]["status"] = Value::String("failed".to_string());
-                    value["saga_steps"][0]["compensation_eligible"] = Value::Bool(false);
-                    value["saga_steps"][0]["recovery_decision"] = Value::String("none".to_string());
+                    value["saga_steps"][0]["status"] =
+                        serde_json::Value::String("failed".to_string());
+                    value["saga_steps"][0]["compensation_eligible"] =
+                        serde_json::Value::Bool(false);
+                    value["saga_steps"][0]["recovery_decision"] =
+                        serde_json::Value::String("none".to_string());
                 }
                 "stale-revision" => {
                     value["document_plans"][0]["observed_revision"] =
-                        Value::String(fixture_hash('f'))
+                        serde_json::Value::String(fixture_hash('f'))
                 }
                 "golden-mismatch" => {
-                    value["golden_snapshots"][0]["refresh_requested"] = Value::Bool(false)
+                    value["golden_snapshots"][0]["refresh_requested"] =
+                        serde_json::Value::Bool(false)
                 }
-                "unreviewed-refresh" => value["golden_snapshots"][0]["approval"] = Value::Null,
+                "unreviewed-refresh" => {
+                    value["golden_snapshots"][0]["approval"] = serde_json::Value::Null
+                }
                 "corrupt-bundle" => {
-                    value["bundle_members"][0]["observed_hash"] = Value::String(fixture_hash('a'))
+                    value["bundle_members"][0]["observed_hash"] =
+                        serde_json::Value::String(fixture_hash('a'))
                 }
                 "reference-overclaim" => {
                     value["references"][0]["non_adoption_boundary"] =
-                        Value::String("proves domain correctness".to_string())
+                        serde_json::Value::String("proves domain correctness".to_string())
                 }
                 "overclaim" => {
                     value["non_claims"] = serde_json::json!(["proves release eligibility"])

@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use super::common::{
     push_issue, require_hex_string, require_known_string_at, require_string, validate_hash_field,
     validate_optional_hash, validate_optional_receipt_hash, without_hash_field,
@@ -9,11 +7,11 @@ use super::{
 };
 use crate::verified::evidence::canonical_json_hash;
 
-pub fn revision_handoff_hash(value: &Value) -> String {
+pub fn revision_handoff_hash(value: &serde_json::Value) -> String {
     canonical_json_hash(&without_hash_field(value, "receipt_hash"))
 }
 
-pub fn validate_revision_handoff(value: &Value) -> SemanticReviewReport {
+pub fn validate_revision_handoff(value: &serde_json::Value) -> SemanticReviewReport {
     // r[impl cairn.semantic_review.revision_handoff_receipts.schema]
     // r[impl cairn.semantic_review.revision_handoff_receipts.schema.schema.chain]
     // r[impl cairn.semantic_review.revision_handoff_receipts.schema.schema.dispositions]
@@ -33,8 +31,11 @@ pub fn validate_revision_handoff(value: &Value) -> SemanticReviewReport {
     report(value, issues)
 }
 
-fn validate_revision_artifacts(value: Option<&Value>, issues: &mut Vec<SemanticReviewIssue>) {
-    let Some(artifacts) = value.and_then(Value::as_array) else {
+fn validate_revision_artifacts(
+    value: Option<&serde_json::Value>,
+    issues: &mut Vec<SemanticReviewIssue>,
+) {
+    let Some(artifacts) = value.and_then(serde_json::Value::as_array) else {
         push_issue(
             issues,
             "missing_field",
@@ -55,7 +56,7 @@ fn validate_revision_artifacts(value: Option<&Value>, issues: &mut Vec<SemanticR
         let field = format!("revision_artifacts[{index}]");
         if artifact
             .get("path")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or("")
             .is_empty()
         {
@@ -70,8 +71,8 @@ fn validate_revision_artifacts(value: Option<&Value>, issues: &mut Vec<SemanticR
     }
 }
 
-fn validate_dispositions(value: Option<&Value>, issues: &mut Vec<SemanticReviewIssue>) {
-    let Some(dispositions) = value.and_then(Value::as_array) else {
+fn validate_dispositions(value: Option<&serde_json::Value>, issues: &mut Vec<SemanticReviewIssue>) {
+    let Some(dispositions) = value.and_then(serde_json::Value::as_array) else {
         push_issue(
             issues,
             "missing_field",
@@ -92,7 +93,7 @@ fn validate_dispositions(value: Option<&Value>, issues: &mut Vec<SemanticReviewI
         let field = format!("finding_dispositions[{index}]");
         if disposition
             .get("finding_id")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or("")
             .is_empty()
         {
@@ -113,12 +114,12 @@ fn validate_dispositions(value: Option<&Value>, issues: &mut Vec<SemanticReviewI
         if disposition_value.as_deref() == Some("addressed") {
             let has_refs = disposition
                 .get("evidence_refs")
-                .and_then(Value::as_array)
+                .and_then(serde_json::Value::as_array)
                 .map(|refs| !refs.is_empty())
                 .unwrap_or(false);
             let has_hashes = disposition
                 .get("artifact_hashes")
-                .and_then(Value::as_array)
+                .and_then(serde_json::Value::as_array)
                 .map(|hashes| !hashes.is_empty())
                 .unwrap_or(false);
             if !has_refs && !has_hashes {
@@ -135,7 +136,7 @@ fn validate_dispositions(value: Option<&Value>, issues: &mut Vec<SemanticReviewI
             // r[impl cairn.semantic_review.revision_handoff_receipts.validation.validation.new_findings]
             if disposition
                 .get("introduced_by_followup")
-                .and_then(Value::as_bool)
+                .and_then(serde_json::Value::as_bool)
                 != Some(true)
             {
                 push_issue(
@@ -149,7 +150,7 @@ fn validate_dispositions(value: Option<&Value>, issues: &mut Vec<SemanticReviewI
     }
 }
 
-fn report(value: &Value, issues: Vec<SemanticReviewIssue>) -> SemanticReviewReport {
+fn report(value: &serde_json::Value, issues: Vec<SemanticReviewIssue>) -> SemanticReviewReport {
     let valid = issues.is_empty();
     SemanticReviewReport {
         valid,

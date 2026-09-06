@@ -1,12 +1,10 @@
-use serde_json::Value;
-
 use super::super::common::entropy_hash_material_messages;
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_entropy_issues(
     root_path: &str,
-    root: &Value,
+    root: &serde_json::Value,
 ) -> Vec<ExportBundleIssue> {
     entropy_hash_material_messages(root_path, root)
         .into_iter()

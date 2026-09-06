@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::Serialize;
 use serde_json::json;
 
@@ -56,7 +54,7 @@ pub fn build_archive_manifest(
         ));
     }
     let mut entries = Vec::with_capacity(archive.files.len());
-    let mut seen_paths = BTreeSet::new();
+    let mut seen_paths = std::collections::BTreeSet::new();
     for file in &archive.files {
         if !safe_relative_path(&file.path) {
             issues.push(issue(
@@ -143,12 +141,12 @@ pub fn build_compaction_plan(
     let pointer_by_archive = pointers
         .iter()
         .map(|pointer| (pointer.archive_id.as_str(), pointer))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
 
     let mut all_manifests = Vec::new();
     let mut candidate_manifests = Vec::new();
     let mut restored_manifests = Vec::new();
-    let mut seen_archives = BTreeSet::new();
+    let mut seen_archives = std::collections::BTreeSet::new();
     for archive in archives {
         if !seen_archives.insert(archive.archive_id.clone()) {
             blockers.push(issue(
@@ -555,7 +553,7 @@ fn archive_file_role(path: &str) -> &'static str {
 // r[impl cairn.sync_archive.compaction.manifest_roots.deduplicate]
 fn build_pack_manifest(mut archives: Vec<ArchiveManifest>) -> PackManifest {
     archives.sort_by(|left, right| left.archive_id.cmp(&right.archive_id));
-    let mut objects = BTreeMap::<String, u64>::new();
+    let mut objects = std::collections::BTreeMap::<String, u64>::new();
     for archive in &archives {
         for entry in &archive.entries {
             objects
@@ -598,7 +596,7 @@ fn pack_manifest_hash(pack: &PackManifest) -> String {
 }
 
 fn validate_pointers(pointers: &[ArchivePointer], issues: &mut Vec<CompactionIssue>) {
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for pointer in pointers {
         if pointer.schema_version != COMPACTION_POINTER_SCHEMA_V1 {
             issues.push(issue(

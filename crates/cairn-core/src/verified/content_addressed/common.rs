@@ -1,4 +1,4 @@
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 use crate::verified::nominal_identity::{ArtifactDigest, RAW_BLAKE3_PROFILE};
 
@@ -29,12 +29,12 @@ const ENTROPY_KEY_FRAGMENTS: &[&str] = &[
 ];
 const HASH_TRAVERSAL_STACK_CAPACITY: usize = 32;
 
-pub(super) fn strip_non_hash_fields(value: &mut Value) {
+pub(super) fn strip_non_hash_fields(value: &mut serde_json::Value) {
     let mut stack = Vec::with_capacity(HASH_TRAVERSAL_STACK_CAPACITY);
     stack.push(value);
     while let Some(current) = stack.pop() {
         match current {
-            Value::Object(object) => {
+            serde_json::Value::Object(object) => {
                 object.remove("object_hash");
                 object.remove("pointer_hash");
                 object.remove("bundle_hash");
@@ -48,7 +48,7 @@ pub(super) fn strip_non_hash_fields(value: &mut Value) {
                     stack.push(child);
                 }
             }
-            Value::Array(entries) => {
+            serde_json::Value::Array(entries) => {
                 for child in entries {
                     stack.push(child);
                 }
@@ -58,13 +58,16 @@ pub(super) fn strip_non_hash_fields(value: &mut Value) {
     }
 }
 
-pub(super) fn entropy_hash_material_messages(root_path: &str, root: &Value) -> Vec<String> {
+pub(super) fn entropy_hash_material_messages(
+    root_path: &str,
+    root: &serde_json::Value,
+) -> Vec<String> {
     let mut issues = Vec::with_capacity(16);
     let mut stack = Vec::with_capacity(HASH_TRAVERSAL_STACK_CAPACITY);
     stack.push((root_path.to_string(), root));
     while let Some((path, value)) = stack.pop() {
         match value {
-            Value::Object(object) => {
+            serde_json::Value::Object(object) => {
                 for (key, child) in object {
                     let child_path = format!("{path}.{key}");
                     if is_entropy_key(key) {
@@ -75,12 +78,12 @@ pub(super) fn entropy_hash_material_messages(root_path: &str, root: &Value) -> V
                     stack.push((child_path, child));
                 }
             }
-            Value::Array(entries) => {
+            serde_json::Value::Array(entries) => {
                 for (index, child) in entries.iter().enumerate() {
                     stack.push((format!("{path}[{index}]"), child));
                 }
             }
-            Value::String(text) if is_temporary_path(text) => {
+            serde_json::Value::String(text) if is_temporary_path(text) => {
                 issues.push(format!(
                     "temporary absolute path is not allowed in hash material: {path}"
                 ));
@@ -91,10 +94,14 @@ pub(super) fn entropy_hash_material_messages(root_path: &str, root: &Value) -> V
     issues
 }
 
-pub(super) fn known_value(object: &Map<String, Value>, field: &str, known: &[&str]) -> bool {
+pub(super) fn known_value(
+    object: &Map<String, serde_json::Value>,
+    field: &str,
+    known: &[&str],
+) -> bool {
     object
         .get(field)
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .is_some_and(|value| known.contains(&value))
 }
 

@@ -1,13 +1,13 @@
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 use super::super::common::is_blake3_hex;
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_object_issues(
-    object: &Map<String, Value>,
+    object: &Map<String, serde_json::Value>,
 ) -> (Vec<String>, Vec<ExportBundleIssue>) {
-    let Some(objects) = object.get("objects").and_then(Value::as_array) else {
+    let Some(objects) = object.get("objects").and_then(serde_json::Value::as_array) else {
         return (
             Vec::new(),
             vec![bundle_issue(
@@ -29,7 +29,7 @@ pub(super) fn export_bundle_object_issues(
         };
         let object_hash = object_entry
             .get("object_hash")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
         if !is_blake3_hex(object_hash) {
             issues.push(bundle_issue(

@@ -4,7 +4,7 @@
 // r[impl electrical_circuit_primitives.units]
 // r[impl electrical_circuit_primitives.units.dimensioned_values]
 
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 use super::issues::{issue, CircuitPrimitiveIssue};
 
@@ -26,9 +26,14 @@ const MODEL_CAVEATED_KINDS: &[&str] = &["behavioral-source", "vendor-model", "se
 const PASSIVE_KINDS: &[&str] = &["resistor", "capacitor", "inductor"];
 const REQUIRED_TERMINALS: &[&str] = &["p", "n"];
 
-pub(super) fn component_issues(object: &Map<String, Value>) -> Vec<CircuitPrimitiveIssue> {
+pub(super) fn component_issues(
+    object: &Map<String, serde_json::Value>,
+) -> Vec<CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(8);
-    let Some(components) = object.get("components").and_then(Value::as_array) else {
+    let Some(components) = object
+        .get("components")
+        .and_then(serde_json::Value::as_array)
+    else {
         issues.push(issue(
             "circuit_primitive.components_not_array",
             "components must be an array",
@@ -45,7 +50,7 @@ pub(super) fn component_issues(object: &Map<String, Value>) -> Vec<CircuitPrimit
         };
         let kind = component_object
             .get("kind")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
         if PASSIVE_KINDS.contains(&kind) {
             issues.extend(passive_value_issues(component_object));
@@ -58,11 +63,11 @@ pub(super) fn component_issues(object: &Map<String, Value>) -> Vec<CircuitPrimit
 }
 
 pub(super) fn component_binding_issues(
-    components: Option<&Value>,
+    components: Option<&serde_json::Value>,
     net_ids: &[String],
 ) -> Vec<CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(8);
-    let Some(component_entries) = components.and_then(Value::as_array) else {
+    let Some(component_entries) = components.and_then(serde_json::Value::as_array) else {
         return issues;
     };
     for component in component_entries {
@@ -71,7 +76,7 @@ pub(super) fn component_binding_issues(
         };
         let kind = component_object
             .get("kind")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
         if !TWO_TERMINAL_KINDS.contains(&kind) && !MODEL_CAVEATED_KINDS.contains(&kind) {
             issues.push(issue(
@@ -82,7 +87,7 @@ pub(super) fn component_binding_issues(
         }
         let Some(bindings) = component_object
             .get("terminal_bindings")
-            .and_then(Value::as_object)
+            .and_then(serde_json::Value::as_object)
         else {
             issues.push(issue(
                 "circuit_primitive.terminal_bindings_missing",
@@ -91,7 +96,7 @@ pub(super) fn component_binding_issues(
             continue;
         };
         for terminal in REQUIRED_TERMINALS {
-            match bindings.get(*terminal).and_then(Value::as_str) {
+            match bindings.get(*terminal).and_then(serde_json::Value::as_str) {
                 Some(net_id) if net_ids.iter().any(|declared| declared == net_id) => {}
                 Some(_) => issues.push(issue(
                     "circuit_primitive.terminal_net_unknown",
@@ -107,9 +112,12 @@ pub(super) fn component_binding_issues(
     issues
 }
 
-fn passive_value_issues(component: &Map<String, Value>) -> Vec<CircuitPrimitiveIssue> {
+fn passive_value_issues(component: &Map<String, serde_json::Value>) -> Vec<CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(REQUIRED_VALUE_FIELDS.len());
-    let Some(value) = component.get("value").and_then(Value::as_object) else {
+    let Some(value) = component
+        .get("value")
+        .and_then(serde_json::Value::as_object)
+    else {
         return vec![issue(
             "circuit_primitive.value_missing",
             "passive primitives must carry a dimensioned value object",
@@ -135,14 +143,14 @@ fn passive_value_issues(component: &Map<String, Value>) -> Vec<CircuitPrimitiveI
     issues
 }
 
-fn model_caveat_issues(component: &Map<String, Value>) -> Vec<CircuitPrimitiveIssue> {
+fn model_caveat_issues(component: &Map<String, serde_json::Value>) -> Vec<CircuitPrimitiveIssue> {
     let has_provenance = component
         .get("model_provenance")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .is_some_and(|value| !value.is_empty());
     let has_caveats = component
         .get("model_caveats")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .is_some_and(|entries| !entries.is_empty());
     let mut issues = Vec::with_capacity(2);
     if !has_provenance {

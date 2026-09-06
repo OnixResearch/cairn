@@ -1,14 +1,14 @@
-use serde_json::{json, Map, Value};
+use serde_json::Map;
 
 use super::SemanticReviewIssue;
 
 pub(super) fn require_string(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
     expected: &str,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    match value.get(field).and_then(Value::as_str) {
+    match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if actual == expected => {}
         Some(_) => push_issue(issues, "invalid_field", field, "field has unexpected value"),
         None => push_issue(issues, "missing_field", field, "missing required field"),
@@ -16,12 +16,12 @@ pub(super) fn require_string(
 }
 
 pub(super) fn require_known_string(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
     allowed: &[&str],
     issues: &mut Vec<SemanticReviewIssue>,
 ) -> Option<String> {
-    match value.get(field).and_then(Value::as_str) {
+    match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if allowed.contains(&actual) => Some(actual.to_string()),
         Some(_) => {
             push_issue(issues, "invalid_field", field, "field is not policy-known");
@@ -35,13 +35,13 @@ pub(super) fn require_known_string(
 }
 
 pub(super) fn require_known_string_at(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
     allowed: &[&str],
     prefix: &str,
     issues: &mut Vec<SemanticReviewIssue>,
 ) -> Option<String> {
-    match value.get(field).and_then(Value::as_str) {
+    match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if allowed.contains(&actual) => Some(actual.to_string()),
         Some(_) => {
             push_issue(
@@ -65,11 +65,11 @@ pub(super) fn require_known_string_at(
 }
 
 pub(super) fn require_hex_string(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    match value.get(field).and_then(Value::as_str) {
+    match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if is_blake3_hex(actual) => {}
         Some(_) => push_issue(issues, "invalid_hash", field, "field must be blake3 hex"),
         None => push_issue(
@@ -82,11 +82,11 @@ pub(super) fn require_hex_string(
 }
 
 pub(super) fn validate_optional_hash(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    if let Some(actual) = value.get(field).and_then(Value::as_str) {
+    if let Some(actual) = value.get(field).and_then(serde_json::Value::as_str) {
         if !is_blake3_hex(actual) {
             push_issue(issues, "invalid_hash", field, "field must be blake3 hex");
         }
@@ -94,12 +94,12 @@ pub(super) fn validate_optional_hash(
 }
 
 pub(super) fn validate_hash_field(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
     prefix: &str,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    match value.get(field).and_then(Value::as_str) {
+    match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if is_blake3_hex(actual) => {}
         Some(_) => push_issue(
             issues,
@@ -117,11 +117,14 @@ pub(super) fn validate_hash_field(
 }
 
 pub(super) fn validate_optional_receipt_hash(
-    value: &Value,
+    value: &serde_json::Value,
     issues: &mut Vec<SemanticReviewIssue>,
     expected: String,
 ) {
-    if let Some(actual) = value.get("receipt_hash").and_then(Value::as_str) {
+    if let Some(actual) = value
+        .get("receipt_hash")
+        .and_then(serde_json::Value::as_str)
+    {
         if actual != expected {
             push_issue(
                 issues,
@@ -133,12 +136,12 @@ pub(super) fn validate_optional_receipt_hash(
     }
 }
 
-pub fn issues_json(issues: &[SemanticReviewIssue]) -> Value {
-    Value::Array(
+pub fn issues_json(issues: &[SemanticReviewIssue]) -> serde_json::Value {
+    serde_json::Value::Array(
         issues
             .iter()
             .map(|issue| {
-                json!({
+                serde_json::json!({
                     "code": issue.code,
                     "field_path": issue.field_path,
                     "message": issue.message,
@@ -148,33 +151,36 @@ pub fn issues_json(issues: &[SemanticReviewIssue]) -> Value {
     )
 }
 
-pub(super) fn without_hash_field(value: &Value, field: &str) -> Value {
+pub(super) fn without_hash_field(value: &serde_json::Value, field: &str) -> serde_json::Value {
     match value {
-        Value::Object(object) => {
+        serde_json::Value::Object(object) => {
             let mut cloned = object.clone();
             cloned.remove(field);
-            Value::Object(cloned)
+            serde_json::Value::Object(cloned)
         }
         other => other.clone(),
     }
 }
 
-pub(super) fn count_string_field(values: &[Value], field: &str) -> Value {
+pub(super) fn count_string_field(values: &[serde_json::Value], field: &str) -> serde_json::Value {
     let mut counts = Map::new();
     for value in values {
-        if let Some(text) = value.get(field).and_then(Value::as_str) {
+        if let Some(text) = value.get(field).and_then(serde_json::Value::as_str) {
             increment_count(&mut counts, text);
         }
     }
     sort_count_map(&mut counts)
 }
 
-pub(super) fn increment_count(counts: &mut Map<String, Value>, key: &str) {
-    let current = counts.get(key).and_then(Value::as_u64).unwrap_or(0);
-    counts.insert(key.to_string(), json!(current + 1));
+pub(super) fn increment_count(counts: &mut Map<String, serde_json::Value>, key: &str) {
+    let current = counts
+        .get(key)
+        .and_then(serde_json::Value::as_u64)
+        .unwrap_or(0);
+    counts.insert(key.to_string(), serde_json::json!(current + 1));
 }
 
-pub(super) fn sort_count_map(counts: &mut Map<String, Value>) -> Value {
+pub(super) fn sort_count_map(counts: &mut Map<String, serde_json::Value>) -> serde_json::Value {
     let mut pairs = counts
         .iter()
         .map(|(key, value)| (key.clone(), value.clone()))
@@ -184,7 +190,7 @@ pub(super) fn sort_count_map(counts: &mut Map<String, Value>) -> Value {
     for (key, value) in pairs {
         sorted.insert(key, value);
     }
-    Value::Object(sorted)
+    serde_json::Value::Object(sorted)
 }
 
 pub(super) fn sorted_unique(mut values: Vec<String>) -> Vec<String> {

@@ -1,7 +1,5 @@
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::json;
-use serde_json::Value;
 
 use super::evidence::canonical_json_hash;
 
@@ -135,7 +133,7 @@ pub struct AuthenticatedReleaseGateReport {
 }
 
 pub fn authenticated_evidence_policy_from_value(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<AuthenticatedEvidencePolicy, String> {
     value
         .get("authenticated_evidence_policy")
@@ -153,7 +151,7 @@ pub fn authenticated_signature_message(
     measurements.sort_by(|left, right| left.role.cmp(&right.role).then(left.path.cmp(&right.path)));
     let mut parent_hashes = input.required_parent_hashes.clone();
     parent_hashes.sort();
-    super::evidence::canonical_json(&json!({
+    super::evidence::canonical_json(&serde_json::json!({
         "domain": AUTHENTICATED_EVIDENCE_SCHEMA_V1,
         "evidence_kind": input.evidence_kind,
         "measurements": measurements,
@@ -185,7 +183,7 @@ pub fn evaluate_authenticated_evidence(
     sort_issues(&mut issues);
     let passed = issues.is_empty();
     let authentication_hash = passed.then(|| {
-        canonical_json_hash(&json!({
+        canonical_json_hash(&serde_json::json!({
             "policy": policy,
             "input": input,
         }))

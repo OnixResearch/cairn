@@ -1,7 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::verified::evidence::{blake3_hex, canonical_json};
 
@@ -237,7 +234,7 @@ pub fn evaluate_content_bound_requirement_registry(
     validate_revision(&revision, "revision", &mut issues);
     specifications.sort_by(|left, right| left.path.cmp(&right.path));
 
-    let mut seen_specification_paths = BTreeSet::new();
+    let mut seen_specification_paths = std::collections::BTreeSet::new();
     let mut identities = Vec::with_capacity(specifications.len());
     let mut rows = Vec::new();
     for (index, specification) in specifications.iter().enumerate() {
@@ -439,7 +436,7 @@ pub fn validate_content_bound_requirement_registry(
 }
 
 pub fn parse_content_bound_requirement_registry_value(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<ContentBoundRequirementRegistry, ContentBoundRequirementRegistryIssue> {
     serde_json::from_value(value.clone()).map_err(|error| {
         issue(
@@ -453,7 +450,7 @@ pub fn parse_content_bound_requirement_registry_value(
 #[must_use]
 pub fn content_bound_requirement_registry_issues_json(
     issues: &[ContentBoundRequirementRegistryIssue],
-) -> Vec<Value> {
+) -> Vec<serde_json::Value> {
     issues
         .iter()
         .map(|issue| {
@@ -784,7 +781,7 @@ fn reject_duplicate_requirement_ids(
     rows: &[ContentBoundRequirementRow],
     issues: &mut Vec<ContentBoundRequirementRegistryIssue>,
 ) {
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for (index, row) in rows.iter().enumerate() {
         if !seen.insert(row.requirement_id.as_str()) {
             push_issue(
@@ -871,7 +868,7 @@ fn validate_specification_identities(
             "specification identities must use canonical path order",
         );
     }
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     for (index, specification) in registry.specifications.iter().enumerate() {
         validate_specification_path(
             &specification.path,
@@ -940,8 +937,8 @@ fn validate_rows(
                 specification.content_blake3.as_str(),
             )
         })
-        .collect::<BTreeMap<_, _>>();
-    let mut seen = BTreeSet::new();
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut seen = std::collections::BTreeSet::new();
     for (index, row) in registry.rows.iter().enumerate() {
         let row_path = format!("rows[{index}]");
         if !valid_requirement_id(&row.requirement_id) {
@@ -1136,12 +1133,12 @@ fn compare_registry_freshness(
         .specifications
         .iter()
         .map(|row| (row.path.as_str(), row.content_blake3.as_str()))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     let expected_specs = expected
         .specifications
         .iter()
         .map(|row| (row.path.as_str(), row.content_blake3.as_str()))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     for (path, expected_hash) in &expected_specs {
         match actual_specs.get(path) {
             Some(actual_hash) if actual_hash == expected_hash => {}
@@ -1173,12 +1170,12 @@ fn compare_registry_freshness(
         .rows
         .iter()
         .map(|row| (row.requirement_id.as_str(), row))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     let expected_rows = expected
         .rows
         .iter()
         .map(|row| (row.requirement_id.as_str(), row))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<std::collections::BTreeMap<_, _>>();
     for (requirement_id, expected_row) in &expected_rows {
         match actual_rows.get(requirement_id) {
             Some(actual_row) if *actual_row == *expected_row => {}

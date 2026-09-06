@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -889,8 +887,8 @@ fn validate_workset_shape(workset: &Workset) -> Result<(), WorksetError> {
             limit: MAX_WORKSET_MEMBERS,
         });
     }
-    let mut labels = BTreeSet::new();
-    let mut display_paths = BTreeSet::new();
+    let mut labels = std::collections::BTreeSet::new();
+    let mut display_paths = std::collections::BTreeSet::new();
     for member in &workset.members {
         validate_identifier(
             member.label.as_str(),
@@ -930,7 +928,7 @@ fn validate_opener_policy(policy: &WorksetOpenerPolicy) -> Result<(), WorksetErr
             limit: MAX_OPENER_PROFILES,
         });
     }
-    let mut profile_ids = BTreeSet::new();
+    let mut profile_ids = std::collections::BTreeSet::new();
     for profile in &policy.profiles {
         validate_opener_profile(profile)?;
         if !profile_ids.insert(profile.id.as_str()) {

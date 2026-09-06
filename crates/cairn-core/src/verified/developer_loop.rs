@@ -1,7 +1,5 @@
-use std::collections::BTreeSet;
-
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::json;
 
 use crate::verified::evidence::canonical_json_hash;
 
@@ -141,7 +139,7 @@ pub struct DeveloperLoopPlan {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopReceiptInput {
-    pub receipt: Value,
+    pub receipt: serde_json::Value,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -190,7 +188,7 @@ pub struct DeveloperLoopCacheEvaluation {
 pub struct DeveloperLoopCacheKeyInput<'a> {
     pub profile_id: &'a str,
     pub subject_hash: &'a str,
-    pub dependencies: &'a BTreeSet<String>,
+    pub dependencies: &'a std::collections::BTreeSet<String>,
     pub target: &'a str,
     pub toolchain: &'a str,
     pub policy_hash: &'a str,
@@ -233,7 +231,7 @@ pub fn admit_developer_loop_policy(
             .cmp(&right.field_path)
             .then(left.code.cmp(&right.code))
     });
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     issues.retain(|issue| seen.insert((issue.code.clone(), issue.field_path.clone())));
 
     let issue_limit = policy.bounds.max_issues.max(1);
@@ -375,8 +373,8 @@ pub fn validate_developer_loop_receipt(
     profile_id: &str,
     policy_hash: &str,
     subject_hash: &str,
-    dependencies: &BTreeSet<String>,
-    receipt: &Value,
+    dependencies: &std::collections::BTreeSet<String>,
+    receipt: &serde_json::Value,
 ) -> DeveloperLoopVerificationSummary {
     let mut issues = Vec::new();
     let profile = match find_developer_loop_profile(admitted, profile_id) {
@@ -414,35 +412,37 @@ pub fn validate_developer_loop_receipt(
     let profile_identity = developer_loop_profile_identity(profile);
     let receipt_profile = receipt
         .get("profile")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     let receipt_subject = receipt
         .get("subject_hash")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     let receipt_policy = receipt
         .get("policy_hash")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     let receipt_target = receipt
         .get("target")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     let receipt_toolchain = receipt
         .get("toolchain")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     let measurement_class = receipt
         .get("measurement_class")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or("unknown")
         .to_string();
     let observed_duration = receipt
         .get("observed_duration_seconds")
-        .and_then(Value::as_u64)
+        .and_then(serde_json::Value::as_u64)
         .unwrap_or(u64::MAX);
 
-    if receipt.get("schema").and_then(Value::as_str) != Some(DEVELOPER_LOOP_RECEIPT_SCHEMA_V1) {
+    if receipt.get("schema").and_then(serde_json::Value::as_str)
+        != Some(DEVELOPER_LOOP_RECEIPT_SCHEMA_V1)
+    {
         issues.push(issue(
             "developer_loop.receipt.schema",
             "schema",
@@ -521,13 +521,13 @@ pub fn validate_developer_loop_receipt(
     let required_checks = &profile.checks;
     let result_statuses = receipt
         .get("result_statuses")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .cloned()
         .unwrap_or_default()
         .into_iter()
         .filter_map(|value| serde_json::from_value::<DeveloperLoopResultStatus>(value).ok())
         .collect::<Vec<_>>();
-    let mut seen_checks = BTreeSet::new();
+    let mut seen_checks = std::collections::BTreeSet::new();
     for status in &result_statuses {
         seen_checks.insert(status.check_id.clone());
         if !required_checks.contains(&status.check_id) {
@@ -578,7 +578,7 @@ pub fn validate_developer_loop_receipt(
     // posture
     let posture_states = receipt
         .get("posture_states")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .cloned()
         .unwrap_or_default()
         .into_iter()
@@ -591,7 +591,7 @@ pub fn validate_developer_loop_receipt(
     {
         let has_enforcement_evidence = receipt
             .get("enforcement_evidence")
-            .and_then(Value::as_array)
+            .and_then(serde_json::Value::as_array)
             .is_some_and(|values| !values.is_empty());
         if !has_enforcement_evidence {
             issues.push(issue(
@@ -659,13 +659,13 @@ fn evaluate_cache(
     profile: &DeveloperLoopProfile,
     policy_hash: &str,
     subject_hash: &str,
-    dependencies: &BTreeSet<String>,
-    receipt: &Value,
+    dependencies: &std::collections::BTreeSet<String>,
+    receipt: &serde_json::Value,
 ) -> DeveloperLoopCacheEvaluation {
     let mode = profile.cache_policy.mode.clone();
     let claimed = receipt
         .get("cache")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or("unset")
         .to_string();
     let cache_key_inputs = profile.cache_policy.key_inputs.clone();
@@ -681,7 +681,7 @@ fn evaluate_cache(
     });
     let stated_identity = receipt
         .get("cache_key_identity")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     let mut issues = Vec::new();
     if claimed == "hit" {
@@ -735,9 +735,9 @@ fn evaluate_cache(
     }
 }
 
-fn developer_loop_receipt_hash_valid(receipt: &Value) -> bool {
+fn developer_loop_receipt_hash_valid(receipt: &serde_json::Value) -> bool {
     debug_assert_eq!(
-        receipt.get("schema").and_then(Value::as_str),
+        receipt.get("schema").and_then(serde_json::Value::as_str),
         Some(DEVELOPER_LOOP_RECEIPT_SCHEMA_V1)
     );
     let mut material = receipt.clone();
@@ -746,12 +746,12 @@ fn developer_loop_receipt_hash_valid(receipt: &Value) -> bool {
     }
     let stated = receipt
         .get("receipt_hash")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
     stated == canonical_json_hash(&material)
 }
 
-fn developer_loop_receipt_has_secret(receipt: &Value) -> bool {
+fn developer_loop_receipt_has_secret(receipt: &serde_json::Value) -> bool {
     let text = serde_json::to_string(receipt)
         .unwrap_or_default()
         .to_lowercase();
@@ -827,7 +827,7 @@ fn validate_policy_header(policy: &DeveloperLoopPolicy) -> Vec<DeveloperLoopIssu
 }
 
 fn validate_budgets(policy: &DeveloperLoopPolicy, issues: &mut Vec<DeveloperLoopIssue>) {
-    let mut ids = BTreeSet::new();
+    let mut ids = std::collections::BTreeSet::new();
     for (index, budget) in policy.budgets.iter().enumerate() {
         let path = format!("budgets[{index}]");
         if !non_empty(&budget.id)
@@ -845,7 +845,7 @@ fn validate_budgets(policy: &DeveloperLoopPolicy, issues: &mut Vec<DeveloperLoop
 }
 
 fn validate_checks(policy: &DeveloperLoopPolicy, issues: &mut Vec<DeveloperLoopIssue>) {
-    let mut ids = BTreeSet::new();
+    let mut ids = std::collections::BTreeSet::new();
     for (index, check) in policy.checks.iter().enumerate() {
         let path = format!("checks[{index}]");
         let argv_valid = !check.argv.is_empty()
@@ -877,13 +877,13 @@ fn validate_profiles(policy: &DeveloperLoopPolicy, issues: &mut Vec<DeveloperLoo
         .budgets
         .iter()
         .map(|budget| budget.id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let check_ids = policy
         .checks
         .iter()
         .map(|check| check.id.as_str())
-        .collect::<BTreeSet<_>>();
-    let mut ids = BTreeSet::new();
+        .collect::<std::collections::BTreeSet<_>>();
+    let mut ids = std::collections::BTreeSet::new();
     for (index, profile) in policy.profiles.iter().enumerate() {
         let path = format!("profiles[{index}]");
         let mut local_issues = Vec::new();
@@ -908,7 +908,7 @@ fn validate_profiles(policy: &DeveloperLoopPolicy, issues: &mut Vec<DeveloperLoo
             local_issues.push(issue("developer_loop.profile.form", &path, "profile identity, scope, checks, budget, full-gate refs, or non-claims are invalid"));
         }
         // duplicate checks
-        let mut check_set = BTreeSet::new();
+        let mut check_set = std::collections::BTreeSet::new();
         let mut duplicate = false;
         for check in &profile.checks {
             if !check_set.insert(check) {
@@ -1096,7 +1096,7 @@ mod tests {
         "c".repeat(BLAKE3_HEX_LENGTH)
     }
 
-    fn receipt() -> Value {
+    fn receipt() -> serde_json::Value {
         let mut value = json!({
             "schema": DEVELOPER_LOOP_RECEIPT_SCHEMA_V1,
             "profile": INITIAL_DEVELOPER_LOOP_PROFILE,
@@ -1152,7 +1152,7 @@ mod tests {
             INITIAL_DEVELOPER_LOOP_PROFILE,
             &"d".repeat(BLAKE3_HEX_LENGTH),
             &subject_hash(),
-            &BTreeSet::new(),
+            &std::collections::BTreeSet::new(),
             &value,
         );
         assert!(summary
@@ -1170,7 +1170,7 @@ mod tests {
             INITIAL_DEVELOPER_LOOP_PROFILE,
             &"d".repeat(BLAKE3_HEX_LENGTH),
             &subject_hash(),
-            &BTreeSet::new(),
+            &std::collections::BTreeSet::new(),
             &value,
         );
         assert!(summary.valid, "{:#?}", summary.issues);
@@ -1192,7 +1192,7 @@ mod tests {
             INITIAL_DEVELOPER_LOOP_PROFILE,
             &"d".repeat(BLAKE3_HEX_LENGTH),
             &subject_hash(),
-            &BTreeSet::new(),
+            &std::collections::BTreeSet::new(),
             &value,
         );
         assert!(!summary.valid);
@@ -1220,7 +1220,7 @@ mod tests {
             INITIAL_DEVELOPER_LOOP_PROFILE,
             &"d".repeat(BLAKE3_HEX_LENGTH),
             &subject_hash(),
-            &BTreeSet::new(),
+            &std::collections::BTreeSet::new(),
             &value,
         );
         assert!(summary
@@ -1241,7 +1241,7 @@ mod tests {
             INITIAL_DEVELOPER_LOOP_PROFILE,
             &"d".repeat(BLAKE3_HEX_LENGTH),
             &subject_hash(),
-            &BTreeSet::new(),
+            &std::collections::BTreeSet::new(),
             &value,
         );
         assert!(summary

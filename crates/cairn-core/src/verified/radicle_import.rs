@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use super::{
     collaboration_change::BASE_REVISION_KIND_GIT_OID,
@@ -23,13 +23,13 @@ pub struct ChangeCobImportSnapshot {
     pub design: Option<String>,
     pub tasks: Option<String>,
     pub metadata: Option<String>,
-    pub delta_specs: BTreeMap<String, String>,
+    pub delta_specs: std::collections::BTreeMap<String, String>,
 }
 
 pub fn plan_change_cob_import(
     snapshot: ChangeCobImportSnapshot,
 ) -> Result<ChangeCobInit, ChangeCobError> {
-    let mut artifacts = BTreeMap::new();
+    let mut artifacts = std::collections::BTreeMap::new();
     insert_present_artifact(
         &mut artifacts,
         ChangeArtifactId::proposal(),
@@ -76,7 +76,7 @@ pub fn change_cob_import_content_root(
 }
 
 fn insert_present_artifact(
-    artifacts: &mut BTreeMap<ChangeArtifactId, String>,
+    artifacts: &mut std::collections::BTreeMap<ChangeArtifactId, String>,
     artifact: ChangeArtifactId,
     content: Option<String>,
 ) {
@@ -111,7 +111,7 @@ mod tests {
             design: Some("# Design\n".to_string()),
             tasks: Some("# Tasks\n\n- [ ] Preserve me\n".to_string()),
             metadata: Some("{\n  \"depends_on\": []\n}\n".to_string()),
-            delta_specs: BTreeMap::from([(
+            delta_specs: std::collections::BTreeMap::from([(
                 "radicle-import-cli".to_string(),
                 "# Delta\n".to_string(),
             )]),
@@ -171,7 +171,8 @@ mod tests {
     #[test]
     fn import_plan_rejects_malformed_spec_ids_and_oversized_artifacts() {
         let mut malformed = snapshot();
-        malformed.delta_specs = BTreeMap::from([("../escape".to_string(), "bad\n".to_string())]);
+        malformed.delta_specs =
+            std::collections::BTreeMap::from([("../escape".to_string(), "bad\n".to_string())]);
         assert!(matches!(
             plan_change_cob_import(malformed),
             Err(ChangeCobError::InvalidArtifactId { .. })

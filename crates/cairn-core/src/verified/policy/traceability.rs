@@ -1,7 +1,3 @@
-use std::collections::BTreeSet;
-
-use serde_json::Value;
-
 use crate::verified::{
     content_bound_trace_index::{
         TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES, TRACEABILITY_ASSURANCE_DECLARED,
@@ -40,7 +36,9 @@ const TRACEABILITY_MARKER_VERBS: &[&str] = &[
     TRACEABILITY_VERB_RELATED,
 ];
 
-pub(super) fn traceability_policy(value: &Value) -> Result<TraceabilityPolicy, PolicyError> {
+pub(super) fn traceability_policy(
+    value: &serde_json::Value,
+) -> Result<TraceabilityPolicy, PolicyError> {
     // r[impl cairn.supersede.traceability_ownership.configured_profiles]
     let policy = value
         .get(TRACEABILITY_POLICY_FIELD)
@@ -48,13 +46,13 @@ pub(super) fn traceability_policy(value: &Value) -> Result<TraceabilityPolicy, P
     let default_profile = string_field(policy, TRACEABILITY_DEFAULT_PROFILE_FIELD)?;
     let profiles_value = policy
         .get("profiles")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField(TRACEABILITY_PROFILES_FIELD))?;
     if profiles_value.is_empty() {
         return Err(PolicyError::InvalidField(TRACEABILITY_PROFILES_FIELD));
     }
 
-    let mut seen_profile_ids = BTreeSet::new();
+    let mut seen_profile_ids = std::collections::BTreeSet::new();
     let mut profiles = Vec::with_capacity(profiles_value.len());
     for profile_value in profiles_value {
         let profile = parse_profile(profile_value)?;
@@ -83,7 +81,7 @@ pub(super) fn traceability_policy(value: &Value) -> Result<TraceabilityPolicy, P
     })
 }
 
-fn parse_profile(value: &Value) -> Result<TraceabilityProfile, PolicyError> {
+fn parse_profile(value: &serde_json::Value) -> Result<TraceabilityProfile, PolicyError> {
     let id = string_field(value, TRACEABILITY_PROFILE_ID_FIELD)?;
     if id.is_empty() {
         return Err(PolicyError::InvalidField(TRACEABILITY_PROFILE_ID_FIELD));
@@ -122,14 +120,14 @@ fn parse_profile(value: &Value) -> Result<TraceabilityProfile, PolicyError> {
 }
 
 fn parse_sources(
-    value: &Value,
+    value: &serde_json::Value,
     lookup: &str,
     field: &'static str,
     allowed_source_kinds: &[&str],
 ) -> Result<Vec<TraceabilitySource>, PolicyError> {
     let sources = value
         .get(lookup)
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField(field))?;
     if sources.is_empty() {
         return Err(PolicyError::InvalidField(field));
@@ -141,7 +139,7 @@ fn parse_sources(
 }
 
 fn parse_source(
-    value: &Value,
+    value: &serde_json::Value,
     allowed_source_kinds: &[&str],
 ) -> Result<TraceabilitySource, PolicyError> {
     let root = string_field(value, TRACEABILITY_SOURCE_ROOT_FIELD)?;
@@ -169,7 +167,7 @@ fn parse_source(
     })
 }
 
-fn parse_marker_verbs(value: &Value) -> Result<Vec<String>, PolicyError> {
+fn parse_marker_verbs(value: &serde_json::Value) -> Result<Vec<String>, PolicyError> {
     let marker_verbs = traceability_string_array(value, TRACEABILITY_MARKER_VERBS_FIELD)?;
     if marker_verbs.is_empty()
         || marker_verbs
@@ -178,7 +176,9 @@ fn parse_marker_verbs(value: &Value) -> Result<Vec<String>, PolicyError> {
     {
         return Err(PolicyError::InvalidField(TRACEABILITY_MARKER_VERBS_FIELD));
     }
-    let unique = marker_verbs.iter().collect::<BTreeSet<_>>();
+    let unique = marker_verbs
+        .iter()
+        .collect::<std::collections::BTreeSet<_>>();
     if unique.len() != marker_verbs.len() {
         return Err(PolicyError::InvalidField(TRACEABILITY_MARKER_VERBS_FIELD));
     }
@@ -186,13 +186,13 @@ fn parse_marker_verbs(value: &Value) -> Result<Vec<String>, PolicyError> {
 }
 
 fn traceability_string_array(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
 ) -> Result<Vec<String>, PolicyError> {
     let lookup = field.rsplit('.').next().unwrap_or(field);
     value
         .get(lookup)
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField(field))?
         .iter()
         .map(|item| {

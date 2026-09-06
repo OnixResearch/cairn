@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use crate::verified::{policy::ArtifactSubstancePolicy, repo::SpecSource};
 
 use super::markdown::{
@@ -253,8 +251,10 @@ fn valid_lifecycle_id(candidate: &str) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
 }
 
-pub(super) fn visible_requirement_reference_set(markdown: &str) -> BTreeSet<String> {
-    let mut references = BTreeSet::new();
+pub(super) fn visible_requirement_reference_set(
+    markdown: &str,
+) -> std::collections::BTreeSet<String> {
+    let mut references = std::collections::BTreeSet::new();
     let mut fenced = false;
     let mut in_comment = false;
     for line in markdown.lines() {

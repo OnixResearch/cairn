@@ -1,7 +1,4 @@
 // r[impl cairn.semantic_review.metrics_regression_split.focused_helpers]
-use std::collections::BTreeMap;
-
-use serde_json::Value;
 
 use super::super::common::push_issue;
 use super::super::SemanticReviewIssue;
@@ -10,15 +7,18 @@ use super::common::non_empty_string;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) struct FixtureOutcome<'a> {
     valid: bool,
-    diagnostics: &'a [Value],
+    diagnostics: &'a [serde_json::Value],
 }
 
 pub(super) fn fixture_result_map<'a>(
-    fixture_coverage: &'a Value,
+    fixture_coverage: &'a serde_json::Value,
     issues: &mut Vec<SemanticReviewIssue>,
-) -> BTreeMap<&'a str, FixtureOutcome<'a>> {
-    let mut results = BTreeMap::new();
-    let Some(fixtures) = fixture_coverage.get("fixtures").and_then(Value::as_array) else {
+) -> std::collections::BTreeMap<&'a str, FixtureOutcome<'a>> {
+    let mut results = std::collections::BTreeMap::new();
+    let Some(fixtures) = fixture_coverage
+        .get("fixtures")
+        .and_then(serde_json::Value::as_array)
+    else {
         push_issue(
             issues,
             "missing_fixture_results",
@@ -43,12 +43,12 @@ pub(super) fn fixture_result_map<'a>(
 }
 
 fn collect_fixture_result<'a>(
-    fixture: &'a Value,
+    fixture: &'a serde_json::Value,
     index: usize,
-    results: &mut BTreeMap<&'a str, FixtureOutcome<'a>>,
+    results: &mut std::collections::BTreeMap<&'a str, FixtureOutcome<'a>>,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    let path = match fixture.get("path").and_then(Value::as_str) {
+    let path = match fixture.get("path").and_then(serde_json::Value::as_str) {
         Some(path) if !path.trim().is_empty() => path,
         Some(_) | None => {
             push_issue(
@@ -60,7 +60,7 @@ fn collect_fixture_result<'a>(
             return;
         }
     };
-    let Some(valid) = fixture.get("valid").and_then(Value::as_bool) else {
+    let Some(valid) = fixture.get("valid").and_then(serde_json::Value::as_bool) else {
         push_issue(
             issues,
             "invalid_fixture_result",
@@ -69,7 +69,10 @@ fn collect_fixture_result<'a>(
         );
         return;
     };
-    let Some(diagnostics) = fixture.get("diagnostics").and_then(Value::as_array) else {
+    let Some(diagnostics) = fixture
+        .get("diagnostics")
+        .and_then(serde_json::Value::as_array)
+    else {
         push_issue(
             issues,
             "invalid_fixture_result",
@@ -104,11 +107,14 @@ fn collect_fixture_result<'a>(
 }
 
 pub(super) fn validate_fixture_pairs(
-    registry: &Value,
-    fixture_results: &BTreeMap<&str, FixtureOutcome<'_>>,
+    registry: &serde_json::Value,
+    fixture_results: &std::collections::BTreeMap<&str, FixtureOutcome<'_>>,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
-    let Some(categories) = registry.get("categories").and_then(Value::as_array) else {
+    let Some(categories) = registry
+        .get("categories")
+        .and_then(serde_json::Value::as_array)
+    else {
         return;
     };
     for (index, category) in categories.iter().enumerate() {
@@ -121,9 +127,9 @@ pub(super) fn validate_fixture_pairs(
 }
 
 fn validate_positive_fixture(
-    category: &Value,
+    category: &serde_json::Value,
     index: usize,
-    fixture_results: &BTreeMap<&str, FixtureOutcome<'_>>,
+    fixture_results: &std::collections::BTreeMap<&str, FixtureOutcome<'_>>,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
     let Some(fixture_ref) = non_empty_string(category, "positive_fixture") else {
@@ -147,10 +153,10 @@ fn validate_positive_fixture(
 }
 
 fn validate_negative_fixture(
-    category: &Value,
+    category: &serde_json::Value,
     index: usize,
     diagnostic_code: &str,
-    fixture_results: &BTreeMap<&str, FixtureOutcome<'_>>,
+    fixture_results: &std::collections::BTreeMap<&str, FixtureOutcome<'_>>,
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
     let Some(fixture_ref) = non_empty_string(category, "negative_fixture") else {
@@ -179,9 +185,9 @@ fn validate_negative_fixture(
     }
 }
 
-fn has_diagnostic(diagnostics: &[Value], diagnostic_code: &str) -> bool {
+fn has_diagnostic(diagnostics: &[serde_json::Value], diagnostic_code: &str) -> bool {
     diagnostics
         .iter()
-        .filter_map(Value::as_str)
+        .filter_map(serde_json::Value::as_str)
         .any(|diagnostic| diagnostic == diagnostic_code)
 }

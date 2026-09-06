@@ -1,6 +1,3 @@
-use serde_json::json;
-use serde_json::Value;
-
 use super::catalog::NOMINAL_IDENTITY_REQUIRED_NON_CLAIM;
 use super::*;
 
@@ -11,7 +8,7 @@ const OVERSIZED_ID_BYTES: usize = 129;
 const SERIALIZED_WIRE_FIELD_COUNT: usize = 2;
 
 fn generated_policy() -> NominalIdentityPolicy {
-    let value: Value = serde_json::from_str(include_str!(
+    let value: serde_json::Value = serde_json::from_str(include_str!(
         "../../../../../cairn-policy/generated/cairn-policy.json"
     ))
     .expect("generated policy JSON must parse");
@@ -145,7 +142,7 @@ fn closed_wire_adapter_preserves_shape_and_rejects_wrong_role_projection() {
     assert_eq!(object.len(), SERIALIZED_WIRE_FIELD_COUNT);
     assert_eq!(
         serialized,
-        json!({"role": "receipt-digest", "value": HASH_LOWER})
+        serde_json::json!({"role": "receipt-digest", "value": HASH_LOWER})
     );
 
     let admitted = AnyIdentity::try_from(wire).expect("admit receipt identity");

@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use serde::Serialize;
 
 use super::{
@@ -27,13 +25,13 @@ pub struct ChangeCollaborationImportSnapshot {
     pub design: Option<String>,
     pub tasks: Option<String>,
     pub metadata: Option<String>,
-    pub delta_specs: BTreeMap<String, String>,
+    pub delta_specs: std::collections::BTreeMap<String, String>,
 }
 
 pub fn plan_change_collaboration_import(
     snapshot: ChangeCollaborationImportSnapshot,
 ) -> Result<ChangeCollaborationInit, ChangeCollaborationError> {
-    let mut artifacts = BTreeMap::new();
+    let mut artifacts = std::collections::BTreeMap::new();
     insert_present_artifact(
         &mut artifacts,
         ChangeArtifactId::proposal(),
@@ -101,7 +99,7 @@ pub fn change_collaboration_import_operation_id(
 }
 
 fn insert_present_artifact(
-    artifacts: &mut BTreeMap<ChangeArtifactId, String>,
+    artifacts: &mut std::collections::BTreeMap<ChangeArtifactId, String>,
     artifact: ChangeArtifactId,
     content: Option<String>,
 ) {
@@ -138,7 +136,10 @@ mod tests {
             design: Some("# Design\n".to_string()),
             tasks: None,
             metadata: None,
-            delta_specs: BTreeMap::from([("portable-import".to_string(), "# Delta\n".to_string())]),
+            delta_specs: std::collections::BTreeMap::from([(
+                "portable-import".to_string(),
+                "# Delta\n".to_string(),
+            )]),
         }
     }
 

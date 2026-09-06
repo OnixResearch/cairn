@@ -1,7 +1,3 @@
-use std::collections::BTreeSet;
-
-use serde_json::Value;
-
 use crate::verified::cli_machine::{
     MachineContractBounds, MachineContractPolicy, MachineDiagnosticDefinition,
     MachineDiagnosticSeverity, MachineExitClass, MachineExitClassPolicy, CLI_MACHINE_EXIT_CLASSES,
@@ -42,7 +38,9 @@ const FIELD_REQUIRED_NON_CLAIMS: &str = "machine_contract_policy.required_non_cl
 const EXPECTED_DIAGNOSTIC_FIELDS: &[&str] = &["code", "severity", "message", "target", "fix"];
 const SERIALIZATION_OVERHEAD_PER_ENTRY: usize = 128;
 
-pub(super) fn machine_contract_policy(value: &Value) -> Result<MachineContractPolicy, PolicyError> {
+pub(super) fn machine_contract_policy(
+    value: &serde_json::Value,
+) -> Result<MachineContractPolicy, PolicyError> {
     // r[impl cairn.cli_machine_contract.policy]
     let policy = value
         .get(FIELD_MACHINE_POLICY)
@@ -130,15 +128,17 @@ pub(super) fn machine_contract_policy(value: &Value) -> Result<MachineContractPo
     })
 }
 
-fn parse_exit_classes(policy: &Value) -> Result<Vec<MachineExitClassPolicy>, PolicyError> {
+fn parse_exit_classes(
+    policy: &serde_json::Value,
+) -> Result<Vec<MachineExitClassPolicy>, PolicyError> {
     let values = policy
         .get("exit_classes")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField(FIELD_EXIT_CLASSES))?;
     if values.len() != CLI_MACHINE_EXIT_CLASSES.len() {
         return Err(PolicyError::InvalidField(FIELD_EXIT_CLASSES));
     }
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     let mut classes = Vec::with_capacity(values.len());
     for value in values {
         let id_text = string_field(value, FIELD_EXIT_CLASS_ID)?;
@@ -150,7 +150,7 @@ fn parse_exit_classes(policy: &Value) -> Result<Vec<MachineExitClassPolicy>, Pol
         }
         let status = value
             .get("process_status")
-            .and_then(Value::as_u64)
+            .and_then(serde_json::Value::as_u64)
             .ok_or(PolicyError::MissingField(FIELD_EXIT_CLASS_STATUS))?;
         let process_status =
             u8::try_from(status).map_err(|_| PolicyError::InvalidField(FIELD_EXIT_CLASS_STATUS))?;
@@ -172,17 +172,17 @@ fn parse_exit_classes(policy: &Value) -> Result<Vec<MachineExitClassPolicy>, Pol
 }
 
 fn parse_diagnostics(
-    policy: &Value,
+    policy: &serde_json::Value,
     bounds: &MachineContractBounds,
 ) -> Result<Vec<MachineDiagnosticDefinition>, PolicyError> {
     let values = policy
         .get("diagnostics")
-        .and_then(Value::as_array)
+        .and_then(serde_json::Value::as_array)
         .ok_or(PolicyError::MissingField(FIELD_DIAGNOSTICS))?;
     if values.is_empty() || values.len() > bounds.max_diagnostics {
         return Err(PolicyError::InvalidField(FIELD_DIAGNOSTICS));
     }
-    let mut seen = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
     let mut definitions = Vec::with_capacity(values.len());
     for value in values {
         let code = string_field(value, FIELD_DIAGNOSTIC_CODE)?;
@@ -244,11 +244,11 @@ fn validate_diagnostic_order(
     let definitions = diagnostics
         .iter()
         .map(|definition| definition.code.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let order = diagnostic_order
         .iter()
         .map(String::as_str)
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     if order.len() != diagnostic_order.len() || definitions != order {
         return Err(PolicyError::InvalidField(FIELD_DIAGNOSTIC_ORDER));
     }
@@ -279,14 +279,14 @@ fn validate_combined_bounds(bounds: &MachineContractBounds) -> Result<(), Policy
 }
 
 fn bounded_usize_field(
-    value: &Value,
+    value: &serde_json::Value,
     field: &'static str,
     maximum: usize,
 ) -> Result<usize, PolicyError> {
     let lookup = field.rsplit('.').next().unwrap_or(field);
     let raw = value
         .get(lookup)
-        .and_then(Value::as_u64)
+        .and_then(serde_json::Value::as_u64)
         .ok_or(PolicyError::MissingField(field))?;
     let converted = usize::try_from(raw).map_err(|_| PolicyError::InvalidField(field))?;
     if converted == 0 || converted > maximum {

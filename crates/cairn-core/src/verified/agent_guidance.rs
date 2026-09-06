@@ -1,9 +1,6 @@
 //! Pure admission, selection, and identity construction for local agent guidance.
 
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
 use super::evidence::{blake3_hex, canonical_json_hash};
 
@@ -333,7 +330,7 @@ pub fn admit_agent_guidance_declaration(
     }
 
     let mut normalized = declaration.clone();
-    let mut ids = BTreeSet::new();
+    let mut ids = std::collections::BTreeSet::new();
     for (index, reference) in normalized.context_refs.iter_mut().enumerate() {
         let path = format!("context_refs[{index}]");
         validate_common_entry(
@@ -519,7 +516,7 @@ pub fn build_agent_guidance_result(
     policy: &AgentGuidancePolicy,
 ) -> AgentGuidanceResult {
     let mut issues = Vec::new();
-    let mut observed = BTreeMap::new();
+    let mut observed = std::collections::BTreeMap::new();
     for observation in observations {
         if observed
             .insert(observation.id.as_str(), observation)
@@ -536,7 +533,7 @@ pub fn build_agent_guidance_result(
         .context_refs
         .iter()
         .map(|reference| reference.id.as_str())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     for observation in observations {
         if !selected_ids.contains(observation.id.as_str()) {
             issues.push(issue(
@@ -576,7 +573,7 @@ pub fn build_agent_guidance_result(
     issues.truncate(policy.bounds.max_issues);
 
     let portable_entries = entries.iter().map(portable_entry).collect::<Vec<_>>();
-    let portable_identity = canonical_json_hash(&json!({
+    let portable_identity = canonical_json_hash(&serde_json::json!({
         "request": plan.request,
         "bounds": policy.bounds,
         "entries": portable_entries,
@@ -584,7 +581,7 @@ pub fn build_agent_guidance_result(
         "policy_hash": policy_hash,
         "non_claims": policy.required_non_claims,
     }));
-    let local_result_hash = canonical_json_hash(&json!({
+    let local_result_hash = canonical_json_hash(&serde_json::json!({
         "request": plan.request,
         "bounds": policy.bounds,
         "entries": entries,
@@ -623,7 +620,7 @@ pub fn portable_agent_guidance_result(result: &AgentGuidanceResult) -> PortableA
 // r[impl cairn.agent_guidance_context.receipts]
 // r[impl cairn.agent_guidance_context.boundary]
 pub fn admit_portable_agent_guidance_result(
-    value: &Value,
+    value: &serde_json::Value,
 ) -> Result<PortableAgentGuidanceResult, AgentGuidanceIssue> {
     if contains_forbidden_portable_field(value) {
         return Err(issue(
@@ -672,7 +669,7 @@ struct CommonEntryAdmission<'a> {
 fn validate_common_entry(
     entry: CommonEntryAdmission<'_>,
     policy: &AgentGuidancePolicy,
-    ids: &mut BTreeSet<String>,
+    ids: &mut std::collections::BTreeSet<String>,
     issues: &mut Vec<AgentGuidanceIssue>,
 ) {
     if !valid_id(entry.id, policy.bounds.max_id_bytes) || !ids.insert(entry.id.to_string()) {
@@ -1001,13 +998,13 @@ fn authority_rank(authority: &str) -> u8 {
     }
 }
 
-fn contains_forbidden_portable_field(value: &Value) -> bool {
+fn contains_forbidden_portable_field(value: &serde_json::Value) -> bool {
     match value {
-        Value::Object(object) => object.iter().any(|(key, child)| {
+        serde_json::Value::Object(object) => object.iter().any(|(key, child)| {
             matches!(key.as_str(), "text" | "absolute_path")
                 || contains_forbidden_portable_field(child)
         }),
-        Value::Array(values) => values.iter().any(contains_forbidden_portable_field),
+        serde_json::Value::Array(values) => values.iter().any(contains_forbidden_portable_field),
         _ => false,
     }
 }
@@ -1015,7 +1012,11 @@ fn contains_forbidden_portable_field(value: &Value) -> bool {
 fn unique_nonempty(values: &[String]) -> bool {
     !values.is_empty()
         && values.iter().all(|value| !value.is_empty())
-        && values.iter().collect::<BTreeSet<_>>().len() == values.len()
+        && values
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            == values.len()
 }
 
 fn contains_required(values: &[String], required: &[&str]) -> bool {
@@ -1174,7 +1175,7 @@ mod tests {
         let codes = issues
             .iter()
             .map(|issue| issue.code.as_str())
-            .collect::<BTreeSet<_>>();
+            .collect::<std::collections::BTreeSet<_>>();
         assert!(codes.contains(AGENT_GUIDANCE_ISSUE_PATH));
         assert!(codes.contains(AGENT_GUIDANCE_ISSUE_SELECTOR));
         assert!(codes.contains(AGENT_GUIDANCE_ISSUE_AUTHORITY));
@@ -1268,7 +1269,7 @@ mod tests {
     fn portable_admission_rejects_raw_text_and_accepts_identity_only_values() {
         // r[verify cairn.agent_guidance_context.receipts.reject_raw]
         let policy = policy();
-        let portable = json!({
+        let portable = serde_json::json!({
             "request": AgentGuidanceRequest::default(),
             "bounds": policy.bounds,
             "entries": [],
@@ -1279,7 +1280,7 @@ mod tests {
         });
         assert!(admit_portable_agent_guidance_result(&portable).is_ok());
         let mut raw = portable;
-        raw["text"] = Value::String("secret-like text".to_string());
+        raw["text"] = serde_json::Value::String("secret-like text".to_string());
         let issue = admit_portable_agent_guidance_result(&raw).expect_err("raw text rejected");
         assert_eq!(issue.code, AGENT_GUIDANCE_ISSUE_PORTABLE_RAW);
     }

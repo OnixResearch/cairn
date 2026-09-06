@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use crate::verified::{
     dag::topological_order,
     lifecycle::validate_change_name,
@@ -96,10 +94,10 @@ pub struct ChangeDependencyIssue {
 }
 
 struct GraphBuildContext {
-    known_set: BTreeSet<String>,
-    active_set: BTreeSet<String>,
-    archived_set: BTreeSet<String>,
-    nodes: BTreeMap<String, ChangeDependencyNode>,
+    known_set: std::collections::BTreeSet<String>,
+    active_set: std::collections::BTreeSet<String>,
+    archived_set: std::collections::BTreeSet<String>,
+    nodes: std::collections::BTreeMap<String, ChangeDependencyNode>,
     edges: Vec<ChangeDependencyEdge>,
     topological_edges: Vec<(String, String)>,
     issues: Vec<ChangeDependencyIssue>,
@@ -394,13 +392,13 @@ fn dependency_edit_plan(
 fn known_change_names_for_status(
     changes: &[ChangeStatus],
     archived_changes: &[String],
-) -> BTreeSet<String> {
+) -> std::collections::BTreeSet<String> {
     let active_set = sorted_active_names(changes)
         .into_iter()
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let archived_set = sorted_archived_names(archived_changes)
         .into_iter()
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     known_change_names(&active_set, &archived_set)
 }
 
@@ -439,7 +437,7 @@ fn changes_with_dependency_update(
 }
 
 fn graph_render_names(graph: &ChangeDependencyGraph) -> Vec<String> {
-    let mut names = BTreeSet::new();
+    let mut names = std::collections::BTreeSet::new();
     for node in &graph.nodes {
         names.insert(node.name.clone());
     }
@@ -450,7 +448,7 @@ fn graph_render_names(graph: &ChangeDependencyGraph) -> Vec<String> {
     names.into_iter().collect()
 }
 
-fn graph_node_ids(names: &[String]) -> BTreeMap<String, String> {
+fn graph_node_ids(names: &[String]) -> std::collections::BTreeMap<String, String> {
     names
         .iter()
         .enumerate()
@@ -487,10 +485,13 @@ pub fn build_change_dependency_graph(
     // r[impl cairn.change_dependency_graph.trellis_primitives]
     // r[impl cairn.change_dependency_graph.trellis_primitives.portable]
     let active_names = sorted_active_names(changes);
-    let active_set = active_names.iter().cloned().collect::<BTreeSet<_>>();
+    let active_set = active_names
+        .iter()
+        .cloned()
+        .collect::<std::collections::BTreeSet<_>>();
     let archived_set = sorted_archived_names(archived_changes)
         .into_iter()
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     let known_set = known_change_names(&active_set, &archived_set);
     let mut context = GraphBuildContext {
         known_set,
@@ -600,15 +601,17 @@ fn sorted_archived_names(archived_changes: &[String]) -> Vec<String> {
 }
 
 fn known_change_names(
-    active_set: &BTreeSet<String>,
-    archived_set: &BTreeSet<String>,
-) -> BTreeSet<String> {
+    active_set: &std::collections::BTreeSet<String>,
+    archived_set: &std::collections::BTreeSet<String>,
+) -> std::collections::BTreeSet<String> {
     let mut known = active_set.clone();
     known.extend(archived_set.iter().cloned());
     known
 }
 
-fn initial_nodes(active_names: &[String]) -> BTreeMap<String, ChangeDependencyNode> {
+fn initial_nodes(
+    active_names: &[String],
+) -> std::collections::BTreeMap<String, ChangeDependencyNode> {
     active_names
         .iter()
         .map(|name| {
@@ -645,8 +648,8 @@ fn unique_dependencies(
     issues: &mut Vec<ChangeDependencyIssue>,
 ) -> Vec<String> {
     let mut unique = Vec::new();
-    let mut seen = BTreeSet::new();
-    let mut duplicates = BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
+    let mut duplicates = std::collections::BTreeSet::new();
     for dependency in sorted_dependencies {
         if !seen.insert(dependency.clone()) {
             duplicates.insert(dependency.clone());
@@ -710,7 +713,7 @@ fn record_dependency_edge(change_name: &str, dependency: &str, context: &mut Gra
     }
 }
 
-fn sort_node_fields(nodes: &mut BTreeMap<String, ChangeDependencyNode>) {
+fn sort_node_fields(nodes: &mut std::collections::BTreeMap<String, ChangeDependencyNode>) {
     for node in nodes.values_mut() {
         node.dependencies.sort();
         node.dependencies.dedup();
@@ -724,13 +727,13 @@ fn sort_node_fields(nodes: &mut BTreeMap<String, ChangeDependencyNode>) {
 }
 
 fn mark_dependency_readiness(
-    nodes: &mut BTreeMap<String, ChangeDependencyNode>,
+    nodes: &mut std::collections::BTreeMap<String, ChangeDependencyNode>,
     issues: &[ChangeDependencyIssue],
 ) {
     let issue_changes = issues
         .iter()
         .map(|issue| issue.change.clone())
-        .collect::<BTreeSet<_>>();
+        .collect::<std::collections::BTreeSet<_>>();
     for node in nodes.values_mut() {
         node.dependency_ready = node.blocked_by.is_empty() && !issue_changes.contains(&node.name);
     }

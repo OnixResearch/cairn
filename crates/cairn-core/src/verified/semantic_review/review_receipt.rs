@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use super::common::{
     push_issue, require_known_string, require_known_string_at, require_string,
     validate_optional_receipt_hash, without_hash_field,
@@ -10,12 +8,12 @@ use super::{
 };
 use crate::verified::evidence::canonical_json_hash;
 
-pub fn review_receipt_hash(value: &Value) -> String {
+pub fn review_receipt_hash(value: &serde_json::Value) -> String {
     canonical_json_hash(&without_hash_field(value, "receipt_hash"))
 }
 
 pub fn validate_review_receipt(
-    value: &Value,
+    value: &serde_json::Value,
     observed_artifact_hashes: &[(String, String)],
 ) -> SemanticReviewReport {
     // r[impl cairn.semantic_review.semantic_review_receipts.schema]
@@ -43,7 +41,7 @@ pub fn validate_review_receipt(
     report(value, issues)
 }
 
-fn validate_reviewer(reviewer: Option<&Value>, issues: &mut Vec<SemanticReviewIssue>) {
+fn validate_reviewer(reviewer: Option<&serde_json::Value>, issues: &mut Vec<SemanticReviewIssue>) {
     let Some(reviewer) = reviewer else {
         push_issue(
             issues,
@@ -56,7 +54,7 @@ fn validate_reviewer(reviewer: Option<&Value>, issues: &mut Vec<SemanticReviewIs
     require_known_string(reviewer, "source", REVIEW_SOURCES, issues);
     if reviewer
         .get("id")
-        .and_then(Value::as_str)
+        .and_then(serde_json::Value::as_str)
         .unwrap_or("")
         .is_empty()
     {
@@ -70,12 +68,15 @@ fn validate_reviewer(reviewer: Option<&Value>, issues: &mut Vec<SemanticReviewIs
 }
 
 fn validate_reviewed_inputs(
-    value: &Value,
+    value: &serde_json::Value,
     observed_artifact_hashes: &[(String, String)],
     issues: &mut Vec<SemanticReviewIssue>,
 ) {
     // r[impl cairn.semantic_review.semantic_review_receipts.schema.schema.hash_binding]
-    let Some(inputs) = value.get("reviewed_inputs").and_then(Value::as_array) else {
+    let Some(inputs) = value
+        .get("reviewed_inputs")
+        .and_then(serde_json::Value::as_array)
+    else {
         push_issue(
             issues,
             "missing_field",
@@ -94,7 +95,10 @@ fn validate_reviewed_inputs(
     }
     for (index, input) in inputs.iter().enumerate() {
         let field = format!("reviewed_inputs[{index}]");
-        let path = input.get("path").and_then(Value::as_str).unwrap_or("");
+        let path = input
+            .get("path")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("");
         if path.is_empty() {
             push_issue(
                 issues,
@@ -103,7 +107,10 @@ fn validate_reviewed_inputs(
                 "missing input path",
             );
         }
-        let stated_hash = input.get("hash").and_then(Value::as_str).unwrap_or("");
+        let stated_hash = input
+            .get("hash")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("");
         if !super::common::is_blake3_hex(stated_hash) {
             push_issue(
                 issues,
@@ -128,11 +135,15 @@ fn validate_reviewed_inputs(
     }
 }
 
-fn validate_findings(value: &Value, decision: Option<&str>, issues: &mut Vec<SemanticReviewIssue>) {
+fn validate_findings(
+    value: &serde_json::Value,
+    decision: Option<&str>,
+    issues: &mut Vec<SemanticReviewIssue>,
+) {
     // r[impl cairn.semantic_review.review_rejection_taxonomy.finding_validation]
     // r[impl cairn.semantic_review.review_rejection_taxonomy.finding_validation.finding_validation.required]
     // r[impl cairn.semantic_review.review_rejection_taxonomy.finding_validation.finding_validation.approved]
-    let Some(findings) = value.get("findings").and_then(Value::as_array) else {
+    let Some(findings) = value.get("findings").and_then(serde_json::Value::as_array) else {
         push_issue(
             issues,
             "missing_field",
@@ -153,7 +164,7 @@ fn validate_findings(value: &Value, decision: Option<&str>, issues: &mut Vec<Sem
         let field = format!("findings[{index}]");
         if finding
             .get("id")
-            .and_then(Value::as_str)
+            .and_then(serde_json::Value::as_str)
             .unwrap_or("")
             .is_empty()
         {
@@ -169,7 +180,7 @@ fn validate_findings(value: &Value, decision: Option<&str>, issues: &mut Vec<Sem
     }
 }
 
-fn report(value: &Value, issues: Vec<SemanticReviewIssue>) -> SemanticReviewReport {
+fn report(value: &serde_json::Value, issues: Vec<SemanticReviewIssue>) -> SemanticReviewReport {
     let valid = issues.is_empty();
     SemanticReviewReport {
         valid,
