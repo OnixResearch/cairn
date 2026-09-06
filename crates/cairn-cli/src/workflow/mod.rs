@@ -267,6 +267,30 @@ pub(crate) fn load_workflow_profile_context_with_budget(
     policy: &Policy,
     budget: Option<&crate::support::observation_budget::ObservationBudget>,
 ) -> Result<WorkflowProfileContext, Box<dyn Error>> {
+    load_profile_observations(root, layout, change, policy, budget, None)
+}
+
+/// A stage-local context is only consumed by its selected gate, never by
+/// artifact readiness, completion, or mutation preflight.
+pub(crate) fn load_workflow_gate_context_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+    stage: GateStage,
+) -> Result<WorkflowProfileContext, Box<dyn Error>> {
+    load_profile_observations(root, layout, change, policy, budget, Some(stage))
+}
+
+fn load_profile_observations(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+    gate_stage: Option<GateStage>,
+) -> Result<WorkflowProfileContext, Box<dyn Error>> {
     // r[impl cairn.lifecycle_workflow_profiles.integration]
     // r[impl cairn.lifecycle_workflow_profiles.functional_boundary]
     validate_change_name(change)?;
@@ -278,8 +302,16 @@ pub(crate) fn load_workflow_profile_context_with_budget(
         &policy.workflow_schemas,
         &metadata,
     )?;
-    let observations = observe::observe_workflow_artifacts_with_budget(
-        root, layout, change, &schema, policy, budget,
+    let selected = gate_stage
+        .map(|stage| cairn_core::verified::readiness::readiness_gate_artifact_ids(&schema, stage));
+    let observations = observe::observe_workflow_artifact_subset_with_budget(
+        root,
+        layout,
+        change,
+        &schema,
+        policy,
+        budget,
+        selected.as_deref(),
     )?;
     let mut report = derive_workflow_status(&schema, &observations)?;
     let artifact_hashes = profile_artifact_hashes(&change_relative, &observations);
@@ -290,21 +322,29 @@ pub(crate) fn load_workflow_profile_context_with_budget(
         WORKFLOW_ADMISSION_ACCEPTANCE,
         budget,
     )?;
-    let tasks_markdown = read_admission_artifact(
-        root,
-        &change_relative,
-        &schema,
-        WORKFLOW_ADMISSION_TASKS,
-        budget,
-    )?;
-    let outcome_machine_review = read_admission_artifact(
-        root,
-        &change_relative,
-        &schema,
-        WORKFLOW_ADMISSION_OUTCOME_MACHINE,
-        budget,
-    )?
-    .and_then(|text| serde_json::from_str::<Value>(&text).ok());
+    let tasks_markdown = if gate_stage.is_none_or(|stage| stage == GateStage::Tasks) {
+        read_admission_artifact(
+            root,
+            &change_relative,
+            &schema,
+            WORKFLOW_ADMISSION_TASKS,
+            budget,
+        )?
+    } else {
+        None
+    };
+    let outcome_machine_review = if gate_stage != Some(GateStage::Proposal) {
+        read_admission_artifact(
+            root,
+            &change_relative,
+            &schema,
+            WORKFLOW_ADMISSION_OUTCOME_MACHINE,
+            budget,
+        )?
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok())
+    } else {
+        None
+    };
     let outcome_machine_evidence = observe_outcome_machine_evidence(
         root,
         &change_relative,
@@ -312,7 +352,11 @@ pub(crate) fn load_workflow_profile_context_with_budget(
         schema.bounds.max_artifact_bytes,
         budget,
     )?;
-    let reviews = read_review_evidence(root, &change_relative, &schema, &artifact_hashes, budget)?;
+    let reviews = if gate_stage.is_none_or(|stage| stage == GateStage::Tasks) {
+        read_review_evidence(root, &change_relative, &schema, &artifact_hashes, budget)?
+    } else {
+        Vec::new()
+    };
     let delta_spec_paths = observations
         .iter()
         .filter(|observation| {
@@ -359,26 +403,6 @@ pub(crate) fn load_workflow_profile_context_with_budget(
         profile_identity_hash,
         change_path: path_string(change_relative),
     })
-}
-
-/// Read the actual selection without requiring unrelated artifact observations.
-pub(crate) fn compatibility_selection_with_budget(
-    root: &Path,
-    layout: LifecycleLayout,
-    change: &str,
-    policy: &Policy,
-    budget: Option<&crate::support::observation_budget::ObservationBudget>,
-) -> Result<bool, Box<dyn Error>> {
-    validate_change_name(change)?;
-    let relative = PathBuf::from(changes_dir(layout)).join(change);
-    let value = read_change_metadata_value(root, &relative, budget)?;
-    let metadata = workflow_change_profile_metadata_from_value(&value)?;
-    let (selection, _) = select_workflow_profile(
-        &policy.workflow_profile_policy,
-        &policy.workflow_schemas,
-        &metadata,
-    )?;
-    Ok(selection.compatibility_fallback)
 }
 
 pub(crate) fn select_workflow_profile_for_create(

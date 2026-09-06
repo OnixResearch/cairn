@@ -100,7 +100,7 @@ pub(crate) use scan::{
     find_change, find_spec_source, mutation_gate_blockers, mutation_gate_observation_with_budget,
     read_change_dependency_graph, read_change_dependency_graph_with_budget, read_gate_snapshot,
     read_gate_snapshot_with_budget, read_gate_stage_snapshot_with_budget,
-    read_selected_change_with_budget, scan_repo,
+    read_selected_change_with_budget, read_selected_metadata_with_budget, scan_repo,
 };
 pub(crate) use usage::{print_usage, usage_text};
 

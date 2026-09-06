@@ -167,9 +167,52 @@ fn gather_once(
     input: &Value,
     budget: &crate::support::observation_budget::ObservationBudget,
 ) -> Result<ReadinessSnapshot, Box<dyn Error>> {
-    let policy = load_policy_file_with_budget(policy_path.to_path_buf(), Some(budget))?;
     let layout = detect_layout(root).layout;
     let completion = load_completion_with_budget(root, input, Some(budget));
+    let metadata =
+        crate::support::read_selected_metadata_with_budget(root, layout, change, Some(budget));
+    let policy = match load_policy_file_with_budget(policy_path.to_path_buf(), Some(budget)) {
+        Ok(policy) => policy,
+        Err(_) => {
+            // Completion's original validator requires the current policy hash.
+            // Preserve admitted input identities, but do not substitute a null,
+            // contract-declared, or default policy for the unavailable policy.
+            let scope = ReadinessScope {
+                change: change.into(),
+                policy_hash: canonical_json_hash(&Value::Null),
+                source_hash: canonical_json_hash(&json!(metadata
+                    .as_ref()
+                    .ok()
+                    .map(|(_, hash)| hash))),
+                evidence_hash: canonical_json_hash(&json!({
+                    "completion": completion.as_ref().ok(),
+                    "completion_unavailable": completion.is_err(),
+                    "policy_admitted": false,
+                    "request_hash": portable_json_hash(root, input),
+                })),
+            };
+            let mut observations = READINESS_STAGES
+                .into_iter()
+                .map(|stage| unavailable(&scope, stage))
+                .collect::<Vec<_>>();
+            observations[0].decision["metadata"] =
+                json!(metadata.as_ref().ok().map(|(metadata, hash)| json!({
+                    "input_hash": hash, "depends_on": metadata.depends_on,
+                    "cross_repo_dependencies": metadata.cross_repo_dependencies,
+                })));
+            if let Ok(Some(completion)) = completion {
+                observations[4].decision["admitted_inputs"] = json!({
+                    "contract_hash": canonical_json_hash(&completion.contract),
+                    "results_hash": canonical_json_hash(&completion.results),
+                    "subject_hash": completion.subject,
+                });
+            }
+            return Ok(ReadinessSnapshot {
+                scope,
+                observations,
+            });
+        }
+    };
     let status = read_selected_change_with_budget(root, layout, change, Some(budget));
     let profile = crate::workflow::load_workflow_profile_context_with_budget(
         root,
@@ -184,17 +227,18 @@ fn gather_once(
         Some(budget),
     );
     let policy_hash = canonical_json_hash(&policy.raw);
-    let cross = status
-        .as_ref()
-        .ok()
-        .zip(external.as_ref().ok())
-        .map(|(status, evidence)| {
-            crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
-                status,
-                evidence,
-                &policy_hash,
-            )
-        });
+    let cross =
+        metadata
+            .as_ref()
+            .ok()
+            .zip(external.as_ref().ok())
+            .map(|((metadata, _), evidence)| {
+                cairn_core::evaluate_cross_repo_dependencies(
+                    &metadata.cross_repo_dependencies,
+                    evidence,
+                    &policy_hash,
+                )
+            });
     let gate_snapshot = status
         .as_ref()
         .ok()
@@ -210,6 +254,7 @@ fn gather_once(
                     "completion": completion.as_ref().ok(),
                     "completion_unavailable": completion.is_err(),
                     "cross_repo": cross.as_ref().map(|cross| cross.to_json()),
+                    "metadata_input_hash": metadata.as_ref().ok().map(|(_, hash)| hash),
                     "external_unavailable": external.is_err(),
                     "profile": profile.as_ref().ok().map(|profile| &profile.profile_identity_hash),
                 })),
@@ -306,6 +351,7 @@ fn gather_once(
                 })),
                 "completion": completion.as_ref().ok(), "completion_unavailable": completion.is_err(),
                 "cross_repo": cross.as_ref().map(|cross| cross.to_json()),
+                "metadata_input_hash": metadata.as_ref().ok().map(|(_, hash)| hash),
                 "external": external.as_ref().ok().map(|evidence| evidence.iter().map(|summary| json!({
                     "repo": summary.repo, "change": summary.change, "receipt_hash": summary.receipt_hash,
                     "policy_hash": summary.policy_hash, "subject_hash": summary.subject_hash,
@@ -359,8 +405,8 @@ fn gather_once(
     let mutations = (|| -> Result<Vec<ReadinessObservation>, Box<dyn Error>> {
         let graph = graph?;
         external?;
-        let mut plan_blockers = dependency_blockers.clone();
-        plan_blockers.extend(profile_blockers);
+        metadata?;
+        let plan_blockers = dependency_blockers.clone();
         let sync = build_sync_plan_for_effect_with_dependency_blockers(
             &status,
             &plan_blockers,
@@ -381,7 +427,9 @@ fn gather_once(
             .as_ref()
             .ok()
             .map(|merges| sync_merge_bindings(root, merges));
-        let gate = if policy.sync_require_gate || policy.archive_require_gate {
+        let (sync_gate, archive_gate) =
+            readiness_mutation_gate_requirements(&policy, &sync, &archive);
+        let gate = if sync_gate || archive_gate {
             Some(mutation_gate_observation_with_budget(
                 root,
                 layout,
@@ -410,14 +458,15 @@ fn gather_once(
             merge_binding,
             merge_reasons: &merge_reasons,
             gate_reasons,
+            profile_reasons: &profile_blockers,
             policy: &policy,
             dependencies: &graph,
         });
         for observation in &mut mutations {
             let requires_gate = if observation.stage == "sync" {
-                policy.sync_require_gate
+                sync_gate
             } else {
-                policy.archive_require_gate
+                archive_gate
             };
             if requires_gate && gate_unavailable {
                 observation.state = ReadinessState::Unavailable;
@@ -478,21 +527,27 @@ fn gather_partial_gates(
     profile: Option<&crate::workflow::WorkflowProfileContext>,
     budget: &crate::support::observation_budget::ObservationBudget,
 ) -> Vec<ReadinessObservation> {
-    let compatibility = profile.is_none()
-        && crate::workflow::compatibility_selection_with_budget(
-            root,
-            layout,
-            &scope.change,
-            policy,
-            Some(budget),
-        )
-        .unwrap_or(false);
     [GateStage::Proposal, GateStage::Design, GateStage::Tasks]
         .into_iter()
         .map(|stage| {
-            if profile.is_none() && !compatibility {
-                return unavailable(scope, stage.as_str());
-            }
+            let local_profile = if profile.is_none() {
+                match crate::workflow::load_workflow_gate_context_with_budget(
+                    root,
+                    layout,
+                    &scope.change,
+                    policy,
+                    Some(budget),
+                    stage,
+                ) {
+                    Ok(profile) => Some(profile),
+                    Err(_) => return unavailable(scope, stage.as_str()),
+                }
+            } else {
+                None
+            };
+            let profile = profile
+                .or(local_profile.as_ref())
+                .expect("admitted gate profile");
             let snapshot = match crate::support::read_gate_stage_snapshot_with_budget(
                 root,
                 layout,
@@ -503,10 +558,7 @@ fn gather_partial_gates(
                 Ok(snapshot) => snapshot,
                 Err(_) => return unavailable(scope, stage.as_str()),
             };
-            let report = profile.map_or_else(
-                || cairn_core::evaluate_gate_snapshot(&snapshot, stage, policy),
-                |profile| profile.gate_report(&snapshot, stage, policy),
-            );
+            let report = profile.gate_report(&snapshot, stage, policy);
             let probes = (stage == GateStage::Tasks).then(|| {
                 crate::probe::observe_gate_probes_with_budget(
                     root,
@@ -535,6 +587,7 @@ fn gather_partial_gates(
                 root,
                 &crate::plan_receipts::gate_input_json(layout, stage, policy, &snapshot)
             ));
+            observation.decision["profile_input_hash"] = json!(profile.profile_identity_hash);
             observation
         })
         .collect()

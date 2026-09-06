@@ -105,6 +105,9 @@ fn gate_observation_failure_only_disables_stages_that_require_the_gate(
 ) -> Result<(), Box<dyn Error>> {
     for (sync_gate, archive_gate) in [(true, false), (false, true), (false, false)] {
         let root = lifecycle_fixture(&format!("gate-isolation-{sync_gate}-{archive_gate}"))?;
+        let tasks = root.join(".cairn/changes/demo/tasks.md");
+        let text = std::fs::read_to_string(&tasks)?;
+        std::fs::write(tasks, text.replace("- [ ]", "- [x]"))?;
         let mut input = readiness_input(&root);
         let policy_path = PathBuf::from(input["policy"].as_str().ok_or("policy")?);
         let mut policy: Value = serde_json::from_slice(&std::fs::read(policy_path)?)?;
@@ -261,14 +264,28 @@ fn lifecycle_failure_preserves_the_independent_completion_decision() -> Result<(
         );
         assert_eq!(after["stages"][4]["state"], before["stages"][4]["state"]);
         if failure == "profile" {
-            assert_eq!(
-                after["stages"][0]["decision"]["cross_repo_dependencies"]["valid"],
-                true
-            );
+            assert!(after["stages"][0]["decision"]["cross_repo_dependencies"].is_null());
         }
         assert_eq!(after["mutation_authorized"], false);
         std::fs::remove_dir_all(root)?;
     }
+    Ok(())
+}
+
+#[test]
+fn policy_failure_binds_requested_evidence_without_claiming_it_was_evaluated(
+) -> Result<(), Box<dyn Error>> {
+    let root = lifecycle_fixture("unavailable-policy-request")?;
+    let mut input = readiness_input(&root);
+    input["policy"] = json!(root.join("missing-policy.json"));
+    let before = readiness_value(&input)?;
+    input["cross_repo_evidence"] = json!(["not-read.json"]);
+    let after = readiness_value(&input)?;
+    assert_ne!(before["receipt_hash"], after["receipt_hash"]);
+    assert_eq!(before["stages"], after["stages"]);
+    assert_eq!(after["mutation_authorized"], false);
+    assert!(!root.join("not-read.json").exists());
+    std::fs::remove_dir_all(root)?;
     Ok(())
 }
 

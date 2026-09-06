@@ -97,6 +97,47 @@ pub struct ReadinessReport {
     pub non_claims: Vec<String>,
 }
 
+/// Inputs required by a profile gate, including artifact dependency closure.
+/// The admitted schema remains unchanged; observations outside this set are not
+/// evidence for this gate and must never be presented as a full profile report.
+pub fn readiness_gate_artifact_ids(
+    schema: &crate::WorkflowSchemaPolicy,
+    stage: crate::GateStage,
+) -> Vec<String> {
+    let mut selected = std::collections::BTreeSet::new();
+    for artifact in &schema.artifacts {
+        let applies = match stage {
+            crate::GateStage::Proposal => artifact.stage == "proposal",
+            crate::GateStage::Design => matches!(artifact.stage.as_str(), "proposal" | "design"),
+            crate::GateStage::Tasks => {
+                matches!(artifact.stage.as_str(), "proposal" | "design" | "tasks")
+            }
+        };
+        if applies
+            || matches!(
+                artifact.structural_admission.as_str(),
+                crate::WORKFLOW_ADMISSION_ACCEPTANCE | crate::WORKFLOW_ADMISSION_DELTA_SPECS
+            )
+        {
+            selected.insert(artifact.id.clone());
+        }
+    }
+    // An admitted schema is finite and acyclic. At most one new node per pass
+    // is needed; the schema's artifact bound therefore also bounds this walk.
+    for _ in 0..schema.artifacts.len() {
+        let before = selected.len();
+        for artifact in &schema.artifacts {
+            if selected.contains(&artifact.id) {
+                selected.extend(artifact.requires.iter().cloned());
+            }
+        }
+        if before == selected.len() {
+            break;
+        }
+    }
+    selected.into_iter().collect()
+}
+
 pub fn readiness_cause(code: &str, target: &str, message: &str) -> ReadinessCause {
     ReadinessCause {
         code: code.into(),
@@ -312,20 +353,38 @@ pub struct ReadinessMutationInputs<'a> {
     pub merge_binding: Option<Value>,
     pub merge_reasons: &'a [String],
     pub gate_reasons: &'a [String],
+    pub profile_reasons: &'a [String],
     pub policy: &'a crate::Policy,
     pub dependencies: &'a crate::ChangeDependencyGraph,
+}
+
+/// Match the original preview validators: a blocked base plan does not consume
+/// mutation-gate observations. Profile blockers are added after this decision.
+pub fn readiness_mutation_gate_requirements(
+    policy: &crate::Policy,
+    sync: &crate::SyncPlan,
+    archive: &crate::ArchivePlan,
+) -> (bool, bool) {
+    (
+        policy.sync_require_gate && !sync.blocked,
+        policy.archive_require_gate && !archive.blocked,
+    )
 }
 
 pub fn readiness_mutation_observations(
     input: ReadinessMutationInputs<'_>,
 ) -> Vec<ReadinessObservation> {
+    let (sync_gate, archive_gate) =
+        readiness_mutation_gate_requirements(input.policy, input.sync, input.archive);
     let mut sync_reasons = input.sync.reasons.clone();
+    sync_reasons.extend_from_slice(input.profile_reasons);
     sync_reasons.extend_from_slice(input.merge_reasons);
-    if input.policy.sync_require_gate {
+    if sync_gate {
         sync_reasons.extend_from_slice(input.gate_reasons);
     }
     let mut archive_reasons = input.archive.reasons.clone();
-    if input.policy.archive_require_gate {
+    archive_reasons.extend_from_slice(input.profile_reasons);
+    if archive_gate {
         archive_reasons.extend_from_slice(input.gate_reasons);
     }
     [("sync", sync_reasons), ("archive", archive_reasons)]

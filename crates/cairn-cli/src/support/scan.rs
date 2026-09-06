@@ -350,6 +350,30 @@ pub(crate) fn read_selected_change_with_budget(
         .ok_or_else(|| "selected change was not observed".into())
 }
 
+/// Read metadata without admitting task text or delta sources. Invalid metadata
+/// stays an admission failure rather than becoming an empty dependency set.
+pub(crate) fn read_selected_metadata_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> Result<(cairn_core::ChangeMetadata, String), Box<dyn Error>> {
+    cairn_core::validate_change_name(change)?;
+    let mut reader = SourceReader::open_with_budget(root, budget)?;
+    let relative = PathBuf::from(changes_dir(layout)).join(change);
+    reader.entries(&relative)?;
+    let text = read_optional_text(&mut reader, &relative.join("metadata.json"))?;
+    let (metadata, issues) =
+        cairn_core::verified::repo::parse_change_metadata(change, text.as_deref());
+    if !issues.is_empty() {
+        return Err("selected metadata was not admitted".into());
+    }
+    Ok((
+        metadata,
+        cairn_core::canonical_json_hash(&serde_json::json!(text)),
+    ))
+}
+
 /// Load only inputs consumed by the selected gate. Delta references apply at every stage.
 pub(crate) fn read_gate_stage_snapshot_with_budget(
     root: &Path,

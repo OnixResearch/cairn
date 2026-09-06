@@ -89,6 +89,7 @@ fn missing_merge_observation_does_not_discard_archive_authority() {
             merge_binding,
             merge_reasons: &[],
             gate_reasons: &[],
+            profile_reasons: &[],
             policy: &policy,
             dependencies: &graph,
         });
@@ -104,6 +105,58 @@ fn missing_merge_observation_does_not_discard_archive_authority() {
         assert_eq!(observations[0].causes.is_empty(), available);
         assert!(observations[1].causes.is_empty());
     }
+}
+
+#[test]
+fn profile_gate_inputs_include_dependency_closure_without_later_unrelated_artifacts() {
+    let policy = crate::validate_policy_json(
+        serde_json::from_str(include_str!(
+            "../../../../../cairn-policy/generated/cairn-policy.json"
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    for schema in &policy.workflow_schemas {
+        for stage in [
+            crate::GateStage::Proposal,
+            crate::GateStage::Design,
+            crate::GateStage::Tasks,
+        ] {
+            let selected = readiness_gate_artifact_ids(schema, stage);
+            for artifact in schema
+                .artifacts
+                .iter()
+                .filter(|artifact| selected.contains(&artifact.id))
+            {
+                assert!(artifact
+                    .requires
+                    .iter()
+                    .all(|required| selected.contains(required)));
+            }
+            assert_eq!(selected, readiness_gate_artifact_ids(schema, stage));
+        }
+    }
+    let mut schema = policy
+        .workflow_schemas
+        .iter()
+        .find(|schema| schema.id == "spec-driven")
+        .unwrap()
+        .clone();
+    let proposal = schema
+        .artifacts
+        .iter()
+        .position(|artifact| artifact.stage == "proposal")
+        .unwrap();
+    let tasks = schema
+        .artifacts
+        .iter()
+        .find(|artifact| artifact.stage == "tasks")
+        .unwrap()
+        .id
+        .clone();
+    assert!(!readiness_gate_artifact_ids(&schema, crate::GateStage::Proposal).contains(&tasks));
+    schema.artifacts[proposal].requires.push(tasks.clone());
+    assert!(readiness_gate_artifact_ids(&schema, crate::GateStage::Proposal).contains(&tasks));
 }
 
 #[test]
