@@ -121,6 +121,9 @@ pub fn publication_decision(
     for ((attempt, artifact), profile) in attempts.iter().zip(artifacts).zip(&plan.profiles) {
         if attempt.result.check_id != profile.check_id
             || attempt.observation.plan_hash != plan.plan_hash
+            || attempts.first().is_none_or(|first| {
+                first.observation.attempt_hash != attempt.observation.attempt_hash
+            })
             || attempt.result.status != "passed"
             || !seen.insert(&attempt.result.check_id)
             || !plan

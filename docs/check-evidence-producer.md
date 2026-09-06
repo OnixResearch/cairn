@@ -2,7 +2,7 @@
 
 ## Available boundary
 
-Cairn provides pure admission, Linux bounded execution, durable local publication, and native saved Mantle admission.
+Cairn provides pure admission, Linux bounded execution, durable local publication, manifest verification, and saved Mantle and Octet admission.
 The active change remains incomplete. Cairn producer-adapter maintainers own this boundary.
 The current live consumer is Cairn's original completion validator.
 The maintained disposable Cargo and Nix fixtures need no manual result edits.
@@ -21,8 +21,11 @@ cairn check-evidence source --root REPOSITORY --projection projection.json
 
 The source receipt reports `subject_hash` and `source_projection_hash` for the applicability input.
 The projection limits are 4,096 files, 16 MiB per file, and 64 MiB in total.
-Source prechecks reject symbolic-link components, non-regular members, and oversized files.
-These prechecks are not atomic no-follow opens. Concurrent path substitution remains an open hardening task.
+Source reads reject symbolic-link components, non-regular members, and oversized files.
+On Linux x86_64 and aarch64, capability-relative `O_PATH | O_NOFOLLOW` opens hold each component before metadata inspection.
+A symlink descriptor fails admission. Only a regular-file descriptor is reopened through `/proc/self/fd` for bounded reads.
+This fail-closed equivalent prevents symlink substitution and avoids device or FIFO read effects before file-type admission.
+Missing procfs support and unsupported platform ABIs fail closed. Input files, cancellation controls, and publication readback use the same mechanism.
 The selected file set does not prove source-closure completeness.
 Consumers retain projection review, including build inputs and exclusions for evidence and build output.
 
@@ -95,11 +98,24 @@ Source disappearance preserves executed facts and rejected observations without 
 Publication collisions preserve existing bytes and retain observations through other available artifact paths.
 A runner error does not establish execution coverage.
 Any publication error withholds the final manifest. Existing destination bytes remain unchanged.
-Readback still uses metadata prechecks rather than atomic no-follow opens.
+Readback uses the same no-follow descriptor mechanism as source reads.
+The manifest also binds the attempt journal. Pure publication admission rejects results from different attempts, even when their plan identities match.
 
 If an attempt stops with only a journal or partial files, inspect that directory before recovery.
-This version has no automated recovery command. A new attempt requires a separately authorized output directory.
-Only a complete manifest closes the publication attempt. Standalone completion rows do not prove bundle publication.
+A new attempt requires a separately authorized output directory. Cairn never retries, removes partial files, or completes an interrupted manifest automatically.
+The read-only verifier returns `inspect_and_use_new_output_root` for missing, malformed, changed, or incomplete artifacts.
+Only an admitted complete manifest closes the publication attempt.
+
+```console
+cairn check-evidence verify --root REPOSITORY --out OUTPUT_DIRECTORY \
+  --contract contract.json --profiles profiles.json \
+  --applicability applicability.json --projection projection.json \
+  --plan-hash REVIEWED_HASH --attempt ATTEMPT_BLAKE3
+```
+
+Verification rechecks current source and policy, exact artifact bytes, journal linkage, normalized observations, native payload facts, and the original completion contract.
+It admits at most 67 artifacts, 4 MiB per artifact, and 64 MiB in total.
+Verification proves presented linkage and admitted payload shape, not execution truth. Standalone completion rows do not prove bundle publication.
 The shell can return a non-passing JSON receipt with exit zero. Consumers must inspect its `valid` field.
 Parent synchronization is an observed system-call result, not a power-loss correctness guarantee.
 
@@ -129,6 +145,17 @@ Native admission does not create completion rows or grant execution authority.
 The Mantle contract lacks executed-test coverage and Cairn command/applicability binding. Both remain explicit blockers.
 Unknown producer adapters fail closed. No generic decoder supplies missing producer facts.
 
+```console
+cairn check-evidence import octet --root SAVED_DIRECTORY --observation observation.json
+```
+
+The Octet adapter translates the published `octet-acceptance-receipt/v1` JSON contract in Cairn's pure core.
+It admits a bounded subset with integer artifact sizes, closed fields, and at most 64 rows per native array.
+It preserves native status, failure counts, evidence tiers, and coverage-scope identities. It omits raw logs, diagnostics, and paths from its receipt.
+The source contract does not bind full-catalog deny-all scope. Passing, failed, blocked, and warning-bearing receipts therefore remain ineligible for completion.
+This translation uses no Octet source implementation or Cargo dependency. The pinned contract revision is `890f424cd7b1b2015f39c0eb5747f1bd1e576028`.
+The source contract retains its AGPL-3.0-or-later notice. This consumer translation does not change upstream licenses or claims.
+
 ## Published dependency cohort and notices
 
 | Dependency | Immutable revision | Imported scope | Public license |
@@ -143,7 +170,7 @@ The owner-authorized reuse grant applies only to exclusively OnixResearch-owned 
 `nix/check-producer-source-pins.nix` checks matching Cargo/Nix revisions and rejects a substituted revision.
 The existing Octet/Slotcar compiler and check pin remains unchanged.
 
-Lattice, Kiln, Octet, and Valence adapters remain unavailable.
+Lattice, Kiln, and Valence adapters remain unavailable.
 The reviewed Lattice contract requires BLAKE3 1.8.3, while the reviewed Mantle contract requires exactly 1.8.2.
 A joint dependency-resolution probe records the resulting blocker separately from runtime conformance.
 See the active change's implementation reports for commands, observed verdicts, and remaining work.

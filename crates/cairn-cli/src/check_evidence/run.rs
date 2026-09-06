@@ -94,8 +94,7 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
         return Err("attempt requires an explicit BLAKE3 identity".into());
     }
     let cancel = required("--cancel-file")?;
-    if root
-        .read_bounded(Path::new(cancel), local::CANCEL_BYTES)
+    if super::reads::input(&root, Path::new(cancel), local::CANCEL_BYTES)
         .map_err(|_| "cancellation control unavailable")?
         != b"0"
     {
@@ -112,13 +111,15 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
     let mut publisher = Publisher::open(Path::new(required("--out")?))
         .map_err(|_| "publication root unavailable")?;
     // No-replace journal stays after failure or interruption. There is no implicit retry/recovery.
-    publisher.publish(
-        "attempt.json",
-        &serde_json::to_vec(
-            &json!({"attempt_hash":attempt, "plan_hash":reviewed, "state":"started"}),
-        )?,
+    let journal = serde_json::to_vec(
+        &json!({"attempt_hash":attempt, "plan_hash":reviewed, "state":"started"}),
     )?;
+    publisher.publish("attempt.json", &journal)?;
     let mut state = AttemptState::default();
+    state.artifacts.insert(
+        "attempt.json".into(),
+        blake3::hash(&journal).to_hex().to_string(),
+    );
     if let Err(blocker) = execute_attempts(
         &root,
         &paths,
@@ -213,8 +214,7 @@ fn execute_attempts(
             &state.attempts,
         )
         .map_err(|_| "attempt_not_authorized")?;
-        if root
-            .read_bounded(Path::new(cancel), local::CANCEL_BYTES)
+        if super::reads::input(root, Path::new(cancel), local::CANCEL_BYTES)
             .map_err(|_| "cancellation_control_unavailable")?
             != b"0"
         {

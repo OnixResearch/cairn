@@ -12,7 +12,7 @@ use super::*;
 fn hash(c: char) -> String {
     c.to_string().repeat(64)
 }
-fn fixture() -> (AgentVerificationContract, Vec<CheckProfile>, Applicability) {
+pub(super) fn fixture() -> (AgentVerificationContract, Vec<CheckProfile>, Applicability) {
     let profile = CheckProfile {
         schema: PROFILE_SCHEMA.into(),
         check_id: "tests".into(),
@@ -57,7 +57,7 @@ fn fixture() -> (AgentVerificationContract, Vec<CheckProfile>, Applicability) {
     };
     (contract, vec![profile], applicability)
 }
-fn observation(plan: &CheckEvidencePlan) -> AttemptObservation {
+pub(super) fn observation(plan: &CheckEvidencePlan) -> AttemptObservation {
     let p = &plan.profiles()[0];
     AttemptObservation {
         check_id: p.check_id.clone(),
@@ -430,6 +430,63 @@ fn nix_check_is_only_a_build_obligation() {
     assert_eq!(
         normalize_attempt(&plan, &o).unwrap().result().status,
         "unknown"
+    );
+}
+
+#[test]
+fn publication_rejects_mixed_attempts_and_failed_or_reordered_rows() {
+    let (mut c, mut p, a) = fixture();
+    let mut next = p[0].clone();
+    next.check_id = "after".into();
+    let mut check = c.required_checks[0].clone();
+    check.check_id = "after".into();
+    check.prerequisites.push("tests".into());
+    c.required_checks.push(check);
+    p.push(next);
+    c.selection_hash = authoritative_selection_hash(&c.required_checks);
+    let plan = admit_plan(&c, &p, &a).unwrap();
+    let first = observation(&plan);
+    let mut second = first.clone();
+    second.check_id = "after".into();
+    let artifacts = vec![
+        PublishedArtifact {
+            expected_hash: hash('c'),
+            observed_hash: hash('c'),
+            durable: true,
+        };
+        2
+    ];
+    let rows = vec![
+        normalize_attempt(&plan, &first).unwrap(),
+        normalize_attempt(&plan, &second).unwrap(),
+    ];
+    assert_eq!(
+        publication_decision(&plan, &rows, &artifacts, &a),
+        PublicationDecision::PublishFinalManifest
+    );
+    second.attempt_hash = hash('b');
+    let mixed = vec![rows[0].clone(), normalize_attempt(&plan, &second).unwrap()];
+    assert_eq!(
+        publication_decision(&plan, &mixed, &artifacts, &a),
+        PublicationDecision::Withhold
+    );
+    let mut reversed = rows.clone();
+    reversed.reverse();
+    assert_eq!(
+        publication_decision(&plan, &reversed, &artifacts, &a),
+        PublicationDecision::Withhold
+    );
+    second.attempt_hash = first.attempt_hash;
+    second.outcome = ProcessOutcome::ExitedNonzero;
+    let failed = vec![rows[0].clone(), normalize_attempt(&plan, &second).unwrap()];
+    assert_eq!(
+        publication_decision(&plan, &failed, &artifacts, &a),
+        PublicationDecision::Withhold
+    );
+    let duplicate = vec![rows[0].clone(), rows[0].clone()];
+    assert_eq!(
+        publication_decision(&plan, &duplicate, &artifacts, &a),
+        PublicationDecision::Withhold
     );
 }
 

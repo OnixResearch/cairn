@@ -4,8 +4,12 @@ mod local;
 #[cfg(target_os = "linux")]
 mod publication;
 #[cfg(target_os = "linux")]
+mod reads;
+#[cfg(target_os = "linux")]
 mod run;
 mod saved;
+#[cfg(target_os = "linux")]
+mod verify;
 use std::{collections::BTreeMap, error::Error, path::Path};
 
 use cairn_core::verified::check_evidence::{admit_plan, Applicability, CheckProfile};
@@ -25,6 +29,8 @@ pub(crate) fn run_check_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>
         Some("run") => run::run(&args[1..]),
         #[cfg(target_os = "linux")]
         Some("source") => run::source(&args[1..]),
+        #[cfg(target_os = "linux")]
+        Some("verify") => verify::verify(&args[1..]),
         Some("import") => saved::import(&args[1..]),
         _ => {
             Err("check-evidence requires plan; run and import are unavailable in this build".into())
@@ -68,9 +74,14 @@ fn named_options<'a>(
 }
 
 fn read_input<T: DeserializeOwned>(root: &CapabilityRoot, name: &str) -> Result<T, Box<dyn Error>> {
-    let bytes = root
-        .read_bounded(Path::new(name), MAX_INPUT_BYTES)
+    #[cfg(target_os = "linux")]
+    let bytes = reads::input(root, Path::new(name), MAX_INPUT_BYTES)
         .map_err(|_| "check-evidence input is unavailable or exceeds its bound")?;
+    #[cfg(not(target_os = "linux"))]
+    let bytes: Vec<u8> = {
+        let _ = (root, name);
+        return Err("atomic no-follow producer reads unavailable on this platform".into());
+    };
     serde_json::from_slice(&bytes).map_err(|_| "check-evidence input is malformed".into())
 }
 

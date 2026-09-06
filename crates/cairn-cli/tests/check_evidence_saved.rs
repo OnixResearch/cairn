@@ -112,3 +112,52 @@ fn native_mantle_admission_preserves_status_and_rejects_substitution() -> Result
     assert!(!String::from_utf8_lossy(&output.stderr).contains("secret-do-not-echo"));
     Ok(())
 }
+
+#[test]
+fn native_octet_json_translation_is_bounded_redacted_and_never_strict_acceptance(
+) -> Result<(), Box<dyn Error>> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let fixture = root
+        .join("target")
+        .join(format!("saved-octet-{}", std::process::id()));
+    fs::create_dir_all(&fixture)?;
+    let mut value = json!({"schema_version":"octet-acceptance-receipt/v1","run_id":"run","started_at":"start","finished_at":"finish",
+        "tool":"octet","tool_version":"reviewed","git_revision":"revision","config_digest":"digest",
+        "config_digest_detail":{"algorithm":"blake3","value":"digest"},"inputs":[],"stages":[],
+        "artifacts":[],"status":"passed","warnings":["secret-do-not-echo"],"errors":[],
+        "verification_commands":[],"verification_evidence":[],"raw_log_path":"private-log"});
+    let invoke = || {
+        Command::new(env!("CARGO_BIN_EXE_cairn"))
+            .current_dir(&root)
+            .args(["check-evidence", "import", "octet", "--root"])
+            .arg(&fixture)
+            .args(["--observation", "observation.json"])
+            .output()
+    };
+    for status in ["passed", "failed", "blocked"] {
+        value["status"] = json!(status);
+        fs::write(
+            fixture.join("observation.json"),
+            serde_json::to_vec(&value)?,
+        )?;
+        let output = invoke()?;
+        assert!(output.status.success());
+        let receipt: Value = serde_json::from_slice(&output.stdout)?;
+        assert_eq!(receipt["admission"]["native_status"], status);
+        assert_eq!(receipt["completion_eligible"], false);
+        assert_eq!(receipt["completion_results"], json!([]));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("secret-do-not-echo"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("private-log"));
+    }
+    value["schema_version"] = json!("unknown");
+    fs::write(
+        fixture.join("observation.json"),
+        serde_json::to_vec(&value)?,
+    )?;
+    assert!(!invoke()?.status.success());
+    fs::write(fixture.join("observation.json"), b"secret-do-not-echo")?;
+    let output = invoke()?;
+    assert!(!output.status.success());
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("secret-do-not-echo"));
+    Ok(())
+}

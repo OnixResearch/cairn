@@ -9,6 +9,9 @@ pub(super) fn import(args: &[String]) -> Result<(), Box<dyn Error>> {
     let Some((producer, pairs)) = args.split_first() else {
         return Err("import requires an installed producer adapter".into());
     };
+    if producer == "octet" {
+        return import_octet(pairs);
+    }
     if producer != "mantle" {
         return Err(
             "requested native producer admission adapter is unavailable; no results admitted"
@@ -44,5 +47,26 @@ pub(super) fn import(args: &[String]) -> Result<(), Box<dyn Error>> {
         "checks_executed":false, "completion_results":[], "completion_eligible":false,
         "blockers":["native build observations contain no executed-test coverage", "Cairn check applicability and command binding are not supplied by this native contract"],
         "non_claims":["saved identity admission does not grant execution authority", "a build observation does not satisfy a test or strict-lint obligation"]}),
+    )
+}
+
+fn import_octet(pairs: &[String]) -> Result<(), Box<dyn Error>> {
+    let options = named_options(pairs, &["--root", "--observation"])?;
+    let root = CapabilityRoot::open(
+        CapabilityRootKind::EvidenceBundle,
+        Path::new(options.get("--root").copied().unwrap_or(".")),
+    )?;
+    let value: serde_json::Value = read_input(
+        &root,
+        options
+            .get("--observation")
+            .ok_or("missing --observation")?,
+    )?;
+    let admission = cairn_core::verified::check_evidence::admit_octet_json(&value)?;
+    print_json(
+        json!({"schema":"cairn.saved-check-admission.v1", "producer":"octet-acceptance-receipt",
+        "native_contract_valid":true, "admission":admission, "checks_executed":false,
+        "completion_results":[], "completion_eligible":false,
+        "blockers":["published acceptance JSON lacks an exact full-catalog deny-all obligation binding"]}),
     )
 }

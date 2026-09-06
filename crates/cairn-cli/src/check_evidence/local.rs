@@ -16,7 +16,7 @@ use std::{
     time::Duration,
 };
 
-pub(super) const PRODUCER: &str = "29dac88ecded94457572db3fdfaaaab95fa91525";
+pub(super) const PRODUCER: &str = LOCAL_EXECUTOR_REVISION;
 pub(super) const CANCEL_BYTES: u64 = 1;
 const MAX_SOURCE_FILES: usize = 4096;
 const MAX_SOURCE_FILE_BYTES: u64 = 16 * 1024 * 1024;
@@ -58,8 +58,7 @@ pub(super) fn source_hash(
         {
             return Err("source projection requires regular files".into());
         }
-        let bytes = root
-            .read_bounded(&relative, MAX_SOURCE_FILE_BYTES)
+        let bytes = super::reads::input(root, &relative, MAX_SOURCE_FILE_BYTES)
             .map_err(|_| "source unavailable or oversized")?;
         total = total
             .checked_add(bytes.len())
@@ -142,7 +141,7 @@ pub(super) fn execute(
         scope.spawn(|| {
             while !stopped.load(Ordering::Acquire) {
                 // The control is explicit and capability-relative. Any nonzero byte cancels.
-                match cancel_root.read_bounded(Path::new(cancel), CANCEL_BYTES) {
+                match super::reads::input(cancel_root, Path::new(cancel), CANCEL_BYTES) {
                     Ok(bytes) if bytes == b"0" => {}
                     _ => {
                         cancelled.store(true, Ordering::Release);

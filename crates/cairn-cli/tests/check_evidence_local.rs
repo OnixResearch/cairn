@@ -177,6 +177,28 @@ impl Fixture {
         );
         Ok(serde_json::from_slice(&output.stdout)?)
     }
+    fn verify(&self) -> Result<Value, Box<dyn Error>> {
+        cli(&[
+            "check-evidence",
+            "verify",
+            "--root",
+            self.root.to_str().ok_or("path")?,
+            "--out",
+            self.out.to_str().ok_or("path")?,
+            "--contract",
+            "contract.json",
+            "--profiles",
+            "profiles.json",
+            "--applicability",
+            "applicability.json",
+            "--projection",
+            "projection.json",
+            "--plan-hash",
+            self.plan.identity(),
+            "--attempt",
+            &"b".repeat(64),
+        ])
+    }
     fn completion(&self) -> Result<Value, Box<dyn Error>> {
         cli(&[
             "agent-receipt",
@@ -206,6 +228,20 @@ fn real_cargo_passes_original_completion_and_denial_never_spawns() -> Result<(),
     let result = f.run()?;
     assert_eq!(result["valid"], true, "{result}");
     assert_eq!(f.completion()?["valid"], true);
+    assert_eq!(f.verify()?["valid"], true);
+    let saved = fs::read(f.out.join("results.json"))?;
+    fs::write(f.out.join("results.json"), b"[]")?;
+    assert_eq!(f.verify()?["valid"], false);
+    fs::write(f.out.join("results.json"), saved)?;
+    assert_eq!(f.verify()?["valid"], true);
+    let journal = fs::read(f.out.join("attempt.json"))?;
+    fs::remove_file(f.out.join("attempt.json"))?;
+    assert_eq!(f.verify()?["recovery"], "inspect_and_use_new_output_root");
+    fs::write(f.out.join("attempt.json"), journal)?;
+    let manifest = fs::read(f.out.join("manifest.json"))?;
+    fs::remove_file(f.out.join("manifest.json"))?;
+    assert_eq!(f.verify()?["valid"], false);
+    fs::write(f.out.join("manifest.json"), manifest)?;
     // The unchanged loop validator must not reinterpret Cargo rows as fmt/validate/traceability evidence.
     let loop_receipt = cli(&[
         "developer-loop",

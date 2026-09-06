@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::verified::agent_receipt::{AgentExecutionResult, AgentVerificationContract};
 
+pub const LOCAL_EXECUTOR_REVISION: &str = "29dac88ecded94457572db3fdfaaaab95fa91525";
 pub const PROFILE_SCHEMA: &str = "cairn.check-profile.v1";
 pub const PLAN_SCHEMA: &str = "cairn.check-evidence-plan.v1";
 pub const MAX_CHECKS: usize = 64;

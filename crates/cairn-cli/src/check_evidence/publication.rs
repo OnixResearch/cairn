@@ -63,16 +63,11 @@ impl Publisher {
     }
 
     pub(super) fn verify(&self, leaf: &str, expected: &str) -> Result<(), Box<dyn Error>> {
-        use std::io::Read;
-        let metadata = self.root.symlink_metadata(leaf)?;
-        if !metadata.is_file() || metadata.len() > u64::try_from(MAX_ARTIFACT_BYTES)? {
-            return Err("publication readback is not a bounded regular file".into());
-        }
-        let mut bytes = Vec::new();
-        self.root
-            .open(leaf)?
-            .take(u64::try_from(MAX_ARTIFACT_BYTES)? + 1)
-            .read_to_end(&mut bytes)?;
+        let bytes = super::reads::read(
+            &self.root,
+            Path::new(leaf),
+            u64::try_from(MAX_ARTIFACT_BYTES)?,
+        )?;
         if bytes.len() > MAX_ARTIFACT_BYTES || blake3::hash(&bytes).to_hex().as_str() != expected {
             return Err("publication readback changed; inspect output before recovery".into());
         }
