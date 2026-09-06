@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 const MAX_CYCLE_WITNESS_NODES: usize = 64;
 
 // r[impl cairn.global_registry.graph]
@@ -183,7 +181,7 @@ fn traversal_set(
         values.dedup();
     }
     let mut selected = std::collections::BTreeSet::from([start.to_string()]);
-    let mut queue = VecDeque::from([start]);
+    let mut queue = std::collections::VecDeque::from([start]);
     while let Some(current) = queue.pop_front() {
         let neighbors = match direction {
             super::RegistryGraphDirection::Descendants => {

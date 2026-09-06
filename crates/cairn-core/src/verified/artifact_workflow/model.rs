@@ -1,4 +1,4 @@
-use std::{error::Error, fmt};
+use std::error::Error;
 
 pub const WORKFLOW_SCHEMA_VERSION_V1: &str = "cairn.workflow-schema.v1";
 pub const WORKFLOW_STATUS_SCHEMA_V1: &str = "cairn.workflow-status.v1";
@@ -375,8 +375,8 @@ impl WorkflowAdmissionError {
     }
 }
 
-impl fmt::Display for WorkflowAdmissionError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for WorkflowAdmissionError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             formatter,
             "{} at {}: {}",
