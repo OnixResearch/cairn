@@ -22,5 +22,6 @@
 Baseline evidence is in `evidence/implementation-first-pass.md`.
 Contract and pure-core evidence is in `evidence/contracts-core-second-pass.md`.
 Dependency-admission evidence is in `evidence/dependency-admission.md`.
-All shell and consumer tasks require further implementation. Planning gates do not complete these tasks.
+Publication, guidance, and fresh-consumer progress is recorded in `evidence/finish-2746-bootstrap.md`.
+The remaining recovery review, drift controls, and full acceptance checks keep these tasks open. Planning gates do not complete them.
 Archive execution is not a prerequisite of any task. Use the normal lifecycle after implementation evidence passes.
