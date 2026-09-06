@@ -6,6 +6,7 @@ use std::{
 };
 
 // r[impl cairn.release_evidence.cap_std_boundary.dependency]
+use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};
 use cap_std::{
     ambient_authority,
     fs::{Dir, FileType},
@@ -104,15 +105,23 @@ impl CapabilityRoot {
 
     pub(crate) fn read_bounded(&self, relative: &Path, max_bytes: u64) -> io::Result<Vec<u8>> {
         let relative = self.relative(relative)?;
-        let metadata = self.dir.symlink_metadata(&relative)?;
-        if metadata.file_type().is_symlink() {
+        let (parent, leaf) = self.nofollow_parent(&relative)?;
+        let metadata = parent.symlink_metadata(&leaf)?;
+        if !metadata.is_file() {
+            return Err(capability_path_error());
+        }
+        let mut options = cap_std::fs::OpenOptions::new();
+        options.read(true).follow(FollowSymlinks::No);
+        let file = parent.open_with(&leaf, &options)?;
+        let metadata = file.metadata()?;
+        if !metadata.is_file() {
             return Err(capability_path_error());
         }
         if metadata.len() > max_bytes {
             return Err(bounded_read_limit_error());
         }
         let read_limit = max_bytes.saturating_add(1);
-        let mut reader = self.dir.open(&relative)?.take(read_limit);
+        let mut reader = file.take(read_limit);
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes)?;
         let byte_count = u64::try_from(bytes.len()).map_err(|_| bounded_read_limit_error())?;
@@ -120,6 +129,21 @@ impl CapabilityRoot {
             return Err(bounded_read_limit_error());
         }
         Ok(bytes)
+    }
+
+    fn nofollow_parent(&self, relative: &Path) -> io::Result<(Dir, PathBuf)> {
+        let mut directory = self.dir.try_clone()?;
+        let mut components = relative.components().peekable();
+        while let Some(component) = components.next() {
+            if component == Component::CurDir {
+                continue;
+            }
+            if components.peek().is_none() {
+                return Ok((directory, PathBuf::from(component.as_os_str())));
+            }
+            directory = directory.open_dir_nofollow(component.as_os_str())?;
+        }
+        Err(capability_path_error())
     }
 
     pub(crate) fn read_to_string(&self, relative: &Path) -> io::Result<String> {
@@ -458,6 +482,27 @@ mod tests {
         assert!(root.read(Path::new("../outside.txt")).is_err());
         assert!(root.read(Path::new("/outside.txt")).is_err());
 
+        fs::remove_dir_all(directory)?;
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn bounded_read_rejects_leaf_and_parent_links_even_inside_root(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        use std::os::unix::fs::symlink;
+        let directory = test_directory("nofollow");
+        remove_test_directory(&directory)?;
+        fs::create_dir_all(directory.join("real"))?;
+        fs::write(directory.join("real/file"), b"ok")?;
+        symlink("real", directory.join("alias"))?;
+        symlink("real/file", directory.join("leaf"))?;
+        symlink("missing", directory.join("dangling"))?;
+        let root = CapabilityRoot::open(CapabilityRootKind::Scan, &directory)?;
+        assert_eq!(root.read_bounded(Path::new("real/file"), 2)?, b"ok");
+        for path in ["alias/file", "leaf", "dangling", "real", "../escape"] {
+            assert!(root.read_bounded(Path::new(path), 2).is_err(), "{path}");
+        }
         fs::remove_dir_all(directory)?;
         Ok(())
     }

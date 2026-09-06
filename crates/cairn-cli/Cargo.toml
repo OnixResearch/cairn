@@ -24,6 +24,7 @@ bounded-tree-cap.workspace = true
 bounded-tree-core.workspace = true
 cairn-core = { path = "../cairn-core" }
 cap-std.workspace = true
+cap-fs-ext = "=4.0.2"
 crossterm.workspace = true
 ed25519-dalek.workspace = true
 nickel-export-core.workspace = true
