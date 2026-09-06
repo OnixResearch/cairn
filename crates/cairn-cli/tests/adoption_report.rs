@@ -1,3 +1,5 @@
+// r[verify cairn.adoption_report.conformance]
+// r[verify cairn.adoption_report.queries]
 use serde_json::{json, Value};
 use std::{
     collections::BTreeMap,

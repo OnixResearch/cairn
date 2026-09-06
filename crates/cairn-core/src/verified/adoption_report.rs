@@ -1,3 +1,9 @@
+//! Pure adoption-stage composition over explicitly supplied snapshots.
+//!
+//! <!-- r[impl cairn.adoption_report.boundary] -->
+//! No sibling scan, transport, pin update, check execution, or mutation
+//! happens here: this module only joins supplied facts.
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
@@ -64,6 +70,7 @@ pub enum AdoptionStageKind {
     IntegrationEvidence,
 }
 
+// r[impl cairn.adoption_report.unknowns]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AdoptionStageState {
@@ -255,6 +262,7 @@ pub fn adoption_stage_kinds() -> [AdoptionStageKind; 4] {
 }
 
 #[must_use]
+// r[impl cairn.adoption_report.inputs]
 pub fn admit_stack_deps_contracts(
     query: &AdoptionQuery,
     input: &StackDepsContractInput<'_>,
@@ -359,6 +367,7 @@ pub fn admit_cairn_adoption_evidence(
 }
 
 #[must_use]
+// r[impl cairn.adoption_report.stages]
 pub fn derive_adoption_report(snapshot: &AdoptionSnapshot) -> AdoptionReport {
     let mut diagnostics = validate_snapshot(snapshot);
     let mut relationships = snapshot.query.relationships.clone();

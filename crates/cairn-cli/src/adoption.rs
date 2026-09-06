@@ -21,6 +21,8 @@ pub(crate) fn run_adoption(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     }
 }
 
+// r[impl cairn.adoption_report.queries]
+// r[impl cairn.adoption_report.boundary]
 pub(crate) fn adoption_report_value(input: &Value) -> Result<Value, Box<dyn Error>> {
     let root = PathBuf::from(input["root"].as_str().unwrap_or("."));
     let snapshot_path = PathBuf::from(

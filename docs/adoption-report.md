@@ -1,5 +1,7 @@
 # Cross-repository adoption report
 
+<!-- r[impl cairn.adoption_report.inputs] r[impl cairn.adoption_report.stages] r[impl cairn.adoption_report.unknowns] r[impl cairn.adoption_report.queries] r[impl cairn.adoption_report.boundary] r[impl cairn.adoption_report.conformance] -->
+
 The adoption report answers one question: which downstream adoption stages are still gaps for an upstream Cairn change?
 
 It consumes saved inputs only. It does not scan sibling repositories, fetch remotes, run checks, update pins, or mutate lifecycle files.
