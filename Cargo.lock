@@ -320,6 +320,7 @@ dependencies = [
  "bounded-tree-cap",
  "bounded-tree-core",
  "cairn-core",
+ "cap-fs-ext",
  "cap-root-core",
  "cap-std",
  "crossterm 0.28.1",

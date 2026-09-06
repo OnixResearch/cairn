@@ -115,6 +115,24 @@ fn project_declaration_is_closed_and_does_not_grant_path_authority() {
         complete_manifest: id("manifest"),
     };
     assert_eq!(declaration.validate(), Ok(()));
+    let mut complete = BootstrapCompleteSelection {
+        schema: "cairn.bootstrap-complete-selection.v1".into(),
+        cohort: declaration.cohort.clone(),
+        policy: declaration.policy.clone(),
+        policy_locator: declaration.policy_locator.clone(),
+    };
+    assert_eq!(complete.validate_for(&declaration), Ok(()));
+    complete.schema = "cairn.bootstrap-plan.v1".into();
+    assert_eq!(
+        complete.validate_for(&declaration),
+        Err(BootstrapError::InvalidSelection)
+    );
+    complete.schema = "cairn.bootstrap-complete-selection.v1".into();
+    complete.policy = id("other-policy");
+    assert_eq!(
+        complete.validate_for(&declaration),
+        Err(BootstrapError::InvalidSelection)
+    );
     for locator in [
         "",
         "/policy",

@@ -16,9 +16,8 @@ use crate::{
     },
     support::{
         collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
-        default_policy_path, detect_layout, find_change, find_spec_source, load_policy_file,
-        path_string, print_json, read_gate_snapshot, read_option, read_string_option, scan_repo,
-        with_portable_receipt_hash,
+        default_policy_path, detect_layout, find_change, find_spec_source, path_string, print_json,
+        read_gate_snapshot, read_option, read_string_option, scan_repo, with_portable_receipt_hash,
     },
 };
 
@@ -45,12 +44,23 @@ pub(crate) fn run_doctor(
     invocation: &RootLocalInvocation,
 ) -> Result<(), Box<dyn Error>> {
     let root = read_option(args.clone(), "--root", ".");
-    let policy_path = read_option(args, "--policy", default_policy_path());
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
-    let policy_result = load_policy_file(policy_path.clone());
+    let policy_result = crate::project_policy::load(&root, &args);
+    let policy_selection = policy_result
+        .as_ref()
+        .ok()
+        .map(|selected| selected.selection.clone());
+    let policy_path = policy_selection
+        .as_ref()
+        .and_then(|value| value["locator"].as_str())
+        .map(str::to_owned)
+        .unwrap_or_else(|| {
+            read_string_option(&args, "--policy").unwrap_or_else(|| default_policy_path().into())
+        });
     let (policy_name, policy_error, validation_issue_count) = match policy_result {
-        Ok(policy) => {
+        Ok(selected_policy) => {
+            let policy = selected_policy.policy;
             let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
             let change_issue_count =
                 validate_changes_with_archives(&status.changes, &archived_changes, &policy).len();
@@ -82,7 +92,7 @@ pub(crate) fn run_doctor(
         specs_dir_present: root.join(specs_dir(selected.layout)).exists(),
         changes_dir_present: root.join(changes_dir(selected.layout)).exists(),
         archive_dir_present: root.join(archive_dir(selected.layout)).exists(),
-        policy_path: path_string(policy_path),
+        policy_path,
         policy_name,
         policy_error,
         spec_count: status.specs.len(),
@@ -93,6 +103,9 @@ pub(crate) fn run_doctor(
     let context = invocation.context_result()?;
     let doctor_valid = report.valid && context.valid;
     let mut value = doctor_report_json(&report);
+    if let Some(selection) = policy_selection {
+        value["policy_selection"] = selection;
+    }
     if let Some(object) = value.as_object_mut() {
         object.insert("valid".to_string(), json!(doctor_valid));
         object.insert(

@@ -171,6 +171,34 @@ impl BootstrapProjectDeclaration {
     }
 }
 
+/// Complete selection metadata. The shell must verify its exact bytes and every
+/// selected policy artifact; this structure alone is not execution evidence.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapCompleteSelection {
+    pub schema: String,
+    pub cohort: BootstrapIdentity,
+    pub policy: BootstrapIdentity,
+    pub policy_locator: String,
+}
+
+impl BootstrapCompleteSelection {
+    pub fn validate_for(
+        &self,
+        declaration: &BootstrapProjectDeclaration,
+    ) -> Result<(), BootstrapError> {
+        declaration.validate()?;
+        if self.schema != "cairn.bootstrap-complete-selection.v1"
+            || self.cohort != declaration.cohort
+            || self.policy != declaration.policy
+            || self.policy_locator != declaration.policy_locator
+        {
+            return Err(BootstrapError::InvalidSelection);
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BootstrapOwnership {

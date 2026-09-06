@@ -66,6 +66,12 @@ let ProjectDeclaration = {
   cohort | Identity,
   complete_manifest | Identity,
 } in
+let CompleteSelection = {
+  schema | std.contract.from_predicate (fun value => value == "cairn.bootstrap-complete-selection.v1"),
+  cohort | Identity,
+  policy | Identity,
+  policy_locator | RelativeLocator,
+} in
 let Ownership = {
   locator | Identity,
   identity | Identity,
@@ -87,6 +93,7 @@ let Recovery = {
   cohort = Cohort,
   policy_selection = PolicySelection,
   project_declaration = ProjectDeclaration,
+  complete_selection = CompleteSelection,
   ownership = Ownership,
   upgrade = Upgrade,
   recovery = Recovery,
