@@ -64,13 +64,23 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
         "NIX_CONFIG".into(),
         "experimental-features = nix-command flakes".into(),
     );
+    // A sandboxed Nix build exposes a read-only /nix/var; the real nix process
+    // needs writable state directories inside the fixture root instead.
+    environment.insert(
+        "NIX_STATE_DIR".into(),
+        root.join("nix-state").to_str().ok_or("path")?.into(),
+    );
     // Diagnostic capture: mirror the exact profile command so a sandbox-only
     // failure reports the real nix diagnostics in the panic message.
     {
         let mut diagnostic = Command::new(&nix);
-        diagnostic
-            .current_dir(&root)
-            .args(["eval", "--offline", "--json", "--file", "./check.nix"]);
+        diagnostic.current_dir(&root).args([
+            "eval",
+            "--offline",
+            "--json",
+            "--file",
+            "./check.nix",
+        ]);
         for (key, value) in &environment {
             diagnostic.env(key, value);
         }
