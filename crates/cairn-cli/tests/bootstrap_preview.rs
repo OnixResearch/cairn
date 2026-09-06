@@ -1,4 +1,6 @@
 //! Saved producer observations are fixtures, not executed Nickel evidence.
+#[path = "bootstrap_preview/apply.rs"]
+mod apply;
 use cairn_core::verified::consumer_bootstrap::{
     BootstrapBounds, BootstrapCohort, BootstrapIdentity, BootstrapSourceArtifact,
     BootstrapSourceBundle, BOOTSTRAP_SCHEMA, MAX_ARTIFACT_BYTES, MAX_TOTAL_BYTES,
@@ -23,8 +25,12 @@ fn id(bytes: &[u8]) -> BootstrapIdentity {
 fn bundle(root: &Path) -> Result<BootstrapSourceBundle, Box<dyn Error>> {
     let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let policy = fs::read(repo.join("cairn-policy/generated/cairn-policy.json"))?;
+    bundle_material(root, policy)
+}
+
+fn bundle_material(root: &Path, policy: Vec<u8>) -> Result<BootstrapSourceBundle, Box<dyn Error>> {
     let source = b"# fixture observation only\n{}";
-    let workflow = b"fixture workflow identity only";
+    let workflow = br#"{"schema":"cairn.bootstrap-guidance.v1","adapter":"agent-skills","destination":".agents/skills"}"#;
     let request = ExportRequest {
         schema: REQUEST_SCHEMA.into(),
         family_id: "cairn-bootstrap".into(),
@@ -81,7 +87,7 @@ fn bundle(root: &Path) -> Result<BootstrapSourceBundle, Box<dyn Error>> {
             managed_locators: vec![id(POLICY_DESTINATION.as_bytes())],
             upgrade_from: vec![],
             bounds: BootstrapBounds {
-                max_artifacts: 1,
+                max_artifacts: cairn_core::verified::consumer_bootstrap::MAX_MANAGED_ARTIFACTS,
                 max_artifact_bytes: MAX_ARTIFACT_BYTES,
                 max_total_bytes: MAX_TOTAL_BYTES,
             },
@@ -98,11 +104,21 @@ fn bundle(root: &Path) -> Result<BootstrapSourceBundle, Box<dyn Error>> {
 }
 
 fn invoke(root: &Path, sources: &Path, extra: &[&str]) -> Result<Output, Box<dyn Error>> {
+    setup(root, sources, "plan", extra)
+}
+
+fn setup(
+    root: &Path,
+    sources: &Path,
+    command: &str,
+    extra: &[&str],
+) -> Result<Output, Box<dyn Error>> {
     Ok(Command::new(env!("CARGO_BIN_EXE_cairn"))
+        .env_clear()
         .current_dir(root)
         .env("HOME", root)
         .env("CAIRN_DATA_DIR", root.join("data"))
-        .args(["setup", "plan", "--root"])
+        .args(["setup", command, "--root"])
         .arg(root)
         .arg("--source-root")
         .arg(sources)
@@ -134,7 +150,7 @@ fn preview_binds_observations_without_authorizing_installation() -> Result<(), B
     assert_eq!(result["valid"], true);
     assert_eq!(result["mutated"], false);
     assert_eq!(result["installation_receipt"], false);
-    assert_eq!(result["execution_supported"], false);
+    assert_eq!(result["execution_supported"], true);
     assert_eq!(result["artifacts"][0]["action"], "create");
     assert_eq!(result["policy"], bundle.cohort.policy.as_str());
     assert_eq!(result["producer_non_claim"], nickel_export_core::NON_CLAIM);

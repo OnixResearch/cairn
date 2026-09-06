@@ -59,6 +59,62 @@ fn plan() -> BootstrapPlan {
     .unwrap()
 }
 
+// r[verify cairn.consumer_bootstrap.guidance]
+// r[verify cairn.consumer_bootstrap.publication]
+#[test]
+fn guidance_and_generation_admission_reject_unsafe_replacement() {
+    let mut guidance = BootstrapGuidanceDeclaration {
+        schema: "cairn.bootstrap-guidance.v1".into(),
+        adapter: "agent-skills".into(),
+        destination: ".agents/skills".into(),
+    };
+    assert_eq!(guidance.validate(), Ok(()));
+    guidance.destination = "../home".into();
+    assert_eq!(guidance.validate(), Err(BootstrapError::UnsafePath));
+    let complete = BootstrapCompleteSelection {
+        artifacts: vec![BootstrapInstalledArtifact {
+            destination: "policy.json".into(),
+            identity: id("policy"),
+            bytes: MAX_ARTIFACT_BYTES,
+        }],
+        schema: "cairn.bootstrap-complete-selection.v1".into(),
+        cohort: id("cohort"),
+        policy: id("policy"),
+        policy_locator: "policy.json".into(),
+    };
+    assert_eq!(
+        admit_generation_write(
+            Some(&complete),
+            "next-policy.json",
+            PublicationAction::Create
+        ),
+        Ok(())
+    );
+    assert_eq!(
+        admit_generation_write(Some(&complete), "policy.json", PublicationAction::Preserve),
+        Ok(())
+    );
+    assert_eq!(
+        admit_generation_write(
+            Some(&complete),
+            "policy.json",
+            PublicationAction::ReplaceOwned
+        ),
+        Err(BootstrapError::InvalidSelection)
+    );
+    let mut bounds = BootstrapBounds {
+        max_artifacts: MAX_MANAGED_ARTIFACTS,
+        max_artifact_bytes: MAX_ARTIFACT_BYTES,
+        max_total_bytes: MAX_TOTAL_BYTES,
+    };
+    assert_eq!(complete.validate_bounds(&bounds), Ok(()));
+    bounds.max_artifact_bytes -= 1;
+    assert_eq!(
+        complete.validate_bounds(&bounds),
+        Err(BootstrapError::Bounds)
+    );
+}
+
 // r[verify cairn.consumer_bootstrap.policy]
 #[test]
 fn policy_precedence_distinguishes_absence_from_failure() {
@@ -116,6 +172,7 @@ fn project_declaration_is_closed_and_does_not_grant_path_authority() {
     };
     assert_eq!(declaration.validate(), Ok(()));
     let mut complete = BootstrapCompleteSelection {
+        artifacts: vec![],
         schema: "cairn.bootstrap-complete-selection.v1".into(),
         cohort: declaration.cohort.clone(),
         policy: declaration.policy.clone(),

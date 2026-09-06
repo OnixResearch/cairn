@@ -34,6 +34,20 @@ fn nickel_bootstrap_contract_accepts_cohort_and_rejects_excessive_bound(
         export_current: true,
     };
     assert_eq!(admit_cohort(&cohort, &observed, None), Ok(()));
+    let guidance = export("fixtures/consumer-bootstrap/guidance.ncl")?;
+    assert!(
+        guidance.status.success(),
+        "{}",
+        String::from_utf8_lossy(&guidance.stderr)
+    );
+    let guidance: cairn_core::verified::consumer_bootstrap::BootstrapGuidanceDeclaration =
+        serde_json::from_slice(&guidance.stdout)?;
+    guidance.validate()?;
+    assert!(
+        !export("fixtures/consumer-bootstrap/rejected-guidance.ncl")?
+            .status
+            .success()
+    );
     let records = export("fixtures/consumer-bootstrap/ownership-upgrade.ncl")?;
     assert!(
         records.status.success(),

@@ -58,6 +58,17 @@ pub(crate) fn run_doctor(
         .unwrap_or_else(|| {
             read_string_option(&args, "--policy").unwrap_or_else(|| default_policy_path().into())
         });
+    let guidance = policy_result
+        .as_ref()
+        .ok()
+        .map(|selected| crate::bootstrap::doctor_guidance(&root, &selected.policy))
+        .transpose();
+    let guidance = match guidance {
+        Ok(value) => value.flatten(),
+        Err(error) => Some(
+            json!({"valid": false, "category": "bootstrap.guidance.manual_repair", "error": error.to_string()}),
+        ),
+    };
     let (policy_name, policy_error, validation_issue_count) = match policy_result {
         Ok(selected_policy) => {
             let policy = selected_policy.policy;
@@ -101,8 +112,13 @@ pub(crate) fn run_doctor(
     };
     let report = build_doctor_report(snapshot);
     let context = invocation.context_result()?;
-    let doctor_valid = report.valid && context.valid;
+    let doctor_valid = report.valid
+        && context.valid
+        && guidance.as_ref().is_none_or(|value| value["valid"] == true);
     let mut value = doctor_report_json(&report);
+    if let Some(guidance) = guidance {
+        value["bootstrap_guidance"] = guidance;
+    }
     if let Some(selection) = policy_selection {
         value["policy_selection"] = selection;
     }

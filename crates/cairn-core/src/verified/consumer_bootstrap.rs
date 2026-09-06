@@ -8,6 +8,9 @@ use std::collections::BTreeSet;
 
 use serde::{Deserialize, Serialize};
 
+pub const BOOTSTRAP_GUIDANCE_LOCATOR: &str = ".cairn/bootstrap/guidance.json";
+pub const BOOTSTRAP_LOCK_LOCATOR: &str = ".cairn-bootstrap.lock";
+pub const BOOTSTRAP_STAGE_LEAF: &str = ".cairn-bootstrap-stage";
 pub const BOOTSTRAP_SCHEMA: &str = "cairn.consumer-bootstrap.v1";
 pub const BOOTSTRAP_PREPARED_LOCATOR: &str = ".cairn/bootstrap/prepared.json";
 pub const BOOTSTRAP_COMPLETE_LOCATOR: &str = ".cairn/bootstrap/complete.json";
@@ -191,13 +194,27 @@ impl BootstrapSourceBundle {
                 BOOTSTRAP_PREPARED_LOCATOR,
                 BOOTSTRAP_COMPLETE_LOCATOR,
                 BOOTSTRAP_SELECTION_LOCATOR,
+                BOOTSTRAP_LOCK_LOCATOR,
+                BOOTSTRAP_GUIDANCE_LOCATOR,
             ]
             .contains(&artifact.destination.as_str())
+                || artifact
+                    .destination
+                    .split('/')
+                    .any(|part| part == BOOTSTRAP_STAGE_LEAF)
             {
                 return Err(BootstrapError::InvalidSelection);
             }
             if !destinations.insert(&artifact.destination) {
                 return Err(BootstrapError::DuplicateArtifact);
+            }
+        }
+        for destination in &destinations {
+            if destinations
+                .iter()
+                .any(|other| other.starts_with(&format!("{destination}/")))
+            {
+                return Err(BootstrapError::InvalidSelection);
             }
         }
         if !destinations.contains(&self.policy_locator) {
@@ -244,6 +261,30 @@ fn validate_locator(locator: &str) -> Result<(), BootstrapError> {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapGuidanceDeclaration {
+    pub schema: String,
+    pub adapter: String,
+    pub destination: String,
+}
+
+impl BootstrapGuidanceDeclaration {
+    pub fn validate(&self) -> Result<(), BootstrapError> {
+        if self.schema != "cairn.bootstrap-guidance.v1"
+            || self.adapter.is_empty()
+            || self.adapter.len() > MAX_LABEL_BYTES
+            || !self
+                .adapter
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        {
+            return Err(BootstrapError::InvalidSelection);
+        }
+        validate_locator(&self.destination)
+    }
+}
+
 /// A checked runtime projection, not a declaration of filesystem authority.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -281,18 +322,61 @@ impl BootstrapProjectDeclaration {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BootstrapCompleteSelection {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub artifacts: Vec<BootstrapInstalledArtifact>,
     pub schema: String,
     pub cohort: BootstrapIdentity,
     pub policy: BootstrapIdentity,
     pub policy_locator: String,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapInstalledArtifact {
+    pub destination: String,
+    pub identity: BootstrapIdentity,
+    pub bytes: u64,
+}
+
 impl BootstrapCompleteSelection {
+    pub fn validate_bounds(&self, bounds: &BootstrapBounds) -> Result<(), BootstrapError> {
+        let mut total = 0_u64;
+        if self.artifacts.len() > bounds.max_artifacts {
+            return Err(BootstrapError::Bounds);
+        }
+        for artifact in &self.artifacts {
+            total = total
+                .checked_add(artifact.bytes)
+                .ok_or(BootstrapError::Bounds)?;
+            if artifact.bytes > bounds.max_artifact_bytes || total > bounds.max_total_bytes {
+                return Err(BootstrapError::Bounds);
+            }
+        }
+        Ok(())
+    }
+
     pub fn validate_for(
         &self,
         declaration: &BootstrapProjectDeclaration,
     ) -> Result<(), BootstrapError> {
         declaration.validate()?;
+        if self.artifacts.len() > MAX_MANAGED_ARTIFACTS {
+            return Err(BootstrapError::Bounds);
+        }
+        let mut destinations = BTreeSet::new();
+        let mut total = 0_u64;
+        for artifact in &self.artifacts {
+            validate_locator(&artifact.destination)?;
+            total = total
+                .checked_add(artifact.bytes)
+                .ok_or(BootstrapError::Bounds)?;
+            if artifact.bytes > MAX_ARTIFACT_BYTES || total > MAX_TOTAL_BYTES {
+                return Err(BootstrapError::Bounds);
+            }
+            if !destinations.insert(&artifact.destination) {
+                return Err(BootstrapError::DuplicateArtifact);
+            }
+        }
         if self.schema != "cairn.bootstrap-complete-selection.v1"
             || self.cohort != declaration.cohort
             || self.policy != declaration.policy
@@ -582,6 +666,21 @@ pub fn plan_bootstrap(
         artifacts: artifacts.to_vec(),
         actions,
     })
+}
+
+/// Keep the selected policy generation unchanged until the final pointer switch.
+pub fn admit_generation_write(
+    prior: Option<&BootstrapCompleteSelection>,
+    destination: &str,
+    action: PublicationAction,
+) -> Result<(), BootstrapError> {
+    if prior.is_some_and(|prior| prior.policy_locator == destination)
+        && action == PublicationAction::ReplaceOwned
+    {
+        Err(BootstrapError::InvalidSelection)
+    } else {
+        Ok(())
+    }
 }
 
 pub fn recheck_plan(

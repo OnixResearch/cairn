@@ -70,6 +70,16 @@ pub(crate) fn load(root: &Path, args: &[String]) -> Result<SelectedPolicy, Box<d
     // Preserve the old default for roots without a declaration. A dangling
     // declaration symlink is present, not permission to fall back.
     let capability = open_root(root)?;
+    if read_optional(
+        &capability,
+        cairn_core::verified::consumer_bootstrap::BOOTSTRAP_PREPARED_LOCATOR,
+        MAX_DECLARATION_BYTES,
+    )?
+    .is_some()
+        || read_optional(&capability, ".cairn-bootstrap.lock", MAX_DECLARATION_BYTES)?.is_some()
+    {
+        return Err("bootstrap.policy.recovery_required".into());
+    }
     let bytes = match read_optional(&capability, DECLARATION, MAX_DECLARATION_BYTES)? {
         None => {
             let path = default_policy_path();

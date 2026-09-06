@@ -24,6 +24,7 @@ fn declaration_resolves_from_selected_root_and_fails_closed() -> Result<(), Box<
     }
     let policy_bytes = fs::read(source.join("cairn-policy/generated/cairn-policy.json"))?;
     let manifest = BootstrapCompleteSelection {
+        artifacts: vec![],
         schema: "cairn.bootstrap-complete-selection.v1".into(),
         cohort: BootstrapIdentity::from_bytes(b"cohort"),
         policy: BootstrapIdentity::from_bytes(&policy_bytes),

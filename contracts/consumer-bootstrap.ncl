@@ -66,7 +66,19 @@ let ProjectDeclaration = {
   cohort | Identity,
   complete_manifest | Identity,
 } in
+let InstalledArtifact = {
+  destination | RelativeLocator,
+  identity | Identity,
+  bytes | NaturalBound MaximumArtifactBytes,
+} in
+let GuidanceDeclaration = {
+  schema | std.contract.from_predicate (fun value => value == "cairn.bootstrap-guidance.v1"),
+  adapter | Label,
+  destination | RelativeLocator,
+} in
 let CompleteSelection = {
+  artifacts | optional | Array InstalledArtifact
+    | std.contract.from_predicate (fun values => std.array.length values <= MaximumArtifacts),
   schema | std.contract.from_predicate (fun value => value == "cairn.bootstrap-complete-selection.v1"),
   cohort | Identity,
   policy | Identity,
@@ -79,6 +91,9 @@ let SourceArtifact = {
       value != ".cairn/bootstrap/prepared.json"
       && value != ".cairn/bootstrap/complete.json"
       && value != ".cairn/bootstrap/selection.json"
+      && value != ".cairn/bootstrap/guidance.json"
+      && value != ".cairn-bootstrap.lock"
+      && std.array.all (fun part => part != ".cairn-bootstrap-stage") (std.string.split "/" value)
     ),
 } in
 let SourceBundle = {
@@ -119,6 +134,7 @@ let Recovery = {
   policy_selection = PolicySelection,
   project_declaration = ProjectDeclaration,
   complete_selection = CompleteSelection,
+  guidance_declaration = GuidanceDeclaration,
   source_bundle = SourceBundle,
   ownership = Ownership,
   upgrade = Upgrade,

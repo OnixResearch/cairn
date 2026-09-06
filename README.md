@@ -82,7 +82,8 @@ nix run path:$CAIRN_SOURCE#cairn -- gate tasks add-friendly-start --root "$REPO"
 Templates, scaffolds, sync, archive, and migration are preview-first. Add `--execute` only after you review the plan.
 
 Read the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md) or the [copyable example](examples/make-a-cairn/README.md).
-The [consumer bootstrap preview](docs/consumer-bootstrap-preview.md) checks a declared artifact bundle without installation. Apply and recovery remain unavailable.
+[Consumer bootstrap](docs/consumer-bootstrap-preview.md) previews and applies an exact policy and project-local guidance plan.
+Apply requires `--execute --plan-hash HASH`. Interrupted installation requires explicit manual recovery.
 
 Direct CLI agents can use `cairn --machine <command> ...` for one versioned JSON outcome.
 Read the [CLI machine contract](docs/cli-machine-contract.md) before you depend on its status and failure rules.
