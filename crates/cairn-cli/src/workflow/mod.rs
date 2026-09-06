@@ -28,7 +28,6 @@ pub(crate) mod observe;
 mod options;
 mod receipts;
 
-use observe::observe_workflow_artifacts;
 use options::{parse_workflow_request, WorkflowRequestKind};
 use receipts::{instructions_receipt, status_receipt, workflow_input_hash, WorkflowReceiptContext};
 
@@ -258,18 +257,30 @@ pub(crate) fn load_workflow_profile_context(
     change: &str,
     policy: &Policy,
 ) -> Result<WorkflowProfileContext, Box<dyn Error>> {
+    load_workflow_profile_context_with_budget(root, layout, change, policy, None)
+}
+
+pub(crate) fn load_workflow_profile_context_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<WorkflowProfileContext, Box<dyn Error>> {
     // r[impl cairn.lifecycle_workflow_profiles.integration]
     // r[impl cairn.lifecycle_workflow_profiles.functional_boundary]
     validate_change_name(change)?;
     let change_relative = PathBuf::from(changes_dir(layout)).join(change);
-    let metadata_value = read_change_metadata_value(root, &change_relative)?;
+    let metadata_value = read_change_metadata_value(root, &change_relative, budget)?;
     let metadata = workflow_change_profile_metadata_from_value(&metadata_value)?;
     let (selection, schema) = select_workflow_profile(
         &policy.workflow_profile_policy,
         &policy.workflow_schemas,
         &metadata,
     )?;
-    let observations = observe_workflow_artifacts(root, layout, change, &schema, policy)?;
+    let observations = observe::observe_workflow_artifacts_with_budget(
+        root, layout, change, &schema, policy, budget,
+    )?;
     let mut report = derive_workflow_status(&schema, &observations)?;
     let artifact_hashes = profile_artifact_hashes(&change_relative, &observations);
     let acceptance_markdown = read_admission_artifact(
@@ -277,14 +288,21 @@ pub(crate) fn load_workflow_profile_context(
         &change_relative,
         &schema,
         WORKFLOW_ADMISSION_ACCEPTANCE,
+        budget,
     )?;
-    let tasks_markdown =
-        read_admission_artifact(root, &change_relative, &schema, WORKFLOW_ADMISSION_TASKS)?;
+    let tasks_markdown = read_admission_artifact(
+        root,
+        &change_relative,
+        &schema,
+        WORKFLOW_ADMISSION_TASKS,
+        budget,
+    )?;
     let outcome_machine_review = read_admission_artifact(
         root,
         &change_relative,
         &schema,
         WORKFLOW_ADMISSION_OUTCOME_MACHINE,
+        budget,
     )?
     .and_then(|text| serde_json::from_str::<Value>(&text).ok());
     let outcome_machine_evidence = observe_outcome_machine_evidence(
@@ -292,8 +310,9 @@ pub(crate) fn load_workflow_profile_context(
         &change_relative,
         outcome_machine_review.as_ref(),
         schema.bounds.max_artifact_bytes,
+        budget,
     )?;
-    let reviews = read_review_evidence(root, &change_relative, &schema, &artifact_hashes)?;
+    let reviews = read_review_evidence(root, &change_relative, &schema, &artifact_hashes, budget)?;
     let delta_spec_paths = observations
         .iter()
         .filter(|observation| {
@@ -342,6 +361,26 @@ pub(crate) fn load_workflow_profile_context(
     })
 }
 
+/// Read the actual selection without requiring unrelated artifact observations.
+pub(crate) fn compatibility_selection_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<bool, Box<dyn Error>> {
+    validate_change_name(change)?;
+    let relative = PathBuf::from(changes_dir(layout)).join(change);
+    let value = read_change_metadata_value(root, &relative, budget)?;
+    let metadata = workflow_change_profile_metadata_from_value(&value)?;
+    let (selection, _) = select_workflow_profile(
+        &policy.workflow_profile_policy,
+        &policy.workflow_schemas,
+        &metadata,
+    )?;
+    Ok(selection.compatibility_fallback)
+}
+
 pub(crate) fn select_workflow_profile_for_create(
     policy: &Policy,
     profile_id: Option<&str>,
@@ -374,9 +413,15 @@ pub(crate) fn select_workflow_profile_for_create(
 fn read_change_metadata_value(
     root: &Path,
     change_relative: &Path,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
 ) -> Result<Value, Box<dyn Error>> {
     let metadata_path = change_relative.join("metadata.json");
-    let Some(text) = read_bounded_text(root, &metadata_path, MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT)?
+    let Some(text) = read_bounded_text_with_budget(
+        root,
+        &metadata_path,
+        MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT,
+        budget,
+    )?
     else {
         return Ok(json!({}));
     };
@@ -390,6 +435,7 @@ fn read_admission_artifact(
     change_relative: &Path,
     schema: &WorkflowSchemaPolicy,
     admission: &str,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
 ) -> Result<Option<String>, Box<dyn Error>> {
     let Some(artifact) = schema
         .artifacts
@@ -398,10 +444,11 @@ fn read_admission_artifact(
     else {
         return Ok(None);
     };
-    read_bounded_text(
+    read_bounded_text_with_budget(
         root,
         &change_relative.join(&artifact.output_path),
         schema.bounds.max_artifact_bytes,
+        budget,
     )
 }
 
@@ -410,6 +457,7 @@ fn read_review_evidence(
     change_relative: &Path,
     schema: &WorkflowSchemaPolicy,
     artifact_hashes: &[WorkflowProfileArtifactHash],
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
 ) -> Result<Vec<WorkflowReviewEvidence>, Box<dyn Error>> {
     let observed_hashes = artifact_hashes
         .iter()
@@ -424,10 +472,11 @@ fn read_review_evidence(
         else {
             continue;
         };
-        let Some(text) = read_bounded_text(
+        let Some(text) = read_bounded_text_with_budget(
             root,
             &change_relative.join(&artifact.output_path),
             schema.bounds.max_artifact_bytes,
+            budget,
         )?
         else {
             continue;
@@ -524,6 +573,7 @@ fn observe_outcome_machine_evidence(
     change_relative: &Path,
     review: Option<&Value>,
     max_artifact_bytes: usize,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
 ) -> Result<Vec<WorkflowOutcomeMachineEvidenceObservation>, Box<dyn Error>> {
     // r[impl cairn.outcome_machine_profile.completion]
     // r[impl cairn.outcome_machine_profile.fresh_state]
@@ -531,7 +581,8 @@ fn observe_outcome_machine_evidence(
     if evidence_paths.is_empty() {
         return Ok(Vec::new());
     }
-    let capability = CapabilityRoot::open(CapabilityRootKind::Scan, root)?;
+    let capability =
+        CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?.with_budget(budget);
     let max_artifact_bytes = u64::try_from(max_artifact_bytes)?;
     let observations = evidence_paths
         .into_iter()
@@ -547,12 +598,23 @@ fn observe_outcome_machine_evidence(
     Ok(observations)
 }
 
+#[cfg(test)]
 fn read_bounded_text(
     root: &Path,
     relative: &Path,
     max_bytes: usize,
 ) -> Result<Option<String>, Box<dyn Error>> {
-    let capability = CapabilityRoot::open(CapabilityRootKind::Scan, root)?;
+    read_bounded_text_with_budget(root, relative, max_bytes, None)
+}
+
+fn read_bounded_text_with_budget(
+    root: &Path,
+    relative: &Path,
+    max_bytes: usize,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<Option<String>, Box<dyn Error>> {
+    let capability =
+        CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?.with_budget(budget);
     let bytes = match capability.read_bounded(relative, u64::try_from(max_bytes)?) {
         Ok(bytes) => bytes,
         Err(error) if error.kind() == ErrorKind::NotFound => return Ok(None),

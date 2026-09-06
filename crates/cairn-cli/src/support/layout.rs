@@ -42,12 +42,20 @@ pub(crate) fn reject_legacy_only_lifecycle_root(root: &Path) -> Result<(), Box<d
 const MAX_POLICY_BYTES: u64 = 16 * 1024 * 1024;
 
 pub(crate) fn load_policy_file(path: PathBuf) -> Result<Policy, Box<dyn Error>> {
+    load_policy_file_with_budget(path, None)
+}
+
+pub(crate) fn load_policy_file_with_budget(
+    path: PathBuf,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> Result<Policy, Box<dyn Error>> {
     let parent = path
         .parent()
         .filter(|path| !path.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
     let leaf = path.file_name().ok_or("policy path has no file name")?;
-    let capability = CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, parent)?;
+    let capability =
+        CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, parent)?.with_budget(budget);
     let bytes = capability
         .read_bounded(Path::new(leaf), MAX_POLICY_BYTES)
         .map_err(|source| format!("failed to read policy {}: {source}", path.display()))?;

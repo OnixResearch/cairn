@@ -44,7 +44,35 @@ fn completion_and_stale_missing_and_symlink_controls() -> Result<(), Box<dyn Err
             "{}",
             String::from_utf8_lossy(&output.stderr)
         );
-        Ok(serde_json::from_slice(&output.stdout)?)
+        let report: Value = serde_json::from_slice(&output.stdout)?;
+        let mcp_input = serde_json::json!({"change": "demo", "root": temporary,
+            "contract": "contract.json", "results": "results.json", "subject_hash": subject});
+        let mcp_output = Command::new(env!("CARGO_BIN_EXE_cairn"))
+            .current_dir(&source)
+            .args(["mcp", "--call", "cairn_readiness", &mcp_input.to_string()])
+            .output()?;
+        assert!(mcp_output.status.success());
+        let mcp: Value = serde_json::from_slice(&mcp_output.stdout)?;
+        assert_eq!(mcp["structuredContent"], report);
+        if report["stages"][4]["state"] != "unavailable" {
+            let original_output = Command::new(env!("CARGO_BIN_EXE_cairn"))
+                .current_dir(&source)
+                .args([
+                    "agent-receipt",
+                    "complete",
+                    "--contract",
+                    temporary.join("contract.json").to_str().ok_or("contract")?,
+                    "--results",
+                    temporary.join("results.json").to_str().ok_or("results")?,
+                    "--subject-hash",
+                    subject,
+                ])
+                .output()?;
+            assert!(original_output.status.success());
+            let original: Value = serde_json::from_slice(&original_output.stdout)?;
+            assert_eq!(report["stages"][4]["decision"], original["completion"]);
+        }
+        Ok(report)
     };
     let before = fs::read(temporary.join(".cairn/changes/demo/tasks.md"))?;
     let passing = observe(&"c".repeat(64))?;

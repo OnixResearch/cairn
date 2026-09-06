@@ -214,6 +214,16 @@ pub(crate) fn observe_gate_probes(
     change: &str,
     policy: &Policy,
 ) -> ProbeGateEvidence {
+    observe_gate_probes_with_budget(root, layout, change, policy, None)
+}
+
+pub(crate) fn observe_gate_probes_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> ProbeGateEvidence {
     // r[impl cairn.probe_execution_boundary.authoritative_evidence_binding]
     // r[impl cairn.probe_execution_boundary.authoritative_evidence_binding.changed]
     // r[impl cairn.probe_execution_boundary.authoritative_evidence_binding.private]
@@ -240,12 +250,13 @@ pub(crate) fn observe_gate_probes(
             readiness_causes: Vec::new(),
         };
     }
-    let declaration_bytes = match read_bounded_probe_bytes(root, &declarations_path) {
+    let declaration_bytes = match read_bounded_probe_bytes(root, &declarations_path, budget) {
         Ok(bytes) => bytes,
         Err(message) => {
             return probe_observation_failure(
                 policy,
                 "probe.declarations.unreadable",
+                &safe_relative_path(root, &declarations_path),
                 message,
                 json!({"declarations_present": true, "probes": []}),
             );
@@ -257,6 +268,7 @@ pub(crate) fn observe_gate_probes(
             return probe_observation_failure(
                 policy,
                 "probe.declarations.malformed",
+                &safe_relative_path(root, &declarations_path),
                 "saved probe declarations are not valid JSON".to_string(),
                 json!({
                     "declarations_present": true,
@@ -271,6 +283,7 @@ pub(crate) fn observe_gate_probes(
         return probe_observation_failure(
             policy,
             "probe.declarations.bound",
+            &safe_relative_path(root, &declarations_path),
             "Saved probe count exceeds its bound".into(),
             json!({"declarations_present": true, "declarations_hash": blake3_hex(&declaration_bytes), "probes": []}),
         );
@@ -283,7 +296,7 @@ pub(crate) fn observe_gate_probes(
             .get("receipt_path")
             .and_then(Value::as_str)
             .and_then(|path| repo_relative_path(root, path))
-            .and_then(|path| read_bounded_probe_bytes(root, &path).ok());
+            .and_then(|path| read_bounded_probe_bytes(root, &path, budget).ok());
         let probe_messages = gate_probe_declaration_issues(
             root,
             &declarations_path,
@@ -330,20 +343,31 @@ pub(crate) fn observe_gate_probes(
     }
 }
 
-fn read_bounded_probe_bytes(root: &Path, path: &Path) -> Result<Vec<u8>, String> {
-    crate::support::CapabilityRoot::open(crate::support::CapabilityRootKind::Scan, root)
-        .and_then(|capability| capability.read_bounded_path(path, MAX_SAVED_PROBE_BYTES as u64))
+fn read_bounded_probe_bytes(
+    root: &Path,
+    path: &Path,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<Vec<u8>, String> {
+    crate::support::CapabilityRoot::open_nofollow(crate::support::CapabilityRootKind::Scan, root)
+        .and_then(|capability| {
+            capability
+                .with_budget(budget)
+                .read_bounded_path(path, MAX_SAVED_PROBE_BYTES as u64)
+        })
         .map_err(|_| "saved probe evidence is unreadable, unsafe, or exceeds its byte bound".into())
 }
 
 fn probe_observation_failure(
     policy: &Policy,
     code: &str,
+    target: &str,
     message: String,
     binding: Value,
 ) -> ProbeGateEvidence {
     ProbeGateEvidence {
-        readiness_causes: Vec::new(),
+        readiness_causes: vec![cairn_core::verified::readiness::readiness_cause(
+            code, target, &message,
+        )],
         issues: vec![GateIssue {
             code: code.to_string(),
             message,
@@ -734,21 +758,37 @@ mod tests {
         let observe = || observe_gate_probes(&root, LifecycleLayout::Native, "demo", &policy);
         fs::write(directory.join("probes.json"), b"{\"probes\": []}")?;
         assert!(observe().issues.is_empty());
+        assert!(observe().readiness_causes.is_empty());
+        let assert_target = |expected_code: &str| {
+            let observation = observe();
+            assert_eq!(observation.issues[0].code, expected_code);
+            assert_eq!(observation.readiness_causes[0].code, expected_code);
+            assert_eq!(
+                observation.readiness_causes[0].target,
+                ".cairn/changes/demo/probes/probes.json"
+            );
+            assert_eq!(
+                observation.readiness_causes[0].message,
+                observation.issues[0].message
+            );
+        };
+        fs::write(directory.join("probes.json"), b"{")?;
+        assert_target("probe.declarations.malformed");
         fs::write(
             directory.join("probes.json"),
             serde_json::to_vec(&json!({"probes": vec![json!({}); MAX_SAVED_PROBES + 1]}))?,
         )?;
-        assert_eq!(observe().issues[0].code, "probe.declarations.bound");
+        assert_target("probe.declarations.bound");
         fs::write(
             directory.join("probes.json"),
             vec![b' '; MAX_SAVED_PROBE_BYTES + 1],
         )?;
-        assert_eq!(observe().issues[0].code, "probe.declarations.unreadable");
+        assert_target("probe.declarations.unreadable");
         #[cfg(unix)]
         {
             fs::remove_file(directory.join("probes.json"))?;
             std::os::unix::fs::symlink("absent", directory.join("probes.json"))?;
-            assert_eq!(observe().issues[0].code, "probe.declarations.unreadable");
+            assert_target("probe.declarations.unreadable");
         }
         fs::remove_dir_all(root)?;
         Ok(())

@@ -32,6 +32,7 @@ pub(crate) struct CapabilityRoot {
     kind: CapabilityRootKind,
     display_path: PathBuf,
     dir: Dir,
+    budget: Option<super::observation_budget::ObservationBudget>,
 }
 
 pub(crate) struct CapabilityDirEntry {
@@ -50,6 +51,7 @@ impl CapabilityRoot {
             kind,
             display_path: path.to_path_buf(),
             dir,
+            budget: None,
         })
     }
 
@@ -108,7 +110,16 @@ impl CapabilityRoot {
             kind,
             display_path: path.to_path_buf(),
             dir: directories.pop().ok_or_else(capability_path_error)?,
+            budget: None,
         })
+    }
+
+    pub(crate) fn with_budget(
+        mut self,
+        budget: Option<&super::observation_budget::ObservationBudget>,
+    ) -> Self {
+        self.budget = budget.cloned();
+        self
     }
 
     pub(crate) fn kind(&self) -> CapabilityRootKind {
@@ -135,6 +146,10 @@ impl CapabilityRoot {
     }
 
     pub(crate) fn read_bounded(&self, relative: &Path, max_bytes: u64) -> io::Result<Vec<u8>> {
+        let max_bytes = self
+            .budget
+            .as_ref()
+            .map_or(max_bytes, |budget| budget.read_limit(max_bytes));
         let relative = self.relative(relative)?;
         let (parent, leaf) = self.nofollow_parent(&relative)?;
         let metadata = parent.symlink_metadata(&leaf)?;
@@ -152,11 +167,19 @@ impl CapabilityRoot {
             return Err(bounded_read_limit_error());
         }
         let read_limit = max_bytes.saturating_add(1);
+        let read_limit = self
+            .budget
+            .as_ref()
+            .map_or(read_limit, |budget| budget.read_limit(read_limit));
         let mut reader = file.take(read_limit);
         let mut bytes = Vec::new();
-        reader.read_to_end(&mut bytes)?;
+        let result = reader.read_to_end(&mut bytes);
+        if let Some(budget) = &self.budget {
+            budget.charge_bytes(bytes.len() as u64)?;
+        }
+        result?;
         let byte_count = u64::try_from(bytes.len()).map_err(|_| bounded_read_limit_error())?;
-        if byte_count > max_bytes {
+        if byte_count > max_bytes || reader.get_ref().metadata()?.len() > max_bytes {
             return Err(bounded_read_limit_error());
         }
         Ok(bytes)
@@ -313,6 +336,9 @@ impl CapabilityRoot {
         };
         let mut entries = Vec::new();
         for entry in directory.entries()? {
+            if let Some(budget) = &self.budget {
+                budget.charge_entry()?;
+            }
             if max_entries.is_some_and(|limit| entries.len() >= limit) {
                 return Err(bounded_entry_limit_error());
             }

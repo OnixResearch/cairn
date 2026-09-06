@@ -15,8 +15,16 @@ pub(crate) struct SourceReader {
 
 impl SourceReader {
     pub(crate) fn open(root: &Path) -> io::Result<Self> {
+        Self::open_with_budget(root, None)
+    }
+
+    pub(crate) fn open_with_budget(
+        root: &Path,
+        budget: Option<&super::observation_budget::ObservationBudget>,
+    ) -> io::Result<Self> {
         Ok(Self {
-            capability: CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?,
+            capability: CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?
+                .with_budget(budget),
             remaining_bytes: MAX_SOURCE_TOTAL_BYTES,
             remaining_entries: MAX_SOURCE_ENTRIES,
         })

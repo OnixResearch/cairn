@@ -1,4 +1,5 @@
 use super::*;
+use crate::support::{find_change, load_sync_merge_snapshots};
 
 fn lifecycle_fixture(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     let root = std::env::temp_dir().join(format!("cairn-readiness-{name}-{}", std::process::id()));
@@ -21,6 +22,111 @@ fn lifecycle_fixture(name: &str) -> Result<PathBuf, Box<dyn Error>> {
 fn readiness_input(root: &Path) -> Value {
     json!({"root": root, "change": "demo", "policy":
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../cairn-policy/generated/cairn-policy.json")})
+}
+
+// r[verify cairn.unified_readiness.boundary]
+#[test]
+fn report_budget_is_shared_across_readers_and_both_observation_passes() -> Result<(), Box<dyn Error>>
+{
+    use crate::support::observation_budget::{
+        ObservationBudget, MAX_REPORT_BYTES, MAX_REPORT_ENTRIES,
+    };
+    let root = lifecycle_fixture("report-budget")?;
+    let repository = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for file in ["contract.json", "results.json"] {
+        std::fs::copy(
+            repository.join("fixtures/agent-completion").join(file),
+            root.join(file),
+        )?;
+    }
+    let matrix: Value = serde_json::from_slice(&std::fs::read(
+        repository.join("fixtures/cross-repo-dependencies/matrix.json"),
+    )?)?;
+    std::fs::write(
+        root.join("upstream.json"),
+        serde_json::to_vec(&matrix["positive"][0]["evidence"])?,
+    )?;
+    let probes = root.join(".cairn/changes/demo/probes/probes.json");
+    std::fs::create_dir_all(probes.parent().ok_or("parent")?)?;
+    std::fs::write(probes, b"{\"probes\":[]}")?;
+    let mut input = readiness_input(&root);
+    input["contract"] = json!("contract.json");
+    input["results"] = json!("results.json");
+    input["subject_hash"] = json!("c".repeat(64));
+    input["cross_repo_evidence"] = json!(["upstream.json"]);
+    let policy = PathBuf::from(input["policy"].as_str().ok_or("policy")?);
+    let measured = ObservationBudget::new();
+    let first = gather_once(&root, &policy, "demo", &input, &measured)?;
+    let bytes = MAX_REPORT_BYTES - measured.read_limit(MAX_REPORT_BYTES);
+    assert!(bytes > std::fs::metadata(&policy)?.len());
+    let exact = ObservationBudget::with_limits(bytes * 2, MAX_REPORT_ENTRIES);
+    let stable = gather_observation_cohort(|| gather_once(&root, &policy, "demo", &input, &exact))?;
+    assert_eq!(stable, first);
+    assert_eq!(exact.read_limit(MAX_REPORT_BYTES), 0);
+    let short = ObservationBudget::with_limits(bytes * 2 - 1, MAX_REPORT_ENTRIES);
+    let rejected =
+        gather_observation_cohort(|| gather_once(&root, &policy, "demo", &input, &short))?;
+    assert!(!derive_readiness(&rejected).valid);
+    assert!(!derive_readiness(&rejected).mutation_authorized);
+    std::fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+#[test]
+fn shared_capability_budget_keeps_per_reader_limits_and_counts_directory_entries(
+) -> Result<(), Box<dyn Error>> {
+    use crate::support::observation_budget::ObservationBudget;
+    const FILE_BYTES: u64 = 4;
+    const FILE_COUNT: usize = 2;
+    let root = std::env::temp_dir().join(format!("cairn-shared-budget-{}", std::process::id()));
+    std::fs::create_dir_all(&root)?;
+    std::fs::write(root.join("a"), b"null")?;
+    std::fs::write(root.join("b"), b"null")?;
+    let budget = ObservationBudget::with_limits(FILE_BYTES * FILE_COUNT as u64, FILE_COUNT);
+    let first =
+        CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, &root)?.with_budget(Some(&budget));
+    let second =
+        CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, &root)?.with_budget(Some(&budget));
+    assert!(first.read_bounded(Path::new("a"), FILE_BYTES - 1).is_err());
+    assert_eq!(first.read_bounded(Path::new("a"), FILE_BYTES)?, b"null");
+    assert_eq!(second.read_bounded(Path::new("b"), FILE_BYTES)?, b"null");
+    assert!(first.read_bounded(Path::new("a"), FILE_BYTES).is_err());
+    assert_eq!(
+        first.entries_bounded(Path::new("."), FILE_COUNT)?.len(),
+        FILE_COUNT
+    );
+    assert!(second.entries_bounded(Path::new("."), FILE_COUNT).is_err());
+    std::fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+#[test]
+fn gate_observation_failure_only_disables_stages_that_require_the_gate(
+) -> Result<(), Box<dyn Error>> {
+    for (sync_gate, archive_gate) in [(true, false), (false, true), (false, false)] {
+        let root = lifecycle_fixture(&format!("gate-isolation-{sync_gate}-{archive_gate}"))?;
+        let mut input = readiness_input(&root);
+        let policy_path = PathBuf::from(input["policy"].as_str().ok_or("policy")?);
+        let mut policy: Value = serde_json::from_slice(&std::fs::read(policy_path)?)?;
+        policy["mutation_policy"]["sync"]["require_passing_gate"] = json!(sync_gate);
+        policy["mutation_policy"]["archive"]["require_passing_gate"] = json!(archive_gate);
+        let custom = root.join("policy.json");
+        std::fs::write(&custom, serde_json::to_vec(&policy)?)?;
+        input["policy"] = json!(custom);
+        let accepted = root.join(".cairn/specs/unrelated/spec.md");
+        std::fs::create_dir_all(accepted.parent().ok_or("parent")?)?;
+        std::fs::write(accepted, [0xff])?;
+        let report = readiness_value(&input)?;
+        for (index, required) in [(5, sync_gate), (6, archive_gate)] {
+            assert_eq!(
+                report["stages"][index]["state"] == "unavailable",
+                required,
+                "{report}"
+            );
+        }
+        std::fs::remove_dir_all(root)?;
+    }
+    Ok(())
 }
 
 #[test]
@@ -58,6 +164,74 @@ fn accepted_sources_outside_merge_targets_bind_exact_validation_bytes() -> Resul
 }
 
 #[test]
+fn unrelated_source_failure_preserves_selected_artifact_observation() -> Result<(), Box<dyn Error>>
+{
+    let root = lifecycle_fixture("independent-artifact")?;
+    let input = readiness_input(&root);
+    let before = readiness_value(&input)?;
+    let unrelated = root.join(".cairn/changes/unrelated/tasks.md");
+    std::fs::create_dir_all(unrelated.parent().ok_or("parent")?)?;
+    std::fs::write(unrelated, [0xff])?;
+    let after = readiness_value(&input)?;
+    assert_eq!(after["stages"][0]["state"], before["stages"][0]["state"]);
+    assert_eq!(
+        after["stages"][0]["decision"]["artifacts"],
+        before["stages"][0]["decision"]["artifacts"]
+    );
+    for stage in 1..4 {
+        assert_eq!(
+            after["stages"][stage]["decision"],
+            before["stages"][stage]["decision"]
+        );
+        assert_eq!(
+            after["stages"][stage]["state"],
+            before["stages"][stage]["state"]
+        );
+    }
+    assert_eq!(after["stages"][5]["state"], "unavailable");
+    assert_eq!(
+        after["stages"][5]["decision"]["cross_repo_dependencies"]["valid"],
+        true
+    );
+    assert_eq!(after["mutation_authorized"], false);
+    std::fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+#[test]
+fn unreadable_later_artifacts_preserve_independent_earlier_gate_decisions(
+) -> Result<(), Box<dyn Error>> {
+    for (artifact, first_unavailable) in [("design.md", 2), ("tasks.md", 3)] {
+        let root = lifecycle_fixture(&format!("stage-local-{artifact}"))?;
+        let input = readiness_input(&root);
+        let before = readiness_value(&input)?;
+        std::fs::write(root.join(".cairn/changes/demo").join(artifact), [0xff])?;
+        let after = readiness_value(&input)?;
+        for stage in 1..first_unavailable {
+            assert_eq!(
+                after["stages"][stage]["state"],
+                before["stages"][stage]["state"]
+            );
+            assert_eq!(
+                after["stages"][stage]["decision"]["verdict"],
+                before["stages"][stage]["decision"]["verdict"]
+            );
+            assert_eq!(
+                after["stages"][stage]["decision"]["issues"],
+                before["stages"][stage]["decision"]["issues"]
+            );
+            assert!(after["stages"][stage]["decision"]["source_input_hash"].is_string());
+        }
+        for stage in first_unavailable..4 {
+            assert_eq!(after["stages"][stage]["state"], "unavailable");
+        }
+        assert_eq!(after["mutation_authorized"], false);
+        std::fs::remove_dir_all(root)?;
+    }
+    Ok(())
+}
+
+#[test]
 fn lifecycle_failure_preserves_the_independent_completion_decision() -> Result<(), Box<dyn Error>> {
     for failure in ["source", "profile"] {
         let root = lifecycle_fixture(&format!("partial-{failure}"))?;
@@ -86,6 +260,12 @@ fn lifecycle_failure_preserves_the_independent_completion_decision() -> Result<(
             before["stages"][4]["decision"]
         );
         assert_eq!(after["stages"][4]["state"], before["stages"][4]["state"]);
+        if failure == "profile" {
+            assert_eq!(
+                after["stages"][0]["decision"]["cross_repo_dependencies"]["valid"],
+                true
+            );
+        }
         assert_eq!(after["mutation_authorized"], false);
         std::fs::remove_dir_all(root)?;
     }

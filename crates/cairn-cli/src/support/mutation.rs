@@ -15,13 +15,23 @@ pub(crate) fn load_sync_merge_snapshots(
     change: &str,
     plan: &SyncPlan,
 ) -> Result<Vec<SyncMergeSnapshot>, Box<dyn Error>> {
+    load_sync_merge_snapshots_with_budget(root, layout, change, plan, None)
+}
+
+pub(crate) fn load_sync_merge_snapshots_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    plan: &SyncPlan,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> Result<Vec<SyncMergeSnapshot>, Box<dyn Error>> {
     // r[impl cairn.sync_archive.delta_merge.mutation_truth]
     let delta_root = root.join(changes_dir(layout)).join(change).join("specs");
     let specs_root = root.join(specs_dir(layout));
     if plan.delta_specs.len() > super::source::MAX_SOURCE_ENTRIES {
         return Err("sync source count exceeds its bound".into());
     }
-    let mut reader = super::source::SourceReader::open(root)?;
+    let mut reader = super::source::SourceReader::open_with_budget(root, budget)?;
     let mut snapshots = Vec::with_capacity(plan.delta_specs.len());
     for source_path in &plan.delta_specs {
         let source = PathBuf::from(source_path);

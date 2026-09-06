@@ -6,7 +6,15 @@ const ARCHIVE_DATE_SEPARATOR_INDEX: usize = ARCHIVE_DATE_LEN;
 const ARCHIVE_NAME_PREFIX_LEN: usize = ARCHIVE_DATE_LEN + 1;
 
 pub(crate) fn scan_repo(root: PathBuf, layout: LifecycleLayout) -> std::io::Result<RepoStatus> {
-    let mut capability = SourceReader::open(&root)?;
+    scan_repo_with_budget(root, layout, None)
+}
+
+pub(crate) fn scan_repo_with_budget(
+    root: PathBuf,
+    layout: LifecycleLayout,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> std::io::Result<RepoStatus> {
+    let mut capability = SourceReader::open_with_budget(&root, budget)?;
     let specs_dir_text = specs_dir(layout);
     let changes_dir_text = changes_dir(layout);
     let specs = collect_spec_files(&mut capability, Path::new(&specs_dir_text))?;
@@ -18,8 +26,16 @@ pub(crate) fn read_change_dependency_graph(
     root: &Path,
     layout: LifecycleLayout,
 ) -> std::io::Result<ChangeDependencyGraph> {
-    let status = scan_repo(root.to_path_buf(), layout)?;
-    let archived_changes = collect_archived_change_ids(root, layout)?;
+    read_change_dependency_graph_with_budget(root, layout, None)
+}
+
+pub(crate) fn read_change_dependency_graph_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> std::io::Result<ChangeDependencyGraph> {
+    let status = scan_repo_with_budget(root.to_path_buf(), layout, budget)?;
+    let archived_changes = collect_archived_change_ids_with_budget(root, layout, budget)?;
     Ok(build_change_dependency_graph(
         &status.changes,
         &archived_changes,
@@ -30,7 +46,15 @@ pub(crate) fn collect_archived_change_ids(
     root: &Path,
     layout: LifecycleLayout,
 ) -> std::io::Result<Vec<String>> {
-    let mut capability = SourceReader::open(root)?;
+    collect_archived_change_ids_with_budget(root, layout, None)
+}
+
+fn collect_archived_change_ids_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> std::io::Result<Vec<String>> {
+    let mut capability = SourceReader::open_with_budget(root, budget)?;
     let archive_dir_text = archive_dir(layout);
     let archive_root = Path::new(&archive_dir_text);
     let entries = match capability.entries(archive_root) {
@@ -288,7 +312,16 @@ pub(crate) fn find_change(
     layout: LifecycleLayout,
     change: &str,
 ) -> Result<ChangeStatus, Box<dyn Error>> {
-    let status = scan_repo(root, layout)?;
+    find_change_with_budget(root, layout, change, None)
+}
+
+pub(crate) fn find_change_with_budget(
+    root: PathBuf,
+    layout: LifecycleLayout,
+    change: &str,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> Result<ChangeStatus, Box<dyn Error>> {
+    let status = scan_repo_with_budget(root, layout, budget)?;
     let Some(change_status) = status
         .changes
         .into_iter()
@@ -299,15 +332,95 @@ pub(crate) fn find_change(
     Ok(change_status)
 }
 
+/// Admit the selected change independently of unrelated repository sources.
+pub(crate) fn read_selected_change_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> Result<ChangeStatus, Box<dyn Error>> {
+    cairn_core::validate_change_name(change)?;
+    let mut reader = SourceReader::open_with_budget(root, budget)?;
+    let relative = PathBuf::from(changes_dir(layout)).join(change);
+    reader.entries(&relative)?;
+    let source = read_change_source(&mut reader, change.into(), relative)?;
+    build_repo_status(path_string(root), Vec::new(), vec![source])
+        .changes
+        .pop()
+        .ok_or_else(|| "selected change was not observed".into())
+}
+
+/// Load only inputs consumed by the selected gate. Delta references apply at every stage.
+pub(crate) fn read_gate_stage_snapshot_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    stage: GateStage,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> Result<GateSnapshot, Box<dyn Error>> {
+    cairn_core::validate_change_name(change)?;
+    let mut reader = SourceReader::open_with_budget(root, budget)?;
+    let relative = PathBuf::from(changes_dir(layout)).join(change);
+    CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, &root.join(&relative))?;
+    let proposal = read_gate_artifact(&mut reader, &relative.join("proposal.md"))?;
+    let design = if stage != GateStage::Proposal {
+        read_gate_artifact(&mut reader, &relative.join("design.md"))?
+    } else {
+        None
+    };
+    let tasks = if stage == GateStage::Tasks {
+        read_gate_artifact(&mut reader, &relative.join("tasks.md"))?
+    } else {
+        None
+    };
+    let paths = collect_spec_files(&mut reader, &relative.join("specs"))?;
+    let mut delta_specs = Vec::new();
+    for path in &paths {
+        if let Some(artifact) = read_gate_artifact_path(&mut reader, Path::new(path))? {
+            delta_specs.push(artifact);
+        }
+    }
+    let source = ChangeSource {
+        name: change.into(),
+        path: path_string(root.join(&relative)),
+        has_proposal: proposal.is_some(),
+        has_design: design.is_some(),
+        has_tasks: tasks.is_some(),
+        delta_specs: paths,
+        tasks_markdown: tasks.as_ref().map(|tasks| tasks.markdown.clone()),
+        metadata_json: read_optional_text(&mut reader, &relative.join("metadata.json"))?,
+    };
+    let change = build_repo_status(path_string(root), Vec::new(), vec![source])
+        .changes
+        .pop()
+        .ok_or("selected change was not observed")?;
+    Ok(GateSnapshot {
+        change,
+        proposal,
+        design,
+        tasks,
+        delta_specs,
+    })
+}
+
 pub(crate) fn read_gate_snapshot(
     root: &Path,
     layout: LifecycleLayout,
     change: ChangeStatus,
 ) -> Result<GateSnapshot, Box<dyn Error>> {
+    read_gate_snapshot_with_budget(root, layout, change, None)
+}
+
+pub(crate) fn read_gate_snapshot_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: ChangeStatus,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> Result<GateSnapshot, Box<dyn Error>> {
     // r[impl cairn.supersede.gate_policy.references]
     // r[impl cairn.supersede.gate_policy.task_links]
     // r[impl cairn.supersede.gate_policy.exemptions]
-    let mut capability = SourceReader::open(root)?;
+    let mut capability = SourceReader::open_with_budget(root, budget)?;
     let changes_dir_text = changes_dir(layout);
     let change_dir = Path::new(&changes_dir_text).join(&change.name);
     let proposal = read_gate_artifact(&mut capability, &change_dir.join("proposal.md"))?;
@@ -378,17 +491,40 @@ pub(crate) fn mutation_gate_observation(
     stage: GateStage,
     policy: &Policy,
 ) -> Result<(Vec<String>, Value), Box<dyn Error>> {
-    let snapshot = read_gate_snapshot(root, layout, change_status.clone())?;
-    let profile_context =
-        crate::workflow::load_workflow_profile_context(root, layout, &change_status.name, policy)?;
+    mutation_gate_observation_with_budget(root, layout, change_status, stage, policy, None)
+}
+
+pub(crate) fn mutation_gate_observation_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change_status: &ChangeStatus,
+    stage: GateStage,
+    policy: &Policy,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> Result<(Vec<String>, Value), Box<dyn Error>> {
+    let snapshot = read_gate_snapshot_with_budget(root, layout, change_status.clone(), budget)?;
+    let profile_context = crate::workflow::load_workflow_profile_context_with_budget(
+        root,
+        layout,
+        &change_status.name,
+        policy,
+        budget,
+    )?;
     let report = profile_context.gate_report(&snapshot, stage, policy);
     let mut blockers = report
         .issues
         .into_iter()
         .map(|issue| format!("gate {}: {}", stage.as_str(), issue.message))
         .collect::<Vec<_>>();
-    let probes = matches!(stage, GateStage::Tasks)
-        .then(|| crate::probe::observe_gate_probes(root, layout, &change_status.name, policy));
+    let probes = matches!(stage, GateStage::Tasks).then(|| {
+        crate::probe::observe_gate_probes_with_budget(
+            root,
+            layout,
+            &change_status.name,
+            policy,
+            budget,
+        )
+    });
     if let Some(probes) = &probes {
         blockers.extend(
             probes
@@ -397,7 +533,7 @@ pub(crate) fn mutation_gate_observation(
                 .map(|issue| format!("gate {}: {}: {}", stage.as_str(), issue.code, issue.message)),
         );
     }
-    let mut reader = SourceReader::open(root)?;
+    let mut reader = SourceReader::open_with_budget(root, budget)?;
     let accepted = PathBuf::from(specs_dir(layout));
     let mut validation_sources =
         collect_spec_sources_from_root(&mut reader, &accepted, root, &root.join(&accepted))?;

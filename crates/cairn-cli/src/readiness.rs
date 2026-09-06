@@ -1,9 +1,10 @@
 //! Bounded read-only observation adapter. No producer or mutation commands run here.
 use crate::support::{
-    default_policy_path, detect_layout, find_change, load_policy_file, load_sync_merge_snapshots,
-    mutation_gate_observation, portable_json_hash, print_json, read_change_dependency_graph,
-    read_gate_snapshot, sync_merge_bindings, sync_merge_blockers, CapabilityRoot,
-    CapabilityRootKind,
+    default_policy_path, detect_layout, load_policy_file_with_budget,
+    load_sync_merge_snapshots_with_budget, mutation_gate_observation_with_budget,
+    portable_json_hash, print_json, read_change_dependency_graph_with_budget,
+    read_gate_snapshot_with_budget, read_selected_change_with_budget, sync_merge_bindings,
+    sync_merge_blockers, CapabilityRoot, CapabilityRootKind,
 };
 use cairn_core::verified::readiness::*;
 use cairn_core::{
@@ -123,7 +124,8 @@ fn gather(
     change: &str,
     input: &Value,
 ) -> Result<ReadinessSnapshot, Box<dyn Error>> {
-    gather_observation_cohort(|| gather_once(root, policy_path, change, input))
+    let budget = crate::support::observation_budget::ObservationBudget::new();
+    gather_observation_cohort(|| gather_once(root, policy_path, change, input, &budget))
 }
 
 fn gather_observation_cohort(
@@ -163,20 +165,43 @@ fn gather_once(
     policy_path: &Path,
     change: &str,
     input: &Value,
+    budget: &crate::support::observation_budget::ObservationBudget,
 ) -> Result<ReadinessSnapshot, Box<dyn Error>> {
-    let policy = load_policy_file(policy_path.to_path_buf())?;
+    let policy = load_policy_file_with_budget(policy_path.to_path_buf(), Some(budget))?;
     let layout = detect_layout(root).layout;
-    let completion = load_completion(root, input);
-    let lifecycle = (|| -> Result<_, Box<dyn Error>> {
-        let status = find_change(root.to_path_buf(), layout, change)?;
-        let gate_snapshot = read_gate_snapshot(root, layout, status.clone())?;
-        let profile =
-            crate::workflow::load_workflow_profile_context(root, layout, change, &policy)?;
-        Ok((status, gate_snapshot, profile))
-    })();
-    let (status, gate_snapshot, profile) = match lifecycle {
-        Ok(inputs) => inputs,
-        Err(_) => {
+    let completion = load_completion_with_budget(root, input, Some(budget));
+    let status = read_selected_change_with_budget(root, layout, change, Some(budget));
+    let profile = crate::workflow::load_workflow_profile_context_with_budget(
+        root,
+        layout,
+        change,
+        &policy,
+        Some(budget),
+    );
+    let external = crate::cross_repo_dependencies::load_readiness_cross_repo_evidence_with_budget(
+        root,
+        input,
+        Some(budget),
+    );
+    let policy_hash = canonical_json_hash(&policy.raw);
+    let cross = status
+        .as_ref()
+        .ok()
+        .zip(external.as_ref().ok())
+        .map(|(status, evidence)| {
+            crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
+                status,
+                evidence,
+                &policy_hash,
+            )
+        });
+    let gate_snapshot = status
+        .as_ref()
+        .ok()
+        .map(|status| read_gate_snapshot_with_budget(root, layout, status.clone(), Some(budget)));
+    let (status, gate_snapshot, profile) = match (status, gate_snapshot, profile) {
+        (Ok(status), Some(Ok(snapshot)), Ok(profile)) => (status, snapshot, profile),
+        (_, _, profile) => {
             let scope = ReadinessScope {
                 change: change.into(),
                 policy_hash: canonical_json_hash(&policy.raw),
@@ -184,9 +209,38 @@ fn gather_once(
                 evidence_hash: canonical_json_hash(&json!({
                     "completion": completion.as_ref().ok(),
                     "completion_unavailable": completion.is_err(),
+                    "cross_repo": cross.as_ref().map(|cross| cross.to_json()),
+                    "external_unavailable": external.is_err(),
+                    "profile": profile.as_ref().ok().map(|profile| &profile.profile_identity_hash),
                 })),
             };
-            let mut observations = vec![unavailable(&scope, "artifact")];
+            let mut artifacts = match &profile {
+                Ok(profile) => {
+                    let mut artifacts = readiness_artifacts(&scope, &profile.report);
+                    readiness_profile_causes(
+                        &scope,
+                        &mut artifacts,
+                        &profile.evaluation,
+                        &profile.schema,
+                        &profile.evidence,
+                    );
+                    artifacts
+                }
+                Err(_) => unavailable(&scope, "artifact"),
+            };
+            artifacts.decision["cross_repo_dependencies"] = cross
+                .as_ref()
+                .map(|cross| cross.to_json())
+                .unwrap_or(Value::Null);
+            let mut observations = vec![artifacts];
+            observations.extend(gather_partial_gates(
+                root,
+                layout,
+                &scope,
+                &policy,
+                profile.as_ref().ok(),
+                budget,
+            ));
             if let Ok(Some(completion)) = completion {
                 observations.push(readiness_completion(
                     &scope,
@@ -197,23 +251,31 @@ fn gather_once(
             } else {
                 observations.push(unavailable(&scope, "completion"));
             }
+            let mut scope = scope;
+            scope.source_hash = portable_json_hash(
+                root,
+                &json!(observations
+                    .iter()
+                    .filter(|observation| matches!(
+                        observation.stage.as_str(),
+                        "proposal" | "design" | "tasks"
+                    ))
+                    .map(|observation| &observation.decision["source_input_hash"])
+                    .collect::<Vec<_>>()),
+            );
+            for observation in &mut observations {
+                observation.scope = scope.clone();
+            }
             return Ok(ReadinessSnapshot {
                 scope,
                 observations,
             });
         }
     };
-    let graph = read_change_dependency_graph(root, layout);
-    let probes = crate::probe::observe_gate_probes(root, layout, change, &policy);
-    let policy_hash = canonical_json_hash(&policy.raw);
-    let external = crate::cross_repo_dependencies::load_readiness_cross_repo_evidence(root, input);
-    let cross = external.as_ref().ok().map(|evidence| {
-        crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
-            &status,
-            evidence,
-            &policy_hash,
-        )
-    });
+    let graph = read_change_dependency_graph_with_budget(root, layout, Some(budget));
+    let probes =
+        crate::probe::observe_gate_probes_with_budget(root, layout, change, &policy, Some(budget));
+
     let mut dependency_blockers = graph
         .as_ref()
         .map(|graph| dependency_blockers_for_change(graph, change))
@@ -309,7 +371,8 @@ fn gather_once(
             &plan_blockers,
             &profile.schema.spec_effect,
         );
-        let merges = load_sync_merge_snapshots(root, layout, change, &sync);
+        let merges =
+            load_sync_merge_snapshots_with_budget(root, layout, change, &sync, Some(budget));
         let merge_reasons = merges
             .as_ref()
             .map(|merges| sync_merge_blockers(root, merges))
@@ -318,28 +381,76 @@ fn gather_once(
             .as_ref()
             .ok()
             .map(|merges| sync_merge_bindings(root, merges));
-        let (gate_reasons, gate_binding) =
-            mutation_gate_observation(root, layout, &status, GateStage::Tasks, &policy)?;
+        let gate = if policy.sync_require_gate || policy.archive_require_gate {
+            Some(mutation_gate_observation_with_budget(
+                root,
+                layout,
+                &status,
+                GateStage::Tasks,
+                &policy,
+                Some(budget),
+            ))
+        } else {
+            None
+        };
+        let gate_reasons = gate
+            .as_ref()
+            .and_then(|gate| gate.as_ref().ok())
+            .map(|gate| gate.0.as_slice())
+            .unwrap_or_default();
+        let gate_binding = gate
+            .as_ref()
+            .and_then(|gate| gate.as_ref().ok())
+            .map(|gate| &gate.1);
+        let gate_unavailable = gate.as_ref().is_some_and(|gate| gate.is_err());
         let mut mutations = readiness_mutation_observations(ReadinessMutationInputs {
             scope: &scope,
             sync: &sync,
             archive: &archive,
             merge_binding,
             merge_reasons: &merge_reasons,
-            gate_reasons: &gate_reasons,
+            gate_reasons,
             policy: &policy,
             dependencies: &graph,
         });
         for observation in &mut mutations {
-            observation.decision["validation_input_hash"] =
-                json!(portable_json_hash(root, &gate_binding));
+            let requires_gate = if observation.stage == "sync" {
+                policy.sync_require_gate
+            } else {
+                policy.archive_require_gate
+            };
+            if requires_gate && gate_unavailable {
+                observation.state = ReadinessState::Unavailable;
+                observation.causes.push(readiness_cause(
+                    "observation.load_failed",
+                    change,
+                    "The required mutation gate observation could not be admitted",
+                ));
+            }
+            if requires_gate {
+                observation.decision["validation_input_hash"] = gate_binding
+                    .map(|binding| json!(portable_json_hash(root, binding)))
+                    .unwrap_or(Value::Null);
+            }
+            observation.decision["gate_required"] = json!(requires_gate);
+            observation.decision["cross_repo_dependencies"] = cross
+                .as_ref()
+                .map(|cross| cross.to_json())
+                .unwrap_or(Value::Null);
         }
         Ok(mutations)
     })();
     match mutations {
         Ok(mutations) => observations.extend(mutations),
         Err(_) => {
-            observations.extend([unavailable(&scope, "sync"), unavailable(&scope, "archive")])
+            for stage in ["sync", "archive"] {
+                let mut observation = unavailable(&scope, stage);
+                observation.decision["cross_repo_dependencies"] = cross
+                    .as_ref()
+                    .map(|cross| cross.to_json())
+                    .unwrap_or(Value::Null);
+                observations.push(observation);
+            }
         }
     }
     let mut scope = scope;
@@ -359,6 +470,76 @@ fn gather_once(
     })
 }
 
+fn gather_partial_gates(
+    root: &Path,
+    layout: cairn_core::LifecycleLayout,
+    scope: &ReadinessScope,
+    policy: &cairn_core::Policy,
+    profile: Option<&crate::workflow::WorkflowProfileContext>,
+    budget: &crate::support::observation_budget::ObservationBudget,
+) -> Vec<ReadinessObservation> {
+    let compatibility = profile.is_none()
+        && crate::workflow::compatibility_selection_with_budget(
+            root,
+            layout,
+            &scope.change,
+            policy,
+            Some(budget),
+        )
+        .unwrap_or(false);
+    [GateStage::Proposal, GateStage::Design, GateStage::Tasks]
+        .into_iter()
+        .map(|stage| {
+            if profile.is_none() && !compatibility {
+                return unavailable(scope, stage.as_str());
+            }
+            let snapshot = match crate::support::read_gate_stage_snapshot_with_budget(
+                root,
+                layout,
+                &scope.change,
+                stage,
+                Some(budget),
+            ) {
+                Ok(snapshot) => snapshot,
+                Err(_) => return unavailable(scope, stage.as_str()),
+            };
+            let report = profile.map_or_else(
+                || cairn_core::evaluate_gate_snapshot(&snapshot, stage, policy),
+                |profile| profile.gate_report(&snapshot, stage, policy),
+            );
+            let probes = (stage == GateStage::Tasks).then(|| {
+                crate::probe::observe_gate_probes_with_budget(
+                    root,
+                    layout,
+                    &scope.change,
+                    policy,
+                    Some(budget),
+                )
+            });
+            let report = finalize_gate_report(
+                report,
+                probes
+                    .as_ref()
+                    .map(|probe| probe.issues.clone())
+                    .unwrap_or_default(),
+            );
+            let mut observation = readiness_gate_with_external_causes(
+                scope,
+                &report,
+                probes
+                    .as_ref()
+                    .map(|probe| probe.readiness_causes.as_slice())
+                    .unwrap_or_default(),
+            );
+            observation.decision["source_input_hash"] = json!(portable_json_hash(
+                root,
+                &crate::plan_receipts::gate_input_json(layout, stage, policy, &snapshot)
+            ));
+            observation
+        })
+        .collect()
+}
+
 #[cfg(test)]
 #[path = "readiness_tests.rs"]
 mod tests;
@@ -370,7 +551,16 @@ struct CompletionInputs {
     subject: String,
 }
 
+#[cfg(test)]
 fn load_completion(root: &Path, input: &Value) -> Result<Option<CompletionInputs>, Box<dyn Error>> {
+    load_completion_with_budget(root, input, None)
+}
+
+fn load_completion_with_budget(
+    root: &Path,
+    input: &Value,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<Option<CompletionInputs>, Box<dyn Error>> {
     match (
         input["contract"].as_str(),
         input["results"].as_str(),
@@ -378,7 +568,8 @@ fn load_completion(root: &Path, input: &Value) -> Result<Option<CompletionInputs
     ) {
         (None, None, None) => Ok(None),
         (Some(contract), Some(results), Some(subject)) => {
-            let capability = CapabilityRoot::open(CapabilityRootKind::Scan, root)?;
+            let capability =
+                CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?.with_budget(budget);
             let contract = capability
                 .read_bounded(Path::new(contract), MAX_READINESS_OBSERVATION_BYTES as u64)?;
             let remaining = MAX_READINESS_OBSERVATION_BYTES

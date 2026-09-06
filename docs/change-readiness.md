@@ -50,7 +50,8 @@ Known repairs with equal rule, target, and input bindings share one action. Each
 Unknown diagnostics with different messages remain separate.
 Saved-probe blockers identify the admitted receipt path rather than the task document.
 The core accepts these targets only when their codes and messages match the original validator issues.
-Two producers with the same diagnostic retain their separate targets. Unsupported producer commands remain absent from `argv`.
+Two producers with the same diagnostic retain their separate targets. Declaration-wide failures identify the declaration document.
+Unsupported producer commands remain absent from `argv`.
 
 The report binds the lifecycle source, selected policy, supplied evidence, and readiness policy with BLAKE3 identities.
 The model admits seven stages, at most 512 blockers, and targets of at most 4096 bytes.
@@ -60,9 +61,13 @@ Its semantic observation limit is 16 MiB. Existing loaders retain their own limi
 
 The maintained tests are `crates/cairn-core/src/verified/readiness/tests.rs`, `crates/cairn-cli/tests/readiness.rs`, and `readiness_completion.rs`.
 The basic fixture compares three direct gate calls with one readiness call. All three gate verdicts and issue counts agree.
+The completion fixture also compares direct completion decisions with both transports for passing, stale-subject, and missing-result cases.
+The symlink case compares both transports and confirms that inspection does not change the task file.
 This is a bounded command-count comparison, not a latency or general productivity claim.
+The complete diagnostic-call study remains open.
 
-This first implementation does not yet replace drain presentation. Legacy receipts remain unchanged.
+Drain presentation is deliberately outside this increment. The full unified compatibility matrix remains incomplete.
+Passing legacy drain tests do not establish compatibility for a shared-model replacement. Legacy receipts remain unchanged.
 Explicit cross-repository evidence uses repeated `--cross-repo-evidence FILE` options or the MCP `cross_repo_evidence` array.
 This surface admits repository-relative summary files only. It does not discover bundles or fetch remote evidence.
 It uses the existing `cairn.cross-repo-receipt-summary.v1` admission contract.
@@ -71,15 +76,23 @@ The limits are 64 files and 64 KiB per file. Unsafe, missing, oversized, or malf
 Completion and mutation-observation failures retain successful artifact and gate observations. Error details use bounded classes, not raw infrastructure text.
 The shell repeats observation gathering and rejects differences in the bound cohort. This does not provide an atomic filesystem snapshot.
 Lifecycle scans and merge preflight use no-follow source readers. Each reader admits at most 1 MiB per file and 16 MiB in total.
-Each traversal admits at most 16,384 entries and 64 relative path components. These are per-reader budgets, not one shared report-wide budget.
+Each traversal admits at most 16,384 entries and 64 relative path components.
+All readiness readers also share one request budget of 64 MiB and 65,536 directory entries across both observation passes.
+The shared budget covers policy, lifecycle sources, workflow artifacts, reviews, probes, completion inputs, dependency scans, external summaries, and mutation observations.
+Each reader retains its smaller local limits. Failed reads consume the bytes already read.
 Policy loading admits at most 16 MiB and rejects linked parents and leaves. Explicit parent components remain supported without concealing symbolic links.
 Workflow admission text uses its existing size bound during the read, not only before it.
 
 Mutation observations bind the exact validation-source bytes, including accepted specifications outside merge targets.
 Source and profile admission failures retain an independently evaluated completion decision when policy loading succeeds.
 A merge-only admission failure marks sync unavailable without discarding the archive decision.
+A mutation-gate admission failure affects only stages whose policy requires that gate. If neither stage requires it, the shell skips that observation.
+An unrelated source failure preserves the selected artifact and gate decisions. The dependency scan remains unavailable rather than silently ignoring that source.
+Profile admission failure retains the cross-repository decision when its inputs are available.
+Stage-local reads preserve earlier gates when a later artifact is unreadable. Each preserved gate binds its exact admitted source bytes.
+This path uses an available profile or the existing metadata-selected compatibility profile. It never substitutes that profile for an unknown or explicit profile.
 
-The full report-wide I/O budget, complete independent stage loading, producer-specific commands, and drain adoption remain open.
+Complete independent loading for failed explicit profiles, policy admission failures, producer-specific commands, and drain adoption remain open.
 Repeated reads detect observed differences but do not protect against arbitrary concurrent filesystem changes. These gaps prevent change completion.
 
 Saved probe observation admits at most 64 declarations and 64 KiB per declaration document or receipt.
