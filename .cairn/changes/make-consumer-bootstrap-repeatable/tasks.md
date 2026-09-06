@@ -2,7 +2,7 @@
 
 ## Contract and core
 
-- [ ] [serial] [task:baseline] Record current init, policy, guidance, and migration baselines with the missing-policy and explicit-policy controls. r[cairn.consumer_bootstrap.conformance]
+- [x] [serial] [task:baseline] Record current init, policy, guidance, and migration baselines with the missing-policy and explicit-policy controls. r[cairn.consumer_bootstrap.conformance]
 - [ ] [serial] [task:contracts] [after:baseline] Define typed Nickel cohort, policy-selection, upgrade, ownership, and named-bound contracts with accepted and rejected fixtures. r[cairn.consumer_bootstrap.policy] r[cairn.consumer_bootstrap.compatibility]
 - [ ] [serial] [task:core] [after:contracts] Implement pure bootstrap admission, compatibility, publication plans, and recovery transitions with positive and negative unit tests. r[cairn.consumer_bootstrap.policy] r[cairn.consumer_bootstrap.compatibility] r[cairn.consumer_bootstrap.publication]
 
@@ -19,5 +19,6 @@
 - [ ] [serial] [task:docs] [after:consumer] Publish the checked setup example, policy precedence, migration limits, compatibility diagnostics, and current project-local guidance. r[cairn.consumer_bootstrap.policy] r[cairn.consumer_bootstrap.guidance] r[cairn.consumer_bootstrap.boundary]
 - [ ] [serial] [task:verification] [after:docs] Run focused and full checks, retain exact consumer receipts, and prepare reviewed sync and archive plans. r[cairn.consumer_bootstrap.conformance]
 
-All tasks describe future implementation. Planning gates do not complete these tasks.
+Only the baseline task has runtime evidence in `evidence/implementation-first-pass.md`.
+All remaining tasks require further implementation. Planning gates do not complete these tasks.
 Archive execution is not a prerequisite of any task. Use the normal lifecycle after implementation evidence passes.

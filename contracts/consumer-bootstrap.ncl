@@ -1,0 +1,69 @@
+# Consumer-owned bootstrap input contracts. These contracts grant no path or I/O authority.
+let MaximumArtifacts = 64 in
+let MaximumArtifactBytes = 16777216 in
+let MaximumTotalBytes = 67108864 in
+let MaximumLabelBytes = 256 in
+let MaximumUpgradeSources = 64 in
+let Identity = std.contract.from_predicate (fun value =>
+  std.is_string value && std.string.is_match "^[0-9a-f]{64}$" value
+) in
+let Label = std.contract.from_predicate (fun value =>
+  std.is_string value && std.string.length value > 0
+  && std.string.length value <= MaximumLabelBytes
+  && std.string.is_match "^[a-zA-Z0-9-]+$" value
+) in
+let NaturalBound = fun maximum => std.contract.from_predicate (fun value =>
+  std.is_number value && value == std.number.floor value && value > 0 && value <= maximum
+) in
+let UniqueIdentities = fun maximum => std.contract.from_predicate (fun values =>
+    std.is_array values && std.array.length values <= maximum
+    && std.array.all (fun value => std.is_string value && std.string.is_match "^[0-9a-f]{64}$" value) values
+    && std.array.all (fun value =>
+      std.array.fold_left (fun count other => if other == value then count + 1 else count) 0 values == 1
+    ) values
+  )
+in
+let Bounds = {
+  max_artifacts | NaturalBound MaximumArtifacts,
+  max_artifact_bytes | NaturalBound MaximumArtifactBytes,
+  max_total_bytes | NaturalBound MaximumTotalBytes
+    | std.contract.from_predicate (fun value => value >= max_artifact_bytes),
+}
+in
+let Cohort = {
+  schema | std.contract.from_predicate (fun value => value == "cairn.consumer-bootstrap.v1"),
+  tool | Identity,
+  policy | Identity,
+  export | Identity,
+  evaluator | Identity,
+  source | Identity,
+  workflow | Identity,
+  profile | Label,
+  managed_locators | UniqueIdentities MaximumArtifacts
+    | std.contract.from_predicate (fun value =>
+      std.array.length value > 0 && std.array.length value <= bounds.max_artifacts
+    ),
+  upgrade_from | UniqueIdentities MaximumUpgradeSources,
+  bounds | Bounds,
+}
+in
+let PolicySelection = {
+  source | std.contract.from_predicate (fun value =>
+    value == "explicit" || value == "project" || value == "legacy_default"
+  ),
+  identity | Identity,
+} in
+let Recovery = {
+  prepared_plan | Identity,
+  decision | std.contract.from_predicate (fun value =>
+    value == "resume_unchanged" || value == "publish_complete_manifest"
+    || value == "require_synchronization" || value == "manual_repair"
+  ),
+} in
+{
+  identity = Identity,
+  bounds = Bounds,
+  cohort = Cohort,
+  policy_selection = PolicySelection,
+  recovery = Recovery,
+}
