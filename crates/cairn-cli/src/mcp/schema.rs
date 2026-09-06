@@ -101,6 +101,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Validate repository-owned completion evidence without executing checks",
         ),
         mcp_tool(
+            "cairn_readiness",
+            true,
+            false,
+            "Inspect change readiness without execution or mutation",
+        ),
+        mcp_tool(
             "cairn_drain_plan",
             true,
             false,
@@ -204,6 +210,15 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_change_create" => mcp_object_schema(&["change"], &["root", "policy", "profile"]),
         "cairn_context" => {
             mcp_object_schema(&[], &["root", "policy", "profile", "artifact", "operation"])
+        }
+        "cairn_readiness" => {
+            let mut schema = mcp_schema_with_evidence(
+                &["change"],
+                &["root", "policy", "contract", "results", "subject_hash"],
+            );
+            schema["properties"]["cross_repo_evidence"]["description"] =
+                json!("Explicit repository-relative receipt summary files only");
+            schema
         }
         "cairn_workflow_status" => mcp_object_schema(&["change"], &["root", "policy", "schema"]),
         "cairn_workflow_instructions" => {
@@ -330,6 +345,17 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
             &[],
             &["root", "policy", "profile", "artifact", "operation"],
         ),
+        "cairn_readiness" => {
+            validate_evidence_array(name, object)?;
+            let mut strings = object.clone();
+            strings.remove("cross_repo_evidence");
+            validate_string_args(
+                name,
+                &strings,
+                &["change"],
+                &["root", "policy", "contract", "results", "subject_hash"],
+            )
+        }
         "cairn_workflow_status" => {
             validate_string_args(name, object, &["change"], &["root", "policy", "schema"])
         }

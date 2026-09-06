@@ -1,6 +1,5 @@
 use std::{
     error::Error,
-    fs,
     io::ErrorKind,
     path::{Path, PathBuf},
 };
@@ -29,7 +28,6 @@ pub(crate) mod observe;
 mod options;
 mod receipts;
 
-use observe::observe_workflow_artifacts;
 use options::{parse_workflow_request, WorkflowRequestKind};
 use receipts::{instructions_receipt, status_receipt, workflow_input_hash, WorkflowReceiptContext};
 
@@ -139,6 +137,7 @@ pub(crate) struct WorkflowProfileContext {
     pub(crate) schema: WorkflowSchemaPolicy,
     pub(crate) selection: WorkflowProfileSelection,
     pub(crate) evaluation: WorkflowProfileEvaluation,
+    pub(crate) evidence: WorkflowProfileEvidence,
     pub(crate) report: WorkflowStatusReport,
     pub(crate) input_hash: String,
     pub(crate) profile_identity_hash: String,
@@ -258,42 +257,96 @@ pub(crate) fn load_workflow_profile_context(
     change: &str,
     policy: &Policy,
 ) -> Result<WorkflowProfileContext, Box<dyn Error>> {
+    load_workflow_profile_context_with_budget(root, layout, change, policy, None)
+}
+
+pub(crate) fn load_workflow_profile_context_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<WorkflowProfileContext, Box<dyn Error>> {
+    load_profile_observations(root, layout, change, policy, budget, None)
+}
+
+/// A stage-local context is only consumed by its selected gate, never by
+/// artifact readiness, completion, or mutation preflight.
+pub(crate) fn load_workflow_gate_context_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+    stage: GateStage,
+) -> Result<WorkflowProfileContext, Box<dyn Error>> {
+    load_profile_observations(root, layout, change, policy, budget, Some(stage))
+}
+
+fn load_profile_observations(
+    root: &Path,
+    layout: LifecycleLayout,
+    change: &str,
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+    gate_stage: Option<GateStage>,
+) -> Result<WorkflowProfileContext, Box<dyn Error>> {
     // r[impl cairn.lifecycle_workflow_profiles.integration]
     // r[impl cairn.lifecycle_workflow_profiles.functional_boundary]
     validate_change_name(change)?;
     let change_relative = PathBuf::from(changes_dir(layout)).join(change);
-    let metadata_value = read_change_metadata_value(root, &change_relative)?;
+    let metadata_value = read_change_metadata_value(root, &change_relative, budget)?;
     let metadata = workflow_change_profile_metadata_from_value(&metadata_value)?;
     let (selection, schema) = select_workflow_profile(
         &policy.workflow_profile_policy,
         &policy.workflow_schemas,
         &metadata,
     )?;
-    let observations = observe_workflow_artifacts(root, layout, change, &schema, policy)?;
+    let selected = gate_stage
+        .map(|stage| cairn_core::verified::readiness::readiness_gate_artifact_ids(&schema, stage));
+    let observations = observe::observe_workflow_artifact_subset_with_budget(
+        root,
+        layout,
+        change,
+        &schema,
+        policy,
+        budget,
+        selected.as_deref(),
+    )?;
     let mut report = derive_workflow_status(&schema, &observations)?;
     let artifact_hashes = profile_artifact_hashes(&change_relative, &observations);
-    let acceptance_markdown = read_admission_artifact(
-        root,
-        &change_relative,
-        &schema,
-        WORKFLOW_ADMISSION_ACCEPTANCE,
-    )?;
-    let tasks_markdown =
-        read_admission_artifact(root, &change_relative, &schema, WORKFLOW_ADMISSION_TASKS)?;
-    let outcome_machine_review = read_admission_artifact(
-        root,
-        &change_relative,
-        &schema,
-        WORKFLOW_ADMISSION_OUTCOME_MACHINE,
-    )?
-    .and_then(|text| serde_json::from_str::<Value>(&text).ok());
+    let read_selected_admission = |admission| {
+        let admitted = schema.artifacts.iter().any(|artifact| {
+            artifact.structural_admission == admission
+                && selected
+                    .as_ref()
+                    .is_none_or(|ids| ids.contains(&artifact.id))
+        });
+        if admitted {
+            read_admission_artifact(root, &change_relative, &schema, admission, budget)
+        } else {
+            Ok(None)
+        }
+    };
+    let acceptance_markdown = read_selected_admission(WORKFLOW_ADMISSION_ACCEPTANCE)?;
+    let tasks_markdown = read_selected_admission(WORKFLOW_ADMISSION_TASKS)?;
+    let outcome_machine_review = read_selected_admission(WORKFLOW_ADMISSION_OUTCOME_MACHINE)?
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok());
     let outcome_machine_evidence = observe_outcome_machine_evidence(
         root,
         &change_relative,
         outcome_machine_review.as_ref(),
         schema.bounds.max_artifact_bytes,
+        budget,
     )?;
-    let reviews = read_review_evidence(root, &change_relative, &schema, &artifact_hashes)?;
+    let reviews = read_review_evidence(
+        root,
+        &change_relative,
+        &schema,
+        &artifact_hashes,
+        budget,
+        selected.as_deref(),
+    )?;
     let delta_spec_paths = observations
         .iter()
         .filter(|observation| {
@@ -334,6 +387,7 @@ pub(crate) fn load_workflow_profile_context(
         schema,
         selection,
         evaluation,
+        evidence,
         report,
         input_hash,
         profile_identity_hash,
@@ -373,9 +427,15 @@ pub(crate) fn select_workflow_profile_for_create(
 fn read_change_metadata_value(
     root: &Path,
     change_relative: &Path,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
 ) -> Result<Value, Box<dyn Error>> {
     let metadata_path = change_relative.join("metadata.json");
-    let Some(text) = read_bounded_text(root, &metadata_path, MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT)?
+    let Some(text) = read_bounded_text_with_budget(
+        root,
+        &metadata_path,
+        MAX_WORKFLOW_ARTIFACT_BYTES_LIMIT,
+        budget,
+    )?
     else {
         return Ok(json!({}));
     };
@@ -389,6 +449,7 @@ fn read_admission_artifact(
     change_relative: &Path,
     schema: &WorkflowSchemaPolicy,
     admission: &str,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
 ) -> Result<Option<String>, Box<dyn Error>> {
     let Some(artifact) = schema
         .artifacts
@@ -397,10 +458,11 @@ fn read_admission_artifact(
     else {
         return Ok(None);
     };
-    read_bounded_text(
+    read_bounded_text_with_budget(
         root,
         &change_relative.join(&artifact.output_path),
         schema.bounds.max_artifact_bytes,
+        budget,
     )
 }
 
@@ -409,6 +471,8 @@ fn read_review_evidence(
     change_relative: &Path,
     schema: &WorkflowSchemaPolicy,
     artifact_hashes: &[WorkflowProfileArtifactHash],
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+    selected: Option<&[String]>,
 ) -> Result<Vec<WorkflowReviewEvidence>, Box<dyn Error>> {
     let observed_hashes = artifact_hashes
         .iter()
@@ -416,6 +480,9 @@ fn read_review_evidence(
         .collect::<Vec<_>>();
     let mut reviews = Vec::new();
     for obligation in &schema.review_obligations {
+        if selected.is_some_and(|ids| !ids.contains(&obligation.artifact_id)) {
+            continue;
+        }
         let Some(artifact) = schema
             .artifacts
             .iter()
@@ -423,10 +490,11 @@ fn read_review_evidence(
         else {
             continue;
         };
-        let Some(text) = read_bounded_text(
+        let Some(text) = read_bounded_text_with_budget(
             root,
             &change_relative.join(&artifact.output_path),
             schema.bounds.max_artifact_bytes,
+            budget,
         )?
         else {
             continue;
@@ -523,6 +591,7 @@ fn observe_outcome_machine_evidence(
     change_relative: &Path,
     review: Option<&Value>,
     max_artifact_bytes: usize,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
 ) -> Result<Vec<WorkflowOutcomeMachineEvidenceObservation>, Box<dyn Error>> {
     // r[impl cairn.outcome_machine_profile.completion]
     // r[impl cairn.outcome_machine_profile.fresh_state]
@@ -530,7 +599,8 @@ fn observe_outcome_machine_evidence(
     if evidence_paths.is_empty() {
         return Ok(Vec::new());
     }
-    let capability = CapabilityRoot::open(CapabilityRootKind::Scan, root)?;
+    let capability =
+        CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?.with_budget(budget);
     let max_artifact_bytes = u64::try_from(max_artifact_bytes)?;
     let observations = evidence_paths
         .into_iter()
@@ -546,33 +616,29 @@ fn observe_outcome_machine_evidence(
     Ok(observations)
 }
 
+#[cfg(test)]
 fn read_bounded_text(
     root: &Path,
     relative: &Path,
     max_bytes: usize,
 ) -> Result<Option<String>, Box<dyn Error>> {
-    let path = root.join(relative);
-    let metadata = match fs::symlink_metadata(&path) {
-        Ok(metadata) => metadata,
+    read_bounded_text_with_budget(root, relative, max_bytes, None)
+}
+
+fn read_bounded_text_with_budget(
+    root: &Path,
+    relative: &Path,
+    max_bytes: usize,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<Option<String>, Box<dyn Error>> {
+    let capability =
+        CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?.with_budget(budget);
+    let bytes = match capability.read_bounded(relative, u64::try_from(max_bytes)?) {
+        Ok(bytes) => bytes,
         Err(error) if error.kind() == ErrorKind::NotFound => return Ok(None),
         Err(error) => return Err(error.into()),
     };
-    if metadata.file_type().is_symlink() || !metadata.is_file() {
-        return Err(format!(
-            "workflow profile artifact is not a safe file: {}",
-            path.display()
-        )
-        .into());
-    }
-    let max_bytes = u64::try_from(max_bytes)?;
-    if metadata.len() > max_bytes {
-        return Err(format!(
-            "workflow profile artifact exceeds its byte bound: {}",
-            path.display()
-        )
-        .into());
-    }
-    Ok(Some(fs::read_to_string(path)?))
+    Ok(Some(String::from_utf8(bytes)?))
 }
 
 pub(crate) fn add_mcp_transport(mut value: Value) -> Value {
@@ -598,6 +664,213 @@ mod tests {
     const VALID_PROPOSAL: &str = "## Why\n\nA deterministic test is required.\n\n## What Changes\n\n- Add a test.\n\n## Impact\n\n- Tests change.\n";
     const VALID_DESIGN: &str = "# Design\n\n## Decision\n\nUse a deterministic fixture.\n";
     const VALID_TASKS: &str = "# Tasks\n\n- [ ] [serial] Add the fixture. r[demo.workflow]\n";
+
+    #[test]
+    fn admission_text_uses_bounded_regular_file_reads() -> Result<(), Box<dyn Error>> {
+        const LIMIT: usize = 4;
+        let root = test_root("admission-bound");
+        fs::create_dir_all(&root)?;
+        fs::write(root.join("artifact"), b"text")?;
+        assert_eq!(
+            read_bounded_text(&root, Path::new("artifact"), LIMIT)?,
+            Some("text".into())
+        );
+        assert_eq!(read_bounded_text(&root, Path::new("missing"), LIMIT)?, None);
+        fs::write(root.join("artifact"), b"extra")?;
+        assert!(read_bounded_text(&root, Path::new("artifact"), LIMIT).is_err());
+        assert!(read_bounded_text(&root, Path::new("."), LIMIT).is_err());
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn admission_text_rejects_linked_parent_and_dangling_leaf() -> Result<(), Box<dyn Error>> {
+        use std::os::unix::fs::symlink;
+        let root = test_root("admission-links");
+        fs::create_dir_all(root.join("real"))?;
+        fs::write(root.join("real/artifact"), b"text")?;
+        symlink("real", root.join("alias"))?;
+        symlink("missing", root.join("dangling"))?;
+        for path in ["alias/artifact", "dangling"] {
+            assert!(
+                read_bounded_text(&root, Path::new(path), 4).is_err(),
+                "{path}"
+            );
+        }
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[test]
+    // r[verify cairn.unified_readiness.decisions]
+    fn stage_local_profile_reads_follow_custom_admission_and_review_topology(
+    ) -> Result<(), Box<dyn Error>> {
+        for profile in ["no-spec-delta", "assurance", "outcome-machine"] {
+            for artifact_stage in ["proposal", "design", "tasks", "archive"] {
+                let root = test_root(&format!("readiness-{profile}-{artifact_stage}"));
+                write_fixture(&root)?;
+                let change = root.join(".cairn/changes/demo");
+                let mut policy = load_policy_file(policy_path())?;
+                let mut schema = policy
+                    .workflow_schemas
+                    .iter()
+                    .find(|schema| schema.id == profile)
+                    .unwrap()
+                    .clone();
+                schema.id = format!("readiness-{profile}");
+                for artifact in &mut schema.artifacts {
+                    // Admission is independent of configured lifecycle stage.
+                    if matches!(
+                        artifact.structural_admission.as_str(),
+                        WORKFLOW_ADMISSION_ACCEPTANCE | WORKFLOW_ADMISSION_OUTCOME_MACHINE
+                    ) || schema
+                        .review_obligations
+                        .iter()
+                        .any(|review| review.artifact_id == artifact.id)
+                    {
+                        artifact.stage = artifact_stage.into();
+                        artifact.requires.clear();
+                    }
+                }
+                // Review-only late inputs need not appear in requires edges.
+                if let Some(review) = schema.review_obligations.first_mut() {
+                    review.required_artifacts = vec!["design".into()];
+                }
+                cairn_core::admit_workflow_schemas(
+                    &[schema.clone()],
+                    &[
+                        "proposal".into(),
+                        "design".into(),
+                        "tasks".into(),
+                        "archive".into(),
+                    ],
+                )?;
+                policy.raw["schemas"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(json!(schema));
+                policy.raw["workflow_profile_policy"]["allowed_profiles"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(json!(schema.id));
+                let policy = cairn_core::validate_policy_json(policy.raw)?;
+                fs::write(
+                    change.join("metadata.json"),
+                    serde_json::to_vec(&json!({
+                        "workflow_profile": {"id": schema.id, "version": 1, "source": "change_create"},
+                        "spec_effect": schema.spec_effect,
+                        "spec_effect_rationale": "Internal fixture leaves accepted requirements unchanged."
+                    }))?,
+                )?;
+                if profile == "no-spec-delta" {
+                    fs::remove_dir_all(change.join("specs"))?;
+                    fs::write(
+                        change.join("acceptance.md"),
+                        "# Acceptance\n\na[demo] Keep the fixture deterministic.\n",
+                    )?;
+                    fs::write(
+                        change.join("tasks.md"),
+                        "- [ ] [serial] Check the fixture. a[demo]\n",
+                    )?;
+                }
+                for artifact in &schema.artifacts {
+                    let path = change.join(&artifact.output_path);
+                    if artifact.structural_admission == WORKFLOW_ADMISSION_OUTCOME_MACHINE {
+                        fs::write(
+                            &path,
+                            serde_json::to_vec(&json!({
+                                "schema": "cairn.outcome-machine-review.v1",
+                                "route": {"kind": "delivery", "details": {
+                                    "immediate_outcome": "A bounded readiness report.",
+                                    "current_consumer": "repository operator",
+                                    "durable_capability_contribution": "Repeatable observation admission.",
+                                    "repeatability_plan": "Run maintained controls from tracked inputs."
+                                }},
+                                "maintenance_owner": "Cairn maintainers", "tracked_inputs": ["source", "policy"],
+                                "deterministic_checks": ["cargo test"],
+                                "ai_assistance": {"used": false, "hidden_session_state_required": false, "completion_authority": "repository"},
+                                "fresh_state_reproduction": {"status": "planned", "evidence": [], "rationale": "Run from a clean checkout."},
+                                "completion": {"status": "planned", "evidence": []},
+                                "activity_counts_are_completion_evidence": false,
+                                "non_claims": ["This record does not prove product correctness."]
+                            }))?,
+                        )?;
+                    }
+                }
+                for review in &schema.review_obligations {
+                    let artifact = schema
+                        .artifacts
+                        .iter()
+                        .find(|artifact| artifact.id == review.artifact_id)
+                        .unwrap();
+                    let inputs = review.required_artifacts.iter().filter_map(|id| schema.artifacts.iter().find(|artifact| &artifact.id == id))
+                        .filter_map(|artifact| fs::read(change.join(&artifact.output_path)).ok().map(|bytes| json!({"path": artifact.output_path, "hash": blake3_hex(&bytes)}))).collect::<Vec<_>>();
+                    let path = change.join(&artifact.output_path);
+                    fs::create_dir_all(path.parent().unwrap())?;
+                    fs::write(
+                        path,
+                        serde_json::to_vec(&json!({
+                            "schema_version": "cairn.semantic-review.review-receipt.v1", "review_kind": review.review_kind,
+                            "decision": "approved", "reviewed_inputs": inputs,
+                            "reviewer": {"source": "manual", "id": "readiness-test"}, "findings": []
+                        }))?,
+                    )?;
+                }
+                let status = crate::support::read_selected_change_with_budget(
+                    &root,
+                    LifecycleLayout::Native,
+                    "demo",
+                    None,
+                )?;
+                let snapshot = crate::support::read_gate_snapshot_with_budget(
+                    &root,
+                    LifecycleLayout::Native,
+                    status,
+                    None,
+                )?;
+                for stale in [false, true] {
+                    if stale {
+                        fs::write(
+                            change.join("design.md"),
+                            format!("{VALID_DESIGN}\nChanged review input.\n"),
+                        )?;
+                        if profile == "outcome-machine" {
+                            fs::write(change.join("outcome-machine.json"), "{}")?;
+                        }
+                        if profile == "no-spec-delta" {
+                            fs::write(change.join("acceptance.md"), "a[broken")?;
+                        }
+                    }
+                    let full = load_workflow_profile_context(
+                        &root,
+                        LifecycleLayout::Native,
+                        "demo",
+                        &policy,
+                    )?;
+                    for stage in [GateStage::Proposal, GateStage::Design, GateStage::Tasks] {
+                        let local = load_workflow_gate_context_with_budget(
+                            &root,
+                            LifecycleLayout::Native,
+                            "demo",
+                            &policy,
+                            None,
+                            stage,
+                        )?;
+                        assert_eq!(local.selection, full.selection);
+                        assert_eq!(local.schema, full.schema);
+                        assert_eq!(
+                            local.gate_report(&snapshot, stage, &policy),
+                            full.gate_report(&snapshot, stage, &policy),
+                            "{profile}/{artifact_stage}/{stage:?}/stale={stale}"
+                        );
+                    }
+                }
+                fs::remove_dir_all(root)?;
+            }
+        }
+        Ok(())
+    }
 
     fn test_root(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!(

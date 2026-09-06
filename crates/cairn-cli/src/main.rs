@@ -36,6 +36,7 @@ mod preserves_corpus;
 mod probe;
 mod project_policy;
 mod radicle_change;
+mod readiness;
 mod receipt_preserves_diff;
 mod receipt_verify_content_hash;
 mod release_decision;
@@ -148,6 +149,7 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "validate"
             | "view"
             | "workflow"
+            | "readiness"
             | "release-readiness"
             | "lifecycle"
             | "traceability"
@@ -216,6 +218,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         )?,
         "view" => run_view(args.collect())?,
         "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
+        "readiness" => readiness::run_readiness(args.collect())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-decision" => run_release(args.collect())?,

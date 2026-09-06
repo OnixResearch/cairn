@@ -8,7 +8,7 @@ use crate::verified::{
 
 use super::{ChangeMetadata, ChangeStatus};
 
-pub(super) fn parse_change_metadata(
+pub fn parse_change_metadata(
     change_name: &str,
     metadata_json: Option<&str>,
 ) -> (ChangeMetadata, Vec<String>) {

@@ -15,6 +15,41 @@ fn run_json_failure(args: &[String]) -> Result<Value, Box<dyn Error>> {
     Ok(serde_json::from_slice(&output.stdout)?)
 }
 
+pub(super) fn assert_readiness_probe_parity(
+    fixture: &std::path::Path,
+    gate: &Value,
+) -> Result<(), Box<dyn Error>> {
+    let input = json!({"root": fixture, "change": "demo"});
+    let report = run_json_strings(&[
+        "readiness".into(),
+        "demo".into(),
+        "--root".into(),
+        fixture.display().to_string(),
+    ])?;
+    let mcp = run_json_strings(&[
+        "mcp".into(),
+        "--call".into(),
+        "cairn_readiness".into(),
+        input.to_string(),
+    ])?;
+    assert_eq!(mcp["structuredContent"], report);
+    assert_eq!(report["stages"][3]["decision"]["verdict"], gate["verdict"]);
+    let codes = |issues: &Value| {
+        issues
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|i| i["code"].clone())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        codes(&report["stages"][3]["decision"]["issues"]),
+        codes(&gate["issues"])
+    );
+    assert_eq!(report["mutation_authorized"], false);
+    Ok(())
+}
+
 fn valid_probe_declaration(receipt_path: Option<&str>) -> Value {
     let mut declaration = json!({
         "schema": "cairn.probe.v1",
@@ -94,6 +129,7 @@ fn probe_run_emits_receipt_and_gate_verifies_saved_receipt() -> Result<(), Box<d
         fixture.display().to_string(),
     ])?;
     assert_eq!(gate["valid"], true);
+    assert_readiness_probe_parity(&fixture, &gate)?;
     Ok(())
 }
 
@@ -122,6 +158,31 @@ fn default_gate_reports_missing_probe_receipt_without_running_probe() -> Result<
         fixture.display().to_string(),
     ])?;
     assert_eq!(gate["valid"], false);
+    assert_readiness_probe_parity(&fixture, &gate)?;
+    let readiness = run_json_strings(&[
+        "readiness".into(),
+        "demo".into(),
+        "--root".into(),
+        fixture.display().to_string(),
+    ])?;
+    assert!(
+        readiness["actions"]
+            .as_array()
+            .ok_or("actions")?
+            .iter()
+            .any(|action| {
+                action["kind"] == "evidence_refresh" && action["target"] == receipt_path
+            }),
+        "{readiness:#}"
+    );
+    assert!(!readiness["blockers"]
+        .as_array()
+        .ok_or("blockers")?
+        .iter()
+        .any(|blocker| {
+            blocker["code"] == "probe.saved_evidence.invalid"
+                && blocker["target"] == ".cairn/changes/demo/tasks.md"
+        }));
     assert!(!fixture.join(receipt_path).exists());
     let messages = gate["issues"]
         .as_array()
@@ -176,6 +237,9 @@ fn gate_messages_after_receipt_mutation(
         fixture.display().to_string(),
     ])?;
     assert_eq!(gate["valid"], false);
+    let before = fs::read(&full_receipt_path)?;
+    assert_readiness_probe_parity(&fixture, &gate)?;
+    assert_eq!(before, fs::read(&full_receipt_path)?);
     Ok(gate["issues"]
         .as_array()
         .ok_or("issues")?
@@ -218,6 +282,22 @@ fn gate_rejects_stale_policy_hash() -> Result<(), Box<dyn Error>> {
     assert!(messages
         .iter()
         .any(|message| message.contains("policy_hash does not match")));
+    Ok(())
+}
+
+#[test]
+fn readiness_and_gate_reject_current_failed_probe_status() -> Result<(), Box<dyn Error>> {
+    let messages =
+        gate_messages_after_receipt_mutation("readiness-probe-failed-status", |receipt| {
+            receipt["status_class"] = json!("failure");
+            receipt["status_matches"] = json!(false);
+            receipt["valid"] = json!(false);
+            receipt["verdict"] = json!("FAIL");
+            restamp_probe_receipt_hash(receipt);
+        })?;
+    assert!(messages
+        .iter()
+        .any(|message| message.contains("saved probe status_class must be success")));
     Ok(())
 }
 

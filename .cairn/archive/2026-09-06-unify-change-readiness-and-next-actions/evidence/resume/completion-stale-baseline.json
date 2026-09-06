@@ -1,0 +1,74 @@
+{
+  "checks_executed": false,
+  "classification": "authoritative",
+  "command": "agent-receipt complete",
+  "completion": {
+    "classification": "authoritative",
+    "diagnostics": [
+      {
+        "actual": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "artifacts": [],
+        "check_id": null,
+        "code": "verification_contract.subject_stale",
+        "diagnostic_id": "27bdde93619ebfd2dab7d1375a938448e296d3c219a6959f4c021bbd8020b2ed",
+        "evidence_hash": null,
+        "execution_receipt_hash": null,
+        "expected": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "non_claims": [
+          "completion validation does not prove check-oracle soundness",
+          "completion validation does not prove honest command execution beyond supplied evidence",
+          "completion validation does not prove model correctness",
+          "completion validation does not prove whole-product correctness",
+          "completion validation does not prove release eligibility outside the selected contract"
+        ],
+        "registry_hash": null,
+        "remediation_label": "refresh-and-rerun-required-check",
+        "reproduction_argv": [],
+        "result_status": null,
+        "selection_hash": null,
+        "severity": "error",
+        "source": null,
+        "subject_hash": null,
+        "summary": "verification contract does not bind the current final subject",
+        "working_root": "<repository-root>"
+      }
+    ],
+    "final_subject_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "input_hash": "3f750080fbe5e85d3b0488954385e05c2569bcc0510be2f55a23978752684628",
+    "non_claims": [
+      "completion validation does not prove check-oracle soundness",
+      "completion validation does not prove honest command execution beyond supplied evidence",
+      "completion validation does not prove model correctness",
+      "completion validation does not prove whole-product correctness",
+      "completion validation does not prove release eligibility outside the selected contract"
+    ],
+    "non_passing_checks": [],
+    "passed_checks": [
+      "clippy",
+      "tests"
+    ],
+    "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+    "receipt_hash": "3c0955e6a50d895281c48b0aff616525124a381c2755a5df31e36ff64fb02826",
+    "registry_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "registry_id": "cairn-release-checks",
+    "repository_id": "onixresearch/cairn",
+    "required_checks": [
+      "clippy",
+      "tests"
+    ],
+    "schema": "cairn.agent-completion.v2",
+    "selection_hash": "b9da53c190687f8ff0bf2a465d6823056328363c7aa4b73f97ee0a10ff158581",
+    "valid": false,
+    "verdict": "FAIL"
+  },
+  "completion_receipt_hash": "3c0955e6a50d895281c48b0aff616525124a381c2755a5df31e36ff64fb02826",
+  "contract_path": "fixtures/agent-completion/contract.json",
+  "current_policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "current_subject_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "input_kind": "path",
+  "max_content_bytes": 65536,
+  "receipt_hash": "81b5a1ef9c49f2b3f68dad39b0f648eb4e2d7fe3a366c4aaab925746aa45f2b8",
+  "results_path": "fixtures/agent-completion/results.json",
+  "valid": false,
+  "verdict": "FAIL"
+}

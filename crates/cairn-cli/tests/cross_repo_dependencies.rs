@@ -65,6 +65,156 @@ fn fixture(name: &str) -> Result<(PathBuf, PathBuf), Box<dyn Error>> {
 }
 
 #[test]
+fn readiness_explicit_cross_repo_evidence_preserves_parity_and_partial_facts(
+) -> Result<(), Box<dyn Error>> {
+    let (fixture, evidence) = fixture("readiness")?;
+    let root_text = fixture.to_str().ok_or("root")?;
+    let observe = |file: &str| -> Result<Value, Box<dyn Error>> {
+        let report = run_json(cairn().args([
+            "readiness",
+            "ready",
+            "--root",
+            root_text,
+            "--cross-repo-evidence",
+            file,
+        ]))?;
+        let mcp =
+            run_json(
+                cairn().args([
+                    "mcp",
+                    "--call",
+                    "cairn_readiness",
+                    &json!({"root": fixture, "change": "ready", "cross_repo_evidence": [file]})
+                        .to_string(),
+                ]),
+            )?;
+        assert_eq!(mcp["structuredContent"], report);
+        Ok(report)
+    };
+    let passing = observe("upstream.json")?;
+    assert!(
+        passing["stages"][5]["decision"]["reasons"]
+            .as_array()
+            .unwrap()
+            .is_empty(),
+        "{passing:#}"
+    );
+    let absent = run_json(cairn().args(["readiness", "ready", "--root", root_text]))?;
+    assert!(!absent["stages"][5]["decision"]["reasons"]
+        .as_array()
+        .unwrap()
+        .is_empty());
+    let mut failed: Value = serde_json::from_slice(&fs::read(&evidence)?)?;
+    failed["status"] = json!("FAIL");
+    fs::write(&evidence, serde_json::to_vec(&failed)?)?;
+    let rejected = observe("upstream.json")?;
+    assert!(!rejected["stages"][5]["decision"]["reasons"]
+        .as_array()
+        .unwrap()
+        .is_empty());
+    for path in ["../escape", "missing.json", ".cairn"] {
+        let unavailable = observe(path)?;
+        assert_eq!(unavailable["stages"][5]["state"], "unavailable");
+        for stage in 0..4 {
+            assert_eq!(
+                unavailable["stages"][stage]["decision"],
+                passing["stages"][stage]["decision"]
+            );
+        }
+    }
+    fs::write(&evidence, vec![b' '; 64 * 1024 + 1])?;
+    assert_eq!(
+        observe("upstream.json")?["stages"][5]["state"],
+        "unavailable"
+    );
+    let count = run_json(
+        cairn().args([
+            "mcp",
+            "--call",
+            "cairn_readiness",
+            &json!({
+                "root": fixture, "change": "ready", "cross_repo_evidence": vec!["upstream.json"; 65]
+            })
+            .to_string(),
+        ]),
+    )?;
+    assert_eq!(
+        count["structuredContent"]["stages"][5]["state"],
+        "unavailable"
+    );
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn readiness_local_dependency_wait_identifies_upstream_and_clears_when_archived(
+) -> Result<(), Box<dyn Error>> {
+    let fixture = std::env::temp_dir().join(format!(
+        "cairn-readiness-local-dependency-{}",
+        std::process::id()
+    ));
+    if fixture.exists() {
+        fs::remove_dir_all(&fixture)?;
+    }
+    copy_dir(&root().join("fixtures/archive-ready"), &fixture)?;
+    copy_dir(
+        &fixture.join(".cairn/changes/ready"),
+        &fixture.join(".cairn/changes/upstream"),
+    )?;
+    fs::write(
+        fixture.join(".cairn/changes/ready/metadata.json"),
+        br#"{"depends_on":["upstream"]}"#,
+    )?;
+    let observe = || -> Result<Value, Box<dyn Error>> {
+        let report = run_json(cairn().args([
+            "readiness",
+            "ready",
+            "--root",
+            fixture.to_str().ok_or("root")?,
+        ]))?;
+        let mcp = run_json(cairn().args([
+            "mcp",
+            "--call",
+            "cairn_readiness",
+            &json!({"root": fixture, "change": "ready"}).to_string(),
+        ]))?;
+        assert_eq!(mcp["structuredContent"], report);
+        Ok(report)
+    };
+    let blocked = observe()?;
+    let waits = blocked["actions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|a| a["kind"] == "dependency_wait")
+        .collect::<Vec<_>>();
+    assert_eq!(waits.len(), 1);
+    assert_eq!(waits[0]["target"], "upstream");
+    assert_eq!(waits[0]["causes"].as_array().unwrap().len(), 2);
+    fs::create_dir_all(fixture.join(".cairn/archive"))?;
+    fs::rename(
+        fixture.join(".cairn/changes/upstream"),
+        fixture.join(".cairn/archive/2026-09-05-upstream"),
+    )?;
+    let satisfied = observe()?;
+    assert!(!satisfied["actions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|a| a["kind"] == "dependency_wait"));
+    assert!(satisfied["stages"][5]["decision"]["reasons"]
+        .as_array()
+        .unwrap()
+        .is_empty());
+    assert_ne!(
+        blocked["scope"]["evidence_hash"],
+        satisfied["scope"]["evidence_hash"]
+    );
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
 // r[verify cairn.cross_repo_change_dependencies.contract]
 // r[verify cairn.cross_repo_change_dependencies.contract.identity]
 // r[verify cairn.cross_repo_change_dependencies.contract.invalid]

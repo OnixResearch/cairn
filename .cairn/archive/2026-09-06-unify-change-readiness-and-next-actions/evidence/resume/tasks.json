@@ -1,0 +1,299 @@
+{
+  "acceptance_ids": [],
+  "change": "unify-change-readiness-and-next-actions",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "6536289997b46a5e4c693dfea4941f6667d19e0e9673b3553839c671b0ef2db8",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "probe_evidence": {
+    "declarations_present": false,
+    "probes": []
+  },
+  "profile_identity_hash": "5e07dbfdd8d20f1eb5a76313b13e8a7807bb5f554eb6d1bc5ad978f991ca3193",
+  "receipt_hash": "41cf215e793006b5805af9f5bee9dc9cc6d3e514dc844779b0cd42dc34ad762e",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "tasks",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "design",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/unify-change-readiness-and-next-actions/design.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 55,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/unify-change-readiness-and-next-actions/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 25,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/unify-change-readiness-and-next-actions/specs/unified-change-readiness/spec.md",
+      "requirement_blocks": 6,
+      "scenario_blocks": 12,
+      "substantive_lines": 42,
+      "substantive_requirement_blocks": 6,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 10,
+      "kind": "tasks",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/unify-change-readiness-and-next-actions/tasks.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 13,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 10,
+      "task_done": 1,
+      "task_in_progress": 0,
+      "task_todo": 9
+    }
+  ],
+  "task_ordering": {
+    "active": true,
+    "edges": [
+      {
+        "predecessor": "core",
+        "task": "actions"
+      },
+      {
+        "predecessor": "negative",
+        "task": "consumer"
+      },
+      {
+        "predecessor": "baseline",
+        "task": "contracts"
+      },
+      {
+        "predecessor": "contracts",
+        "task": "core"
+      },
+      {
+        "predecessor": "consumer",
+        "task": "docs"
+      },
+      {
+        "predecessor": "transports",
+        "task": "negative"
+      },
+      {
+        "predecessor": "actions",
+        "task": "observation"
+      },
+      {
+        "predecessor": "observation",
+        "task": "transports"
+      },
+      {
+        "predecessor": "docs",
+        "task": "verification"
+      }
+    ],
+    "issues": [],
+    "nodes": [
+      {
+        "blocked_by": [
+          "core"
+        ],
+        "blocks": [
+          "observation"
+        ],
+        "id": "actions",
+        "line": 8,
+        "predecessors": [
+          "core"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [],
+        "blocks": [
+          "contracts"
+        ],
+        "id": "baseline",
+        "line": 5,
+        "predecessors": [],
+        "ready": false,
+        "state": "done"
+      },
+      {
+        "blocked_by": [
+          "negative"
+        ],
+        "blocks": [
+          "docs"
+        ],
+        "id": "consumer",
+        "line": 18,
+        "predecessors": [
+          "negative"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [],
+        "blocks": [
+          "core"
+        ],
+        "id": "contracts",
+        "line": 6,
+        "predecessors": [
+          "baseline"
+        ],
+        "ready": true,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "contracts"
+        ],
+        "blocks": [
+          "actions"
+        ],
+        "id": "core",
+        "line": 7,
+        "predecessors": [
+          "contracts"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "consumer"
+        ],
+        "blocks": [
+          "verification"
+        ],
+        "id": "docs",
+        "line": 19,
+        "predecessors": [
+          "consumer"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "transports"
+        ],
+        "blocks": [
+          "consumer"
+        ],
+        "id": "negative",
+        "line": 14,
+        "predecessors": [
+          "transports"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "actions"
+        ],
+        "blocks": [
+          "transports"
+        ],
+        "id": "observation",
+        "line": 12,
+        "predecessors": [
+          "actions"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "observation"
+        ],
+        "blocks": [
+          "negative"
+        ],
+        "id": "transports",
+        "line": 13,
+        "predecessors": [
+          "observation"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "docs"
+        ],
+        "blocks": [],
+        "id": "verification",
+        "line": 20,
+        "predecessors": [
+          "docs"
+        ],
+        "ready": false,
+        "state": "todo"
+      }
+    ],
+    "order": [
+      "baseline",
+      "contracts",
+      "core",
+      "actions",
+      "observation",
+      "transports",
+      "negative",
+      "consumer",
+      "docs",
+      "verification"
+    ],
+    "ready_tasks": [
+      "contracts"
+    ],
+    "valid": true
+  },
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

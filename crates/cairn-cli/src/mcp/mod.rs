@@ -231,6 +231,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_agent_receipt_validate" => mcp_agent_receipt_validate(input)?,
             "cairn_agent_completion_validate" => mcp_agent_completion_validate(input)?,
             "cairn_drain_plan" => mcp_drain_plan(input)?,
+            "cairn_readiness" => crate::readiness::readiness_value(input)?,
             "cairn_sync_plan" => mcp_sync(input, false)?,
             "cairn_archive_plan" => mcp_archive(input, false)?,
             "cairn_migrate_plan" => mcp_migrate(input, false)?,

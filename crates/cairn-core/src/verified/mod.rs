@@ -54,6 +54,7 @@ pub mod probe;
 pub mod radicle_change;
 pub mod radicle_checkout;
 pub mod radicle_import;
+pub mod readiness;
 pub mod receipt_drift;
 pub mod release_decision;
 pub mod release_run_ledger;

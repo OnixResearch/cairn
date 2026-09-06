@@ -93,6 +93,33 @@ pub(crate) fn load_cross_repo_evidence(root: &Path, inputs: &[PathBuf]) -> Loade
     LoadedCrossRepoEvidence { summaries, issues }
 }
 
+/// Readiness admits only explicit repository-relative summary files, not bundle discovery.
+pub(crate) fn load_readiness_cross_repo_evidence_with_budget(
+    root: &Path,
+    input: &Value,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<Vec<CrossRepoReceiptSummary>, Box<dyn Error>> {
+    let paths = evidence_paths_from_json(input)?;
+    if paths.len() > MAX_EVIDENCE_FILES {
+        return Err("cross_repo_dependency.evidence_file_bound".into());
+    }
+    let capability = crate::support::CapabilityRoot::open_nofollow(
+        crate::support::CapabilityRootKind::Scan,
+        root,
+    )?
+    .with_budget(budget);
+    let mut paths = paths;
+    paths.sort();
+    paths.dedup();
+    let mut summaries = Vec::new();
+    for path in paths {
+        let bytes = capability.read_bounded(&path, MAX_EVIDENCE_FILE_BYTES)?;
+        let value = serde_json::from_slice(&bytes)?;
+        summaries.push(summarize_value(root, &root.join(path), &value)?);
+    }
+    Ok(summaries)
+}
+
 pub(crate) fn evaluate_change_cross_repo_dependencies(
     change: &cairn_core::ChangeStatus,
     evidence: &[CrossRepoReceiptSummary],
