@@ -314,6 +314,7 @@ pub(super) fn mcp_gate(input: &Value) -> Result<Value, Box<dyn Error>> {
         crate::probe::ProbeGateEvidence {
             issues: Vec::new(),
             binding: Value::Null,
+            readiness_causes: Vec::new(),
         }
     };
     let report = finalize_gate_report(report, probe_evidence.issues);

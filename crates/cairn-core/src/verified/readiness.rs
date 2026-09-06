@@ -132,6 +132,49 @@ pub fn readiness_gate(scope: &ReadinessScope, report: &GateReport) -> ReadinessO
     }
 }
 
+/// Bind adapter-owned source targets to the original validator's exact issues.
+/// Equal display messages from different producers retain each distinct target.
+pub fn readiness_gate_with_external_causes(
+    scope: &ReadinessScope,
+    report: &GateReport,
+    external: &[ReadinessCause],
+) -> ReadinessObservation {
+    let mut observation = readiness_gate(scope, report);
+    if external.iter().any(|cause| {
+        !report
+            .issues
+            .iter()
+            .any(|issue| issue.code == cause.code && issue.message == cause.message)
+    }) {
+        observation.state = ReadinessState::Unavailable;
+        observation.causes.push(readiness_cause(
+            "observation.cause_conflict",
+            &scope.change,
+            "A supplied source target has no matching validator issue",
+        ));
+        return observation;
+    }
+    observation.causes = observation
+        .causes
+        .into_iter()
+        .flat_map(|cause| {
+            let replacements = external
+                .iter()
+                .filter(|candidate| {
+                    candidate.code == cause.code && candidate.message == cause.message
+                })
+                .cloned()
+                .collect::<Vec<_>>();
+            if replacements.is_empty() {
+                vec![cause]
+            } else {
+                replacements
+            }
+        })
+        .collect();
+    observation
+}
+
 pub fn readiness_artifacts(
     scope: &ReadinessScope,
     report: &WorkflowStatusReport,
@@ -204,7 +247,7 @@ pub fn readiness_profile_causes(
             if !current {
                 report.causes.push(readiness_cause(
                     "cairn.workflow.profile.review",
-                    &artifact.path,
+                    &format!(".cairn/changes/{}/{}", scope.change, artifact.path),
                     &format!(
                         "Review {} must bind current artifact {}",
                         obligation.id, artifact.blake3
@@ -266,7 +309,7 @@ pub struct ReadinessMutationInputs<'a> {
     pub scope: &'a ReadinessScope,
     pub sync: &'a crate::SyncPlan,
     pub archive: &'a crate::ArchivePlan,
-    pub merge_binding: Value,
+    pub merge_binding: Option<Value>,
     pub merge_reasons: &'a [String],
     pub gate_reasons: &'a [String],
     pub policy: &'a crate::Policy,
@@ -297,6 +340,14 @@ pub fn readiness_mutation_observations(
                 json!({"reasons": reasons, "merge_preflight": input.merge_binding}),
             );
             readiness_dependency_causes(&mut observation, input.dependencies);
+            if stage == "sync" && input.merge_binding.is_none() {
+                observation.state = ReadinessState::Unavailable;
+                observation.causes.push(readiness_cause(
+                    "observation.load_failed",
+                    &input.scope.change,
+                    "The sync merge observation could not be admitted",
+                ));
+            }
             observation
         })
         .collect()

@@ -67,7 +67,18 @@ fn denied_mutation_and_unavailable_evidence_do_not_change_files() -> Result<(), 
         &"c".repeat(64),
     ])?;
     assert_eq!(unavailable["classification"], "unavailable");
-    assert_eq!(unavailable["stages"][0]["decision"]["evaluated"], false);
+    assert_eq!(unavailable["stages"][4]["decision"]["evaluated"], false);
+    let ordinary = run(&["readiness", "demo", "--root", "fixtures/basic"])?;
+    for stage in 0..4 {
+        assert_eq!(
+            unavailable["stages"][stage]["decision"],
+            ordinary["stages"][stage]["decision"]
+        );
+        assert_eq!(
+            unavailable["stages"][stage]["state"],
+            ordinary["stages"][stage]["state"]
+        );
+    }
     assert!(unavailable["blockers"]
         .as_array()
         .unwrap()
@@ -80,6 +91,28 @@ fn denied_mutation_and_unavailable_evidence_do_not_change_files() -> Result<(), 
         .output()?;
     assert!(!output.status.success());
     assert_eq!(fs::read(path)?, before);
+    Ok(())
+}
+
+#[test]
+fn readiness_mcp_rejects_wrong_evidence_types_and_unknown_authority() -> Result<(), Box<dyn Error>>
+{
+    for fields in [
+        json!({"cross_repo_evidence": "upstream.json"}),
+        json!({"cross_repo_evidence": [1]}),
+        json!({"execute": true}),
+    ] {
+        let mut input = fields;
+        input["root"] = json!("fixtures/basic");
+        input["change"] = json!("demo");
+        let output = Command::new(env!("CARGO_BIN_EXE_cairn"))
+            .current_dir(root())
+            .args(["mcp", "--call", "cairn_readiness", &input.to_string()])
+            .output()?;
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr)
+            .contains("invalid arguments for cairn_readiness"));
+    }
     Ok(())
 }
 

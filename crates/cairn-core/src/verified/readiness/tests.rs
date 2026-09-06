@@ -1,6 +1,112 @@
 use super::*;
 
 #[test]
+fn probe_causes_preserve_exact_targets_without_inventing_validator_issues() {
+    let mut snapshot = snapshot();
+    let gate = GateReport {
+        change: snapshot.scope.change.clone(),
+        stage: "tasks".into(),
+        verdict: "FAIL".into(),
+        issues: vec![crate::GateIssue {
+            code: "probe.saved_evidence.invalid".into(),
+            message: "receipt missing".into(),
+            scope: "local".into(),
+            promoted: "blocking".into(),
+        }],
+        substance: vec![],
+        task_ordering: None,
+    };
+    let causes = ["receipts/first.json", "receipts/second.json"]
+        .map(|target| readiness_cause("probe.saved_evidence.invalid", target, "receipt missing"));
+    let observation = readiness_gate_with_external_causes(&snapshot.scope, &gate, &causes);
+    assert_eq!(observation.state, ReadinessState::Blocked);
+    assert_eq!(
+        observation.decision,
+        readiness_gate(&snapshot.scope, &gate).decision
+    );
+    assert_eq!(observation.causes, causes);
+    snapshot.observations[3] = observation;
+    let report = derive_readiness(&snapshot);
+    for target in ["receipts/first.json", "receipts/second.json"] {
+        assert!(report
+            .actions
+            .iter()
+            .any(|action| action.kind == "evidence_refresh" && action.target == target));
+    }
+    let forged = [readiness_cause(
+        "probe.saved_evidence.invalid",
+        "receipts/forged.json",
+        "not observed",
+    )];
+    let rejected = readiness_gate_with_external_causes(&snapshot.scope, &gate, &forged);
+    assert_eq!(rejected.state, ReadinessState::Unavailable);
+    assert!(!rejected
+        .causes
+        .iter()
+        .any(|cause| cause.target == "receipts/forged.json"));
+    assert!(rejected
+        .causes
+        .iter()
+        .any(|cause| cause.code == "observation.cause_conflict"));
+}
+
+#[test]
+fn missing_merge_observation_does_not_discard_archive_authority() {
+    let scope = snapshot().scope;
+    let policy = crate::validate_policy_json(
+        serde_json::from_str(include_str!(
+            "../../../../../cairn-policy/generated/cairn-policy.json"
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    let sync = crate::SyncPlan {
+        change: scope.change.clone(),
+        dry_run: true,
+        mutated: false,
+        actions: vec![],
+        delta_specs: vec![],
+        spec_effect: "none".into(),
+        blocked: false,
+        reasons: vec![],
+    };
+    let archive = crate::ArchivePlan {
+        change: scope.change.clone(),
+        dry_run: true,
+        mutated: false,
+        actions: vec![],
+        spec_effect: "none".into(),
+        blocked: false,
+        reasons: vec![],
+    };
+    let graph = crate::build_change_dependency_graph(&[], &[]);
+    for merge_binding in [Some(json!({"documents": []})), None] {
+        let available = merge_binding.is_some();
+        let observations = readiness_mutation_observations(ReadinessMutationInputs {
+            scope: &scope,
+            sync: &sync,
+            archive: &archive,
+            merge_binding,
+            merge_reasons: &[],
+            gate_reasons: &[],
+            policy: &policy,
+            dependencies: &graph,
+        });
+        assert_eq!(
+            observations[0].state,
+            if available {
+                ReadinessState::Ready
+            } else {
+                ReadinessState::Unavailable
+            }
+        );
+        assert_eq!(observations[1].state, ReadinessState::Ready);
+        assert_eq!(observations[0].causes.is_empty(), available);
+        assert!(observations[1].causes.is_empty());
+    }
+}
+
+#[test]
 fn current_and_stale_reviews_select_exact_artifact_repairs() {
     let policy: Value = serde_json::from_str(include_str!(
         "../../../../../cairn-policy/generated/cairn-policy.json"
@@ -30,7 +136,7 @@ fn current_and_stale_reviews_select_exact_artifact_repairs() {
             .iter()
             .map(|a| crate::WorkflowProfileArtifactHash {
                 artifact_id: a.id.clone(),
-                path: format!(".cairn/changes/demo/{}", a.output_path),
+                path: a.output_path.clone(),
                 blake3: "a".repeat(64),
             })
             .collect(),
@@ -82,7 +188,8 @@ fn current_and_stale_reviews_select_exact_artifact_repairs() {
     assert!(report
         .actions
         .iter()
-        .any(|a| a.kind == "evidence_refresh" && a.target == changed));
+        .any(|a| a.kind == "evidence_refresh"
+            && a.target == format!(".cairn/changes/demo/{changed}")));
 }
 
 #[test]

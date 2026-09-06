@@ -257,6 +257,7 @@ fn task_gate_reports_valid_order_and_ready_tasks() -> Result<(), Box<dyn Error>>
         value["task_ordering"]["ready_tasks"],
         serde_json::json!(["test"])
     );
+    super::probe_execution::assert_readiness_probe_parity(&fixture, &value)?;
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
@@ -291,6 +292,7 @@ fn task_gate_rejects_cycles_without_actionable_order() -> Result<(), Box<dyn Err
         .ok_or("issues")?
         .iter()
         .any(|issue| issue["code"] == "task_ordering.cycle"));
+    super::probe_execution::assert_readiness_probe_parity(&fixture, &value)?;
     fs::remove_dir_all(fixture)?;
     Ok(())
 }

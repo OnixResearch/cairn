@@ -18,6 +18,10 @@ pub(crate) fn load_sync_merge_snapshots(
     // r[impl cairn.sync_archive.delta_merge.mutation_truth]
     let delta_root = root.join(changes_dir(layout)).join(change).join("specs");
     let specs_root = root.join(specs_dir(layout));
+    if plan.delta_specs.len() > super::source::MAX_SOURCE_ENTRIES {
+        return Err("sync source count exceeds its bound".into());
+    }
+    let mut reader = super::source::SourceReader::open(root)?;
     let mut snapshots = Vec::with_capacity(plan.delta_specs.len());
     for source_path in &plan.delta_specs {
         let source = PathBuf::from(source_path);
@@ -29,21 +33,18 @@ pub(crate) fn load_sync_merge_snapshots(
             )
         })?;
         let destination = specs_root.join(relative);
-        let delta_markdown = fs::read_to_string(&source).map_err(|source_error| {
-            format!(
-                "failed to read delta spec {}: {source_error}",
-                source.display()
-            )
-        })?;
-        let accepted_markdown = if destination.exists() {
-            Some(fs::read_to_string(&destination).map_err(|source_error| {
+        let delta_markdown = reader
+            .read_to_string_path(&source)
+            .map_err(|source_error| {
                 format!(
-                    "failed to read accepted spec {}: {source_error}",
-                    destination.display()
+                    "failed to read delta spec {}: {source_error}",
+                    source.display()
                 )
-            })?)
-        } else {
-            None
+            })?;
+        let accepted_markdown = match reader.read_to_string_path(&destination) {
+            Ok(markdown) => Some(markdown),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+            Err(error) => return Err(error.into()),
         };
         let spec_id = relative
             .parent()

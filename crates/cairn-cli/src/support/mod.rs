@@ -25,6 +25,7 @@ mod mutation;
 mod paths;
 mod receipts;
 mod scan;
+mod source;
 mod usage;
 
 pub(crate) fn validation_findings_json(issues: &[String]) -> Vec<Value> {
@@ -94,8 +95,8 @@ pub(crate) use receipts::{
 };
 pub(crate) use scan::{
     collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
-    find_change, find_spec_source, mutation_gate_blockers, read_change_dependency_graph,
-    read_gate_snapshot, scan_repo,
+    find_change, find_spec_source, mutation_gate_blockers, mutation_gate_observation,
+    read_change_dependency_graph, read_gate_snapshot, scan_repo,
 };
 pub(crate) use usage::{print_usage, usage_text};
 

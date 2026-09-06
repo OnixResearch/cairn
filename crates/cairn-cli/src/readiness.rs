@@ -1,7 +1,7 @@
 //! Bounded read-only observation adapter. No producer or mutation commands run here.
 use crate::support::{
     default_policy_path, detect_layout, find_change, load_policy_file, load_sync_merge_snapshots,
-    mutation_gate_blockers, portable_json_hash, print_json, read_change_dependency_graph,
+    mutation_gate_observation, portable_json_hash, print_json, read_change_dependency_graph,
     read_gate_snapshot, sync_merge_bindings, sync_merge_blockers, CapabilityRoot,
     CapabilityRootKind,
 };
@@ -29,6 +29,16 @@ pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             "--contract" => "contract",
             "--results" => "results",
             "--subject-hash" => "subject_hash",
+            "--cross-repo-evidence" => {
+                if input.get("cross_repo_evidence").is_none() {
+                    input["cross_repo_evidence"] = json!([]);
+                }
+                input["cross_repo_evidence"]
+                    .as_array_mut()
+                    .expect("array initialized")
+                    .push(json!(pair[1]));
+                continue;
+            }
             "--format" => {
                 format = &pair[1];
                 continue;
@@ -113,27 +123,109 @@ fn gather(
     change: &str,
     input: &Value,
 ) -> Result<ReadinessSnapshot, Box<dyn Error>> {
+    gather_observation_cohort(|| gather_once(root, policy_path, change, input))
+}
+
+fn gather_observation_cohort(
+    mut observe: impl FnMut() -> Result<ReadinessSnapshot, Box<dyn Error>>,
+) -> Result<ReadinessSnapshot, Box<dyn Error>> {
+    let mut first = observe()?;
+    let current = observe()?;
+    reject_cohort_drift(&mut first, &current);
+    Ok(first)
+}
+
+fn reject_cohort_drift(first: &mut ReadinessSnapshot, current: &ReadinessSnapshot) {
+    if first != current {
+        for observation in &mut first.observations {
+            observation.scope.evidence_hash =
+                canonical_json_hash(&json!("observation cohort changed"));
+        }
+    }
+}
+
+fn unavailable(scope: &ReadinessScope, stage: &str) -> ReadinessObservation {
+    ReadinessObservation {
+        scope: scope.clone(),
+        stage: stage.into(),
+        state: ReadinessState::Unavailable,
+        decision: json!({"evaluated": false, "error_class": "ObservationAdmission"}),
+        causes: vec![readiness_cause(
+            "observation.load_failed",
+            &scope.change,
+            "The selected observation could not be admitted",
+        )],
+    }
+}
+
+fn gather_once(
+    root: &Path,
+    policy_path: &Path,
+    change: &str,
+    input: &Value,
+) -> Result<ReadinessSnapshot, Box<dyn Error>> {
     let policy = load_policy_file(policy_path.to_path_buf())?;
     let layout = detect_layout(root).layout;
-    let status = find_change(root.to_path_buf(), layout, change)?;
-    let gate_snapshot = read_gate_snapshot(root, layout, status.clone())?;
-    let profile = crate::workflow::load_workflow_profile_context(root, layout, change, &policy)?;
-    let graph = read_change_dependency_graph(root, layout)?;
+    let completion = load_completion(root, input);
+    let lifecycle = (|| -> Result<_, Box<dyn Error>> {
+        let status = find_change(root.to_path_buf(), layout, change)?;
+        let gate_snapshot = read_gate_snapshot(root, layout, status.clone())?;
+        let profile =
+            crate::workflow::load_workflow_profile_context(root, layout, change, &policy)?;
+        Ok((status, gate_snapshot, profile))
+    })();
+    let (status, gate_snapshot, profile) = match lifecycle {
+        Ok(inputs) => inputs,
+        Err(_) => {
+            let scope = ReadinessScope {
+                change: change.into(),
+                policy_hash: canonical_json_hash(&policy.raw),
+                source_hash: canonical_json_hash(&json!({"available": false})),
+                evidence_hash: canonical_json_hash(&json!({
+                    "completion": completion.as_ref().ok(),
+                    "completion_unavailable": completion.is_err(),
+                })),
+            };
+            let mut observations = vec![unavailable(&scope, "artifact")];
+            if let Ok(Some(completion)) = completion {
+                observations.push(readiness_completion(
+                    &scope,
+                    &completion.contract,
+                    &completion.results,
+                    &completion.subject,
+                ));
+            } else {
+                observations.push(unavailable(&scope, "completion"));
+            }
+            return Ok(ReadinessSnapshot {
+                scope,
+                observations,
+            });
+        }
+    };
+    let graph = read_change_dependency_graph(root, layout);
     let probes = crate::probe::observe_gate_probes(root, layout, change, &policy);
     let policy_hash = canonical_json_hash(&policy.raw);
-    let cross = crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
-        &status,
-        &[],
-        &policy_hash,
-    );
-    let mut dependency_blockers = dependency_blockers_for_change(&graph, change);
-    dependency_blockers.extend(cairn_core::dependency_blocker_messages(&cross));
+    let external = crate::cross_repo_dependencies::load_readiness_cross_repo_evidence(root, input);
+    let cross = external.as_ref().ok().map(|evidence| {
+        crate::cross_repo_dependencies::evaluate_change_cross_repo_dependencies(
+            &status,
+            evidence,
+            &policy_hash,
+        )
+    });
+    let mut dependency_blockers = graph
+        .as_ref()
+        .map(|graph| dependency_blockers_for_change(graph, change))
+        .unwrap_or_default();
+    if let Some(cross) = &cross {
+        dependency_blockers.extend(cairn_core::dependency_blocker_messages(cross));
+    }
     let profile_blockers = if profile.selection.compatibility_fallback {
         Vec::new()
     } else {
         profile.completion_blockers()
     };
-    let completion = load_completion(root, input)?;
     let source_input =
         crate::plan_receipts::gate_input_json(layout, GateStage::Tasks, &policy, &gate_snapshot);
     let scope = ReadinessScope {
@@ -144,7 +236,21 @@ fn gather(
             root,
             &json!({
                 "profile": profile.profile_identity_hash, "probe": probes.binding, "dependencies": dependency_blockers,
-                "completion": completion, "cross_repo": cross.to_json(),
+                "dependency_graph": graph.as_ref().ok().map(|graph| json!({
+                    "nodes": graph.nodes.iter().map(crate::native::change_dependency_node_json).collect::<Vec<_>>(),
+                    "edges": graph.edges.iter().map(crate::native::change_dependency_edge_json).collect::<Vec<_>>(),
+                    "issues": graph.issues.iter().map(crate::native::change_dependency_issue_json).collect::<Vec<_>>(),
+                    "drain_order": graph.drain_order,
+                })),
+                "completion": completion.as_ref().ok(), "completion_unavailable": completion.is_err(),
+                "cross_repo": cross.as_ref().map(|cross| cross.to_json()),
+                "external": external.as_ref().ok().map(|evidence| evidence.iter().map(|summary| json!({
+                    "repo": summary.repo, "change": summary.change, "receipt_hash": summary.receipt_hash,
+                    "policy_hash": summary.policy_hash, "subject_hash": summary.subject_hash,
+                    "status": summary.status, "receipt_kind": summary.receipt_kind,
+                    "artifact_ref": summary.artifact_ref, "diagnostic_summary": summary.diagnostic_summary,
+                })).collect::<Vec<_>>()),
+                "external_unavailable": external.is_err(),
             }),
         ),
     };
@@ -167,9 +273,17 @@ fn gather(
                 Vec::new()
             },
         );
-        observations.push(readiness_gate(&scope, &report));
+        observations.push(readiness_gate_with_external_causes(
+            &scope,
+            &report,
+            if stage == GateStage::Tasks {
+                &probes.readiness_causes
+            } else {
+                &[]
+            },
+        ));
     }
-    if let Some(completion) = &completion {
+    if let Ok(Some(completion)) = &completion {
         observations.push(readiness_completion(
             &scope,
             &completion.contract,
@@ -177,50 +291,77 @@ fn gather(
             &completion.subject,
         ));
     }
-    let mut plan_blockers = dependency_blockers.clone();
-    plan_blockers.extend(profile_blockers);
-    let sync = build_sync_plan_for_effect_with_dependency_blockers(
-        &status,
-        &plan_blockers,
-        &profile.schema.spec_effect,
+    if completion.is_err() {
+        observations.push(unavailable(&scope, "completion"));
+    }
+    let mutations = (|| -> Result<Vec<ReadinessObservation>, Box<dyn Error>> {
+        let graph = graph?;
+        external?;
+        let mut plan_blockers = dependency_blockers.clone();
+        plan_blockers.extend(profile_blockers);
+        let sync = build_sync_plan_for_effect_with_dependency_blockers(
+            &status,
+            &plan_blockers,
+            &profile.schema.spec_effect,
+        );
+        let archive = build_archive_plan_for_effect_with_dependency_blockers(
+            &status,
+            &plan_blockers,
+            &profile.schema.spec_effect,
+        );
+        let merges = load_sync_merge_snapshots(root, layout, change, &sync);
+        let merge_reasons = merges
+            .as_ref()
+            .map(|merges| sync_merge_blockers(root, merges))
+            .unwrap_or_default();
+        let merge_binding = merges
+            .as_ref()
+            .ok()
+            .map(|merges| sync_merge_bindings(root, merges));
+        let (gate_reasons, gate_binding) =
+            mutation_gate_observation(root, layout, &status, GateStage::Tasks, &policy)?;
+        let mut mutations = readiness_mutation_observations(ReadinessMutationInputs {
+            scope: &scope,
+            sync: &sync,
+            archive: &archive,
+            merge_binding,
+            merge_reasons: &merge_reasons,
+            gate_reasons: &gate_reasons,
+            policy: &policy,
+            dependencies: &graph,
+        });
+        for observation in &mut mutations {
+            observation.decision["validation_input_hash"] =
+                json!(portable_json_hash(root, &gate_binding));
+        }
+        Ok(mutations)
+    })();
+    match mutations {
+        Ok(mutations) => observations.extend(mutations),
+        Err(_) => {
+            observations.extend([unavailable(&scope, "sync"), unavailable(&scope, "archive")])
+        }
+    }
+    let mut scope = scope;
+    scope.evidence_hash = portable_json_hash(
+        root,
+        &json!({
+            "evidence": scope.evidence_hash,
+            "decisions": observations.iter().map(|o| &o.decision).collect::<Vec<_>>()
+        }),
     );
-    let archive = build_archive_plan_for_effect_with_dependency_blockers(
-        &status,
-        &plan_blockers,
-        &profile.schema.spec_effect,
-    );
-    let merges = load_sync_merge_snapshots(root, layout, change, &sync)?;
-    let merge_reasons = sync_merge_blockers(root, &merges);
-    let gate_reasons = mutation_gate_blockers(root, layout, &status, GateStage::Tasks, &policy)?;
-    observations.extend(readiness_mutation_observations(ReadinessMutationInputs {
-        scope: &scope,
-        sync: &sync,
-        archive: &archive,
-        merge_binding: json!(sync_merge_bindings(root, &merges)),
-        merge_reasons: &merge_reasons,
-        gate_reasons: &gate_reasons,
-        policy: &policy,
-        dependencies: &graph,
-    }));
-    // A second bounded source/profile observation detects drift during composition.
-    let current_status = find_change(root.to_path_buf(), layout, change)?;
-    let current = read_gate_snapshot(root, layout, current_status)?;
-    let current_profile =
-        crate::workflow::load_workflow_profile_context(root, layout, change, &policy)?;
-    if scope.source_hash
-        != portable_json_hash(
-            root,
-            &crate::plan_receipts::gate_input_json(layout, GateStage::Tasks, &policy, &current),
-        )
-        || profile.profile_identity_hash != current_profile.profile_identity_hash
-    {
-        observations[0].scope.source_hash = canonical_json_hash(&json!("source changed"));
+    for observation in &mut observations {
+        observation.scope = scope.clone();
     }
     Ok(ReadinessSnapshot {
         scope,
         observations,
     })
 }
+
+#[cfg(test)]
+#[path = "readiness_tests.rs"]
+mod tests;
 
 #[derive(serde::Serialize)]
 struct CompletionInputs {
@@ -240,8 +381,10 @@ fn load_completion(root: &Path, input: &Value) -> Result<Option<CompletionInputs
             let capability = CapabilityRoot::open(CapabilityRootKind::Scan, root)?;
             let contract = capability
                 .read_bounded(Path::new(contract), MAX_READINESS_OBSERVATION_BYTES as u64)?;
-            let results = capability
-                .read_bounded(Path::new(results), MAX_READINESS_OBSERVATION_BYTES as u64)?;
+            let remaining = MAX_READINESS_OBSERVATION_BYTES
+                .checked_sub(contract.len())
+                .ok_or("completion aggregate byte bound")?;
+            let results = capability.read_bounded(Path::new(results), remaining as u64)?;
             Ok(Some(CompletionInputs {
                 contract: serde_json::from_slice(&contract)?,
                 results: serde_json::from_slice(&results)?,

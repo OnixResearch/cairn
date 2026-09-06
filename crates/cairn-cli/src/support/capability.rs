@@ -80,6 +80,37 @@ impl CapabilityRoot {
         Ok((root, file_name))
     }
 
+    pub(crate) fn open_nofollow(kind: CapabilityRootKind, path: &Path) -> io::Result<Self> {
+        // Keep parent components for compatibility, but resolve each normal
+        // component before processing `..`. A symlink/.. pair cannot hide a link.
+        let absolute = std::path::absolute(path)?;
+        let anchor = absolute
+            .ancestors()
+            .last()
+            .ok_or_else(capability_path_error)?;
+        let mut directories = vec![Dir::open_ambient_dir(anchor, ambient_authority())?];
+        for component in absolute.components() {
+            match component {
+                Component::Normal(name) => {
+                    let parent = directories.last().ok_or_else(capability_path_error)?;
+                    directories.push(parent.open_dir_nofollow(name)?);
+                }
+                Component::ParentDir if directories.len() > 1 => {
+                    directories.pop();
+                }
+                Component::ParentDir
+                | Component::CurDir
+                | Component::RootDir
+                | Component::Prefix(_) => {}
+            }
+        }
+        Ok(Self {
+            kind,
+            display_path: path.to_path_buf(),
+            dir: directories.pop().ok_or_else(capability_path_error)?,
+        })
+    }
+
     pub(crate) fn kind(&self) -> CapabilityRootKind {
         self.kind
     }
@@ -175,9 +206,10 @@ impl CapabilityRoot {
         self.dir.create_dir_all(relative)
     }
 
-    pub(crate) fn metadata(&self, relative: &Path) -> io::Result<cap_std::fs::Metadata> {
+    pub(crate) fn metadata_nofollow(&self, relative: &Path) -> io::Result<cap_std::fs::Metadata> {
         let relative = self.relative(relative)?;
-        self.dir.metadata(relative)
+        let (parent, leaf) = self.nofollow_parent(&relative)?;
+        parent.symlink_metadata(leaf)
     }
 
     pub(crate) fn symlink_metadata(&self, relative: &Path) -> io::Result<cap_std::fs::Metadata> {
@@ -241,11 +273,6 @@ impl CapabilityRoot {
         self.read_bounded(&relative, max_bytes)
     }
 
-    pub(crate) fn read_to_string_path(&self, path: &Path) -> io::Result<String> {
-        let relative = self.relative_from_display_path(path)?;
-        self.read_to_string(&relative)
-    }
-
     pub(crate) fn write_path(&self, path: &Path, contents: &[u8]) -> io::Result<()> {
         let relative = self.relative_from_display_path(path)?;
         self.write(&relative, contents)
@@ -254,11 +281,6 @@ impl CapabilityRoot {
     pub(crate) fn create_dir_all_path(&self, path: &Path) -> io::Result<()> {
         let relative = self.relative_from_display_path(path)?;
         self.create_dir_all(&relative)
-    }
-
-    pub(crate) fn metadata_path(&self, path: &Path) -> io::Result<cap_std::fs::Metadata> {
-        let relative = self.relative_from_display_path(path)?;
-        self.metadata(&relative)
     }
 
     pub(crate) fn symlink_metadata_path(&self, path: &Path) -> io::Result<cap_std::fs::Metadata> {
@@ -286,7 +308,8 @@ impl CapabilityRoot {
         let directory = if relative == Path::new(".") {
             self.dir.try_clone()?
         } else {
-            self.dir.open_dir(&relative)?
+            let (parent, leaf) = self.nofollow_parent(&relative)?;
+            parent.open_dir_nofollow(leaf)?
         };
         let mut entries = Vec::new();
         for entry in directory.entries()? {
@@ -301,7 +324,7 @@ impl CapabilityRoot {
         Ok(entries)
     }
 
-    fn relative_from_display_path(&self, path: &Path) -> io::Result<PathBuf> {
+    pub(crate) fn relative_from_display_path(&self, path: &Path) -> io::Result<PathBuf> {
         let relative = if path == self.display_path {
             PathBuf::from(".")
         } else if let Ok(relative) = path.strip_prefix(&self.display_path) {

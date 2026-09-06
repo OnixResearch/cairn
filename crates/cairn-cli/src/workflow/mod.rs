@@ -1,6 +1,5 @@
 use std::{
     error::Error,
-    fs,
     io::ErrorKind,
     path::{Path, PathBuf},
 };
@@ -553,28 +552,13 @@ fn read_bounded_text(
     relative: &Path,
     max_bytes: usize,
 ) -> Result<Option<String>, Box<dyn Error>> {
-    let path = root.join(relative);
-    let metadata = match fs::symlink_metadata(&path) {
-        Ok(metadata) => metadata,
+    let capability = CapabilityRoot::open(CapabilityRootKind::Scan, root)?;
+    let bytes = match capability.read_bounded(relative, u64::try_from(max_bytes)?) {
+        Ok(bytes) => bytes,
         Err(error) if error.kind() == ErrorKind::NotFound => return Ok(None),
         Err(error) => return Err(error.into()),
     };
-    if metadata.file_type().is_symlink() || !metadata.is_file() {
-        return Err(format!(
-            "workflow profile artifact is not a safe file: {}",
-            path.display()
-        )
-        .into());
-    }
-    let max_bytes = u64::try_from(max_bytes)?;
-    if metadata.len() > max_bytes {
-        return Err(format!(
-            "workflow profile artifact exceeds its byte bound: {}",
-            path.display()
-        )
-        .into());
-    }
-    Ok(Some(fs::read_to_string(path)?))
+    Ok(Some(String::from_utf8(bytes)?))
 }
 
 pub(crate) fn add_mcp_transport(mut value: Value) -> Value {
@@ -600,6 +584,43 @@ mod tests {
     const VALID_PROPOSAL: &str = "## Why\n\nA deterministic test is required.\n\n## What Changes\n\n- Add a test.\n\n## Impact\n\n- Tests change.\n";
     const VALID_DESIGN: &str = "# Design\n\n## Decision\n\nUse a deterministic fixture.\n";
     const VALID_TASKS: &str = "# Tasks\n\n- [ ] [serial] Add the fixture. r[demo.workflow]\n";
+
+    #[test]
+    fn admission_text_uses_bounded_regular_file_reads() -> Result<(), Box<dyn Error>> {
+        const LIMIT: usize = 4;
+        let root = test_root("admission-bound");
+        fs::create_dir_all(&root)?;
+        fs::write(root.join("artifact"), b"text")?;
+        assert_eq!(
+            read_bounded_text(&root, Path::new("artifact"), LIMIT)?,
+            Some("text".into())
+        );
+        assert_eq!(read_bounded_text(&root, Path::new("missing"), LIMIT)?, None);
+        fs::write(root.join("artifact"), b"extra")?;
+        assert!(read_bounded_text(&root, Path::new("artifact"), LIMIT).is_err());
+        assert!(read_bounded_text(&root, Path::new("."), LIMIT).is_err());
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn admission_text_rejects_linked_parent_and_dangling_leaf() -> Result<(), Box<dyn Error>> {
+        use std::os::unix::fs::symlink;
+        let root = test_root("admission-links");
+        fs::create_dir_all(root.join("real"))?;
+        fs::write(root.join("real/artifact"), b"text")?;
+        symlink("real", root.join("alias"))?;
+        symlink("missing", root.join("dangling"))?;
+        for path in ["alias/artifact", "dangling"] {
+            assert!(
+                read_bounded_text(&root, Path::new(path), 4).is_err(),
+                "{path}"
+            );
+        }
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
 
     fn test_root(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
