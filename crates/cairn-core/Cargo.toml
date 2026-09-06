@@ -9,6 +9,7 @@ repository.workspace = true
 artifact-auth-core.workspace = true
 blake3.workspace = true
 iddqd.workspace = true
+kiln-core.workspace = true
 preserves.workspace = true
 serde.workspace = true
 serde_json.workspace = true

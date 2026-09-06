@@ -1,0 +1,11 @@
+[package]
+name = "cairn-lattice-fixture-replay"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+lattice-workflow-contract = { git = "ssh://git@github.com/OnixResearch/lattice.git", rev = "70496e67c7fd4a8b05914161a8e09de2759bebc8" }
+serde_json = "1"

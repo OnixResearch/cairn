@@ -2,7 +2,7 @@
 
 ## Available boundary
 
-Cairn provides pure admission, Linux bounded execution, durable local publication, manifest verification, and saved Mantle and Octet admission.
+Cairn provides pure admission, Linux bounded execution, durable local publication, manifest verification, and saved Mantle, Octet, Lattice, Kiln, and Valence admission.
 The active change remains incomplete. Cairn producer-adapter maintainers own this boundary.
 The current live consumer is Cairn's original completion validator.
 The maintained disposable Cargo and Nix fixtures need no manual result edits.
@@ -27,7 +27,9 @@ A symlink descriptor fails admission. Only a regular-file descriptor is reopened
 This fail-closed equivalent prevents symlink substitution and avoids device or FIFO read effects before file-type admission.
 Missing procfs support and unsupported platform ABIs fail closed.
 Contract, profile, applicability, projection, and saved-observation inputs use this mechanism, as do cancellation controls and publication readback.
-Policy loading still uses the existing ambient loader. Its no-follow and bounded-read conversion remains an open local-execution task.
+Producer policy loading uses the same descriptor reader with a 4 MiB bound and the original `validate_policy_json` function.
+Absolute policy paths start at `/`. Relative policy paths retain their current-working-directory meaning.
+Policy read and validation errors omit paths, contents, and parser diagnostics.
 The selected file set does not prove source-closure completeness.
 Consumers retain projection review, including build inputs and exclusions for evidence and build output.
 
@@ -158,6 +160,34 @@ The source contract does not bind full-catalog deny-all scope. Passing, failed, 
 This translation uses no Octet source implementation or Cargo dependency. The pinned contract revision is `890f424cd7b1b2015f39c0eb5747f1bd1e576028`.
 The source contract retains its AGPL-3.0-or-later notice. This consumer translation does not change upstream licenses or claims.
 
+```console
+cairn check-evidence import lattice --root SAVED_DIRECTORY \
+  --profile profile.json --request request.json \
+  --accepted accepted.json --observation observation.json
+cairn check-evidence import kiln --root SAVED_DIRECTORY \
+  --plan plan.json --observation observation.json
+cairn check-evidence import valence --root SAVED_DIRECTORY --observation sidecar.json
+```
+
+Lattice admission checks the original profile, request, accepted record, observation, and framed identities.
+It checks ordered capabilities, graph membership and cycles, controls, native states, receipts, and ordered bounded logs.
+Cairn admits at most 64 graph nodes, edges, and log references, within the producer's declared limits.
+The original published producer fixture and its rejection controls accompany a separate native-library fixture replay.
+Skipped nodes remain natively successful. They never establish executed-test coverage.
+
+Kiln admission calls the pinned `kiln-core::workflow::admit_workflow_observation` function after the original nominal constructors admit JSON values.
+Its native status and CI outcome remain separate. The adapter adds finite input bounds but does not replace CI decisions.
+The published Kiln workflow DTO has no non-claim field. Cairn states the consumer boundary explicitly instead of inventing native claims.
+
+Valence admission implements the bounded intersection of the published Nickel sidecar contract and Rust sidecar validator.
+It preserves binary and parent artifact identities, source identity hashes, claim scope, and the reviewed stack and chain non-claims.
+Unreviewed extra non-claim text is unsupported and rejected, so arbitrary input text cannot enter the safe receipt.
+No measured binary bytes or executed tests are present. This adapter does not perform built-binary thread verification.
+
+All three adapters return empty completion rows and `completion_eligible: false`.
+Native identity admission proves neither producer authenticity nor current Cairn command applicability.
+See [fixture provenance](../fixtures/check-evidence/README.md) for immutable revisions, original fixtures, and repeatable commands.
+
 ## Published dependency cohort and notices
 
 | Dependency | Immutable revision | Imported scope | Public license |
@@ -165,6 +195,7 @@ The source contract retains its AGPL-3.0-or-later notice. This consumer translat
 | Bounded Exec | `29dac88ecded94457572db3fdfaaaab95fa91525` | `bounded-exec` and its core | AGPL-3.0-or-later |
 | Durable File Publication | `951c27f59003cea9bfdb40ed4d89653d50fada1f` | Published one-file crate and Linux adapter | MIT OR Apache-2.0 |
 | Mantle | `0bbab77e23ab95caa4e4184b9945cfaa5c8040e2` | `mantle-build-contract` only | AGPL-3.0-or-later |
+| Kiln | `5d99f4e9bb954743443e340baece31256b4c53f1` | `kiln-core` workflow admission and nominal values | MIT OR Apache-2.0 |
 
 Cargo and Nix acquire complete pinned sources through their published Git transports.
 No producer implementation is copied. Upstream source distributions retain their license and contributor notices.
@@ -172,7 +203,12 @@ The owner-authorized reuse grant applies only to exclusively OnixResearch-owned 
 `nix/check-producer-source-pins.nix` checks matching Cargo/Nix revisions and rejects a substituted revision.
 The existing Octet/Slotcar compiler and check pin remains unchanged.
 
-Lattice, Kiln, and Valence adapters remain unavailable.
-The reviewed Lattice contract requires BLAKE3 1.8.3, while the reviewed Mantle contract requires exactly 1.8.2.
-A joint dependency-resolution probe records the resulting blocker separately from runtime conformance.
+The Lattice native fixture helper has a separate locked Cargo graph. Its producer requires BLAKE3 1.8.3 or later; Mantle requires exactly 1.8.2.
+The product JSON translator preserves the pinned Lattice framing without joining those dependency graphs.
+Kiln's published source is `https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git`.
+
+The Nix consumer packaging adapter limits Mantle package discovery to `crates/mantle-build-contract`.
+It retains the complete pinned checkout for workspace inheritance and uses Cargo's original package admission and Crane's inheritance resolver.
+It compares the packaged source directory and license against the immutable input. No producer source or lint command changes.
+The source-pin check also rejects changed revisions and substituted workspace inheritance metadata.
 See the active change's implementation reports for commands, observed verdicts, and remaining work.

@@ -1,6 +1,6 @@
 //! Read-only bundle consumer. Interrupted output never authorizes recovery mutation.
 use super::{local, named_options, read_input, reads};
-use crate::support::{load_policy_file, print_json, CapabilityRoot, CapabilityRootKind};
+use crate::support::{print_json, CapabilityRoot, CapabilityRootKind};
 use cairn_core::verified::check_evidence::*;
 use cairn_core::{canonical_json_hash, AgentVerificationContract};
 use serde_json::{json, Value};
@@ -33,13 +33,12 @@ pub(super) fn verify(args: &[String]) -> Result<(), Box<dyn Error>> {
     let profiles: Vec<CheckProfile> = read_input(&root, required("--profiles")?)?;
     let applicability: Applicability = read_input(&root, required("--applicability")?)?;
     let projection: Vec<String> = read_input(&root, required("--projection")?)?;
-    let policy = load_policy_file(
+    let policy = super::policy::load(Path::new(
         options
             .get("--policy")
             .copied()
-            .unwrap_or(crate::support::default_policy_path())
-            .into(),
-    )?;
+            .unwrap_or(crate::support::default_policy_path()),
+    ))?;
     if applicability.policy_hash != canonical_json_hash(&policy.raw)
         || applicability.source_projection_hash != canonical_json_hash(&json!(projection))
         || applicability.subject_hash != local::source_hash(&root, &projection)?

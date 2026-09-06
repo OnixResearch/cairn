@@ -1,0 +1,88 @@
+{
+  "observation": {
+    "attempt_id": "attempt",
+    "candidate_id": "candidate",
+    "effect_id": "effect",
+    "execution": {
+      "contract_version": 1,
+      "native_id": "execution",
+      "native_kind": "execution",
+      "provider_namespace": "lattice"
+    },
+    "idempotency_key": "0000000000000000000000000000000000000000000000000000000000000000",
+    "logs": [],
+    "nodes": [
+      {
+        "adapter": {
+          "contract_version": 1,
+          "native_id": "adapter",
+          "native_kind": "adapter",
+          "provider_namespace": "lattice"
+        },
+        "node_id": "test",
+        "receipt": {
+          "contract_version": 1,
+          "native_id": "receipt",
+          "native_kind": "receipt",
+          "provider_namespace": "lattice"
+        },
+        "state": "Completed",
+        "successful": true,
+        "terminal": true
+      }
+    ],
+    "outcome": "Success",
+    "pipeline_revision_id": "pipeline",
+    "provider_profile": "lattice-v1",
+    "receipt": {
+      "contract_version": 1,
+      "native_id": "receipt",
+      "native_kind": "receipt",
+      "provider_namespace": "lattice"
+    },
+    "sequence": 4,
+    "state": "Completed",
+    "successful": true,
+    "terminal": true,
+    "workflow": {
+      "contract_version": 1,
+      "native_id": "workflow",
+      "native_kind": "workflow",
+      "provider_namespace": "lattice"
+    },
+    "workflow_policy_id": "policy"
+  },
+  "plan": {
+    "attempt_id": "attempt",
+    "bounds": {
+      "max_edges": 16,
+      "max_log_read_bytes": 4096,
+      "max_log_references": 8,
+      "max_nodes": 8,
+      "max_total_log_bytes": 16384
+    },
+    "candidate_id": "candidate",
+    "controls": {
+      "cancel": true,
+      "pause": true,
+      "resume": true
+    },
+    "edges": [],
+    "effect_id": "effect",
+    "idempotency_key": "0000000000000000000000000000000000000000000000000000000000000000",
+    "nodes": [
+      {
+        "adapter_kind": "local",
+        "effect_class": "Test",
+        "id": "test",
+        "kind": "test",
+        "operation_identity": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "pipeline_revision_id": "pipeline",
+    "platform": "linux-x86_64",
+    "provider_profile": "lattice-v1",
+    "source": null,
+    "workflow_policy_id": "policy"
+  }
+}

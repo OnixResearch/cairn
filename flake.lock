@@ -391,6 +391,23 @@
         "type": "github"
       }
     },
+    "kiln-core": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788142402,
+        "narHash": "sha256-ULVaEH8tOiR2SoHVkpB5dB7ZKrvu99VxQ8KBLytP+RM=",
+        "ref": "refs/heads/main",
+        "rev": "5d99f4e9bb954743443e340baece31256b4c53f1",
+        "revCount": 68,
+        "type": "git",
+        "url": "https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git"
+      },
+      "original": {
+        "rev": "5d99f4e9bb954743443e340baece31256b4c53f1",
+        "type": "git",
+        "url": "https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git"
+      }
+    },
     "mantle-build-contract": {
       "flake": false,
       "locked": {
@@ -578,6 +595,7 @@
         "artifact": "artifact",
         "bounded-exec": "bounded-exec",
         "durable-file-publication": "durable-file-publication",
+        "kiln-core": "kiln-core",
         "mantle-build-contract": "mantle-build-contract",
         "nickel-1-17-0": "nickel-1-17-0",
         "nickel-export": "nickel-export",

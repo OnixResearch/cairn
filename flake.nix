@@ -14,6 +14,10 @@
   # r[impl cairn.nickel_toolchain.cohort] r[impl cairn.nickel_toolchain.lockfile]
   inputs.nickel-1-17-0.url = "github:nickel-lang/nickel/1320a983e6c3d1e2fb53dd2464b084b4903b1426";
   inputs.slotcar.url = "github:OnixResearch/slotcar";
+  inputs.kiln-core = {
+    url = "git+https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git?rev=5d99f4e9bb954743443e340baece31256b4c53f1";
+    flake = false;
+  };
   inputs.mantle-build-contract = {
     url = "git+ssh://git@github.com/OnixResearch/mantle.git?rev=0bbab77e23ab95caa4e4184b9945cfaa5c8040e2";
     flake = false;
@@ -142,10 +146,29 @@
             changed = facts // {
               inputs = facts.inputs // { bounded-exec = { rev = "substituted"; }; };
             };
+            mantle = self.inputs.mantle-build-contract;
+            packaging = {
+              workspace = builtins.fromTOML (builtins.readFile "${mantle}/Cargo.toml");
+              manifest = builtins.fromTOML (builtins.readFile "${mantle}/crates/mantle-build-contract/Cargo.toml");
+            };
+            vendor = import ./nix/producer-cargo-vendor.nix {
+              inherit pkgs;
+              crane = slotcar.inputs.crane;
+              mantleSource = mantle;
+              cargoLock = ./Cargo.lock;
+            };
           in
           assert checker.validate facts;
           assert !(checker.validate changed);
+          assert !(checker.validate (facts // {
+            inputs = facts.inputs // { mantle-build-contract = { rev = "substituted"; }; };
+          }));
+          assert checker.validateMantlePackaging packaging;
+          assert !(checker.validateMantlePackaging (packaging // {
+            workspace.workspace.package = packaging.workspace.workspace.package // { license = "substituted"; };
+          }));
           pkgs.runCommand "cairn-check-producer-source-pins" { } ''
+            test -f ${vendor}/config.toml
             touch "$out"
           '';
         artifact-auth-source-pin =
@@ -796,13 +819,30 @@
           doCheck = false;
         };
 
-        slotcar = slotcar.lib.mkConsumerCheck {
-          system = pkgs.stdenv.hostPlatform.system;
-          src = self;
-          cargoLock = ./Cargo.lock;
-          cargoExtraArgs = "--all-targets --features redb-registry";
-          nativeBuildInputs = [ pkgs.stdenv.cc ];
-        };
+        slotcar =
+          let
+            vendor = import ./nix/producer-cargo-vendor.nix {
+              inherit pkgs;
+              crane = slotcar.inputs.crane;
+              mantleSource = self.inputs.mantle-build-contract;
+              cargoLock = ./Cargo.lock;
+            };
+            consumer = slotcar.lib.mkConsumerCheck {
+              system = pkgs.stdenv.hostPlatform.system;
+              src = self;
+              # Supply the same locked dependencies through our packaging adapter.
+              # The upstream consumer command and full check scope stay unchanged.
+              cargoExtraArgs = "--all-targets --features redb-registry";
+              nativeBuildInputs = [ pkgs.stdenv.cc ];
+            };
+          in
+          consumer.overrideAttrs (old: {
+            buildCommand = ''
+              export CARGO_HOME="$TMPDIR/cairn-cargo-home"
+              mkdir -p "$CARGO_HOME"
+              cp ${vendor}/config.toml "$CARGO_HOME/config.toml"
+            '' + old.buildCommand;
+          });
       });
 
       devShells = eachSystem (pkgs: {

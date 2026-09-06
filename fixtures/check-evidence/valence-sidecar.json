@@ -1,0 +1,36 @@
+{
+  "binary_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "chain": {
+    "boundary": "provenance chain proves identity and linkage only; it does not prove behavioral correctness, semantic equivalence, or that the binary satisfies the requirement",
+    "links": [
+      {
+        "artifact_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "binary_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "function_object_id": "status.json",
+        "requirement_ids": [
+          "r[octet.policy.no_unwrap]"
+        ],
+        "source_id": "octet.standards.formal-proof"
+      }
+    ],
+    "schema": "valence.provenance-chain.v1"
+  },
+  "claim_scope": "identity-linkage-sidecar",
+  "diagnostics": [],
+  "non_claims": [
+    "stack provenance proves identity and linkage only; it does not prove behavioral correctness, semantic equivalence, whole-program safety, or requirement satisfaction",
+    "provenance chain proves identity and linkage only; it does not prove behavioral correctness, semantic equivalence, or that the binary satisfies the requirement"
+  ],
+  "octet_export_artifact_dir": "target/octet-artifact",
+  "parent_artifacts": [
+    {
+      "artifact": "status.json",
+      "blake3": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    {
+      "artifact": "results.jsonl",
+      "blake3": "3333333333333333333333333333333333333333333333333333333333333333"
+    }
+  ],
+  "schema": "valence.stack-provenance-sidecar.v1"
+}

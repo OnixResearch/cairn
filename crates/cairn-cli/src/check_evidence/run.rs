@@ -1,5 +1,5 @@
 use super::{local, named_options, publication::Publisher, read_input};
-use crate::support::{load_policy_file, print_json};
+use crate::support::print_json;
 use cairn_core::verified::check_evidence::*;
 use cairn_core::{canonical_json_hash, AgentVerificationContract};
 use serde_json::json;
@@ -66,12 +66,11 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
     let profiles: Vec<CheckProfile> = read_input(&root, required("--profiles")?)?;
     let applicability: Applicability = read_input(&root, required("--applicability")?)?;
     let paths: Vec<String> = read_input(&root, required("--projection")?)?;
-    let policy = load_policy_file(
+    let policy = super::policy::load(Path::new(
         opts.get("--policy")
             .copied()
-            .unwrap_or(crate::support::default_policy_path())
-            .into(),
-    )?;
+            .unwrap_or(crate::support::default_policy_path()),
+    ))?;
     if applicability.policy_hash != canonical_json_hash(&policy.raw) {
         return Err("check-evidence policy identity is stale".into());
     }

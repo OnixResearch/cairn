@@ -1,6 +1,7 @@
 //! Producer composition root. Execution requires a reviewed plan and explicit authority.
 #[cfg(target_os = "linux")]
 mod local;
+mod policy;
 #[cfg(target_os = "linux")]
 mod publication;
 #[cfg(target_os = "linux")]
@@ -17,7 +18,7 @@ use cairn_core::{canonical_json_hash, AgentVerificationContract};
 use serde::de::DeserializeOwned;
 use serde_json::json;
 
-use crate::support::{load_policy_file, print_json, CapabilityRoot, CapabilityRootKind};
+use crate::support::{print_json, CapabilityRoot, CapabilityRootKind};
 
 const MAX_INPUT_BYTES: u64 = 1_048_576;
 const MAX_ARGUMENTS: usize = 12;
@@ -103,7 +104,7 @@ fn run_plan(args: &[String]) -> Result<(), Box<dyn Error>> {
         .get("--policy")
         .copied()
         .unwrap_or(crate::support::default_policy_path());
-    let policy = load_policy_file(policy_path.into())?;
+    let policy = policy::load(Path::new(policy_path))?;
     if applicability.policy_hash != canonical_json_hash(&policy.raw) {
         return Err("check-evidence policy identity is stale".into());
     }

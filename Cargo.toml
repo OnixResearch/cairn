@@ -27,6 +27,7 @@ ed25519-dalek = "2.2"
 git-ref-format-core = "0.6.0"
 git2 = { version = "0.20.4", features = ["vendored-libgit2"], default-features = false }
 iddqd = "0.4.5"
+kiln-core = { git = "https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git", rev = "5d99f4e9bb954743443e340baece31256b4c53f1" }
 mantle-build-contract = { git = "ssh://git@github.com/OnixResearch/mantle.git", rev = "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2" }
 nickel-export-core = { git = "https://github.com/OnixResearch/nickel-export", rev = "257fafc1c746f1faf156207043a4c826bfb16d49" }
 nonempty = "0.9"

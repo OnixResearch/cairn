@@ -356,6 +356,7 @@ dependencies = [
  "artifact-auth-core",
  "blake3",
  "iddqd",
+ "kiln-core",
  "preserves",
  "serde",
  "serde_json",
@@ -1387,6 +1388,15 @@ dependencies = [
  "hashbrown 0.16.1",
  "portable-atomic",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "kiln-core"
+version = "0.1.0"
+source = "git+https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git?rev=5d99f4e9bb954743443e340baece31256b4c53f1#5d99f4e9bb954743443e340baece31256b4c53f1"
+dependencies = [
+ "blake3",
+ "serde",
 ]
 
 [[package]]
