@@ -34,6 +34,32 @@ fn nickel_bootstrap_contract_accepts_cohort_and_rejects_excessive_bound(
         export_current: true,
     };
     assert_eq!(admit_cohort(&cohort, &observed, None), Ok(()));
+    let records = export("fixtures/consumer-bootstrap/ownership-upgrade.ncl")?;
+    assert!(
+        records.status.success(),
+        "{}",
+        String::from_utf8_lossy(&records.stderr)
+    );
+    let records: serde_json::Value = serde_json::from_slice(&records.stdout)?;
+    let _: cairn_core::verified::consumer_bootstrap::BootstrapOwnership =
+        serde_json::from_value(records["ownership"].clone())?;
+    let _: cairn_core::verified::consumer_bootstrap::BootstrapUpgrade =
+        serde_json::from_value(records["upgrade"].clone())?;
+    let rejected_ownership = export("fixtures/consumer-bootstrap/rejected-ownership.ncl")?;
+    assert!(!rejected_ownership.status.success());
+    assert!(String::from_utf8_lossy(&rejected_ownership.stderr).contains("contract broken"));
+    let project = export("fixtures/consumer-bootstrap/project.ncl")?;
+    assert!(
+        project.status.success(),
+        "{}",
+        String::from_utf8_lossy(&project.stderr)
+    );
+    let declaration: cairn_core::verified::consumer_bootstrap::BootstrapProjectDeclaration =
+        serde_json::from_slice(&project.stdout)?;
+    declaration.validate()?;
+    let rejected_project = export("fixtures/consumer-bootstrap/rejected-project.ncl")?;
+    assert!(!rejected_project.status.success());
+    assert!(String::from_utf8_lossy(&rejected_project.stderr).contains("contract broken"));
     let rejected = export("fixtures/consumer-bootstrap/rejected-bound.ncl")?;
     assert!(!rejected.status.success());
     assert!(String::from_utf8_lossy(&rejected.stderr).contains("contract broken"));

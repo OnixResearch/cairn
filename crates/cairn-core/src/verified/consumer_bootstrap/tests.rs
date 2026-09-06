@@ -104,6 +104,41 @@ fn identity_decode_rejects_noncanonical_values() {
     }
 }
 
+// r[verify cairn.consumer_bootstrap.policy]
+#[test]
+fn project_declaration_is_closed_and_does_not_grant_path_authority() {
+    let mut declaration = BootstrapProjectDeclaration {
+        schema: "cairn.bootstrap-project.v1".into(),
+        policy_locator: ".cairn/bootstrap/policy.json".into(),
+        policy: id("policy"),
+        cohort: id("cohort"),
+        complete_manifest: id("manifest"),
+    };
+    assert_eq!(declaration.validate(), Ok(()));
+    for locator in [
+        "",
+        "/policy",
+        "../policy",
+        "a/../policy",
+        "a//b",
+        ".",
+        "a/./b",
+        "a\\b",
+    ] {
+        declaration.policy_locator = locator.into();
+        assert_eq!(
+            declaration.validate(),
+            Err(BootstrapError::InvalidSelection)
+        );
+    }
+    declaration.policy_locator = "policy.json".into();
+    declaration.schema = "future".into();
+    assert_eq!(
+        declaration.validate(),
+        Err(BootstrapError::InvalidSelection)
+    );
+}
+
 // r[verify cairn.consumer_bootstrap.compatibility]
 #[test]
 fn exact_cohort_and_explicit_upgrade_are_required() {

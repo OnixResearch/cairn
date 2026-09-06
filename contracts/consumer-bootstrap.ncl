@@ -53,6 +53,27 @@ let PolicySelection = {
   ),
   identity | Identity,
 } in
+let RelativeLocator = std.contract.from_predicate (fun value =>
+  std.is_string value && std.string.length value > 0
+  && std.string.length value <= MaximumLabelBytes
+  && std.string.is_match "^[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$" value
+  && std.array.all (fun part => part != "." && part != "..") (std.string.split "/" value)
+) in
+let ProjectDeclaration = {
+  schema | std.contract.from_predicate (fun value => value == "cairn.bootstrap-project.v1"),
+  policy_locator | RelativeLocator,
+  policy | Identity,
+  cohort | Identity,
+  complete_manifest | Identity,
+} in
+let Ownership = {
+  locator | Identity,
+  identity | Identity,
+} in
+let Upgrade = {
+  from | Identity,
+  to | Identity,
+} in
 let Recovery = {
   prepared_plan | Identity,
   decision | std.contract.from_predicate (fun value =>
@@ -65,5 +86,8 @@ let Recovery = {
   bounds = Bounds,
   cohort = Cohort,
   policy_selection = PolicySelection,
+  project_declaration = ProjectDeclaration,
+  ownership = Ownership,
+  upgrade = Upgrade,
   recovery = Recovery,
 }

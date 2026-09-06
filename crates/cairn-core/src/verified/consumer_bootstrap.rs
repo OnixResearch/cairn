@@ -35,6 +35,16 @@ impl TryFrom<String> for BootstrapIdentity {
     }
 }
 
+impl BootstrapIdentity {
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        Self(blake3::hash(bytes).to_hex().to_string())
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 impl From<BootstrapIdentity> for String {
     fn from(value: BootstrapIdentity) -> Self {
         value.0
@@ -127,6 +137,52 @@ pub struct BootstrapCohort {
     pub managed_locators: Vec<BootstrapIdentity>,
     pub upgrade_from: Vec<BootstrapIdentity>,
     pub bounds: BootstrapBounds,
+}
+
+/// A checked runtime projection, not a declaration of filesystem authority.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapProjectDeclaration {
+    pub schema: String,
+    pub policy_locator: String,
+    pub policy: BootstrapIdentity,
+    pub cohort: BootstrapIdentity,
+    pub complete_manifest: BootstrapIdentity,
+}
+
+impl BootstrapProjectDeclaration {
+    // r[impl cairn.consumer_bootstrap.policy]
+    pub fn validate(&self) -> Result<(), BootstrapError> {
+        if self.schema != "cairn.bootstrap-project.v1"
+            || self.policy_locator.is_empty()
+            || self.policy_locator.len() > MAX_LABEL_BYTES
+            || !self.policy_locator.split('/').all(|part| {
+                !part.is_empty()
+                    && part != "."
+                    && part != ".."
+                    && part.bytes().all(|byte| {
+                        byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.' | b'-')
+                    })
+            })
+        {
+            return Err(BootstrapError::InvalidSelection);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapOwnership {
+    pub locator: BootstrapIdentity,
+    pub identity: BootstrapIdentity,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapUpgrade {
+    pub from: BootstrapIdentity,
+    pub to: BootstrapIdentity,
 }
 
 /// Independently observed identities, not assertions copied from the cohort.
