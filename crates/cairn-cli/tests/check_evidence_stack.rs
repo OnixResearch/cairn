@@ -95,6 +95,52 @@ fn published_lattice_inputs_reach_the_shell_without_test_promotion() -> Result<(
     fs::remove_dir_all(root)?;
     Ok(())
 }
+// r[verify cairn.check_evidence_producer.conformance]
+#[test]
+fn original_octet_export_cannot_be_promoted_to_strict_lint_coverage() -> Result<(), Box<dyn Error>>
+{
+    let root = repo().join(format!("target/stack-octet-native-{}", std::process::id()));
+    fs::create_dir_all(&root)?;
+    let mut fixture: Value = serde_json::from_slice(include_bytes!(
+        "../../../fixtures/check-evidence/octet-producer-fixture.json"
+    ))?;
+    write(&root, "observation.json", &fixture)?;
+    let args = ["--observation", "observation.json"];
+    let result = ineligible(run(&root, "octet", &args)?)?;
+    assert_eq!(result["admission"]["native_status"], "passed");
+    fixture
+        .as_object_mut()
+        .ok_or("fixture object")?
+        .remove("config_digest");
+    write(&root, "observation.json", &fixture)?;
+    assert!(!run(&root, "octet", &args)?.status.success());
+    fs::remove_dir_all(root)?;
+    Ok(())
+}
+// r[verify cairn.check_evidence_producer.conformance]
+#[test]
+fn original_kiln_fixture_export_crosses_the_real_import_boundary() -> Result<(), Box<dyn Error>> {
+    let root = repo().join(format!("target/stack-kiln-native-{}", std::process::id()));
+    fs::create_dir_all(&root)?;
+    let fixture: Value = serde_json::from_slice(include_bytes!(
+        "../../../fixtures/check-evidence/kiln-producer-fixtures.json"
+    ))?;
+    assert_eq!(
+        fixture["producer_revision"],
+        cairn_core::verified::check_evidence::KILN_REVISION
+    );
+    write(&root, "plan.json", &fixture["plan"])?;
+    write(&root, "observation.json", &fixture["observation"])?;
+    let args = ["--plan", "plan.json", "--observation", "observation.json"];
+    let result = ineligible(run(&root, "kiln", &args)?)?;
+    assert_eq!(result["admission"]["native_outcome"], "Success");
+    for name in ["stale_attempt", "false_paused_success"] {
+        write(&root, "observation.json", &fixture["rejected"][name])?;
+        assert!(!run(&root, "kiln", &args)?.status.success());
+    }
+    fs::remove_dir_all(root)?;
+    Ok(())
+}
 #[test]
 fn valence_and_kiln_json_have_native_meaning_but_no_execution_coverage(
 ) -> Result<(), Box<dyn Error>> {

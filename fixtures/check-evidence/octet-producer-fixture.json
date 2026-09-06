@@ -1,0 +1,50 @@
+{
+  "artifacts": [
+    {
+      "blake3": "fedcba9876543210",
+      "bytes": 512,
+      "path": "octet-artifact-manifest.json"
+    }
+  ],
+  "config_digest": "0123456789abcdef",
+  "config_digest_detail": {
+    "algorithm": "blake3",
+    "value": "0123456789abcdef"
+  },
+  "errors": [],
+  "finished_at": "2026-05-06T14:01:00Z",
+  "git_revision": "d35db7a5",
+  "inputs": [
+    {
+      "blake3": "0123456789abcdef",
+      "path": "standards/profiles/local.ncl"
+    }
+  ],
+  "provenance_records": [],
+  "raw_log_path": "logs/debug.log",
+  "run_id": "run-0001",
+  "schema_version": "octet-acceptance-receipt/v1",
+  "stages": [
+    {
+      "name": "policy-validate",
+      "status": "passed"
+    }
+  ],
+  "started_at": "2026-05-06T14:00:00Z",
+  "status": "passed",
+  "tool": "octet-standards",
+  "tool_version": "0.1.0",
+  "verification_commands": [
+    {
+      "command": "nix run .#octet-policy-validate",
+      "status": "passed"
+    }
+  ],
+  "verification_evidence": [
+    {
+      "blake3": "0123456789abcdef",
+      "path": "openspec/evidence/focused-checks.txt"
+    }
+  ],
+  "warnings": []
+}
