@@ -87,6 +87,11 @@ impl CapabilityRoot {
         &self.display_path
     }
 
+    #[cfg(target_os = "linux")]
+    pub(crate) fn clone_directory_file(&self) -> io::Result<fs::File> {
+        Ok(self.dir.try_clone()?.into_std_file())
+    }
+
     pub(crate) fn relative(&self, path: &Path) -> io::Result<PathBuf> {
         validate_relative_path(path)
     }

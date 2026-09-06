@@ -30,7 +30,7 @@ fn explicit_execution_and_import_never_use_a_fallback() -> Result<(), Box<dyn Er
             .output()?;
         assert!(!output.status.success());
         assert!(output.stdout.is_empty());
-        assert!(String::from_utf8_lossy(&output.stderr).contains("unavailable"));
+        assert!(!output.stderr.is_empty());
     }
     Ok(())
 }
@@ -104,7 +104,7 @@ fn plan_is_current_policy_bound_read_only_and_strict() -> Result<(), Box<dyn Err
     assert_eq!(receipt["valid"], true);
     assert_eq!(receipt["checks_executed"], false);
     assert_eq!(receipt["subject_observed"], false);
-    assert_eq!(receipt["execution_available"], false);
+    assert_eq!(receipt["execution_available"], cfg!(target_os = "linux"));
     assert_eq!(fs::read_dir(&fixture)?.count(), 3);
     assert_eq!(first.stdout, command().args(args).output()?.stdout);
     assert!(!command()

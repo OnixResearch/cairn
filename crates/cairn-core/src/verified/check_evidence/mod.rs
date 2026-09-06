@@ -1,6 +1,8 @@
 //! Cairn-owned evidence production decisions over supplied facts.
 //! Admission is not execution, authority, freshness observation, or publication.
 mod admission;
+mod cargo_output;
+pub use cargo_output::{cargo_coverage, CargoCoverage};
 mod normalization;
 mod types;
 

@@ -2,21 +2,31 @@
 
 ## Available boundary
 
-Cairn currently provides pure producer admission and normalization, plus read-only CLI planning.
-Local execution, saved-producer imports, and durable publication are not available in this build.
-The active change remains incomplete.
+Cairn provides pure admission, Linux bounded execution, durable local publication, and native saved Mantle admission.
+The active change remains incomplete. Cairn producer-adapter maintainers own this boundary.
+The current live consumer is Cairn's original completion validator.
+The maintained disposable Cargo and Nix fixtures need no manual result edits.
 
-Cairn producer-adapter maintainers own this boundary.
-The current consumer is Cairn's authoritative completion validator.
-The maintained tests generate result rows from explicit observations and replay those rows through the original validator.
-These tests do not constitute a live producer or Kiln adoption pilot.
+## Plan and execute a local check
 
-## Plan a check
-
-1. Author the profiles through `contracts/check-evidence-producer.ncl`.
+1. Author profiles through `contracts/check-evidence-producer.ncl`.
 2. Export the profiles with Nickel.
-3. Supply the repository-owned completion contract and declared applicability.
-4. Run the read-only plan command:
+3. Supply the repository-owned completion contract and applicability.
+4. Supply a sorted, unique JSON array of repository-relative source files in `projection.json`.
+5. Observe that exact file projection:
+
+```console
+cairn check-evidence source --root REPOSITORY --projection projection.json
+```
+
+The source receipt reports `subject_hash` and `source_projection_hash` for the applicability input.
+The projection limits are 4,096 files, 16 MiB per file, and 64 MiB in total.
+Source prechecks reject symbolic-link components, non-regular members, and oversized files.
+These prechecks are not atomic no-follow opens. Concurrent path substitution remains an open hardening task.
+The selected file set does not prove source-closure completeness.
+Consumers retain projection review, including build inputs and exclusions for evidence and build output.
+
+6. Run the read-only plan command:
 
 ```console
 cairn check-evidence plan --root REPOSITORY \
@@ -24,72 +34,113 @@ cairn check-evidence plan --root REPOSITORY \
   --applicability applicability.json
 ```
 
-The plan admits exactly one profile per required check.
-It preserves the completion owner's selection and command identities.
-It orders prerequisites before dependent checks and binds the complete plan with BLAKE3.
-Unknown, duplicate, malformed, stale-policy, and substituted inputs fail admission.
-The shell bounds each input file to 1 MiB and uses Cairn's existing capability-root reader.
+The plan preserves the completion owner's exact selection, command identities, and prerequisite order.
+Planning does not observe executable bytes. It grants no execution authority.
+Each input file has a 1 MiB bound.
 
-The applicability input contains these fields:
+7. Create a separate, empty output directory under explicit operator authority.
+8. Create a one-byte cancellation control file with the content `0` under the repository root.
+9. Execute the reviewed plan with a fresh attempt identity:
 
-- `subject_hash`: the declared final subject identity;
-- `policy_hash`: the current generated policy identity;
-- `dependency_hashes`: sorted, unique dependency identities;
-- `source_projection_hash`: the consumer-owned projection identity, including reviewed exclusions.
+```console
+cairn check-evidence run --execute --root REPOSITORY \
+  --contract contract.json --profiles profiles.json \
+  --applicability applicability.json --projection projection.json \
+  --plan-hash REVIEWED_HASH --attempt ATTEMPT_BLAKE3 \
+  --cancel-file cancel --out OUTPUT_DIRECTORY
+```
 
-Each digest uses 64 lowercase hexadecimal characters.
-Planning does not observe the source filesystem or executable bytes.
-The receipt explicitly reports `subject_observed: false` and `checks_executed: false`.
-It grants no execution authority.
+A nonzero cancellation byte, missing control, or unreadable control requests cancellation.
+The control watcher polls every 10 ms. Bounded Exec owns process-group termination and bounded teardown.
+A failed or uncertain attempt has no automatic retry.
 
-## Profile contract
+## Profile and observation contracts
 
-The two fixed grammars are `cargo_test` and `nix_check`.
-Cargo selects the workspace, all targets, a target triple, locked offline dependencies, and an explicit feature set without default features.
+The fixed grammars are `cargo_test` and `nix_check`. Neither accepts shell text or arbitrary trailing arguments.
+Cargo selects workspace tests, all targets, an explicit target and feature set, locked offline dependencies, and no default features.
 Nix selects an offline flake check without lock updates for an explicit system.
-A Nix check is a build obligation, not a test-coverage claim.
-Neither grammar accepts trailing shell text or ambient executable discovery.
+A Nix check is a build obligation, not test coverage. Its process success does not establish nonempty executed-test coverage.
 
-Profiles bind exact executable and cohort hashes, environment values, working root, and named execution bounds.
-Limits cap execution at one hour, teardown at one minute, and each captured stream at 1 MiB.
-No cache waiver or zero-test rationale exists in this version.
-The synthetic profiles under `fixtures/check-evidence/` are admission fixtures, not installed executables or approved live cohorts.
+Profiles bind a Nix-store executable, byte identity, declared cohort identity, explicit environment, working root, and named bounds.
+The environment is cleared before explicit entries are applied. Profiles must not contain secrets.
+The cohort label is a binding, not independent attestation of a complete tool closure.
+Execution rechecks executable bytes before each child and after each result.
+The child working directory refers to the held repository directory through a Linux file descriptor.
 
-## Pure observation boundary
+The source projection is observed before execution, between attempts, and before final publication.
+Nonempty dependency identity sets remain blocked because a dependency-observation contract is absent.
+The mechanism does not prevent a hostile same-authority process from changing files between observations.
 
-`AttemptObservation` is a Cairn application-port type, not a producer wire schema.
-It deliberately lacks `Deserialize`.
-Only a future execution or pinned producer-admission adapter can supply observed facts to this port.
-No CLI command accepts user-authored observations through this type.
+Cargo coverage admission pairs stable libtest `running N tests` announcements with complete result summaries.
+All admitted summaries must pass. Executed-test coverage excludes ignored, measured, and filtered tests.
+Empty, malformed, unmatched, failing, or truncated summaries cannot pass.
+The final line needs a newline and a complete elapsed-time field.
+Custom harness output can imitate this grammar. Summary admission does not prove oracle truth.
 
-Normalization preserves the supplied producer identity, native status, non-claims, role, attempt identity, and evidence hash.
-Only the local port's exact `passed` status can produce a passing row.
-Future upstream adapters must retain native meaning without feeding unknown vocabularies into this local convention.
+`AttemptObservation` remains a non-deserializable Cairn application-port type, not an upstream wire schema.
+Diagnostics retain bounded hashes, byte counts, statuses, and non-claims instead of raw child output.
+Timeout, cancellation, overflow, failed payloads, source drift, and unknown cleanup remain non-passing.
+A successful process is not proof of sandboxing, source correctness, or release eligibility.
 
-A zero process exit does not establish success.
-Test observations need a passing payload, nonzero executed-test coverage, current applicability, and complete teardown.
-Failure, timeout, cancellation, overflow, unknown execution, missing teardown, and unsupported cache claims remain non-passing.
-Changed sources, commands, executable bytes, dependency identities, or tool cohorts fail applicability.
-Diagnostics use a finite vocabulary instead of raw producer output.
+## Publication and recovery
 
-`publication_decision` requests a final manifest only after exact, ordered, passing results and durable artifact readback facts.
-It performs no I/O and does not prove those facts are true.
-The shell still needs the admitted one-file publication mechanism, output-root authority, serialization, interruption handling, and recovery.
+Durable File Publication supplies exclusive staging, exact no-replace rename, payload synchronization, and parent synchronization.
+Cairn publishes `attempt.json` before execution. That journal prevents concurrent reuse and implicit retries in the same output directory.
+Cairn publishes native facts, normalized observations, and `results.json` before the final manifest.
+The manifest binds artifact hashes after bounded readback. Failed attempts receive `incomplete.json` when publication remains available.
+Source disappearance preserves executed facts and rejected observations without completion rows.
+Publication collisions preserve existing bytes and retain observations through other available artifact paths.
+A runner error does not establish execution coverage.
+Any publication error withholds the final manifest. Existing destination bytes remain unchanged.
+Readback still uses metadata prechecks rather than atomic no-follow opens.
 
-## Explicit blockers
+If an attempt stops with only a journal or partial files, inspect that directory before recovery.
+This version has no automated recovery command. A new attempt requires a separately authorized output directory.
+Only a complete manifest closes the publication attempt. Standalone completion rows do not prove bundle publication.
+The shell can return a non-passing JSON receipt with exit zero. Consumers must inspect its `valid` field.
+Parent synchronization is an observed system-call result, not a power-loss correctness guarantee.
 
-`check-evidence run` rejects every request, including `--execute`.
-This build does not contain the reviewed Bounded Exec dependency.
-There is no copied runner, arbitrary-command escape hatch, or fallback to `std::process::Command`.
+## Original consumer replay
 
-`check-evidence import` rejects every request.
-This build does not contain pinned producer admission adapters.
-A generic JSON parser must not replace those contracts.
+```console
+cairn agent-receipt complete --contract CONTRACT \
+  --results OUTPUT_DIRECTORY/results.json --subject-hash SUBJECT
+```
 
-The worker assignment forbids Nix pin and lock changes.
-Cairn's current manifests contain none of the new process, publication, or producer-contract dependencies.
-The coordinator must authorize matching Cargo/Nix dependency admission before the execution and import work can proceed.
-Existing Nix names still refer to Slotcar/Tiger Style and predate canonical Octet integration.
-This increment changes no pins, locks, lint defaults, or gate scope.
+The original completion validator accepts current passing Cargo rows and rejects the real failure controls.
+The developer-loop validator rejects these rows as loop receipts with a schema diagnostic.
+Foreign receipt schemas no longer trigger a debug assertion.
+Its `cairn-local` profile requires fmt, lifecycle validation, and traceability facts that Cargo/Nix profiles do not supply.
+No adapter fabricates those facts or weakens the loop validator.
 
-See the active change's `evidence/implementation-first-pass.md` for exact inspected revisions, contracts, and remaining conformance work.
+## Native saved admission
+
+```console
+cairn check-evidence import mantle --root SAVED_DIRECTORY \
+  --request request.json --builder builder.json --observation observation.json
+```
+
+These files use the published `mantle-build-contract` types. The builder file contains its native identity string.
+Cairn calls `validate_observation` and preserves native status, cache facts, identities, and non-claims.
+Native admission does not create completion rows or grant execution authority.
+The Mantle contract lacks executed-test coverage and Cairn command/applicability binding. Both remain explicit blockers.
+Unknown producer adapters fail closed. No generic decoder supplies missing producer facts.
+
+## Published dependency cohort and notices
+
+| Dependency | Immutable revision | Imported scope | Public license |
+|---|---|---|---|
+| Bounded Exec | `29dac88ecded94457572db3fdfaaaab95fa91525` | `bounded-exec` and its core | AGPL-3.0-or-later |
+| Durable File Publication | `951c27f59003cea9bfdb40ed4d89653d50fada1f` | Published one-file crate and Linux adapter | MIT OR Apache-2.0 |
+| Mantle | `0bbab77e23ab95caa4e4184b9945cfaa5c8040e2` | `mantle-build-contract` only | AGPL-3.0-or-later |
+
+Cargo and Nix acquire complete pinned sources through their published Git transports.
+No producer implementation is copied. Upstream source distributions retain their license and contributor notices.
+The owner-authorized reuse grant applies only to exclusively OnixResearch-owned material. It does not change public licenses or third-party rights.
+`nix/check-producer-source-pins.nix` checks matching Cargo/Nix revisions and rejects a substituted revision.
+The existing Octet/Slotcar compiler and check pin remains unchanged.
+
+Lattice, Kiln, Octet, and Valence adapters remain unavailable.
+The reviewed Lattice contract requires BLAKE3 1.8.3, while the reviewed Mantle contract requires exactly 1.8.2.
+A joint dependency-resolution probe records the resulting blocker separately from runtime conformance.
+See the active change's implementation reports for commands, observed verdicts, and remaining work.

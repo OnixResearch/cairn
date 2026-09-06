@@ -14,6 +14,18 @@
   # r[impl cairn.nickel_toolchain.cohort] r[impl cairn.nickel_toolchain.lockfile]
   inputs.nickel-1-17-0.url = "github:nickel-lang/nickel/1320a983e6c3d1e2fb53dd2464b084b4903b1426";
   inputs.slotcar.url = "github:OnixResearch/slotcar";
+  inputs.mantle-build-contract = {
+    url = "git+ssh://git@github.com/OnixResearch/mantle.git?rev=0bbab77e23ab95caa4e4184b9945cfaa5c8040e2";
+    flake = false;
+  };
+  inputs.bounded-exec = {
+    url = "git+https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525";
+    flake = false;
+  };
+  inputs.durable-file-publication = {
+    url = "git+https://git.onix.computer/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git?rev=951c27f59003cea9bfdb40ed4d89653d50fada1f";
+    flake = false;
+  };
 
   outputs =
     {
@@ -23,6 +35,7 @@
       nickel-export,
       nickel-1-17-0,
       slotcar,
+      ...
     }:
     let
       systems = [
@@ -118,6 +131,23 @@
       });
 
       checks = eachSystem (pkgs: {
+        check-producer-source-pins =
+          let
+            checker = import ./nix/check-producer-source-pins.nix { lib = pkgs.lib; };
+            facts = {
+              workspace = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+              lock = builtins.fromTOML (builtins.readFile ./Cargo.lock);
+              inputs = self.inputs;
+            };
+            changed = facts // {
+              inputs = facts.inputs // { bounded-exec = { rev = "substituted"; }; };
+            };
+          in
+          assert checker.validate facts;
+          assert !(checker.validate changed);
+          pkgs.runCommand "cairn-check-producer-source-pins" { } ''
+            touch "$out"
+          '';
         artifact-auth-source-pin =
           let
             validation = artifactAuthSourcePin.validate artifactAuthSourcePinInput;

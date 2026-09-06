@@ -17,6 +17,23 @@
         "url": "ssh://git@github.com/OnixResearch/onix-artifact.git"
       }
     },
+    "bounded-exec": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784441700,
+        "narHash": "sha256-BVmqyUYyoNpY6LfOABxwPO3DY88ZtXeKNg3TPoGCcL0=",
+        "ref": "refs/heads/main",
+        "rev": "29dac88ecded94457572db3fdfaaaab95fa91525",
+        "revCount": 3,
+        "type": "git",
+        "url": "https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git"
+      },
+      "original": {
+        "rev": "29dac88ecded94457572db3fdfaaaab95fa91525",
+        "type": "git",
+        "url": "https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git"
+      }
+    },
     "cairn": {
       "inputs": {
         "nixpkgs": [
@@ -159,6 +176,23 @@
         "owner": "ipetkov",
         "repo": "crane",
         "type": "github"
+      }
+    },
+    "durable-file-publication": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785189981,
+        "narHash": "sha256-fKxZ+3rzWzVuawILnmpiYCCe8PT/z6usopFMbr2KFbI=",
+        "ref": "refs/heads/main",
+        "rev": "951c27f59003cea9bfdb40ed4d89653d50fada1f",
+        "revCount": 9,
+        "type": "git",
+        "url": "https://git.onix.computer/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git"
+      },
+      "original": {
+        "rev": "951c27f59003cea9bfdb40ed4d89653d50fada1f",
+        "type": "git",
+        "url": "https://git.onix.computer/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git"
       }
     },
     "dylint-src": {
@@ -357,6 +391,23 @@
         "type": "github"
       }
     },
+    "mantle-build-contract": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787295942,
+        "narHash": "sha256-wbxOOf78rb1fN/gxifOF0Me/XwndgNVsStaz9IZyOck=",
+        "ref": "refs/heads/main",
+        "rev": "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2",
+        "revCount": 2607,
+        "type": "git",
+        "url": "ssh://git@github.com/OnixResearch/mantle.git"
+      },
+      "original": {
+        "rev": "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2",
+        "type": "git",
+        "url": "ssh://git@github.com/OnixResearch/mantle.git"
+      }
+    },
     "nickel-1-17-0": {
       "inputs": {
         "crane": "crane",
@@ -525,6 +576,9 @@
     "root": {
       "inputs": {
         "artifact": "artifact",
+        "bounded-exec": "bounded-exec",
+        "durable-file-publication": "durable-file-publication",
+        "mantle-build-contract": "mantle-build-contract",
         "nickel-1-17-0": "nickel-1-17-0",
         "nickel-export": "nickel-export",
         "nixpkgs": "nixpkgs_4",

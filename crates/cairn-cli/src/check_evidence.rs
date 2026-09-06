@@ -1,4 +1,11 @@
-//! Read-only producer planning shell. No process or publication fallback exists.
+//! Producer composition root. Execution requires a reviewed plan and explicit authority.
+#[cfg(target_os = "linux")]
+mod local;
+#[cfg(target_os = "linux")]
+mod publication;
+#[cfg(target_os = "linux")]
+mod run;
+mod saved;
 use std::{collections::BTreeMap, error::Error, path::Path};
 
 use cairn_core::verified::check_evidence::{admit_plan, Applicability, CheckProfile};
@@ -14,22 +21,41 @@ const MAX_ARGUMENTS: usize = 12;
 pub(crate) fn run_check_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     match args.first().map(String::as_str) {
         Some("plan") => run_plan(&args[1..]),
-        Some("run") => Err("check-evidence run unavailable: bounded-exec 29dac88ecded94457572db3fdfaaaab95fa91525 is not admitted in this build; no checks executed".into()),
-        Some("import") => Err("check-evidence import unavailable: no pinned producer admission adapters are installed; no results admitted".into()),
-        _ => Err("check-evidence requires plan; run and import are unavailable in this build".into()),
+        #[cfg(target_os = "linux")]
+        Some("run") => run::run(&args[1..]),
+        #[cfg(target_os = "linux")]
+        Some("source") => run::source(&args[1..]),
+        Some("import") => saved::import(&args[1..]),
+        _ => {
+            Err("check-evidence requires plan; run and import are unavailable in this build".into())
+        }
     }
 }
 
 fn options(args: &[String]) -> Result<BTreeMap<&str, &str>, Box<dyn Error>> {
-    if args.len() > MAX_ARGUMENTS || !args.len().is_multiple_of(2) {
+    named_options(
+        args,
+        &[
+            "--root",
+            "--contract",
+            "--profiles",
+            "--applicability",
+            "--policy",
+        ],
+    )
+}
+
+fn named_options<'a>(
+    args: &'a [String],
+    allowed: &[&str],
+) -> Result<BTreeMap<&'a str, &'a str>, Box<dyn Error>> {
+    if args.len() > MAX_ARGUMENTS * 2 || !args.len().is_multiple_of(2) {
         return Err("check-evidence plan requires named input pairs".into());
     }
     let mut options = BTreeMap::new();
     for pair in args.chunks_exact(2) {
-        if !matches!(
-            pair[0].as_str(),
-            "--root" | "--contract" | "--profiles" | "--applicability" | "--policy"
-        ) || pair[1].is_empty()
+        if !allowed.contains(&pair[0].as_str())
+            || pair[1].is_empty()
             || pair[1].starts_with("--")
             || options.insert(pair[0].as_str(), pair[1].as_str()).is_some()
         {
@@ -75,6 +101,6 @@ fn run_plan(args: &[String]) -> Result<(), Box<dyn Error>> {
     print_json(json!({
         "schema": "cairn.check-evidence-plan-receipt.v1", "valid": true,
         "checks_executed": false, "subject_observed": false, "publication_performed": false,
-        "execution_available": false, "plan": plan,
+        "execution_available": cfg!(target_os = "linux"), "plan": plan,
     }))
 }
