@@ -401,6 +401,47 @@ fn interruption_and_unknown_durability_never_imply_completion() {
 }
 
 #[test]
+fn source_bundle_rejects_unsafe_duplicate_or_missing_policy_mappings() {
+    let bundle = BootstrapSourceBundle {
+        schema: "cairn.bootstrap-source-bundle.v1".into(),
+        cohort: cohort(),
+        export_request: "request.json".into(),
+        export_manifest: "manifest.json".into(),
+        workflow_source: "workflow.json".into(),
+        policy_locator: ".cairn/policy.json".into(),
+        artifacts: vec![BootstrapSourceArtifact {
+            source: "policy.json".into(),
+            destination: ".cairn/policy.json".into(),
+        }],
+    };
+    assert_eq!(bundle.validate(), Ok(()));
+    for locator in ["../escape", "/absolute", "a/../b", "a//b", "a\\b"] {
+        let mut bad = bundle.clone();
+        bad.artifacts[0].source = locator.into();
+        assert_eq!(bad.validate(), Err(BootstrapError::UnsafePath));
+    }
+    let mut bad = bundle.clone();
+    bad.artifacts.push(bad.artifacts[0].clone());
+    assert_eq!(bad.validate(), Err(BootstrapError::DuplicateArtifact));
+    let mut bad = bundle.clone();
+    bad.policy_locator = "unmapped.json".into();
+    assert_eq!(bad.validate(), Err(BootstrapError::InvalidSelection));
+    for locator in [
+        BOOTSTRAP_COMPLETE_LOCATOR,
+        BOOTSTRAP_PREPARED_LOCATOR,
+        BOOTSTRAP_SELECTION_LOCATOR,
+    ] {
+        let mut bad = bundle.clone();
+        bad.policy_locator = locator.into();
+        bad.artifacts[0].destination = locator.into();
+        assert_eq!(bad.validate(), Err(BootstrapError::InvalidSelection));
+    }
+    let mut bad = bundle;
+    bad.artifacts.clear();
+    assert_eq!(bad.validate(), Err(BootstrapError::Bounds));
+}
+
+#[test]
 fn recovery_observes_every_member_before_manifest_publication() {
     let mut cohort = cohort();
     cohort.managed_locators.push(id("guidance-locator"));

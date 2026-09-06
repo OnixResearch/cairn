@@ -72,6 +72,31 @@ let CompleteSelection = {
   policy | Identity,
   policy_locator | RelativeLocator,
 } in
+let SourceArtifact = {
+  source | RelativeLocator,
+  destination | RelativeLocator
+    | std.contract.from_predicate (fun value =>
+      value != ".cairn/bootstrap/prepared.json"
+      && value != ".cairn/bootstrap/complete.json"
+      && value != ".cairn/bootstrap/selection.json"
+    ),
+} in
+let SourceBundle = {
+  schema | std.contract.from_predicate (fun value => value == "cairn.bootstrap-source-bundle.v1"),
+  cohort | Cohort,
+  export_request | RelativeLocator,
+  export_manifest | RelativeLocator,
+  workflow_source | RelativeLocator,
+  policy_locator | RelativeLocator,
+  artifacts | Array SourceArtifact
+    | std.contract.from_predicate (fun values =>
+      std.array.length values > 0 && std.array.length values <= cohort.bounds.max_artifacts
+      && std.array.any (fun value => value.destination == policy_locator) values
+      && std.array.all (fun value =>
+        std.array.length (std.array.filter (fun other => other.destination == value.destination) values) == 1
+      ) values
+    ),
+} in
 let Ownership = {
   locator | Identity,
   identity | Identity,
@@ -94,6 +119,7 @@ let Recovery = {
   policy_selection = PolicySelection,
   project_declaration = ProjectDeclaration,
   complete_selection = CompleteSelection,
+  source_bundle = SourceBundle,
   ownership = Ownership,
   upgrade = Upgrade,
   recovery = Recovery,

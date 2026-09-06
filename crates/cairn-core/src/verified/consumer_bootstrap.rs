@@ -9,6 +9,9 @@ use std::collections::BTreeSet;
 use serde::{Deserialize, Serialize};
 
 pub const BOOTSTRAP_SCHEMA: &str = "cairn.consumer-bootstrap.v1";
+pub const BOOTSTRAP_PREPARED_LOCATOR: &str = ".cairn/bootstrap/prepared.json";
+pub const BOOTSTRAP_COMPLETE_LOCATOR: &str = ".cairn/bootstrap/complete.json";
+pub const BOOTSTRAP_SELECTION_LOCATOR: &str = ".cairn/bootstrap/selection.json";
 pub const MAX_MANAGED_ARTIFACTS: usize = 64;
 pub const MAX_ARTIFACT_BYTES: u64 = 16_777_216;
 pub const MAX_TOTAL_BYTES: u64 = 67_108_864;
@@ -137,6 +140,108 @@ pub struct BootstrapCohort {
     pub managed_locators: Vec<BootstrapIdentity>,
     pub upgrade_from: Vec<BootstrapIdentity>,
     pub bounds: BootstrapBounds,
+}
+
+/// Declared input mapping for a preview. Paths do not confer host authority.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapSourceArtifact {
+    pub source: String,
+    pub destination: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapSourceBundle {
+    pub schema: String,
+    pub cohort: BootstrapCohort,
+    pub export_request: String,
+    pub export_manifest: String,
+    pub workflow_source: String,
+    pub policy_locator: String,
+    pub artifacts: Vec<BootstrapSourceArtifact>,
+}
+
+impl BootstrapSourceBundle {
+    pub fn validate(&self) -> Result<(), BootstrapError> {
+        if self.schema != "cairn.bootstrap-source-bundle.v1"
+            || self.artifacts.is_empty()
+            || self.artifacts.len() > MAX_MANAGED_ARTIFACTS
+            || self.artifacts.len() > self.cohort.bounds.max_artifacts
+        {
+            return Err(BootstrapError::Bounds);
+        }
+        let mut destinations = BTreeSet::new();
+        for locator in [
+            &self.export_request,
+            &self.export_manifest,
+            &self.workflow_source,
+            &self.policy_locator,
+        ]
+        .into_iter()
+        .chain(
+            self.artifacts
+                .iter()
+                .flat_map(|artifact| [&artifact.source, &artifact.destination]),
+        ) {
+            validate_locator(locator)?;
+        }
+        for artifact in &self.artifacts {
+            if [
+                BOOTSTRAP_PREPARED_LOCATOR,
+                BOOTSTRAP_COMPLETE_LOCATOR,
+                BOOTSTRAP_SELECTION_LOCATOR,
+            ]
+            .contains(&artifact.destination.as_str())
+            {
+                return Err(BootstrapError::InvalidSelection);
+            }
+            if !destinations.insert(&artifact.destination) {
+                return Err(BootstrapError::DuplicateArtifact);
+            }
+        }
+        if !destinations.contains(&self.policy_locator) {
+            return Err(BootstrapError::InvalidSelection);
+        }
+        Ok(())
+    }
+}
+
+pub fn admit_bootstrap_policy(
+    cohort: &BootstrapCohort,
+    policy: &crate::Policy,
+) -> Result<(), BootstrapError> {
+    if !policy
+        .workflow_profile_policy
+        .allowed_profiles
+        .contains(&cohort.profile)
+        || !policy
+            .workflow_schemas
+            .iter()
+            .any(|schema| schema.id == cohort.profile)
+    {
+        Err(BootstrapError::UnsupportedCohort)
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_locator(locator: &str) -> Result<(), BootstrapError> {
+    if locator.is_empty()
+        || locator.len() > MAX_LABEL_BYTES
+        || !locator.split('/').all(|part| {
+            !part.is_empty()
+                && part != "."
+                && part != ".."
+                && part
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.' | b'-'))
+        })
+    {
+        Err(BootstrapError::UnsafePath)
+    } else {
+        Ok(())
+    }
 }
 
 /// A checked runtime projection, not a declaration of filesystem authority.

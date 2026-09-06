@@ -11,22 +11,44 @@ use std::{
     path::{Component, Path},
 };
 
+const MAX_ROOT_COMPONENTS: usize = 256;
+
 // The caller supplies root authority. Every component is opened without following links.
 pub(crate) fn open_root(root: &Path) -> Result<Dir, Box<dyn Error>> {
+    open_components(root, false)
+}
+
+fn open_components(root: &Path, explicit_parent_navigation: bool) -> Result<Dir, Box<dyn Error>> {
     let absolute = if root.is_absolute() {
         root.to_path_buf()
     } else {
         std::env::current_dir()?.join(root)
     };
-    let mut directory = Dir::open_ambient_dir(Path::new("/"), ambient_authority())?;
-    for component in absolute.components() {
+    let mut directories = vec![Dir::open_ambient_dir(Path::new("/"), ambient_authority())?];
+    for (index, component) in absolute.components().enumerate() {
+        if index >= MAX_ROOT_COMPONENTS {
+            return Err("bootstrap.path.root_bound".into());
+        }
         match component {
-            Component::Normal(leaf) => directory = directory.open_dir_nofollow(leaf)?,
+            Component::Normal(leaf) => {
+                let next = directories
+                    .last()
+                    .ok_or("bootstrap.path.unsafe_root")?
+                    .open_dir_nofollow(leaf)?;
+                directories.push(next);
+            }
+            // Preserve explicit --policy ../path compatibility. Open all preceding
+            // components first: lexical cancellation must not conceal a symlink.
+            Component::ParentDir if explicit_parent_navigation && directories.len() > 1 => {
+                directories.pop();
+            }
             Component::RootDir | Component::CurDir => {}
             _ => return Err("bootstrap.path.unsafe_root".into()),
         }
     }
-    Ok(directory)
+    directories
+        .pop()
+        .ok_or_else(|| "bootstrap.path.unsafe_root".into())
 }
 
 /// Only a proven absent component returns None. A failed open after a positive
@@ -93,7 +115,7 @@ pub(crate) fn read_external(path: &Path, maximum: u64) -> Result<Vec<u8>, Box<dy
         .file_name()
         .and_then(|name| name.to_str())
         .ok_or("bootstrap.path.invalid_leaf")?;
-    read_required(&open_root(parent)?, leaf, maximum)
+    read_required(&open_components(parent, true)?, leaf, maximum)
 }
 
 #[cfg(test)]
@@ -113,6 +135,7 @@ mod tests {
         assert!(read_required(&cap, "file/leaf", 4).is_err());
         assert!(read_required(&cap, "../file", 4).is_err());
         fs::create_dir(root.join("directory"))?;
+        assert_eq!(read_external(&root.join("directory/../file"), 4)?, b"1234");
         assert!(read_optional(&cap, "directory", 4).is_err());
         #[cfg(unix)]
         {
@@ -120,6 +143,7 @@ mod tests {
                 std::os::unix::fs::symlink(target, root.join("link"))?;
                 assert!(read_optional(&cap, "link", 4).is_err());
                 assert!(read_optional(&cap, "link/leaf", 4).is_err());
+                assert!(read_external(&root.join("link/../file"), 4).is_err());
                 fs::remove_file(root.join("link"))?;
             }
         }

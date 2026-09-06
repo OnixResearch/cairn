@@ -72,6 +72,18 @@ fn nickel_bootstrap_contract_accepts_cohort_and_rejects_excessive_bound(
     let rejected_project = export("fixtures/consumer-bootstrap/rejected-project.ncl")?;
     assert!(!rejected_project.status.success());
     assert!(String::from_utf8_lossy(&rejected_project.stderr).contains("contract broken"));
+    let source_bundle = export("fixtures/consumer-bootstrap/source-bundle.ncl")?;
+    assert!(
+        source_bundle.status.success(),
+        "{}",
+        String::from_utf8_lossy(&source_bundle.stderr)
+    );
+    let source_bundle: cairn_core::verified::consumer_bootstrap::BootstrapSourceBundle =
+        serde_json::from_slice(&source_bundle.stdout)?;
+    source_bundle.validate()?;
+    let rejected_bundle = export("fixtures/consumer-bootstrap/rejected-source-bundle.ncl")?;
+    assert!(!rejected_bundle.status.success());
+    assert!(String::from_utf8_lossy(&rejected_bundle.stderr).contains("contract broken"));
     let rejected = export("fixtures/consumer-bootstrap/rejected-bound.ncl")?;
     assert!(!rejected.status.success());
     assert!(String::from_utf8_lossy(&rejected.stderr).contains("contract broken"));

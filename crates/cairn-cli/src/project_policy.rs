@@ -7,6 +7,7 @@ use cairn_core::{
     validate_policy_json,
     verified::consumer_bootstrap::{
         BootstrapCompleteSelection, BootstrapIdentity, BootstrapProjectDeclaration,
+        BOOTSTRAP_COMPLETE_LOCATOR as COMPLETE, BOOTSTRAP_SELECTION_LOCATOR as DECLARATION,
         MAX_ARTIFACT_BYTES,
     },
     Policy,
@@ -14,8 +15,6 @@ use cairn_core::{
 use serde_json::{json, Value};
 use std::{error::Error, path::Path};
 
-const DECLARATION: &str = ".cairn/bootstrap/selection.json";
-const COMPLETE: &str = ".cairn/bootstrap/complete.json";
 const MAX_DECLARATION_BYTES: u64 = 65_536;
 
 pub(crate) struct SelectedPolicy {
