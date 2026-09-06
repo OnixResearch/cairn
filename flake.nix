@@ -14,6 +14,14 @@
   # r[impl cairn.nickel_toolchain.cohort] r[impl cairn.nickel_toolchain.lockfile]
   inputs.nickel-1-17-0.url = "github:nickel-lang/nickel/1320a983e6c3d1e2fb53dd2464b084b4903b1426";
   inputs.slotcar.url = "github:OnixResearch/slotcar";
+  inputs.cap-root = {
+    url = "git+https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git?rev=8991e2572578c16e590c2f1c0915db6c46c5d9cb";
+    flake = false;
+  };
+  inputs.durable-file-publication = {
+    url = "git+https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git?rev=951c27f59003cea9bfdb40ed4d89653d50fada1f";
+    flake = false;
+  };
 
   outputs =
     {
@@ -23,6 +31,8 @@
       nickel-export,
       nickel-1-17-0,
       slotcar,
+      cap-root,
+      durable-file-publication,
     }:
     let
       systems = [
@@ -35,6 +45,8 @@
         lockFile = ./Cargo.lock;
         allowBuiltinFetchGit = true;
         outputHashes = {
+          "cap-root-core-0.1.0" = "sha256-2eiyxmhW8/qj30ALccgkt5hatRMk2OcazmU3SCI/Opo=";
+          "durable-file-publication-0.1.0" = "sha256-fKxZ+3rzWzVuawILnmpiYCCe8PT/z6usopFMbr2KFbI=";
           "nickel-export-core-0.1.0" = "sha256-dV4+/jghpJ89F5DHprdjxyru8kllMAurS2DsBGn/ibA=";
           "rat-canvas-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
           "rat-nodegraph-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
@@ -81,6 +93,13 @@
           ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           postInstall = ''
+            install -Dm644 ${cap-root}/LICENSE $out/share/licenses/cairn/cap-root-LICENSE
+            install -Dm644 ${durable-file-publication}/LICENSE-MIT $out/share/licenses/cairn/durable-file-publication-MIT
+            install -Dm644 ${durable-file-publication}/LICENSE-APACHE $out/share/licenses/cairn/durable-file-publication-APACHE
+            install -Dm644 ${durable-file-publication}/NOTICE $out/share/licenses/cairn/durable-file-publication/NOTICE
+            install -Dm644 ${durable-file-publication}/provenance/SOURCE.md $out/share/licenses/cairn/durable-file-publication/provenance/SOURCE.md
+            install -Dm644 ${durable-file-publication}/provenance/source.ncl $out/share/licenses/cairn/durable-file-publication/provenance/source.ncl
+            install -Dm644 ${durable-file-publication}/provenance/source.json $out/share/licenses/cairn/durable-file-publication/provenance/source.json
             # r[impl cairn.supersede.policy_export_packaged_runtime.wrapper]
             wrapProgram $out/bin/cairn \
               --prefix PATH : ${
@@ -118,6 +137,32 @@
       });
 
       checks = eachSystem (pkgs: {
+        # r[verify cairn.consumer_bootstrap.boundary]
+        bootstrap-source-pin =
+          let
+            contract = import ./nix/bootstrap-source-pin.nix { lib = nixpkgs.lib; };
+            input = {
+              workspace = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+              cli = builtins.fromTOML (builtins.readFile ./crates/cairn-cli/Cargo.toml);
+              cargoLock = builtins.fromTOML (builtins.readFile ./Cargo.lock);
+              flakeLock = builtins.fromJSON (builtins.readFile ./flake.lock);
+              resolved = { inherit cap-root durable-file-publication; };
+              outputHashes = rustCargoLock.outputHashes;
+            };
+            issues = contract.validate input ++ contract.selfTest input;
+          in
+          if issues != [ ] then
+            throw "bootstrap source admission failed: ${nixpkgs.lib.concatStringsSep ", " issues}"
+          else
+            pkgs.runCommand "cairn-bootstrap-source-pin" { } ''
+              test -s ${cap-root}/LICENSE
+              test -s ${durable-file-publication}/LICENSE-MIT
+              test -s ${durable-file-publication}/LICENSE-APACHE
+              test -s ${durable-file-publication}/NOTICE
+              test -s ${durable-file-publication}/provenance/SOURCE.md
+              touch $out
+            '';
+
         artifact-auth-source-pin =
           let
             validation = artifactAuthSourcePin.validate artifactAuthSourcePinInput;

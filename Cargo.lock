@@ -320,8 +320,10 @@ dependencies = [
  "bounded-tree-cap",
  "bounded-tree-core",
  "cairn-core",
+ "cap-root-core",
  "cap-std",
  "crossterm 0.28.1",
+ "durable-file-publication",
  "ed25519-dalek",
  "nickel-export-core",
  "onix-cairn-radicle-cob",
@@ -383,6 +385,11 @@ dependencies = [
  "windows-sys 0.61.2",
  "winx",
 ]
+
+[[package]]
+name = "cap-root-core"
+version = "0.1.0"
+source = "git+https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git?rev=8991e2572578c16e590c2f1c0915db6c46c5d9cb#8991e2572578c16e590c2f1c0915db6c46c5d9cb"
 
 [[package]]
 name = "cap-std"
@@ -779,6 +786,14 @@ name = "dtoa"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
+
+[[package]]
+name = "durable-file-publication"
+version = "0.1.0"
+source = "git+https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git?rev=951c27f59003cea9bfdb40ed4d89653d50fada1f#951c27f59003cea9bfdb40ed4d89653d50fada1f"
+dependencies = [
+ "rustix 1.1.4",
+]
 
 [[package]]
 name = "ec25519"

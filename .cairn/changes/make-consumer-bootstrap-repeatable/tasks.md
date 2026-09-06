@@ -8,7 +8,7 @@
 
 ## Shell and integration
 
-- [ ] [serial] [task:reuse] [after:core] Admit pinned Nickel Export, Cap Root, and Durable File Publication contracts through consumer conformance tests and recorded notices. r[cairn.consumer_bootstrap.boundary] r[cairn.consumer_bootstrap.conformance]
+- [x] [serial] [task:reuse] [after:core] Admit pinned Nickel Export, Cap Root, and Durable File Publication contracts through consumer conformance tests and recorded notices. r[cairn.consumer_bootstrap.boundary] r[cairn.consumer_bootstrap.conformance]
 - [ ] [serial] [task:shell] [after:reuse] Implement preview-first setup, locked apply, exact rechecks, capability-relative publication, and explicit interrupted-state recovery. r[cairn.consumer_bootstrap.publication] r[cairn.consumer_bootstrap.boundary]
 - [ ] [serial] [task:guidance] [after:shell] Compose project policy and generated-workflow freshness findings into doctor without global guidance discovery. r[cairn.consumer_bootstrap.guidance] r[cairn.consumer_bootstrap.policy]
 - [ ] [serial] [task:negative-shell] [after:guidance] Add stale-plan, modified-file, symlink, permission, interruption, durability-unknown, and failed-recovery tests. r[cairn.consumer_bootstrap.publication] r[cairn.consumer_bootstrap.guidance] r[cairn.consumer_bootstrap.boundary]
@@ -21,5 +21,6 @@
 
 Baseline evidence is in `evidence/implementation-first-pass.md`.
 Contract and pure-core evidence is in `evidence/contracts-core-second-pass.md`.
+Dependency-admission evidence is in `evidence/dependency-admission.md`.
 All shell and consumer tasks require further implementation. Planning gates do not complete these tasks.
 Archive execution is not a prerequisite of any task. Use the normal lifecycle after implementation evidence passes.

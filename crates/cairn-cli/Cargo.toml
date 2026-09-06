@@ -23,8 +23,10 @@ blake3.workspace = true
 bounded-tree-cap.workspace = true
 bounded-tree-core.workspace = true
 cairn-core = { path = "../cairn-core" }
+cap-root-core.workspace = true
 cap-std.workspace = true
 crossterm.workspace = true
+durable-file-publication.workspace = true
 ed25519-dalek.workspace = true
 nickel-export-core.workspace = true
 onix-cairn-radicle-cob = { path = "../cairn-radicle-cob" }
