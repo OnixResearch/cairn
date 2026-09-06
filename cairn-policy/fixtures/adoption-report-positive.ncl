@@ -20,7 +20,7 @@ let Relationship = {
     },
     provenance = [{
       producer_id = "workspace-stack-deps-v2",
-      schema = "onix.stack-deps.audit.v2",
+      schema = "onixresearch.stack-dependency-receipt.v1",
       source_revision = "22515fb7bc01d378312053d389d4bbdd55637a50",
       tool_identity = "stack-deps@22515fb7bc01d378312053d389d4bbdd55637a50",
       policy_identity = "workspace-dependency-policy@22515fb7bc01d378312053d389d4bbdd55637a50",

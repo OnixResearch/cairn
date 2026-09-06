@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 
 use super::evidence::canonical_json_hash;
 
@@ -18,9 +18,38 @@ pub const ADOPTION_ACTION_KIND_UNRESOLVED: &str = "unresolved";
 pub const ADOPTION_BOUND_MAX_RELATIONSHIPS: usize = 512;
 pub const ADOPTION_BOUND_MAX_OBSERVATIONS: usize = 4_096;
 pub const ADOPTION_BOUND_MAX_PROVENANCE: usize = 128;
+pub const ADOPTION_STACK_WORKSPACE_TOOLS_REVISION: &str =
+    "22515fb7bc01d378312053d389d4bbdd55637a50";
+pub const STACK_DEPS_CATALOG_SCHEMA_V2: &str = "onixresearch.stack-dependency-catalog.v2";
+pub const STACK_DEPS_RECEIPT_SCHEMA_V1: &str = "onixresearch.stack-dependency-receipt.v1";
+pub const STACK_DEPS_RECONCILIATION_SCHEMA_V2: &str =
+    "onixresearch.stack-dependency-reconciliation.v2";
+pub const STACK_DOCTOR_HEALTH_SCHEMA_V1: &str = "onixresearch.stack-health-receipt.v1";
 const RELATIONSHIP_BOUND_EXHAUSTED: &str = "relationships";
 const OBSERVATION_BOUND_EXHAUSTED: &str = "observations";
 const PROVENANCE_BOUND_EXHAUSTED: &str = "provenance";
+const STACK_DEPS_PRODUCER_KIND: &str = "stack_deps_audit";
+const STACK_DOCTOR_PRODUCER_KIND: &str = "stack_doctor_health";
+const STACK_DEPS_OPERATION_AUDIT: &str = "audit";
+const STACK_DEPS_CLAIM_OBSERVED: &str = "observed-dependency-state";
+const STACK_DOCTOR_CLAIM_OBSERVED: &str = "observed-stack-reference-state";
+const STACK_DOCTOR_CLAIM_CONFORMANCE: &str = "ran-declared-conformance-checks";
+const STACK_DOCTOR_CHECKED_SCOPE_COUNT: usize = 5;
+const HASH_HEX_LENGTH: usize = 64;
+const GIT_SHA1_HEX_LENGTH: usize = 40;
+const GIT_SHA256_HEX_LENGTH: usize = 64;
+const STACK_DEPS_NON_CLAIMS: [&str; 4] = [
+    "does-not-prove-upstream-correctness",
+    "does-not-prove-semantic-compatibility",
+    "does-not-prove-release-readiness",
+    "does-not-prove-whole-stack-correctness",
+];
+const STACK_DOCTOR_NON_CLAIMS: [&str; 4] = [
+    "Stack health does not prove child repository correctness.",
+    "Revision equality does not prove semantic compatibility.",
+    "A complete cohort does not create a shared release unit.",
+    "A clean report does not prove release readiness, deployment success, or whole-stack correctness.",
+];
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -178,6 +207,32 @@ pub struct AdoptionReport {
     pub diagnostics: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AdoptionProducerCohort {
+    pub producer_id: String,
+    pub kind: String,
+    pub supported_schemas: Vec<String>,
+    pub source_revision: String,
+    pub validation_evidence: String,
+    pub required_non_claims: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AdoptionProducerAdmission {
+    pub valid: bool,
+    pub provenance: AdoptionProducerProvenance,
+    pub observations: Vec<AdoptionStageObservation>,
+    pub diagnostics: Vec<String>,
+}
+
+pub struct StackDepsContractInput<'a> {
+    pub catalog: &'a Value,
+    pub audit_receipt: &'a Value,
+    pub reconciliation: &'a Value,
+}
+
 #[must_use]
 pub fn adoption_stage_kinds() -> [AdoptionStageKind; 4] {
     [
@@ -186,6 +241,68 @@ pub fn adoption_stage_kinds() -> [AdoptionStageKind; 4] {
         AdoptionStageKind::ConsumerCompatibility,
         AdoptionStageKind::IntegrationEvidence,
     ]
+}
+
+#[must_use]
+pub fn admit_stack_deps_contracts(
+    query: &AdoptionQuery,
+    input: &StackDepsContractInput<'_>,
+    cohort: &AdoptionProducerCohort,
+) -> AdoptionProducerAdmission {
+    // Pure saved-input producer admission; no producer execution or sibling scan.
+    let mut diagnostics = validate_stack_deps_cohort(cohort);
+    let catalog_relationships = catalog_relationships(input.catalog, &mut diagnostics);
+    validate_stack_deps_audit(
+        input.audit_receipt,
+        &catalog_relationships,
+        &mut diagnostics,
+    );
+    validate_stack_deps_reconciliation(
+        input.reconciliation,
+        input.catalog,
+        input.audit_receipt,
+        &mut diagnostics,
+    );
+
+    let receipt_hash = string_field(input.audit_receipt, "receipt_blake3").unwrap_or_default();
+    let observations = if diagnostics.is_empty() {
+        stack_deps_observations(query, input.audit_receipt, &catalog_relationships, cohort)
+    } else {
+        Vec::new()
+    };
+    producer_admission(
+        cohort,
+        STACK_DEPS_RECEIPT_SCHEMA_V1,
+        "stack-deps",
+        &receipt_hash,
+        observations,
+        diagnostics,
+    )
+}
+
+#[must_use]
+pub fn admit_stack_doctor_health(
+    query: &AdoptionQuery,
+    receipt: &Value,
+    cohort: &AdoptionProducerCohort,
+) -> AdoptionProducerAdmission {
+    // Pure saved-input producer admission; no producer execution or sibling scan.
+    let mut diagnostics = validate_stack_doctor_cohort(cohort);
+    validate_stack_doctor_receipt(receipt, &mut diagnostics);
+    let receipt_hash = string_field(receipt, "receipt_blake3").unwrap_or_default();
+    let observations = if diagnostics.is_empty() {
+        stack_doctor_observations(query, receipt, cohort)
+    } else {
+        Vec::new()
+    };
+    producer_admission(
+        cohort,
+        STACK_DOCTOR_HEALTH_SCHEMA_V1,
+        "stack-doctor",
+        &receipt_hash,
+        observations,
+        diagnostics,
+    )
 }
 
 #[must_use]
@@ -292,6 +409,508 @@ pub fn derive_adoption_report(snapshot: &AdoptionSnapshot) -> AdoptionReport {
     };
     report.report_hash = report_fingerprint(&report);
     report
+}
+
+fn validate_stack_deps_cohort(cohort: &AdoptionProducerCohort) -> Vec<String> {
+    let mut diagnostics = validate_common_cohort(cohort, STACK_DEPS_PRODUCER_KIND);
+    require_schema(cohort, STACK_DEPS_CATALOG_SCHEMA_V2, &mut diagnostics);
+    require_schema(cohort, STACK_DEPS_RECEIPT_SCHEMA_V1, &mut diagnostics);
+    require_schema(
+        cohort,
+        STACK_DEPS_RECONCILIATION_SCHEMA_V2,
+        &mut diagnostics,
+    );
+    require_non_claims(cohort, &STACK_DEPS_NON_CLAIMS, &mut diagnostics);
+    sort_diagnostics(&mut diagnostics);
+    diagnostics
+}
+
+fn validate_stack_doctor_cohort(cohort: &AdoptionProducerCohort) -> Vec<String> {
+    let mut diagnostics = validate_common_cohort(cohort, STACK_DOCTOR_PRODUCER_KIND);
+    require_schema(cohort, STACK_DOCTOR_HEALTH_SCHEMA_V1, &mut diagnostics);
+    require_non_claims(cohort, &STACK_DOCTOR_NON_CLAIMS, &mut diagnostics);
+    sort_diagnostics(&mut diagnostics);
+    diagnostics
+}
+
+fn validate_common_cohort(cohort: &AdoptionProducerCohort, expected_kind: &str) -> Vec<String> {
+    let mut diagnostics = Vec::new();
+    if cohort.producer_id.is_empty() {
+        diagnostics.push("adoption.producer.id_missing".to_string());
+    }
+    if cohort.kind != expected_kind {
+        diagnostics.push("adoption.producer.kind_unsupported".to_string());
+    }
+    if cohort.source_revision != ADOPTION_STACK_WORKSPACE_TOOLS_REVISION {
+        diagnostics.push("adoption.producer.source_revision_mismatch".to_string());
+    }
+    if !is_blake3_hex(&cohort.validation_evidence) {
+        diagnostics.push("adoption.producer.validation_evidence_invalid".to_string());
+    }
+    diagnostics
+}
+
+fn require_schema(cohort: &AdoptionProducerCohort, schema: &str, diagnostics: &mut Vec<String>) {
+    if !cohort.supported_schemas.iter().any(|item| item == schema) {
+        diagnostics.push(format!("adoption.producer.schema_missing:{schema}"));
+    }
+}
+
+fn require_non_claims(
+    cohort: &AdoptionProducerCohort,
+    expected: &[&str],
+    diagnostics: &mut Vec<String>,
+) {
+    let actual = cohort
+        .required_non_claims
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if actual != expected {
+        diagnostics.push("adoption.producer.non_claims_mismatch".to_string());
+    }
+}
+
+fn catalog_relationships(
+    catalog: &Value,
+    diagnostics: &mut Vec<String>,
+) -> BTreeMap<String, Value> {
+    let mut relationships = BTreeMap::new();
+    if string_field(catalog, "schema").as_deref() != Some(STACK_DEPS_CATALOG_SCHEMA_V2) {
+        diagnostics.push("adoption.stack_deps.catalog_schema_unsupported".to_string());
+    }
+    let Some(items) = array_field(catalog, "relationships") else {
+        diagnostics.push("adoption.stack_deps.catalog_relationships_missing".to_string());
+        return relationships;
+    };
+    for item in items {
+        let Some(id) = string_field(item, "id") else {
+            diagnostics.push("adoption.stack_deps.catalog_relationship_id_missing".to_string());
+            continue;
+        };
+        if relationships.insert(id.clone(), item.clone()).is_some() {
+            diagnostics.push(format!(
+                "adoption.stack_deps.catalog_relationship_duplicate:{id}"
+            ));
+        }
+    }
+    relationships
+}
+
+fn validate_stack_deps_audit(
+    receipt: &Value,
+    catalog_relationships: &BTreeMap<String, Value>,
+    diagnostics: &mut Vec<String>,
+) {
+    if string_field(receipt, "schema").as_deref() != Some(STACK_DEPS_RECEIPT_SCHEMA_V1) {
+        diagnostics.push("adoption.stack_deps.audit_schema_unsupported".to_string());
+    }
+    if string_field(receipt, "operation").as_deref() != Some(STACK_DEPS_OPERATION_AUDIT) {
+        diagnostics.push("adoption.stack_deps.audit_operation_unsupported".to_string());
+    }
+    if !receipt.get("relationship").is_some_and(Value::is_null) {
+        diagnostics.push("adoption.stack_deps.audit_relationship_must_be_null".to_string());
+    }
+    if !hash_field_is_blake3(receipt, "receipt_blake3") {
+        diagnostics.push("adoption.stack_deps.audit_receipt_hash_invalid".to_string());
+    }
+    require_string_array_value(
+        receipt,
+        "claims",
+        &[STACK_DEPS_CLAIM_OBSERVED],
+        "adoption.stack_deps.audit_claims_mismatch",
+        diagnostics,
+    );
+    require_string_array_value(
+        receipt,
+        "non_claims",
+        &STACK_DEPS_NON_CLAIMS,
+        "adoption.stack_deps.audit_non_claims_mismatch",
+        diagnostics,
+    );
+    for empty_field in ["adapter_results", "check_results", "changed_paths"] {
+        if !array_field(receipt, empty_field).is_some_and(Vec::is_empty) {
+            diagnostics.push(format!("adoption.stack_deps.audit_{empty_field}_not_empty"));
+        }
+    }
+    if !receipt.get("plan_blake3").is_some_and(Value::is_null) {
+        diagnostics.push("adoption.stack_deps.audit_plan_hash_must_be_null".to_string());
+    }
+    let Some(observations) = array_field(receipt, "observations") else {
+        diagnostics.push("adoption.stack_deps.audit_observations_missing".to_string());
+        return;
+    };
+    if observations.len() != catalog_relationships.len() {
+        diagnostics.push("adoption.stack_deps.audit_coverage_mismatch".to_string());
+    }
+    let mut observed = BTreeSet::new();
+    for observation in observations {
+        validate_stack_deps_observation(
+            observation,
+            catalog_relationships,
+            &mut observed,
+            diagnostics,
+        );
+    }
+}
+
+fn validate_stack_deps_observation(
+    observation: &Value,
+    catalog_relationships: &BTreeMap<String, Value>,
+    observed: &mut BTreeSet<String>,
+    diagnostics: &mut Vec<String>,
+) {
+    let Some(relationship_id) = string_field(observation, "relationship") else {
+        diagnostics.push("adoption.stack_deps.observation_relationship_missing".to_string());
+        return;
+    };
+    if !observed.insert(relationship_id.clone()) {
+        diagnostics.push(format!(
+            "adoption.stack_deps.observation_duplicate:{relationship_id}"
+        ));
+    }
+    let Some(relationship) = catalog_relationships.get(&relationship_id) else {
+        diagnostics.push(format!(
+            "adoption.stack_deps.observation_unknown:{relationship_id}"
+        ));
+        return;
+    };
+    let expected_source = relationship
+        .get("source")
+        .and_then(|source| string_field(source, "source_identity"));
+    if string_field(observation, "source_identity") != expected_source {
+        diagnostics.push(format!(
+            "adoption.stack_deps.observation_source_mismatch:{relationship_id}"
+        ));
+    }
+    if !string_field(observation, "state")
+        .as_deref()
+        .is_some_and(is_stack_deps_state)
+    {
+        diagnostics.push(format!(
+            "adoption.stack_deps.observation_state_unsupported:{relationship_id}"
+        ));
+    }
+    for field in ["consumer_revision", "candidate_revision"] {
+        if let Some(revision) = optional_string_field(observation, field) {
+            if !is_exact_revision(&revision) {
+                diagnostics.push(format!(
+                    "adoption.stack_deps.observation_revision_invalid:{relationship_id}"
+                ));
+            }
+        }
+    }
+}
+
+fn validate_stack_deps_reconciliation(
+    reconciliation: &Value,
+    catalog: &Value,
+    audit_receipt: &Value,
+    diagnostics: &mut Vec<String>,
+) {
+    if string_field(reconciliation, "schema").as_deref()
+        != Some(STACK_DEPS_RECONCILIATION_SCHEMA_V2)
+    {
+        diagnostics.push("adoption.stack_deps.reconciliation_schema_unsupported".to_string());
+    }
+    if !hash_field_is_blake3(reconciliation, "reconciliation_blake3") {
+        diagnostics.push("adoption.stack_deps.reconciliation_hash_invalid".to_string());
+    }
+    let catalog_hash = canonical_json_hash(catalog);
+    if string_field(reconciliation, "catalog_blake3").as_deref() != Some(catalog_hash.as_str()) {
+        diagnostics.push("adoption.stack_deps.reconciliation_catalog_hash_mismatch".to_string());
+    }
+    if string_field(reconciliation, "audit_receipt_blake3")
+        != string_field(audit_receipt, "receipt_blake3")
+    {
+        diagnostics.push("adoption.stack_deps.reconciliation_audit_hash_mismatch".to_string());
+    }
+    require_string_array_value(
+        reconciliation,
+        "non_claims",
+        &STACK_DEPS_NON_CLAIMS,
+        "adoption.stack_deps.reconciliation_non_claims_mismatch",
+        diagnostics,
+    );
+}
+
+fn validate_stack_doctor_receipt(receipt: &Value, diagnostics: &mut Vec<String>) {
+    if string_field(receipt, "schema").as_deref() != Some(STACK_DOCTOR_HEALTH_SCHEMA_V1) {
+        diagnostics.push("adoption.stack_doctor.schema_unsupported".to_string());
+    }
+    if !matches!(
+        string_field(receipt, "verdict").as_deref(),
+        Some("pass" | "fail")
+    ) {
+        diagnostics.push("adoption.stack_doctor.verdict_unsupported".to_string());
+    }
+    for field in ["profile_blake3", "observations_blake3", "receipt_blake3"] {
+        if !hash_field_is_blake3(receipt, field) {
+            diagnostics.push(format!("adoption.stack_doctor.{field}_invalid"));
+        }
+    }
+    if array_field(receipt, "checked_scopes").map_or(0, Vec::len)
+        != STACK_DOCTOR_CHECKED_SCOPE_COUNT
+    {
+        diagnostics.push("adoption.stack_doctor.checked_scopes_incomplete".to_string());
+    }
+    require_string_array_value(
+        receipt,
+        "claims",
+        &[STACK_DOCTOR_CLAIM_OBSERVED, STACK_DOCTOR_CLAIM_CONFORMANCE],
+        "adoption.stack_doctor.claims_mismatch",
+        diagnostics,
+    );
+    require_string_array_value(
+        receipt,
+        "non_claims",
+        &STACK_DOCTOR_NON_CLAIMS,
+        "adoption.stack_doctor.non_claims_mismatch",
+        diagnostics,
+    );
+    if let Some(results) = array_field(receipt, "conformance_results") {
+        for result in results {
+            validate_stack_doctor_conformance(result, diagnostics);
+        }
+    } else {
+        diagnostics.push("adoption.stack_doctor.conformance_results_missing".to_string());
+    }
+}
+
+fn validate_stack_doctor_conformance(result: &Value, diagnostics: &mut Vec<String>) {
+    if string_field(result, "profile").is_none() || string_field(result, "check_id").is_none() {
+        diagnostics.push("adoption.stack_doctor.conformance_identity_missing".to_string());
+    }
+    if !matches!(
+        string_field(result, "status").as_deref(),
+        Some("pass" | "fail" | "timeout" | "unavailable")
+    ) {
+        diagnostics.push("adoption.stack_doctor.conformance_status_unsupported".to_string());
+    }
+    for field in ["producer_revision", "consumer_revision"] {
+        if !string_field(result, field)
+            .as_deref()
+            .is_some_and(is_exact_revision)
+        {
+            diagnostics.push(format!("adoption.stack_doctor.{field}_invalid"));
+        }
+    }
+    if let Some(hash) = optional_string_field(result, "result_identity_blake3") {
+        if !is_blake3_hex(&hash) {
+            diagnostics.push("adoption.stack_doctor.result_identity_invalid".to_string());
+        }
+    }
+}
+
+fn stack_deps_observations(
+    query: &AdoptionQuery,
+    receipt: &Value,
+    catalog_relationships: &BTreeMap<String, Value>,
+    cohort: &AdoptionProducerCohort,
+) -> Vec<AdoptionStageObservation> {
+    let receipt_hash = string_field(receipt, "receipt_blake3").unwrap_or_default();
+    let observations = array_field(receipt, "observations")
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| string_field(item, "relationship").map(|id| (id, item)))
+                .collect::<BTreeMap<_, _>>()
+        })
+        .unwrap_or_default();
+    query
+        .relationships
+        .iter()
+        .filter_map(|relationship| {
+            let observation = observations.get(&relationship.relationship_id)?;
+            let state = stack_deps_adoption_state(string_field(observation, "state").as_deref()?);
+            let producer_status = string_field(observation, "state").unwrap_or_default();
+            let observed_revision = optional_string_field(observation, "consumer_revision")
+                .or_else(|| optional_string_field(observation, "candidate_revision"));
+            let message = stack_deps_message(&producer_status);
+            let evidence_hashes = vec![receipt_hash.clone()];
+            let _catalog_relationship = catalog_relationships.get(&relationship.relationship_id)?;
+            Some(AdoptionStageObservation {
+                relationship: relationship.clone(),
+                stage: AdoptionStageKind::ConsumerPin,
+                state,
+                producer_id: cohort.producer_id.clone(),
+                producer_status,
+                evidence_hashes,
+                observed_revision,
+                message,
+            })
+        })
+        .collect()
+}
+
+fn stack_doctor_observations(
+    query: &AdoptionQuery,
+    receipt: &Value,
+    cohort: &AdoptionProducerCohort,
+) -> Vec<AdoptionStageObservation> {
+    let receipt_hash = string_field(receipt, "receipt_blake3").unwrap_or_default();
+    let results = array_field(receipt, "conformance_results")
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| string_field(item, "profile").map(|id| (id, item)))
+                .collect::<BTreeMap<_, _>>()
+        })
+        .unwrap_or_default();
+    query
+        .relationships
+        .iter()
+        .filter_map(|relationship| {
+            let result = results.get(&relationship.relationship_id)?;
+            let status = string_field(result, "status")?;
+            let state = stack_doctor_adoption_state(&status);
+            let evidence_hashes = optional_string_field(result, "result_identity_blake3")
+                .map_or_else(|| vec![receipt_hash.clone()], |hash| vec![hash]);
+            Some(AdoptionStageObservation {
+                relationship: relationship.clone(),
+                stage: AdoptionStageKind::IntegrationEvidence,
+                state,
+                producer_id: cohort.producer_id.clone(),
+                producer_status: status.clone(),
+                evidence_hashes,
+                observed_revision: optional_string_field(result, "consumer_revision"),
+                message: stack_doctor_message(&status),
+            })
+        })
+        .collect()
+}
+
+fn producer_admission(
+    cohort: &AdoptionProducerCohort,
+    schema: &str,
+    tool_name: &str,
+    receipt_hash: &str,
+    observations: Vec<AdoptionStageObservation>,
+    diagnostics: Vec<String>,
+) -> AdoptionProducerAdmission {
+    let mut diagnostics = diagnostics;
+    sort_diagnostics(&mut diagnostics);
+    AdoptionProducerAdmission {
+        valid: diagnostics.is_empty(),
+        provenance: AdoptionProducerProvenance {
+            producer_id: cohort.producer_id.clone(),
+            schema: schema.to_string(),
+            source_revision: cohort.source_revision.clone(),
+            tool_identity: format!("{tool_name}@{}", cohort.source_revision),
+            policy_identity: format!("workspace-dependency-policy@{}", cohort.source_revision),
+            observation_scope: "explicit-saved-input".to_string(),
+            receipt_hash: receipt_hash.to_string(),
+        },
+        observations,
+        diagnostics,
+    }
+}
+
+fn stack_deps_adoption_state(state: &str) -> AdoptionStageState {
+    match state {
+        "current" => AdoptionStageState::Supported,
+        "behind" => AdoptionStageState::Gap,
+        "ahead" => AdoptionStageState::Diverged,
+        "diverged" => AdoptionStageState::Diverged,
+        "missing" => AdoptionStageState::Missing,
+        "unavailable" => AdoptionStageState::Unavailable,
+        "blocked" => AdoptionStageState::Blocked,
+        _ => AdoptionStageState::Unknown,
+    }
+}
+
+fn stack_doctor_adoption_state(status: &str) -> AdoptionStageState {
+    match status {
+        "pass" => AdoptionStageState::Supported,
+        "fail" => AdoptionStageState::Blocked,
+        "timeout" => AdoptionStageState::Stale,
+        "unavailable" => AdoptionStageState::Unavailable,
+        _ => AdoptionStageState::Unknown,
+    }
+}
+
+fn stack_deps_message(state: &str) -> String {
+    match state {
+        "current" => "consumer pin matches the required source revision".to_string(),
+        "behind" => "consumer pin is behind the required source revision".to_string(),
+        "ahead" => "consumer pin is ahead of the required source revision".to_string(),
+        "diverged" => "consumer pin diverges from the required source revision".to_string(),
+        "missing" => "consumer pin observation is missing".to_string(),
+        "unavailable" => "producer source was unavailable".to_string(),
+        "blocked" => "producer reported a blocked dependency observation".to_string(),
+        _ => "producer reported an unknown dependency observation".to_string(),
+    }
+}
+
+fn stack_doctor_message(status: &str) -> String {
+    match status {
+        "pass" => "consumer conformance check passed".to_string(),
+        "fail" => "consumer conformance check failed".to_string(),
+        "timeout" => "consumer conformance check timed out and must be refreshed".to_string(),
+        "unavailable" => "consumer conformance check was unavailable".to_string(),
+        _ => "consumer conformance check state is unknown".to_string(),
+    }
+}
+
+fn is_stack_deps_state(state: &str) -> bool {
+    matches!(
+        state,
+        "current" | "behind" | "ahead" | "diverged" | "missing" | "unavailable" | "blocked"
+    )
+}
+
+fn string_field(value: &Value, field: &str) -> Option<String> {
+    object(value)?.get(field)?.as_str().map(ToOwned::to_owned)
+}
+
+fn optional_string_field(value: &Value, field: &str) -> Option<String> {
+    match object(value)?.get(field)? {
+        Value::Null => None,
+        Value::String(text) => Some(text.clone()),
+        _ => None,
+    }
+}
+
+fn array_field<'a>(value: &'a Value, field: &str) -> Option<&'a Vec<Value>> {
+    object(value)?.get(field)?.as_array()
+}
+
+fn object(value: &Value) -> Option<&Map<String, Value>> {
+    value.as_object()
+}
+
+fn require_string_array_value(
+    value: &Value,
+    field: &str,
+    expected: &[&str],
+    code: &str,
+    diagnostics: &mut Vec<String>,
+) {
+    let actual = array_field(value, field)
+        .map(|items| items.iter().filter_map(Value::as_str).collect::<Vec<_>>())
+        .unwrap_or_default();
+    if actual != expected {
+        diagnostics.push(code.to_string());
+    }
+}
+
+fn hash_field_is_blake3(value: &Value, field: &str) -> bool {
+    string_field(value, field).is_some_and(|text| is_blake3_hex(&text))
+}
+
+fn is_blake3_hex(value: &str) -> bool {
+    value.len() == HASH_HEX_LENGTH && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn is_exact_revision(value: &str) -> bool {
+    let length = value.len();
+    (length == GIT_SHA1_HEX_LENGTH || length == GIT_SHA256_HEX_LENGTH)
+        && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn sort_diagnostics(diagnostics: &mut Vec<String>) {
+    diagnostics.sort();
+    diagnostics.dedup();
 }
 
 fn validate_snapshot(snapshot: &AdoptionSnapshot) -> Vec<String> {
@@ -752,6 +1371,234 @@ mod tests {
             .actions
             .iter()
             .any(|action| action.kind == ADOPTION_ACTION_KIND_UNRESOLVED));
+    }
+
+    fn stack_deps_cohort() -> AdoptionProducerCohort {
+        AdoptionProducerCohort {
+            producer_id: "workspace-stack-deps-v2".to_string(),
+            kind: STACK_DEPS_PRODUCER_KIND.to_string(),
+            supported_schemas: vec![
+                STACK_DEPS_CATALOG_SCHEMA_V2.to_string(),
+                STACK_DEPS_RECEIPT_SCHEMA_V1.to_string(),
+                STACK_DEPS_RECONCILIATION_SCHEMA_V2.to_string(),
+            ],
+            source_revision: ADOPTION_STACK_WORKSPACE_TOOLS_REVISION.to_string(),
+            validation_evidence: HASH_A.to_string(),
+            required_non_claims: STACK_DEPS_NON_CLAIMS.map(str::to_string).to_vec(),
+        }
+    }
+
+    fn stack_doctor_cohort() -> AdoptionProducerCohort {
+        AdoptionProducerCohort {
+            producer_id: "workspace-stack-doctor-v1".to_string(),
+            kind: STACK_DOCTOR_PRODUCER_KIND.to_string(),
+            supported_schemas: vec![STACK_DOCTOR_HEALTH_SCHEMA_V1.to_string()],
+            source_revision: ADOPTION_STACK_WORKSPACE_TOOLS_REVISION.to_string(),
+            validation_evidence: HASH_B.to_string(),
+            required_non_claims: STACK_DOCTOR_NON_CLAIMS.map(str::to_string).to_vec(),
+        }
+    }
+
+    fn stack_catalog(relationship: &AdoptionRelationshipKey) -> Value {
+        serde_json::json!({
+            "schema": STACK_DEPS_CATALOG_SCHEMA_V2,
+            "relationships": [{
+                "id": relationship.relationship_id,
+                "source": {
+                    "source_identity": "git:https://github.com/OnixResearch/cairn"
+                }
+            }]
+        })
+    }
+
+    fn stack_audit(relationship: &AdoptionRelationshipKey, state: &str) -> Value {
+        serde_json::json!({
+            "schema": STACK_DEPS_RECEIPT_SCHEMA_V1,
+            "operation": "audit",
+            "relationship": null,
+            "verdict": if state == "current" { "pass" } else { "fail" },
+            "observations": [{
+                "relationship": relationship.relationship_id,
+                "consumer_revision": "1111111111111111111111111111111111111111",
+                "candidate_revision": "2222222222222222222222222222222222222222",
+                "state": state,
+                "blocker": null,
+                "source_identity": "git:https://github.com/OnixResearch/cairn"
+            }],
+            "plan_blake3": null,
+            "adapter_results": [],
+            "check_results": [],
+            "changed_paths": [],
+            "claims": [STACK_DEPS_CLAIM_OBSERVED],
+            "non_claims": STACK_DEPS_NON_CLAIMS,
+            "receipt_blake3": HASH_A
+        })
+    }
+
+    fn stack_reconciliation(catalog: &Value, audit: &Value) -> Value {
+        serde_json::json!({
+            "schema": STACK_DEPS_RECONCILIATION_SCHEMA_V2,
+            "catalog_blake3": canonical_json_hash(catalog),
+            "audit_receipt_blake3": string_field(audit, "receipt_blake3").expect("audit hash"),
+            "current_relationships": [],
+            "ready_plans": [],
+            "deferred_relationships": [],
+            "blockers": [],
+            "non_claims": STACK_DEPS_NON_CLAIMS,
+            "reconciliation_blake3": HASH_C
+        })
+    }
+
+    fn stack_doctor_receipt(relationship: &AdoptionRelationshipKey, status: &str) -> Value {
+        serde_json::json!({
+            "schema": STACK_DOCTOR_HEALTH_SCHEMA_V1,
+            "verdict": if status == "pass" { "pass" } else { "fail" },
+            "profile_blake3": HASH_A,
+            "observations_blake3": HASH_B,
+            "checked_scopes": ["repositories", "lifecycle", "documents", "external-components", "conformance"],
+            "repository_count": 2,
+            "discovered_repository_count": 2,
+            "findings": [],
+            "conformance_results": [{
+                "profile": relationship.relationship_id,
+                "check_id": "cairn-to-octet-integration",
+                "status": status,
+                "producer_revision": "1111111111111111111111111111111111111111",
+                "consumer_revision": "2222222222222222222222222222222222222222",
+                "result_identity_blake3": HASH_C,
+                "diagnostic_class": "fixture"
+            }],
+            "claims": [STACK_DOCTOR_CLAIM_OBSERVED, STACK_DOCTOR_CLAIM_CONFORMANCE],
+            "non_claims": STACK_DOCTOR_NON_CLAIMS,
+            "receipt_blake3": HASH_C
+        })
+    }
+
+    #[test]
+    fn stack_deps_contracts_admit_exact_producer_and_preserve_old_pin_gap() {
+        let relationship = key("cairn-to-octet", "onixresearch/octet");
+        let query = AdoptionQuery {
+            scope_id: "producer-stack-deps".to_string(),
+            relationships: vec![relationship.clone()],
+            bounds: AdoptionQueryBounds::default(),
+        };
+        let catalog = stack_catalog(&relationship);
+        let audit = stack_audit(&relationship, "behind");
+        let reconciliation = stack_reconciliation(&catalog, &audit);
+        let admission = admit_stack_deps_contracts(
+            &query,
+            &StackDepsContractInput {
+                catalog: &catalog,
+                audit_receipt: &audit,
+                reconciliation: &reconciliation,
+            },
+            &stack_deps_cohort(),
+        );
+        assert!(admission.valid, "{:?}", admission.diagnostics);
+        assert_eq!(
+            admission.provenance.source_revision,
+            ADOPTION_STACK_WORKSPACE_TOOLS_REVISION
+        );
+        assert_eq!(admission.observations.len(), 1);
+        assert_eq!(
+            admission.observations[0].stage,
+            AdoptionStageKind::ConsumerPin
+        );
+        assert_eq!(admission.observations[0].state, AdoptionStageState::Gap);
+    }
+
+    #[test]
+    fn stack_deps_contracts_reject_unsupported_schema_and_stale_reconciliation() {
+        let relationship = key("cairn-to-octet", "onixresearch/octet");
+        let query = AdoptionQuery {
+            scope_id: "producer-stack-deps-negative".to_string(),
+            relationships: vec![relationship.clone()],
+            bounds: AdoptionQueryBounds::default(),
+        };
+        let mut catalog = stack_catalog(&relationship);
+        catalog["schema"] = serde_json::json!("onix.stack-deps.audit.v2");
+        let audit = stack_audit(&relationship, "current");
+        let mut reconciliation = stack_reconciliation(&catalog, &audit);
+        reconciliation["audit_receipt_blake3"] = serde_json::json!(HASH_B);
+        let admission = admit_stack_deps_contracts(
+            &query,
+            &StackDepsContractInput {
+                catalog: &catalog,
+                audit_receipt: &audit,
+                reconciliation: &reconciliation,
+            },
+            &stack_deps_cohort(),
+        );
+        assert!(!admission.valid);
+        assert!(admission
+            .diagnostics
+            .contains(&"adoption.stack_deps.catalog_schema_unsupported".to_string()));
+        assert!(admission
+            .diagnostics
+            .contains(&"adoption.stack_deps.reconciliation_audit_hash_mismatch".to_string()));
+    }
+
+    #[test]
+    fn stack_doctor_health_admits_pass_and_failure_without_release_claims() {
+        let supported = key("cairn-to-octet", "onixresearch/octet");
+        let blocked = key("octet-to-lattice", "onixresearch/lattice");
+        let query = AdoptionQuery {
+            scope_id: "producer-stack-doctor".to_string(),
+            relationships: vec![supported.clone(), blocked.clone()],
+            bounds: AdoptionQueryBounds::default(),
+        };
+        let mut receipt = stack_doctor_receipt(&supported, "pass");
+        receipt["conformance_results"]
+            .as_array_mut()
+            .expect("conformance array")
+            .push(serde_json::json!({
+                "profile": blocked.relationship_id,
+                "check_id": "octet-to-lattice-integration",
+                "status": "fail",
+                "producer_revision": "1111111111111111111111111111111111111111",
+                "consumer_revision": "2222222222222222222222222222222222222222",
+                "result_identity_blake3": HASH_B,
+                "diagnostic_class": "fixture-failure"
+            }));
+        let admission = admit_stack_doctor_health(&query, &receipt, &stack_doctor_cohort());
+        assert!(admission.valid, "{:?}", admission.diagnostics);
+        assert_eq!(admission.observations.len(), 2);
+        assert!(admission
+            .observations
+            .iter()
+            .any(
+                |item| item.relationship.relationship_id == supported.relationship_id
+                    && item.state == AdoptionStageState::Supported
+            ));
+        assert!(admission
+            .observations
+            .iter()
+            .any(
+                |item| item.relationship.relationship_id == blocked.relationship_id
+                    && item.state == AdoptionStageState::Blocked
+            ));
+    }
+
+    #[test]
+    fn stack_doctor_health_rejects_claim_drift_and_unsupported_status() {
+        let relationship = key("cairn-to-octet", "onixresearch/octet");
+        let query = AdoptionQuery {
+            scope_id: "producer-stack-doctor-negative".to_string(),
+            relationships: vec![relationship.clone()],
+            bounds: AdoptionQueryBounds::default(),
+        };
+        let mut receipt = stack_doctor_receipt(&relationship, "pass");
+        receipt["claims"] =
+            serde_json::json!(["observed-stack-reference-state", "proves-release-readiness"]);
+        receipt["conformance_results"][0]["status"] = serde_json::json!("flaky");
+        let admission = admit_stack_doctor_health(&query, &receipt, &stack_doctor_cohort());
+        assert!(!admission.valid);
+        assert!(admission
+            .diagnostics
+            .contains(&"adoption.stack_doctor.claims_mismatch".to_string()));
+        assert!(admission
+            .diagnostics
+            .contains(&"adoption.stack_doctor.conformance_status_unsupported".to_string()));
     }
 
     #[test]
