@@ -87,3 +87,5 @@ The adoption pilot uses saved Cairn-to-Octet and Octet-to-Lattice relationship o
 Record the named cohort, source identities, commands, and observations for each utility comparison.
 Measure first-use success, time to a correct next action, manual receipt edits, repeated command errors, and stale-evidence rejection.
 Do not count archives, tasks, or generated files as utility evidence.
+
+For the adoption-report operator contract, supported versions, authority map, diagnostic actions, and bounded-stage interpretation, see [Cross-repository adoption report](adoption-report.md).

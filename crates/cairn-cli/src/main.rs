@@ -1,5 +1,6 @@
 use std::{env, error::Error, path::Path};
 
+mod adoption;
 mod adr;
 mod agent_guidance_shell;
 mod agent_receipt;
@@ -68,6 +69,7 @@ mod collaboration;
 mod config_export;
 mod content_addressed_evidence;
 
+use adoption::run_adoption;
 use adr::run_adr;
 use collaboration::run_collaboration;
 use determinism::run_determinism;
@@ -149,6 +151,7 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "view"
             | "workflow"
             | "readiness"
+            | "adoption"
             | "release-readiness"
             | "lifecycle"
             | "traceability"
@@ -217,6 +220,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "view" => run_view(args.collect())?,
         "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
         "readiness" => readiness::run_readiness(args.collect())?,
+        "adoption" => run_adoption(args.collect())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-decision" => run_release(args.collect())?,

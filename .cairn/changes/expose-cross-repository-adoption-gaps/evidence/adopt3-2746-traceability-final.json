@@ -1,0 +1,65 @@
+{
+  "command": "traceability coverage",
+  "dangling": [],
+  "input_hash": "797ba720a4074295fc2178ea0caf2e70de4bdd674caaf388f66e9603cee0472d",
+  "missing": [],
+  "policy": "cairn-default",
+  "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "profile": {
+    "anchor_kind": "exact_marker_bytes",
+    "assurance_level": "declared",
+    "evidence_sources": [
+      {
+        "extensions": [
+          "rs"
+        ],
+        "root": "crates",
+        "source_kind": "rust_source"
+      },
+      {
+        "extensions": [
+          "ncl"
+        ],
+        "root": "crates",
+        "source_kind": "nickel_source"
+      },
+      {
+        "extensions": [
+          "rs",
+          "ncl"
+        ],
+        "root": "tools",
+        "source_kind": "tool_source"
+      }
+    ],
+    "id": "cairn-default",
+    "marker_verbs": [
+      "impl",
+      "verify",
+      "depends",
+      "related"
+    ],
+    "requirement_sources": [
+      {
+        "extensions": [
+          "md"
+        ],
+        "root": ".cairn/specs",
+        "source_kind": "accepted_specs"
+      }
+    ]
+  },
+  "profile_id": "cairn-default",
+  "receipt_hash": "a1b00e79adf13f995011f927c3469c1b19ab898452325c4a8e8e820d2e1b36c4",
+  "referenced": 2301,
+  "requirements": 2301,
+  "root": ".",
+  "source_summary": {
+    "evidence_files": 523,
+    "evidence_manifest_hash": "79b93d7cf69f04cd31e68000c194f964d9e4b5d0991fac364a9d1bb52d967f94",
+    "requirement_files": 66,
+    "requirement_manifest_hash": "eaa3a610a874603e7a0bdf4e1c76a4a2ccaa1d52ea241da96f151086a6061fc9"
+  },
+  "valid": true,
+  "verdict": "pass"
+}

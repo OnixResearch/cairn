@@ -107,6 +107,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Inspect change readiness without execution or mutation",
         ),
         mcp_tool(
+            "cairn_adoption_report",
+            true,
+            false,
+            "Inspect a saved cross-repository adoption snapshot without execution or mutation",
+        ),
+        mcp_tool(
             "cairn_drain_plan",
             true,
             false,
@@ -205,6 +211,7 @@ fn mcp_input_schema(name: &str) -> Value {
             }
         }),
         "cairn_change_graph" => mcp_object_schema(&[], &["root"]),
+        "cairn_adoption_report" => mcp_object_schema(&["snapshot"], &["root"]),
         "cairn_read_spec" => mcp_object_schema(&["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" => mcp_object_schema(&["change"], &["root"]),
         "cairn_change_create" => mcp_object_schema(&["change"], &["root", "policy", "profile"]),
@@ -332,6 +339,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         }
         "cairn_validate" | "cairn_drain_plan" => validate_mcp_validate_args(name, object),
         "cairn_change_graph" => validate_string_args(name, object, &[], &["root"]),
+        "cairn_adoption_report" => validate_string_args(name, object, &["snapshot"], &["root"]),
         "cairn_read_spec" => validate_string_args(name, object, &["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" => {
             validate_string_args(name, object, &["change"], &["root"])

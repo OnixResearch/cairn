@@ -25,11 +25,15 @@ pub const STACK_DEPS_RECEIPT_SCHEMA_V1: &str = "onixresearch.stack-dependency-re
 pub const STACK_DEPS_RECONCILIATION_SCHEMA_V2: &str =
     "onixresearch.stack-dependency-reconciliation.v2";
 pub const STACK_DOCTOR_HEALTH_SCHEMA_V1: &str = "onixresearch.stack-health-receipt.v1";
+pub const CAIRN_CROSS_REPO_SUMMARY_SCHEMA_V1: &str = "cairn.cross-repo-receipt-summary.v1";
+pub const CAIRN_GLOBAL_REGISTRY_SCHEMA_V1: &str = "cairn.global-registry-snapshot.v1";
+pub const VALENCE_EVIDENCE_ADMISSION_SCHEMA_V1: &str = "valence.evidence-admission.v1";
 const RELATIONSHIP_BOUND_EXHAUSTED: &str = "relationships";
 const OBSERVATION_BOUND_EXHAUSTED: &str = "observations";
 const PROVENANCE_BOUND_EXHAUSTED: &str = "provenance";
 const STACK_DEPS_PRODUCER_KIND: &str = "stack_deps_audit";
 const STACK_DOCTOR_PRODUCER_KIND: &str = "stack_doctor_health";
+const CAIRN_EVIDENCE_PRODUCER_KIND: &str = "cairn_adoption_evidence";
 const STACK_DEPS_OPERATION_AUDIT: &str = "audit";
 const STACK_DEPS_CLAIM_OBSERVED: &str = "observed-dependency-state";
 const STACK_DOCTOR_CLAIM_OBSERVED: &str = "observed-stack-reference-state";
@@ -233,6 +237,13 @@ pub struct StackDepsContractInput<'a> {
     pub reconciliation: &'a Value,
 }
 
+pub struct CairnAdoptionEvidenceInput<'a> {
+    pub lifecycle_receipts: &'a [Value],
+    pub completion_receipts: &'a [Value],
+    pub registry_snapshot: Option<&'a Value>,
+    pub valence_admission: Option<&'a Value>,
+}
+
 #[must_use]
 pub fn adoption_stage_kinds() -> [AdoptionStageKind; 4] {
     [
@@ -300,6 +311,48 @@ pub fn admit_stack_doctor_health(
         STACK_DOCTOR_HEALTH_SCHEMA_V1,
         "stack-doctor",
         &receipt_hash,
+        observations,
+        diagnostics,
+    )
+}
+
+#[must_use]
+pub fn admit_cairn_adoption_evidence(
+    query: &AdoptionQuery,
+    input: &CairnAdoptionEvidenceInput<'_>,
+    cohort: &AdoptionProducerCohort,
+) -> AdoptionProducerAdmission {
+    // Pure saved-input evidence composition; registry membership is provenance only.
+    let mut diagnostics = validate_cairn_evidence_cohort(cohort);
+    let mut observations = Vec::new();
+    for receipt in input.lifecycle_receipts {
+        validate_cross_repo_summary(receipt, &mut diagnostics);
+        observations.extend(cairn_lifecycle_observations(query, receipt, cohort));
+    }
+    for receipt in input.completion_receipts {
+        validate_cross_repo_summary(receipt, &mut diagnostics);
+        observations.extend(cairn_completion_observations(query, receipt, cohort));
+    }
+    if let Some(registry) = input.registry_snapshot {
+        validate_adoption_registry(registry, &mut diagnostics);
+    }
+    if let Some(valence) = input.valence_admission {
+        validate_valence_admission(valence, &mut diagnostics);
+        observations.extend(valence_admission_observations(query, valence, cohort));
+    }
+    if !diagnostics.is_empty() {
+        observations.clear();
+    }
+    producer_admission(
+        cohort,
+        CAIRN_CROSS_REPO_SUMMARY_SCHEMA_V1,
+        "cairn-adoption-evidence",
+        &canonical_json_hash(&json!({
+            "lifecycle": input.lifecycle_receipts,
+            "completion": input.completion_receipts,
+            "registry": input.registry_snapshot,
+            "valence": input.valence_admission,
+        })),
         observations,
         diagnostics,
     )
@@ -429,6 +482,29 @@ fn validate_stack_doctor_cohort(cohort: &AdoptionProducerCohort) -> Vec<String> 
     let mut diagnostics = validate_common_cohort(cohort, STACK_DOCTOR_PRODUCER_KIND);
     require_schema(cohort, STACK_DOCTOR_HEALTH_SCHEMA_V1, &mut diagnostics);
     require_non_claims(cohort, &STACK_DOCTOR_NON_CLAIMS, &mut diagnostics);
+    sort_diagnostics(&mut diagnostics);
+    diagnostics
+}
+
+fn validate_cairn_evidence_cohort(cohort: &AdoptionProducerCohort) -> Vec<String> {
+    let mut diagnostics = validate_common_cohort(cohort, CAIRN_EVIDENCE_PRODUCER_KIND);
+    require_schema(cohort, CAIRN_CROSS_REPO_SUMMARY_SCHEMA_V1, &mut diagnostics);
+    require_schema(cohort, CAIRN_GLOBAL_REGISTRY_SCHEMA_V1, &mut diagnostics);
+    require_schema(
+        cohort,
+        VALENCE_EVIDENCE_ADMISSION_SCHEMA_V1,
+        &mut diagnostics,
+    );
+    if cohort.required_non_claims.iter().any(|claim| {
+        claim.contains("authority")
+            || claim.contains("release eligibility")
+            || claim.contains("catalog")
+    }) {
+        diagnostics.push("adoption.cairn_evidence.non_claims_overclaim".to_string());
+    }
+    if cohort.required_non_claims.is_empty() {
+        diagnostics.push("adoption.cairn_evidence.non_claims_missing".to_string());
+    }
     sort_diagnostics(&mut diagnostics);
     diagnostics
 }
@@ -677,6 +753,70 @@ fn validate_stack_doctor_receipt(receipt: &Value, diagnostics: &mut Vec<String>)
     }
 }
 
+fn validate_cross_repo_summary(receipt: &Value, diagnostics: &mut Vec<String>) {
+    if string_field(receipt, "schema").as_deref() != Some(CAIRN_CROSS_REPO_SUMMARY_SCHEMA_V1) {
+        diagnostics.push("adoption.cairn_evidence.summary_schema_unsupported".to_string());
+    }
+    for field in ["repo", "change", "receipt_kind", "status"] {
+        if string_field(receipt, field).is_none() {
+            diagnostics.push(format!("adoption.cairn_evidence.summary_{field}_missing"));
+        }
+    }
+    if let Some(status) = string_field(receipt, "status") {
+        if !matches!(
+            status.as_str(),
+            "pass" | "failed" | "blocked" | "stale" | "missing" | "unsupported"
+        ) {
+            diagnostics.push("adoption.cairn_evidence.summary_status_unsupported".to_string());
+        }
+    }
+    for field in ["receipt_hash", "policy_hash", "subject_hash"] {
+        if let Some(hash) = optional_string_field(receipt, field) {
+            if !is_blake3_hex(&hash) {
+                diagnostics.push(format!("adoption.cairn_evidence.summary_{field}_invalid"));
+            }
+        }
+    }
+}
+
+fn validate_adoption_registry(registry: &Value, diagnostics: &mut Vec<String>) {
+    if string_field(registry, "schema").as_deref() != Some(CAIRN_GLOBAL_REGISTRY_SCHEMA_V1) {
+        diagnostics.push("adoption.registry.schema_unsupported".to_string());
+    }
+    if !hash_field_is_blake3(registry, "snapshot_hash") {
+        diagnostics.push("adoption.registry.snapshot_hash_invalid".to_string());
+    }
+    if let Some(non_claims) = array_field(registry, "non_claims") {
+        if non_claims.is_empty() {
+            diagnostics.push("adoption.registry.non_claims_missing".to_string());
+        }
+    } else {
+        diagnostics.push("adoption.registry.non_claims_missing".to_string());
+    }
+}
+
+fn validate_valence_admission(admission: &Value, diagnostics: &mut Vec<String>) {
+    if string_field(admission, "schema").as_deref() != Some(VALENCE_EVIDENCE_ADMISSION_SCHEMA_V1) {
+        diagnostics.push("adoption.valence.schema_unsupported".to_string());
+    }
+    if admission.get("valid").and_then(Value::as_bool) != Some(true) {
+        diagnostics.push("adoption.valence.not_valid".to_string());
+    }
+    if !hash_field_is_blake3(admission, "receipt_hash") {
+        diagnostics.push("adoption.valence.receipt_hash_invalid".to_string());
+    }
+    if !array_field(admission, "roles").is_some_and(|roles| {
+        roles
+            .iter()
+            .any(|role| role.as_str() == Some("adoption-evidence-admission"))
+    }) {
+        diagnostics.push("adoption.valence.role_missing".to_string());
+    }
+    if array_field(admission, "non_claims").is_none_or(Vec::is_empty) {
+        diagnostics.push("adoption.valence.non_claims_missing".to_string());
+    }
+}
+
 fn validate_stack_doctor_conformance(result: &Value, diagnostics: &mut Vec<String>) {
     if string_field(result, "profile").is_none() || string_field(result, "check_id").is_none() {
         diagnostics.push("adoption.stack_doctor.conformance_identity_missing".to_string());
@@ -741,6 +881,103 @@ fn stack_deps_observations(
             })
         })
         .collect()
+}
+
+fn cairn_lifecycle_observations(
+    query: &AdoptionQuery,
+    receipt: &Value,
+    cohort: &AdoptionProducerCohort,
+) -> Vec<AdoptionStageObservation> {
+    query
+        .relationships
+        .iter()
+        .filter(|relationship| {
+            string_field(receipt, "repo").as_deref()
+                == Some(relationship.upstream_repository.as_str())
+                && string_field(receipt, "change").as_deref()
+                    == Some(relationship.upstream_change.as_str())
+        })
+        .map(|relationship| {
+            summary_observation(
+                relationship,
+                AdoptionStageKind::UpstreamLifecycle,
+                receipt,
+                cohort,
+                "upstream lifecycle evidence",
+            )
+        })
+        .collect()
+}
+
+fn cairn_completion_observations(
+    query: &AdoptionQuery,
+    receipt: &Value,
+    cohort: &AdoptionProducerCohort,
+) -> Vec<AdoptionStageObservation> {
+    query
+        .relationships
+        .iter()
+        .filter(|relationship| {
+            string_field(receipt, "repo").as_deref()
+                == Some(relationship.consumer_repository.as_str())
+                && string_field(receipt, "change").as_deref()
+                    == Some(relationship.relationship_id.as_str())
+        })
+        .map(|relationship| {
+            summary_observation(
+                relationship,
+                AdoptionStageKind::IntegrationEvidence,
+                receipt,
+                cohort,
+                "consumer completion evidence",
+            )
+        })
+        .collect()
+}
+
+fn valence_admission_observations(
+    query: &AdoptionQuery,
+    admission: &Value,
+    cohort: &AdoptionProducerCohort,
+) -> Vec<AdoptionStageObservation> {
+    query
+        .relationships
+        .iter()
+        .filter(|relationship| {
+            string_field(admission, "relationship_id").as_deref() == Some(relationship.relationship_id.as_str())
+                && string_field(admission, "subject_hash").as_deref() == Some(relationship.subject_id.as_str())
+        })
+        .map(|relationship| AdoptionStageObservation {
+            relationship: relationship.clone(),
+            stage: AdoptionStageKind::ConsumerCompatibility,
+            state: AdoptionStageState::Supported,
+            producer_id: cohort.producer_id.clone(),
+            producer_status: "valid".to_string(),
+            evidence_hashes: vec![string_field(admission, "receipt_hash").unwrap_or_default()],
+            observed_revision: string_field(admission, "consumer_revision"),
+            message: "Valence admitted evidence identity, roles, and non-claims without granting catalog or release authority".to_string(),
+        })
+        .collect()
+}
+
+fn summary_observation(
+    relationship: &AdoptionRelationshipKey,
+    stage: AdoptionStageKind,
+    receipt: &Value,
+    cohort: &AdoptionProducerCohort,
+    message_prefix: &str,
+) -> AdoptionStageObservation {
+    let status = string_field(receipt, "status").unwrap_or_else(|| "missing".to_string());
+    AdoptionStageObservation {
+        relationship: relationship.clone(),
+        stage,
+        state: cairn_summary_state(&status),
+        producer_id: cohort.producer_id.clone(),
+        producer_status: status.clone(),
+        evidence_hashes: vec![string_field(receipt, "receipt_hash").unwrap_or_default()],
+        observed_revision: string_field(receipt, "source_revision"),
+        message: format!("{message_prefix}: {status}"),
+    }
 }
 
 fn stack_doctor_observations(
@@ -815,6 +1052,17 @@ fn stack_deps_adoption_state(state: &str) -> AdoptionStageState {
         "missing" => AdoptionStageState::Missing,
         "unavailable" => AdoptionStageState::Unavailable,
         "blocked" => AdoptionStageState::Blocked,
+        _ => AdoptionStageState::Unknown,
+    }
+}
+
+fn cairn_summary_state(status: &str) -> AdoptionStageState {
+    match status {
+        "pass" => AdoptionStageState::Supported,
+        "failed" | "blocked" => AdoptionStageState::Blocked,
+        "stale" => AdoptionStageState::Stale,
+        "missing" => AdoptionStageState::Missing,
+        "unsupported" => AdoptionStageState::Unavailable,
         _ => AdoptionStageState::Unknown,
     }
 }
@@ -1399,6 +1647,24 @@ mod tests {
         }
     }
 
+    fn cairn_evidence_cohort() -> AdoptionProducerCohort {
+        AdoptionProducerCohort {
+            producer_id: "cairn-adoption-evidence-v1".to_string(),
+            kind: CAIRN_EVIDENCE_PRODUCER_KIND.to_string(),
+            supported_schemas: vec![
+                CAIRN_CROSS_REPO_SUMMARY_SCHEMA_V1.to_string(),
+                CAIRN_GLOBAL_REGISTRY_SCHEMA_V1.to_string(),
+                VALENCE_EVIDENCE_ADMISSION_SCHEMA_V1.to_string(),
+            ],
+            source_revision: ADOPTION_STACK_WORKSPACE_TOOLS_REVISION.to_string(),
+            validation_evidence: HASH_C.to_string(),
+            required_non_claims: vec![
+                "registry membership is a derived index, not evidence satisfaction".to_string(),
+                "Valence admission preserves identity and roles only".to_string(),
+            ],
+        }
+    }
+
     fn stack_catalog(relationship: &AdoptionRelationshipKey) -> Value {
         serde_json::json!({
             "schema": STACK_DEPS_CATALOG_SCHEMA_V2,
@@ -1446,6 +1712,54 @@ mod tests {
             "blockers": [],
             "non_claims": STACK_DEPS_NON_CLAIMS,
             "reconciliation_blake3": HASH_C
+        })
+    }
+
+    fn cairn_summary(
+        relationship: &AdoptionRelationshipKey,
+        repo: &str,
+        change: &str,
+        kind: &str,
+        status: &str,
+    ) -> Value {
+        serde_json::json!({
+            "schema": CAIRN_CROSS_REPO_SUMMARY_SCHEMA_V1,
+            "repo": repo,
+            "change": change,
+            "receipt_kind": kind,
+            "status": status,
+            "policy_hash": HASH_A,
+            "subject_hash": relationship.subject_id,
+            "receipt_hash": HASH_B,
+            "source_revision": relationship.required_revision,
+            "diagnostic_summary": "fixture"
+        })
+    }
+
+    fn registry_snapshot() -> Value {
+        serde_json::json!({
+            "schema": CAIRN_GLOBAL_REGISTRY_SCHEMA_V1,
+            "scope_id": "adoption-fixture",
+            "nodes": [],
+            "edges": [],
+            "sources": [],
+            "tags": [],
+            "adapters": [],
+            "non_claims": ["registry membership does not satisfy adoption evidence"],
+            "snapshot_hash": HASH_C
+        })
+    }
+
+    fn valence_admission(relationship: &AdoptionRelationshipKey) -> Value {
+        serde_json::json!({
+            "schema": VALENCE_EVIDENCE_ADMISSION_SCHEMA_V1,
+            "valid": true,
+            "relationship_id": relationship.relationship_id,
+            "subject_hash": relationship.subject_id,
+            "consumer_revision": relationship.required_revision,
+            "roles": ["adoption-evidence-admission"],
+            "non_claims": ["Valence identity admission does not prove catalog authority or release readiness"],
+            "receipt_hash": HASH_A
         })
     }
 
@@ -1599,6 +1913,99 @@ mod tests {
         assert!(admission
             .diagnostics
             .contains(&"adoption.stack_doctor.conformance_status_unsupported".to_string()));
+    }
+
+    #[test]
+    fn cairn_evidence_composes_lifecycle_registry_valence_and_completion() {
+        let mut relationship = key("cairn-to-octet", "onixresearch/octet");
+        relationship.subject_id = HASH_C.to_string();
+        relationship.required_revision = "2222222222222222222222222222222222222222".to_string();
+        let query = AdoptionQuery {
+            scope_id: "cairn-evidence-positive".to_string(),
+            relationships: vec![relationship.clone()],
+            bounds: AdoptionQueryBounds::default(),
+        };
+        let admission = admit_cairn_adoption_evidence(
+            &query,
+            &CairnAdoptionEvidenceInput {
+                lifecycle_receipts: &[cairn_summary(
+                    &relationship,
+                    "onixresearch/cairn",
+                    "change-1",
+                    "archive_receipt",
+                    "pass",
+                )],
+                completion_receipts: &[cairn_summary(
+                    &relationship,
+                    "onixresearch/octet",
+                    "cairn-to-octet",
+                    "integration_receipt",
+                    "pass",
+                )],
+                registry_snapshot: Some(&registry_snapshot()),
+                valence_admission: Some(&valence_admission(&relationship)),
+            },
+            &cairn_evidence_cohort(),
+        );
+        assert!(admission.valid, "{:?}", admission.diagnostics);
+        assert_eq!(admission.observations.len(), 3);
+        let snapshot = AdoptionSnapshot {
+            schema: ADOPTION_SNAPSHOT_SCHEMA_V1.to_string(),
+            query,
+            provenance: vec![admission.provenance],
+            observations: admission.observations,
+            coverage: AdoptionCoverage::default(),
+        };
+        let report = derive_adoption_report(&snapshot);
+        assert!(!report.complete, "consumer pin remains separately owned");
+        assert_eq!(
+            report.relationships[0]
+                .stages
+                .iter()
+                .find(|stage| stage.stage == AdoptionStageKind::ConsumerCompatibility)
+                .expect("compatibility")
+                .state,
+            AdoptionStageState::Supported
+        );
+    }
+
+    #[test]
+    fn cairn_evidence_rejects_bad_registry_and_valence_overclaim() {
+        let mut relationship = key("cairn-to-octet", "onixresearch/octet");
+        relationship.subject_id = HASH_C.to_string();
+        let query = AdoptionQuery {
+            scope_id: "cairn-evidence-negative".to_string(),
+            relationships: vec![relationship.clone()],
+            bounds: AdoptionQueryBounds::default(),
+        };
+        let mut registry = registry_snapshot();
+        registry["snapshot_hash"] = serde_json::json!("not-a-hash");
+        let mut valence = valence_admission(&relationship);
+        valence["roles"] = serde_json::json!(["catalog-authority"]);
+        let admission = admit_cairn_adoption_evidence(
+            &query,
+            &CairnAdoptionEvidenceInput {
+                lifecycle_receipts: &[cairn_summary(
+                    &relationship,
+                    "onixresearch/cairn",
+                    "change-1",
+                    "archive_receipt",
+                    "pass",
+                )],
+                completion_receipts: &[],
+                registry_snapshot: Some(&registry),
+                valence_admission: Some(&valence),
+            },
+            &cairn_evidence_cohort(),
+        );
+        assert!(!admission.valid);
+        assert!(admission
+            .diagnostics
+            .contains(&"adoption.registry.snapshot_hash_invalid".to_string()));
+        assert!(admission
+            .diagnostics
+            .contains(&"adoption.valence.role_missing".to_string()));
+        assert!(admission.observations.is_empty());
     }
 
     #[test]
