@@ -514,6 +514,7 @@ pub fn derive_readiness(snapshot: &ReadinessSnapshot) -> ReadinessReport {
             ],
         });
     }
+    let actions = merge_actions(actions);
     let valid = diagnostics.is_empty();
     let classification = if stages
         .iter()
@@ -557,6 +558,20 @@ fn safe_target(target: &str) -> bool {
         && !target.split('/').any(|part| part == "..")
 }
 
+fn merge_actions(actions: Vec<ReadinessAction>) -> Vec<ReadinessAction> {
+    let mut merged = std::collections::BTreeMap::<String, ReadinessAction>::new();
+    for action in actions {
+        if let Some(existing) = merged.get_mut(&action.id) {
+            existing.causes.extend(action.causes);
+            existing.causes.sort();
+            existing.causes.dedup();
+        } else {
+            merged.insert(action.id.clone(), action);
+        }
+    }
+    merged.into_values().collect()
+}
+
 // r[impl cairn.unified_readiness.actions]
 fn action_for(
     blocker: &ReadinessBlocker,
@@ -575,7 +590,18 @@ fn action_for(
         _ => "reviewed remediation rule for this exact diagnostic",
     };
     ReadinessAction {
-        id: canonical_json_hash(&json!([scope, blocker.id, kind])),
+        id: canonical_json_hash(&json!([
+            scope,
+            kind,
+            blocker.code,
+            blocker.target,
+            // Unknown diagnostics have no reviewed equivalence rule.
+            if kind == "unresolved" {
+                Some(&blocker.message)
+            } else {
+                None
+            }
+        ])),
         kind: kind.into(),
         causes: vec![blocker.id.clone()],
         target: blocker.target.clone(),

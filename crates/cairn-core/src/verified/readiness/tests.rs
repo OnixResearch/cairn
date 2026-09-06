@@ -85,6 +85,72 @@ fn current_and_stale_reviews_select_exact_artifact_repairs() {
         .any(|a| a.kind == "evidence_refresh" && a.target == changed));
 }
 
+#[test]
+fn generated_policy_bounds_match_enforced_limits() {
+    let policy: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/readiness.json"
+    ))
+    .unwrap();
+    assert_eq!(policy["max_blockers"], MAX_READINESS_BLOCKERS);
+    assert_eq!(
+        policy["max_observation_bytes"],
+        MAX_READINESS_OBSERVATION_BYTES
+    );
+    assert_eq!(policy["max_target_bytes"], MAX_READINESS_TARGET_BYTES);
+}
+
+#[test]
+fn causal_actions_merge_stages_but_not_distinct_repairs() {
+    let mut s = snapshot();
+    for stage in [0, 1] {
+        s.observations[stage].state = ReadinessState::Blocked;
+        s.observations[stage].causes = vec![readiness_cause(
+            "artifact.incomplete",
+            "tasks.md",
+            "missing tasks",
+        )];
+    }
+    let report = derive_readiness(&s);
+    let repairs = report
+        .actions
+        .iter()
+        .filter(|a| a.kind == "artifact_repair")
+        .collect::<Vec<_>>();
+    assert_eq!(repairs.len(), 1);
+    assert_eq!(repairs[0].causes.len(), 2);
+    assert!(repairs[0]
+        .causes
+        .iter()
+        .all(|id| report.blockers.iter().any(|b| &b.id == id)));
+    s.observations[1].causes[0].target = "design.md".into();
+    assert_eq!(
+        derive_readiness(&s)
+            .actions
+            .iter()
+            .filter(|a| a.kind == "artifact_repair")
+            .count(),
+        2
+    );
+    for stage in [0, 1] {
+        s.observations[stage].causes = vec![readiness_cause(
+            "unknown",
+            "demo",
+            &format!("cause {stage}"),
+        )];
+    }
+    let report = derive_readiness(&s);
+    assert_eq!(
+        report
+            .actions
+            .iter()
+            .filter(|a| a.kind == "unresolved")
+            .count(),
+        2
+    );
+    s.observations.reverse();
+    assert_eq!(report.actions, derive_readiness(&s).actions);
+}
+
 fn snapshot() -> ReadinessSnapshot {
     let scope = ReadinessScope {
         change: "demo".into(),

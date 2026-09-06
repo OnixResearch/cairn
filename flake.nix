@@ -248,6 +248,33 @@
               touch $out
             '';
 
+        # r[verify cairn.unified_readiness.conformance]
+        readiness-policy-fresh =
+          pkgs.runCommand "cairn-readiness-policy-fresh"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
+            }
+            ''
+              cp -r ${self}/cairn-policy policy
+              chmod -R u+w policy
+              nickel export --format json --field policy policy/readiness.ncl > readiness.json
+              cmp readiness.json policy/generated/readiness.json
+              nickel export --format json policy/fixtures/readiness-positive.ncl > positive.json
+              if nickel export --format json policy/fixtures/readiness-negative.ncl > negative.json 2> negative.err; then
+                echo "expected readiness authority rejection" >&2
+                exit 1
+              fi
+              grep -q 'advisory' negative.err
+              substituteInPlace policy/readiness.ncl \
+                --replace-fail 'max_blockers | Positive = 512' 'max_blockers | Positive = 511'
+              nickel export --format json --field policy policy/readiness.ncl > drift.json
+              if cmp -s drift.json policy/generated/readiness.json; then
+                echo "expected readiness policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         authenticated-policy-profiles-fresh =
           pkgs.runCommand "cairn-authenticated-policy-profiles-fresh"
             {
