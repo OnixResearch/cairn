@@ -215,6 +215,98 @@ impl Fixture {
 }
 
 #[test]
+fn real_developer_loop_profile_receipt_passes_the_original_validator() -> Result<(), Box<dyn Error>>
+{
+    let out = repo()
+        .join("target")
+        .join(format!("producer-loop-{}", std::process::id()));
+    if out.exists() {
+        fs::remove_dir_all(&out)?;
+    }
+    fs::create_dir_all(&out)?;
+    let subject = "c".repeat(64);
+    let denied = Command::new(env!("CARGO_BIN_EXE_cairn"))
+        .current_dir(repo())
+        .args([
+            "check-evidence",
+            "developer-loop",
+            "--root",
+            repo().to_str().ok_or("path")?,
+            "--profile",
+            "cairn-local",
+            "--subject-hash",
+            &subject,
+            "--out",
+            out.to_str().ok_or("path")?,
+        ])
+        .output()?;
+    assert!(!denied.status.success());
+    assert!(!out.join("developer-loop-receipt.json").exists());
+
+    let produced = Command::new(env!("CARGO_BIN_EXE_cairn"))
+        .current_dir(repo())
+        .args([
+            "check-evidence",
+            "developer-loop",
+            "--execute",
+            "--root",
+            repo().to_str().ok_or("path")?,
+            "--profile",
+            "cairn-local",
+            "--subject-hash",
+            &subject,
+            "--out",
+            out.to_str().ok_or("path")?,
+        ])
+        .output()?;
+    assert!(
+        produced.status.success(),
+        "{}",
+        String::from_utf8_lossy(&produced.stderr)
+    );
+    let receipt: Value = serde_json::from_slice(&produced.stdout)?;
+    assert_eq!(receipt["valid"], true, "{receipt}");
+    assert_eq!(receipt["checks_executed"], true);
+    assert!(out.join("developer-loop-receipt.json").exists());
+    assert!(out.join("developer-loop-producer.json").exists());
+
+    let accepted = cli(&[
+        "developer-loop",
+        "verify",
+        "cairn-local",
+        "--root",
+        repo().to_str().ok_or("path")?,
+        "--receipt",
+        out.join("developer-loop-receipt.json")
+            .to_str()
+            .ok_or("path")?,
+        "--subject-hash",
+        &subject,
+    ])?;
+    assert_eq!(accepted["valid"], true, "{accepted}");
+    let stale = cli(&[
+        "developer-loop",
+        "verify",
+        "cairn-local",
+        "--root",
+        repo().to_str().ok_or("path")?,
+        "--receipt",
+        out.join("developer-loop-receipt.json")
+            .to_str()
+            .ok_or("path")?,
+        "--subject-hash",
+        &"d".repeat(64),
+    ])?;
+    assert_eq!(stale["valid"], false);
+    assert!(stale["issues"]
+        .as_array()
+        .ok_or("issues")?
+        .iter()
+        .any(|issue| issue["code"] == "developer_loop.subject.stale"));
+    Ok(())
+}
+
+#[test]
 fn real_cargo_passes_original_completion_and_denial_never_spawns() -> Result<(), Box<dyn Error>> {
     let f = Fixture::new(
         "pass",

@@ -134,6 +134,19 @@ The original completion validator accepts current passing Cargo rows and rejects
 The developer-loop validator rejects these rows as loop receipts with a schema diagnostic.
 Foreign receipt schemas no longer trigger a debug assertion.
 Its `cairn-local` profile requires fmt, lifecycle validation, and traceability facts that Cargo/Nix profiles do not supply.
+
+The producer-owned developer-loop path executes only the admitted `cairn-local` profile grammar:
+
+```console
+cairn check-evidence developer-loop --execute --root REPOSITORY \
+  --profile cairn-local --subject-hash SUBJECT --out OUTPUT_DIRECTORY
+```
+
+The path runs `cargo fmt --all -- --check`, `cairn validate --root .`, and
+`cairn traceability coverage --root .` through Bounded Exec. It records bounded
+stdout/stderr hashes, completion facts, a wall-clock duration observation, and a
+durable no-replace `developer-loop-receipt.json`. The original
+`cairn developer-loop verify` command remains the consumer authority.
 No adapter fabricates those facts or weakens the loop validator.
 
 ## Native saved admission

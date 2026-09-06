@@ -645,6 +645,7 @@
             pkgs.bash
             pkgs.git
             pkgs.nix
+            pkgs.rustfmt
             (nickelCohort pkgs.stdenv.hostPlatform.system)
             nickel-export.packages.${pkgs.stdenv.hostPlatform.system}.nickel-export
           ];

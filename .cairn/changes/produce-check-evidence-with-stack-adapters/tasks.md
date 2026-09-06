@@ -16,8 +16,8 @@
 ## Consumer evidence and handoff
 
 - [x] [serial] [task:controls] [after:publication] Add denied, empty-test, failed-payload, skipped, timed-out, cancelled, flooded, stale, substituted, and teardown-failure controls. r[cairn.check_evidence_producer.local_run] r[cairn.check_evidence_producer.adapters] r[cairn.check_evidence_producer.conformance]
-- [ ] [serial] [task:consumers] [after:controls] Replay fresh Cairn and pinned Kiln consumer fixtures through the original completion and loop validators without manual result edits. r[cairn.check_evidence_producer.conformance]
-- [ ] [serial] [task:verification] [after:consumers] Publish checked recipes, run full checks, retain consumer receipts, and prepare reviewed sync and archive plans. r[cairn.check_evidence_producer.contract] r[cairn.check_evidence_producer.conformance]
+- [x] [serial] [task:consumers] [after:controls] Replay fresh Cairn and pinned Kiln consumer fixtures through the original completion and loop validators without manual result edits. r[cairn.check_evidence_producer.conformance]
+- [x] [serial] [task:verification] [after:consumers] Publish checked recipes, run full checks, retain consumer receipts, and prepare reviewed sync and archive plans. r[cairn.check_evidence_producer.contract] r[cairn.check_evidence_producer.conformance]
 
 The first-pass evidence is in `evidence/implementation-first-pass.md`.
 The core review is complete for the admitted decision surface. Evidence is in `evidence/finish-2746.md`.
