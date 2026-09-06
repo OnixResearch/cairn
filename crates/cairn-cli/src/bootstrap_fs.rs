@@ -18,6 +18,18 @@ pub(crate) fn open_root(root: &Path) -> Result<Dir, Box<dyn Error>> {
     open_components(root, false)
 }
 
+/// Rebind path-based observations to the original directory capability.
+pub(crate) fn recheck_root(root: &Dir, path: &Path) -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::MetadataExt;
+    let current = open_root(path)?;
+    let expected = root.try_clone()?.into_std_file().metadata()?;
+    let observed = current.into_std_file().metadata()?;
+    if (expected.dev(), expected.ino()) != (observed.dev(), observed.ino()) {
+        return Err("bootstrap.setup.root_substituted".into());
+    }
+    Ok(())
+}
+
 fn open_components(root: &Path, explicit_parent_navigation: bool) -> Result<Dir, Box<dyn Error>> {
     let absolute = if root.is_absolute() {
         root.to_path_buf()

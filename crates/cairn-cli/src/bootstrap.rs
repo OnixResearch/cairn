@@ -221,6 +221,15 @@ fn check_export(
 // r[impl cairn.consumer_bootstrap.boundary]
 // r[impl cairn.consumer_bootstrap.compatibility]
 pub(crate) fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    run_with(args, || Ok(()))
+}
+
+// The controlled callback exercises the exact post-lock/pre-recheck boundary.
+// Production has no external hook, environment switch, or alternate executor.
+fn run_with(
+    args: Vec<String>,
+    after_lock: impl FnOnce() -> Result<(), Box<dyn Error>>,
+) -> Result<(), Box<dyn Error>> {
     let options = options(&args)?;
     let root = open_root(&options.root)?;
     crate::support::reject_legacy_only_lifecycle_root(&options.root)?;
@@ -233,6 +242,7 @@ pub(crate) fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             return Err("bootstrap.setup.stale_plan".into());
         }
         let lock = publication::Lock::acquire(&root)?;
+        after_lock()?;
         let current = prepare(&root, &options)?;
         if options.plan_hash.as_deref() != current.record["plan_hash"].as_str() {
             return Err("bootstrap.setup.stale_plan".into());
@@ -251,6 +261,7 @@ pub(crate) fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn prepare(root: &Dir, options: &Options) -> Result<Prepared, Box<dyn Error>> {
+    crate::bootstrap_fs::recheck_root(root, &options.root)?;
     if read_optional(root, PREPARED, MAX_BUNDLE_BYTES)?.is_some() {
         return Err("bootstrap.setup.recovery_required".into());
     }
@@ -369,5 +380,8 @@ fn prepare(root: &Dir, options: &Options) -> Result<Prepared, Box<dyn Error>> {
             return Err("bootstrap.guidance.unmanaged_or_modified: manual repair required".into());
         }
     }
+    // Guidance still uses the selected path. Do not combine its observations
+    // with a capability for a root that was renamed or substituted meanwhile.
+    crate::bootstrap_fs::recheck_root(root, &options.root)?;
     Ok(prepared)
 }

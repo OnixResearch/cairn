@@ -15,6 +15,11 @@ fn receipt(output: Output) -> Result<Value, Box<dyn Error>> {
     );
     Ok(value)
 }
+fn denied(output: Output, category: &str) {
+    assert!(!output.status.success());
+    let diagnostic = String::from_utf8_lossy(&output.stderr);
+    assert!(diagnostic.contains(category), "{diagnostic}");
+}
 fn ordinary(root: &Path, command: &str) -> Result<Output, Box<dyn Error>> {
     Ok(Command::new(env!("CARGO_BIN_EXE_cairn"))
         .env_clear()
@@ -66,6 +71,58 @@ fn fresh_apply_upgrade_and_recovery_controls() -> Result<(), Box<dyn Error>> {
     .status
     .success());
     assert_eq!(fs::read_dir(&root)?.count(), 0);
+    // A previously valid token must fail even when the changed source bundle
+    // remains semantically admissible (only its exact serialization changed).
+    fs::write(
+        sources.join("bundle.json"),
+        serde_json::to_vec_pretty(&bundle)?,
+    )?;
+    let changed = receipt(invoke(&root, &sources, &[])?)?;
+    assert_eq!(changed["valid"], true);
+    assert_ne!(changed["plan_hash"], preview["plan_hash"]);
+    let stale = setup(
+        &root,
+        &sources,
+        "apply",
+        &["--execute", "--plan-hash", hash],
+    )?;
+    assert!(!stale.status.success());
+    assert!(String::from_utf8_lossy(&stale.stderr).contains("bootstrap.setup.stale_plan"));
+    assert_eq!(fs::read_dir(&root)?.count(), 0);
+    fs::write(sources.join("bundle.json"), serde_json::to_vec(&bundle)?)?;
+    let original_source = fs::read(sources.join("policy.ncl"))?;
+    fs::write(sources.join("policy.ncl"), b"changed source")?;
+    let stale = setup(
+        &root,
+        &sources,
+        "apply",
+        &["--execute", "--plan-hash", hash],
+    )?;
+    assert!(!stale.status.success());
+    assert!(String::from_utf8_lossy(&stale.stderr).contains("bootstrap.export.stale"));
+    assert_eq!(fs::read_dir(&root)?.count(), 0);
+    fs::write(sources.join("policy.ncl"), original_source)?;
+    let original_root = temp.join("original-root");
+    fs::rename(&root, &original_root)?;
+    fs::create_dir(&root)?;
+    let substituted = receipt(invoke(&root, &sources, &[])?)?;
+    assert_ne!(substituted["root_identity"], preview["root_identity"]);
+    let stale = setup(
+        &root,
+        &sources,
+        "apply",
+        &["--execute", "--plan-hash", hash],
+    )?;
+    assert!(!stale.status.success());
+    assert!(String::from_utf8_lossy(&stale.stderr).contains("bootstrap.setup.stale_plan"));
+    assert_eq!(fs::read_dir(&root)?.count(), 0);
+    assert_eq!(fs::read_dir(&original_root)?.count(), 0);
+    fs::remove_dir(&root)?;
+    fs::rename(original_root, &root)?;
+    assert_eq!(
+        receipt(invoke(&root, &sources, &[])?)?["plan_hash"],
+        preview["plan_hash"]
+    );
     fs::write(root.join(".cairn-bootstrap.lock"), b"another owner")?;
     assert!(!setup(
         &root,
@@ -102,15 +159,39 @@ fn fresh_apply_upgrade_and_recovery_controls() -> Result<(), Box<dyn Error>> {
         .as_str()
         .ok_or("guidance path")?;
     let guidance_bytes = fs::read(root.join(guidance_path))?;
+    let unmanaged_root = temp.join("unmanaged-guidance");
+    let unmanaged_file = unmanaged_root.join(guidance_path);
+    fs::create_dir_all(unmanaged_file.parent().ok_or("guidance parent")?)?;
+    fs::write(&unmanaged_file, b"unowned guidance")?;
+    denied(
+        invoke(&unmanaged_root, &sources, &[])?,
+        "bootstrap.guidance.manual_repair",
+    );
+    assert_eq!(fs::read(&unmanaged_file)?, b"unowned guidance");
+    assert!(!unmanaged_root
+        .join(".cairn/bootstrap/selection.json")
+        .exists());
     fs::write(root.join(guidance_path), b"modified guidance")?;
     assert_eq!(receipt(ordinary(&root, "doctor")?)?["valid"], false);
-    assert!(!invoke(&root, &sources, &[])?.status.success());
+    denied(
+        invoke(&root, &sources, &[])?,
+        "bootstrap.state.modified_managed",
+    );
+    assert_eq!(fs::read(root.join(guidance_path))?, b"modified guidance");
     fs::remove_file(root.join(guidance_path))?;
-    assert!(!invoke(&root, &sources, &[])?.status.success());
+    denied(
+        invoke(&root, &sources, &[])?,
+        "bootstrap.state.missing_or_unsafe_managed",
+    );
+    assert!(!root.join(guidance_path).exists());
     #[cfg(unix)]
     {
         std::os::unix::fs::symlink(sources.join("policy.json"), root.join(guidance_path))?;
-        assert!(!invoke(&root, &sources, &[])?.status.success());
+        denied(
+            invoke(&root, &sources, &[])?,
+            "bootstrap.state.missing_or_unsafe_managed",
+        );
+        assert!(fs::symlink_metadata(root.join(guidance_path))?.is_symlink());
         assert_eq!(receipt(ordinary(&root, "doctor")?)?["valid"], false);
         fs::remove_file(root.join(guidance_path))?;
     }
@@ -163,11 +244,24 @@ fn fresh_apply_upgrade_and_recovery_controls() -> Result<(), Box<dyn Error>> {
         receipt(ordinary(&root, "doctor")?)?["bootstrap_guidance"]["valid"],
         true
     );
+    let selected_before_recovery = fs::read(root.join(".cairn/bootstrap/selection.json"))?;
+    let complete_before_recovery = fs::read(root.join(".cairn/bootstrap/complete.json"))?;
     fs::write(root.join(".cairn/bootstrap/prepared.json"), b"interrupted")?;
-    for command in ["check", "recover"] {
+    for command in ["check", "recover", "recover"] {
         let state = inspect(&root, command)?;
         assert_eq!(state["valid"], false);
         assert_eq!(state["category"], "bootstrap.recovery.manual_repair");
+        assert_eq!(state["blocked"], true);
+        assert_eq!(state["mutated"], false);
+        assert_eq!(state["installation_receipt"], false);
+        assert_eq!(
+            fs::read(root.join(".cairn/bootstrap/selection.json"))?,
+            selected_before_recovery
+        );
+        assert_eq!(
+            fs::read(root.join(".cairn/bootstrap/complete.json"))?,
+            complete_before_recovery
+        );
     }
     assert!(!ordinary(&root, "validate")?.status.success());
     assert!(!invoke(&root, &sources, &[])?.status.success());

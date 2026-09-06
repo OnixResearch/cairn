@@ -7,6 +7,13 @@
   "issues": [],
   "layout": "cairn",
   "policy": "cairn-default",
+  "policy_selection": {
+    "blake3": "1ff9d3be755fa46532e21a9c901819ea5a87c4b87d85a087738c822bce4dbd2b",
+    "installation_receipt": false,
+    "locator": "cairn-policy/generated/cairn-policy.json",
+    "source": "legacy_default"
+  },
+  "receipt_hash": "9ce47745138b13cc6008a8259f0a013f1fa02e09673264a6ed7c9d808524ffc5",
   "resolution": {
     "diagnostics": [],
     "locator_consulted": false,

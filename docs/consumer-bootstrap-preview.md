@@ -24,7 +24,8 @@ The separate `artifact_plan_hash` is not an execution token.
 
 The execution token binds the root's device and inode, source observations, prior selection, desired manifest, and generated-workflow plan.
 Apply acquires `.cairn-bootstrap.lock` and rebuilds that plan before publication.
-Source, policy, destination, or ownership drift blocks execution.
+It also reopens the selected root without following links and compares its device and inode with the original capability.
+Source, root, policy, destination, or ownership drift blocks execution.
 The lock serializes cooperating Cairn writers. It does not constrain other processes with equal filesystem authority.
 
 ## Source bundle
@@ -112,6 +113,8 @@ cairn setup recover --root CONSUMER
 ```
 
 Recovery is diagnostic and non-mutating. There is no automatic resume, rollback, deletion, or synchronization retry.
+This satisfies the publication contract through an explicit recovery state, not through restored completion.
+Repeated recovery requests preserve the prepared record and prior selection.
 Prepared state or a retained lock yields `bootstrap.recovery.manual_repair` with `valid: false` and `blocked: true`.
 Checks do not infer durable completion from a visible rename or matching bytes.
 

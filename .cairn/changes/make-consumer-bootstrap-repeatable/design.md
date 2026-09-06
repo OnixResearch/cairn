@@ -52,6 +52,11 @@ A crash cannot convert prepared artifacts into an admitted complete installation
 Recovery observes exact bytes and either resumes an unchanged owned plan or requests manual repair.
 It never deletes unowned files, infers success from a rename alone, or treats unknown durability as durable completion.
 
+The initial shell selects the manual-repair branch. It reads bounded prepared and lock observations and reports an explicit blocked recovery state without mutation.
+The publication scenario requires preservation of the last valid state or an explicit recovery state. It does not require automatic resume.
+The pure recovery transitions remain available for a future resume adapter. This delivery does not claim saved-plan reconstruction, rollback, or synchronization retry.
+Repeated recovery requests must preserve selection, complete metadata, prepared bytes, and unowned files. A failed retry cannot certify completion.
+
 ### Diagnostics and compatibility
 
 Doctor composes selected-policy compatibility, export freshness, and declared generated-guidance checks.
