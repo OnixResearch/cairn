@@ -70,6 +70,7 @@ pub mod toolchain_profile_matrix;
 pub mod traceability;
 pub mod trellis_proof_readiness;
 pub mod validation;
+pub mod verification_impact;
 pub mod verification_role;
 pub mod workflow_collaboration;
 pub mod workspace_contract_matrix;

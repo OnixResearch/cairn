@@ -2,9 +2,9 @@
 
 ## Contract and core
 
-- [ ] [serial] [task:baseline] Record trace-index, requirement-registry, developer-loop, and applicability baselines with valid and stale inputs. r[cairn.verification_impact.conformance]
-- [ ] [serial] [task:contracts] [after:baseline] Define typed source-comparison, check-map, scope, uncertainty, and explanation contracts with named bounds. r[cairn.verification_impact.inputs] r[cairn.verification_impact.uncertainty]
-- [ ] [serial] [task:core] [after:contracts] Implement pure delta admission and conservative requirement-to-check selection with exact causal paths and mandatory-check preservation. r[cairn.verification_impact.inputs] r[cairn.verification_impact.selection]
+- [x] [serial] [task:baseline] Record trace-index, requirement-registry, developer-loop, and applicability baselines with valid and stale inputs. r[cairn.verification_impact.conformance]
+- [x] [serial] [task:contracts] [after:baseline] Define typed source-comparison, check-map, scope, uncertainty, and explanation contracts with named bounds. r[cairn.verification_impact.inputs] r[cairn.verification_impact.uncertainty]
+- [x] [serial] [task:core] [after:contracts] Implement pure delta admission and conservative requirement-to-check selection with exact causal paths and mandatory-check preservation. r[cairn.verification_impact.inputs] r[cairn.verification_impact.selection]
 - [ ] [serial] [task:evidence] [after:core] Compose current applicability validators without granting whole-subject evidence reuse after a source change. r[cairn.verification_impact.applicability]
 
 ## Stack adapters and interfaces
