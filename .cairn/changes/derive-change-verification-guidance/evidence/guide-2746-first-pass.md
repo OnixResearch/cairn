@@ -9,7 +9,7 @@ No sync, archive, push, or worktree removal was performed.
 
 ## Commit
 
-- `db37a6f Add pure verification impact guidance` (amended to include this final evidence update).
+- `6554aa2 Add pure verification impact guidance`.
 
 ## Implemented
 
@@ -64,6 +64,7 @@ All commands used the required PATH prefix and `TMPDIR=/var/tmp`. Cargo commands
 | 1001 | `nix run path:$PWD#cairn -- validate --root .` | 0 | Native lifecycle validation passed with `valid: true`, 3 completed tasks and 7 open tasks. |
 | 1010 | `git add ... && git diff --cached --check && git commit -m "Add pure verification impact guidance"` | 0 | Created commit `db37a6f`; no staged whitespace errors. |
 | 1011 | `git status --short --branch && git log --oneline -3` | 0 | Worktree clean; branch ahead 2 with `db37a6f` on top of `811771b`. |
+| 1012 | `git add evidence && git commit --amend --no-edit && git status --short --branch && git log --oneline -3` | 0 | Amended implementation commit to `6554aa2`; worktree clean after amend. |
 
 Observed non-blocking environment warning: `warning: unknown experimental feature 'wasm-builtin'` during Nix commands. Task 1001 also emitted transient SSH/remote-builder cache warnings before local validation succeeded.
 
