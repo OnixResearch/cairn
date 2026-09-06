@@ -135,16 +135,27 @@ pub(super) fn execute(
     cancel_root: &CapabilityRoot,
     cancel: &str,
 ) -> Result<bounded_exec::ExecutionOutput, bounded_exec::RunError> {
+    let cancel_relative = cancel_root.relative(Path::new(cancel)).ok();
+    let cancel_directory = cancel_root.clone_directory_file().ok();
     let stopped = AtomicBool::new(false);
     let cancelled = AtomicBool::new(false);
     std::thread::scope(|scope| {
-        scope.spawn(|| {
-            while !stopped.load(Ordering::Acquire) {
+        let stopped_ref = &stopped;
+        let cancelled_ref = &cancelled;
+        scope.spawn(move || {
+            let (Some(cancel_relative), Some(cancel_directory)) =
+                (cancel_relative, cancel_directory)
+            else {
+                cancelled_ref.store(true, Ordering::Release);
+                return;
+            };
+            let cancel_root = cap_std::fs::Dir::from_std_file(cancel_directory);
+            while !stopped_ref.load(Ordering::Acquire) {
                 // The control is explicit and capability-relative. Any nonzero byte cancels.
-                match super::reads::input(cancel_root, Path::new(cancel), CANCEL_BYTES) {
+                match super::reads::read(&cancel_root, &cancel_relative, CANCEL_BYTES) {
                     Ok(bytes) if bytes == b"0" => {}
                     _ => {
-                        cancelled.store(true, Ordering::Release);
+                        cancelled_ref.store(true, Ordering::Release);
                         break;
                     }
                 }
