@@ -1,0 +1,81 @@
+{
+  "acceptance_ids": [],
+  "change": "derive-change-verification-guidance",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "463d6a69204a0768de7a78757a28eae1af3874c5082aeb7b1470659ca4966bff",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "probe_evidence": null,
+  "profile_identity_hash": "621d82e8c62a29b412ce0709a08a6c2897af4287c5773547608c11d587f92e2c",
+  "receipt_hash": "f3b90462b7ebe3b5ff9f904d4b54f9c43822f06e1f69be62642f8a34e8786b0d",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "design",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "design",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/derive-change-verification-guidance/design.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 50,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/derive-change-verification-guidance/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 26,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/derive-change-verification-guidance/specs/change-verification-guidance/spec.md",
+      "requirement_blocks": 6,
+      "scenario_blocks": 12,
+      "substantive_lines": 42,
+      "substantive_requirement_blocks": 6,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    }
+  ],
+  "task_ordering": null,
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}
