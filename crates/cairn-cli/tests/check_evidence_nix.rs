@@ -44,21 +44,6 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
     fs::write(root.join("check.nix"), format!("{script}\n"))?;
     fs::write(root.join("projection.json"), b"[\"check.nix\"]")?;
     fs::write(root.join("cancel"), b"0")?;
-    // Diagnostic capture: mirror the exact profile command so a sandbox-only
-    // failure reports the real nix diagnostics in the panic message.
-    {
-        let nix = binary("nix")?;
-        let mut diagnostic = Command::new(&nix);
-        diagnostic
-            .current_dir(&root)
-            .args(["eval", "--offline", "--json", "--file", "./check.nix"]);
-        for (key, value) in &environment {
-            diagnostic.env(key, value);
-        }
-        let output = diagnostic.output()?;
-        fs::write(root.join("evidence/nix-stderr.txt"), &output.stderr)?;
-        fs::write(root.join("evidence/nix-stdout.txt"), &output.stdout)?;
-    }
     let source = Command::new(env!("CARGO_BIN_EXE_cairn"))
         .current_dir(&repo)
         .args(["check-evidence", "source", "--root"])
