@@ -1,12 +1,8 @@
-use crate::verified::runtime_evidence::{
-    is_runtime_capture_origin, RuntimeEvidencePolicy, RUNTIME_HASH_ALGORITHM_BLAKE3,
-};
-
 use super::{fields::string_array_field, PolicyError};
 
 pub(super) fn runtime_evidence_policy(
     value: &serde_json::Value,
-) -> Result<RuntimeEvidencePolicy, PolicyError> {
+) -> Result<crate::verified::runtime_evidence::RuntimeEvidencePolicy, PolicyError> {
     // r[impl cairn.runtime_evidence.policy_schema]
     let policy = value
         .get("runtime_evidence_policy")
@@ -16,7 +12,7 @@ pub(super) fn runtime_evidence_policy(
     if allowed_capture_origins.is_empty()
         || allowed_capture_origins
             .iter()
-            .any(|origin| !is_runtime_capture_origin(origin))
+            .any(|origin| !crate::verified::runtime_evidence::is_runtime_capture_origin(origin))
     {
         return Err(PolicyError::InvalidField(
             "runtime_evidence_policy.allowed_capture_origins",
@@ -25,9 +21,9 @@ pub(super) fn runtime_evidence_policy(
     let allowed_hash_algorithms =
         string_array_field(policy, "runtime_evidence_policy.allowed_hash_algorithms")?;
     if allowed_hash_algorithms.is_empty()
-        || allowed_hash_algorithms
-            .iter()
-            .any(|algorithm| algorithm != RUNTIME_HASH_ALGORITHM_BLAKE3)
+        || allowed_hash_algorithms.iter().any(|algorithm| {
+            algorithm != crate::verified::runtime_evidence::RUNTIME_HASH_ALGORITHM_BLAKE3
+        })
     {
         return Err(PolicyError::InvalidField(
             "runtime_evidence_policy.allowed_hash_algorithms",
@@ -44,7 +40,7 @@ pub(super) fn runtime_evidence_policy(
             "runtime_evidence_policy.max_summary_bytes",
         ));
     }
-    Ok(RuntimeEvidencePolicy {
+    Ok(crate::verified::runtime_evidence::RuntimeEvidencePolicy {
         allowed_capture_origins,
         allowed_hash_algorithms,
         max_summary_bytes,

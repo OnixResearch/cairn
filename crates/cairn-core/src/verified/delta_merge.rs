@@ -1,5 +1,3 @@
-use serde::Serialize;
-
 use super::evidence::blake3_hex;
 
 const ACCEPTED_REQUIREMENTS_HEADING: &str = "## Requirements";
@@ -11,7 +9,7 @@ const SCENARIO_HEADING_PREFIX: &str = "#### Scenario:";
 const REQUIREMENT_ID_PREFIX: &str = "r[";
 const REQUIREMENT_ID_SUFFIX: char = ']';
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DeltaOperationKind {
     Added,
@@ -29,7 +27,7 @@ impl DeltaOperationKind {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DeltaOperationState {
     Applied,
@@ -45,7 +43,7 @@ impl DeltaOperationState {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct DeltaOperation {
     pub kind: DeltaOperationKind,
     pub requirement_id: String,
@@ -55,14 +53,14 @@ pub struct DeltaOperation {
     pub block: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct DeltaOperationOutcome {
     pub kind: DeltaOperationKind,
     pub requirement_id: String,
     pub state: DeltaOperationState,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 pub struct DeltaMergeDiagnostic {
     pub code: String,
     pub message: String,

@@ -5,8 +5,6 @@
 //! This module treats checkout paths as opaque local display facts. It performs
 //! no I/O and makes no claim about path existence, ownership, or safety.
 
-use serde::{Deserialize, Serialize};
-
 use super::evidence::{blake3_hex, canonical_json, canonical_json_hash};
 
 // r[impl cairn.lifecycle_stores.identity]
@@ -81,7 +79,7 @@ pub const DIAGNOSTIC_PORTABLE_HASH_MISMATCH: &str = "lifecycle_store.locator.sta
 pub const DIAGNOSTIC_PLAN_STALE: &str = "lifecycle_store.locator.stale_plan";
 pub const DIAGNOSTIC_PLAN_NEXT_STATE_MISSING: &str = "lifecycle_store.locator.stale_plan";
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
 pub struct LifecycleStoreId(String);
 
@@ -92,7 +90,7 @@ impl LifecycleStoreId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
 pub struct LifecycleStoreRemoteHint(String);
 
@@ -103,7 +101,7 @@ impl LifecycleStoreRemoteHint {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
 pub struct LifecycleStoreNonClaim(String);
 
@@ -114,7 +112,7 @@ impl LifecycleStoreNonClaim {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
 pub struct LifecycleStoreBlake3Identity(String);
 
@@ -130,7 +128,7 @@ impl LifecycleStoreBlake3Identity {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
 pub struct LifecycleStoreCheckoutPath(String);
 
@@ -141,7 +139,7 @@ impl LifecycleStoreCheckoutPath {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LifecycleStoreIdentityProjection {
     pub schema: String,
     pub store_id: String,
@@ -152,7 +150,7 @@ pub struct LifecycleStoreIdentityProjection {
     pub source_identity: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreIdentity {
     pub schema: String,
     pub store_id: LifecycleStoreId,
@@ -163,7 +161,7 @@ pub struct LifecycleStoreIdentity {
     pub store_identity: LifecycleStoreBlake3Identity,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub struct LifecycleStoreDiagnostic {
     pub code: String,
     #[serde(rename = "field_path")]
@@ -172,21 +170,21 @@ pub struct LifecycleStoreDiagnostic {
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreIdentityAdmission {
     pub valid: bool,
     pub identity: Option<LifecycleStoreIdentity>,
     pub diagnostics: Vec<LifecycleStoreDiagnostic>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LifecycleStoreLocatorMappingProjection {
     pub store_id: String,
     pub checkout_path: String,
     pub store_identity: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LifecycleStoreLocatorProjection {
     pub schema: String,
     #[serde(default, rename = "entries")]
@@ -195,14 +193,14 @@ pub struct LifecycleStoreLocatorProjection {
     pub state_identity: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 pub struct LifecycleStoreLocatorMapping {
     pub store_id: LifecycleStoreId,
     pub checkout_path: LifecycleStoreCheckoutPath,
     pub store_identity: LifecycleStoreBlake3Identity,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreLocatorState {
     pub schema: String,
     pub mappings: Vec<LifecycleStoreLocatorMapping>,
@@ -210,21 +208,21 @@ pub struct LifecycleStoreLocatorState {
     pub portable_state_identity: LifecycleStoreBlake3Identity,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreLocatorAdmission {
     pub valid: bool,
     pub state: Option<LifecycleStoreLocatorState>,
     pub diagnostics: Vec<LifecycleStoreDiagnostic>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LifecycleStoreLocatorOperation {
     Register,
     Unregister,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreLocatorLocalFacts {
     pub evidence_class: String,
     pub operation: LifecycleStoreLocatorOperation,
@@ -237,7 +235,7 @@ pub struct LifecycleStoreLocatorLocalFacts {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreLocatorPortableFacts {
     pub fact_class: String,
     pub operation: LifecycleStoreLocatorOperation,
@@ -249,7 +247,7 @@ pub struct LifecycleStoreLocatorPortableFacts {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreLocatorPlan {
     pub schema: String,
     pub blocked: bool,
@@ -265,7 +263,7 @@ pub struct LifecycleStoreLocatorPlan {
     pub plan_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreLocatorApplication {
     pub accepted: bool,
     pub next_state: Option<LifecycleStoreLocatorState>,

@@ -1,10 +1,8 @@
-use serde_json::Map;
-
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_pointer_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
     object_hashes: &[String],
 ) -> Vec<ExportBundleIssue> {
     let Some(pointers) = object

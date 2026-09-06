@@ -1,8 +1,3 @@
-use crate::verified::{
-    dag::topological_order,
-    policy::{Policy, TaskMarker, TASK_IDENTITY_MARKER_ID, TASK_PREDECESSOR_MARKER_ID},
-};
-
 use super::{
     spec::{fence_boundary, visible_text_without_comments},
     substance::valid_lifecycle_id,
@@ -92,15 +87,22 @@ struct MarkerObservation {
     targets: Vec<String>,
 }
 
-pub fn build_task_ordering_graph(markdown: &str, policy: &Policy) -> TaskOrderingGraph {
+pub fn build_task_ordering_graph(
+    markdown: &str,
+    policy: &crate::verified::policy::Policy,
+) -> TaskOrderingGraph {
     // r[impl cairn.task_ordering.markers]
     // r[impl cairn.task_ordering.graph]
     // r[impl cairn.task_ordering.progress]
-    let Some(identity_marker) = configured_marker(policy, TASK_IDENTITY_MARKER_ID) else {
-        return marker_policy_failure(TASK_IDENTITY_MARKER_ID);
+    let Some(identity_marker) =
+        configured_marker(policy, crate::verified::policy::TASK_IDENTITY_MARKER_ID)
+    else {
+        return marker_policy_failure(crate::verified::policy::TASK_IDENTITY_MARKER_ID);
     };
-    let Some(predecessor_marker) = configured_marker(policy, TASK_PREDECESSOR_MARKER_ID) else {
-        return marker_policy_failure(TASK_PREDECESSOR_MARKER_ID);
+    let Some(predecessor_marker) =
+        configured_marker(policy, crate::verified::policy::TASK_PREDECESSOR_MARKER_ID)
+    else {
+        return marker_policy_failure(crate::verified::policy::TASK_PREDECESSOR_MARKER_ID);
     };
     if identity_marker.kind != TASK_IDENTITY_MARKER_KIND {
         return marker_kind_failure(identity_marker, TASK_IDENTITY_MARKER_KIND);
@@ -142,7 +144,7 @@ pub fn build_task_ordering_graph(markdown: &str, policy: &Policy) -> TaskOrderin
         .iter()
         .map(|edge| (edge.predecessor.clone(), edge.task.clone()))
         .collect::<Vec<_>>();
-    let topological = topological_order(&node_ids, &topological_edges);
+    let topological = crate::verified::dag::topological_order(&node_ids, &topological_edges);
     for task_id in &topological.blocked_nodes {
         issues.push(TaskOrderingIssue {
             code: TASK_ORDER_ISSUE_CYCLE.to_string(),
@@ -189,7 +191,10 @@ pub fn build_task_ordering_graph(markdown: &str, policy: &Policy) -> TaskOrderin
     }
 }
 
-fn configured_marker<'a>(policy: &'a Policy, marker_id: &str) -> Option<&'a TaskMarker> {
+fn configured_marker<'a>(
+    policy: &'a crate::verified::policy::Policy,
+    marker_id: &str,
+) -> Option<&'a crate::verified::policy::TaskMarker> {
     policy
         .task_marker_tokens
         .iter()
@@ -215,7 +220,10 @@ fn marker_policy_failure(marker_id: &str) -> TaskOrderingGraph {
     }
 }
 
-fn marker_kind_failure(marker: &TaskMarker, expected_kind: &str) -> TaskOrderingGraph {
+fn marker_kind_failure(
+    marker: &crate::verified::policy::TaskMarker,
+    expected_kind: &str,
+) -> TaskOrderingGraph {
     let issue = TaskOrderingIssue {
         code: TASK_ORDER_ISSUE_MARKER_POLICY.to_string(),
         line: None,
@@ -540,7 +548,7 @@ mod tests {
     use super::*;
     use crate::verified::policy::parse_policy_json;
 
-    fn policy() -> Policy {
+    fn policy() -> crate::verified::policy::Policy {
         parse_policy_json(include_str!(
             "../../../../../cairn-policy/generated/cairn-policy.json"
         ))

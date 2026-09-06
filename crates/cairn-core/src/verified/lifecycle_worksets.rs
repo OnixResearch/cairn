@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use super::evidence::canonical_json_hash;
@@ -42,7 +41,7 @@ const SHELL_EXECUTABLES: &[&str] = &[
 // r[impl cairn.lifecycle_stores.worksets]
 // r[impl cairn.lifecycle_stores.receipts]
 
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
 pub struct WorksetId(String);
 
@@ -58,7 +57,7 @@ impl WorksetId {
     }
 }
 
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
 pub struct WorksetMemberLabel(String);
 
@@ -74,7 +73,7 @@ impl WorksetMemberLabel {
     }
 }
 
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
 pub struct WorksetOpenerProfileId(String);
 
@@ -90,7 +89,7 @@ impl WorksetOpenerProfileId {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetMember {
     pub label: WorksetMemberLabel,
     pub display_path: String,
@@ -110,7 +109,7 @@ impl WorksetMember {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Workset {
     pub id: WorksetId,
     pub members: Vec<WorksetMember>,
@@ -136,7 +135,7 @@ impl Workset {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetState {
     pub schema_version: String,
     pub worksets: Vec<Workset>,
@@ -151,7 +150,7 @@ impl WorksetState {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetOpenerProfile {
     pub id: WorksetOpenerProfileId,
     pub executable: String,
@@ -174,27 +173,27 @@ impl WorksetOpenerProfile {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetOpenerPolicy {
     pub policy_hash: String,
     pub profiles: Vec<WorksetOpenerProfile>,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WorksetExecutionMode {
     Preview,
     Execute,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WorksetTransitionOperation {
     Create,
     Remove,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WorksetReceiptOperation {
     Create,
@@ -202,7 +201,7 @@ pub enum WorksetReceiptOperation {
     Open,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WorksetArtifactRole {
     LocalState,
@@ -210,7 +209,7 @@ pub enum WorksetArtifactRole {
     Member,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WorksetArtifactEffect {
     ReplaceLocalState,
@@ -218,7 +217,7 @@ pub enum WorksetArtifactEffect {
     OpenReadOnly,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetArtifactPlan {
     pub label: String,
     pub role: WorksetArtifactRole,
@@ -227,7 +226,7 @@ pub struct WorksetArtifactPlan {
     pub display_path: Option<String>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum WorksetPlanAction {
     ReplaceLocalState {
@@ -241,14 +240,14 @@ pub enum WorksetPlanAction {
     },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetLocalMemberFact {
     pub label: WorksetMemberLabel,
     pub display_path: String,
     pub primary: bool,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetLocalReceiptFacts {
     pub schema_version: String,
     pub evidence_class: String,
@@ -286,7 +285,7 @@ pub struct WorksetRemoveRequest {
     pub execution: WorksetExecutionMode,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetTransitionPlan {
     pub schema_version: String,
     pub operation: WorksetTransitionOperation,
@@ -321,14 +320,14 @@ pub struct WorksetOpenRequest {
     pub execution: WorksetExecutionMode,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "kind", content = "value", rename_all = "snake_case")]
 pub enum WorksetPortableArg {
     Literal(String),
     Member(WorksetMemberLabel),
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorksetOpenPlan {
     pub schema_version: String,
     pub execution: WorksetExecutionMode,
@@ -1210,14 +1209,14 @@ fn workset_non_claims() -> Vec<String> {
     ]
 }
 
-fn hash_serializable<T: Serialize>(value: &T) -> Result<String, WorksetError> {
+fn hash_serializable<T: serde::Serialize>(value: &T) -> Result<String, WorksetError> {
     let value = serde_json::to_value(value).map_err(|error| WorksetError::Serialization {
         reason: error.to_string(),
     })?;
     Ok(canonical_json_hash(&value))
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize)]
 struct PortableWorkset {
     id: WorksetId,
     ordered_member_labels: Vec<WorksetMemberLabel>,
@@ -1238,13 +1237,13 @@ fn portable_workset(workset: &Workset) -> PortableWorkset {
     }
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct PortableStateMaterial {
     schema_version: String,
     worksets: Vec<PortableWorkset>,
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct PortableArtifactPlan {
     label: String,
     role: WorksetArtifactRole,
@@ -1252,7 +1251,7 @@ struct PortableArtifactPlan {
     logical_path: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 enum PortablePlanAction {
     ReplaceLocalState {
@@ -1262,7 +1261,7 @@ enum PortablePlanAction {
     },
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct PortableTransitionPlanMaterial {
     schema_version: String,
     operation: WorksetTransitionOperation,
@@ -1277,7 +1276,7 @@ struct PortableTransitionPlanMaterial {
     non_claims: Vec<String>,
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct PortableOpenPlanMaterial {
     schema_version: String,
     execution: WorksetExecutionMode,

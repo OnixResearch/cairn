@@ -1,13 +1,9 @@
-use serde_json::Map;
-
-use crate::verified::evidence::canonical_json_hash;
-
 use super::super::common::{is_blake3_hex, strip_non_hash_fields};
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub fn export_bundle_hash(receipt: &serde_json::Value) -> String {
-    canonical_json_hash(&export_bundle_hash_material(receipt))
+    crate::verified::evidence::canonical_json_hash(&export_bundle_hash_material(receipt))
 }
 
 pub fn export_bundle_hash_material(receipt: &serde_json::Value) -> serde_json::Value {
@@ -17,7 +13,7 @@ pub fn export_bundle_hash_material(receipt: &serde_json::Value) -> serde_json::V
 }
 
 pub(super) fn export_bundle_hash_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
     computed_bundle_hash: &str,
 ) -> Vec<ExportBundleIssue> {
     let stated_hash = object

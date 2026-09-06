@@ -1,14 +1,3 @@
-use crate::verified::{
-    content_bound_trace_index::{
-        TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES, TRACEABILITY_ASSURANCE_DECLARED,
-    },
-    traceability::{
-        TraceabilityProfile, TraceabilitySource, TRACEABILITY_PROFILE_CAIRN_DEFAULT,
-        TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_RELATED,
-        TRACEABILITY_VERB_VERIFY,
-    },
-};
-
 use super::{fields::string_field, PolicyError, TraceabilityPolicy};
 
 const TRACEABILITY_POLICY_FIELD: &str = "traceability_policy";
@@ -30,10 +19,10 @@ const TRACEABILITY_REQUIREMENT_SOURCE_KINDS: &[&str] = &["accepted_specs", "requ
 const TRACEABILITY_EVIDENCE_SOURCE_KINDS: &[&str] =
     &["rust_source", "nickel_source", "tool_source"];
 const TRACEABILITY_MARKER_VERBS: &[&str] = &[
-    TRACEABILITY_VERB_IMPL,
-    TRACEABILITY_VERB_VERIFY,
-    TRACEABILITY_VERB_DEPENDS,
-    TRACEABILITY_VERB_RELATED,
+    crate::verified::traceability::TRACEABILITY_VERB_IMPL,
+    crate::verified::traceability::TRACEABILITY_VERB_VERIFY,
+    crate::verified::traceability::TRACEABILITY_VERB_DEPENDS,
+    crate::verified::traceability::TRACEABILITY_VERB_RELATED,
 ];
 
 pub(super) fn traceability_policy(
@@ -68,10 +57,9 @@ pub(super) fn traceability_policy(
         ));
     }
 
-    if !profiles
-        .iter()
-        .any(|profile| profile.id == TRACEABILITY_PROFILE_CAIRN_DEFAULT)
-    {
+    if !profiles.iter().any(|profile| {
+        profile.id == crate::verified::traceability::TRACEABILITY_PROFILE_CAIRN_DEFAULT
+    }) {
         return Err(PolicyError::InvalidField(TRACEABILITY_PROFILES_FIELD));
     }
 
@@ -81,7 +69,9 @@ pub(super) fn traceability_policy(
     })
 }
 
-fn parse_profile(value: &serde_json::Value) -> Result<TraceabilityProfile, PolicyError> {
+fn parse_profile(
+    value: &serde_json::Value,
+) -> Result<crate::verified::traceability::TraceabilityProfile, PolicyError> {
     let id = string_field(value, TRACEABILITY_PROFILE_ID_FIELD)?;
     if id.is_empty() {
         return Err(PolicyError::InvalidField(TRACEABILITY_PROFILE_ID_FIELD));
@@ -101,15 +91,19 @@ fn parse_profile(value: &serde_json::Value) -> Result<TraceabilityProfile, Polic
     let marker_verbs = parse_marker_verbs(value)?;
     let assurance_level = string_field(value, TRACEABILITY_ASSURANCE_LEVEL_FIELD)?;
     let anchor_kind = string_field(value, TRACEABILITY_ANCHOR_KIND_FIELD)?;
-    if assurance_level != TRACEABILITY_ASSURANCE_DECLARED {
+    if assurance_level
+        != crate::verified::content_bound_trace_index::TRACEABILITY_ASSURANCE_DECLARED
+    {
         return Err(PolicyError::InvalidField(
             TRACEABILITY_ASSURANCE_LEVEL_FIELD,
         ));
     }
-    if anchor_kind != TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES {
+    if anchor_kind
+        != crate::verified::content_bound_trace_index::TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES
+    {
         return Err(PolicyError::InvalidField(TRACEABILITY_ANCHOR_KIND_FIELD));
     }
-    Ok(TraceabilityProfile {
+    Ok(crate::verified::traceability::TraceabilityProfile {
         id,
         requirement_sources,
         evidence_sources,
@@ -124,7 +118,7 @@ fn parse_sources(
     lookup: &str,
     field: &'static str,
     allowed_source_kinds: &[&str],
-) -> Result<Vec<TraceabilitySource>, PolicyError> {
+) -> Result<Vec<crate::verified::traceability::TraceabilitySource>, PolicyError> {
     let sources = value
         .get(lookup)
         .and_then(serde_json::Value::as_array)
@@ -141,7 +135,7 @@ fn parse_sources(
 fn parse_source(
     value: &serde_json::Value,
     allowed_source_kinds: &[&str],
-) -> Result<TraceabilitySource, PolicyError> {
+) -> Result<crate::verified::traceability::TraceabilitySource, PolicyError> {
     let root = string_field(value, TRACEABILITY_SOURCE_ROOT_FIELD)?;
     let source_kind = string_field(value, TRACEABILITY_SOURCE_KIND_FIELD)?;
     let extensions = traceability_string_array(value, TRACEABILITY_SOURCE_EXTENSIONS_FIELD)?;
@@ -160,7 +154,7 @@ fn parse_source(
             TRACEABILITY_SOURCE_EXTENSIONS_FIELD,
         ));
     }
-    Ok(TraceabilitySource {
+    Ok(crate::verified::traceability::TraceabilitySource {
         root,
         source_kind,
         extensions,

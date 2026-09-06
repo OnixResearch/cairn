@@ -1,7 +1,3 @@
-use crate::verified::artifact_workflow::{
-    workflow_profile_registry_from_value, workflow_schemas_from_value,
-};
-
 use super::{
     agent_guidance::agent_guidance_policy,
     developer_loop::developer_loop_policy,
@@ -37,18 +33,22 @@ pub fn validate_policy_json(value: serde_json::Value) -> Result<Policy, PolicyEr
     let name = super::fields::string_field(&value, "name")?;
     let version = version_field(&value)?;
     require_nonempty_array(&value, "schemas")?;
-    let workflow_schemas =
-        workflow_schemas_from_value(&value).map_err(|error| PolicyError::InvalidWorkflow {
+    let workflow_schemas = crate::verified::artifact_workflow::workflow_schemas_from_value(&value)
+        .map_err(|error| PolicyError::InvalidWorkflow {
             code: error.code,
             path: error.path,
             message: error.message,
         })?;
-    let workflow_profile_policy = workflow_profile_registry_from_value(&value, &workflow_schemas)
+    let workflow_profile_policy =
+        crate::verified::artifact_workflow::workflow_profile_registry_from_value(
+            &value,
+            &workflow_schemas,
+        )
         .map_err(|error| PolicyError::InvalidWorkflow {
-        code: error.code,
-        path: error.path,
-        message: error.message,
-    })?;
+            code: error.code,
+            path: error.path,
+            message: error.message,
+        })?;
     let agent_guidance_policy = agent_guidance_policy(&value)?;
     let developer_loop_policy = developer_loop_policy(&value)?;
     let generated_agent_workflow_policy = generated_agent_workflow_policy(&value)?;

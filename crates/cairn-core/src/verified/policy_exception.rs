@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::evidence::canonical_json_hash;
 
 pub const POLICY_EXCEPTION_SCHEMA_V1: &str = "cairn.policy-exception.v1";
@@ -8,7 +6,7 @@ pub const POLICY_EXCEPTION_PORTABLE_SCHEMA_V1: &str = "cairn.policy-exception-po
 const BLAKE3_HEX_LENGTH: usize = 64;
 
 // r[impl cairn.policy_exception_cob.scope]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PolicyScope {
     pub rule_ids: Vec<String>,
@@ -16,7 +14,7 @@ pub struct PolicyScope {
 }
 
 // r[impl cairn.policy_exception_cob.approval]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExceptionRequest {
     pub policy_identity: String,
@@ -27,7 +25,7 @@ pub struct ExceptionRequest {
 }
 
 // r[impl cairn.policy_exception_cob.validity]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ValidityObservation {
     pub id: String,
@@ -37,7 +35,7 @@ pub struct ValidityObservation {
 }
 
 // r[impl cairn.policy_exception_cob.approval]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExceptionFinding {
     pub id: String,
@@ -45,7 +43,7 @@ pub struct ExceptionFinding {
     pub description: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PolicyExceptionState {
     pub schema: String,
@@ -67,7 +65,7 @@ pub struct PolicyExceptionState {
     pub operations: std::collections::BTreeSet<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PolicyExceptionInit {
     pub schema: String,
@@ -82,7 +80,7 @@ pub struct PolicyExceptionInit {
     pub observers: std::collections::BTreeSet<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum PolicyExceptionAction {
     Init { state: Box<PolicyExceptionInit> },

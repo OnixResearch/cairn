@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::evidence::canonical_json_hash;
 
 pub const OXIDE_LIFECYCLE_PATTERN_SCHEMA_V1: &str = "cairn.oxide-lifecycle-patterns.v1";
@@ -22,7 +20,7 @@ const REQUIRED_REFERENCE_REPOS: &[&str] = &[
 const REQUIRED_BUNDLE_NON_CLAIM: &str =
     "bundle inspection does not prove evidence truth or release eligibility";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct OxideReferenceRow {
     pub repository: String,
     pub adaptation: String,
@@ -31,7 +29,7 @@ pub struct OxideReferenceRow {
     pub study_only: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LifecycleSagaStep {
     pub id: String,
     pub input_hash: String,
@@ -43,7 +41,7 @@ pub struct LifecycleSagaStep {
     pub operator_decision: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LifecycleDocumentPlan {
     pub source_path: String,
     pub source_revision: String,
@@ -56,7 +54,7 @@ pub struct LifecycleDocumentPlan {
     pub scan_profile: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct GoldenSnapshotPlan {
     pub id: String,
     pub expected_hash: String,
@@ -65,7 +63,7 @@ pub struct GoldenSnapshotPlan {
     pub approval: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceBundleMember {
     pub path: String,
     pub role: String,
@@ -75,7 +73,7 @@ pub struct EvidenceBundleMember {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct OxideLifecyclePatternBundle {
     pub schema_version: String,
     pub references: Vec<OxideReferenceRow>,
@@ -86,14 +84,14 @@ pub struct OxideLifecyclePatternBundle {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct OxideLifecyclePatternIssue {
     pub code: String,
     pub field_path: String,
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct OxideLifecyclePatternReport {
     pub valid: bool,
     pub input_hash: String,

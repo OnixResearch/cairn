@@ -1,5 +1,3 @@
-use crate::verified::repo::SpecSource;
-
 use super::types::{
     LifecycleViewIssue, ParsedRequirement, ParsedScenario, ParsedSpec, ParsedTask, ParsedTaskState,
 };
@@ -18,7 +16,7 @@ const MARKER_SUFFIX: char = ']';
 const MARKER_EXTENSION_SEPARATOR: char = '+';
 
 pub(super) fn parse_specs(
-    mut sources: Vec<SpecSource>,
+    mut sources: Vec<crate::verified::repo::SpecSource>,
 ) -> (Vec<ParsedSpec>, Vec<LifecycleViewIssue>) {
     // r[impl cairn.lifecycle_views.semantic_model.markdown]
     sources.sort_by(|left, right| left.path.cmp(&right.path).then(left.id.cmp(&right.id)));
@@ -69,7 +67,10 @@ pub(super) fn parse_tasks(
     (tasks, issues)
 }
 
-fn parse_spec(source: &SpecSource, issues: &mut Vec<LifecycleViewIssue>) -> ParsedSpec {
+fn parse_spec(
+    source: &crate::verified::repo::SpecSource,
+    issues: &mut Vec<LifecycleViewIssue>,
+) -> ParsedSpec {
     let lines = source.markdown.lines().collect::<Vec<_>>();
     let mut requirements = Vec::new();
     for (index, line) in lines.iter().enumerate() {
@@ -98,7 +99,7 @@ fn parse_spec(source: &SpecSource, issues: &mut Vec<LifecycleViewIssue>) -> Pars
 }
 
 fn parse_requirement(
-    source: &SpecSource,
+    source: &crate::verified::repo::SpecSource,
     lines: &[&str],
     heading_index: usize,
     heading: &str,
@@ -160,7 +161,7 @@ fn parse_requirement(
 }
 
 fn parse_scenario(
-    source: &SpecSource,
+    source: &crate::verified::repo::SpecSource,
     lines: &[&str],
     heading_index: usize,
     heading: &str,
@@ -210,7 +211,7 @@ fn task_line(trimmed: &str) -> Option<(ParsedTaskState, &str)> {
         .map(|body| (ParsedTaskState::Done, body))
 }
 
-fn spec_label(source: &SpecSource) -> String {
+fn spec_label(source: &crate::verified::repo::SpecSource) -> String {
     source
         .markdown
         .lines()

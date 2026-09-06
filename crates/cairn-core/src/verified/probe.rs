@@ -1,5 +1,3 @@
-use crate::verified::evidence::canonical_json_hash;
-
 pub const PROBE_RECEIPT_SCHEMA_V1: &str = "cairn.probe-receipt.v1";
 pub const PROBE_DECLARATION_SCHEMA_V1: &str = "cairn.probe.v1";
 const BLAKE3_HEX_LENGTH: usize = 64;
@@ -12,7 +10,7 @@ pub struct ProbeIssue {
 }
 
 pub fn probe_declaration_hash(declaration: &serde_json::Value) -> String {
-    canonical_json_hash(&probe_declaration_hash_material(declaration))
+    crate::verified::evidence::canonical_json_hash(&probe_declaration_hash_material(declaration))
 }
 
 pub fn probe_receipt_hash(receipt: &serde_json::Value) -> String {
@@ -20,7 +18,7 @@ pub fn probe_receipt_hash(receipt: &serde_json::Value) -> String {
     if let Some(object) = material.as_object_mut() {
         object.remove("receipt_hash");
     }
-    canonical_json_hash(&material)
+    crate::verified::evidence::canonical_json_hash(&material)
 }
 
 pub fn validate_probe_declaration(declaration: &serde_json::Value) -> Vec<ProbeIssue> {
@@ -616,7 +614,8 @@ mod tests {
     #[test]
     fn receipt_validation_rejects_tampering() {
         let declaration = declaration();
-        let policy_hash = canonical_json_hash(&serde_json::json!({"policy": "test"}));
+        let policy_hash =
+            crate::verified::evidence::canonical_json_hash(&serde_json::json!({"policy": "test"}));
         let declaration_hash = probe_declaration_hash(&declaration);
         let mut receipt = serde_json::json!({
             "schema": PROBE_RECEIPT_SCHEMA_V1,
@@ -656,8 +655,10 @@ mod tests {
     #[test]
     fn receipt_validation_rejects_stale_policy_probe_id_and_requirement_ids() {
         let declaration = declaration();
-        let policy_hash = canonical_json_hash(&serde_json::json!({"policy": "test"}));
-        let stale_policy_hash = canonical_json_hash(&serde_json::json!({"policy": "stale"}));
+        let policy_hash =
+            crate::verified::evidence::canonical_json_hash(&serde_json::json!({"policy": "test"}));
+        let stale_policy_hash =
+            crate::verified::evidence::canonical_json_hash(&serde_json::json!({"policy": "stale"}));
         let mut receipt = serde_json::json!({
             "schema": PROBE_RECEIPT_SCHEMA_V1,
             "probe_id": "undeclared-probe",

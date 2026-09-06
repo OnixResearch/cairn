@@ -1,11 +1,9 @@
-use serde_json::Map;
-
 use super::super::common::NO_CORRECTNESS_CLAIM;
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_caveat_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<ExportBundleIssue> {
     let Some(caveats) = object.get("caveats").and_then(serde_json::Value::as_object) else {
         return vec![bundle_issue(

@@ -1,9 +1,6 @@
 // r[impl cairn.nominal_evidence_identities.readiness]
 // r[verify cairn.nominal_evidence_identities.readiness.validation]
 
-use serde::Deserialize;
-use serde::Serialize;
-
 use super::evidence::canonical_json_hash;
 use super::nominal_identity::{
     ArtifactDigestRole, BinaryDigestRole, Blake3DigestRef, DigestRoleMarker, DomainIdRef,
@@ -41,7 +38,7 @@ const FORBIDDEN_CLAIM_FRAGMENTS: &[&str] = &[
     "proves release eligibility",
 ];
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainProfile {
     pub evidence_kind: String,
     pub profile_version: String,
@@ -49,13 +46,13 @@ pub struct EvidenceChainProfile {
     pub required_non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainPolicyIdentity {
     pub policy_kind: String,
     pub digest_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainPolicy {
     pub mode: String,
     pub gate_policy_identity: String,
@@ -63,13 +60,13 @@ pub struct EvidenceChainPolicy {
     pub required_policy_hashes: Vec<EvidenceChainPolicyIdentity>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainValenceLink {
     pub artifact_hash: String,
     pub canonical_envelope_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainMantleLink {
     pub artifact_hash: String,
     pub valence_validation_hash: String,
@@ -77,14 +74,14 @@ pub struct EvidenceChainMantleLink {
     pub release_binary_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainProjection {
     pub role: String,
     pub artifact_hash: String,
     pub canonical_envelope_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainReadinessInput {
     pub evidence_kind: String,
     pub profile_version: String,
@@ -99,7 +96,7 @@ pub struct EvidenceChainReadinessInput {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainReadinessIssue {
     pub code: String,
     pub field_path: String,
@@ -107,7 +104,7 @@ pub struct EvidenceChainReadinessIssue {
     pub actual: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EvidenceChainReadiness {
     pub mode: String,
     pub required: bool,

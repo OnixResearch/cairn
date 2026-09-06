@@ -1,8 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-use crate::verified::requirement_id_registry::{
-    validate_requirement_id_registry, RequirementIdRegistry, RequirementReference,
-};
+use crate::verified::requirement_id_registry::RequirementIdRegistry;
 
 pub const TRACEABILITY_PROFILE_CAIRN_DEFAULT: &str = "cairn-default";
 pub const TRACEABILITY_PROFILE_TRELLIS_RUST: &str = "trellis-rust";
@@ -38,7 +34,7 @@ const TRACEABILITY_MARKER_ISSUE_DUPLICATE: &str = "traceability_marker.duplicate
 const TRACEABILITY_MARKER_ISSUE_MISSING_REGISTRY: &str = "traceability_marker.missing_registry";
 const TRACEABILITY_MARKER_ISSUE_OVERCLAIM: &str = "traceability_marker.overclaim";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TraceabilityProfile {
     pub id: String,
@@ -49,7 +45,7 @@ pub struct TraceabilityProfile {
     pub anchor_kind: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TraceabilitySource {
     pub root: String,
@@ -489,13 +485,15 @@ fn validate_registry_links(
     };
     let references = links
         .iter()
-        .map(|link| RequirementReference {
-            requirement_id: link.requirement_id.clone(),
-            consumer: input.consumer.clone(),
-            expected_owner: input.expected_owner.clone(),
-        })
+        .map(
+            |link| crate::verified::requirement_id_registry::RequirementReference {
+                requirement_id: link.requirement_id.clone(),
+                consumer: input.consumer.clone(),
+                expected_owner: input.expected_owner.clone(),
+            },
+        )
         .collect::<Vec<_>>();
-    let report = validate_requirement_id_registry(
+    let report = crate::verified::requirement_id_registry::validate_requirement_id_registry(
         registry,
         &references,
         TRACEABILITY_MARKER_REGISTRY_HASH.to_string(),

@@ -1,5 +1,3 @@
-use crate::verified::evidence::canonical_json_hash;
-
 pub const STRUCTURED_LIFECYCLE_SCHEMA_V1: &str = "cairn.structured-lifecycle.bundle.v1";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,7 +14,7 @@ pub struct StructuredLifecycleReport {
 }
 
 pub fn structured_lifecycle_bundle_hash(bundle: &serde_json::Value) -> String {
-    canonical_json_hash(bundle)
+    crate::verified::evidence::canonical_json_hash(bundle)
 }
 
 pub fn validate_structured_lifecycle_bundle(

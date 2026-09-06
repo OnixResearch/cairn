@@ -5,10 +5,9 @@ use super::common::{
 use super::{
     SemanticReviewIssue, SemanticReviewReport, REVISION_DISPOSITIONS, REVISION_HANDOFF_SCHEMA_V1,
 };
-use crate::verified::evidence::canonical_json_hash;
 
 pub fn revision_handoff_hash(value: &serde_json::Value) -> String {
-    canonical_json_hash(&without_hash_field(value, "receipt_hash"))
+    crate::verified::evidence::canonical_json_hash(&without_hash_field(value, "receipt_hash"))
 }
 
 pub fn validate_revision_handoff(value: &serde_json::Value) -> SemanticReviewReport {

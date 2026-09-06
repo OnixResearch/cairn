@@ -1,5 +1,3 @@
-use serde_json::Map;
-
 use super::SemanticReviewIssue;
 
 pub(super) fn require_string(
@@ -163,7 +161,7 @@ pub(super) fn without_hash_field(value: &serde_json::Value, field: &str) -> serd
 }
 
 pub(super) fn count_string_field(values: &[serde_json::Value], field: &str) -> serde_json::Value {
-    let mut counts = Map::new();
+    let mut counts = serde_json::Map::new();
     for value in values {
         if let Some(text) = value.get(field).and_then(serde_json::Value::as_str) {
             increment_count(&mut counts, text);
@@ -172,7 +170,7 @@ pub(super) fn count_string_field(values: &[serde_json::Value], field: &str) -> s
     sort_count_map(&mut counts)
 }
 
-pub(super) fn increment_count(counts: &mut Map<String, serde_json::Value>, key: &str) {
+pub(super) fn increment_count(counts: &mut serde_json::Map<String, serde_json::Value>, key: &str) {
     let current = counts
         .get(key)
         .and_then(serde_json::Value::as_u64)
@@ -180,13 +178,15 @@ pub(super) fn increment_count(counts: &mut Map<String, serde_json::Value>, key: 
     counts.insert(key.to_string(), serde_json::json!(current + 1));
 }
 
-pub(super) fn sort_count_map(counts: &mut Map<String, serde_json::Value>) -> serde_json::Value {
+pub(super) fn sort_count_map(
+    counts: &mut serde_json::Map<String, serde_json::Value>,
+) -> serde_json::Value {
     let mut pairs = counts
         .iter()
         .map(|(key, value)| (key.clone(), value.clone()))
         .collect::<Vec<_>>();
     pairs.sort_by(|left, right| left.0.cmp(&right.0));
-    let mut sorted = Map::new();
+    let mut sorted = serde_json::Map::new();
     for (key, value) in pairs {
         sorted.insert(key, value);
     }

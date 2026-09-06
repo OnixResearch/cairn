@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use super::{
@@ -16,7 +15,7 @@ pub const PORTABLE_COLLABORATION_BACKEND_V1: &str = "portable-json.v1";
 
 // r[impl cairn.collaboration_backend.portable_state]
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct PortableChangeCollaboration {
     pub schema: String,
     pub backend: String,
@@ -155,7 +154,7 @@ fn portable_envelope_hash(
     Ok(canonical_json_hash(&value))
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct PortableEnvelopeIdentity<'a> {
     schema: &'a str,
     backend: &'a str,

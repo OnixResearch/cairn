@@ -3,8 +3,6 @@
 
 use std::collections::BTreeSet;
 
-use serde::{Deserialize, Serialize};
-
 use super::nominal_identity::{
     ActorId, ChangeId, IdentityIssue, OperationId, PolicyDigest, WorkspaceId, RAW_BLAKE3_PROFILE,
 };
@@ -49,7 +47,7 @@ struct AdmittedCollaborationState {
     operations: std::collections::BTreeSet<OperationId>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCollaborationInit {
     pub schema: String,
     pub change_id: String,
@@ -86,7 +84,7 @@ impl ChangeCollaborationInit {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ChangeCollaborationAction {
     Init {
@@ -116,7 +114,7 @@ pub struct ChangeCollaborationOperation {
     pub actions: Vec<ChangeCollaborationAction>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCollaborationState {
     pub schema: String,
     pub change_id: String,

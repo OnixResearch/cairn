@@ -1,5 +1,3 @@
-use serde::Deserialize;
-
 use super::model::{
     WorkflowOutcomeMachineEvidenceObservation, WorkflowProfileIssue, WorkflowSchemaPolicy,
     OUTCOME_MACHINE_REVIEW_SCHEMA_V1, WORKFLOW_ADMISSION_OUTCOME_MACHINE,
@@ -16,7 +14,7 @@ const OUTCOME_MACHINE_MAX_LIST_ITEMS: usize = 64;
 const OUTCOME_MACHINE_MAX_EVIDENCE_ITEMS: usize = 64;
 const OUTCOME_MACHINE_BLAKE3_HEX_LENGTH: usize = 64;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct OutcomeMachineReview {
     schema: String,
@@ -31,7 +29,7 @@ struct OutcomeMachineReview {
     non_claims: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(
     tag = "kind",
     content = "details",
@@ -44,7 +42,7 @@ enum OutcomeMachineRoute {
     BoundedException(BoundedExceptionRoute),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct DeliveryRoute {
     immediate_outcome: String,
@@ -53,7 +51,7 @@ struct DeliveryRoute {
     repeatability_plan: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct FoundationRoute {
     current_consumer: String,
@@ -62,7 +60,7 @@ struct FoundationRoute {
     repeatability_plan: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct BoundedExceptionRoute {
     immediate_outcome: String,
@@ -72,7 +70,7 @@ struct BoundedExceptionRoute {
     capability_non_claim: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct AiAssistance {
     #[serde(rename = "used")]
@@ -81,7 +79,7 @@ struct AiAssistance {
     completion_authority: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct FreshStateDisposition {
     status: FreshStateStatus,
@@ -89,7 +87,7 @@ struct FreshStateDisposition {
     rationale: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum FreshStateStatus {
     Planned,
@@ -97,21 +95,21 @@ enum FreshStateStatus {
     NotApplicable,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct CompletionDisposition {
     status: CompletionStatus,
     evidence: Vec<EvidenceReference>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum CompletionStatus {
     Planned,
     Observed,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct EvidenceReference {
     #[serde(rename = "kind")]
@@ -120,7 +118,7 @@ struct EvidenceReference {
     blake3: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum EvidenceKind {
     Test,

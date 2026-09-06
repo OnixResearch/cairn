@@ -1,6 +1,3 @@
-use serde::Deserialize;
-use serde::Serialize;
-
 use super::types::{
     ActorId, ArchiveDigest, ArchiveId, ArtifactDigest, BinaryDigest, ChainDigest, ChangeId,
     ContentRootDigest, EvidenceKind, GitOidSha1Digest, GraphDigest, ImportedDigest, InputDigest,
@@ -13,7 +10,9 @@ use super::IdentityIssue;
 const FIELD_VALUE: &str = "value";
 const FIELD_ROLE: &str = "role";
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum IdentityRole {
     ChangeId,
@@ -46,7 +45,7 @@ pub enum IdentityRole {
 }
 
 /// Closed compatibility DTO for heterogeneous identity records.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IdentityWire {
     pub role: IdentityRole,

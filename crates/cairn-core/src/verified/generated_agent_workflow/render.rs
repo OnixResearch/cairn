@@ -1,5 +1,3 @@
-use crate::verified::evidence::{blake3_hex, canonical_json_hash};
-
 // r[impl cairn.generated_agent_workflows.catalog]
 // r[impl cairn.generated_agent_workflows.catalog.contracts]
 // r[impl cairn.generated_agent_workflows.adapters]
@@ -46,14 +44,15 @@ pub fn render_generated_agent_workflows(
                 "adapter output exceeds the policy file bound",
             )]);
         }
-        let descriptor_identity = canonical_json_hash(&serde_json::json!({
-            "descriptor": descriptor,
-            "generator_version": catalog.policy.generator_version,
-        }));
+        let descriptor_identity =
+            crate::verified::evidence::canonical_json_hash(&serde_json::json!({
+                "descriptor": descriptor,
+                "generator_version": catalog.policy.generator_version,
+            }));
         files.push(RenderedGeneratedWorkflowFile {
             workflow_id: descriptor.id.clone(),
             relative_path,
-            content_blake3: blake3_hex(contents.as_bytes()),
+            content_blake3: crate::verified::evidence::blake3_hex(contents.as_bytes()),
             contents,
             descriptor_identity,
         });

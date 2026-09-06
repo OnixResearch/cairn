@@ -6,10 +6,9 @@ use super::{
     SemanticReviewIssue, SemanticReviewReport, REVIEW_CATEGORIES, REVIEW_DECISIONS, REVIEW_KINDS,
     REVIEW_RECEIPT_SCHEMA_V1, REVIEW_SEVERITIES, REVIEW_SOURCES,
 };
-use crate::verified::evidence::canonical_json_hash;
 
 pub fn review_receipt_hash(value: &serde_json::Value) -> String {
-    canonical_json_hash(&without_hash_field(value, "receipt_hash"))
+    crate::verified::evidence::canonical_json_hash(&without_hash_field(value, "receipt_hash"))
 }
 
 pub fn validate_review_receipt(

@@ -1,7 +1,4 @@
-use serde::{Deserialize, Serialize};
 use serde_json::json;
-
-use crate::verified::evidence::canonical_json_hash;
 
 pub const DEVELOPER_LOOP_POLICY_SCHEMA_V1: &str = "cairn.developer-loop-policy.v1";
 pub const DEVELOPER_LOOP_PLAN_SCHEMA_V1: &str = "cairn.developer-loop-plan.v1";
@@ -10,7 +7,7 @@ pub const DEVELOPER_LOOP_RECEIPT_SCHEMA_V1: &str = "cairn.developer-loop-receipt
 // r[impl cairn.developer_loop_profiles.policy.valid]
 pub const INITIAL_DEVELOPER_LOOP_PROFILE: &str = "cairn-local";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopBounds {
     pub max_profiles: usize,
@@ -24,14 +21,14 @@ pub struct DeveloperLoopBounds {
     pub max_receipt_bytes: usize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopBudget {
     pub id: String,
     pub max_seconds: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopCheck {
     pub id: String,
@@ -41,14 +38,14 @@ pub struct DeveloperLoopCheck {
     pub expected_status_class: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopCachePolicy {
     pub mode: String,
     pub key_inputs: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopProfile {
     pub id: String,
@@ -66,7 +63,7 @@ pub struct DeveloperLoopProfile {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopPolicy {
     pub schema: String,
@@ -85,7 +82,7 @@ pub struct AdmittedDeveloperLoopPolicy {
     pub policy_identity: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopIssue {
     pub code: String,
@@ -108,7 +105,7 @@ impl std::fmt::Display for DeveloperLoopIssue {
 impl std::error::Error for DeveloperLoopIssue {}
 
 // r[impl cairn.developer_loop_profiles.plan]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopPlanStep {
     pub check_id: String,
@@ -119,7 +116,7 @@ pub struct DeveloperLoopPlanStep {
 }
 
 // r[impl cairn.developer_loop_profiles.plan.read_only]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopPlan {
     pub schema: String,
@@ -136,13 +133,13 @@ pub struct DeveloperLoopPlan {
 }
 
 // r[impl cairn.developer_loop_profiles.receipt]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopReceiptInput {
     pub receipt: serde_json::Value,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopVerificationSummary {
     pub profile: String,
@@ -165,7 +162,7 @@ pub struct DeveloperLoopVerificationSummary {
     pub verdict: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopResultStatus {
     pub check_id: String,
@@ -173,7 +170,7 @@ pub struct DeveloperLoopResultStatus {
     pub command_identity: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeveloperLoopCacheEvaluation {
     pub mode: String,
@@ -214,7 +211,7 @@ pub fn developer_loop_cache_key(input: &DeveloperLoopCacheKeyInput<'_>) -> Strin
             _ => {}
         }
     }
-    canonical_json_hash(&json!(selected))
+    crate::verified::evidence::canonical_json_hash(&json!(selected))
 }
 
 // r[impl cairn.developer_loop_profiles.policy.invalid]
@@ -239,7 +236,7 @@ pub fn admit_developer_loop_policy(
     if !issues.is_empty() {
         return Err(issues);
     }
-    let policy_identity = canonical_json_hash(&json!({
+    let policy_identity = crate::verified::evidence::canonical_json_hash(&json!({
         "profiles": policy.profiles,
         "budgets": policy.budgets,
         "checks": policy.checks,
@@ -289,7 +286,7 @@ pub fn find_developer_loop_budget<'a>(
 }
 
 pub fn developer_loop_profile_identity(profile: &DeveloperLoopProfile) -> String {
-    canonical_json_hash(&json!(profile))
+    crate::verified::evidence::canonical_json_hash(&json!(profile))
 }
 
 // r[impl cairn.developer_loop_profiles.plan]
@@ -343,7 +340,7 @@ pub fn build_developer_loop_plan(
 }
 
 pub fn developer_loop_plan_identity(plan: &DeveloperLoopPlan) -> String {
-    canonical_json_hash(&json!({
+    crate::verified::evidence::canonical_json_hash(&json!({
         "schema": plan.schema,
         "profile": plan.profile,
         "target": plan.target,
@@ -748,7 +745,7 @@ fn developer_loop_receipt_hash_valid(receipt: &serde_json::Value) -> bool {
         .get("receipt_hash")
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
-    stated == canonical_json_hash(&material)
+    stated == crate::verified::evidence::canonical_json_hash(&material)
 }
 
 fn developer_loop_receipt_has_secret(receipt: &serde_json::Value) -> bool {
@@ -1115,7 +1112,7 @@ mod tests {
             "posture_states": ["declared"],
             "full_gate_status": "outstanding",
         });
-        let hash = canonical_json_hash(&value);
+        let hash = crate::verified::evidence::canonical_json_hash(&value);
         value["receipt_hash"] = json!(hash);
         value
     }
@@ -1145,7 +1142,7 @@ mod tests {
         let admitted = admitted();
         let mut value = receipt();
         value["posture_states"] = json!(["externally_enforced"]);
-        let hash = canonical_json_hash(&value);
+        let hash = crate::verified::evidence::canonical_json_hash(&value);
         value["receipt_hash"] = json!(hash);
         let summary = validate_developer_loop_receipt(
             &admitted,
@@ -1185,7 +1182,7 @@ mod tests {
         let mut value = receipt();
         value["subject_hash"] = json!("f".repeat(BLAKE3_HEX_LENGTH));
         value["observed_duration_seconds"] = json!(9999);
-        let hash = canonical_json_hash(&value);
+        let hash = crate::verified::evidence::canonical_json_hash(&value);
         value["receipt_hash"] = json!(hash);
         let summary = validate_developer_loop_receipt(
             &admitted,
@@ -1213,7 +1210,7 @@ mod tests {
         let mut value = receipt();
         value["cache"] = json!("hit");
         value["cache_key_identity"] = json!("g".repeat(BLAKE3_HEX_LENGTH));
-        let hash = canonical_json_hash(&value);
+        let hash = crate::verified::evidence::canonical_json_hash(&value);
         value["receipt_hash"] = json!(hash);
         let summary = validate_developer_loop_receipt(
             &admitted,
@@ -1235,7 +1232,7 @@ mod tests {
         let mut value = receipt();
         value["diagnostics"] =
             json!([{"code": "developer_loop.receipt.hash", "message": "raw_prompt secret"}]);
-        value["receipt_hash"] = json!(canonical_json_hash(&value));
+        value["receipt_hash"] = json!(crate::verified::evidence::canonical_json_hash(&value));
         let summary = validate_developer_loop_receipt(
             &admitted,
             INITIAL_DEVELOPER_LOOP_PROFILE,

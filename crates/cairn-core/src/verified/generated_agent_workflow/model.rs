@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 pub const GENERATED_AGENT_WORKFLOW_POLICY_SCHEMA_V1: &str =
     "cairn.generated-agent-workflow-policy.v1";
 pub const GENERATED_AGENT_WORKFLOW_MANIFEST_SCHEMA_V1: &str =
@@ -22,21 +20,21 @@ pub const INITIAL_WORKFLOW_IDS: &[&str] =
     &["apply", "archive", "drain", "explore", "propose", "verify"];
 pub const INITIAL_ADAPTER_IDS: &[&str] = &["agent-skills", "claude", "codex"];
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum GeneratedWorkflowPermission {
     Read,
     Mutation,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum GeneratedWorkflowMutationClass {
     ReadOnly,
     PreviewFirst,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum GeneratedWorkflowAdapterFormat {
     AgentSkills,
@@ -44,7 +42,7 @@ pub enum GeneratedWorkflowAdapterFormat {
     Codex,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum GeneratedWorkflowFreshness {
     Current,
@@ -56,7 +54,7 @@ pub enum GeneratedWorkflowFreshness {
     SymlinkConflict,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum GeneratedWorkflowObservedKind {
     Missing,
@@ -65,7 +63,7 @@ pub enum GeneratedWorkflowObservedKind {
     Other,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowBounds {
     pub max_descriptors: usize,
@@ -79,14 +77,14 @@ pub struct GeneratedWorkflowBounds {
     pub max_issues: usize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowCommandClass {
     pub id: String,
     pub permission: GeneratedWorkflowPermission,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowDescriptor {
     pub id: String,
@@ -103,7 +101,7 @@ pub struct GeneratedWorkflowDescriptor {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowAdapter {
     pub id: String,
@@ -116,7 +114,7 @@ pub struct GeneratedWorkflowAdapter {
     pub max_files: usize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedAgentWorkflowPolicy {
     pub schema: String,
@@ -129,7 +127,7 @@ pub struct GeneratedAgentWorkflowPolicy {
     pub required_non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowIssue {
     pub code: String,
@@ -155,7 +153,7 @@ pub struct AdmittedGeneratedWorkflowCatalog {
     pub catalog_identity: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RenderedGeneratedWorkflowFile {
     pub workflow_id: String,
@@ -165,7 +163,7 @@ pub struct RenderedGeneratedWorkflowFile {
     pub descriptor_identity: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowFileObservation {
     pub relative_path: String,
@@ -173,7 +171,7 @@ pub struct GeneratedWorkflowFileObservation {
     pub content_blake3: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowManifestFile {
     pub workflow_id: String,
@@ -183,7 +181,7 @@ pub struct GeneratedWorkflowManifestFile {
     pub descriptor_identity: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowManifest {
     pub schema: String,
@@ -214,7 +212,7 @@ pub struct GeneratedWorkflowDestinationSnapshot {
     pub manifest: GeneratedWorkflowManifestObservation,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowPlannedFile {
     pub workflow_id: String,
@@ -227,7 +225,7 @@ pub struct GeneratedWorkflowPlannedFile {
     pub contents: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowInstallPlan {
     pub schema: String,

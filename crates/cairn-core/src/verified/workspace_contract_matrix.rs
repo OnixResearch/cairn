@@ -1,8 +1,5 @@
 use iddqd::{id_upcast, IdOrdItem, IdOrdMap};
 
-use crate::verified::evidence::canonical_json_hash;
-use crate::verified::stack_provenance::is_blake3_hex;
-
 pub const WORKSPACE_CONTRACT_MATRIX_SCHEMA_V1: &str = "cairn.workspace-contract-matrix.v1";
 pub const WORKSPACE_CONTRACT_MATRIX_RECEIPT_SCHEMA_V1: &str =
     "cairn.workspace-contract-matrix.verify-receipt.v1";
@@ -154,7 +151,7 @@ pub fn validate_workspace_contract_matrix_value(
         }
         Err(issue) => WorkspaceContractReport {
             valid: false,
-            matrix_hash: canonical_json_hash(value),
+            matrix_hash: crate::verified::evidence::canonical_json_hash(value),
             edge_count: EMPTY_COUNT,
             stale_edge_count: EMPTY_COUNT,
             checked_edges: Vec::new(),
@@ -282,7 +279,9 @@ pub fn evaluate_workspace_contract_matrix_readiness(
     let valid_receipt = receipt.get("valid").and_then(serde_json::Value::as_bool) == Some(true)
         && receipt.get("schema").and_then(serde_json::Value::as_str)
             == Some(WORKSPACE_CONTRACT_MATRIX_RECEIPT_SCHEMA_V1)
-        && receipt_hash.as_deref().is_some_and(is_blake3_hex);
+        && receipt_hash
+            .as_deref()
+            .is_some_and(crate::verified::stack_provenance::is_blake3_hex);
     if !valid_receipt {
         push_issue(
             &mut issues,
@@ -546,7 +545,7 @@ fn validate_identity(
     identity: &str,
     issues: &mut Vec<WorkspaceContractIssue>,
 ) {
-    if !is_blake3_hex(identity) {
+    if !crate::verified::stack_provenance::is_blake3_hex(identity) {
         push_issue(
             issues,
             ISSUE_INVALID_IDENTITY,
@@ -638,7 +637,7 @@ fn parse_workspace_contract_input(
     WorkspaceContractIssue,
 > {
     let matrix_value = object_field(value, FIELD_MATRIX)?;
-    let matrix_hash = canonical_json_hash(matrix_value);
+    let matrix_hash = crate::verified::evidence::canonical_json_hash(matrix_value);
     let matrix = WorkspaceContractMatrix {
         schema_version: string_field(matrix_value, FIELD_SCHEMA_VERSION)?,
         edges: parse_edges(array_field(matrix_value, FIELD_EDGES)?)?,

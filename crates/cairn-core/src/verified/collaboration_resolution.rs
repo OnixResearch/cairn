@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::{
     collaboration_change::{
         action_into_compatibility, apply_change_collaboration_operation,
@@ -25,7 +23,7 @@ const RESOLUTION_SIMULATION_OPERATION: &str = "cairn-resolution-simulation";
 // r[impl cairn.collaboration_resolution.inspection]
 // r[impl cairn.collaboration_resolution.plan]
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeArtifactConflictHead {
     pub revision_id: String,
     pub actor: String,
@@ -34,20 +32,20 @@ pub struct ChangeArtifactConflictHead {
     pub content_bytes: Option<usize>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeArtifactConflict {
     pub artifact: ChangeArtifactId,
     pub heads: Vec<ChangeArtifactConflictHead>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeLifecycleConflictHead {
     pub revision_id: String,
     pub actor: String,
     pub record: ChangeLifecycleRecord,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCollaborationConflictInspection {
     pub change_id: String,
     pub state_hash: String,
@@ -61,7 +59,7 @@ impl ChangeCollaborationConflictInspection {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeArtifactConflictValue {
     pub artifact: ChangeArtifactId,
     pub revision_id: String,
@@ -72,7 +70,7 @@ pub struct ChangeArtifactConflictValue {
     pub content_bytes: Option<usize>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeArtifactHeadSelection {
     pub artifact: ChangeArtifactId,
     pub revision_id: String,
@@ -88,7 +86,7 @@ pub struct ChangeCollaborationResolutionSnapshot {
     pub lifecycle_status: Option<ChangeLifecycleStatus>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCollaborationResolutionPlan {
     pub change_id: String,
     pub actor: String,
@@ -102,7 +100,7 @@ pub struct ChangeCollaborationResolutionPlan {
     pub expected_content_root: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCobResolutionPlan {
     pub change_id: String,
     pub actor: String,
@@ -400,7 +398,7 @@ pub fn change_cob_resolution_plan_hash(
     resolution_plan_hash(plan)
 }
 
-fn resolution_plan_hash<T: Serialize>(plan: &T) -> Result<String, ChangeCobError> {
+fn resolution_plan_hash<T: serde::Serialize>(plan: &T) -> Result<String, ChangeCobError> {
     let value = serde_json::to_value(plan).map_err(|error| ChangeCobError::Serialization {
         reason: error.to_string(),
     })?;
@@ -644,7 +642,7 @@ fn invalid_resolution(field: &str, reason: impl Into<String>) -> ChangeCobError 
     }
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct ResolutionOperationIdentity<'a> {
     domain: &'a str,
     input_state_hash: &'a str,

@@ -1,7 +1,3 @@
-use serde_json::Map;
-
-use crate::verified::nominal_identity::{ArtifactDigest, RAW_BLAKE3_PROFILE};
-
 pub(super) const SOURCE_SCANNER_DEPENDENCIES: &str = "source-scanner-token-set";
 pub(super) const NO_CORRECTNESS_CLAIM: &str = "none";
 pub(super) const KNOWN_MACRO_STATUSES: &[&str] =
@@ -95,7 +91,7 @@ pub(super) fn entropy_hash_material_messages(
 }
 
 pub(super) fn known_value(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
     field: &str,
     known: &[&str],
 ) -> bool {
@@ -106,7 +102,12 @@ pub(super) fn known_value(
 }
 
 pub(super) fn is_blake3_hex(value: &str) -> bool {
-    ArtifactDigest::parse_compatible(value, RAW_BLAKE3_PROFILE, "content_addressed.digest").is_ok()
+    crate::verified::nominal_identity::ArtifactDigest::parse_compatible(
+        value,
+        crate::verified::nominal_identity::RAW_BLAKE3_PROFILE,
+        "content_addressed.digest",
+    )
+    .is_ok()
 }
 
 fn is_entropy_key(key: &str) -> bool {

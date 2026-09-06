@@ -1,7 +1,5 @@
 use serde_json::Value;
 
-use crate::verified::evidence::canonical_json_hash;
-
 pub const AI_SPEC_DRAFT_SCHEMA_V1: &str = "cairn.ai_spec_draft_provenance.v1";
 
 const ARTIFACT_KIND_LIFECYCLE_SPEC: &str = "lifecycle_spec";
@@ -84,7 +82,7 @@ pub struct AiSpecDraftReport {
 }
 
 pub fn ai_spec_draft_hash(value: &Value) -> String {
-    canonical_json_hash(&without_receipt_hash(value))
+    crate::verified::evidence::canonical_json_hash(&without_receipt_hash(value))
 }
 
 pub fn validate_ai_spec_draft(value: &Value) -> AiSpecDraftReport {

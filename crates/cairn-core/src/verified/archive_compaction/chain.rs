@@ -1,5 +1,3 @@
-use crate::verified::nominal_identity::{ChainDigestRole, LedgerDigestRole, ReceiptDigestRole};
-
 use super::{
     model::{
         CompactionIssue, CompactionLedger, CompactionLedgerEntry, CompactionPlan,
@@ -89,7 +87,10 @@ pub fn validate_compaction_receipt(receipt: &CompactionReceipt) -> Vec<Compactio
             "compaction receipt must preserve the local-integrity-only non-claim",
         ));
     }
-    if !same_digest::<ReceiptDigestRole>(&compaction_receipt_hash(receipt), &receipt.receipt_hash) {
+    if !same_digest::<crate::verified::nominal_identity::ReceiptDigestRole>(
+        &compaction_receipt_hash(receipt),
+        &receipt.receipt_hash,
+    ) {
         issues.push(issue(
             "archive_compaction.receipt_hash_mismatch",
             "receipt_hash",
@@ -97,7 +98,10 @@ pub fn validate_compaction_receipt(receipt: &CompactionReceipt) -> Vec<Compactio
         ));
     }
     let expected_chain = compaction_chain_hash(&receipt.prev_chain_hash, &receipt.receipt_hash);
-    if !same_digest::<ChainDigestRole>(&expected_chain, &receipt.chain_hash) {
+    if !same_digest::<crate::verified::nominal_identity::ChainDigestRole>(
+        &expected_chain,
+        &receipt.chain_hash,
+    ) {
         issues.push(issue(
             "archive_compaction.chain_hash_mismatch",
             "chain_hash",
@@ -152,7 +156,10 @@ pub fn append_compaction_receipt(
             "receipt sequence must append exactly one ledger entry",
         ));
     }
-    if !same_digest::<ChainDigestRole>(&receipt.prev_chain_hash, &ledger.latest_chain_hash) {
+    if !same_digest::<crate::verified::nominal_identity::ChainDigestRole>(
+        &receipt.prev_chain_hash,
+        &ledger.latest_chain_hash,
+    ) {
         issues.push(issue(
             "archive_compaction.previous_chain_mismatch",
             "prev_chain_hash",
@@ -204,7 +211,7 @@ pub fn validate_compaction_ledger(
     );
     validate_hash(&ledger.latest_chain_hash, "latest_chain_hash", &mut issues);
     validate_hash(&ledger.ledger_hash, "ledger_hash", &mut issues);
-    if !same_digest::<ChainDigestRole>(
+    if !same_digest::<crate::verified::nominal_identity::ChainDigestRole>(
         &compaction_genesis_hash(&ledger.policy_hash),
         &ledger.genesis_chain_hash,
     ) {
@@ -214,7 +221,10 @@ pub fn validate_compaction_ledger(
             "ledger genesis must be derived from the policy-owned domain and policy hash",
         ));
     }
-    if !same_digest::<LedgerDigestRole>(&compaction_ledger_hash(ledger), &ledger.ledger_hash) {
+    if !same_digest::<crate::verified::nominal_identity::LedgerDigestRole>(
+        &compaction_ledger_hash(ledger),
+        &ledger.ledger_hash,
+    ) {
         issues.push(issue(
             "archive_compaction.ledger_hash_mismatch",
             "ledger_hash",
@@ -254,8 +264,14 @@ pub fn validate_compaction_ledger(
         if let Some(receipt) = receipts.get(index) {
             issues.extend(validate_compaction_receipt(receipt));
             if receipt.sequence != entry.sequence
-                || !same_digest::<ReceiptDigestRole>(&receipt.receipt_hash, &entry.receipt_hash)
-                || !same_digest::<ChainDigestRole>(&receipt.chain_hash, &entry.chain_hash)
+                || !same_digest::<crate::verified::nominal_identity::ReceiptDigestRole>(
+                    &receipt.receipt_hash,
+                    &entry.receipt_hash,
+                )
+                || !same_digest::<crate::verified::nominal_identity::ChainDigestRole>(
+                    &receipt.chain_hash,
+                    &entry.chain_hash,
+                )
                 || receipt_path(&receipt.pack_root) != entry.receipt_path
             {
                 issues.push(issue(
@@ -264,7 +280,10 @@ pub fn validate_compaction_ledger(
                     "ledger entry must bind its exact receipt identity",
                 ));
             }
-            if !same_digest::<ChainDigestRole>(&receipt.prev_chain_hash, expected_prev) {
+            if !same_digest::<crate::verified::nominal_identity::ChainDigestRole>(
+                &receipt.prev_chain_hash,
+                expected_prev,
+            ) {
                 issues.push(issue(
                     "archive_compaction.receipt_predecessor_mismatch",
                     &format!("entries[{index}]"),
@@ -274,7 +293,10 @@ pub fn validate_compaction_ledger(
         }
         expected_prev = &entry.chain_hash;
     }
-    if !same_digest::<ChainDigestRole>(&ledger.latest_chain_hash, expected_prev) {
+    if !same_digest::<crate::verified::nominal_identity::ChainDigestRole>(
+        &ledger.latest_chain_hash,
+        expected_prev,
+    ) {
         issues.push(issue(
             "archive_compaction.ledger_tip_mismatch",
             "latest_chain_hash",

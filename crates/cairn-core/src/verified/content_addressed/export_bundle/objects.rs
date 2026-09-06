@@ -1,11 +1,9 @@
-use serde_json::Map;
-
 use super::super::common::is_blake3_hex;
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_object_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> (Vec<String>, Vec<ExportBundleIssue>) {
     let Some(objects) = object.get("objects").and_then(serde_json::Value::as_array) else {
         return (

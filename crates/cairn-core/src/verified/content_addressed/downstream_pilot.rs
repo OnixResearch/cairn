@@ -1,7 +1,3 @@
-use serde_json::Map;
-
-use crate::verified::evidence::canonical_json_hash;
-
 use super::common::{
     entropy_hash_material_messages, is_blake3_hex, strip_non_hash_fields, NO_CORRECTNESS_CLAIM,
 };
@@ -56,7 +52,7 @@ pub fn validate_downstream_pilot_receipt(receipt: &serde_json::Value) -> Downstr
 }
 
 pub fn downstream_pilot_hash(receipt: &serde_json::Value) -> String {
-    canonical_json_hash(&downstream_pilot_hash_material(receipt))
+    crate::verified::evidence::canonical_json_hash(&downstream_pilot_hash_material(receipt))
 }
 
 pub fn downstream_pilot_hash_material(receipt: &serde_json::Value) -> serde_json::Value {
@@ -88,7 +84,7 @@ fn downstream_pilot_issues(
 }
 
 fn downstream_pilot_required_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<DownstreamPilotIssue> {
     let mut issues = Vec::with_capacity(DOWNSTREAM_PILOT_REQUIRED_FIELDS.len() + 1);
     for field in DOWNSTREAM_PILOT_REQUIRED_FIELDS {
@@ -110,7 +106,7 @@ fn downstream_pilot_required_issues(
 }
 
 fn downstream_pilot_hash_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
     computed_pilot_hash: &str,
 ) -> Vec<DownstreamPilotIssue> {
     let mut issues = Vec::with_capacity(4);
@@ -140,7 +136,7 @@ fn downstream_pilot_hash_issues(
 }
 
 fn downstream_pilot_kind_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<DownstreamPilotIssue> {
     let Some(kind) = object.get("pilot_kind").and_then(serde_json::Value::as_str) else {
         return vec![pilot_issue(
@@ -158,7 +154,9 @@ fn downstream_pilot_kind_issues(
     }
 }
 
-fn crunch_pilot_issues(object: &Map<String, serde_json::Value>) -> Vec<DownstreamPilotIssue> {
+fn crunch_pilot_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<DownstreamPilotIssue> {
     let mut issues = Vec::with_capacity(CRUNCH_REQUIRED_FIELDS.len() + 1);
     issues.extend(pilot_required_hash_issues(object, CRUNCH_REQUIRED_FIELDS));
     if object
@@ -174,7 +172,9 @@ fn crunch_pilot_issues(object: &Map<String, serde_json::Value>) -> Vec<Downstrea
     issues
 }
 
-fn aspen_pilot_issues(object: &Map<String, serde_json::Value>) -> Vec<DownstreamPilotIssue> {
+fn aspen_pilot_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<DownstreamPilotIssue> {
     let mut issues = Vec::with_capacity(ASPEN_REQUIRED_FIELDS.len() + 2);
     issues.extend(pilot_required_hash_issues(object, ASPEN_REQUIRED_FIELDS));
     if object
@@ -201,7 +201,7 @@ fn aspen_pilot_issues(object: &Map<String, serde_json::Value>) -> Vec<Downstream
 }
 
 fn pilot_required_hash_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
     fields: &[&str],
 ) -> Vec<DownstreamPilotIssue> {
     let mut issues = Vec::with_capacity(fields.len());
@@ -221,7 +221,7 @@ fn pilot_required_hash_issues(
 }
 
 fn downstream_pilot_non_claim_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<DownstreamPilotIssue> {
     let Some(non_claims) = object
         .get("non_claims")

@@ -1,5 +1,3 @@
-use crate::verified::evidence::canonical_json_hash;
-
 use super::super::common::issues_json;
 use super::super::{SemanticReviewIssue, SemanticReviewReport};
 
@@ -15,7 +13,7 @@ pub(super) fn build_report(
     });
     let valid = issues.is_empty();
     let verdict = if valid { "PASS" } else { "FAIL" }.to_string();
-    let receipt_hash = canonical_json_hash(&serde_json::json!({
+    let receipt_hash = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "schema_version": schema_version,
         "valid": valid,
         "verdict": verdict,

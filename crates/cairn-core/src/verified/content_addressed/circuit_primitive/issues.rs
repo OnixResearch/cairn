@@ -1,8 +1,6 @@
 // r[impl electrical_circuit_primitive_receipts.validator.core]
 // r[verify electrical_circuit_primitive_receipts.circuit_primitive_core_split.behavior_preserved.repository_checks]
 
-use serde_json::Map;
-
 use super::super::common::{entropy_hash_material_messages, is_blake3_hex};
 use super::components::component_issues;
 use super::hash::circuit_primitive_hash_material;
@@ -67,7 +65,7 @@ pub(super) fn circuit_primitive_issues(
 }
 
 fn required_top_level_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(REQUIRED_TOP_LEVEL_FIELDS.len() + 1);
     for field in REQUIRED_TOP_LEVEL_FIELDS {
@@ -89,7 +87,7 @@ fn required_top_level_issues(
 }
 
 fn hash_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
     computed_graph_hash: &str,
 ) -> Vec<CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(2);
@@ -117,7 +115,7 @@ fn hash_issues(
 }
 
 fn required_nested_object_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<CircuitPrimitiveIssue> {
     let mut issues =
         Vec::with_capacity(REQUIRED_NORMALIZATION_FIELDS.len() + REQUIRED_TOOL_FIELDS.len());
@@ -134,7 +132,9 @@ fn required_nested_object_issues(
     issues
 }
 
-fn non_claim_issues(object: &Map<String, serde_json::Value>) -> Vec<CircuitPrimitiveIssue> {
+fn non_claim_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<CircuitPrimitiveIssue> {
     let Some(non_claims) = object
         .get("non_claims")
         .and_then(serde_json::Value::as_array)

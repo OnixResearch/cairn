@@ -1,12 +1,4 @@
-use serde::Serialize;
 use serde_json::json;
-
-use crate::verified::evidence::{blake3_hex, canonical_json_hash};
-use crate::verified::nominal_identity::{
-    ArchiveDigestRole, ArchiveId, ArtifactDigestRole, Blake3Digest, ChainDigestRole,
-    DigestRoleMarker, InputDigestRole, LedgerDigestRole, PackDigestRole, PlanDigestRole,
-    PolicyDigestRole, ReceiptDigestRole, StateDigestRole, RAW_BLAKE3_PROFILE,
-};
 
 use super::model::{
     ArchiveInput, ArchiveManifest, ArchiveManifestEntry, ArchivePointer, CompactionIssue,
@@ -25,7 +17,7 @@ pub fn compaction_genesis_hash(policy_hash: &str) -> String {
     let mut material = Vec::with_capacity(GENESIS_DOMAIN.len() + policy_hash.len());
     material.extend_from_slice(GENESIS_DOMAIN);
     material.extend_from_slice(policy_hash.as_bytes());
-    blake3_hex(&material)
+    crate::verified::evidence::blake3_hex(&material)
 }
 
 pub fn compaction_chain_hash(prev_chain_hash: &str, receipt_hash: &str) -> String {
@@ -37,7 +29,7 @@ pub fn compaction_chain_hash(prev_chain_hash: &str, receipt_hash: &str) -> Strin
     material.extend_from_slice(prev_chain_hash.as_bytes());
     material.extend_from_slice(&separator);
     material.extend_from_slice(receipt_hash.as_bytes());
-    blake3_hex(&material)
+    crate::verified::evidence::blake3_hex(&material)
 }
 
 pub fn build_archive_manifest(
@@ -88,7 +80,7 @@ pub fn build_archive_manifest(
             path: file.path.clone(),
             role: archive_file_role(&file.path).to_string(),
             byte_length,
-            content_hash: blake3_hex(&file.bytes),
+            content_hash: crate::verified::evidence::blake3_hex(&file.bytes),
         });
     }
     entries.sort_by(|left, right| left.path.cmp(&right.path));
@@ -97,7 +89,7 @@ pub fn build_archive_manifest(
     if !issues.is_empty() {
         return Err(issues);
     }
-    let archive_root = canonical_json_hash(&json!({
+    let archive_root = crate::verified::evidence::canonical_json_hash(&json!({
         "archive_id": archive.archive_id,
         "entries": entries,
     }));
@@ -159,7 +151,7 @@ pub fn build_compaction_plan(
         match build_archive_manifest(archive) {
             Ok(manifest) => {
                 if let Some(pointer) = pointer_by_archive.get(manifest.archive_id.as_str()) {
-                    if !same_digest::<ArchiveDigestRole>(
+                    if !same_digest::<crate::verified::nominal_identity::ArchiveDigestRole>(
                         &pointer.archive_root,
                         &manifest.archive_root,
                     ) {
@@ -210,22 +202,23 @@ pub fn build_compaction_plan(
     post_pointers.sort_by(|left, right| left.archive_id.cmp(&right.archive_id));
     validate_pointers(&post_pointers, &mut blockers);
 
-    let input_hash = canonical_json_hash(&json!({
+    let input_hash = crate::verified::evidence::canonical_json_hash(&json!({
         "expanded_archives": all_manifests,
         "retained_pointers": pointers,
         "policy_hash": policy_hash,
         "prev_chain_hash": prev_chain_hash,
         "profile": profile,
     }));
-    let pre_state_root = canonical_json_hash(&json!({
+    let pre_state_root = crate::verified::evidence::canonical_json_hash(&json!({
         "expanded_archives": all_manifests,
         "retained_pointers": pointers,
     }));
-    let post_state_root = canonical_json_hash(&json!({
+    let post_state_root = crate::verified::evidence::canonical_json_hash(&json!({
         "expanded_archives": restored_manifests,
         "retained_pointers": post_pointers,
     }));
-    let retained_manifest_root = canonical_json_hash(&json!({"pointers": post_pointers}));
+    let retained_manifest_root =
+        crate::verified::evidence::canonical_json_hash(&json!({"pointers": post_pointers}));
     let mutation_manifest = build_mutation_manifest(&pack, &planned_pointers);
     let mutation_manifest_hash = hash_serializable(&mutation_manifest);
     blockers.sort();
@@ -316,7 +309,10 @@ pub fn validate_compaction_plan(plan: &CompactionPlan) -> Vec<CompactionIssue> {
     validate_hash(&plan.plan_hash, "plan_hash", &mut issues);
     issues.extend(super::verify::validate_pack_manifest(&plan.pack));
     if plan.pack.pack_root.is_empty()
-        || !same_digest::<PackDigestRole>(&plan.pack.pack_root, &pack_manifest_hash(&plan.pack))
+        || !same_digest::<crate::verified::nominal_identity::PackDigestRole>(
+            &plan.pack.pack_root,
+            &pack_manifest_hash(&plan.pack),
+        )
     {
         issues.push(issue(
             "archive_compaction.pack_root_mismatch",
@@ -337,7 +333,7 @@ pub fn validate_compaction_plan(plan: &CompactionPlan) -> Vec<CompactionIssue> {
             "plan candidates must exactly match the ordered pack archives",
         ));
     }
-    if !same_digest::<ArchiveDigestRole>(
+    if !same_digest::<crate::verified::nominal_identity::ArchiveDigestRole>(
         &plan.pack.packed_archives_root,
         &plan.packed_archives_root,
     ) {
@@ -347,7 +343,7 @@ pub fn validate_compaction_plan(plan: &CompactionPlan) -> Vec<CompactionIssue> {
             "plan and pack archive roots must match",
         ));
     }
-    if !same_digest::<PlanDigestRole>(
+    if !same_digest::<crate::verified::nominal_identity::PlanDigestRole>(
         &hash_serializable(&plan.mutation_manifest),
         &plan.mutation_manifest_hash,
     ) {
@@ -357,7 +353,10 @@ pub fn validate_compaction_plan(plan: &CompactionPlan) -> Vec<CompactionIssue> {
             "mutation manifest hash must match canonical actions",
         ));
     }
-    if !same_digest::<PlanDigestRole>(&compaction_plan_hash(plan), &plan.plan_hash) {
+    if !same_digest::<crate::verified::nominal_identity::PlanDigestRole>(
+        &compaction_plan_hash(plan),
+        &plan.plan_hash,
+    ) {
         issues.push(issue(
             "archive_compaction.plan_hash_mismatch",
             "plan_hash",
@@ -373,11 +372,14 @@ pub fn validate_compaction_plan(plan: &CompactionPlan) -> Vec<CompactionIssue> {
             .zip(&plan.pack.archives)
             .any(|(pointer, archive)| {
                 pointer.archive_id != archive.archive_id
-                    || !same_digest::<ArchiveDigestRole>(
+                    || !same_digest::<crate::verified::nominal_identity::ArchiveDigestRole>(
                         &pointer.archive_root,
                         &archive.archive_root,
                     )
-                    || !same_digest::<PackDigestRole>(&pointer.pack_root, &plan.pack.pack_root)
+                    || !same_digest::<crate::verified::nominal_identity::PackDigestRole>(
+                        &pointer.pack_root,
+                        &plan.pack.pack_root,
+                    )
                     || pointer.pack_manifest_path != pack_manifest_path(&plan.pack.pack_root)
             })
     {
@@ -391,8 +393,8 @@ pub fn validate_compaction_plan(plan: &CompactionPlan) -> Vec<CompactionIssue> {
     expected_pointers.extend(plan.planned_pointers.clone());
     expected_pointers.sort_by(|left, right| left.archive_id.cmp(&right.archive_id));
     validate_pointers(&expected_pointers, &mut issues);
-    if !same_digest::<ArchiveDigestRole>(
-        &canonical_json_hash(&json!({"pointers": expected_pointers})),
+    if !same_digest::<crate::verified::nominal_identity::ArchiveDigestRole>(
+        &crate::verified::evidence::canonical_json_hash(&json!({"pointers": expected_pointers})),
         &plan.retained_manifest_root,
     ) {
         issues.push(issue(
@@ -445,7 +447,8 @@ pub fn ledger_path() -> String {
 }
 
 pub fn safe_archive_id(value: &str) -> bool {
-    ArchiveId::parse(value, "archive_compaction.archive_id").is_ok()
+    crate::verified::nominal_identity::ArchiveId::parse(value, "archive_compaction.archive_id")
+        .is_ok()
         && !value.contains('/')
         && !value.starts_with('.')
 }
@@ -474,41 +477,43 @@ pub(crate) fn issue(code: &str, path: &str, message: &str) -> CompactionIssue {
     }
 }
 
-pub(crate) fn hash_serializable<T: Serialize>(value: &T) -> String {
+pub(crate) fn hash_serializable<T: serde::Serialize>(value: &T) -> String {
     match serde_json::to_value(value) {
-        Ok(json) => canonical_json_hash(&json),
-        Err(error) => blake3_hex(format!("serialization_error:{error}").as_bytes()),
+        Ok(json) => crate::verified::evidence::canonical_json_hash(&json),
+        Err(error) => {
+            crate::verified::evidence::blake3_hex(format!("serialization_error:{error}").as_bytes())
+        }
     }
 }
 
 pub(crate) fn validate_hash(value: &str, path: &str, issues: &mut Vec<CompactionIssue>) {
     let valid = if path == "policy_hash" {
-        is_digest::<PolicyDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::PolicyDigestRole>(value)
     } else if path == "input_hash" {
-        is_digest::<InputDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::InputDigestRole>(value)
     } else if matches!(path, "plan_hash" | "mutation_manifest_hash") {
-        is_digest::<PlanDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::PlanDigestRole>(value)
     } else if path == "receipt_hash" || path.ends_with(".receipt_hash") {
-        is_digest::<ReceiptDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::ReceiptDigestRole>(value)
     } else if matches!(
         path,
         "prev_chain_hash" | "chain_hash" | "genesis_chain_hash" | "latest_chain_hash"
     ) || path.ends_with(".chain_hash")
     {
-        is_digest::<ChainDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::ChainDigestRole>(value)
     } else if matches!(path, "pre_state_root" | "post_state_root") {
-        is_digest::<StateDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::StateDigestRole>(value)
     } else if matches!(path, "pack_root" | "pack.pack_root" | "pointer.pack_root") {
-        is_digest::<PackDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::PackDigestRole>(value)
     } else if matches!(
         path,
         "archive_root" | "pointer.archive_root" | "packed_archives_root" | "retained_manifest_root"
     ) {
-        is_digest::<ArchiveDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::ArchiveDigestRole>(value)
     } else if path == "ledger_hash" {
-        is_digest::<LedgerDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::LedgerDigestRole>(value)
     } else {
-        is_digest::<ArtifactDigestRole>(value)
+        is_digest::<crate::verified::nominal_identity::ArtifactDigestRole>(value)
     };
     if !valid {
         issues.push(issue(
@@ -519,15 +524,29 @@ pub(crate) fn validate_hash(value: &str, path: &str, issues: &mut Vec<Compaction
     }
 }
 
-fn is_digest<Role: DigestRoleMarker>(value: &str) -> bool {
-    Blake3Digest::<Role>::parse(value, RAW_BLAKE3_PROFILE, "archive_compaction.digest").is_ok()
+fn is_digest<Role: crate::verified::nominal_identity::DigestRoleMarker>(value: &str) -> bool {
+    crate::verified::nominal_identity::Blake3Digest::<Role>::parse(
+        value,
+        crate::verified::nominal_identity::RAW_BLAKE3_PROFILE,
+        "archive_compaction.digest",
+    )
+    .is_ok()
 }
 
-pub(crate) fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
-    let left =
-        Blake3Digest::<Role>::parse(left, RAW_BLAKE3_PROFILE, "archive_compaction.left_digest");
-    let right =
-        Blake3Digest::<Role>::parse(right, RAW_BLAKE3_PROFILE, "archive_compaction.right_digest");
+pub(crate) fn same_digest<Role: crate::verified::nominal_identity::DigestRoleMarker>(
+    left: &str,
+    right: &str,
+) -> bool {
+    let left = crate::verified::nominal_identity::Blake3Digest::<Role>::parse(
+        left,
+        crate::verified::nominal_identity::RAW_BLAKE3_PROFILE,
+        "archive_compaction.left_digest",
+    );
+    let right = crate::verified::nominal_identity::Blake3Digest::<Role>::parse(
+        right,
+        crate::verified::nominal_identity::RAW_BLAKE3_PROFILE,
+        "archive_compaction.right_digest",
+    );
     matches!(
         (left, right),
         (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()
@@ -569,7 +588,7 @@ fn build_pack_manifest(mut archives: Vec<ArchiveManifest>) -> PackManifest {
             byte_length,
         })
         .collect::<Vec<_>>();
-    let packed_archives_root = canonical_json_hash(&json!({
+    let packed_archives_root = crate::verified::evidence::canonical_json_hash(&json!({
         "archives": archives
             .iter()
             .map(|archive| json!({

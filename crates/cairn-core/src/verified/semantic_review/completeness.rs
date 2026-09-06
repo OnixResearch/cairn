@@ -1,6 +1,5 @@
 use super::common::sorted_unique;
 use super::REVIEW_COMPLETENESS_SCHEMA_V1;
-use crate::verified::evidence::canonical_json_hash;
 
 pub fn completeness_receipt(
     requirements: Vec<String>,
@@ -51,7 +50,7 @@ pub fn completeness_receipt(
         "verification_refs": verification_refs,
         "findings": findings,
     });
-    let hash = canonical_json_hash(&receipt);
+    let hash = crate::verified::evidence::canonical_json_hash(&receipt);
     receipt["receipt_hash"] = serde_json::json!(hash);
     receipt
 }

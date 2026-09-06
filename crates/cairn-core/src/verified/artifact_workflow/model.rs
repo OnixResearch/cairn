@@ -1,7 +1,5 @@
 use std::{error::Error, fmt};
 
-use serde::{Deserialize, Serialize};
-
 pub const WORKFLOW_SCHEMA_VERSION_V1: &str = "cairn.workflow-schema.v1";
 pub const WORKFLOW_STATUS_SCHEMA_V1: &str = "cairn.workflow-status.v1";
 pub const WORKFLOW_INSTRUCTIONS_SCHEMA_V1: &str = "cairn.workflow-instructions.v1";
@@ -95,7 +93,7 @@ pub const MAX_WORKFLOW_ISSUES_LIMIT: usize = 512;
 pub const MAX_WORKFLOW_DIRECTORY_DEPTH_LIMIT: usize = 16;
 pub const MAX_WORKFLOW_DIRECTORY_ENTRIES_LIMIT: usize = 1024;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkflowBounds {
     pub max_artifacts: usize,
@@ -111,7 +109,7 @@ pub struct WorkflowBounds {
     pub max_directory_entries: usize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkflowArtifactPolicy {
     pub id: String,
@@ -133,7 +131,7 @@ pub struct WorkflowArtifactPolicy {
     pub skip_satisfies_dependencies: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkflowReviewObligationPolicy {
     pub id: String,
@@ -142,7 +140,7 @@ pub struct WorkflowReviewObligationPolicy {
     pub required_artifacts: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkflowSchemaPolicy {
     pub schema_version: String,
@@ -160,14 +158,14 @@ pub struct WorkflowSchemaPolicy {
     pub required_non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkflowEffectProfilePolicy {
     pub effect: String,
     pub profile: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkflowProfileRegistryPolicy {
     pub default_profile: String,
@@ -176,7 +174,7 @@ pub struct WorkflowProfileRegistryPolicy {
     pub forbidden_selection_sources: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkflowProfileRef {
     pub id: String,
@@ -184,14 +182,14 @@ pub struct WorkflowProfileRef {
     pub source: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
 pub struct WorkflowChangeProfileMetadata {
     pub workflow_profile: Option<WorkflowProfileRef>,
     pub spec_effect: Option<String>,
     pub spec_effect_rationale: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowProfileSelection {
     pub profile_id: String,
     pub profile_version: u64,
@@ -199,20 +197,20 @@ pub struct WorkflowProfileSelection {
     pub compatibility_fallback: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowProfileArtifactHash {
     pub artifact_id: String,
     pub path: String,
     pub blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowReviewInputEvidence {
     pub path: String,
     pub hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowReviewEvidence {
     pub obligation_id: String,
     pub valid: bool,
@@ -222,13 +220,13 @@ pub struct WorkflowReviewEvidence {
     pub receipt_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowOutcomeMachineEvidenceObservation {
     pub path: String,
     pub blake3: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowProfileEvidence {
     pub spec_effect: Option<String>,
     pub spec_effect_rationale: Option<String>,
@@ -241,7 +239,7 @@ pub struct WorkflowProfileEvidence {
     pub reviews: Vec<WorkflowReviewEvidence>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowProfileIssue {
     pub code: String,
     pub artifact_id: Option<String>,
@@ -249,7 +247,7 @@ pub struct WorkflowProfileIssue {
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowProfileEvaluation {
     pub profile_id: String,
     pub profile_version: u64,
@@ -260,13 +258,13 @@ pub struct WorkflowProfileEvaluation {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowArtifactFile {
     pub path: String,
     pub blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowArtifactObservation {
     pub artifact_id: String,
     pub present: bool,
@@ -288,7 +286,7 @@ impl WorkflowArtifactObservation {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WorkflowArtifactState {
     Done,
@@ -309,7 +307,7 @@ impl WorkflowArtifactState {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowArtifactStatus {
     pub id: String,
     pub state: WorkflowArtifactState,
@@ -324,7 +322,7 @@ pub struct WorkflowArtifactStatus {
     pub files: Vec<WorkflowArtifactFile>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowStatusReport {
     pub schema_version: String,
     pub schema_id: String,
@@ -336,14 +334,14 @@ pub struct WorkflowStatusReport {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowUpstreamArtifact {
     pub artifact_id: String,
     pub state: WorkflowArtifactState,
     pub files: Vec<WorkflowArtifactFile>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowInstructionEnvelope {
     pub schema_version: String,
     pub schema_id: String,

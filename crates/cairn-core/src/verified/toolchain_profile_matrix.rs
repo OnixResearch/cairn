@@ -1,5 +1,3 @@
-use crate::verified::evidence::canonical_json_hash;
-
 pub const TOOLCHAIN_PROFILE_MATRIX_SCHEMA_V1: &str = "cairn.toolchain-profile-matrix.v1";
 pub const TOOLCHAIN_PROFILE_MATRIX_BOUNDARY: &str = "toolchain profile matrix validation proves declaration completeness only; it does not prove command success, release eligibility, proof soundness, or compatibility without separate execution receipts";
 
@@ -77,7 +75,7 @@ pub fn validate_toolchain_profile_matrix_value(
         Ok((matrix, matrix_hash)) => validate_toolchain_profile_matrix(&matrix, matrix_hash),
         Err(issue) => ToolchainProfileReport {
             valid: false,
-            matrix_hash: canonical_json_hash(value),
+            matrix_hash: crate::verified::evidence::canonical_json_hash(value),
             profile_count: EMPTY_COUNT,
             invalid_profile_count: EMPTY_COUNT,
             issues: vec![issue],
@@ -271,7 +269,7 @@ fn parse_toolchain_profile_matrix_input(
     value: &serde_json::Value,
 ) -> Result<(ToolchainProfileMatrix, String), ToolchainProfileIssue> {
     let matrix_value = object_field(value, FIELD_MATRIX)?;
-    let matrix_hash = canonical_json_hash(matrix_value);
+    let matrix_hash = crate::verified::evidence::canonical_json_hash(matrix_value);
     let matrix = ToolchainProfileMatrix {
         schema_version: string_field(matrix_value, FIELD_SCHEMA_VERSION)?,
         profiles: parse_profiles(array_field(matrix_value, FIELD_PROFILES)?)?,

@@ -2,8 +2,6 @@ mod identity;
 mod issues;
 mod non_claims;
 
-use serde::{Deserialize, Serialize};
-
 use crate::{AuthenticatedEvidenceIssue, AuthenticatedEvidenceReport};
 
 use super::{CairnArtifactAuthReport, CAIRN_ARTIFACT_AUTH_BOUNDARY};
@@ -14,7 +12,9 @@ pub const CAIRN_ARTIFACT_AUTH_COMPATIBILITY_BOUNDARY: &str = "Compatibility evid
 
 const BLAKE3_HEX_LENGTH: usize = 64;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum CairnArtifactAuthCompatibilityDimension {
     Preimage,
@@ -24,7 +24,9 @@ pub enum CairnArtifactAuthCompatibilityDimension {
     NonClaim,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum CairnArtifactAuthCompatibilityDisposition {
     Equal,
@@ -32,7 +34,7 @@ pub enum CairnArtifactAuthCompatibilityDisposition {
     Blocking,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CairnArtifactAuthCompatibilityClassification {
     pub dimension: CairnArtifactAuthCompatibilityDimension,
     pub code: String,
@@ -41,7 +43,7 @@ pub struct CairnArtifactAuthCompatibilityClassification {
     pub disposition: CairnArtifactAuthCompatibilityDisposition,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CairnArtifactAuthCompatibilityReport {
     pub schema_version: String,
     pub case_explained: bool,

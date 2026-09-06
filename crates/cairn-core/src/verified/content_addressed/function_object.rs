@@ -1,7 +1,3 @@
-use serde_json::Map;
-
-use crate::verified::evidence::canonical_json_hash;
-
 use super::common::{
     entropy_hash_material_messages, is_blake3_hex, known_value, strip_non_hash_fields,
     KNOWN_EFFECT_STATUSES, KNOWN_MACRO_STATUSES, SOURCE_SCANNER_DEPENDENCIES,
@@ -60,7 +56,7 @@ pub fn validate_function_object_receipt(receipt: &serde_json::Value) -> Function
 }
 
 pub fn function_object_hash(receipt: &serde_json::Value) -> String {
-    canonical_json_hash(&function_object_hash_material(receipt))
+    crate::verified::evidence::canonical_json_hash(&function_object_hash_material(receipt))
 }
 
 pub fn function_object_hash_material(receipt: &serde_json::Value) -> serde_json::Value {
@@ -90,7 +86,9 @@ fn function_object_issues(
     issues
 }
 
-fn required_top_level_issues(object: &Map<String, serde_json::Value>) -> Vec<FunctionObjectIssue> {
+fn required_top_level_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<FunctionObjectIssue> {
     let mut issues = Vec::with_capacity(REQUIRED_TOP_LEVEL_FIELDS.len() + 1);
     for field in REQUIRED_TOP_LEVEL_FIELDS {
         if !object.contains_key(*field) {
@@ -110,7 +108,7 @@ fn required_top_level_issues(object: &Map<String, serde_json::Value>) -> Vec<Fun
 }
 
 fn hash_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
     computed_object_hash: &str,
 ) -> Vec<FunctionObjectIssue> {
     let mut issues = Vec::with_capacity(3);
@@ -140,7 +138,7 @@ fn hash_issues(
 }
 
 fn required_nested_object_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<FunctionObjectIssue> {
     let mut issues = Vec::with_capacity(
         REQUIRED_NORMALIZATION_FIELDS.len()
@@ -165,7 +163,9 @@ fn required_nested_object_issues(
     issues
 }
 
-fn normalization_issues(object: &Map<String, serde_json::Value>) -> Vec<FunctionObjectIssue> {
+fn normalization_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<FunctionObjectIssue> {
     let has_source_token_kind = object
         .get("normalization")
         .and_then(|value| value.get("content_kind"))
@@ -180,7 +180,7 @@ fn normalization_issues(object: &Map<String, serde_json::Value>) -> Vec<Function
     )]
 }
 
-fn caveat_issues(object: &Map<String, serde_json::Value>) -> Vec<FunctionObjectIssue> {
+fn caveat_issues(object: &serde_json::Map<String, serde_json::Value>) -> Vec<FunctionObjectIssue> {
     let Some(caveats) = object.get("caveats").and_then(serde_json::Value::as_object) else {
         return Vec::new();
     };
@@ -190,7 +190,9 @@ fn caveat_issues(object: &Map<String, serde_json::Value>) -> Vec<FunctionObjectI
     issues
 }
 
-fn caveat_identity_issues(caveats: &Map<String, serde_json::Value>) -> Vec<FunctionObjectIssue> {
+fn caveat_identity_issues(
+    caveats: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<FunctionObjectIssue> {
     let mut issues = Vec::with_capacity(2);
     if caveats.get("identity").and_then(serde_json::Value::as_str) != Some(SOURCE_TOKEN_IDENTITY) {
         issues.push(issue(
@@ -211,7 +213,9 @@ fn caveat_identity_issues(caveats: &Map<String, serde_json::Value>) -> Vec<Funct
     issues
 }
 
-fn caveat_status_issues(caveats: &Map<String, serde_json::Value>) -> Vec<FunctionObjectIssue> {
+fn caveat_status_issues(
+    caveats: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<FunctionObjectIssue> {
     let mut issues = Vec::with_capacity(3);
     if caveats
         .get("dependency_status")

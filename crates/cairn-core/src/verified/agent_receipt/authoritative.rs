@@ -1,7 +1,3 @@
-use serde::{Deserialize, Serialize};
-
-use crate::verified::evidence::canonical_json_hash;
-
 const AUTHORITATIVE_SCHEMA: &str = "cairn.agent-completion.v2";
 const PASSING_STATUS: &str = "passed";
 const MAX_DIAGNOSTIC_SUMMARY_BYTES: usize = 512;
@@ -27,7 +23,7 @@ const SUPPORTED_NON_PASSING_STATUSES: [&str; 11] = [
     "unknown",
 ];
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AgentVerificationContract {
     pub schema: String,
     pub repository_id: String,
@@ -39,7 +35,7 @@ pub struct AgentVerificationContract {
     pub required_checks: Vec<AgentRequiredCheck>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AgentRequiredCheck {
     pub check_id: String,
     pub command: Vec<String>,
@@ -48,7 +44,7 @@ pub struct AgentRequiredCheck {
     pub prerequisites: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AgentExecutionResult {
     pub check_id: String,
     pub status: String,
@@ -66,13 +62,13 @@ pub struct AgentExecutionResult {
     pub diagnostic: Option<AgentDiagnosticEvidence>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AgentArtifactReference {
     pub path: String,
     pub hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AgentDiagnosticEvidence {
     pub remediation_label: String,
     pub summary: String,
@@ -82,14 +78,14 @@ pub struct AgentDiagnosticEvidence {
     pub source: Option<AgentSourceSpan>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AgentSourceSpan {
     pub path: String,
     pub line: u64,
     pub column: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct AgentCompletionDiagnostic {
     pub diagnostic_id: String,
     pub code: String,
@@ -112,13 +108,13 @@ pub struct AgentCompletionDiagnostic {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct AgentNonPassingCheck {
     pub check_id: String,
     pub status: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct AgentAuthoritativeCompletionReport {
     pub schema: String,
     pub classification: String,
@@ -166,7 +162,7 @@ pub fn evaluate_authoritative_agent_completion(
     current_subject_hash: &str,
     current_policy_hash: &str,
 ) -> AgentAuthoritativeCompletionReport {
-    let input_hash = canonical_json_hash(&serde_json::json!({
+    let input_hash = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "contract": contract_value,
         "results": results_value,
         "current_subject_hash": current_subject_hash,
@@ -226,7 +222,7 @@ pub fn evaluate_authoritative_agent_completion(
 }
 
 pub fn authoritative_command_hash(command: &[String]) -> String {
-    canonical_json_hash(&serde_json::json!(command))
+    crate::verified::evidence::canonical_json_hash(&serde_json::json!(command))
 }
 
 pub fn authoritative_selection_hash(required_checks: &[AgentRequiredCheck]) -> String {
@@ -243,8 +239,8 @@ pub fn authoritative_selection_hash(required_checks: &[AgentRequiredCheck]) -> S
             })
         })
         .collect::<Vec<_>>();
-    rows.sort_by_key(canonical_json_hash);
-    canonical_json_hash(&serde_json::json!(rows))
+    rows.sort_by_key(crate::verified::evidence::canonical_json_hash);
+    crate::verified::evidence::canonical_json_hash(&serde_json::json!(rows))
 }
 
 fn parse_results(value: &serde_json::Value) -> Result<Vec<AgentExecutionResult>, String> {
@@ -730,7 +726,7 @@ fn diagnostic(
         "actual": context.actual,
     });
     AgentCompletionDiagnostic {
-        diagnostic_id: canonical_json_hash(&id_material),
+        diagnostic_id: crate::verified::evidence::canonical_json_hash(&id_material),
         code: code.to_string(),
         check_id: context.check_id.map(ToOwned::to_owned),
         result_status: context.status.map(ToOwned::to_owned),
@@ -965,7 +961,7 @@ fn canonical_report_hash(report: &AgentAuthoritativeCompletionReport) -> String 
     if let Some(object) = value.as_object_mut() {
         object.remove("receipt_hash");
     }
-    canonical_json_hash(&value)
+    crate::verified::evidence::canonical_json_hash(&value)
 }
 
 #[cfg(test)]

@@ -1,9 +1,6 @@
 use std::collections::BTreeSet;
 
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
-
-use crate::verified::{evidence::canonical_json_hash, lifecycle::validate_change_name};
 
 // r[impl cairn.radicle_change_cob.lossless_change_state]
 // r[impl cairn.radicle_change_cob.deterministic_reducer]
@@ -44,7 +41,7 @@ pub const BLAKE3_HEX_LENGTH: usize = 64;
 pub const GIT_SHA1_HEX_LENGTH: usize = 40;
 pub const GIT_SHA256_HEX_LENGTH: usize = 64;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
 pub struct ChangeArtifactId(String);
 
@@ -118,7 +115,7 @@ impl ChangeArtifactId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCobInit {
     pub schema: String,
     pub change_id: String,
@@ -130,7 +127,7 @@ pub struct ChangeCobInit {
     pub artifacts: std::collections::BTreeMap<ChangeArtifactId, String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCobEvidence {
     pub blake3: String,
     pub schema: String,
@@ -142,7 +139,9 @@ pub struct ChangeCobEvidence {
     pub non_claims: std::collections::BTreeSet<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum ChangeLifecycleStatus {
     Open,
@@ -165,14 +164,14 @@ impl ChangeLifecycleStatus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeLifecycleRecord {
     pub status: ChangeLifecycleStatus,
     pub subject_root: String,
     pub evidence: std::collections::BTreeSet<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ChangeCobAction {
     Init {
@@ -202,14 +201,14 @@ pub struct ChangeCobOperation {
     pub actions: Vec<ChangeCobAction>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeRevision<T> {
     pub actor: String,
     pub basis: std::collections::BTreeSet<String>,
     pub value: T,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeRevisionSet<T> {
     pub revisions: std::collections::BTreeMap<String, ChangeRevision<T>>,
 }
@@ -287,7 +286,7 @@ impl<T> ChangeRevisionSet<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCobState {
     pub schema: String,
     pub change_id: String,
@@ -801,9 +800,11 @@ pub fn validate_change_cob_init(init: &ChangeCobInit) -> Result<(), ChangeCobErr
         });
     }
     validate_text_limit("change_id", &init.change_id, MAX_CHANGE_ID_BYTES)?;
-    validate_change_name(&init.change_id).map_err(|reason| ChangeCobError::InvalidField {
-        field: "change_id".to_string(),
-        reason,
+    crate::verified::lifecycle::validate_change_name(&init.change_id).map_err(|reason| {
+        ChangeCobError::InvalidField {
+            field: "change_id".to_string(),
+            reason,
+        }
     })?;
     validate_text_limit("workspace_id", &init.repository_id, MAX_WORKSPACE_ID_BYTES)?;
     if init.schema == RADICLE_CHANGE_COB_SCHEMA_V1 {
@@ -1149,14 +1150,14 @@ fn validate_lower_hex(
     })
 }
 
-fn hash_serializable<T: Serialize>(value: &T) -> Result<String, ChangeCobError> {
+fn hash_serializable<T: serde::Serialize>(value: &T) -> Result<String, ChangeCobError> {
     let json = serde_json::to_value(value).map_err(|error| ChangeCobError::Serialization {
         reason: error.to_string(),
     })?;
-    Ok(canonical_json_hash(&json))
+    Ok(crate::verified::evidence::canonical_json_hash(&json))
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct LegacyChangeContentIdentity<'a> {
     schema: &'a str,
     change_id: &'a str,
@@ -1167,7 +1168,7 @@ struct LegacyChangeContentIdentity<'a> {
     artifacts: std::collections::BTreeMap<ChangeArtifactId, String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeBaseRevision {
     pub kind: String,
     pub value: String,
@@ -1223,7 +1224,7 @@ pub fn decode_base_revision(value: &str) -> Result<ChangeBaseRevision, ChangeCob
     ChangeBaseRevision::new(kind, revision_value)
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct ChangeContentIdentity<'a> {
     schema: &'a str,
     change_id: &'a str,
@@ -1236,7 +1237,7 @@ struct ChangeContentIdentity<'a> {
     artifacts: std::collections::BTreeMap<ChangeArtifactId, String>,
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct ChangeStateIdentity<'a> {
     schema: &'a str,
     change_id: &'a str,
@@ -1826,31 +1827,33 @@ mod tests {
             .into_iter()
             .filter_map(|(artifact, content)| content.map(|content| (artifact, content)))
             .collect::<std::collections::BTreeMap<_, _>>();
-        let expected_content_root = canonical_json_hash(&serde_json::json!({
-            "schema": without_delegate.schema,
-            "change_id": without_delegate.change_id,
-            "workspace_id": without_delegate.repository_id,
-            "base_revision": base_revision,
-            "policy_hash": without_delegate.policy_hash,
-            "creator": without_delegate.creator,
-            "artifacts": artifacts,
-        }));
+        let expected_content_root =
+            crate::verified::evidence::canonical_json_hash(&serde_json::json!({
+                "schema": without_delegate.schema,
+                "change_id": without_delegate.change_id,
+                "workspace_id": without_delegate.repository_id,
+                "base_revision": base_revision,
+                "policy_hash": without_delegate.policy_hash,
+                "creator": without_delegate.creator,
+                "artifacts": artifacts,
+            }));
         assert_eq!(
             change_cob_content_root(&without_delegate).unwrap(),
             expected_content_root
         );
-        let expected_state_hash = canonical_json_hash(&serde_json::json!({
-            "schema": without_delegate.schema,
-            "change_id": without_delegate.change_id,
-            "workspace_id": without_delegate.repository_id,
-            "base_revision": decode_base_revision(&without_delegate.base_git_oid).unwrap(),
-            "policy_hash": without_delegate.policy_hash,
-            "creator": without_delegate.creator,
-            "artifacts": without_delegate.artifacts,
-            "evidence": without_delegate.evidence,
-            "lifecycle": without_delegate.lifecycle,
-            "operations": without_delegate.operations,
-        }));
+        let expected_state_hash =
+            crate::verified::evidence::canonical_json_hash(&serde_json::json!({
+                "schema": without_delegate.schema,
+                "change_id": without_delegate.change_id,
+                "workspace_id": without_delegate.repository_id,
+                "base_revision": decode_base_revision(&without_delegate.base_git_oid).unwrap(),
+                "policy_hash": without_delegate.policy_hash,
+                "creator": without_delegate.creator,
+                "artifacts": without_delegate.artifacts,
+                "evidence": without_delegate.evidence,
+                "lifecycle": without_delegate.lifecycle,
+                "operations": without_delegate.operations,
+            }));
         assert_eq!(
             change_cob_state_hash(&without_delegate).unwrap(),
             expected_state_hash

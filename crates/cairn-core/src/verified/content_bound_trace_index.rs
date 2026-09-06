@@ -1,14 +1,3 @@
-use serde::{Deserialize, Serialize};
-
-use crate::verified::{
-    content_bound_requirement_registry::{
-        validate_content_bound_requirement_registry, ContentBoundRequirementRegistry,
-        ContentBoundRequirementRow,
-    },
-    evidence::{blake3_hex, canonical_json},
-    traceability::{traceability_id_is_valid, TraceabilityFile, TraceabilityProfile},
-};
-
 pub const CONTENT_BOUND_TRACE_INDEX_SCHEMA_V1: &str = "cairn.content-bound-trace-index.v1";
 pub const CONTENT_BOUND_TRACE_INDEX_BOUNDARY: &str = "content-bound trace index validation proves canonical identity, current-input freshness, and declared marker linkage only; it does not prove requirement satisfaction, implementation correctness, test adequacy, proof soundness, release eligibility, lifecycle readiness, or behavioral correctness";
 pub const TRACEABILITY_ASSURANCE_DECLARED: &str = "declared";
@@ -58,14 +47,14 @@ const ISSUE_NON_CLAIM_MISSING: &str = "trace_index.non_claim_missing";
 const ISSUE_QUERY_UNKNOWN: &str = "trace_index.query_unknown_requirement";
 const ISSUE_SERIALIZATION: &str = "trace_index.serialization_failed";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundTraceSourceIdentity {
     pub path: String,
     pub content_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundTraceMarkerSpan {
     pub start_byte: u64,
@@ -74,7 +63,7 @@ pub struct ContentBoundTraceMarkerSpan {
     pub end_line: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundTraceLink {
     pub requirement_id: String,
@@ -87,23 +76,24 @@ pub struct ContentBoundTraceLink {
     pub link_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundTraceIndex {
     pub schema_version: String,
     pub boundary: String,
-    pub profile: TraceabilityProfile,
+    pub profile: crate::verified::traceability::TraceabilityProfile,
     pub profile_blake3: String,
     pub policy_blake3: String,
     pub requirement_registry_blake3: String,
-    pub requirements: Vec<ContentBoundRequirementRow>,
+    pub requirements:
+        Vec<crate::verified::content_bound_requirement_registry::ContentBoundRequirementRow>,
     pub sources: Vec<ContentBoundTraceSourceIdentity>,
     pub links: Vec<ContentBoundTraceLink>,
     pub non_claims: Vec<String>,
     pub index_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundTraceIndexIssue {
     pub code: String,
@@ -130,7 +120,8 @@ pub struct ContentBoundTraceIndexVerification {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContentBoundTraceQuery {
-    pub requirement: ContentBoundRequirementRow,
+    pub requirement:
+        crate::verified::content_bound_requirement_registry::ContentBoundRequirementRow,
     pub links: Vec<ContentBoundTraceLink>,
 }
 
@@ -140,7 +131,7 @@ pub struct ContentBoundTraceQueryEvaluation {
     pub issues: Vec<ContentBoundTraceIndexIssue>,
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct LinkHashMaterial<'a> {
     requirement_id: &'a str,
     requirement_row_blake3: &'a str,
@@ -152,15 +143,16 @@ struct LinkHashMaterial<'a> {
     marker_blake3: &'a str,
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct IndexHashMaterial<'a> {
     schema_version: &'a str,
     boundary: &'a str,
-    profile: &'a TraceabilityProfile,
+    profile: &'a crate::verified::traceability::TraceabilityProfile,
     profile_blake3: &'a str,
     policy_blake3: &'a str,
     requirement_registry_blake3: &'a str,
-    requirements: &'a [ContentBoundRequirementRow],
+    requirements:
+        &'a [crate::verified::content_bound_requirement_registry::ContentBoundRequirementRow],
     sources: &'a [ContentBoundTraceSourceIdentity],
     links: &'a [ContentBoundTraceLink],
     non_claims: &'a [String],
@@ -176,15 +168,15 @@ struct LocatedMarker<'a> {
 
 #[must_use]
 pub fn evaluate_content_bound_trace_index(
-    registry: &ContentBoundRequirementRegistry,
-    profile: &TraceabilityProfile,
-    mut evidence_files: Vec<TraceabilityFile>,
+    registry: &crate::verified::content_bound_requirement_registry::ContentBoundRequirementRegistry,
+    profile: &crate::verified::traceability::TraceabilityProfile,
+    mut evidence_files: Vec<crate::verified::traceability::TraceabilityFile>,
 ) -> ContentBoundTraceIndexEvaluation {
     // r[impl cairn.trace_index.canonical_index]
     // r[impl cairn.trace_index.validation]
     let mut issues = Vec::new();
     validate_profile(profile, "profile", &mut issues);
-    for registry_issue in validate_content_bound_requirement_registry(registry) {
+    for registry_issue in crate::verified::content_bound_requirement_registry::validate_content_bound_requirement_registry(registry) {
         push_issue(
             &mut issues,
             ISSUE_REGISTRY_INVALID,
@@ -333,9 +325,9 @@ pub fn validate_content_bound_trace_index(
 #[must_use]
 pub fn verify_content_bound_trace_index(
     index: &ContentBoundTraceIndex,
-    registry: &ContentBoundRequirementRegistry,
-    profile: &TraceabilityProfile,
-    evidence_files: Vec<TraceabilityFile>,
+    registry: &crate::verified::content_bound_requirement_registry::ContentBoundRequirementRegistry,
+    profile: &crate::verified::traceability::TraceabilityProfile,
+    evidence_files: Vec<crate::verified::traceability::TraceabilityFile>,
 ) -> ContentBoundTraceIndexVerification {
     // r[impl cairn.trace_index.freshness]
     let mut issues = validate_content_bound_trace_index(index);
@@ -409,10 +401,13 @@ pub fn parse_content_bound_trace_index_value(
 }
 
 fn collect_file_links<'a>(
-    file: &TraceabilityFile,
+    file: &crate::verified::traceability::TraceabilityFile,
     source_file_blake3: &str,
-    profile: &TraceabilityProfile,
-    requirement_rows: &std::collections::BTreeMap<&'a str, &'a ContentBoundRequirementRow>,
+    profile: &crate::verified::traceability::TraceabilityProfile,
+    requirement_rows: &std::collections::BTreeMap<
+        &'a str,
+        &'a crate::verified::content_bound_requirement_registry::ContentBoundRequirementRow,
+    >,
     links: &mut Vec<ContentBoundTraceLink>,
     issues: &mut Vec<ContentBoundTraceIndexIssue>,
 ) {
@@ -498,7 +493,7 @@ fn located_reference_markers<'a>(
                 .unwrap_or(raw_requirement_id);
             if allowed_roles.iter().any(|allowed| allowed == role)
                 && requirement_id != PLACEHOLDER_REQUIREMENT_ID
-                && traceability_id_is_valid(requirement_id)
+                && crate::verified::traceability::traceability_id_is_valid(requirement_id)
             {
                 markers.push(LocatedMarker {
                     role,
@@ -532,7 +527,7 @@ fn compare_links(
 }
 
 fn reject_duplicate_source_paths(
-    files: &[TraceabilityFile],
+    files: &[crate::verified::traceability::TraceabilityFile],
     issues: &mut Vec<ContentBoundTraceIndexIssue>,
 ) {
     for pair in files.windows(MARKER_BODY_PART_COUNT) {
@@ -565,7 +560,7 @@ fn reject_duplicate_links(
 }
 
 fn validate_profile(
-    profile: &TraceabilityProfile,
+    profile: &crate::verified::traceability::TraceabilityProfile,
     field_path: &str,
     issues: &mut Vec<ContentBoundTraceIndexIssue>,
 ) {
@@ -900,7 +895,7 @@ fn compare_sources(
 }
 
 fn link_hash(
-    requirement_row: &ContentBoundRequirementRow,
+    requirement_row: &crate::verified::content_bound_requirement_registry::ContentBoundRequirementRow,
     role: &str,
     source_path: &str,
     source_file_blake3: &str,
@@ -924,11 +919,11 @@ fn link_hash(
 
 #[allow(clippy::too_many_arguments)]
 fn index_hash(
-    profile: &TraceabilityProfile,
+    profile: &crate::verified::traceability::TraceabilityProfile,
     profile_blake3: &str,
     policy_blake3: &str,
     requirement_registry_blake3: &str,
-    requirements: &[ContentBoundRequirementRow],
+    requirements: &[crate::verified::content_bound_requirement_registry::ContentBoundRequirementRow],
     sources: &[ContentBoundTraceSourceIdentity],
     links: &[ContentBoundTraceLink],
     non_claims: &[String],
@@ -1003,10 +998,10 @@ fn domain_hash_bytes(domain: &str, bytes: &[u8]) -> String {
     material.extend_from_slice(domain.as_bytes());
     material.push(DOMAIN_SEPARATOR);
     material.extend_from_slice(bytes);
-    blake3_hex(&material)
+    crate::verified::evidence::blake3_hex(&material)
 }
 
-fn domain_hash_json<T: Serialize>(
+fn domain_hash_json<T: serde::Serialize>(
     domain: &str,
     value: &T,
 ) -> Result<String, ContentBoundTraceIndexIssue> {
@@ -1017,7 +1012,10 @@ fn domain_hash_json<T: Serialize>(
             "canonical trace-index hash material could not be serialized",
         )
     })?;
-    Ok(domain_hash_bytes(domain, canonical_json(&value).as_bytes()))
+    Ok(domain_hash_bytes(
+        domain,
+        crate::verified::evidence::canonical_json(&value).as_bytes(),
+    ))
 }
 
 fn issue(code: &str, field_path: &str, message: &str) -> ContentBoundTraceIndexIssue {
@@ -1081,7 +1079,9 @@ mod tests {
         }
     }
 
-    fn registry(policy: &[u8]) -> ContentBoundRequirementRegistry {
+    fn registry(
+        policy: &[u8],
+    ) -> crate::verified::content_bound_requirement_registry::ContentBoundRequirementRegistry {
         evaluate_content_bound_requirement_registry(
             vec![specification()],
             policy,
@@ -1095,8 +1095,8 @@ mod tests {
         .expect("valid registry")
     }
 
-    fn profile() -> TraceabilityProfile {
-        TraceabilityProfile {
+    fn profile() -> crate::verified::traceability::TraceabilityProfile {
+        crate::verified::traceability::TraceabilityProfile {
             id: "test".to_string(),
             requirement_sources: vec![TraceabilitySource {
                 root: ".cairn/specs".to_string(),
@@ -1119,8 +1119,8 @@ mod tests {
         }
     }
 
-    fn source(path: &str, prefix: &str) -> TraceabilityFile {
-        TraceabilityFile {
+    fn source(path: &str, prefix: &str) -> crate::verified::traceability::TraceabilityFile {
+        crate::verified::traceability::TraceabilityFile {
             path: path.to_string(),
             text: format!(
                 "{prefix}// r[{} {REQUIREMENT_ID}]\n// r[{} {REQUIREMENT_ID}]\n",
@@ -1252,7 +1252,7 @@ mod tests {
             &profile(),
             vec![
                 source(SOURCE_PATH, ""),
-                TraceabilityFile {
+                crate::verified::traceability::TraceabilityFile {
                     path: SECOND_SOURCE_PATH.to_string(),
                     text: format!("// r[{} {REQUIREMENT_ID}]\n", TRACEABILITY_VERB_IMPL),
                 },
@@ -1301,7 +1301,7 @@ mod tests {
         let unselected = evaluate_content_bound_trace_index(
             &registry,
             &profile(),
-            vec![TraceabilityFile {
+            vec![crate::verified::traceability::TraceabilityFile {
                 path: SOURCE_PATH.to_string(),
                 text: format!("// r[{} cairn.trace.missing]\n", TRACEABILITY_VERB_IMPL),
             }],

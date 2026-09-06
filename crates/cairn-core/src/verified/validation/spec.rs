@@ -1,5 +1,3 @@
-use crate::verified::{policy::ArtifactSubstancePolicy, repo::SpecSource};
-
 use super::markdown::{
     has_requirement_strength, has_scenario_clause, markdown_heading, next_heading_at_or_above,
 };
@@ -19,7 +17,7 @@ pub struct SpecSubstanceInventory {
     pub scenario_blocks: usize,
 }
 
-pub fn validate_spec_sources(sources: &[SpecSource]) -> Vec<String> {
+pub fn validate_spec_sources(sources: &[crate::verified::repo::SpecSource]) -> Vec<String> {
     let mut ordered = sources.to_vec();
     ordered.sort_by(|left, right| left.path.cmp(&right.path).then(left.id.cmp(&right.id)));
     let mut issues = Vec::with_capacity(ordered.len().saturating_mul(2));
@@ -30,8 +28,8 @@ pub fn validate_spec_sources(sources: &[SpecSource]) -> Vec<String> {
 }
 
 pub fn validate_spec_sources_with_policy(
-    sources: &[SpecSource],
-    policy: &ArtifactSubstancePolicy,
+    sources: &[crate::verified::repo::SpecSource],
+    policy: &crate::verified::policy::ArtifactSubstancePolicy,
 ) -> Vec<String> {
     let mut ordered = sources.to_vec();
     ordered.sort_by(|left, right| left.path.cmp(&right.path).then(left.id.cmp(&right.id)));
@@ -43,7 +41,7 @@ pub fn validate_spec_sources_with_policy(
     issues
 }
 
-pub fn validate_spec_source(source: &SpecSource) -> Vec<String> {
+pub fn validate_spec_source(source: &crate::verified::repo::SpecSource) -> Vec<String> {
     // Compatibility validator retained for callers that do not have reviewed
     // policy. Product validation and mutation surfaces use the policy-aware API.
     // r[impl cairn.supersede.validate_ears] r[impl cairn.supersede.validate_ears.accept]
@@ -69,8 +67,8 @@ pub fn validate_spec_source(source: &SpecSource) -> Vec<String> {
 }
 
 pub fn validate_spec_source_with_policy(
-    source: &SpecSource,
-    policy: &ArtifactSubstancePolicy,
+    source: &crate::verified::repo::SpecSource,
+    policy: &crate::verified::policy::ArtifactSubstancePolicy,
 ) -> (SpecSubstanceInventory, Vec<String>) {
     // r[impl cairn.lifecycle_validation.spec_substance]
     // r[impl cairn.lifecycle_validation.spec_substance.borrowed_strength]
@@ -331,7 +329,7 @@ fn contains_word(text: &str, needle: &str) -> bool {
 }
 
 fn validate_requirement_block_compatibility(
-    source: &SpecSource,
+    source: &crate::verified::repo::SpecSource,
     lines: &[&str],
     index: usize,
     heading: &str,
@@ -347,7 +345,7 @@ fn validate_requirement_block_compatibility(
 }
 
 fn validate_scenario_block(
-    source: &SpecSource,
+    source: &crate::verified::repo::SpecSource,
     lines: &[&str],
     index: usize,
     heading: &str,
@@ -357,7 +355,7 @@ fn validate_scenario_block(
 }
 
 fn validate_visible_scenario_block(
-    source: &SpecSource,
+    source: &crate::verified::repo::SpecSource,
     lines: &[&str],
     headings: &[VisibleHeading],
     heading: &VisibleHeading,
@@ -371,7 +369,11 @@ fn validate_visible_scenario_block(
     scenario_clause_issue(source, &heading.text, &lines[heading.line_index + 1..end])
 }
 
-fn scenario_clause_issue(source: &SpecSource, heading: &str, block: &[&str]) -> Option<String> {
+fn scenario_clause_issue(
+    source: &crate::verified::repo::SpecSource,
+    heading: &str,
+    block: &[&str],
+) -> Option<String> {
     let mut missing = Vec::with_capacity(REQUIREMENT_HEADING_LEVEL);
     if !has_scenario_clause(block, "GIVEN") {
         missing.push("GIVEN");

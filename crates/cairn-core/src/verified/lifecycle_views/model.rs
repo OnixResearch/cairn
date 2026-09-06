@@ -1,12 +1,8 @@
 use std::collections::btree_map::Entry;
 
-use crate::verified::{
-    change_dependencies::{ChangeDependencyGraph, ChangeDependencyNode},
-    repo::{ChangeStatus, TaskCounts},
-    traceability::{
-        TraceabilityCoverageReport, TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL,
-        TRACEABILITY_VERB_RELATED, TRACEABILITY_VERB_VERIFY,
-    },
+use crate::verified::traceability::{
+    TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_RELATED,
+    TRACEABILITY_VERB_VERIFY,
 };
 
 use super::{
@@ -151,7 +147,10 @@ fn add_change_nodes(changes: &[LifecycleViewChangeInput], builder: &mut ViewBuil
     }
 }
 
-fn add_dependency_edges(graph: &ChangeDependencyGraph, builder: &mut ViewBuilder) {
+fn add_dependency_edges(
+    graph: &crate::verified::change_dependencies::ChangeDependencyGraph,
+    builder: &mut ViewBuilder,
+) {
     for edge in &graph.edges {
         let dependent_id = change_node_id(&edge.dependent);
         let dependency_id = change_node_id(&edge.dependency);
@@ -385,7 +384,7 @@ fn register_reference(
 }
 
 fn add_traceability_requirement_targets(
-    report: &TraceabilityCoverageReport,
+    report: &crate::verified::traceability::TraceabilityCoverageReport,
     reference_targets: &mut std::collections::BTreeMap<String, String>,
     builder: &mut ViewBuilder,
 ) {
@@ -458,7 +457,7 @@ fn add_task_nodes(
 }
 
 fn add_traceability_edges(
-    report: &TraceabilityCoverageReport,
+    report: &crate::verified::traceability::TraceabilityCoverageReport,
     reference_targets: &std::collections::BTreeMap<String, String>,
     builder: &mut ViewBuilder,
 ) {
@@ -537,7 +536,7 @@ fn traceability_edge_kind(verb: &str) -> LifecycleViewEdgeKind {
 
 fn build_kanban_board(
     changes: &[LifecycleViewChangeInput],
-    graph: &ChangeDependencyGraph,
+    graph: &crate::verified::change_dependencies::ChangeDependencyGraph,
 ) -> KanbanBoard {
     let mut lanes = std::collections::BTreeMap::<KanbanColumnKind, Vec<KanbanCard>>::new();
     for kind in KanbanColumnKind::ORDERED {
@@ -581,9 +580,9 @@ fn build_kanban_board(
 }
 
 fn classify_change(
-    change: &ChangeStatus,
-    node: Option<&ChangeDependencyNode>,
-    graph: &ChangeDependencyGraph,
+    change: &crate::verified::repo::ChangeStatus,
+    node: Option<&crate::verified::change_dependencies::ChangeDependencyNode>,
+    graph: &crate::verified::change_dependencies::ChangeDependencyGraph,
 ) -> (KanbanColumnKind, Vec<String>) {
     let mut blockers = Vec::new();
     if change.metadata.status.as_deref() == Some("blocked") {
@@ -643,7 +642,10 @@ fn classify_change(
     )
 }
 
-fn archive_ready(change: &ChangeStatus, node: Option<&ChangeDependencyNode>) -> bool {
+fn archive_ready(
+    change: &crate::verified::repo::ChangeStatus,
+    node: Option<&crate::verified::change_dependencies::ChangeDependencyNode>,
+) -> bool {
     change.has_proposal
         && change.has_design
         && change.has_tasks
@@ -652,11 +654,11 @@ fn archive_ready(change: &ChangeStatus, node: Option<&ChangeDependencyNode>) -> 
         && change.task_counts.is_some_and(tasks_complete)
 }
 
-fn tasks_complete(counts: TaskCounts) -> bool {
+fn tasks_complete(counts: crate::verified::repo::TaskCounts) -> bool {
     counts.total > 0 && counts.todo == 0 && counts.in_progress == 0 && counts.unmarked == 0
 }
 
-fn work_started(counts: Option<TaskCounts>) -> bool {
+fn work_started(counts: Option<crate::verified::repo::TaskCounts>) -> bool {
     counts.is_some_and(|counts| counts.done > 0 || counts.in_progress > 0)
 }
 

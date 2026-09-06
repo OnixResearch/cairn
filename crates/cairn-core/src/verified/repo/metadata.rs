@@ -2,9 +2,6 @@ use crate::verified::change_dependencies::{
     DEPENDENCY_ISSUE_EMPTY_ID, DEPENDENCY_ISSUE_INVALID_ID, DEPENDENCY_ISSUE_INVALID_ITEM,
     DEPENDENCY_ISSUE_INVALID_TYPE,
 };
-use crate::verified::{
-    cross_repo_dependencies::parse_cross_repo_dependencies, lifecycle::validate_change_name,
-};
 
 use super::{ChangeMetadata, ChangeStatus};
 
@@ -48,7 +45,9 @@ pub(super) fn parse_change_metadata(
     let status = status.0;
     let depends_on = parse_dependency_metadata(object.get("depends_on"), change_name, &mut issues);
     let (cross_repo_dependencies, cross_repo_issues) =
-        parse_cross_repo_dependencies(object.get("cross_repo_dependencies"));
+        crate::verified::cross_repo_dependencies::parse_cross_repo_dependencies(
+            object.get("cross_repo_dependencies"),
+        );
     issues.extend(
         cross_repo_issues
             .into_iter()
@@ -111,7 +110,7 @@ fn parse_dependency_metadata(
             ));
             continue;
         }
-        if let Err(error) = validate_change_name(dependency) {
+        if let Err(error) = crate::verified::lifecycle::validate_change_name(dependency) {
             issues.push(format!(
                 "{change_name}: {DEPENDENCY_ISSUE_INVALID_ID}: invalid dependency id {dependency}: {error}"
             ));

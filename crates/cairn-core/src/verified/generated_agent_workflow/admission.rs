@@ -1,5 +1,3 @@
-use crate::verified::evidence::canonical_json_hash;
-
 use super::model::{
     AdmittedGeneratedWorkflowCatalog, GeneratedAgentWorkflowPolicy, GeneratedWorkflowAdapter,
     GeneratedWorkflowAdapterFormat, GeneratedWorkflowDescriptor, GeneratedWorkflowIssue,
@@ -64,7 +62,7 @@ pub fn admit_generated_agent_workflow_policy(
         normalize_strings(&mut descriptor.constraints);
         normalize_strings(&mut descriptor.non_claims);
     }
-    let catalog_identity = canonical_json_hash(&serde_json::json!({
+    let catalog_identity = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "generator_version": normalized.generator_version,
         "command_classes": normalized.command_classes,
         "descriptors": normalized.descriptors,

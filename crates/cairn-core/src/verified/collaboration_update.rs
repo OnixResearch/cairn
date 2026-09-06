@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::{
     collaboration_change::{
         action_into_compatibility, apply_change_collaboration_operation,
@@ -36,7 +34,7 @@ pub struct ChangeCollaborationUpdateSnapshot {
     pub delta_specs: std::collections::BTreeMap<String, String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCollaborationUpdatePlan {
     pub change_id: String,
     pub actor: String,
@@ -55,7 +53,7 @@ impl ChangeCollaborationUpdatePlan {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeCobUpdatePlan {
     pub change_id: String,
     pub actor: String,
@@ -195,7 +193,7 @@ pub fn change_cob_update_plan_hash(plan: &ChangeCobUpdatePlan) -> Result<String,
     update_plan_hash(plan)
 }
 
-fn update_plan_hash<T: Serialize>(plan: &T) -> Result<String, ChangeCobError> {
+fn update_plan_hash<T: serde::Serialize>(plan: &T) -> Result<String, ChangeCobError> {
     let value = serde_json::to_value(plan).map_err(|error| ChangeCobError::Serialization {
         reason: error.to_string(),
     })?;
@@ -391,7 +389,7 @@ fn update_operation_id(
     Ok(canonical_json_hash(&value))
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct UpdateOperationIdentity<'a> {
     domain: &'a str,
     input_state_hash: &'a str,

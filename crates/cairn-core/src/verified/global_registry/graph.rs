@@ -1,7 +1,5 @@
 use std::collections::VecDeque;
 
-use crate::verified::evidence::canonical_json_hash;
-
 use super::{
     issue, issue_order, registry_non_claims, report_hash, GlobalRegistrySnapshot, RegistryEdge,
     RegistryGraphDirection, RegistryGraphProfile, RegistryGraphReport,
@@ -136,7 +134,7 @@ pub fn evaluate_registry_graph(
     selected_edge_ids.sort();
     selected_edge_ids.dedup();
     issues.sort_by(issue_order);
-    let result_hash = canonical_json_hash(&serde_json::json!({
+    let result_hash = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "profile_id": profile.id,
         "snapshot_hash": snapshot.snapshot_hash,
         "selected_nodes": selected_nodes,

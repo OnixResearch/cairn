@@ -1,7 +1,5 @@
 // r[impl cairn.nominal_evidence_identities.receipt_chains]
 
-use serde::{Deserialize, Serialize};
-
 use super::evidence::canonical_json_hash;
 use super::nominal_identity::{
     ArtifactDigestRole, Blake3Digest, DigestRoleMarker, LedgerDigestRole, PolicyDigestRole,
@@ -39,13 +37,13 @@ const FORBIDDEN_CLAIMS: &[&str] = &[
     "trusts external services",
 ];
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunCommandIdentity {
     pub name: String,
     pub argv_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunStep {
     pub id: String,
     pub from_state: String,
@@ -54,7 +52,7 @@ pub struct ReleaseRunStep {
     pub diagnostic_refs: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunArtifact {
     pub id: String,
     pub run_id: String,
@@ -63,7 +61,7 @@ pub struct ReleaseRunArtifact {
     pub blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunDiagnostic {
     pub id: String,
     pub step_id: Option<String>,
@@ -71,7 +69,7 @@ pub struct ReleaseRunDiagnostic {
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunBlocker {
     pub id: String,
     pub step_id: String,
@@ -79,13 +77,13 @@ pub struct ReleaseRunBlocker {
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunResumeHint {
     pub step_id: String,
     pub action: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunLedger {
     pub schema_version: String,
     pub run_id: String,
@@ -102,14 +100,14 @@ pub struct ReleaseRunLedger {
     pub ledger_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunLedgerIssue {
     pub code: String,
     pub field_path: String,
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunLedgerReport {
     pub valid: bool,
     pub run_id: String,
@@ -124,7 +122,7 @@ pub struct ReleaseRunLedgerReport {
     pub boundary: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunStatusProjection {
     pub valid: bool,
     pub run_id: String,
@@ -135,7 +133,7 @@ pub struct ReleaseRunStatusProjection {
     pub next_action: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseRunExplainProjection {
     pub run_id: String,
     pub blockers: Vec<String>,

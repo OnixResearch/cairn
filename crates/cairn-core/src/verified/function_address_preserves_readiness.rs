@@ -1,6 +1,3 @@
-use serde::Deserialize;
-use serde::Serialize;
-
 use super::evidence_chain_readiness::{
     evaluate_evidence_chain_readiness, function_address_evidence_chain_profile,
     EvidenceChainMantleLink, EvidenceChainPolicy, EvidenceChainPolicyIdentity,
@@ -16,14 +13,14 @@ pub const FUNCTION_ADDRESS_MANTLE_DISPOSITION_PRESENT: &str = "present";
 pub const FUNCTION_ADDRESS_VALENCE_POLICY_KIND: &str = "valence-function-address-policy";
 pub const FUNCTION_ADDRESS_PRESERVES_BOUNDARY: &str = "Cairn function-address Preserves readiness proves typed canonical-receipt linkage and lifecycle policy conformance only; it does not prove evidence truth, Rust semantic correctness, compiler correctness, whole-program safety, verifier soundness, runtime authority, or release eligibility";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct FunctionAddressJsonProjection {
     pub artifact_hash: String,
     pub canonical_preserves_receipt_hash: String,
     pub authority: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct FunctionAddressPreservesInput {
     pub schema_version: String,
     pub canonical_preserves_receipt_hash: String,

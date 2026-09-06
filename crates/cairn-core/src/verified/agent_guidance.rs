@@ -1,7 +1,5 @@
 //! Pure admission, selection, and identity construction for local agent guidance.
 
-use serde::{Deserialize, Serialize};
-
 use super::evidence::{blake3_hex, canonical_json_hash};
 
 pub const AGENT_GUIDANCE_POLICY_SCHEMA_V1: &str = "cairn.agent-guidance-policy.v1";
@@ -40,7 +38,7 @@ const AUTHORITY_RANK_FACT: u8 = 1;
 const AUTHORITY_RANK_ADVISORY: u8 = 2;
 const POLICY_CONSTRAINT_PRIORITY: u32 = 0;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentGuidanceBounds {
     pub max_context_refs: usize,
@@ -55,7 +53,7 @@ pub struct AgentGuidanceBounds {
     pub max_issues: usize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentGuidancePolicy {
     pub schema: String,
@@ -70,7 +68,7 @@ pub struct AgentGuidancePolicy {
     pub required_non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct AgentGuidanceDeclaration {
     #[serde(default)]
@@ -81,7 +79,7 @@ pub struct AgentGuidanceDeclaration {
     pub operation_guidance: Vec<AgentOperationGuidance>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentContextReference {
     pub id: String,
@@ -98,7 +96,7 @@ pub struct AgentContextReference {
     pub operations: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentArtifactGuidance {
     pub id: String,
@@ -111,7 +109,7 @@ pub struct AgentArtifactGuidance {
     pub artifacts: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentOperationGuidance {
     pub id: String,
@@ -122,7 +120,7 @@ pub struct AgentOperationGuidance {
     pub operations: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct AgentGuidanceRequest {
     pub profile: Option<String>,
@@ -130,7 +128,7 @@ pub struct AgentGuidanceRequest {
     pub operation: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AgentGuidanceObservationStatus {
     Present,
@@ -139,7 +137,7 @@ pub enum AgentGuidanceObservationStatus {
     Invalid,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentGuidanceSourceObservation {
     pub id: String,
@@ -150,7 +148,7 @@ pub struct AgentGuidanceSourceObservation {
     pub diagnostic: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentGuidanceIssue {
     pub code: String,
@@ -171,7 +169,7 @@ pub struct AgentGuidanceSelectionPlan {
     pub operation_guidance: Vec<AgentOperationGuidance>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentGuidanceEntry {
     pub id: String,
@@ -189,7 +187,7 @@ pub struct AgentGuidanceEntry {
     pub text: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PortableAgentGuidanceEntry {
     pub id: String,
@@ -206,7 +204,7 @@ pub struct PortableAgentGuidanceEntry {
     pub content_blake3: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentGuidanceResult {
     pub valid: bool,
@@ -222,7 +220,7 @@ pub struct AgentGuidanceResult {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PortableAgentGuidanceResult {
     pub request: AgentGuidanceRequest,

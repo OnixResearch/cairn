@@ -1,6 +1,3 @@
-use crate::verified::evidence::{blake3_hex, canonical_json_hash};
-use crate::verified::nominal_identity::{ArchiveDigestRole, ArtifactDigestRole, PackDigestRole};
-
 use super::{
     model::{
         ArchivePointer, CompactionIssue, CompactionLedger, CompactionVerificationReceipt,
@@ -105,11 +102,15 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
                 }
             }
         }
-        let expected_archive_root = canonical_json_hash(&serde_json::json!({
-            "archive_id": archive.archive_id,
-            "entries": archive.entries,
-        }));
-        if !same_digest::<ArchiveDigestRole>(&archive.archive_root, &expected_archive_root) {
+        let expected_archive_root =
+            crate::verified::evidence::canonical_json_hash(&serde_json::json!({
+                "archive_id": archive.archive_id,
+                "entries": archive.entries,
+            }));
+        if !same_digest::<crate::verified::nominal_identity::ArchiveDigestRole>(
+            &archive.archive_root,
+            &expected_archive_root,
+        ) {
             issues.push(issue(
                 "archive_compaction.archive_root_mismatch",
                 &archive.archive_id,
@@ -121,8 +122,13 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
             "archive_root": archive.archive_root,
         }));
     }
-    let expected_packed_root = canonical_json_hash(&serde_json::json!({"archives": archive_roots}));
-    if !same_digest::<ArchiveDigestRole>(&pack.packed_archives_root, &expected_packed_root) {
+    let expected_packed_root = crate::verified::evidence::canonical_json_hash(
+        &serde_json::json!({"archives": archive_roots}),
+    );
+    if !same_digest::<crate::verified::nominal_identity::ArchiveDigestRole>(
+        &pack.packed_archives_root,
+        &expected_packed_root,
+    ) {
         issues.push(issue(
             "archive_compaction.packed_archives_root_mismatch",
             "packed_archives_root",
@@ -143,7 +149,10 @@ pub fn validate_pack_manifest(pack: &PackManifest) -> Vec<CompactionIssue> {
     }
     let mut pack_material = pack.clone();
     pack_material.pack_root.clear();
-    if !same_digest::<PackDigestRole>(&hash_serializable(&pack_material), &pack.pack_root) {
+    if !same_digest::<crate::verified::nominal_identity::PackDigestRole>(
+        &hash_serializable(&pack_material),
+        &pack.pack_root,
+    ) {
         issues.push(issue(
             "archive_compaction.pack_root_mismatch",
             "pack_root",
@@ -191,8 +200,10 @@ pub fn verify_pack_objects(
                         "object byte length must match its descriptor",
                     ));
                 }
-                if !same_digest::<ArtifactDigestRole>(&blake3_hex(bytes), &descriptor.content_hash)
-                {
+                if !same_digest::<crate::verified::nominal_identity::ArtifactDigestRole>(
+                    &crate::verified::evidence::blake3_hex(bytes),
+                    &descriptor.content_hash,
+                ) {
                     issues.push(issue(
                         "archive_compaction.object_hash_mismatch",
                         &descriptor.content_hash,
@@ -228,7 +239,10 @@ pub fn build_unpack_plan(
     // r[impl cairn.sync_archive.compaction.lossless_pack]
     // r[impl cairn.sync_archive.compaction.lossless_pack.unpack]
     let mut blockers = verify_pack_objects(pack, objects);
-    if !same_digest::<PackDigestRole>(&pointer.pack_root, &pack.pack_root) {
+    if !same_digest::<crate::verified::nominal_identity::PackDigestRole>(
+        &pointer.pack_root,
+        &pack.pack_root,
+    ) {
         blockers.push(issue(
             "archive_compaction.pointer_pack_mismatch",
             &pointer.archive_id,
@@ -242,7 +256,10 @@ pub fn build_unpack_plan(
     let mut files = Vec::new();
     let archive_root = match archive {
         Some(archive) => {
-            if !same_digest::<ArchiveDigestRole>(&archive.archive_root, &pointer.archive_root) {
+            if !same_digest::<crate::verified::nominal_identity::ArchiveDigestRole>(
+                &archive.archive_root,
+                &pointer.archive_root,
+            ) {
                 blockers.push(issue(
                     "archive_compaction.pointer_archive_root_mismatch",
                     &pointer.archive_id,

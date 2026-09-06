@@ -2,13 +2,11 @@
 // r[impl electrical_circuit_primitives.topology.reference_node]
 // r[impl electrical_circuit_primitives.topology.connection_arity]
 
-use serde_json::Map;
-
 use super::components::component_binding_issues;
 use super::issues::{issue, CircuitPrimitiveIssue};
 
 pub(super) fn topology_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(8);
     let node_ids = collect_ids(object.get("nodes"));

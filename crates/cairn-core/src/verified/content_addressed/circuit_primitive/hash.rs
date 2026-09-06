@@ -1,12 +1,10 @@
 // r[impl electrical_circuit_primitives.receipts]
 // r[impl electrical_circuit_primitives.receipts.portable_hashes]
 
-use crate::verified::evidence::canonical_json_hash;
-
 use super::super::common::strip_non_hash_fields;
 
 pub fn circuit_primitive_graph_hash(receipt: &serde_json::Value) -> String {
-    canonical_json_hash(&circuit_primitive_hash_material(receipt))
+    crate::verified::evidence::canonical_json_hash(&circuit_primitive_hash_material(receipt))
 }
 
 pub fn circuit_primitive_hash_material(receipt: &serde_json::Value) -> serde_json::Value {

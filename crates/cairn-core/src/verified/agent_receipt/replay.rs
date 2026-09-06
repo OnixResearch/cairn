@@ -1,13 +1,9 @@
-use serde_json::Map;
-
-use crate::verified::nominal_identity::{ArtifactDigestRole, PolicyDigestRole, ReceiptDigestRole};
-
 use super::common::{is_digest, issue};
 use super::types::AgentRunGateIssue;
 
 // r[impl cairn.supersede.agent_receipt_replay_evidence.schema]
 pub(super) fn replay_evidence_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<AgentRunGateIssue> {
     let Some(evidence) = object
         .get("replay_evidence")
@@ -20,7 +16,7 @@ pub(super) fn replay_evidence_issues(
         .get("replay_receipt_hash")
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
-    if !is_digest::<ReceiptDigestRole>(replay_hash) {
+    if !is_digest::<crate::verified::nominal_identity::ReceiptDigestRole>(replay_hash) {
         issues.push(issue(
             "replay_evidence.invalid_hash",
             "replay_evidence.replay_receipt_hash must be a BLAKE3 hex hash",
@@ -30,7 +26,7 @@ pub(super) fn replay_evidence_issues(
         .get("replay_policy_hash")
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
-    if !is_digest::<PolicyDigestRole>(policy_hash) {
+    if !is_digest::<crate::verified::nominal_identity::PolicyDigestRole>(policy_hash) {
         issues.push(issue(
             "replay_evidence.invalid_policy_hash",
             "replay_evidence.replay_policy_hash must be a BLAKE3 hex hash",
@@ -50,7 +46,7 @@ pub(super) fn replay_evidence_issues(
     if let Some(attestation_hash) = evidence.get("replay_environment_attestation_hash") {
         if !attestation_hash
             .as_str()
-            .is_some_and(is_digest::<ArtifactDigestRole>)
+            .is_some_and(is_digest::<crate::verified::nominal_identity::ArtifactDigestRole>)
         {
             issues.push(issue(
                 "replay_evidence.invalid_environment_attestation_hash",

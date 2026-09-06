@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::evidence::canonical_json_hash;
 
 pub const STATE_MACHINE_RECEIPT_SCHEMA_V1: &str = "cairn.state-machine-receipt.v1";
@@ -26,33 +24,33 @@ const FORBIDDEN_CLAIMS: &[&str] = &[
     "proves verifier soundness",
 ];
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct StateMachineArtifact {
     pub path: String,
     pub declared_blake3: String,
     pub observed_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct StateMachineChecker {
     pub id: String,
     pub version: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct StateMachineNamedHash {
     pub name: String,
     pub blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct StateMachineDiagnostic {
     pub id: String,
     pub severity: String,
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct StateMachineReceipt {
     pub schema_version: String,
     pub model: StateMachineArtifact,
@@ -70,14 +68,14 @@ pub struct StateMachineReceipt {
     pub receipt_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct StateMachineReceiptIssue {
     pub code: String,
     pub field_path: String,
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct StateMachineReceiptReport {
     pub valid: bool,
     pub receipt_hash: String,

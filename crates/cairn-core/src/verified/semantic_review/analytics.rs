@@ -1,8 +1,5 @@
-use serde_json::Map;
-
 use super::common::{count_string_field, increment_count, issues_json, sort_count_map};
 use super::{review_receipt_hash, validate_review_receipt, REVIEW_ANALYTICS_SCHEMA_V1};
-use crate::verified::evidence::canonical_json_hash;
 
 pub fn review_ledger_analytics(receipts: &[serde_json::Value]) -> serde_json::Value {
     // r[impl cairn.semantic_review.review_ledger_analytics.aggregate]
@@ -23,7 +20,7 @@ pub fn review_ledger_analytics(receipts: &[serde_json::Value]) -> serde_json::Va
     }
     let by_kind = count_string_field(&valid_receipts, "review_kind");
     let by_decision = count_string_field(&valid_receipts, "decision");
-    let mut by_category: Map<String, serde_json::Value> = Map::new();
+    let mut by_category: serde_json::Map<String, serde_json::Value> = serde_json::Map::new();
     for receipt in &valid_receipts {
         if let Some(findings) = receipt
             .get("findings")
@@ -64,7 +61,7 @@ pub fn review_ledger_analytics(receipts: &[serde_json::Value]) -> serde_json::Va
         },
         "warnings": warnings,
     });
-    let hash = canonical_json_hash(&receipt);
+    let hash = crate::verified::evidence::canonical_json_hash(&receipt);
     receipt["receipt_hash"] = serde_json::json!(hash);
     receipt
 }

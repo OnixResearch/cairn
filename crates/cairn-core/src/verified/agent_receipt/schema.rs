@@ -1,12 +1,10 @@
-use serde_json::Map;
-
 use super::common::issue;
 use super::constants::REQUIRED_RECEIPT_FIELDS;
 use super::types::AgentRunGateIssue;
 
 // r[impl cairn.supersede.agent_run_receipts.schema.required_fields]
 pub(super) fn required_field_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<AgentRunGateIssue> {
     REQUIRED_RECEIPT_FIELDS
         .iter()

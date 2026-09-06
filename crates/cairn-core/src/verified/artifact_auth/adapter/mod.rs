@@ -8,8 +8,6 @@ mod compatibility_tests;
 mod tests;
 
 use artifact_auth_core::{ArtifactStatement, AuthenticationPolicy, AuthenticationScope};
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::AuthenticatedEvidenceIssue;
 
@@ -47,7 +45,7 @@ pub struct CairnArtifactAuthInput {
 }
 
 /// Cairn-owned compatibility projection of a bounded standalone decision.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CairnArtifactAuthReport {
     pub evidence_kind: String,
     pub decision_passed: bool,

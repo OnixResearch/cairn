@@ -1,11 +1,9 @@
-use serde_json::Map;
-
 use super::common::bundle_issue;
 use super::constants::EXPORT_BUNDLE_REPLAY_REQUIRED_FIELDS;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_replay_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<ExportBundleIssue> {
     let Some(replay) = object.get("replay").and_then(serde_json::Value::as_object) else {
         return vec![bundle_issue(

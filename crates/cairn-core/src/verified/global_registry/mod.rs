@@ -5,14 +5,7 @@ mod graph;
 mod query;
 mod types;
 
-use serde::Serialize;
 use serde_json::json;
-
-use crate::verified::evidence::canonical_json_hash;
-use crate::verified::nominal_identity::{
-    ArtifactDigestRole, Blake3Digest, DigestRoleMarker, ReceiptDigestRole, StateDigestRole,
-    WorkspaceId, RAW_BLAKE3_PROFILE,
-};
 
 pub use graph::evaluate_registry_graph;
 pub use query::{query_registry_exact_id, query_registry_tags};
@@ -36,7 +29,7 @@ pub fn build_global_registry_snapshot(
     candidates: RegistryCandidateRecords,
     policy: &RegistryCorePolicy,
 ) -> RegistrySnapshotReport {
-    let input_hash = canonical_json_hash(&json!({
+    let input_hash = crate::verified::evidence::canonical_json_hash(&json!({
         "scope_id": scope_id,
         "candidates": candidates,
         "policy": policy,
@@ -53,7 +46,8 @@ pub fn build_global_registry_snapshot(
             "registry core policy must preserve vocabulary and claim boundaries",
         ));
     }
-    if WorkspaceId::parse(scope_id, "registry.scope_id").is_err() {
+    if crate::verified::nominal_identity::WorkspaceId::parse(scope_id, "registry.scope_id").is_err()
+    {
         issues.push(issue(
             "registry.scope_empty",
             "snapshot",
@@ -165,7 +159,7 @@ pub fn verify_global_registry_snapshot(
                 Some(&candidate.schema),
                 "portable registry schema is unsupported",
             )],
-            canonical_json_hash(&json!(candidate)),
+            crate::verified::evidence::canonical_json_hash(&json!(candidate)),
             policy,
         );
     }
@@ -199,7 +193,10 @@ pub fn verify_global_registry_snapshot(
             policy,
         );
     }
-    if same_digest::<StateDigestRole>(&stated_hash, &snapshot.snapshot_hash) {
+    if same_digest::<crate::verified::nominal_identity::StateDigestRole>(
+        &stated_hash,
+        &snapshot.snapshot_hash,
+    ) {
         report
     } else {
         finalize_snapshot_report(
@@ -224,7 +221,7 @@ pub fn global_registry_snapshot_hash(snapshot: &GlobalRegistrySnapshot) -> Strin
     if let Some(object) = value.as_object_mut() {
         object.remove("snapshot_hash");
     }
-    canonical_json_hash(&value)
+    crate::verified::evidence::canonical_json_hash(&value)
 }
 
 fn normalize_sources(
@@ -696,7 +693,9 @@ fn validate_stated_record_hash(
     expected: &str,
     issues: &mut Vec<RegistryIssue>,
 ) {
-    if !stated.is_empty() && !same_digest::<ReceiptDigestRole>(stated, expected) {
+    if !stated.is_empty()
+        && !same_digest::<crate::verified::nominal_identity::ReceiptDigestRole>(stated, expected)
+    {
         issues.push(issue(
             "registry.record_hash_mismatch",
             kind,
@@ -746,12 +745,12 @@ where
     result
 }
 
-fn record_hash<T: Serialize>(value: &T, hash_field: &str) -> String {
+fn record_hash<T: serde::Serialize>(value: &T, hash_field: &str) -> String {
     let mut json = serde_json::to_value(value).expect("registry record serializes");
     if let Some(object) = json.as_object_mut() {
         object.remove(hash_field);
     }
-    canonical_json_hash(&json)
+    crate::verified::evidence::canonical_json_hash(&json)
 }
 
 fn finalize_snapshot_report(
@@ -814,12 +813,12 @@ pub(super) fn issue_order(left: &RegistryIssue, right: &RegistryIssue) -> std::c
         ))
 }
 
-pub(super) fn report_hash<T: Serialize>(report: &T) -> String {
+pub(super) fn report_hash<T: serde::Serialize>(report: &T) -> String {
     let mut value = serde_json::to_value(report).expect("registry report serializes");
     if let Some(object) = value.as_object_mut() {
         object.remove("receipt_hash");
     }
-    canonical_json_hash(&value)
+    crate::verified::evidence::canonical_json_hash(&value)
 }
 
 pub(super) fn registry_non_claims(snapshot: &GlobalRegistrySnapshot) -> Vec<String> {
@@ -833,18 +832,32 @@ pub(super) fn sorted_unique(mut values: Vec<String>) -> Vec<String> {
 }
 
 pub(super) fn is_blake3_hex(value: &str) -> bool {
-    is_digest::<ArtifactDigestRole>(value)
+    is_digest::<crate::verified::nominal_identity::ArtifactDigestRole>(value)
 }
 
-fn is_digest<Role: DigestRoleMarker>(value: &str) -> bool {
-    Blake3Digest::<Role>::parse_compatible(value, RAW_BLAKE3_PROFILE, "registry.digest").is_ok()
+fn is_digest<Role: crate::verified::nominal_identity::DigestRoleMarker>(value: &str) -> bool {
+    crate::verified::nominal_identity::Blake3Digest::<Role>::parse_compatible(
+        value,
+        crate::verified::nominal_identity::RAW_BLAKE3_PROFILE,
+        "registry.digest",
+    )
+    .is_ok()
 }
 
-fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
-    let left =
-        Blake3Digest::<Role>::parse_compatible(left, RAW_BLAKE3_PROFILE, "registry.left_digest");
-    let right =
-        Blake3Digest::<Role>::parse_compatible(right, RAW_BLAKE3_PROFILE, "registry.right_digest");
+fn same_digest<Role: crate::verified::nominal_identity::DigestRoleMarker>(
+    left: &str,
+    right: &str,
+) -> bool {
+    let left = crate::verified::nominal_identity::Blake3Digest::<Role>::parse_compatible(
+        left,
+        crate::verified::nominal_identity::RAW_BLAKE3_PROFILE,
+        "registry.left_digest",
+    );
+    let right = crate::verified::nominal_identity::Blake3Digest::<Role>::parse_compatible(
+        right,
+        crate::verified::nominal_identity::RAW_BLAKE3_PROFILE,
+        "registry.right_digest",
+    );
     matches!(
         (left, right),
         (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()

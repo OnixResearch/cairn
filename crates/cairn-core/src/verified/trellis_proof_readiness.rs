@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::{
     evidence::canonical_json_hash,
     evidence_chain_readiness::{
@@ -22,7 +20,7 @@ pub const TRELLIS_PROOF_ROLE_ACCEPTED_FORMAL: &str = "accepted-formal-proof";
 const MAX_SCOPE_IDS: usize = 256;
 const MAX_ASSUMPTIONS: usize = 128;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TrellisProofPolicy {
     pub mode: String,
     pub evidence_chain_policy: EvidenceChainPolicy,
@@ -31,7 +29,7 @@ pub struct TrellisProofPolicy {
     pub allowed_assumptions: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TrellisProofInput {
     pub evidence_chain: EvidenceChainReadinessInput,
     pub proof_role: String,
@@ -40,7 +38,7 @@ pub struct TrellisProofInput {
     pub assumptions: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TrellisProofIssue {
     pub code: String,
     pub field_path: String,
@@ -48,7 +46,7 @@ pub struct TrellisProofIssue {
     pub actual: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TrellisProofReadiness {
     pub mode: String,
     pub required: bool,

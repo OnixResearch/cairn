@@ -1,10 +1,8 @@
-use serde_json::Map;
-
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_compiler_ir_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<ExportBundleIssue> {
     let Some(compiler_ir) = object
         .get("compiler_ir")
@@ -22,7 +20,7 @@ pub(super) fn export_bundle_compiler_ir_issues(
 }
 
 fn export_bundle_hir_issues(
-    compiler_ir: &Map<String, serde_json::Value>,
+    compiler_ir: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<ExportBundleIssue> {
     let Some(hir) = compiler_ir
         .get("hir")
@@ -60,7 +58,7 @@ fn export_bundle_hir_issues(
 }
 
 fn export_bundle_mir_issues(
-    compiler_ir: &Map<String, serde_json::Value>,
+    compiler_ir: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<ExportBundleIssue> {
     let Some(mir) = compiler_ir
         .get("mir")

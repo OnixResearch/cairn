@@ -1,7 +1,5 @@
 use serde_json::Value;
 
-use crate::verified::evidence::canonical_json_hash;
-
 pub const KANI_RECEIPT_SCHEMA_V1: &str = "cairn.kani_receipt.v1";
 pub const KANI_NON_CLAIM_WHOLE_PROGRAM: &str = "kani.boundary.whole_program";
 pub const KANI_NON_CLAIM_VERIFIER_SOUNDNESS: &str = "kani.boundary.verifier_soundness";
@@ -83,7 +81,7 @@ pub struct KaniReceiptReport {
 }
 
 pub fn kani_receipt_hash(value: &Value) -> String {
-    canonical_json_hash(&without_receipt_hash(value))
+    crate::verified::evidence::canonical_json_hash(&without_receipt_hash(value))
 }
 
 pub fn validate_kani_receipt(

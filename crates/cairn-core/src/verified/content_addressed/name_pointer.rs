@@ -1,7 +1,3 @@
-use serde_json::Map;
-
-use crate::verified::evidence::canonical_json_hash;
-
 use super::common::{
     entropy_hash_material_messages, is_blake3_hex, known_value, strip_non_hash_fields,
     KNOWN_EFFECT_STATUSES, KNOWN_MACRO_STATUSES, MUTATION_MANIFEST_REQUIRED_FIELDS,
@@ -62,7 +58,7 @@ pub fn validate_name_pointer_receipt(receipt: &serde_json::Value) -> NamePointer
 }
 
 pub fn name_pointer_hash(receipt: &serde_json::Value) -> String {
-    canonical_json_hash(&name_pointer_hash_material(receipt))
+    crate::verified::evidence::canonical_json_hash(&name_pointer_hash_material(receipt))
 }
 
 pub fn name_pointer_hash_material(receipt: &serde_json::Value) -> serde_json::Value {
@@ -95,7 +91,9 @@ fn name_pointer_issues(
     issues
 }
 
-fn name_pointer_required_issues(object: &Map<String, serde_json::Value>) -> Vec<NamePointerIssue> {
+fn name_pointer_required_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<NamePointerIssue> {
     let mut issues = Vec::with_capacity(NAME_POINTER_REQUIRED_FIELDS.len() + 1);
     for field in NAME_POINTER_REQUIRED_FIELDS {
         if !object.contains_key(*field) {
@@ -115,7 +113,7 @@ fn name_pointer_required_issues(object: &Map<String, serde_json::Value>) -> Vec<
 }
 
 fn name_pointer_hash_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
     computed_pointer_hash: &str,
 ) -> Vec<NamePointerIssue> {
     let mut issues = Vec::with_capacity(3);
@@ -144,7 +142,9 @@ fn name_pointer_hash_issues(
     issues
 }
 
-fn name_pointer_movement_issues(object: &Map<String, serde_json::Value>) -> Vec<NamePointerIssue> {
+fn name_pointer_movement_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<NamePointerIssue> {
     let mut issues = Vec::with_capacity(4);
     for field in ["name", "reason", "diff_summary", "rollback_handle"] {
         if !non_empty_string(object, field) {
@@ -163,7 +163,9 @@ fn name_pointer_movement_issues(object: &Map<String, serde_json::Value>) -> Vec<
     issues
 }
 
-fn name_pointer_manifest_issues(object: &Map<String, serde_json::Value>) -> Vec<NamePointerIssue> {
+fn name_pointer_manifest_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<NamePointerIssue> {
     let Some(manifest) = object
         .get("mutation_manifest")
         .and_then(serde_json::Value::as_object)
@@ -196,7 +198,9 @@ fn name_pointer_manifest_issues(object: &Map<String, serde_json::Value>) -> Vec<
     issues
 }
 
-fn touched_file_issues(manifest: &Map<String, serde_json::Value>) -> Vec<NamePointerIssue> {
+fn touched_file_issues(
+    manifest: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<NamePointerIssue> {
     let Some(entries) = manifest
         .get("touched_files")
         .and_then(serde_json::Value::as_array)
@@ -249,7 +253,9 @@ fn touched_file_issues(manifest: &Map<String, serde_json::Value>) -> Vec<NamePoi
     issues
 }
 
-fn name_pointer_drift_issues(object: &Map<String, serde_json::Value>) -> Vec<NamePointerIssue> {
+fn name_pointer_drift_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<NamePointerIssue> {
     let Some(drift) = object
         .get("drift_check")
         .and_then(serde_json::Value::as_object)
@@ -268,7 +274,9 @@ fn name_pointer_drift_issues(object: &Map<String, serde_json::Value>) -> Vec<Nam
     )]
 }
 
-fn name_pointer_caveat_issues(object: &Map<String, serde_json::Value>) -> Vec<NamePointerIssue> {
+fn name_pointer_caveat_issues(
+    object: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<NamePointerIssue> {
     let Some(caveats) = object.get("caveats").and_then(serde_json::Value::as_object) else {
         return vec![pointer_issue(
             "name_pointer.missing_object",
@@ -323,7 +331,7 @@ fn pointer_entropy_issues(root_path: &str, root: &serde_json::Value) -> Vec<Name
         .collect()
 }
 
-fn non_empty_string(object: &Map<String, serde_json::Value>, field: &str) -> bool {
+fn non_empty_string(object: &serde_json::Map<String, serde_json::Value>, field: &str) -> bool {
     object
         .get(field)
         .and_then(serde_json::Value::as_str)

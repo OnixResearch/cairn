@@ -1,8 +1,4 @@
-use crate::verified::{
-    dag::topological_order,
-    lifecycle::validate_change_name,
-    repo::{ChangeMetadata, ChangeStatus},
-};
+use crate::verified::repo::ChangeMetadata;
 
 pub const DEPENDENCY_ISSUE_DUPLICATE: &str = "change_dependency.duplicate_dependency";
 pub const DEPENDENCY_ISSUE_UNKNOWN: &str = "change_dependency.unknown_dependency";
@@ -103,7 +99,7 @@ struct GraphBuildContext {
     issues: Vec<ChangeDependencyIssue>,
 }
 
-pub fn normalized_change_dependencies(change: &ChangeStatus) -> Vec<String> {
+pub fn normalized_change_dependencies(change: &crate::verified::repo::ChangeStatus) -> Vec<String> {
     let mut dependencies = change.metadata.depends_on.clone();
     dependencies.sort();
     dependencies.dedup();
@@ -111,7 +107,7 @@ pub fn normalized_change_dependencies(change: &ChangeStatus) -> Vec<String> {
 }
 
 pub fn plan_change_dependency_edit(
-    changes: &[ChangeStatus],
+    changes: &[crate::verified::repo::ChangeStatus],
     archived_changes: &[String],
     change_name: &str,
     dependency: &str,
@@ -149,7 +145,7 @@ pub fn plan_change_dependency_edit(
             message: metadata_issue.clone(),
         });
     }
-    if let Err(error) = validate_change_name(dependency) {
+    if let Err(error) = crate::verified::lifecycle::validate_change_name(dependency) {
         issues.push(ChangeDependencyIssue {
             change: change_name.to_string(),
             code: DEPENDENCY_ISSUE_INVALID_ID.to_string(),
@@ -258,7 +254,7 @@ pub fn plan_change_dependency_edit(
 }
 
 pub fn change_metadata_with_dependencies(
-    change: &ChangeStatus,
+    change: &crate::verified::repo::ChangeStatus,
     depends_on: Vec<String>,
 ) -> ChangeMetadata {
     let mut dependencies = depends_on;
@@ -390,7 +386,7 @@ fn dependency_edit_plan(
 }
 
 fn known_change_names_for_status(
-    changes: &[ChangeStatus],
+    changes: &[crate::verified::repo::ChangeStatus],
     archived_changes: &[String],
 ) -> std::collections::BTreeSet<String> {
     let active_set = sorted_active_names(changes)
@@ -420,10 +416,10 @@ fn apply_dependency_edit(
 }
 
 fn changes_with_dependency_update(
-    changes: &[ChangeStatus],
+    changes: &[crate::verified::repo::ChangeStatus],
     change_name: &str,
     dependencies: &[String],
-) -> Vec<ChangeStatus> {
+) -> Vec<crate::verified::repo::ChangeStatus> {
     changes
         .iter()
         .map(|change| {
@@ -478,7 +474,7 @@ fn render_lines(lines: Vec<String>) -> String {
 }
 
 pub fn build_change_dependency_graph(
-    changes: &[ChangeStatus],
+    changes: &[crate::verified::repo::ChangeStatus],
     archived_changes: &[String],
 ) -> ChangeDependencyGraph {
     // r[impl cairn.change_dependency_graph.graph_validation]
@@ -519,7 +515,8 @@ pub fn build_change_dependency_graph(
             .then(left.dependency.cmp(&right.dependency))
     });
 
-    let topological = topological_order(&active_names, &context.topological_edges);
+    let topological =
+        crate::verified::dag::topological_order(&active_names, &context.topological_edges);
     for cyclic_node in &topological.blocked_nodes {
         context.issues.push(ChangeDependencyIssue {
             change: cyclic_node.clone(),
@@ -583,7 +580,7 @@ fn change_dependency_issue_message(issue: &ChangeDependencyIssue) -> String {
     format!("{}: {}: {}", issue.change, issue.code, issue.message)
 }
 
-fn sorted_active_names(changes: &[ChangeStatus]) -> Vec<String> {
+fn sorted_active_names(changes: &[crate::verified::repo::ChangeStatus]) -> Vec<String> {
     let mut names = changes
         .iter()
         .map(|change| change.name.clone())
@@ -630,7 +627,9 @@ fn initial_nodes(
         .collect()
 }
 
-fn sorted_changes(changes: &[ChangeStatus]) -> Vec<&ChangeStatus> {
+fn sorted_changes(
+    changes: &[crate::verified::repo::ChangeStatus],
+) -> Vec<&crate::verified::repo::ChangeStatus> {
     let mut sorted = changes.iter().collect::<Vec<_>>();
     sorted.sort_by(|left, right| left.name.cmp(&right.name));
     sorted
@@ -750,8 +749,8 @@ mod tests {
     use super::*;
     use crate::verified::repo::{ChangeMetadata, TaskCounts};
 
-    fn change(name: &str, depends_on: &[&str]) -> ChangeStatus {
-        ChangeStatus {
+    fn change(name: &str, depends_on: &[&str]) -> crate::verified::repo::ChangeStatus {
+        crate::verified::repo::ChangeStatus {
             name: name.to_string(),
             path: format!(".cairn/changes/{name}"),
             has_proposal: true,

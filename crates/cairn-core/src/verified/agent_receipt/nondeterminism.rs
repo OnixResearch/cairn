@@ -1,5 +1,3 @@
-use serde_json::Map;
-
 use super::common::issue;
 use super::constants::KNOWN_ENTROPY_CLASSES;
 use super::types::AgentRunGateIssue;
@@ -8,7 +6,7 @@ use super::types::AgentRunGateIssue;
 // r[impl cairn.supersede.agent_run_receipts.nondeterminism.captured]
 // r[impl cairn.supersede.agent_run_receipts.nondeterminism.hidden]
 pub(super) fn nondeterminism_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<AgentRunGateIssue> {
     let Some(manifest) = object
         .get("nondeterminism_manifest")

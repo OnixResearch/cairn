@@ -1,8 +1,5 @@
 use std::marker::PhantomData;
 
-use serde::Deserialize;
-use serde::Serialize;
-
 const BLAKE3_HEX_LENGTH: usize = 64;
 const SHA256_HEX_LENGTH: usize = 64;
 const GIT_OID_SHA1_HEX_LENGTH: usize = 40;
@@ -12,7 +9,7 @@ const DOMAIN_SEPARATOR: char = ':';
 const B3_PREFIX: &str = "b3:";
 const BLAKE3_PREFIX: &str = "blake3:";
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DigestSpelling {
     RawHex,
@@ -524,7 +521,9 @@ fn profile_allows_spelling(profile: DigestProfile, spelling: DigestSpelling) -> 
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum ImportedDigestAlgorithm {
     Sha256,

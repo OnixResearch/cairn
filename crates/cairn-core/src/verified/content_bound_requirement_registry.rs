@@ -1,7 +1,3 @@
-use serde::{Deserialize, Serialize};
-
-use crate::verified::evidence::{blake3_hex, canonical_json};
-
 pub const CONTENT_BOUND_REQUIREMENT_REGISTRY_SCHEMA_V1: &str =
     "cairn.content-bound-requirement-registry.v1";
 pub const CONTENT_BOUND_REQUIREMENT_REGISTRY_RECEIPT_SCHEMA_V1: &str =
@@ -85,21 +81,21 @@ pub struct ContentBoundSpecificationInput {
     pub markdown: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundRevision {
     pub kind: String,
     pub value: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundSpecificationIdentity {
     pub path: String,
     pub content_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundSourceSpan {
     pub start_byte: u64,
@@ -108,7 +104,7 @@ pub struct ContentBoundSourceSpan {
     pub end_line: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundRequirementRow {
     pub requirement_id: String,
@@ -119,7 +115,7 @@ pub struct ContentBoundRequirementRow {
     pub row_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundRequirementRegistryReceipt {
     pub schema_version: String,
@@ -134,7 +130,7 @@ pub struct ContentBoundRequirementRegistryReceipt {
     pub receipt_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundRequirementRegistry {
     pub schema_version: String,
@@ -150,7 +146,7 @@ pub struct ContentBoundRequirementRegistry {
     pub receipt: ContentBoundRequirementRegistryReceipt,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContentBoundRequirementRegistryIssue {
     pub code: String,
@@ -178,7 +174,7 @@ pub struct ContentBoundRequirementRegistryVerification {
     pub boundary: String,
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct RequirementRowHashMaterial<'a> {
     requirement_id: &'a str,
     specification_path: &'a str,
@@ -187,7 +183,7 @@ struct RequirementRowHashMaterial<'a> {
     requirement_body_blake3: &'a str,
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct RegistryHashMaterial<'a> {
     schema_version: &'a str,
     boundary: &'a str,
@@ -200,7 +196,7 @@ struct RegistryHashMaterial<'a> {
     non_claims: &'a [String],
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct ReceiptHashMaterial<'a> {
     schema_version: &'a str,
     registry_blake3: &'a str,
@@ -1360,10 +1356,10 @@ fn domain_hash_bytes(domain: &str, bytes: &[u8]) -> String {
     material.extend_from_slice(domain.as_bytes());
     material.push(DOMAIN_SEPARATOR);
     material.extend_from_slice(bytes);
-    blake3_hex(&material)
+    crate::verified::evidence::blake3_hex(&material)
 }
 
-fn domain_hash_json<T: Serialize>(
+fn domain_hash_json<T: serde::Serialize>(
     domain: &str,
     value: &T,
 ) -> Result<String, ContentBoundRequirementRegistryIssue> {
@@ -1374,7 +1370,10 @@ fn domain_hash_json<T: Serialize>(
             "canonical registry hash material could not be serialized",
         )
     })?;
-    Ok(domain_hash_bytes(domain, canonical_json(&value).as_bytes()))
+    Ok(domain_hash_bytes(
+        domain,
+        crate::verified::evidence::canonical_json(&value).as_bytes(),
+    ))
 }
 
 fn issue(code: &str, field_path: &str, message: &str) -> ContentBoundRequirementRegistryIssue {

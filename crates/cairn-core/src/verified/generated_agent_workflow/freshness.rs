@@ -1,5 +1,3 @@
-use crate::verified::evidence::canonical_json_hash;
-
 use super::model::{
     GeneratedWorkflowDestinationSnapshot, GeneratedWorkflowFileObservation,
     GeneratedWorkflowFreshness, GeneratedWorkflowManifest, GeneratedWorkflowManifestObservation,
@@ -98,7 +96,7 @@ pub(super) fn classify_manifest(
 }
 
 pub fn generated_workflow_manifest_identity(manifest: &GeneratedWorkflowManifest) -> String {
-    canonical_json_hash(&serde_json::json!({
+    crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "schema": manifest.schema,
         "generator_version": manifest.generator_version,
         "policy_hash": manifest.policy_hash,

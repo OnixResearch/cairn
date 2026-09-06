@@ -1,5 +1,3 @@
-use serde::Serialize;
-
 use super::{
     collaboration_change::{
         initialize_change_collaboration, validate_change_collaboration_init,
@@ -108,7 +106,7 @@ fn insert_present_artifact(
     }
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct ImportOperationIdentity<'a> {
     domain: &'a str,
     actor: &'a str,

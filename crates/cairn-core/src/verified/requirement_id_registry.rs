@@ -1,5 +1,3 @@
-use crate::verified::evidence::canonical_json_hash;
-
 pub const REQUIREMENT_ID_REGISTRY_SCHEMA_V1: &str = "cairn.requirement-id-registry.v1";
 pub const REQUIREMENT_ID_REGISTRY_BOUNDARY: &str = "requirement ID registry resolution proves ownership and linkage only; it does not prove requirement satisfaction, implementation correctness, test coverage, or release eligibility";
 
@@ -114,7 +112,7 @@ pub fn validate_requirement_id_registry_value(
         }
         Err(issue) => RequirementIdRegistryReport {
             valid: false,
-            registry_hash: canonical_json_hash(value),
+            registry_hash: crate::verified::evidence::canonical_json_hash(value),
             row_count: EMPTY_COUNT,
             checked_reference_count: EMPTY_COUNT,
             dangling_reference_count: EMPTY_COUNT,
@@ -515,7 +513,7 @@ fn parse_requirement_id_registry_input(
 ) -> Result<(RequirementIdRegistry, Vec<RequirementReference>, String), RequirementIdRegistryIssue>
 {
     let registry_value = object_field(value, FIELD_REGISTRY)?;
-    let registry_hash = canonical_json_hash(registry_value);
+    let registry_hash = crate::verified::evidence::canonical_json_hash(registry_value);
     let registry = parse_registry(registry_value)?;
     let references = parse_references(array_field(value, FIELD_REFERENCES)?)?;
     Ok((registry, references, registry_hash))

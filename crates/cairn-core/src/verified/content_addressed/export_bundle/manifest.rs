@@ -1,11 +1,9 @@
-use serde_json::Map;
-
 use super::super::common::is_blake3_hex;
 use super::common::bundle_issue;
 use super::types::ExportBundleIssue;
 
 pub(super) fn export_bundle_manifest_issues(
-    object: &Map<String, serde_json::Value>,
+    object: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<ExportBundleIssue> {
     let Some(manifest) = object
         .get("mutation_manifest")
@@ -20,7 +18,7 @@ pub(super) fn export_bundle_manifest_issues(
 }
 
 fn export_bundle_touched_file_issues(
-    manifest: &Map<String, serde_json::Value>,
+    manifest: &serde_json::Map<String, serde_json::Value>,
 ) -> Vec<ExportBundleIssue> {
     let Some(entries) = manifest
         .get("touched_files")

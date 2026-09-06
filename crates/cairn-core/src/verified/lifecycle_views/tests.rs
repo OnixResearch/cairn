@@ -1,13 +1,3 @@
-use crate::verified::{
-    change_dependencies::build_change_dependency_graph,
-    repo::{count_tasks, ChangeMetadata, ChangeStatus, SpecSource},
-    traceability::{
-        classify_traceability_coverage, TraceabilityFile, TraceabilityProfile, TraceabilitySource,
-        TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_RELATED,
-        TRACEABILITY_VERB_VERIFY,
-    },
-};
-
 use super::{
     build_lifecycle_view_model, KanbanColumnKind, LifecycleViewChangeInput, LifecycleViewEdgeKind,
     LifecycleViewInput, LifecycleViewNodeKind,
@@ -90,11 +80,14 @@ fn malformed_outline_and_dangling_task_link_fail_closed() {
         &[],
         Some("- [ ] [serial] Implement unknown link. r[demo.unknown]\n"),
     );
-    let graph = build_change_dependency_graph(std::slice::from_ref(&change.status), &[]);
+    let graph = crate::verified::change_dependencies::build_change_dependency_graph(
+        std::slice::from_ref(&change.status),
+        &[],
+    );
     let model = build_lifecycle_view_model(LifecycleViewInput {
         repository: "broken-fixture".to_string(),
         changes: vec![change],
-        specs: vec![SpecSource {
+        specs: vec![crate::verified::repo::SpecSource {
             id: "broken".to_string(),
             path: ".cairn/specs/broken/spec.md".to_string(),
             markdown: "# Broken\n\n### Requirement: Malformed marker r[bad/id]\nThe system MUST fail closed.\n\n#### Scenario: Compatibility identity\n- GIVEN malformed lifecycle input\n- WHEN Cairn builds a view\n- THEN it reports an issue\n".to_string(),
@@ -149,21 +142,33 @@ fn positive_input() -> LifecycleViewInput {
         .iter()
         .map(|change| change.status.clone())
         .collect::<Vec<_>>();
-    let graph = build_change_dependency_graph(&statuses, &[]);
+    let graph = crate::verified::change_dependencies::build_change_dependency_graph(&statuses, &[]);
     let spec = accepted_spec();
-    let traceability = classify_traceability_coverage(
+    let traceability = crate::verified::traceability::classify_traceability_coverage(
         &traceability_profile(),
-        &[TraceabilityFile {
+        &[crate::verified::traceability::TraceabilityFile {
             path: spec.path.clone(),
             text: spec.markdown.clone(),
         }],
-        &[TraceabilityFile {
+        &[crate::verified::traceability::TraceabilityFile {
             path: "src/example.rs".to_string(),
             text: [
-                role_marker(TRACEABILITY_VERB_IMPL, "demo.requirement"),
-                role_marker(TRACEABILITY_VERB_VERIFY, "demo.requirement.happy"),
-                role_marker(TRACEABILITY_VERB_DEPENDS, "demo.requirement"),
-                role_marker(TRACEABILITY_VERB_RELATED, "demo.requirement.happy"),
+                role_marker(
+                    crate::verified::traceability::TRACEABILITY_VERB_IMPL,
+                    "demo.requirement",
+                ),
+                role_marker(
+                    crate::verified::traceability::TRACEABILITY_VERB_VERIFY,
+                    "demo.requirement.happy",
+                ),
+                role_marker(
+                    crate::verified::traceability::TRACEABILITY_VERB_DEPENDS,
+                    "demo.requirement",
+                ),
+                role_marker(
+                    crate::verified::traceability::TRACEABILITY_VERB_RELATED,
+                    "demo.requirement.happy",
+                ),
             ]
             .join("\n"),
         }],
@@ -177,8 +182,8 @@ fn positive_input() -> LifecycleViewInput {
     }
 }
 
-fn accepted_spec() -> SpecSource {
-    SpecSource {
+fn accepted_spec() -> crate::verified::repo::SpecSource {
+    crate::verified::repo::SpecSource {
         id: "demo".to_string(),
         path: ".cairn/specs/demo/spec.md".to_string(),
         markdown: "# Demo Specification\n\n## Requirements\n\n### Requirement: Demonstrate lifecycle views\nr[demo.requirement] The system MUST expose lifecycle views.\n\n#### Scenario: Happy path\nr[demo.requirement.happy]\n- GIVEN valid lifecycle facts\n- WHEN Cairn builds a view\n- THEN the view is deterministic\n".to_string(),
@@ -191,9 +196,9 @@ fn change(
     dependencies: &[&str],
     tasks_markdown: Option<&str>,
 ) -> LifecycleViewChangeInput {
-    let task_counts = tasks_markdown.map(count_tasks);
+    let task_counts = tasks_markdown.map(crate::verified::repo::count_tasks);
     LifecycleViewChangeInput {
-        status: ChangeStatus {
+        status: crate::verified::repo::ChangeStatus {
             name: name.to_string(),
             path: format!(".cairn/changes/{name}"),
             has_proposal: true,
@@ -201,7 +206,7 @@ fn change(
             has_tasks: tasks_markdown.is_some(),
             delta_specs: vec![format!(".cairn/changes/{name}/specs/demo/spec.md")],
             task_counts,
-            metadata: ChangeMetadata {
+            metadata: crate::verified::repo::ChangeMetadata {
                 groups: Vec::new(),
                 target_date: None,
                 status: status.map(str::to_string),
@@ -221,24 +226,24 @@ fn role_marker(verb: &str, requirement: &str) -> String {
     format!("// {}[{verb} {requirement}]", "r")
 }
 
-fn traceability_profile() -> TraceabilityProfile {
-    TraceabilityProfile {
+fn traceability_profile() -> crate::verified::traceability::TraceabilityProfile {
+    crate::verified::traceability::TraceabilityProfile {
         id: "test".to_string(),
-        requirement_sources: vec![TraceabilitySource {
+        requirement_sources: vec![crate::verified::traceability::TraceabilitySource {
             root: ".cairn/specs".to_string(),
             source_kind: "accepted_spec".to_string(),
             extensions: vec!["md".to_string()],
         }],
-        evidence_sources: vec![TraceabilitySource {
+        evidence_sources: vec![crate::verified::traceability::TraceabilitySource {
             root: "src".to_string(),
             source_kind: "rust_source".to_string(),
             extensions: vec!["rs".to_string()],
         }],
         marker_verbs: vec![
-            TRACEABILITY_VERB_IMPL.to_string(),
-            TRACEABILITY_VERB_VERIFY.to_string(),
-            TRACEABILITY_VERB_DEPENDS.to_string(),
-            TRACEABILITY_VERB_RELATED.to_string(),
+            crate::verified::traceability::TRACEABILITY_VERB_IMPL.to_string(),
+            crate::verified::traceability::TRACEABILITY_VERB_VERIFY.to_string(),
+            crate::verified::traceability::TRACEABILITY_VERB_DEPENDS.to_string(),
+            crate::verified::traceability::TRACEABILITY_VERB_RELATED.to_string(),
         ],
         assurance_level: "declared".to_string(),
         anchor_kind: "exact_marker_bytes".to_string(),

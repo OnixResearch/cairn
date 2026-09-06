@@ -21,7 +21,7 @@ pub const DOCUMENT_ROLE_APPROVER: &str = "approver";
 const BLAKE3_HEX_LENGTH: usize = 64;
 
 // r[impl cairn.document_collaboration.semantic_core]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DocumentKind {
     Rfd,
@@ -63,7 +63,7 @@ impl TryFrom<&str> for DocumentKind {
 }
 
 // r[impl cairn.document_collaboration.semantic_core]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DocumentRole {
     Author,
@@ -86,7 +86,7 @@ impl DocumentRole {
 }
 
 // r[impl cairn.document_collaboration.semantic_core]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DiscussionRecord {
     pub id: String,
@@ -96,7 +96,7 @@ pub struct DiscussionRecord {
 }
 
 // r[impl cairn.document_collaboration.semantic_core]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DocumentLink {
     pub id: String,
@@ -107,7 +107,7 @@ pub struct DocumentLink {
 }
 
 // r[impl cairn.rfd_cob.identity]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PublicationNumber {
     pub number: u64,
@@ -118,7 +118,7 @@ pub struct PublicationNumber {
 }
 
 // r[impl cairn.document_collaboration.semantic_core]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DocumentState {
     pub schema: String,
@@ -141,7 +141,7 @@ pub struct DocumentState {
     pub operations: std::collections::BTreeSet<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct DocumentRevisionSet {
     pub revisions: std::collections::BTreeMap<String, String>,
@@ -167,7 +167,7 @@ impl DocumentRevisionSet {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DocumentLifecycleStatus {
     Draft,
@@ -179,7 +179,7 @@ pub enum DocumentLifecycleStatus {
     Superseded,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DocumentLifecycleRecord {
     pub status: DocumentLifecycleStatus,
@@ -188,7 +188,7 @@ pub struct DocumentLifecycleRecord {
     pub basis: std::collections::BTreeSet<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum DocumentAction {
     Init {
@@ -219,7 +219,7 @@ pub enum DocumentAction {
 }
 
 // r[impl cairn.rfd_cob.profile.root]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DocumentInit {
     pub schema: String,

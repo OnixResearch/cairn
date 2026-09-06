@@ -1,5 +1,3 @@
-use crate::verified::evidence::{canonical_json, canonical_json_hash};
-
 use super::{
     admission::{find_generated_workflow_adapter, issue},
     freshness::{
@@ -132,7 +130,7 @@ pub fn plan_generated_agent_workflow_install(
 }
 
 pub fn generated_workflow_plan_identity(plan: &GeneratedWorkflowInstallPlan) -> String {
-    canonical_json_hash(&serde_json::json!({
+    crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "schema": plan.schema,
         "adapter_id": plan.adapter_id,
         "adapter_version": plan.adapter_version,
@@ -249,7 +247,10 @@ fn serialize_manifest(
             format!("manifest serialization failed: {error}"),
         )]
     })?;
-    Ok(format!("{}\n", canonical_json(&value)))
+    Ok(format!(
+        "{}\n",
+        crate::verified::evidence::canonical_json(&value)
+    ))
 }
 
 fn conflict(path: &str) -> String {

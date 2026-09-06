@@ -1,11 +1,9 @@
-use crate::verified::policy::Policy;
-
 use super::gates::{gate_issue, GateArtifact, GateIssue, GateSnapshot, GateStage};
 
 pub(super) fn reference_hygiene_issues(
     snapshot: &GateSnapshot,
     stage: GateStage,
-    policy: &Policy,
+    policy: &crate::verified::policy::Policy,
 ) -> Vec<GateIssue> {
     if snapshot.delta_specs.is_empty() {
         return Vec::new();
@@ -55,7 +53,7 @@ fn known_delta_references(delta_specs: &[GateArtifact]) -> Vec<String> {
 fn unknown_reference_issues(
     artifact: &GateArtifact,
     known: &[String],
-    policy: &Policy,
+    policy: &crate::verified::policy::Policy,
 ) -> Vec<GateIssue> {
     reference_markers(&artifact.markdown)
         .into_iter()
@@ -72,7 +70,10 @@ fn unknown_reference_issues(
         .collect()
 }
 
-fn malformed_exemption_issues(artifact: &GateArtifact, policy: &Policy) -> Vec<GateIssue> {
+fn malformed_exemption_issues(
+    artifact: &GateArtifact,
+    policy: &crate::verified::policy::Policy,
+) -> Vec<GateIssue> {
     let mut issues = Vec::with_capacity(artifact.markdown.lines().count());
     for (line_number, line) in artifact.markdown.lines().enumerate() {
         for marker in exemption_markers(line) {
@@ -109,7 +110,7 @@ fn exemption_markers(line: &str) -> Vec<&str> {
     markers
 }
 
-fn exemption_marker_is_valid(marker: &str, policy: &Policy) -> bool {
+fn exemption_marker_is_valid(marker: &str, policy: &crate::verified::policy::Policy) -> bool {
     let fields = marker_fields(marker);
     if !policy
         .exemption_marker_policy
@@ -151,7 +152,7 @@ fn is_iso_date(value: &str) -> bool {
         && bytes[8..].iter().all(u8::is_ascii_digit)
 }
 
-fn exemption_marker_hint(policy: &Policy) -> String {
+fn exemption_marker_hint(policy: &crate::verified::policy::Policy) -> String {
     policy
         .exemption_marker_policy
         .required_fields
@@ -164,7 +165,7 @@ fn exemption_marker_hint(policy: &Policy) -> String {
 fn unlinked_task_issues(
     artifact: &GateArtifact,
     known: &[String],
-    policy: &Policy,
+    policy: &crate::verified::policy::Policy,
 ) -> Vec<GateIssue> {
     let mut issues = Vec::with_capacity(artifact.markdown.lines().count());
     for (line_number, line) in artifact.markdown.lines().enumerate() {
@@ -195,7 +196,7 @@ fn is_checkbox_task(trimmed: &str) -> bool {
         || trimmed.starts_with("- [~]")
 }
 
-fn has_valid_dependency_marker(trimmed: &str, policy: &Policy) -> bool {
+fn has_valid_dependency_marker(trimmed: &str, policy: &crate::verified::policy::Policy) -> bool {
     policy.task_marker_tokens.iter().any(|marker| {
         if marker.id != policy.artifact_substance_policy.dependency_marker_id {
             return false;

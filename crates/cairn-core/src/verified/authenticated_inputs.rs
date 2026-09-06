@@ -1,6 +1,3 @@
-use serde::Deserialize;
-use serde::Serialize;
-
 use super::evidence::canonical_json_hash;
 
 pub const AUTHENTICATED_EVIDENCE_SCHEMA_V1: &str = "cairn.authenticated-evidence.v1";
@@ -21,7 +18,7 @@ const MAX_POLICY_EXPORTS_COUNT: usize = 16;
 const MAX_TRUSTED_PRODUCERS_COUNT: usize = 32;
 const ADJACENT_PAIR_WINDOW: usize = 2;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticatedPolicyExport {
     pub evidence_kind: String,
     pub path: String,
@@ -29,7 +26,7 @@ pub struct AuthenticatedPolicyExport {
     pub signature_purpose: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticatedTrustedProducer {
     pub producer: String,
     pub key_id: String,
@@ -39,7 +36,7 @@ pub struct AuthenticatedTrustedProducer {
     pub revoked: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticatedEvidencePolicy {
     pub schema_version: String,
     pub release_profile: String,
@@ -50,7 +47,7 @@ pub struct AuthenticatedEvidencePolicy {
     pub trusted_producers: Vec<AuthenticatedTrustedProducer>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct MeasuredEvidenceInput {
     pub role: String,
     pub path: String,
@@ -58,21 +55,21 @@ pub struct MeasuredEvidenceInput {
     pub measured_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CanonicalReceiptObservation {
     pub profile: String,
     pub supplied_receipt_hash: String,
     pub recomputed_receipt_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct PolicyExportObservation {
     pub path: String,
     pub declared_blake3: String,
     pub measured_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SignatureVerificationObservation {
     pub algorithm: String,
     pub verified: bool,
@@ -84,7 +81,7 @@ pub struct SignatureVerificationObservation {
     pub public_key_blake3: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticatedEvidenceInput {
     pub schema_version: String,
     pub evidence_kind: String,
@@ -96,7 +93,7 @@ pub struct AuthenticatedEvidenceInput {
     pub valence_integrity_receipt_hash: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticatedEvidenceIssue {
     pub code: String,
     pub field_path: String,
@@ -104,7 +101,7 @@ pub struct AuthenticatedEvidenceIssue {
     pub actual: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticatedEvidenceReport {
     pub evidence_kind: String,
     pub passed: bool,
@@ -124,7 +121,7 @@ pub struct AuthenticatedReleaseGateInput<'a> {
     pub function_address: Option<&'a AuthenticatedEvidenceReport>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticatedReleaseGateReport {
     pub required: bool,
     pub passed: bool,

@@ -1,8 +1,4 @@
-use serde::Deserialize;
-use serde::Serialize;
-
 use super::types::IdentityIssue;
-use crate::verified::evidence::canonical_json_hash;
 
 pub const NOMINAL_IDENTITY_RUNTIME_SCHEMA_V1: &str = "cairn.nominal-evidence-identity-runtime.v1";
 pub const NOMINAL_IDENTITY_OCTET_SCHEMA_V1: &str = "octet-nominal-domain-policy/v1";
@@ -26,7 +22,7 @@ const SUPPORTED_ALGORITHMS: &[&str] = &["none", "BLAKE3", "SHA-256", "Git-OID-SH
 const SUPPORTED_WRAPPERS: &[&str] = &["refined-newtype", "marker-generic"];
 const SUPPORTED_CONSTRUCTORS: &[&str] = &["private-fallible", "marker-only"];
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NominalIdentityPolicy {
     pub policy_id: String,
@@ -35,7 +31,7 @@ pub struct NominalIdentityPolicy {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NominalIdentityRuntimeProjection {
     pub schema_version: String,
@@ -43,7 +39,7 @@ pub struct NominalIdentityRuntimeProjection {
     pub domains: Vec<NominalIdentityDomainPolicy>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NominalIdentityDomainPolicy {
     pub domain_id: String,
@@ -59,7 +55,7 @@ pub struct NominalIdentityDomainPolicy {
     pub constructor_policy: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NominalIdentityOctetProjection {
     pub schema_version: String,
@@ -70,7 +66,7 @@ pub struct NominalIdentityOctetProjection {
     pub non_claims: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NominalIdentityOctetDomain {
     pub domain_id: String,
@@ -99,13 +95,13 @@ pub fn nominal_identity_policy_diagnostics(policy: &NominalIdentityPolicy) -> Ve
 #[must_use]
 pub fn nominal_runtime_projection_hash(policy: &NominalIdentityPolicy) -> String {
     let value = serde_json::json!(&policy.runtime);
-    canonical_json_hash(&value)
+    crate::verified::evidence::canonical_json_hash(&value)
 }
 
 #[must_use]
 pub fn nominal_octet_projection_hash(policy: &NominalIdentityPolicy) -> String {
     let value = serde_json::json!(&policy.octet);
-    canonical_json_hash(&value)
+    crate::verified::evidence::canonical_json_hash(&value)
 }
 
 fn validate_headers(policy: &NominalIdentityPolicy, issues: &mut Vec<IdentityIssue>) {
