@@ -17,7 +17,7 @@
 
 - [x] [serial] [task:consumer] [after:negative-shell] Reproduce clean setup and upgrades from fresh roots without ambient policy or user-global state. r[cairn.consumer_bootstrap.conformance]
 - [x] [serial] [task:docs] [after:consumer] Publish the checked setup example, policy precedence, migration limits, compatibility diagnostics, and current project-local guidance. r[cairn.consumer_bootstrap.policy] r[cairn.consumer_bootstrap.guidance] r[cairn.consumer_bootstrap.boundary]
-- [ ] [serial] [task:verification] [after:docs] Run focused and full checks, retain exact consumer receipts, and prepare reviewed sync and archive plans. r[cairn.consumer_bootstrap.conformance]
+- [x] [serial] [task:verification] [after:docs] Run focused and full checks, retain exact consumer receipts, and prepare reviewed sync and archive plans. r[cairn.consumer_bootstrap.conformance]
 
 Baseline evidence is in `evidence/implementation-first-pass.md`.
 Contract and pure-core evidence is in `evidence/contracts-core-second-pass.md`.
