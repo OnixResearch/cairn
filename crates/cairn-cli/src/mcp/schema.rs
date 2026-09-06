@@ -101,6 +101,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Validate repository-owned completion evidence without executing checks",
         ),
         mcp_tool(
+            "cairn_readiness",
+            true,
+            false,
+            "Inspect change readiness without execution or mutation",
+        ),
+        mcp_tool(
             "cairn_drain_plan",
             true,
             false,
@@ -205,6 +211,10 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_context" => {
             mcp_object_schema(&[], &["root", "policy", "profile", "artifact", "operation"])
         }
+        "cairn_readiness" => mcp_object_schema(
+            &["change"],
+            &["root", "policy", "contract", "results", "subject_hash"],
+        ),
         "cairn_workflow_status" => mcp_object_schema(&["change"], &["root", "policy", "schema"]),
         "cairn_workflow_instructions" => {
             mcp_object_schema(&["change", "artifact"], &["root", "policy", "schema"])
@@ -329,6 +339,12 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
             object,
             &[],
             &["root", "policy", "profile", "artifact", "operation"],
+        ),
+        "cairn_readiness" => validate_string_args(
+            name,
+            object,
+            &["change"],
+            &["root", "policy", "contract", "results", "subject_hash"],
         ),
         "cairn_workflow_status" => {
             validate_string_args(name, object, &["change"], &["root", "policy", "schema"])
