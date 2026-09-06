@@ -1,4 +1,3 @@
-use super::catalog::NOMINAL_IDENTITY_REQUIRED_NON_CLAIM;
 use super::*;
 
 const HASH_LOWER: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -163,7 +162,7 @@ fn generated_catalog_is_valid_sorted_and_deterministic() {
     assert!(policy
         .non_claims
         .iter()
-        .any(|value| value == NOMINAL_IDENTITY_REQUIRED_NON_CLAIM));
+        .any(|value| value == super::catalog::NOMINAL_IDENTITY_REQUIRED_NON_CLAIM));
     assert_eq!(policy.octet.default_mode, "deny");
     assert!(policy.octet.domains.iter().all(|domain| domain
         .core_scopes

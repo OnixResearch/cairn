@@ -1,9 +1,3 @@
-use super::common::{
-    entropy_hash_material_messages, is_blake3_hex, known_value, strip_non_hash_fields,
-    KNOWN_EFFECT_STATUSES, KNOWN_MACRO_STATUSES, MUTATION_MANIFEST_REQUIRED_FIELDS,
-    SOURCE_SCANNER_DEPENDENCIES,
-};
-
 pub const NAME_POINTER_SCHEMA_V1: &str = "octet.name-pointer.v1";
 
 const NAME_POINTER_REQUIRED_FIELDS: &[&str] = &[
@@ -63,7 +57,7 @@ pub fn name_pointer_hash(receipt: &serde_json::Value) -> String {
 
 pub fn name_pointer_hash_material(receipt: &serde_json::Value) -> serde_json::Value {
     let mut material = receipt.clone();
-    strip_non_hash_fields(&mut material);
+    super::common::strip_non_hash_fields(&mut material);
     material
 }
 
@@ -121,7 +115,7 @@ fn name_pointer_hash_issues(
         .get("pointer_hash")
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
-    if stated_hash != computed_pointer_hash || !is_blake3_hex(stated_hash) {
+    if stated_hash != computed_pointer_hash || !super::common::is_blake3_hex(stated_hash) {
         issues.push(pointer_issue(
             "name_pointer.hash_mismatch",
             "pointer_hash must equal the BLAKE3 hash of canonical name-pointer content with non-hash fields excluded",
@@ -131,7 +125,7 @@ fn name_pointer_hash_issues(
         if !object
             .get(field)
             .and_then(serde_json::Value::as_str)
-            .is_some_and(is_blake3_hex)
+            .is_some_and(super::common::is_blake3_hex)
         {
             issues.push(pointer_issue(
                 "name_pointer.invalid_hash_field",
@@ -176,7 +170,7 @@ fn name_pointer_manifest_issues(
         )];
     };
     let mut issues = Vec::with_capacity(6);
-    for field in MUTATION_MANIFEST_REQUIRED_FIELDS {
+    for field in super::common::MUTATION_MANIFEST_REQUIRED_FIELDS {
         if !manifest.contains_key(*field) {
             issues.push(pointer_issue(
                 "name_pointer.missing_field",
@@ -188,7 +182,7 @@ fn name_pointer_manifest_issues(
     if !manifest
         .get("manifest_hash")
         .and_then(serde_json::Value::as_str)
-        .is_some_and(is_blake3_hex)
+        .is_some_and(super::common::is_blake3_hex)
     {
         issues.push(pointer_issue(
             "name_pointer.invalid_manifest_hash",
@@ -241,7 +235,7 @@ fn touched_file_issues(
             if !file
                 .get(hash_field)
                 .and_then(serde_json::Value::as_str)
-                .is_some_and(is_blake3_hex)
+                .is_some_and(super::common::is_blake3_hex)
             {
                 issues.push(pointer_issue(
                     "name_pointer.invalid_touched_file_hash",
@@ -287,14 +281,14 @@ fn name_pointer_caveat_issues(
     if caveats
         .get("dependency_status")
         .and_then(serde_json::Value::as_str)
-        != Some(SOURCE_SCANNER_DEPENDENCIES)
+        != Some(super::common::SOURCE_SCANNER_DEPENDENCIES)
     {
         issues.push(pointer_issue(
             "name_pointer.dependency_status_overclaim",
             "name-pointer receipts must preserve source-scanner-token-set dependency caveats",
         ));
     }
-    if !known_value(caveats, "macro_status", KNOWN_MACRO_STATUSES) {
+    if !super::common::known_value(caveats, "macro_status", super::common::KNOWN_MACRO_STATUSES) {
         issues.push(pointer_issue(
             "name_pointer.unknown_macro_status",
             "macro_status must use the closed caveat vocabulary",
@@ -303,7 +297,7 @@ fn name_pointer_caveat_issues(
     let effect_status = caveats
         .get("effect_status")
         .and_then(serde_json::Value::as_str);
-    if !effect_status.is_some_and(|value| KNOWN_EFFECT_STATUSES.contains(&value)) {
+    if !effect_status.is_some_and(|value| super::common::KNOWN_EFFECT_STATUSES.contains(&value)) {
         issues.push(pointer_issue(
             "name_pointer.unknown_effect_status",
             "effect_status must use the closed caveat vocabulary",
@@ -325,7 +319,7 @@ fn name_pointer_caveat_issues(
 }
 
 fn pointer_entropy_issues(root_path: &str, root: &serde_json::Value) -> Vec<NamePointerIssue> {
-    entropy_hash_material_messages(root_path, root)
+    super::common::entropy_hash_material_messages(root_path, root)
         .into_iter()
         .map(|message| pointer_issue("name_pointer.ambient_entropy_in_hash_material", message))
         .collect()

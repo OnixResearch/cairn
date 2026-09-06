@@ -3,24 +3,22 @@ use crate::verified::change_dependencies::{
     DEPENDENCY_ISSUE_INVALID_TYPE,
 };
 
-use super::{ChangeMetadata, ChangeStatus};
-
 pub(super) fn parse_change_metadata(
     change_name: &str,
     metadata_json: Option<&str>,
-) -> (ChangeMetadata, Vec<String>) {
+) -> (super::ChangeMetadata, Vec<String>) {
     let Some(metadata_json) = metadata_json else {
-        return (ChangeMetadata::default(), Vec::new());
+        return (super::ChangeMetadata::default(), Vec::new());
     };
     let Ok(value) = serde_json::from_str::<serde_json::Value>(metadata_json) else {
         return (
-            ChangeMetadata::default(),
+            super::ChangeMetadata::default(),
             vec![format!("{change_name}: metadata.json is not valid JSON")],
         );
     };
     let Some(object) = value.as_object() else {
         return (
-            ChangeMetadata::default(),
+            super::ChangeMetadata::default(),
             vec![format!(
                 "{change_name}: metadata.json must contain an object"
             )],
@@ -63,7 +61,7 @@ pub(super) fn parse_change_metadata(
         sorted_groups.dedup();
     }
     (
-        ChangeMetadata {
+        super::ChangeMetadata {
             groups: sorted_groups,
             target_date,
             status,
@@ -151,7 +149,7 @@ fn is_yyyy_mm_dd(value: &str) -> bool {
 }
 
 pub fn validate_change_metadata_policy(
-    change: &ChangeStatus,
+    change: &super::ChangeStatus,
     allowed_groups: &[String],
     group_prefixes: &[String],
     allowed_statuses: &[String],

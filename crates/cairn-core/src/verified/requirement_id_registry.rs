@@ -675,7 +675,6 @@ fn push_issue(
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
 
     use super::*;
 
@@ -808,7 +807,7 @@ mod tests {
     fn value_parser_and_fixture_matrix_cover_success_and_failure() {
         // r[verify cairn.requirement_id_registry.final_validation]
         // r[verify cairn.requirement_id_registry.final_validation.fixtures]
-        let valid = json!({
+        let valid = serde_json::json!({
             "registry": {
                 "schema_version": REQUIREMENT_ID_REGISTRY_SCHEMA_V1,
                 "boundary": REQUIREMENT_ID_REGISTRY_BOUNDARY,
@@ -833,7 +832,7 @@ mod tests {
             valid_report.issues
         );
 
-        let invalid = json!({
+        let invalid = serde_json::json!({
             "registry": {
                 "schema_version": REQUIREMENT_ID_REGISTRY_SCHEMA_V1,
                 "boundary": REQUIREMENT_ID_REGISTRY_BOUNDARY,

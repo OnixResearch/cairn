@@ -1,14 +1,18 @@
-use super::PolicyError;
-
 pub(super) fn generated_agent_workflow_policy(
     value: &serde_json::Value,
-) -> Result<crate::verified::generated_agent_workflow::GeneratedAgentWorkflowPolicy, PolicyError> {
-    let field = value
-        .get("generated_agent_workflow_policy")
-        .ok_or(PolicyError::MissingField("generated_agent_workflow_policy"))?;
+) -> Result<
+    crate::verified::generated_agent_workflow::GeneratedAgentWorkflowPolicy,
+    super::PolicyError,
+> {
+    let field =
+        value
+            .get("generated_agent_workflow_policy")
+            .ok_or(super::PolicyError::MissingField(
+                "generated_agent_workflow_policy",
+            ))?;
     let policy: crate::verified::generated_agent_workflow::GeneratedAgentWorkflowPolicy =
         serde_json::from_value(field.clone())
-            .map_err(|_| PolicyError::InvalidField("generated_agent_workflow_policy"))?;
+            .map_err(|_| super::PolicyError::InvalidField("generated_agent_workflow_policy"))?;
     crate::verified::generated_agent_workflow::admit_generated_agent_workflow_policy(&policy).map_err(|issues| {
         let first = issues.into_iter().next().unwrap_or_else(|| {
             crate::verified::generated_agent_workflow::GeneratedWorkflowIssue {
@@ -17,7 +21,7 @@ pub(super) fn generated_agent_workflow_policy(
                 message: "generated workflow policy admission failed".to_string(),
             }
         });
-        PolicyError::InvalidWorkflow {
+        super::PolicyError::InvalidWorkflow {
             code: crate::verified::generated_agent_workflow::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             path: first.field_path,
             message: format!("{}: {}", first.code, first.message),

@@ -1,12 +1,5 @@
 use serde_json::json;
 
-use super::model::{
-    ArchiveInput, ArchiveManifest, ArchiveManifestEntry, ArchivePointer, CompactionIssue,
-    CompactionPlan, MutationAction, PackManifest, PackObjectDescriptor, COMPACTION_NON_CLAIM,
-    COMPACTION_PACK_SCHEMA_V1, COMPACTION_PLAN_SCHEMA_V1, COMPACTION_POINTER_SCHEMA_V1,
-    LOSSLESS_PACK_PROFILE,
-};
-
 pub const COMPACTION_ROOT: &str = ".cairn/compaction/v1";
 pub const HASH_HEX_LENGTH: usize = 64;
 const LOSSINESS_LOSSLESS: &str = "lossless";
@@ -33,8 +26,8 @@ pub fn compaction_chain_hash(prev_chain_hash: &str, receipt_hash: &str) -> Strin
 }
 
 pub fn build_archive_manifest(
-    archive: &ArchiveInput,
-) -> Result<ArchiveManifest, Vec<CompactionIssue>> {
+    archive: &super::model::ArchiveInput,
+) -> Result<super::model::ArchiveManifest, Vec<super::model::CompactionIssue>> {
     // r[impl cairn.sync_archive.compaction.manifest_roots.entries]
     // r[impl cairn.sync_archive.compaction.manifest_roots.stable]
     let mut issues = Vec::new();
@@ -75,7 +68,7 @@ pub fn build_archive_manifest(
                 continue;
             }
         };
-        entries.push(ArchiveManifestEntry {
+        entries.push(super::model::ArchiveManifestEntry {
             archive_id: archive.archive_id.clone(),
             path: file.path.clone(),
             role: archive_file_role(&file.path).to_string(),
@@ -93,7 +86,7 @@ pub fn build_archive_manifest(
         "archive_id": archive.archive_id,
         "entries": entries,
     }));
-    Ok(ArchiveManifest {
+    Ok(super::model::ArchiveManifest {
         archive_id: archive.archive_id.clone(),
         entries,
         archive_root,
@@ -101,13 +94,13 @@ pub fn build_archive_manifest(
 }
 
 pub fn build_compaction_plan(
-    archives: &[ArchiveInput],
-    retained_pointers: &[ArchivePointer],
+    archives: &[super::model::ArchiveInput],
+    retained_pointers: &[super::model::ArchivePointer],
     policy_hash: &str,
     profile: &str,
     prev_chain_hash: &str,
-    observed_issues: &[CompactionIssue],
-) -> CompactionPlan {
+    observed_issues: &[super::model::CompactionIssue],
+) -> super::model::CompactionPlan {
     // r[impl cairn.sync_archive.compaction.plan]
     // r[impl cairn.sync_archive.compaction.plan.ordering]
     // r[impl cairn.sync_archive.compaction.manifest_roots]
@@ -119,7 +112,7 @@ pub fn build_compaction_plan(
     let mut blockers = observed_issues.to_vec();
     validate_hash(policy_hash, "policy_hash", &mut blockers);
     validate_hash(prev_chain_hash, "prev_chain_hash", &mut blockers);
-    if profile != LOSSLESS_PACK_PROFILE {
+    if profile != super::model::LOSSLESS_PACK_PROFILE {
         blockers.push(issue(
             "archive_compaction.profile_unsupported",
             "profile",
@@ -186,8 +179,8 @@ pub fn build_compaction_plan(
     let mut planned_pointers = pack
         .archives
         .iter()
-        .map(|archive| ArchivePointer {
-            schema_version: COMPACTION_POINTER_SCHEMA_V1.to_string(),
+        .map(|archive| super::model::ArchivePointer {
+            schema_version: super::model::COMPACTION_POINTER_SCHEMA_V1.to_string(),
             archive_id: archive.archive_id.clone(),
             archive_root: archive.archive_root.clone(),
             pack_root: pack.pack_root.clone(),
@@ -228,8 +221,8 @@ pub fn build_compaction_plan(
         .iter()
         .map(|archive| archive.archive_id.clone())
         .collect();
-    let mut plan = CompactionPlan {
-        schema_version: COMPACTION_PLAN_SCHEMA_V1.to_string(),
+    let mut plan = super::model::CompactionPlan {
+        schema_version: super::model::COMPACTION_PLAN_SCHEMA_V1.to_string(),
         profile: profile.to_string(),
         lossiness: LOSSINESS_LOSSLESS.to_string(),
         candidates,
@@ -247,28 +240,30 @@ pub fn build_compaction_plan(
         mutation_manifest,
         mutation_manifest_hash,
         plan_hash: String::new(),
-        non_claims: vec![COMPACTION_NON_CLAIM.to_string()],
+        non_claims: vec![super::model::COMPACTION_NON_CLAIM.to_string()],
     };
     plan.plan_hash = compaction_plan_hash(&plan);
     plan
 }
 
-pub fn compaction_plan_hash(plan: &CompactionPlan) -> String {
+pub fn compaction_plan_hash(plan: &super::model::CompactionPlan) -> String {
     let mut material = plan.clone();
     material.plan_hash.clear();
     hash_serializable(&material)
 }
 
-pub fn validate_compaction_plan(plan: &CompactionPlan) -> Vec<CompactionIssue> {
+pub fn validate_compaction_plan(
+    plan: &super::model::CompactionPlan,
+) -> Vec<super::model::CompactionIssue> {
     let mut issues = Vec::new();
-    if plan.schema_version != COMPACTION_PLAN_SCHEMA_V1 {
+    if plan.schema_version != super::model::COMPACTION_PLAN_SCHEMA_V1 {
         issues.push(issue(
             "archive_compaction.plan_schema_unsupported",
             "schema_version",
             "plan schema must be cairn.archive-compaction-plan.v1",
         ));
     }
-    if plan.profile != LOSSLESS_PACK_PROFILE || plan.lossiness != LOSSINESS_LOSSLESS {
+    if plan.profile != super::model::LOSSLESS_PACK_PROFILE || plan.lossiness != LOSSINESS_LOSSLESS {
         issues.push(issue(
             "archive_compaction.profile_unsupported",
             "profile",
@@ -278,7 +273,7 @@ pub fn validate_compaction_plan(plan: &CompactionPlan) -> Vec<CompactionIssue> {
     if !plan
         .non_claims
         .iter()
-        .any(|non_claim| non_claim == COMPACTION_NON_CLAIM)
+        .any(|non_claim| non_claim == super::model::COMPACTION_NON_CLAIM)
     {
         issues.push(issue(
             "archive_compaction.non_claim_missing",
@@ -469,8 +464,8 @@ fn safe_path_component(value: &str) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'))
 }
 
-pub(crate) fn issue(code: &str, path: &str, message: &str) -> CompactionIssue {
-    CompactionIssue {
+pub(crate) fn issue(code: &str, path: &str, message: &str) -> super::model::CompactionIssue {
+    super::model::CompactionIssue {
         code: code.to_string(),
         path: path.to_string(),
         message: message.to_string(),
@@ -486,7 +481,11 @@ pub(crate) fn hash_serializable<T: serde::Serialize>(value: &T) -> String {
     }
 }
 
-pub(crate) fn validate_hash(value: &str, path: &str, issues: &mut Vec<CompactionIssue>) {
+pub(crate) fn validate_hash(
+    value: &str,
+    path: &str,
+    issues: &mut Vec<super::model::CompactionIssue>,
+) {
     let valid = if path == "policy_hash" {
         is_digest::<crate::verified::nominal_identity::PolicyDigestRole>(value)
     } else if path == "input_hash" {
@@ -570,7 +569,9 @@ fn archive_file_role(path: &str) -> &'static str {
 }
 
 // r[impl cairn.sync_archive.compaction.manifest_roots.deduplicate]
-fn build_pack_manifest(mut archives: Vec<ArchiveManifest>) -> PackManifest {
+fn build_pack_manifest(
+    mut archives: Vec<super::model::ArchiveManifest>,
+) -> super::model::PackManifest {
     archives.sort_by(|left, right| left.archive_id.cmp(&right.archive_id));
     let mut objects = std::collections::BTreeMap::<String, u64>::new();
     for archive in &archives {
@@ -583,10 +584,12 @@ fn build_pack_manifest(mut archives: Vec<ArchiveManifest>) -> PackManifest {
     }
     let objects = objects
         .into_iter()
-        .map(|(content_hash, byte_length)| PackObjectDescriptor {
-            content_hash,
-            byte_length,
-        })
+        .map(
+            |(content_hash, byte_length)| super::model::PackObjectDescriptor {
+                content_hash,
+                byte_length,
+            },
+        )
         .collect::<Vec<_>>();
     let packed_archives_root = crate::verified::evidence::canonical_json_hash(&json!({
         "archives": archives
@@ -597,8 +600,8 @@ fn build_pack_manifest(mut archives: Vec<ArchiveManifest>) -> PackManifest {
             }))
             .collect::<Vec<_>>(),
     }));
-    let mut pack = PackManifest {
-        schema_version: COMPACTION_PACK_SCHEMA_V1.to_string(),
+    let mut pack = super::model::PackManifest {
+        schema_version: super::model::COMPACTION_PACK_SCHEMA_V1.to_string(),
         archives,
         objects,
         packed_archives_root,
@@ -608,16 +611,19 @@ fn build_pack_manifest(mut archives: Vec<ArchiveManifest>) -> PackManifest {
     pack
 }
 
-fn pack_manifest_hash(pack: &PackManifest) -> String {
+fn pack_manifest_hash(pack: &super::model::PackManifest) -> String {
     let mut material = pack.clone();
     material.pack_root.clear();
     hash_serializable(&material)
 }
 
-fn validate_pointers(pointers: &[ArchivePointer], issues: &mut Vec<CompactionIssue>) {
+fn validate_pointers(
+    pointers: &[super::model::ArchivePointer],
+    issues: &mut Vec<super::model::CompactionIssue>,
+) {
     let mut seen = std::collections::BTreeSet::new();
     for pointer in pointers {
-        if pointer.schema_version != COMPACTION_POINTER_SCHEMA_V1 {
+        if pointer.schema_version != super::model::COMPACTION_POINTER_SCHEMA_V1 {
             issues.push(issue(
                 "archive_compaction.pointer_schema_unsupported",
                 &pointer.archive_id,
@@ -658,52 +664,52 @@ fn validate_pointers(pointers: &[ArchivePointer], issues: &mut Vec<CompactionIss
 }
 
 fn build_mutation_manifest(
-    pack: &PackManifest,
-    planned_pointers: &[ArchivePointer],
-) -> Vec<MutationAction> {
+    pack: &super::model::PackManifest,
+    planned_pointers: &[super::model::ArchivePointer],
+) -> Vec<super::model::MutationAction> {
     let mut actions = pack
         .objects
         .iter()
-        .map(|object| MutationAction {
+        .map(|object| super::model::MutationAction {
             kind: "write_object".to_string(),
             path: object_path(&object.content_hash),
             content_hash: Some(object.content_hash.clone()),
         })
         .collect::<Vec<_>>();
-    actions.push(MutationAction {
+    actions.push(super::model::MutationAction {
         kind: "write_pack_manifest".to_string(),
         path: pack_manifest_path(&pack.pack_root),
         content_hash: Some(hash_serializable(pack)),
     });
     for pointer in planned_pointers {
-        actions.push(MutationAction {
+        actions.push(super::model::MutationAction {
             kind: "write_prepared_pointer".to_string(),
             path: prepared_pointer_path(&pack.pack_root, &pointer.archive_id),
             content_hash: Some(hash_serializable(pointer)),
         });
     }
-    actions.push(MutationAction {
+    actions.push(super::model::MutationAction {
         kind: "write_mutation_manifest".to_string(),
         path: mutation_manifest_path(&pack.pack_root),
         content_hash: None,
     });
-    actions.push(MutationAction {
+    actions.push(super::model::MutationAction {
         kind: "write_receipt".to_string(),
         path: receipt_path(&pack.pack_root),
         content_hash: None,
     });
-    actions.push(MutationAction {
+    actions.push(super::model::MutationAction {
         kind: "append_ledger".to_string(),
         path: ledger_path(),
         content_hash: None,
     });
     for pointer in planned_pointers {
-        actions.push(MutationAction {
+        actions.push(super::model::MutationAction {
             kind: "prune_expanded_archive".to_string(),
             path: format!(".cairn/archive/{}", pointer.archive_id),
             content_hash: Some(pointer.archive_root.clone()),
         });
-        actions.push(MutationAction {
+        actions.push(super::model::MutationAction {
             kind: "finalize_pointer".to_string(),
             path: pointer_path(&pointer.archive_id),
             content_hash: Some(hash_serializable(pointer)),

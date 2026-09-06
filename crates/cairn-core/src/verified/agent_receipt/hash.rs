@@ -1,6 +1,3 @@
-use super::common::issue;
-use super::types::AgentRunGateIssue;
-
 // r[impl cairn.supersede.agent_run_receipts.schema]
 // r[impl cairn.supersede.agent_run_receipts.schema.bounded_content]
 pub fn agent_run_receipt_hash(receipt: &serde_json::Value) -> String {
@@ -27,7 +24,7 @@ fn receipt_without_self_referential_hashes(receipt: &serde_json::Value) -> serde
 pub(super) fn receipt_hash_issues(
     receipt: &serde_json::Value,
     object: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<AgentRunGateIssue> {
+) -> Vec<super::types::AgentRunGateIssue> {
     let Some(stated_hash) = object
         .get("receipt_hash")
         .and_then(serde_json::Value::as_str)
@@ -56,7 +53,7 @@ pub(super) fn receipt_hash_issues(
     if matches {
         Vec::new()
     } else {
-        vec![issue(
+        vec![super::common::issue(
             "receipt.hash_mismatch",
             "receipt_hash must equal the BLAKE3 hash of canonical receipt content with receipt_hash excluded",
         )]

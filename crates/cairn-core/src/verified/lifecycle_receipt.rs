@@ -1,9 +1,3 @@
-use super::evidence::canonical_json_hash;
-use super::nominal_identity::{
-    ArtifactDigestRole, Blake3Digest, ChainDigestRole, DigestRoleMarker, InputDigestRole,
-    PlanDigestRole, PolicyDigestRole, ReceiptDigestRole, StateDigestRole, RAW_BLAKE3_PROFILE,
-};
-
 pub const LIFECYCLE_RECEIPT_CORE_SCHEMA_V1: &str = "cairn.lifecycle-receipt-core.v1";
 pub const LIFECYCLE_RECEIPT_CORE_BOUNDARY: &str = "lifecycle receipt core validation proves only receipt envelope syntax, hash consistency, diagnostics shape, and non-claim presence; it does not prove release eligibility, lifecycle readiness, policy satisfaction, evidence truth, source-code correctness, verifier soundness, or downstream behavioral correctness";
 
@@ -193,7 +187,7 @@ pub fn lifecycle_receipt_hash(
     profile: &LifecycleReceiptHashProfile,
 ) -> String {
     let material = lifecycle_receipt_hash_material(receipt, profile);
-    canonical_json_hash(&material)
+    super::evidence::canonical_json_hash(&material)
 }
 
 pub fn validate_lifecycle_receipt_envelope(
@@ -521,7 +515,7 @@ fn validate_hash_fields(
         );
         return;
     }
-    if !is_digest::<ReceiptDigestRole>(&input.envelope.receipt_hash) {
+    if !is_digest::<super::nominal_identity::ReceiptDigestRole>(&input.envelope.receipt_hash) {
         push_lifecycle_receipt_issue(
             issues,
             LIFECYCLE_RECEIPT_ISSUE_MALFORMED_HASH,
@@ -531,7 +525,10 @@ fn validate_hash_fields(
         return;
     }
     let expected = lifecycle_receipt_hash(&input.hash_material, &input.hash_profile);
-    if !same_digest::<ReceiptDigestRole>(&input.envelope.receipt_hash, &expected) {
+    if !same_digest::<super::nominal_identity::ReceiptDigestRole>(
+        &input.envelope.receipt_hash,
+        &expected,
+    ) {
         push_lifecycle_receipt_issue(
             issues,
             LIFECYCLE_RECEIPT_ISSUE_STALE_HASH,
@@ -758,23 +755,42 @@ fn is_hash_field_name(name: &str) -> bool {
 
 fn is_typed_hash_field(name: &str, value: &str) -> bool {
     match name {
-        LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH => is_digest::<ReceiptDigestRole>(value),
-        LIFECYCLE_RECEIPT_HASH_FIELD_INPUT_HASH => is_digest::<InputDigestRole>(value),
-        LIFECYCLE_RECEIPT_HASH_FIELD_POLICY_HASH => is_digest::<PolicyDigestRole>(value),
-        "plan_hash" => is_digest::<PlanDigestRole>(value),
-        "chain_hash" => is_digest::<ChainDigestRole>(value),
-        "state_hash" => is_digest::<StateDigestRole>(value),
-        _ => is_digest::<ArtifactDigestRole>(value),
+        LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH => {
+            is_digest::<super::nominal_identity::ReceiptDigestRole>(value)
+        }
+        LIFECYCLE_RECEIPT_HASH_FIELD_INPUT_HASH => {
+            is_digest::<super::nominal_identity::InputDigestRole>(value)
+        }
+        LIFECYCLE_RECEIPT_HASH_FIELD_POLICY_HASH => {
+            is_digest::<super::nominal_identity::PolicyDigestRole>(value)
+        }
+        "plan_hash" => is_digest::<super::nominal_identity::PlanDigestRole>(value),
+        "chain_hash" => is_digest::<super::nominal_identity::ChainDigestRole>(value),
+        "state_hash" => is_digest::<super::nominal_identity::StateDigestRole>(value),
+        _ => is_digest::<super::nominal_identity::ArtifactDigestRole>(value),
     }
 }
 
-fn is_digest<Role: DigestRoleMarker>(value: &str) -> bool {
-    Blake3Digest::<Role>::parse(value, RAW_BLAKE3_PROFILE, "lifecycle_receipt.digest").is_ok()
+fn is_digest<Role: super::nominal_identity::DigestRoleMarker>(value: &str) -> bool {
+    super::nominal_identity::Blake3Digest::<Role>::parse(
+        value,
+        super::nominal_identity::RAW_BLAKE3_PROFILE,
+        "lifecycle_receipt.digest",
+    )
+    .is_ok()
 }
 
-fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
-    let left = Blake3Digest::<Role>::parse(left, RAW_BLAKE3_PROFILE, "lifecycle_receipt.left");
-    let right = Blake3Digest::<Role>::parse(right, RAW_BLAKE3_PROFILE, "lifecycle_receipt.right");
+fn same_digest<Role: super::nominal_identity::DigestRoleMarker>(left: &str, right: &str) -> bool {
+    let left = super::nominal_identity::Blake3Digest::<Role>::parse(
+        left,
+        super::nominal_identity::RAW_BLAKE3_PROFILE,
+        "lifecycle_receipt.left",
+    );
+    let right = super::nominal_identity::Blake3Digest::<Role>::parse(
+        right,
+        super::nominal_identity::RAW_BLAKE3_PROFILE,
+        "lifecycle_receipt.right",
+    );
     matches!(
         (left, right),
         (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()
@@ -805,7 +821,6 @@ fn sort_lifecycle_receipt_issues(issues: &mut [LifecycleReceiptIssue]) {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
 
     use super::*;
 
@@ -814,12 +829,12 @@ mod tests {
     const EXPECTED_GATE_DIAGNOSTICS: usize = 1;
 
     fn hash_for(label: &str) -> String {
-        canonical_json_hash(&json!({"label": label}))
+        super::super::evidence::canonical_json_hash(&serde_json::json!({"label": label}))
     }
 
     fn valid_gate_receipt() -> serde_json::Value {
         let profile = default_lifecycle_receipt_hash_profile();
-        let mut receipt = json!({
+        let mut receipt = serde_json::json!({
             "change": "demo",
             "stage": "tasks",
             "valid": true,
@@ -831,13 +846,13 @@ mod tests {
             "layout": "cairn"
         });
         let receipt_hash = lifecycle_receipt_hash(&receipt, &profile);
-        receipt[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = json!(receipt_hash);
+        receipt[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = serde_json::json!(receipt_hash);
         receipt
     }
 
     fn valid_sync_receipt() -> serde_json::Value {
         let profile = default_lifecycle_receipt_hash_profile();
-        let mut receipt = json!({
+        let mut receipt = serde_json::json!({
             "actions": [
                 {"kind": "archive_change", "path": "./.cairn/archive/demo", "description": "archive demo"}
             ],
@@ -854,13 +869,13 @@ mod tests {
             "reasons": []
         });
         let receipt_hash = lifecycle_receipt_hash(&receipt, &profile);
-        receipt[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = json!(receipt_hash);
+        receipt[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = serde_json::json!(receipt_hash);
         receipt
     }
 
     fn valid_downstream_receipt() -> serde_json::Value {
         let profile = default_lifecycle_receipt_hash_profile();
-        let mut receipt = json!({
+        let mut receipt = serde_json::json!({
             "command": "policy-check",
             "family": "octet.policy",
             "valid": true,
@@ -878,7 +893,7 @@ mod tests {
             "policy_hash": hash_for("octet-policy")
         });
         let receipt_hash = lifecycle_receipt_hash(&receipt, &profile);
-        receipt[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = json!(receipt_hash);
+        receipt[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = serde_json::json!(receipt_hash);
         receipt
     }
 
@@ -919,7 +934,7 @@ mod tests {
         assert_eq!(gate_report.family, CAIRN_GATE_FAMILY);
         assert_eq!(gate_report.normalized_receipt_hash.len(), BLAKE3_HEX_LENGTH);
 
-        let validate_report = adapt_cairn_validate_receipt(&json!({
+        let validate_report = adapt_cairn_validate_receipt(&serde_json::json!({
             "change_issues": [],
             "changes": 1,
             "issues": [],
@@ -972,7 +987,8 @@ mod tests {
     fn lifecycle_receipt_core_reports_stale_hashes_and_missing_failure_diagnostics() {
         // r[verify cairn.release_evidence.lifecycle_receipt_core.validation]
         let mut stale = valid_gate_receipt();
-        stale[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = json!("0".repeat(BLAKE3_HEX_LENGTH));
+        stale[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] =
+            serde_json::json!("0".repeat(BLAKE3_HEX_LENGTH));
         let stale_report = adapt_cairn_gate_receipt(&stale);
         assert!(!stale_report.valid);
         assert!(
@@ -980,7 +996,7 @@ mod tests {
         );
 
         let profile = default_lifecycle_receipt_hash_profile();
-        let mut failure = json!({
+        let mut failure = serde_json::json!({
             "valid": false,
             "verdict": "FAIL",
             "issues": [],
@@ -988,7 +1004,7 @@ mod tests {
             "policy_hash": hash_for("failure-policy")
         });
         let receipt_hash = lifecycle_receipt_hash(&failure, &profile);
-        failure[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = json!(receipt_hash);
+        failure[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = serde_json::json!(receipt_hash);
         let failure_report = adapt_cairn_gate_receipt(&failure);
         assert!(!failure_report.valid);
         assert!(issue_codes(&failure_report)
@@ -1000,15 +1016,17 @@ mod tests {
         // r[verify cairn.release_evidence.lifecycle_receipt_core.hash_profiles]
         // r[verify cairn.release_evidence.lifecycle_receipt_core.hash_profiles.self_hash]
         let profile = default_lifecycle_receipt_hash_profile();
-        let mut left = json!({
+        let mut left = serde_json::json!({
             "valid": true,
             "verdict": "PASS",
             "issues": [],
             "input_hash": hash_for("left")
         });
-        left[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = json!("a".repeat(BLAKE3_HEX_LENGTH));
+        left[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] =
+            serde_json::json!("a".repeat(BLAKE3_HEX_LENGTH));
         let mut right = left.clone();
-        right[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = json!("b".repeat(BLAKE3_HEX_LENGTH));
+        right[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] =
+            serde_json::json!("b".repeat(BLAKE3_HEX_LENGTH));
 
         assert_eq!(
             lifecycle_receipt_hash(&left, &profile),
@@ -1058,7 +1076,7 @@ mod tests {
     #[test]
     fn lifecycle_receipt_diagnostics_are_normalized_from_public_issue_shapes() {
         let profile = default_lifecycle_receipt_hash_profile();
-        let mut receipt = json!({
+        let mut receipt = serde_json::json!({
             "valid": false,
             "verdict": "FAIL",
             "issues": ["plain issue text"],
@@ -1069,7 +1087,7 @@ mod tests {
             "policy_hash": hash_for("issue-policy")
         });
         let receipt_hash = lifecycle_receipt_hash(&receipt, &profile);
-        receipt[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = json!(receipt_hash);
+        receipt[LIFECYCLE_RECEIPT_HASH_FIELD_RECEIPT_HASH] = serde_json::json!(receipt_hash);
         let envelope = lifecycle_receipt_envelope_from_value(
             CAIRN_GATE_FAMILY,
             COMMAND_GATE,

@@ -1,7 +1,5 @@
 //! Pure admission, selection, and identity construction for local agent guidance.
 
-use super::evidence::{blake3_hex, canonical_json_hash};
-
 pub const AGENT_GUIDANCE_POLICY_SCHEMA_V1: &str = "cairn.agent-guidance-policy.v1";
 pub const AGENT_GUIDANCE_SOURCE_PROJECT: &str = "project";
 pub const AGENT_GUIDANCE_SOURCE_LIFECYCLE: &str = "lifecycle";
@@ -571,7 +569,7 @@ pub fn build_agent_guidance_result(
     issues.truncate(policy.bounds.max_issues);
 
     let portable_entries = entries.iter().map(portable_entry).collect::<Vec<_>>();
-    let portable_identity = canonical_json_hash(&serde_json::json!({
+    let portable_identity = super::evidence::canonical_json_hash(&serde_json::json!({
         "request": plan.request,
         "bounds": policy.bounds,
         "entries": portable_entries,
@@ -579,7 +577,7 @@ pub fn build_agent_guidance_result(
         "policy_hash": policy_hash,
         "non_claims": policy.required_non_claims,
     }));
-    let local_result_hash = canonical_json_hash(&serde_json::json!({
+    let local_result_hash = super::evidence::canonical_json_hash(&serde_json::json!({
         "request": plan.request,
         "bounds": policy.bounds,
         "entries": entries,
@@ -802,7 +800,7 @@ fn validate_observation(
             };
             if observation.byte_length != Some(text.len())
                 || observation.content_blake3.as_deref()
-                    != Some(blake3_hex(text.as_bytes()).as_str())
+                    != Some(super::evidence::blake3_hex(text.as_bytes()).as_str())
             {
                 issues.push(issue(
                     AGENT_GUIDANCE_ISSUE_OBSERVATION,
@@ -835,7 +833,10 @@ fn validate_observation(
 
 fn policy_constraint_entry(text: &String) -> AgentGuidanceEntry {
     AgentGuidanceEntry {
-        id: format!("policy-constraint-{}", blake3_hex(text.as_bytes())),
+        id: format!(
+            "policy-constraint-{}",
+            super::evidence::blake3_hex(text.as_bytes())
+        ),
         authority: AGENT_GUIDANCE_AUTHORITY_POLICY.to_string(),
         priority: POLICY_CONSTRAINT_PRIORITY,
         source_root: None,
@@ -846,7 +847,7 @@ fn policy_constraint_entry(text: &String) -> AgentGuidanceEntry {
         operations: Vec::new(),
         status: AgentGuidanceObservationStatus::Present,
         byte_length: Some(text.len()),
-        content_blake3: Some(blake3_hex(text.as_bytes())),
+        content_blake3: Some(super::evidence::blake3_hex(text.as_bytes())),
         text: Some(text.clone()),
     }
 }
@@ -914,7 +915,7 @@ fn inline_guidance_entry(
         operations,
         status: AgentGuidanceObservationStatus::Present,
         byte_length: Some(text.len()),
-        content_blake3: Some(blake3_hex(text.as_bytes())),
+        content_blake3: Some(super::evidence::blake3_hex(text.as_bytes())),
         text: Some(text.to_string()),
     }
 }
@@ -1138,7 +1139,7 @@ mod tests {
                 status: AgentGuidanceObservationStatus::Present,
                 text: Some(text.to_string()),
                 byte_length: Some(text.len()),
-                content_blake3: Some(blake3_hex(text.as_bytes())),
+                content_blake3: Some(super::super::evidence::blake3_hex(text.as_bytes())),
                 diagnostic: None,
             }],
             &["Policy constraint.".to_string()],

@@ -1,4 +1,4 @@
-use super::{model::*, outcome_machine::evaluate_outcome_machine_review};
+use super::model::*;
 
 const PROFILE_SOURCE_COMPATIBILITY: &str = "compatibility_fallback";
 const PROFILE_STAGE_PROPOSAL: &str = "proposal";
@@ -137,7 +137,7 @@ pub fn evaluate_workflow_profile(
         Vec::new()
     };
     evaluate_reviews(profile, evidence, &mut issues);
-    issues.extend(evaluate_outcome_machine_review(
+    issues.extend(super::outcome_machine::evaluate_outcome_machine_review(
         profile,
         evidence.outcome_machine_review.as_ref(),
         &evidence.outcome_machine_evidence,

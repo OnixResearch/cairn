@@ -1,10 +1,7 @@
-use super::super::common::issues_json;
-use super::super::{SemanticReviewIssue, SemanticReviewReport};
-
 pub(super) fn build_report(
     schema_version: &str,
-    mut issues: Vec<SemanticReviewIssue>,
-) -> SemanticReviewReport {
+    mut issues: Vec<super::super::SemanticReviewIssue>,
+) -> super::super::SemanticReviewReport {
     issues.sort_by(|left, right| {
         left.field_path
             .cmp(&right.field_path)
@@ -17,9 +14,9 @@ pub(super) fn build_report(
         "schema_version": schema_version,
         "valid": valid,
         "verdict": verdict,
-        "issues": issues_json(&issues),
+        "issues": super::super::common::issues_json(&issues),
     }));
-    SemanticReviewReport {
+    super::super::SemanticReviewReport {
         valid,
         verdict,
         issues,

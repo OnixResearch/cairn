@@ -1,5 +1,3 @@
-use super::evidence::canonical_preserves_bytes;
-
 /// Classification of a field-level difference between two receipt snapshots.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DriftClass {
@@ -68,8 +66,8 @@ pub fn receipt_field_drift(
     candidate: &serde_json::Value,
     source_map: &std::collections::HashMap<String, String>,
 ) -> DriftReport {
-    let baseline_bytes = canonical_preserves_bytes(baseline);
-    let candidate_bytes = canonical_preserves_bytes(candidate);
+    let baseline_bytes = super::evidence::canonical_preserves_bytes(baseline);
+    let candidate_bytes = super::evidence::canonical_preserves_bytes(candidate);
     let baseline_preserves_hash = baseline_bytes.as_ref().map(|bytes| blake3_hex(bytes)).ok();
     let candidate_preserves_hash = candidate_bytes.as_ref().map(|bytes| blake3_hex(bytes)).ok();
     let canonical_bytes_differ = baseline_preserves_hash != candidate_preserves_hash;
@@ -235,7 +233,6 @@ fn json_type_name(value: &serde_json::Value) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
 
     use super::*;
 
@@ -254,7 +251,7 @@ mod tests {
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     // r[impl cairn.determinism.preserves_receipt_field_drift.command]
     fn identical_inputs_yield_empty_drift() {
-        let receipt = json!({
+        let receipt = serde_json::json!({
             "schema": "cairn.receipt.v1",
             "valid": true,
             "result": {"ok": true, "count": 2}
@@ -268,13 +265,13 @@ mod tests {
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     // r[verify cairn.determinism.preserves_receipt_field_drift.command]
     fn drifting_inputs_cite_correct_field_paths() {
-        let baseline = json!({
+        let baseline = serde_json::json!({
             "schema": "cairn.receipt.v1",
             "valid": true,
             "count": 2,
             "nested": {"inner": "old"}
         });
-        let candidate = json!({
+        let candidate = serde_json::json!({
             "schema": "cairn.receipt.v1",
             "valid": false,
             "count": 3,
@@ -295,8 +292,8 @@ mod tests {
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     // r[verify cairn.determinism.preserves_receipt_field_drift.deterministic]
     fn key_reordering_is_not_drift() {
-        let left = json!({"b": 2, "a": {"ok": true}, "c": [1, 2]});
-        let right = json!({"a": {"ok": true}, "c": [1, 2], "b": 2});
+        let left = serde_json::json!({"b": 2, "a": {"ok": true}, "c": [1, 2]});
+        let right = serde_json::json!({"a": {"ok": true}, "c": [1, 2], "b": 2});
         let report = receipt_field_drift(&left, &right, &empty_map());
         assert!(report.entries.is_empty());
         // canonical_bytes_differ may be true or false depending on whether
@@ -307,8 +304,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn drift_detects_added_fields() {
-        let baseline = json!({"a": 1});
-        let candidate = json!({"a": 1, "b": 2});
+        let baseline = serde_json::json!({"a": 1});
+        let candidate = serde_json::json!({"a": 1, "b": 2});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].field_path, "/b");
@@ -319,8 +316,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn drift_detects_removed_fields() {
-        let baseline = json!({"a": 1, "b": 2});
-        let candidate = json!({"a": 1});
+        let baseline = serde_json::json!({"a": 1, "b": 2});
+        let candidate = serde_json::json!({"a": 1});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].field_path, "/b");
@@ -331,8 +328,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn type_mismatch_is_detected() {
-        let baseline = json!({"a": 1});
-        let candidate = json!({"a": "1"});
+        let baseline = serde_json::json!({"a": 1});
+        let candidate = serde_json::json!({"a": "1"});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].class, DriftClass::TypeMismatch);
@@ -341,8 +338,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn float_change_is_drift() {
-        let baseline = json!({"value": 1.0});
-        let candidate = json!({"value": 2.0});
+        let baseline = serde_json::json!({"value": 1.0});
+        let candidate = serde_json::json!({"value": 2.0});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].class, DriftClass::Changed);
@@ -351,8 +348,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn scalar_to_object_is_type_mismatch() {
-        let baseline = json!({"a": 1});
-        let candidate = json!({"a": {"b": 2}});
+        let baseline = serde_json::json!({"a": 1});
+        let candidate = serde_json::json!({"a": {"b": 2}});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].class, DriftClass::TypeMismatch);
@@ -361,8 +358,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn null_is_not_omitted() {
-        let baseline = json!({"a": null});
-        let candidate = json!({"a": "present"});
+        let baseline = serde_json::json!({"a": null});
+        let candidate = serde_json::json!({"a": "present"});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].class, DriftClass::TypeMismatch);
@@ -371,8 +368,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn array_element_added() {
-        let baseline = json!({"items": [1, 2]});
-        let candidate = json!({"items": [1, 2, 3]});
+        let baseline = serde_json::json!({"items": [1, 2]});
+        let candidate = serde_json::json!({"items": [1, 2, 3]});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].field_path, "/items/2");
@@ -382,8 +379,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn array_element_removed() {
-        let baseline = json!({"items": [1, 2, 3]});
-        let candidate = json!({"items": [1, 2]});
+        let baseline = serde_json::json!({"items": [1, 2, 3]});
+        let candidate = serde_json::json!({"items": [1, 2]});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].field_path, "/items/2");
@@ -393,8 +390,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn array_element_changed() {
-        let baseline = json!({"items": [1, 2, 3]});
-        let candidate = json!({"items": [1, 5, 3]});
+        let baseline = serde_json::json!({"items": [1, 2, 3]});
+        let candidate = serde_json::json!({"items": [1, 5, 3]});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert_eq!(report.entries.len(), 1);
         assert_eq!(report.entries[0].field_path, "/items/1");
@@ -408,8 +405,8 @@ mod tests {
             ("/valid", "r[example.valid]"),
             ("/nested/inner", "r[example.nested]"),
         ]);
-        let baseline = json!({"valid": true, "nested": {"inner": "old", "other": 1}});
-        let candidate = json!({"valid": false, "nested": {"inner": "new", "other": 1}});
+        let baseline = serde_json::json!({"valid": true, "nested": {"inner": "old", "other": 1}});
+        let candidate = serde_json::json!({"valid": false, "nested": {"inner": "new", "other": 1}});
         let report = receipt_field_drift(&baseline, &candidate, &source_map);
         assert_eq!(report.entries.len(), 2);
         assert_eq!(report.entries[0].field_path, "/nested/inner");
@@ -428,8 +425,8 @@ mod tests {
     // r[verify cairn.determinism.preserves_receipt_field_drift.source_id_mapping]
     fn unmapped_paths_have_null_source_id() {
         let source_map = map_from_pairs(&[("/valid", "r[example.valid]")]);
-        let baseline = json!({"valid": true, "count": 1});
-        let candidate = json!({"valid": false, "count": 2});
+        let baseline = serde_json::json!({"valid": true, "count": 1});
+        let candidate = serde_json::json!({"valid": false, "count": 2});
         let report = receipt_field_drift(&baseline, &candidate, &source_map);
         // /count is not in the map -> source_id = None
         let count_entry = report
@@ -452,8 +449,8 @@ mod tests {
     fn malformed_inputs_fail_closed_baseline_not_json() {
         // A non-Value::Object root (e.g. a plain array) is valid JSON but not
         // a receipt shape.  The helper should still produce deterministic output.
-        let baseline = json!([1, 2, 3]);
-        let candidate = json!({"a": 1});
+        let baseline = serde_json::json!([1, 2, 3]);
+        let candidate = serde_json::json!({"a": 1});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         // The root types differ, so one entry at "".
         assert_eq!(report.entries.len(), 1);
@@ -463,8 +460,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.tests]
     fn entries_are_sorted_lexically() {
-        let baseline = json!({"z": 1, "m": 1, "a": 1});
-        let candidate = json!({"z": 2, "m": 2, "a": 2});
+        let baseline = serde_json::json!({"z": 1, "m": 1, "a": 1});
+        let candidate = serde_json::json!({"z": 2, "m": 2, "a": 2});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         let paths: Vec<&str> = report
             .entries
@@ -477,8 +474,8 @@ mod tests {
     #[test]
     // r[verify cairn.determinism.preserves_receipt_field_drift.deterministic]
     fn hash_fields_are_included() {
-        let baseline = json!({"valid": true});
-        let candidate = json!({"valid": false});
+        let baseline = serde_json::json!({"valid": true});
+        let candidate = serde_json::json!({"valid": false});
         let report = receipt_field_drift(&baseline, &candidate, &empty_map());
         assert!(report.baseline_json_hash.len() == 64);
         assert!(report.candidate_json_hash.len() == 64);

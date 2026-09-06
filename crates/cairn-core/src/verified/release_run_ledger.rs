@@ -1,11 +1,5 @@
 // r[impl cairn.nominal_evidence_identities.receipt_chains]
 
-use super::evidence::canonical_json_hash;
-use super::nominal_identity::{
-    ArtifactDigestRole, Blake3Digest, DigestRoleMarker, LedgerDigestRole, PolicyDigestRole,
-    StateDigestRole, RAW_BLAKE3_PROFILE,
-};
-
 pub const RELEASE_RUN_LEDGER_SCHEMA_V1: &str = "cairn.release-run-ledger.v1";
 pub const RELEASE_RUN_LEDGER_BOUNDARY: &str = "release-run ledger validation proves ledger syntax, Cairn-owned identity linkage, transition validity, and non-claim preservation only; it does not publish artifacts, does not create tags, does not create GitHub releases, does not upload registry packages, does not sign artifacts, does not prove release eligibility, does not prove evidence truth, and does not trust external services";
 pub const RELEASE_RUN_STATE_PENDING: &str = "pending";
@@ -146,7 +140,7 @@ pub struct ReleaseRunExplainProjection {
 
 #[must_use]
 pub fn release_run_identity(ledger: &ReleaseRunLedger) -> String {
-    canonical_json_hash(&serde_json::json!({
+    super::evidence::canonical_json_hash(&serde_json::json!({
         "lifecycle_root_identity": ledger.lifecycle_root_identity,
         "policy_hash": ledger.policy_hash,
         "command_identity": ledger.command_identity,
@@ -160,7 +154,7 @@ pub fn release_run_ledger_hash(value: &serde_json::Value) -> String {
     if let Some(object) = material.as_object_mut() {
         object.remove("ledger_hash");
     }
-    canonical_json_hash(&material)
+    super::evidence::canonical_json_hash(&material)
 }
 
 #[must_use]
@@ -279,7 +273,10 @@ fn validate_release_run_ledger(
         &mut issues,
     );
     validate_hash(&ledger.policy_hash, "policy_hash", &mut issues);
-    if !same_digest::<PolicyDigestRole>(&ledger.policy_hash, expected_policy_hash) {
+    if !same_digest::<super::nominal_identity::PolicyDigestRole>(
+        &ledger.policy_hash,
+        expected_policy_hash,
+    ) {
         push_issue(
             &mut issues,
             "release_run_ledger.policy_stale",
@@ -300,7 +297,7 @@ fn validate_release_run_ledger(
     validate_required_text(&ledger.profile, "profile", &mut issues);
     let expected_run_id = release_run_identity(ledger);
     validate_hash(&ledger.run_id, "run_id", &mut issues);
-    if !same_digest::<StateDigestRole>(&ledger.run_id, &expected_run_id) {
+    if !same_digest::<super::nominal_identity::StateDigestRole>(&ledger.run_id, &expected_run_id) {
         push_issue(
             &mut issues,
             "release_run_ledger.run_identity_stale",
@@ -319,7 +316,10 @@ fn validate_release_run_ledger(
     );
     validate_blockers_and_hints(ledger, &step_index, &mut issues);
     validate_non_claims(&ledger.non_claims, &mut issues);
-    if !same_digest::<LedgerDigestRole>(&ledger.ledger_hash, &computed_hash) {
+    if !same_digest::<super::nominal_identity::LedgerDigestRole>(
+        &ledger.ledger_hash,
+        &computed_hash,
+    ) {
         push_issue(
             &mut issues,
             "release_run_ledger.hash_mismatch",
@@ -444,7 +444,10 @@ fn validate_artifacts(
                 "artifact ids must be unique",
             );
         }
-        if !same_digest::<StateDigestRole>(&artifact.run_id, &ledger.run_id) {
+        if !same_digest::<super::nominal_identity::StateDigestRole>(
+            &artifact.run_id,
+            &ledger.run_id,
+        ) {
             push_issue(
                 issues,
                 "release_run_ledger.artifact_run_substitution",
@@ -738,13 +741,13 @@ fn validate_unique_texts(
 
 fn validate_hash(value: &str, field_path: &str, issues: &mut Vec<ReleaseRunLedgerIssue>) {
     let valid = if field_path == "policy_hash" {
-        is_digest::<PolicyDigestRole>(value)
+        is_digest::<super::nominal_identity::PolicyDigestRole>(value)
     } else if field_path == "ledger_hash" {
-        is_digest::<LedgerDigestRole>(value)
+        is_digest::<super::nominal_identity::LedgerDigestRole>(value)
     } else if matches!(field_path, "lifecycle_root_identity" | "run_id") {
-        is_digest::<StateDigestRole>(value)
+        is_digest::<super::nominal_identity::StateDigestRole>(value)
     } else {
-        is_digest::<ArtifactDigestRole>(value)
+        is_digest::<super::nominal_identity::ArtifactDigestRole>(value)
     };
     if !valid {
         push_issue(
@@ -756,13 +759,26 @@ fn validate_hash(value: &str, field_path: &str, issues: &mut Vec<ReleaseRunLedge
     }
 }
 
-fn is_digest<Role: DigestRoleMarker>(value: &str) -> bool {
-    Blake3Digest::<Role>::parse(value, RAW_BLAKE3_PROFILE, "release_run.digest").is_ok()
+fn is_digest<Role: super::nominal_identity::DigestRoleMarker>(value: &str) -> bool {
+    super::nominal_identity::Blake3Digest::<Role>::parse(
+        value,
+        super::nominal_identity::RAW_BLAKE3_PROFILE,
+        "release_run.digest",
+    )
+    .is_ok()
 }
 
-fn same_digest<Role: DigestRoleMarker>(left: &str, right: &str) -> bool {
-    let left = Blake3Digest::<Role>::parse(left, RAW_BLAKE3_PROFILE, "release_run.left_digest");
-    let right = Blake3Digest::<Role>::parse(right, RAW_BLAKE3_PROFILE, "release_run.right_digest");
+fn same_digest<Role: super::nominal_identity::DigestRoleMarker>(left: &str, right: &str) -> bool {
+    let left = super::nominal_identity::Blake3Digest::<Role>::parse(
+        left,
+        super::nominal_identity::RAW_BLAKE3_PROFILE,
+        "release_run.left_digest",
+    );
+    let right = super::nominal_identity::Blake3Digest::<Role>::parse(
+        right,
+        super::nominal_identity::RAW_BLAKE3_PROFILE,
+        "release_run.right_digest",
+    );
     matches!(
         (left, right),
         (Ok(left), Ok(right)) if left.as_hex() == right.as_hex()

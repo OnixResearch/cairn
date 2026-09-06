@@ -1047,16 +1047,6 @@ fn sort_issues(issues: &mut Vec<ContentBoundTraceIndexIssue>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::verified::{
-        content_bound_requirement_registry::{
-            evaluate_content_bound_requirement_registry, ContentBoundRevision,
-            ContentBoundSpecificationInput, CONTENT_BOUND_REVISION_KIND_OPAQUE,
-        },
-        traceability::{
-            TraceabilitySource, TRACEABILITY_VERB_DEPENDS, TRACEABILITY_VERB_IMPL,
-            TRACEABILITY_VERB_RELATED, TRACEABILITY_VERB_VERIFY,
-        },
-    };
 
     use super::*;
 
@@ -1070,8 +1060,9 @@ mod tests {
     const SECOND_SOURCE_PATH: &str = "crates/demo/src/other.rs";
     const EXPECTED_LINK_COUNT: usize = 2;
 
-    fn specification() -> ContentBoundSpecificationInput {
-        ContentBoundSpecificationInput {
+    fn specification(
+    ) -> crate::verified::content_bound_requirement_registry::ContentBoundSpecificationInput {
+        crate::verified::content_bound_requirement_registry::ContentBoundSpecificationInput {
             path: SPEC_PATH.to_string(),
             markdown: format!(
                 "# Trace\n\n## Requirements\n\n### Requirement: Demo\nr[{REQUIREMENT_ID}] Cairn MUST bind the declared link.\n\n#### Scenario: Link\n- GIVEN a marker\n- WHEN indexed\n- THEN the link MUST be content-bound\n"
@@ -1082,12 +1073,12 @@ mod tests {
     fn registry(
         policy: &[u8],
     ) -> crate::verified::content_bound_requirement_registry::ContentBoundRequirementRegistry {
-        evaluate_content_bound_requirement_registry(
+        crate::verified::content_bound_requirement_registry::evaluate_content_bound_requirement_registry(
             vec![specification()],
             policy,
             REPOSITORY_ID,
-            ContentBoundRevision {
-                kind: CONTENT_BOUND_REVISION_KIND_OPAQUE.to_string(),
+            crate::verified::content_bound_requirement_registry::ContentBoundRevision {
+                kind: crate::verified::content_bound_requirement_registry::CONTENT_BOUND_REVISION_KIND_OPAQUE.to_string(),
                 value: REVISION.to_string(),
             },
         )
@@ -1098,21 +1089,21 @@ mod tests {
     fn profile() -> crate::verified::traceability::TraceabilityProfile {
         crate::verified::traceability::TraceabilityProfile {
             id: "test".to_string(),
-            requirement_sources: vec![TraceabilitySource {
+            requirement_sources: vec![crate::verified::traceability::TraceabilitySource {
                 root: ".cairn/specs".to_string(),
                 source_kind: "accepted_specs".to_string(),
                 extensions: vec!["md".to_string()],
             }],
-            evidence_sources: vec![TraceabilitySource {
+            evidence_sources: vec![crate::verified::traceability::TraceabilitySource {
                 root: "crates".to_string(),
                 source_kind: "rust_source".to_string(),
                 extensions: vec!["rs".to_string()],
             }],
             marker_verbs: vec![
-                TRACEABILITY_VERB_IMPL.to_string(),
-                TRACEABILITY_VERB_VERIFY.to_string(),
-                TRACEABILITY_VERB_DEPENDS.to_string(),
-                TRACEABILITY_VERB_RELATED.to_string(),
+                crate::verified::traceability::TRACEABILITY_VERB_IMPL.to_string(),
+                crate::verified::traceability::TRACEABILITY_VERB_VERIFY.to_string(),
+                crate::verified::traceability::TRACEABILITY_VERB_DEPENDS.to_string(),
+                crate::verified::traceability::TRACEABILITY_VERB_RELATED.to_string(),
             ],
             assurance_level: TRACEABILITY_ASSURANCE_DECLARED.to_string(),
             anchor_kind: TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES.to_string(),
@@ -1124,7 +1115,8 @@ mod tests {
             path: path.to_string(),
             text: format!(
                 "{prefix}// r[{} {REQUIREMENT_ID}]\n// r[{} {REQUIREMENT_ID}]\n",
-                TRACEABILITY_VERB_IMPL, TRACEABILITY_VERB_VERIFY
+                crate::verified::traceability::TRACEABILITY_VERB_IMPL,
+                crate::verified::traceability::TRACEABILITY_VERB_VERIFY
             ),
         }
     }
@@ -1254,7 +1246,10 @@ mod tests {
                 source(SOURCE_PATH, ""),
                 crate::verified::traceability::TraceabilityFile {
                     path: SECOND_SOURCE_PATH.to_string(),
-                    text: format!("// r[{} {REQUIREMENT_ID}]\n", TRACEABILITY_VERB_IMPL),
+                    text: format!(
+                        "// r[{} {REQUIREMENT_ID}]\n",
+                        crate::verified::traceability::TRACEABILITY_VERB_IMPL
+                    ),
                 },
             ],
         );
@@ -1303,7 +1298,10 @@ mod tests {
             &profile(),
             vec![crate::verified::traceability::TraceabilityFile {
                 path: SOURCE_PATH.to_string(),
-                text: format!("// r[{} cairn.trace.missing]\n", TRACEABILITY_VERB_IMPL),
+                text: format!(
+                    "// r[{} cairn.trace.missing]\n",
+                    crate::verified::traceability::TRACEABILITY_VERB_IMPL
+                ),
             }],
         );
         let index = unselected.index.expect("index with no selected links");

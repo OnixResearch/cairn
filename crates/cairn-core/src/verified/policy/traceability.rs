@@ -1,5 +1,3 @@
-use super::{fields::string_field, PolicyError, TraceabilityPolicy};
-
 const TRACEABILITY_POLICY_FIELD: &str = "traceability_policy";
 const TRACEABILITY_DEFAULT_PROFILE_FIELD: &str = "traceability_policy.default_profile";
 const TRACEABILITY_PROFILES_FIELD: &str = "traceability_policy.profiles";
@@ -27,18 +25,22 @@ const TRACEABILITY_MARKER_VERBS: &[&str] = &[
 
 pub(super) fn traceability_policy(
     value: &serde_json::Value,
-) -> Result<TraceabilityPolicy, PolicyError> {
+) -> Result<super::TraceabilityPolicy, super::PolicyError> {
     // r[impl cairn.supersede.traceability_ownership.configured_profiles]
     let policy = value
         .get(TRACEABILITY_POLICY_FIELD)
-        .ok_or(PolicyError::MissingField(TRACEABILITY_POLICY_FIELD))?;
-    let default_profile = string_field(policy, TRACEABILITY_DEFAULT_PROFILE_FIELD)?;
+        .ok_or(super::PolicyError::MissingField(TRACEABILITY_POLICY_FIELD))?;
+    let default_profile = super::fields::string_field(policy, TRACEABILITY_DEFAULT_PROFILE_FIELD)?;
     let profiles_value = policy
         .get("profiles")
         .and_then(serde_json::Value::as_array)
-        .ok_or(PolicyError::MissingField(TRACEABILITY_PROFILES_FIELD))?;
+        .ok_or(super::PolicyError::MissingField(
+            TRACEABILITY_PROFILES_FIELD,
+        ))?;
     if profiles_value.is_empty() {
-        return Err(PolicyError::InvalidField(TRACEABILITY_PROFILES_FIELD));
+        return Err(super::PolicyError::InvalidField(
+            TRACEABILITY_PROFILES_FIELD,
+        ));
     }
 
     let mut seen_profile_ids = std::collections::BTreeSet::new();
@@ -46,13 +48,15 @@ pub(super) fn traceability_policy(
     for profile_value in profiles_value {
         let profile = parse_profile(profile_value)?;
         if !seen_profile_ids.insert(profile.id.clone()) {
-            return Err(PolicyError::InvalidField(TRACEABILITY_PROFILE_ID_FIELD));
+            return Err(super::PolicyError::InvalidField(
+                TRACEABILITY_PROFILE_ID_FIELD,
+            ));
         }
         profiles.push(profile);
     }
 
     if default_profile.is_empty() || !profiles.iter().any(|profile| profile.id == default_profile) {
-        return Err(PolicyError::InvalidField(
+        return Err(super::PolicyError::InvalidField(
             TRACEABILITY_DEFAULT_PROFILE_FIELD,
         ));
     }
@@ -60,10 +64,12 @@ pub(super) fn traceability_policy(
     if !profiles.iter().any(|profile| {
         profile.id == crate::verified::traceability::TRACEABILITY_PROFILE_CAIRN_DEFAULT
     }) {
-        return Err(PolicyError::InvalidField(TRACEABILITY_PROFILES_FIELD));
+        return Err(super::PolicyError::InvalidField(
+            TRACEABILITY_PROFILES_FIELD,
+        ));
     }
 
-    Ok(TraceabilityPolicy {
+    Ok(super::TraceabilityPolicy {
         default_profile,
         profiles,
     })
@@ -71,10 +77,12 @@ pub(super) fn traceability_policy(
 
 fn parse_profile(
     value: &serde_json::Value,
-) -> Result<crate::verified::traceability::TraceabilityProfile, PolicyError> {
-    let id = string_field(value, TRACEABILITY_PROFILE_ID_FIELD)?;
+) -> Result<crate::verified::traceability::TraceabilityProfile, super::PolicyError> {
+    let id = super::fields::string_field(value, TRACEABILITY_PROFILE_ID_FIELD)?;
     if id.is_empty() {
-        return Err(PolicyError::InvalidField(TRACEABILITY_PROFILE_ID_FIELD));
+        return Err(super::PolicyError::InvalidField(
+            TRACEABILITY_PROFILE_ID_FIELD,
+        ));
     }
     let requirement_sources = parse_sources(
         value,
@@ -89,19 +97,21 @@ fn parse_profile(
         TRACEABILITY_EVIDENCE_SOURCE_KINDS,
     )?;
     let marker_verbs = parse_marker_verbs(value)?;
-    let assurance_level = string_field(value, TRACEABILITY_ASSURANCE_LEVEL_FIELD)?;
-    let anchor_kind = string_field(value, TRACEABILITY_ANCHOR_KIND_FIELD)?;
+    let assurance_level = super::fields::string_field(value, TRACEABILITY_ASSURANCE_LEVEL_FIELD)?;
+    let anchor_kind = super::fields::string_field(value, TRACEABILITY_ANCHOR_KIND_FIELD)?;
     if assurance_level
         != crate::verified::content_bound_trace_index::TRACEABILITY_ASSURANCE_DECLARED
     {
-        return Err(PolicyError::InvalidField(
+        return Err(super::PolicyError::InvalidField(
             TRACEABILITY_ASSURANCE_LEVEL_FIELD,
         ));
     }
     if anchor_kind
         != crate::verified::content_bound_trace_index::TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES
     {
-        return Err(PolicyError::InvalidField(TRACEABILITY_ANCHOR_KIND_FIELD));
+        return Err(super::PolicyError::InvalidField(
+            TRACEABILITY_ANCHOR_KIND_FIELD,
+        ));
     }
     Ok(crate::verified::traceability::TraceabilityProfile {
         id,
@@ -118,13 +128,13 @@ fn parse_sources(
     lookup: &str,
     field: &'static str,
     allowed_source_kinds: &[&str],
-) -> Result<Vec<crate::verified::traceability::TraceabilitySource>, PolicyError> {
+) -> Result<Vec<crate::verified::traceability::TraceabilitySource>, super::PolicyError> {
     let sources = value
         .get(lookup)
         .and_then(serde_json::Value::as_array)
-        .ok_or(PolicyError::MissingField(field))?;
+        .ok_or(super::PolicyError::MissingField(field))?;
     if sources.is_empty() {
-        return Err(PolicyError::InvalidField(field));
+        return Err(super::PolicyError::InvalidField(field));
     }
     sources
         .iter()
@@ -135,22 +145,26 @@ fn parse_sources(
 fn parse_source(
     value: &serde_json::Value,
     allowed_source_kinds: &[&str],
-) -> Result<crate::verified::traceability::TraceabilitySource, PolicyError> {
-    let root = string_field(value, TRACEABILITY_SOURCE_ROOT_FIELD)?;
-    let source_kind = string_field(value, TRACEABILITY_SOURCE_KIND_FIELD)?;
+) -> Result<crate::verified::traceability::TraceabilitySource, super::PolicyError> {
+    let root = super::fields::string_field(value, TRACEABILITY_SOURCE_ROOT_FIELD)?;
+    let source_kind = super::fields::string_field(value, TRACEABILITY_SOURCE_KIND_FIELD)?;
     let extensions = traceability_string_array(value, TRACEABILITY_SOURCE_EXTENSIONS_FIELD)?;
     if !is_safe_traceability_path(&root) {
-        return Err(PolicyError::InvalidField(TRACEABILITY_SOURCE_ROOT_FIELD));
+        return Err(super::PolicyError::InvalidField(
+            TRACEABILITY_SOURCE_ROOT_FIELD,
+        ));
     }
     if !allowed_source_kinds.contains(&source_kind.as_str()) {
-        return Err(PolicyError::InvalidField(TRACEABILITY_SOURCE_KIND_FIELD));
+        return Err(super::PolicyError::InvalidField(
+            TRACEABILITY_SOURCE_KIND_FIELD,
+        ));
     }
     if extensions.is_empty()
         || extensions
             .iter()
             .any(|extension| !is_safe_extension(extension))
     {
-        return Err(PolicyError::InvalidField(
+        return Err(super::PolicyError::InvalidField(
             TRACEABILITY_SOURCE_EXTENSIONS_FIELD,
         ));
     }
@@ -161,20 +175,24 @@ fn parse_source(
     })
 }
 
-fn parse_marker_verbs(value: &serde_json::Value) -> Result<Vec<String>, PolicyError> {
+fn parse_marker_verbs(value: &serde_json::Value) -> Result<Vec<String>, super::PolicyError> {
     let marker_verbs = traceability_string_array(value, TRACEABILITY_MARKER_VERBS_FIELD)?;
     if marker_verbs.is_empty()
         || marker_verbs
             .iter()
             .any(|verb| !TRACEABILITY_MARKER_VERBS.contains(&verb.as_str()))
     {
-        return Err(PolicyError::InvalidField(TRACEABILITY_MARKER_VERBS_FIELD));
+        return Err(super::PolicyError::InvalidField(
+            TRACEABILITY_MARKER_VERBS_FIELD,
+        ));
     }
     let unique = marker_verbs
         .iter()
         .collect::<std::collections::BTreeSet<_>>();
     if unique.len() != marker_verbs.len() {
-        return Err(PolicyError::InvalidField(TRACEABILITY_MARKER_VERBS_FIELD));
+        return Err(super::PolicyError::InvalidField(
+            TRACEABILITY_MARKER_VERBS_FIELD,
+        ));
     }
     Ok(marker_verbs)
 }
@@ -182,17 +200,17 @@ fn parse_marker_verbs(value: &serde_json::Value) -> Result<Vec<String>, PolicyEr
 fn traceability_string_array(
     value: &serde_json::Value,
     field: &'static str,
-) -> Result<Vec<String>, PolicyError> {
+) -> Result<Vec<String>, super::PolicyError> {
     let lookup = field.rsplit('.').next().unwrap_or(field);
     value
         .get(lookup)
         .and_then(serde_json::Value::as_array)
-        .ok_or(PolicyError::MissingField(field))?
+        .ok_or(super::PolicyError::MissingField(field))?
         .iter()
         .map(|item| {
             item.as_str()
                 .map(str::to_string)
-                .ok_or(PolicyError::InvalidField(field))
+                .ok_or(super::PolicyError::InvalidField(field))
         })
         .collect()
 }

@@ -1,5 +1,3 @@
-use super::evidence::canonical_json_hash;
-
 pub const STATE_MACHINE_RECEIPT_SCHEMA_V1: &str = "cairn.state-machine-receipt.v1";
 pub const STATE_MACHINE_RECEIPT_BOUNDARY: &str = "accepted state-machine receipts are bounded witnesses for named lifecycle transition properties only; they do not prove Cairn implementation correctness, do not prove repository correctness, do not prove source-code correctness, do not prove exhaustive lifecycle safety, do not prove release eligibility, do not prove verifier soundness, and do not prove downstream behavioral correctness";
 pub const STATE_MACHINE_VERIFICATION_ROLE_BOUNDED_WITNESS: &str = "bounded-witness";
@@ -90,7 +88,7 @@ pub fn state_machine_receipt_hash(value: &serde_json::Value) -> String {
     if let Some(object) = material.as_object_mut() {
         object.remove("receipt_hash");
     }
-    canonical_json_hash(&material)
+    super::evidence::canonical_json_hash(&material)
 }
 
 #[must_use]

@@ -1,4 +1,4 @@
-use super::{admission::workflow_topological_order, model::*};
+use super::model::*;
 
 const WORKFLOW_PLACEHOLDER_TOKEN: &str = "CAIRN_PLACEHOLDER";
 
@@ -17,7 +17,7 @@ pub fn derive_workflow_status(
     schema: &WorkflowSchemaPolicy,
     observations: &[WorkflowArtifactObservation],
 ) -> Result<WorkflowStatusReport, WorkflowAdmissionError> {
-    let order = workflow_topological_order(schema)?;
+    let order = super::admission::workflow_topological_order(schema)?;
     let observations = normalize_observations(schema, observations)?;
     let mut statuses = std::collections::BTreeMap::new();
     let mut issues = Vec::new();

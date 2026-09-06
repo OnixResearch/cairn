@@ -1,6 +1,3 @@
-use super::document_collaboration::DocumentCollaborationPolicy;
-use super::PolicySchemaCompatibilityMetadata;
-
 pub const SUPPORTED_POLICY_VERSION: u64 = 1;
 pub const TASK_IDENTITY_MARKER_ID: &str = "task";
 pub const TASK_PREDECESSOR_MARKER_ID: &str = "after";
@@ -24,7 +21,7 @@ pub struct Policy {
     pub generated_agent_workflow_policy:
         crate::verified::generated_agent_workflow::GeneratedAgentWorkflowPolicy,
     pub machine_contract_policy: crate::verified::cli_machine::MachineContractPolicy,
-    pub document_collaboration_policy: DocumentCollaborationPolicy,
+    pub document_collaboration_policy: super::document_collaboration::DocumentCollaborationPolicy,
     pub sync_require_gate: bool,
     pub archive_require_gate: bool,
     pub migrate_require_manifest: bool,
@@ -41,7 +38,7 @@ pub struct Policy {
     pub runtime_evidence_policy: crate::verified::runtime_evidence::RuntimeEvidencePolicy,
     pub nominal_identity_policy: crate::verified::nominal_identity::NominalIdentityPolicy,
     pub lifecycle_store_policy: LifecycleStorePolicy,
-    pub policy_schema_compatibility: Option<PolicySchemaCompatibilityMetadata>,
+    pub policy_schema_compatibility: Option<super::PolicySchemaCompatibilityMetadata>,
     pub raw: serde_json::Value,
 }
 

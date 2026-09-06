@@ -4,24 +4,20 @@
 // r[impl cairn.generated_agent_workflows.adapters.valid]
 // r[impl cairn.generated_agent_workflows.adapters.authority]
 // r[impl cairn.generated_agent_workflows.adapters.unknown]
-use super::{
-    admission::{find_generated_workflow_adapter, issue},
-    model::{
-        AdmittedGeneratedWorkflowCatalog, GeneratedWorkflowAdapter, GeneratedWorkflowAdapterFormat,
-        GeneratedWorkflowIssue, RenderedGeneratedWorkflowFile,
-        GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER, GENERATED_AGENT_WORKFLOW_ISSUE_DESTINATION,
-    },
-};
+use super::admission::issue;
 
 pub fn render_generated_agent_workflows(
-    catalog: &AdmittedGeneratedWorkflowCatalog,
+    catalog: &super::model::AdmittedGeneratedWorkflowCatalog,
     adapter_id: &str,
-) -> Result<Vec<RenderedGeneratedWorkflowFile>, Vec<GeneratedWorkflowIssue>> {
-    let adapter =
-        find_generated_workflow_adapter(catalog, adapter_id).map_err(|issue| vec![issue])?;
+) -> Result<
+    Vec<super::model::RenderedGeneratedWorkflowFile>,
+    Vec<super::model::GeneratedWorkflowIssue>,
+> {
+    let adapter = super::admission::find_generated_workflow_adapter(catalog, adapter_id)
+        .map_err(|issue| vec![issue])?;
     if catalog.policy.descriptors.len() > adapter.max_files {
         return Err(vec![issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
             "adapter.max_files",
             "adapter file count bound is smaller than the workflow catalog",
         )]);
@@ -31,7 +27,7 @@ pub fn render_generated_agent_workflows(
         let relative_path = adapter_path(adapter, &descriptor.id);
         if !safe_generated_relative_path(&relative_path, catalog.policy.bounds.max_path_bytes) {
             return Err(vec![issue(
-                GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
                 format!("adapters.{}.path", adapter.id),
                 "adapter generated an unsafe relative path",
             )]);
@@ -39,7 +35,7 @@ pub fn render_generated_agent_workflows(
         let contents = render_descriptor(adapter, descriptor);
         if contents.len() > catalog.policy.bounds.max_file_bytes {
             return Err(vec![issue(
-                GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
                 format!("adapters.{}.file_bytes", adapter.id),
                 "adapter output exceeds the policy file bound",
             )]);
@@ -49,7 +45,7 @@ pub fn render_generated_agent_workflows(
                 "descriptor": descriptor,
                 "generator_version": catalog.policy.generator_version,
             }));
-        files.push(RenderedGeneratedWorkflowFile {
+        files.push(super::model::RenderedGeneratedWorkflowFile {
             workflow_id: descriptor.id.clone(),
             relative_path,
             content_blake3: crate::verified::evidence::blake3_hex(contents.as_bytes()),
@@ -81,12 +77,12 @@ pub fn join_generated_destination(
     destination: &str,
     relative: &str,
     max_bytes: usize,
-) -> Result<String, GeneratedWorkflowIssue> {
+) -> Result<String, super::model::GeneratedWorkflowIssue> {
     if !safe_generated_destination_path(destination, max_bytes)
         || !safe_generated_relative_path(relative, max_bytes)
     {
         return Err(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_DESTINATION,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESTINATION,
             "destination",
             "destination and generated path must be safe project-relative paths",
         ));
@@ -94,7 +90,7 @@ pub fn join_generated_destination(
     let joined = format!("{destination}/{relative}");
     if !safe_generated_relative_path(&joined, max_bytes) {
         return Err(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_DESTINATION,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESTINATION,
             "destination",
             "joined generated path exceeds the policy path bound",
         ));
@@ -102,13 +98,14 @@ pub fn join_generated_destination(
     Ok(joined)
 }
 
-fn adapter_path(adapter: &GeneratedWorkflowAdapter, workflow_id: &str) -> String {
+fn adapter_path(adapter: &super::model::GeneratedWorkflowAdapter, workflow_id: &str) -> String {
     match adapter.format {
-        GeneratedWorkflowAdapterFormat::AgentSkills => format!(
+        super::model::GeneratedWorkflowAdapterFormat::AgentSkills => format!(
             "{}{}{}",
             adapter.file_prefix, workflow_id, adapter.directory_suffix
         ),
-        GeneratedWorkflowAdapterFormat::Claude | GeneratedWorkflowAdapterFormat::Codex => {
+        super::model::GeneratedWorkflowAdapterFormat::Claude
+        | super::model::GeneratedWorkflowAdapterFormat::Codex => {
             format!(
                 "{}{}{}",
                 adapter.file_prefix, workflow_id, adapter.file_suffix
@@ -118,7 +115,7 @@ fn adapter_path(adapter: &GeneratedWorkflowAdapter, workflow_id: &str) -> String
 }
 
 fn render_descriptor(
-    adapter: &GeneratedWorkflowAdapter,
+    adapter: &super::model::GeneratedWorkflowAdapter,
     descriptor: &super::model::GeneratedWorkflowDescriptor,
 ) -> String {
     let mut output = String::new();

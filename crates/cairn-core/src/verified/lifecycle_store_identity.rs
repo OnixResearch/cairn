@@ -5,8 +5,6 @@
 //! This module treats checkout paths as opaque local display facts. It performs
 //! no I/O and makes no claim about path existence, ownership, or safety.
 
-use super::evidence::{blake3_hex, canonical_json, canonical_json_hash};
-
 // r[impl cairn.lifecycle_stores.identity]
 // r[impl cairn.lifecycle_stores.locator]
 // r[impl cairn.lifecycle_stores.functional_boundary.pure]
@@ -321,7 +319,7 @@ pub fn lifecycle_store_identity_material(identity: &LifecycleStoreIdentity) -> S
 /// Hash canonical source material that the shell or export boundary supplies.
 #[must_use]
 pub fn lifecycle_store_source_identity(canonical_source_material: &[u8]) -> String {
-    blake3_hex(canonical_source_material)
+    super::evidence::blake3_hex(canonical_source_material)
 }
 
 #[must_use]
@@ -547,13 +545,13 @@ pub fn lifecycle_store_locator_plan_hash(plan: &LifecycleStoreLocatorPlan) -> St
     if let Some(object) = value.as_object_mut() {
         object.remove("plan_hash");
     }
-    canonical_json_hash(&value)
+    super::evidence::canonical_json_hash(&value)
 }
 
 #[must_use]
 pub fn lifecycle_store_locator_portable_hash(facts: &LifecycleStoreLocatorPortableFacts) -> String {
     let value = serde_json::to_value(facts).expect("portable fact serialization is infallible");
-    canonical_json_hash(&value)
+    super::evidence::canonical_json_hash(&value)
 }
 
 fn validate_identity_schema(schema: &str, diagnostics: &mut Vec<LifecycleStoreDiagnostic>) {
@@ -721,8 +719,9 @@ fn build_store_identity(
         &non_claim_text,
         source_identity.as_str(),
     );
-    let store_identity =
-        LifecycleStoreBlake3Identity::from_computed(blake3_hex(material.as_bytes()));
+    let store_identity = LifecycleStoreBlake3Identity::from_computed(super::evidence::blake3_hex(
+        material.as_bytes(),
+    ));
     Some(LifecycleStoreIdentity {
         schema: LIFECYCLE_STORE_IDENTITY_SCHEMA_V1.to_string(),
         store_id,
@@ -740,7 +739,7 @@ fn canonical_store_identity_material(
     non_claims: &[String],
     source_identity: &str,
 ) -> String {
-    canonical_json(&serde_json::json!({
+    super::evidence::canonical_json(&serde_json::json!({
         "domain": STORE_IDENTITY_DOMAIN,
         "schema": schema,
         "store_id": store_id,
@@ -1001,7 +1000,7 @@ fn build_locator_state(
 }
 
 fn local_locator_state_identity(mappings: &[LifecycleStoreLocatorMapping]) -> String {
-    canonical_json_hash(&serde_json::json!({
+    super::evidence::canonical_json_hash(&serde_json::json!({
         "domain": LOCATOR_LOCAL_STATE_DOMAIN,
         "schema": LIFECYCLE_STORE_LOCATOR_SCHEMA_V1,
         "mappings": mappings,
@@ -1018,7 +1017,7 @@ fn portable_locator_state_identity(mappings: &[LifecycleStoreLocatorMapping]) ->
             })
         })
         .collect::<Vec<_>>();
-    canonical_json_hash(&serde_json::json!({
+    super::evidence::canonical_json_hash(&serde_json::json!({
         "domain": LOCATOR_PORTABLE_STATE_DOMAIN,
         "schema": LIFECYCLE_STORE_LOCATOR_SCHEMA_V1,
         "mappings": portable,

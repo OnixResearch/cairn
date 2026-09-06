@@ -1,12 +1,8 @@
-use super::super::common::NO_CORRECTNESS_CLAIM;
-use super::common::bundle_issue;
-use super::types::ExportBundleIssue;
-
 pub(super) fn export_bundle_caveat_issues(
     object: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<ExportBundleIssue> {
+) -> Vec<super::types::ExportBundleIssue> {
     let Some(caveats) = object.get("caveats").and_then(serde_json::Value::as_object) else {
-        return vec![bundle_issue(
+        return vec![super::common::bundle_issue(
             "export_bundle.missing_object",
             "caveats must be a JSON object",
         )];
@@ -15,9 +11,9 @@ pub(super) fn export_bundle_caveat_issues(
     if caveats
         .get("correctness_claim")
         .and_then(serde_json::Value::as_str)
-        != Some(NO_CORRECTNESS_CLAIM)
+        != Some(super::super::common::NO_CORRECTNESS_CLAIM)
     {
-        issues.push(bundle_issue(
+        issues.push(super::common::bundle_issue(
             "export_bundle.correctness_overclaim",
             "export-bundle hash agreement is replay/provenance evidence, not a correctness proof",
         ));
@@ -27,7 +23,7 @@ pub(super) fn export_bundle_caveat_issues(
         .and_then(serde_json::Value::as_str)
         == Some("stable-semantic-identity")
     {
-        issues.push(bundle_issue(
+        issues.push(super::common::bundle_issue(
             "export_bundle.compiler_ir_overclaim",
             "compiler IR evidence must remain toolchain-coupled and cannot claim stable semantic identity",
         ));

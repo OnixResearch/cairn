@@ -1,13 +1,5 @@
 use serde_json::json;
 
-use super::evidence::canonical_json_hash;
-use super::evidence_chain_readiness::{EvidenceChainReadiness, EvidenceChainReadinessIssue};
-use super::function_address_preserves_readiness::{
-    evaluate_function_address_preserves_readiness, function_address_preserves_policy,
-    FunctionAddressJsonProjection, FunctionAddressPreservesInput,
-    FUNCTION_ADDRESS_PRESERVES_SCHEMA_V1,
-};
-
 pub const FUNCTION_ADDRESS_MODE_DISABLED: &str = "disabled";
 pub const FUNCTION_ADDRESS_MODE_OPTIONAL: &str = "optional";
 pub const FUNCTION_ADDRESS_MODE_REQUIRED: &str = "required";
@@ -23,7 +15,8 @@ pub const FUNCTION_ADDRESS_DIGEST_ISSUE_CASE_UNSUPPORTED: &str =
     "function_address.digest_case_unsupported";
 pub const FUNCTION_ADDRESS_VALENCE_SCHEMA_V1: &str = "valence.function-address-evidence.v1";
 pub const FUNCTION_ADDRESS_MANTLE_BINDING_SCHEMA_V1: &str = "mantle.function-address-binding.v1";
-pub const FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1: &str = FUNCTION_ADDRESS_PRESERVES_SCHEMA_V1;
+pub const FUNCTION_ADDRESS_KAMACITE_SCHEMA_V1: &str =
+    super::function_address_preserves_readiness::FUNCTION_ADDRESS_PRESERVES_SCHEMA_V1;
 pub const FUNCTION_ADDRESS_GRAPH_SCHEMA_V1: &str = "valence.function-address-graph.v1";
 pub const FUNCTION_ADDRESS_ISSUE_INPUT_SCHEMA_UNSUPPORTED: &str =
     "function_address.input_schema_unsupported";
@@ -450,8 +443,8 @@ fn function_address_preserves_readiness(
     policy: &FunctionAddressPolicy,
     evidence: &FunctionAddressEvidence,
     valence_receipt: &serde_json::Value,
-) -> EvidenceChainReadiness {
-    let gate_policy_identity = canonical_json_hash(&json!({
+) -> super::evidence_chain_readiness::EvidenceChainReadiness {
+    let gate_policy_identity = super::evidence::canonical_json_hash(&json!({
         "mode": policy.mode,
         "allowed_claim_scopes": policy.allowed_claim_scopes,
         "accepted_valence_policy_hashes": policy.accepted_valence_policy_hashes,
@@ -459,12 +452,16 @@ fn function_address_preserves_readiness(
         "required_schemas": policy.required_schemas,
         "required_boundary": policy.required_boundary,
     }));
-    let chain_policy = function_address_preserves_policy(&policy.mode, &gate_policy_identity);
+    let chain_policy =
+        super::function_address_preserves_readiness::function_address_preserves_policy(
+            &policy.mode,
+            &gate_policy_identity,
+        );
     let kamacite = evidence.kamacite_receipt.as_ref();
     let mantle = evidence.mantle_binding.as_ref();
     let canonical_preserves_receipt_hash =
         optional_receipt_string(kamacite, "canonical_preserves_receipt_hash");
-    let input = FunctionAddressPreservesInput {
+    let input = super::function_address_preserves_readiness::FunctionAddressPreservesInput {
         schema_version: optional_receipt_string(kamacite, FIELD_SCHEMA_VERSION),
         canonical_preserves_receipt_hash: canonical_preserves_receipt_hash.clone(),
         evidence_role: optional_receipt_string(kamacite, "evidence_role"),
@@ -484,14 +481,19 @@ fn function_address_preserves_readiness(
         claim_scope: optional_receipt_string(kamacite, "claim_scope"),
         valence_claim_scope: receipt_string(valence_receipt, "claim_scope").unwrap_or_default(),
         mantle_claim_scope: optional_receipt_string(mantle, "claim_scope"),
-        json_projection: Some(FunctionAddressJsonProjection {
-            artifact_hash: optional_receipt_string(kamacite, "receipt_hash"),
-            canonical_preserves_receipt_hash,
-            authority: optional_receipt_string(kamacite, "projection_authority"),
-        }),
+        json_projection: Some(
+            super::function_address_preserves_readiness::FunctionAddressJsonProjection {
+                artifact_hash: optional_receipt_string(kamacite, "receipt_hash"),
+                canonical_preserves_receipt_hash,
+                authority: optional_receipt_string(kamacite, "projection_authority"),
+            },
+        ),
         non_claims: optional_receipt_strings(kamacite, "non_claims"),
     };
-    evaluate_function_address_preserves_readiness(&chain_policy, Some(&input))
+    super::function_address_preserves_readiness::evaluate_function_address_preserves_readiness(
+        &chain_policy,
+        Some(&input),
+    )
 }
 
 fn optional_receipt_string(value: Option<&serde_json::Value>, field: &str) -> String {
@@ -514,7 +516,9 @@ fn optional_receipt_strings(value: Option<&serde_json::Value>, field: &str) -> V
         .unwrap_or_default()
 }
 
-fn function_address_preserves_issue(issue: &EvidenceChainReadinessIssue) -> FunctionAddressIssue {
+fn function_address_preserves_issue(
+    issue: &super::evidence_chain_readiness::EvidenceChainReadinessIssue,
+) -> FunctionAddressIssue {
     FunctionAddressIssue {
         code: issue.code.clone(),
         field_path: issue.field_path.clone(),
@@ -1252,10 +1256,6 @@ pub fn is_blake3_hex(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::verified::evidence_chain_readiness::EVIDENCE_CHAIN_REQUIRED_NON_CLAIM;
-    use crate::verified::function_address_preserves_readiness::{
-        FUNCTION_ADDRESS_JSON_PROJECTION_AUTHORITY, FUNCTION_ADDRESS_PRESERVES_ROLE,
-    };
 
     const ACCEPTED_POLICY_HASH: &str =
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -1278,7 +1278,7 @@ mod tests {
             required_roles: vec![
                 "valence-function-address-evidence-profile".to_string(),
                 "function-address-evidence-sidecar".to_string(),
-                FUNCTION_ADDRESS_PRESERVES_ROLE.to_string(),
+                crate::verified::function_address_preserves_readiness::FUNCTION_ADDRESS_PRESERVES_ROLE.to_string(),
             ],
             required_schemas: vec![
                 "valence.function-address-evidence.v1".to_string(),
@@ -1299,7 +1299,7 @@ mod tests {
             "roles": [
                 "valence-function-address-evidence-profile",
                 "function-address-evidence-sidecar",
-                FUNCTION_ADDRESS_PRESERVES_ROLE
+                crate::verified::function_address_preserves_readiness::FUNCTION_ADDRESS_PRESERVES_ROLE
             ],
             "schemas": ["valence.function-address-evidence.v1", "kamacite.function-address-receipt.v1"],
             "verification_role_summary": {
@@ -1332,10 +1332,10 @@ mod tests {
             "valid": true,
             "receipt_hash": KAMACITE_JSON_HASH,
             "canonical_preserves_receipt_hash": KAMACITE_HASH,
-            "evidence_role": FUNCTION_ADDRESS_PRESERVES_ROLE,
+            "evidence_role": crate::verified::function_address_preserves_readiness::FUNCTION_ADDRESS_PRESERVES_ROLE,
             "claim_scope": FUNCTION_ADDRESS_CLAIM_SCOPE_LIFECYCLE,
-            "projection_authority": FUNCTION_ADDRESS_JSON_PROJECTION_AUTHORITY,
-            "non_claims": [EVIDENCE_CHAIN_REQUIRED_NON_CLAIM],
+            "projection_authority": crate::verified::function_address_preserves_readiness::FUNCTION_ADDRESS_JSON_PROJECTION_AUTHORITY,
+            "non_claims": [crate::verified::evidence_chain_readiness::EVIDENCE_CHAIN_REQUIRED_NON_CLAIM],
             "non_claim_boundary": "not host-language semantic correctness"
         })
     }
@@ -1639,7 +1639,7 @@ mod tests {
         assert!(readiness.evidence_chain_hash.is_some());
         assert_eq!(
             readiness.json_projection_authority.as_deref(),
-            Some(FUNCTION_ADDRESS_JSON_PROJECTION_AUTHORITY)
+            Some(crate::verified::function_address_preserves_readiness::FUNCTION_ADDRESS_JSON_PROJECTION_AUTHORITY)
         );
     }
 
@@ -1708,8 +1708,10 @@ mod tests {
             evidence.kamacite_receipt.as_mut().unwrap()["valid"] = json!(false);
         }
         fn malformed_kamacite_non_claims(evidence: &mut FunctionAddressEvidence) {
-            evidence.kamacite_receipt.as_mut().unwrap()["non_claims"] =
-                json!([EVIDENCE_CHAIN_REQUIRED_NON_CLAIM, 1]);
+            evidence.kamacite_receipt.as_mut().unwrap()["non_claims"] = json!([
+                crate::verified::evidence_chain_readiness::EVIDENCE_CHAIN_REQUIRED_NON_CLAIM,
+                1
+            ]);
         }
         fn malformed_graph(evidence: &mut FunctionAddressEvidence) {
             evidence.graph_summary.as_mut().unwrap()["report_hash"] = json!("not-a-digest");

@@ -1,10 +1,8 @@
-use super::gates::{gate_issue, GateArtifact, GateIssue, GateSnapshot, GateStage};
-
 pub(super) fn reference_hygiene_issues(
-    snapshot: &GateSnapshot,
-    stage: GateStage,
+    snapshot: &super::gates::GateSnapshot,
+    stage: super::gates::GateStage,
     policy: &crate::verified::policy::Policy,
-) -> Vec<GateIssue> {
+) -> Vec<super::gates::GateIssue> {
     if snapshot.delta_specs.is_empty() {
         return Vec::new();
     }
@@ -13,12 +11,15 @@ pub(super) fn reference_hygiene_issues(
     if let Some(artifact) = &snapshot.proposal {
         artifacts.push(artifact);
     }
-    if matches!(stage, GateStage::Design | GateStage::Tasks) {
+    if matches!(
+        stage,
+        super::gates::GateStage::Design | super::gates::GateStage::Tasks
+    ) {
         if let Some(artifact) = &snapshot.design {
             artifacts.push(artifact);
         }
     }
-    if matches!(stage, GateStage::Tasks) {
+    if matches!(stage, super::gates::GateStage::Tasks) {
         if let Some(artifact) = &snapshot.tasks {
             artifacts.push(artifact);
         }
@@ -28,7 +29,7 @@ pub(super) fn reference_hygiene_issues(
         issues.extend(unknown_reference_issues(artifact, &known, policy));
         issues.extend(malformed_exemption_issues(artifact, policy));
     }
-    if matches!(stage, GateStage::Tasks) {
+    if matches!(stage, super::gates::GateStage::Tasks) {
         if let Some(tasks) = &snapshot.tasks {
             issues.extend(unlinked_task_issues(tasks, &known, policy));
         }
@@ -36,7 +37,7 @@ pub(super) fn reference_hygiene_issues(
     issues
 }
 
-fn known_delta_references(delta_specs: &[GateArtifact]) -> Vec<String> {
+fn known_delta_references(delta_specs: &[super::gates::GateArtifact]) -> Vec<String> {
     let marker_bound = delta_specs
         .iter()
         .map(|artifact| reference_marker_bound(&artifact.markdown))
@@ -51,15 +52,15 @@ fn known_delta_references(delta_specs: &[GateArtifact]) -> Vec<String> {
 }
 
 fn unknown_reference_issues(
-    artifact: &GateArtifact,
+    artifact: &super::gates::GateArtifact,
     known: &[String],
     policy: &crate::verified::policy::Policy,
-) -> Vec<GateIssue> {
+) -> Vec<super::gates::GateIssue> {
     reference_markers(&artifact.markdown)
         .into_iter()
         .filter(|reference| !is_external_trace_reference(reference) && !known.contains(reference))
         .map(|reference| {
-            gate_issue(
+            super::gates::gate_issue(
                 format!(
                     "{}: unknown requirement reference r[{reference}]",
                     artifact.path
@@ -71,16 +72,16 @@ fn unknown_reference_issues(
 }
 
 fn malformed_exemption_issues(
-    artifact: &GateArtifact,
+    artifact: &super::gates::GateArtifact,
     policy: &crate::verified::policy::Policy,
-) -> Vec<GateIssue> {
+) -> Vec<super::gates::GateIssue> {
     let mut issues = Vec::with_capacity(artifact.markdown.lines().count());
     for (line_number, line) in artifact.markdown.lines().enumerate() {
         for marker in exemption_markers(line) {
             if exemption_marker_is_valid(marker, policy) {
                 continue;
             }
-            issues.push(gate_issue(
+            issues.push(super::gates::gate_issue(
                 format!(
                     "{}:{}: malformed gate exemption; expected gate-exempt[{}]",
                     artifact.path,
@@ -163,10 +164,10 @@ fn exemption_marker_hint(policy: &crate::verified::policy::Policy) -> String {
 }
 
 fn unlinked_task_issues(
-    artifact: &GateArtifact,
+    artifact: &super::gates::GateArtifact,
     known: &[String],
     policy: &crate::verified::policy::Policy,
-) -> Vec<GateIssue> {
+) -> Vec<super::gates::GateIssue> {
     let mut issues = Vec::with_capacity(artifact.markdown.lines().count());
     for (line_number, line) in artifact.markdown.lines().enumerate() {
         let trimmed = line.trim_start();
@@ -177,7 +178,7 @@ fn unlinked_task_issues(
         if refs.iter().any(|reference| known.contains(reference)) {
             continue;
         }
-        issues.push(gate_issue(
+        issues.push(super::gates::gate_issue(
             format!(
                 "{}:{}: task missing known requirement reference",
                 artifact.path,

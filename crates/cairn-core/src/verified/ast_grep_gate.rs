@@ -1,5 +1,3 @@
-use super::evidence::canonical_json_hash;
-
 pub const AST_GREP_GATE_MODE_INVENTORY: &str = "inventory";
 pub const AST_GREP_GATE_MODE_ADVISORY: &str = "advisory";
 pub const AST_GREP_GATE_MODE_BLOCKING: &str = "blocking";
@@ -150,7 +148,7 @@ pub fn default_ast_grep_gate_policy(mode: &str) -> AstGrepGatePolicy {
 
 #[must_use]
 pub fn ast_grep_receipt_hash(receipt: &serde_json::Value) -> String {
-    canonical_json_hash(&ast_grep_receipt_hash_material(receipt))
+    super::evidence::canonical_json_hash(&ast_grep_receipt_hash_material(receipt))
 }
 
 #[must_use]

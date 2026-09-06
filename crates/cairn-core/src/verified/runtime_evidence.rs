@@ -1,5 +1,3 @@
-use crate::canonical_json_hash;
-
 pub const RUNTIME_EVIDENCE_SCHEMA_V1: &str = "cairn.runtime_evidence.v1";
 pub const RUNTIME_EVIDENCE_BOUNDARY: &str = "runtime evidence proves presented-chain integrity and witnessed-prefix comparison only; it does not prove agent correctness, action policy enforcement, witness authority trust, or completeness without an independently controlled checkpoint";
 pub const RUNTIME_HASH_ALGORITHM_BLAKE3: &str = "BLAKE3";
@@ -129,7 +127,7 @@ pub fn runtime_record_hash(record: &serde_json::Value) -> String {
     if let Some(object) = material.as_object_mut() {
         object.remove(RECORD_HASH_FIELD);
     }
-    canonical_json_hash(&material)
+    crate::canonical_json_hash(&material)
 }
 
 #[must_use]
@@ -138,7 +136,7 @@ pub fn witness_checkpoint_hash(checkpoint: &serde_json::Value) -> String {
     if let Some(object) = material.as_object_mut() {
         object.remove(CHECKPOINT_HASH_FIELD);
     }
-    canonical_json_hash(&material)
+    crate::canonical_json_hash(&material)
 }
 
 #[must_use]

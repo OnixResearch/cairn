@@ -1,5 +1,3 @@
-use super::evidence::canonical_json_hash;
-
 pub const POLICY_EXCEPTION_SCHEMA_V1: &str = "cairn.policy-exception.v1";
 pub const POLICY_EXCEPTION_COB_TYPE_NAME: &str = "xyz.onixresearch.policy-exception";
 pub const POLICY_EXCEPTION_PORTABLE_SCHEMA_V1: &str = "cairn.policy-exception-portable.v1";
@@ -280,7 +278,7 @@ pub fn validate_scope(scope: &PolicyScope) -> Result<(), PolicyExceptionError> {
 }
 
 pub fn exception_request_root(request: &ExceptionRequest) -> Result<String, PolicyExceptionError> {
-    Ok(canonical_json_hash(&serde_json::json!({
+    Ok(super::evidence::canonical_json_hash(&serde_json::json!({
         "policy": request.policy_identity,
         "scope": request.scope,
         "rationale": request.rationale,
@@ -585,13 +583,15 @@ impl PolicyExceptionState {
 }
 
 pub fn exception_state_hash(state: &PolicyExceptionState) -> Result<String, PolicyExceptionError> {
-    Ok(canonical_json_hash(&serde_json::json!(state)))
+    Ok(super::evidence::canonical_json_hash(&serde_json::json!(
+        state
+    )))
 }
 
 pub fn exception_content_root(
     state: &PolicyExceptionState,
 ) -> Result<String, PolicyExceptionError> {
-    Ok(canonical_json_hash(&serde_json::json!({
+    Ok(super::evidence::canonical_json_hash(&serde_json::json!({
         "kind": state.kind,
         "exception_id": state.exception_id,
         "request": state.request,
@@ -652,7 +652,7 @@ fn portable_identity(value: &serde_json::Value) -> String {
     if let Some(object) = material.as_object_mut() {
         object.remove("portable_identity");
     }
-    canonical_json_hash(&material)
+    super::evidence::canonical_json_hash(&material)
 }
 
 fn exception_json_error<E: std::fmt::Display>(error: E) -> PolicyExceptionError {

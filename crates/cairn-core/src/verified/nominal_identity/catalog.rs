@@ -1,5 +1,3 @@
-use super::types::IdentityIssue;
-
 pub const NOMINAL_IDENTITY_RUNTIME_SCHEMA_V1: &str = "cairn.nominal-evidence-identity-runtime.v1";
 pub const NOMINAL_IDENTITY_OCTET_SCHEMA_V1: &str = "octet-nominal-domain-policy/v1";
 pub const NOMINAL_IDENTITY_POLICY_ID: &str = "cairn.nominal-evidence-identities.v1";
@@ -80,7 +78,9 @@ pub struct NominalIdentityOctetDomain {
 }
 
 #[must_use]
-pub fn nominal_identity_policy_diagnostics(policy: &NominalIdentityPolicy) -> Vec<IdentityIssue> {
+pub fn nominal_identity_policy_diagnostics(
+    policy: &NominalIdentityPolicy,
+) -> Vec<super::types::IdentityIssue> {
     let mut issues = Vec::new();
     validate_headers(policy, &mut issues);
     validate_runtime_domains(&policy.runtime.domains, &mut issues);
@@ -104,36 +104,42 @@ pub fn nominal_octet_projection_hash(policy: &NominalIdentityPolicy) -> String {
     crate::verified::evidence::canonical_json_hash(&value)
 }
 
-fn validate_headers(policy: &NominalIdentityPolicy, issues: &mut Vec<IdentityIssue>) {
+fn validate_headers(policy: &NominalIdentityPolicy, issues: &mut Vec<super::types::IdentityIssue>) {
     if policy.policy_id != NOMINAL_IDENTITY_POLICY_ID
         || policy.runtime.policy_id != policy.policy_id
         || policy.octet.policy_id != policy.policy_id
     {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_POLICY_ID,
             "policy_identity_mismatch",
         ));
     }
     if policy.runtime.schema_version != NOMINAL_IDENTITY_RUNTIME_SCHEMA_V1 {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_RUNTIME,
             "runtime_schema_unsupported",
         ));
     }
     if policy.octet.schema_version != NOMINAL_IDENTITY_OCTET_SCHEMA_V1 {
-        issues.push(IdentityIssue::new(FIELD_OCTET, "octet_schema_unsupported"));
+        issues.push(super::types::IdentityIssue::new(
+            FIELD_OCTET,
+            "octet_schema_unsupported",
+        ));
     }
     if policy.octet.default_mode != "deny" {
-        issues.push(IdentityIssue::new(FIELD_OCTET, "octet_mode_not_deny"));
+        issues.push(super::types::IdentityIssue::new(
+            FIELD_OCTET,
+            "octet_mode_not_deny",
+        ));
     }
 }
 
 fn validate_runtime_domains(
     domains: &[NominalIdentityDomainPolicy],
-    issues: &mut Vec<IdentityIssue>,
+    issues: &mut Vec<super::types::IdentityIssue>,
 ) {
     if domains.is_empty() || domains.len() > MAX_DOMAIN_COUNT {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_RUNTIME,
             "runtime_domain_count_invalid",
         ));
@@ -144,13 +150,13 @@ fn validate_runtime_domains(
     let mut previous = None;
     for domain in domains {
         if !domain_ids.insert(domain.domain_id.as_str()) {
-            issues.push(IdentityIssue::new(
+            issues.push(super::types::IdentityIssue::new(
                 FIELD_RUNTIME,
                 "runtime_domain_duplicate",
             ));
         }
         if previous.is_some_and(|value: &str| value >= domain.domain_id.as_str()) {
-            issues.push(IdentityIssue::new(
+            issues.push(super::types::IdentityIssue::new(
                 FIELD_RUNTIME,
                 "runtime_domains_not_sorted",
             ));
@@ -163,7 +169,7 @@ fn validate_runtime_domains(
 fn validate_runtime_domain(
     domain: &NominalIdentityDomainPolicy,
     symbols: &mut std::collections::BTreeSet<String>,
-    issues: &mut Vec<IdentityIssue>,
+    issues: &mut Vec<super::types::IdentityIssue>,
 ) {
     if domain.domain_id.is_empty()
         || !SUPPORTED_CATEGORIES.contains(&domain.category.as_str())
@@ -173,7 +179,10 @@ fn validate_runtime_domain(
         || !SUPPORTED_WRAPPERS.contains(&domain.wrapper_kind.as_str())
         || !SUPPORTED_CONSTRUCTORS.contains(&domain.constructor_policy.as_str())
     {
-        issues.push(IdentityIssue::new(FIELD_RUNTIME, "runtime_domain_invalid"));
+        issues.push(super::types::IdentityIssue::new(
+            FIELD_RUNTIME,
+            "runtime_domain_invalid",
+        ));
     }
     if domain.rust_symbols.is_empty()
         || domain.rust_symbols.len() > MAX_DOMAIN_SYMBOL_COUNT
@@ -181,14 +190,17 @@ fn validate_runtime_domain(
         || domain.core_scopes.len() > MAX_DOMAIN_SCOPE_COUNT
         || domain.wire_compatibility_scopes.len() > MAX_DOMAIN_SCOPE_COUNT
     {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_RUNTIME,
             "runtime_domain_bounds_invalid",
         ));
     }
     for symbol in &domain.rust_symbols {
         if symbol.is_empty() || !symbols.insert(symbol.clone()) {
-            issues.push(IdentityIssue::new(FIELD_RUNTIME, "runtime_symbol_invalid"));
+            issues.push(super::types::IdentityIssue::new(
+                FIELD_RUNTIME,
+                "runtime_symbol_invalid",
+            ));
         }
     }
     let expected_algorithm = match domain.category.as_str() {
@@ -197,39 +209,48 @@ fn validate_runtime_domain(
         _ => "none",
     };
     if domain.algorithm != expected_algorithm {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_RUNTIME,
             "runtime_algorithm_mismatch",
         ));
     }
     if domain.wrapper_kind == "refined-newtype" && domain.constructor_policy != "private-fallible" {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_RUNTIME,
             "runtime_constructor_mismatch",
         ));
     }
     if domain.wrapper_kind == "marker-generic" && domain.constructor_policy != "marker-only" {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_RUNTIME,
             "runtime_constructor_mismatch",
         ));
     }
 }
 
-fn validate_octet_domains(octet: &NominalIdentityOctetProjection, issues: &mut Vec<IdentityIssue>) {
+fn validate_octet_domains(
+    octet: &NominalIdentityOctetProjection,
+    issues: &mut Vec<super::types::IdentityIssue>,
+) {
     if octet.domains.is_empty() || octet.domains.len() > MAX_DOMAIN_COUNT {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_OCTET,
             "octet_domain_count_invalid",
         ));
     }
     if octet.heuristic_suffixes.is_empty() {
-        issues.push(IdentityIssue::new(FIELD_OCTET, "octet_suffixes_empty"));
+        issues.push(super::types::IdentityIssue::new(
+            FIELD_OCTET,
+            "octet_suffixes_empty",
+        ));
     }
     let mut domain_ids = std::collections::BTreeSet::new();
     for domain in &octet.domains {
         if domain.domain_id.is_empty() || !domain_ids.insert(domain.domain_id.as_str()) {
-            issues.push(IdentityIssue::new(FIELD_OCTET, "octet_domain_invalid"));
+            issues.push(super::types::IdentityIssue::new(
+                FIELD_OCTET,
+                "octet_domain_invalid",
+            ));
         }
         if domain.symbols.is_empty()
             || domain.core_scopes.is_empty()
@@ -237,14 +258,20 @@ fn validate_octet_domains(octet: &NominalIdentityOctetProjection, issues: &mut V
             || !domain.compatibility_required
             || domain.compatibility_scopes.is_empty()
         {
-            issues.push(IdentityIssue::new(FIELD_OCTET, "octet_domain_invalid"));
+            issues.push(super::types::IdentityIssue::new(
+                FIELD_OCTET,
+                "octet_domain_invalid",
+            ));
         }
     }
 }
 
-fn validate_projection_parity(policy: &NominalIdentityPolicy, issues: &mut Vec<IdentityIssue>) {
+fn validate_projection_parity(
+    policy: &NominalIdentityPolicy,
+    issues: &mut Vec<super::types::IdentityIssue>,
+) {
     if policy.runtime.domains.len() != policy.octet.domains.len() {
-        issues.push(IdentityIssue::new(
+        issues.push(super::types::IdentityIssue::new(
             FIELD_OCTET,
             "projection_domain_count_mismatch",
         ));
@@ -257,7 +284,10 @@ fn validate_projection_parity(policy: &NominalIdentityPolicy, issues: &mut Vec<I
             .iter()
             .find(|candidate| candidate.domain_id == runtime.domain_id)
         else {
-            issues.push(IdentityIssue::new(FIELD_OCTET, "projection_domain_missing"));
+            issues.push(super::types::IdentityIssue::new(
+                FIELD_OCTET,
+                "projection_domain_missing",
+            ));
             continue;
         };
         if octet.symbols != runtime.rust_symbols
@@ -267,7 +297,7 @@ fn validate_projection_parity(policy: &NominalIdentityPolicy, issues: &mut Vec<I
             || octet.wrapper_kind != runtime.wrapper_kind
             || octet.constructor_policy != runtime.constructor_policy
         {
-            issues.push(IdentityIssue::new(
+            issues.push(super::types::IdentityIssue::new(
                 FIELD_OCTET,
                 "projection_domain_mismatch",
             ));
@@ -275,7 +305,10 @@ fn validate_projection_parity(policy: &NominalIdentityPolicy, issues: &mut Vec<I
     }
 }
 
-fn validate_non_claims(policy: &NominalIdentityPolicy, issues: &mut Vec<IdentityIssue>) {
+fn validate_non_claims(
+    policy: &NominalIdentityPolicy,
+    issues: &mut Vec<super::types::IdentityIssue>,
+) {
     if !policy
         .non_claims
         .iter()
@@ -286,6 +319,9 @@ fn validate_non_claims(policy: &NominalIdentityPolicy, issues: &mut Vec<Identity
             .iter()
             .any(|value| value == NOMINAL_IDENTITY_REQUIRED_NON_CLAIM)
     {
-        issues.push(IdentityIssue::new(FIELD_NON_CLAIMS, "non_claim_missing"));
+        issues.push(super::types::IdentityIssue::new(
+            FIELD_NON_CLAIMS,
+            "non_claim_missing",
+        ));
     }
 }

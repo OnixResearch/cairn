@@ -1,7 +1,3 @@
-use super::common::{
-    entropy_hash_material_messages, is_blake3_hex, strip_non_hash_fields, NO_CORRECTNESS_CLAIM,
-};
-
 pub const DOWNSTREAM_PILOT_SCHEMA_V1: &str = "octet.downstream-pilot.v1";
 
 const DOWNSTREAM_PILOT_REQUIRED_FIELDS: &[&str] = &[
@@ -57,7 +53,7 @@ pub fn downstream_pilot_hash(receipt: &serde_json::Value) -> String {
 
 pub fn downstream_pilot_hash_material(receipt: &serde_json::Value) -> serde_json::Value {
     let mut material = receipt.clone();
-    strip_non_hash_fields(&mut material);
+    super::common::strip_non_hash_fields(&mut material);
     material
 }
 
@@ -114,7 +110,7 @@ fn downstream_pilot_hash_issues(
         .get("pilot_hash")
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
-    if stated_hash != computed_pilot_hash || !is_blake3_hex(stated_hash) {
+    if stated_hash != computed_pilot_hash || !super::common::is_blake3_hex(stated_hash) {
         issues.push(pilot_issue(
             "downstream_pilot.hash_mismatch",
             "pilot_hash must equal the BLAKE3 hash of canonical downstream-pilot content with non-hash fields excluded",
@@ -124,7 +120,7 @@ fn downstream_pilot_hash_issues(
         if !object
             .get(field)
             .and_then(serde_json::Value::as_str)
-            .is_some_and(is_blake3_hex)
+            .is_some_and(super::common::is_blake3_hex)
         {
             issues.push(pilot_issue(
                 "downstream_pilot.invalid_hash_field",
@@ -209,7 +205,7 @@ fn pilot_required_hash_issues(
         if !object
             .get(*field)
             .and_then(serde_json::Value::as_str)
-            .is_some_and(is_blake3_hex)
+            .is_some_and(super::common::is_blake3_hex)
         {
             issues.push(pilot_issue(
                 "downstream_pilot.invalid_hash_field",
@@ -236,7 +232,7 @@ fn downstream_pilot_non_claim_issues(
     if non_claims
         .get("build_correctness")
         .and_then(serde_json::Value::as_str)
-        != Some(NO_CORRECTNESS_CLAIM)
+        != Some(super::common::NO_CORRECTNESS_CLAIM)
     {
         issues.push(pilot_issue(
             "downstream_pilot.build_correctness_overclaim",
@@ -246,7 +242,7 @@ fn downstream_pilot_non_claim_issues(
     if non_claims
         .get("distributed_execution_correctness")
         .and_then(serde_json::Value::as_str)
-        != Some(NO_CORRECTNESS_CLAIM)
+        != Some(super::common::NO_CORRECTNESS_CLAIM)
     {
         issues.push(pilot_issue(
             "downstream_pilot.distributed_correctness_overclaim",
@@ -260,7 +256,7 @@ fn downstream_pilot_entropy_issues(
     root_path: &str,
     root: &serde_json::Value,
 ) -> Vec<DownstreamPilotIssue> {
-    entropy_hash_material_messages(root_path, root)
+    super::common::entropy_hash_material_messages(root_path, root)
         .into_iter()
         .map(|message| pilot_issue("downstream_pilot.ambient_entropy_in_hash_material", message))
         .collect()

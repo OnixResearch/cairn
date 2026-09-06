@@ -430,7 +430,6 @@ fn push_issue(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
 
     const BLAKE3_DIGEST: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     const SHA256_DIGEST: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
@@ -493,7 +492,7 @@ mod tests {
         // r[verify cairn.hash_algorithm_policy.final_validation.fixtures]
         // r[verify cairn.hash_algorithm_policy.docs]
         // r[verify cairn.hash_algorithm_policy.docs.non_claims]
-        let value = json!({
+        let value = serde_json::json!({
             "policy": {
                 "default_algorithm": "BLAKE3",
                 "exceptions": [{

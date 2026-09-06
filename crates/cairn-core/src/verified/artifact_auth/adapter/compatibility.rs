@@ -2,8 +2,6 @@ mod identity;
 mod issues;
 mod non_claims;
 
-use crate::{AuthenticatedEvidenceIssue, AuthenticatedEvidenceReport};
-
 use super::{CairnArtifactAuthReport, CAIRN_ARTIFACT_AUTH_BOUNDARY};
 
 pub const CAIRN_ARTIFACT_AUTH_COMPATIBILITY_SCHEMA_V1: &str =
@@ -66,9 +64,9 @@ pub struct CairnArtifactAuthCompatibilityReport {
 pub fn compare_cairn_artifact_auth(
     legacy_preimage_blake3: &str,
     standalone_preimage_blake3: Option<&str>,
-    legacy: &AuthenticatedEvidenceReport,
-    standalone: Option<&CairnArtifactAuthReport>,
-    standalone_blockers: &[AuthenticatedEvidenceIssue],
+    legacy: &crate::AuthenticatedEvidenceReport,
+    standalone: Option<&super::CairnArtifactAuthReport>,
+    standalone_blockers: &[crate::AuthenticatedEvidenceIssue],
 ) -> CairnArtifactAuthCompatibilityReport {
     let mut classifications = Vec::new();
     identity::classify_preimages(
@@ -131,7 +129,7 @@ fn classify_unavailable_standalone(output: &mut Vec<CairnArtifactAuthCompatibili
 }
 
 fn classify_standalone_blockers(
-    blockers: &[AuthenticatedEvidenceIssue],
+    blockers: &[crate::AuthenticatedEvidenceIssue],
     output: &mut Vec<CairnArtifactAuthCompatibilityClassification>,
 ) {
     for blocker in blockers {

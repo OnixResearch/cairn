@@ -1,5 +1,3 @@
-use serde_json::json;
-
 pub const DEVELOPER_LOOP_POLICY_SCHEMA_V1: &str = "cairn.developer-loop-policy.v1";
 pub const DEVELOPER_LOOP_PLAN_SCHEMA_V1: &str = "cairn.developer-loop-plan.v1";
 pub const DEVELOPER_LOOP_RECEIPT_SCHEMA_V1: &str = "cairn.developer-loop-receipt.v1";
@@ -197,21 +195,21 @@ pub fn developer_loop_cache_key(input: &DeveloperLoopCacheKeyInput<'_>) -> Strin
     let mut selected = Vec::new();
     for key in input.key_inputs {
         match key.as_str() {
-            "profile" => selected.push(json!(input.profile_id)),
-            "subject" => selected.push(json!(input.subject_hash)),
-            "dependency" => selected.push(json!(input
+            "profile" => selected.push(serde_json::json!(input.profile_id)),
+            "subject" => selected.push(serde_json::json!(input.subject_hash)),
+            "dependency" => selected.push(serde_json::json!(input
                 .dependencies
                 .iter()
                 .cloned()
                 .collect::<Vec<_>>())),
-            "target" => selected.push(json!(input.target)),
-            "toolchain" => selected.push(json!(input.toolchain)),
-            "policy" => selected.push(json!(input.policy_hash)),
-            "checks" => selected.push(json!(input.checks)),
+            "target" => selected.push(serde_json::json!(input.target)),
+            "toolchain" => selected.push(serde_json::json!(input.toolchain)),
+            "policy" => selected.push(serde_json::json!(input.policy_hash)),
+            "checks" => selected.push(serde_json::json!(input.checks)),
             _ => {}
         }
     }
-    crate::verified::evidence::canonical_json_hash(&json!(selected))
+    crate::verified::evidence::canonical_json_hash(&serde_json::json!(selected))
 }
 
 // r[impl cairn.developer_loop_profiles.policy.invalid]
@@ -236,7 +234,7 @@ pub fn admit_developer_loop_policy(
     if !issues.is_empty() {
         return Err(issues);
     }
-    let policy_identity = crate::verified::evidence::canonical_json_hash(&json!({
+    let policy_identity = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "profiles": policy.profiles,
         "budgets": policy.budgets,
         "checks": policy.checks,
@@ -286,7 +284,7 @@ pub fn find_developer_loop_budget<'a>(
 }
 
 pub fn developer_loop_profile_identity(profile: &DeveloperLoopProfile) -> String {
-    crate::verified::evidence::canonical_json_hash(&json!(profile))
+    crate::verified::evidence::canonical_json_hash(&serde_json::json!(profile))
 }
 
 // r[impl cairn.developer_loop_profiles.plan]
@@ -340,7 +338,7 @@ pub fn build_developer_loop_plan(
 }
 
 pub fn developer_loop_plan_identity(plan: &DeveloperLoopPlan) -> String {
-    crate::verified::evidence::canonical_json_hash(&json!({
+    crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "schema": plan.schema,
         "profile": plan.profile,
         "target": plan.target,
@@ -1016,7 +1014,6 @@ fn issue_expected(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
 
     const BLAKE3_HEX_LENGTH: usize = 64;
 
@@ -1094,7 +1091,7 @@ mod tests {
     }
 
     fn receipt() -> serde_json::Value {
-        let mut value = json!({
+        let mut value = serde_json::json!({
             "schema": DEVELOPER_LOOP_RECEIPT_SCHEMA_V1,
             "profile": INITIAL_DEVELOPER_LOOP_PROFILE,
             "policy_hash": "d".repeat(BLAKE3_HEX_LENGTH),
@@ -1113,7 +1110,7 @@ mod tests {
             "full_gate_status": "outstanding",
         });
         let hash = crate::verified::evidence::canonical_json_hash(&value);
-        value["receipt_hash"] = json!(hash);
+        value["receipt_hash"] = serde_json::json!(hash);
         value
     }
 
@@ -1141,9 +1138,9 @@ mod tests {
     fn rejects_unsafe_posture_promotion_without_enforcement() {
         let admitted = admitted();
         let mut value = receipt();
-        value["posture_states"] = json!(["externally_enforced"]);
+        value["posture_states"] = serde_json::json!(["externally_enforced"]);
         let hash = crate::verified::evidence::canonical_json_hash(&value);
-        value["receipt_hash"] = json!(hash);
+        value["receipt_hash"] = serde_json::json!(hash);
         let summary = validate_developer_loop_receipt(
             &admitted,
             INITIAL_DEVELOPER_LOOP_PROFILE,
@@ -1180,10 +1177,10 @@ mod tests {
     fn stale_subject_and_over_budget_fail_with_diagnostics() {
         let admitted = admitted();
         let mut value = receipt();
-        value["subject_hash"] = json!("f".repeat(BLAKE3_HEX_LENGTH));
-        value["observed_duration_seconds"] = json!(9999);
+        value["subject_hash"] = serde_json::json!("f".repeat(BLAKE3_HEX_LENGTH));
+        value["observed_duration_seconds"] = serde_json::json!(9999);
         let hash = crate::verified::evidence::canonical_json_hash(&value);
-        value["receipt_hash"] = json!(hash);
+        value["receipt_hash"] = serde_json::json!(hash);
         let summary = validate_developer_loop_receipt(
             &admitted,
             INITIAL_DEVELOPER_LOOP_PROFILE,
@@ -1208,10 +1205,10 @@ mod tests {
     fn incomplete_cache_hit_is_rejected() {
         let admitted = admitted();
         let mut value = receipt();
-        value["cache"] = json!("hit");
-        value["cache_key_identity"] = json!("g".repeat(BLAKE3_HEX_LENGTH));
+        value["cache"] = serde_json::json!("hit");
+        value["cache_key_identity"] = serde_json::json!("g".repeat(BLAKE3_HEX_LENGTH));
         let hash = crate::verified::evidence::canonical_json_hash(&value);
-        value["receipt_hash"] = json!(hash);
+        value["receipt_hash"] = serde_json::json!(hash);
         let summary = validate_developer_loop_receipt(
             &admitted,
             INITIAL_DEVELOPER_LOOP_PROFILE,
@@ -1230,9 +1227,9 @@ mod tests {
     fn safe_diagnostics_exclude_secret_content() {
         let admitted = admitted();
         let mut value = receipt();
-        value["diagnostics"] =
-            json!([{"code": "developer_loop.receipt.hash", "message": "raw_prompt secret"}]);
-        value["receipt_hash"] = json!(crate::verified::evidence::canonical_json_hash(&value));
+        value["diagnostics"] = serde_json::json!([{"code": "developer_loop.receipt.hash", "message": "raw_prompt secret"}]);
+        value["receipt_hash"] =
+            serde_json::json!(crate::verified::evidence::canonical_json_hash(&value));
         let summary = validate_developer_loop_receipt(
             &admitted,
             INITIAL_DEVELOPER_LOOP_PROFILE,

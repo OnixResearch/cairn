@@ -1,10 +1,5 @@
 use serde_json::json;
 
-use super::nominal_identity::{
-    ArtifactDigestRole, BinaryDigestRole, Blake3Digest, DigestRoleMarker, GraphDigestRole,
-    PolicyDigestRole, ReceiptDigestRole, SidecarDigestRole, RAW_BLAKE3_PROFILE,
-};
-
 pub const STACK_PROVENANCE_MODE_DISABLED: &str = "disabled";
 pub const STACK_PROVENANCE_MODE_OPTIONAL: &str = "optional";
 pub const STACK_PROVENANCE_MODE_REQUIRED: &str = "required";
@@ -236,7 +231,8 @@ fn validate_valence_receipt(
         ));
     }
     match receipt_string(receipt, "receipt_hash") {
-        Some(hash) if admit_digest::<ReceiptDigestRole>(&hash).is_some() => {}
+        Some(hash)
+            if admit_digest::<super::nominal_identity::ReceiptDigestRole>(&hash).is_some() => {}
         _ => issues.push(stack_issue(
             "stack_provenance.valence_receipt_hash_invalid",
             "valence_receipt.receipt_hash",
@@ -248,13 +244,13 @@ fn validate_valence_receipt(
     if policy.accepted_valence_policy_hashes.is_empty() {
         return;
     }
-    let observed_policy = admit_digest::<PolicyDigestRole>(&policy_hash);
+    let observed_policy = admit_digest::<super::nominal_identity::PolicyDigestRole>(&policy_hash);
     let policy_is_accepted = observed_policy.as_ref().is_some_and(|observed| {
         policy
             .accepted_valence_policy_hashes
             .iter()
             .any(|accepted| {
-                admit_digest::<PolicyDigestRole>(accepted)
+                admit_digest::<super::nominal_identity::PolicyDigestRole>(accepted)
                     .is_some_and(|candidate| candidate.as_hex() == observed.as_hex())
             })
     });
@@ -306,8 +302,16 @@ fn validate_mantle_linkage(
             },
         ));
     }
-    validate_linkage_digest::<SidecarDigestRole>(linkage, "sidecar_digest", issues);
-    validate_linkage_digest::<BinaryDigestRole>(linkage, "binary_identity_hash", issues);
+    validate_linkage_digest::<super::nominal_identity::SidecarDigestRole>(
+        linkage,
+        "sidecar_digest",
+        issues,
+    );
+    validate_linkage_digest::<super::nominal_identity::BinaryDigestRole>(
+        linkage,
+        "binary_identity_hash",
+        issues,
+    );
 }
 
 fn validate_artifact_hashes(receipt: &serde_json::Value, issues: &mut Vec<StackProvenanceIssue>) {
@@ -340,8 +344,8 @@ fn validate_artifact_hashes(receipt: &serde_json::Value, issues: &mut Vec<StackP
             .get("observed_hash")
             .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
-        let declared_digest = admit_digest::<ArtifactDigestRole>(declared);
-        let observed_digest = admit_digest::<ArtifactDigestRole>(observed);
+        let declared_digest = admit_digest::<super::nominal_identity::ArtifactDigestRole>(declared);
+        let observed_digest = admit_digest::<super::nominal_identity::ArtifactDigestRole>(observed);
         let matches = matches!(
             (declared_digest, observed_digest),
             (Some(declared), Some(observed)) if declared.as_hex() == observed.as_hex()
@@ -437,7 +441,7 @@ fn validate_graph_summary(
         .get("report_hash")
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
-    if admit_digest::<GraphDigestRole>(report_hash).is_none() {
+    if admit_digest::<super::nominal_identity::GraphDigestRole>(report_hash).is_none() {
         issues.push(stack_issue(
             "stack_provenance.graph_summary_malformed",
             "graph_summary.report_hash",
@@ -453,7 +457,7 @@ fn validate_graph_summary(
     valid.then(|| graph.clone())
 }
 
-fn validate_linkage_digest<Role: DigestRoleMarker>(
+fn validate_linkage_digest<Role: super::nominal_identity::DigestRoleMarker>(
     linkage: &serde_json::Value,
     field: &str,
     issues: &mut Vec<StackProvenanceIssue>,
@@ -477,9 +481,15 @@ fn validate_linkage_digest<Role: DigestRoleMarker>(
     ));
 }
 
-fn admit_digest<Role: DigestRoleMarker>(value: &str) -> Option<Blake3Digest<Role>> {
-    Blake3Digest::<Role>::parse_compatible(value, RAW_BLAKE3_PROFILE, "stack_provenance.digest")
-        .ok()
+fn admit_digest<Role: super::nominal_identity::DigestRoleMarker>(
+    value: &str,
+) -> Option<super::nominal_identity::Blake3Digest<Role>> {
+    super::nominal_identity::Blake3Digest::<Role>::parse_compatible(
+        value,
+        super::nominal_identity::RAW_BLAKE3_PROFILE,
+        "stack_provenance.digest",
+    )
+    .ok()
 }
 
 fn stack_issue(code: &str, field_path: &str, expected: &str, actual: &str) -> StackProvenanceIssue {

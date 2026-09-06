@@ -1,41 +1,36 @@
-use super::common::{
-    push_issue, require_hex_string, require_known_string_at, require_string, validate_hash_field,
-    validate_optional_hash, validate_optional_receipt_hash, without_hash_field,
-};
-use super::{
-    SemanticReviewIssue, SemanticReviewReport, REVISION_DISPOSITIONS, REVISION_HANDOFF_SCHEMA_V1,
-};
-
 pub fn revision_handoff_hash(value: &serde_json::Value) -> String {
-    crate::verified::evidence::canonical_json_hash(&without_hash_field(value, "receipt_hash"))
+    crate::verified::evidence::canonical_json_hash(&super::common::without_hash_field(
+        value,
+        "receipt_hash",
+    ))
 }
 
-pub fn validate_revision_handoff(value: &serde_json::Value) -> SemanticReviewReport {
+pub fn validate_revision_handoff(value: &serde_json::Value) -> super::SemanticReviewReport {
     // r[impl cairn.semantic_review.revision_handoff_receipts.schema]
     // r[impl cairn.semantic_review.revision_handoff_receipts.schema.schema.chain]
     // r[impl cairn.semantic_review.revision_handoff_receipts.schema.schema.dispositions]
     // r[impl cairn.semantic_review.revision_handoff_receipts.validation]
     let mut issues = Vec::new();
-    require_string(
+    super::common::require_string(
         value,
         "schema_version",
-        REVISION_HANDOFF_SCHEMA_V1,
+        super::REVISION_HANDOFF_SCHEMA_V1,
         &mut issues,
     );
-    require_hex_string(value, "prior_review_receipt_hash", &mut issues);
-    validate_optional_hash(value, "followup_review_receipt_hash", &mut issues);
+    super::common::require_hex_string(value, "prior_review_receipt_hash", &mut issues);
+    super::common::validate_optional_hash(value, "followup_review_receipt_hash", &mut issues);
     validate_revision_artifacts(value.get("revision_artifacts"), &mut issues);
     validate_dispositions(value.get("finding_dispositions"), &mut issues);
-    validate_optional_receipt_hash(value, &mut issues, revision_handoff_hash(value));
+    super::common::validate_optional_receipt_hash(value, &mut issues, revision_handoff_hash(value));
     report(value, issues)
 }
 
 fn validate_revision_artifacts(
     value: Option<&serde_json::Value>,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
 ) {
     let Some(artifacts) = value.and_then(serde_json::Value::as_array) else {
-        push_issue(
+        super::common::push_issue(
             issues,
             "missing_field",
             "revision_artifacts",
@@ -44,7 +39,7 @@ fn validate_revision_artifacts(
         return;
     };
     if artifacts.is_empty() {
-        push_issue(
+        super::common::push_issue(
             issues,
             "empty_array",
             "revision_artifacts",
@@ -59,20 +54,23 @@ fn validate_revision_artifacts(
             .unwrap_or("")
             .is_empty()
         {
-            push_issue(
+            super::common::push_issue(
                 issues,
                 "missing_field",
                 &format!("{field}.path"),
                 "missing artifact path",
             );
         }
-        validate_hash_field(artifact, "hash", &field, issues);
+        super::common::validate_hash_field(artifact, "hash", &field, issues);
     }
 }
 
-fn validate_dispositions(value: Option<&serde_json::Value>, issues: &mut Vec<SemanticReviewIssue>) {
+fn validate_dispositions(
+    value: Option<&serde_json::Value>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
+) {
     let Some(dispositions) = value.and_then(serde_json::Value::as_array) else {
-        push_issue(
+        super::common::push_issue(
             issues,
             "missing_field",
             "finding_dispositions",
@@ -81,7 +79,7 @@ fn validate_dispositions(value: Option<&serde_json::Value>, issues: &mut Vec<Sem
         return;
     };
     if dispositions.is_empty() {
-        push_issue(
+        super::common::push_issue(
             issues,
             "empty_array",
             "finding_dispositions",
@@ -96,17 +94,17 @@ fn validate_dispositions(value: Option<&serde_json::Value>, issues: &mut Vec<Sem
             .unwrap_or("")
             .is_empty()
         {
-            push_issue(
+            super::common::push_issue(
                 issues,
                 "missing_field",
                 &format!("{field}.finding_id"),
                 "missing finding id",
             );
         }
-        let disposition_value = require_known_string_at(
+        let disposition_value = super::common::require_known_string_at(
             disposition,
             "disposition",
-            REVISION_DISPOSITIONS,
+            super::REVISION_DISPOSITIONS,
             &field,
             issues,
         );
@@ -123,7 +121,7 @@ fn validate_dispositions(value: Option<&serde_json::Value>, issues: &mut Vec<Sem
                 .unwrap_or(false);
             if !has_refs && !has_hashes {
                 // r[impl cairn.semantic_review.revision_handoff_receipts.validation.validation.addressed_evidence]
-                push_issue(
+                super::common::push_issue(
                     issues,
                     "missing_addressed_evidence",
                     &field,
@@ -138,7 +136,7 @@ fn validate_dispositions(value: Option<&serde_json::Value>, issues: &mut Vec<Sem
                 .and_then(serde_json::Value::as_bool)
                 != Some(true)
             {
-                push_issue(
+                super::common::push_issue(
                     issues,
                     "missing_new_finding_marker",
                     &field,
@@ -149,9 +147,12 @@ fn validate_dispositions(value: Option<&serde_json::Value>, issues: &mut Vec<Sem
     }
 }
 
-fn report(value: &serde_json::Value, issues: Vec<SemanticReviewIssue>) -> SemanticReviewReport {
+fn report(
+    value: &serde_json::Value,
+    issues: Vec<super::SemanticReviewIssue>,
+) -> super::SemanticReviewReport {
     let valid = issues.is_empty();
-    SemanticReviewReport {
+    super::SemanticReviewReport {
         valid,
         verdict: if valid { "PASS" } else { "FAIL" }.to_string(),
         issues,

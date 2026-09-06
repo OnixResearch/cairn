@@ -1,8 +1,3 @@
-use super::{
-    build_lifecycle_view_model, KanbanColumnKind, LifecycleViewChangeInput, LifecycleViewEdgeKind,
-    LifecycleViewInput, LifecycleViewNodeKind,
-};
-
 const EXPECTED_KANBAN_COLUMN_COUNT: usize = 5;
 const EXPECTED_ACTIVE_CHANGE_COUNT: usize = 5;
 const EXPECTED_TRACEABILITY_EDGE_KIND_COUNT: usize = 4;
@@ -13,16 +8,16 @@ fn valid_lifecycle_facts_build_all_views_deterministically() {
     // r[verify cairn.lifecycle_views.verification.positive]
     // r[verify cairn.lifecycle_views.determinism.repeat]
     let mut input = positive_input();
-    let first = build_lifecycle_view_model(input.clone());
+    let first = super::build_lifecycle_view_model(input.clone());
     input.changes.reverse();
     input.specs.reverse();
-    let second = build_lifecycle_view_model(input);
+    let second = super::build_lifecycle_view_model(input);
 
     assert!(first.valid, "{:?}", first.issues);
     assert_eq!(first, second);
     assert_eq!(first.kanban.columns.len(), EXPECTED_KANBAN_COLUMN_COUNT);
     assert_eq!(kanban_card_count(&first), EXPECTED_ACTIVE_CHANGE_COUNT);
-    assert_eq!(first.mindmap.kind, LifecycleViewNodeKind::Repository);
+    assert_eq!(first.mindmap.kind, super::LifecycleViewNodeKind::Repository);
     assert!(first.mindmap.children.len() >= EXPECTED_MINDMAP_MINIMUM_CHILDREN);
 
     let edge_kinds = first
@@ -30,15 +25,15 @@ fn valid_lifecycle_facts_build_all_views_deterministically() {
         .iter()
         .map(|edge| edge.kind)
         .collect::<std::collections::BTreeSet<_>>();
-    assert!(edge_kinds.contains(&LifecycleViewEdgeKind::Contains));
-    assert!(edge_kinds.contains(&LifecycleViewEdgeKind::Covers));
-    assert!(edge_kinds.contains(&LifecycleViewEdgeKind::DependsOn));
-    assert!(edge_kinds.contains(&LifecycleViewEdgeKind::Blocks));
+    assert!(edge_kinds.contains(&super::LifecycleViewEdgeKind::Contains));
+    assert!(edge_kinds.contains(&super::LifecycleViewEdgeKind::Covers));
+    assert!(edge_kinds.contains(&super::LifecycleViewEdgeKind::DependsOn));
+    assert!(edge_kinds.contains(&super::LifecycleViewEdgeKind::Blocks));
     let traceability_kinds = [
-        LifecycleViewEdgeKind::Implements,
-        LifecycleViewEdgeKind::Verifies,
-        LifecycleViewEdgeKind::TraceabilityDepends,
-        LifecycleViewEdgeKind::Related,
+        super::LifecycleViewEdgeKind::Implements,
+        super::LifecycleViewEdgeKind::Verifies,
+        super::LifecycleViewEdgeKind::TraceabilityDepends,
+        super::LifecycleViewEdgeKind::Related,
     ];
     assert_eq!(
         traceability_kinds
@@ -53,17 +48,21 @@ fn valid_lifecycle_facts_build_all_views_deterministically() {
 fn kanban_classification_covers_every_active_lane() {
     // r[verify cairn.lifecycle_views.kanban.classification]
     // r[verify cairn.lifecycle_views.kanban.blocked]
-    let model = build_lifecycle_view_model(positive_input());
-    assert_card_in_lane(&model, "planned", KanbanColumnKind::Planned);
-    assert_card_in_lane(&model, "ready", KanbanColumnKind::Ready);
-    assert_card_in_lane(&model, "in-progress", KanbanColumnKind::InProgress);
-    assert_card_in_lane(&model, "blocked", KanbanColumnKind::Blocked);
-    assert_card_in_lane(&model, "ready-to-archive", KanbanColumnKind::ReadyToArchive);
+    let model = super::build_lifecycle_view_model(positive_input());
+    assert_card_in_lane(&model, "planned", super::KanbanColumnKind::Planned);
+    assert_card_in_lane(&model, "ready", super::KanbanColumnKind::Ready);
+    assert_card_in_lane(&model, "in-progress", super::KanbanColumnKind::InProgress);
+    assert_card_in_lane(&model, "blocked", super::KanbanColumnKind::Blocked);
+    assert_card_in_lane(
+        &model,
+        "ready-to-archive",
+        super::KanbanColumnKind::ReadyToArchive,
+    );
     let blocked = model
         .kanban
         .columns
         .iter()
-        .find(|column| column.kind == KanbanColumnKind::Blocked)
+        .find(|column| column.kind == super::KanbanColumnKind::Blocked)
         .and_then(|column| column.cards.first())
         .expect("blocked card");
     assert!(!blocked.blocked_by.is_empty());
@@ -84,7 +83,7 @@ fn malformed_outline_and_dangling_task_link_fail_closed() {
         std::slice::from_ref(&change.status),
         &[],
     );
-    let model = build_lifecycle_view_model(LifecycleViewInput {
+    let model = super::build_lifecycle_view_model(super::LifecycleViewInput {
         repository: "broken-fixture".to_string(),
         changes: vec![change],
         specs: vec![crate::verified::repo::SpecSource {
@@ -105,12 +104,12 @@ fn malformed_outline_and_dangling_task_link_fail_closed() {
     assert!(codes.contains("lifecycle_view.marker.malformed"));
     assert!(codes.contains("lifecycle_view.task.dangling_reference"));
     assert!(model.nodes.iter().any(|node| {
-        node.kind == LifecycleViewNodeKind::MissingRequirement
+        node.kind == super::LifecycleViewNodeKind::MissingRequirement
             && node.reference.as_deref() == Some("demo.unknown")
     }));
 }
 
-fn positive_input() -> LifecycleViewInput {
+fn positive_input() -> super::LifecycleViewInput {
     let changes = vec![
         change("planned", Some("planned"), &[], None),
         change(
@@ -173,7 +172,7 @@ fn positive_input() -> LifecycleViewInput {
             .join("\n"),
         }],
     );
-    LifecycleViewInput {
+    super::LifecycleViewInput {
         repository: "fixture".to_string(),
         changes,
         specs: vec![spec],
@@ -195,9 +194,9 @@ fn change(
     status: Option<&str>,
     dependencies: &[&str],
     tasks_markdown: Option<&str>,
-) -> LifecycleViewChangeInput {
+) -> super::LifecycleViewChangeInput {
     let task_counts = tasks_markdown.map(crate::verified::repo::count_tasks);
-    LifecycleViewChangeInput {
+    super::LifecycleViewChangeInput {
         status: crate::verified::repo::ChangeStatus {
             name: name.to_string(),
             path: format!(".cairn/changes/{name}"),
@@ -262,7 +261,7 @@ fn kanban_card_count(model: &super::LifecycleViewModel) -> usize {
 fn assert_card_in_lane(
     model: &super::LifecycleViewModel,
     change: &str,
-    expected: KanbanColumnKind,
+    expected: super::KanbanColumnKind,
 ) {
     assert!(
         model

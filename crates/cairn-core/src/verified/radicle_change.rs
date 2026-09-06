@@ -1,7 +1,5 @@
 use std::collections::BTreeSet;
 
-use thiserror::Error;
-
 // r[impl cairn.radicle_change_cob.lossless_change_state]
 // r[impl cairn.radicle_change_cob.deterministic_reducer]
 // r[impl cairn.radicle_change_cob.evidence_boundary]
@@ -323,7 +321,7 @@ pub enum ChangeLifecycleView {
     },
 }
 
-#[derive(Debug, Error, Clone, PartialEq, Eq)]
+#[derive(Debug, thiserror::Error, Clone, PartialEq, Eq)]
 pub enum ChangeCobError {
     #[error("root operation must contain exactly one init action")]
     InvalidRootShape,

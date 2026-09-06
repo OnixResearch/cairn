@@ -308,11 +308,14 @@ mod tests {
         let plan = build_sync_plan_for_effect_with_dependency_blockers(
             &change,
             &[],
-            WORKFLOW_SPEC_EFFECT_NONE,
+            crate::verified::artifact_workflow::WORKFLOW_SPEC_EFFECT_NONE,
         );
         assert!(!plan.blocked);
         assert!(plan.actions.is_empty());
-        assert_eq!(plan.spec_effect, WORKFLOW_SPEC_EFFECT_NONE);
+        assert_eq!(
+            plan.spec_effect,
+            crate::verified::artifact_workflow::WORKFLOW_SPEC_EFFECT_NONE
+        );
     }
 
     #[test]
@@ -321,7 +324,7 @@ mod tests {
         let plan = build_sync_plan_for_effect_with_dependency_blockers(
             &complete_change(),
             &[],
-            WORKFLOW_SPEC_EFFECT_NONE,
+            crate::verified::artifact_workflow::WORKFLOW_SPEC_EFFECT_NONE,
         );
         assert!(plan.blocked);
         assert!(plan.actions.is_empty());

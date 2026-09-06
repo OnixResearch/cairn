@@ -1,8 +1,3 @@
-use super::common::{
-    entropy_hash_material_messages, is_blake3_hex, known_value, strip_non_hash_fields,
-    KNOWN_EFFECT_STATUSES, KNOWN_MACRO_STATUSES, SOURCE_SCANNER_DEPENDENCIES,
-};
-
 pub const FUNCTION_OBJECT_SCHEMA_V1: &str = "octet.function-object.v1";
 
 const REQUIRED_TOP_LEVEL_FIELDS: &[&str] = &[
@@ -61,7 +56,7 @@ pub fn function_object_hash(receipt: &serde_json::Value) -> String {
 
 pub fn function_object_hash_material(receipt: &serde_json::Value) -> serde_json::Value {
     let mut material = receipt.clone();
-    strip_non_hash_fields(&mut material);
+    super::common::strip_non_hash_fields(&mut material);
     material
 }
 
@@ -116,7 +111,7 @@ fn hash_issues(
         .get("object_hash")
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
-    if stated_hash != computed_object_hash || !is_blake3_hex(stated_hash) {
+    if stated_hash != computed_object_hash || !super::common::is_blake3_hex(stated_hash) {
         issues.push(issue(
             "function_object.hash_mismatch",
             "object_hash must equal the BLAKE3 hash of canonical function-object content with non-hash fields excluded",
@@ -126,7 +121,7 @@ fn hash_issues(
         if !object
             .get(field)
             .and_then(serde_json::Value::as_str)
-            .is_some_and(is_blake3_hex)
+            .is_some_and(super::common::is_blake3_hex)
         {
             issues.push(issue(
                 "function_object.invalid_hash_field",
@@ -220,20 +215,24 @@ fn caveat_status_issues(
     if caveats
         .get("dependency_status")
         .and_then(serde_json::Value::as_str)
-        != Some(SOURCE_SCANNER_DEPENDENCIES)
+        != Some(super::common::SOURCE_SCANNER_DEPENDENCIES)
     {
         issues.push(issue(
             "function_object.dependency_status_overclaim",
             "source-token function objects must use source-scanner-token-set dependency status",
         ));
     }
-    if !known_value(caveats, "macro_status", KNOWN_MACRO_STATUSES) {
+    if !super::common::known_value(caveats, "macro_status", super::common::KNOWN_MACRO_STATUSES) {
         issues.push(issue(
             "function_object.unknown_macro_status",
             "macro_status must use the closed function-object caveat vocabulary",
         ));
     }
-    if !known_value(caveats, "effect_status", KNOWN_EFFECT_STATUSES) {
+    if !super::common::known_value(
+        caveats,
+        "effect_status",
+        super::common::KNOWN_EFFECT_STATUSES,
+    ) {
         issues.push(issue(
             "function_object.unknown_effect_status",
             "effect_status must use the closed function-object caveat vocabulary",
@@ -266,7 +265,7 @@ fn required_object_issues(
 }
 
 fn entropy_issues(root_path: &str, root: &serde_json::Value) -> Vec<FunctionObjectIssue> {
-    entropy_hash_material_messages(root_path, root)
+    super::common::entropy_hash_material_messages(root_path, root)
         .into_iter()
         .map(|message| issue("function_object.ambient_entropy_in_hash_material", message))
         .collect()

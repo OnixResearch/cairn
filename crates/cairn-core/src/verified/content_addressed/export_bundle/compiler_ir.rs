@@ -1,14 +1,11 @@
-use super::common::bundle_issue;
-use super::types::ExportBundleIssue;
-
 pub(super) fn export_bundle_compiler_ir_issues(
     object: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<ExportBundleIssue> {
+) -> Vec<super::types::ExportBundleIssue> {
     let Some(compiler_ir) = object
         .get("compiler_ir")
         .and_then(serde_json::Value::as_object)
     else {
-        return vec![bundle_issue(
+        return vec![super::common::bundle_issue(
             "export_bundle.missing_object",
             "compiler_ir must be a JSON object",
         )];
@@ -21,12 +18,12 @@ pub(super) fn export_bundle_compiler_ir_issues(
 
 fn export_bundle_hir_issues(
     compiler_ir: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<ExportBundleIssue> {
+) -> Vec<super::types::ExportBundleIssue> {
     let Some(hir) = compiler_ir
         .get("hir")
         .and_then(serde_json::Value::as_object)
     else {
-        return vec![bundle_issue(
+        return vec![super::common::bundle_issue(
             "export_bundle.missing_object",
             "compiler_ir.hir must be a JSON object",
         )];
@@ -38,7 +35,7 @@ fn export_bundle_hir_issues(
             .and_then(serde_json::Value::as_str)
             .is_none_or(str::is_empty)
         {
-            issues.push(bundle_issue(
+            issues.push(super::common::bundle_issue(
                 "export_bundle.missing_compiler_ir_field",
                 format!("compiler_ir.hir.{field} must be a non-empty string"),
             ));
@@ -49,7 +46,7 @@ fn export_bundle_hir_issues(
         .and_then(serde_json::Value::as_str)
         == Some("source-scanner-token-set")
     {
-        issues.push(bundle_issue(
+        issues.push(super::common::bundle_issue(
             "export_bundle.hir_dependency_overclaim_missing",
             "HIR evidence must report toolchain-scoped resolved dependency status, not source-token scanner status",
         ));
@@ -59,12 +56,12 @@ fn export_bundle_hir_issues(
 
 fn export_bundle_mir_issues(
     compiler_ir: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<ExportBundleIssue> {
+) -> Vec<super::types::ExportBundleIssue> {
     let Some(mir) = compiler_ir
         .get("mir")
         .and_then(serde_json::Value::as_object)
     else {
-        return vec![bundle_issue(
+        return vec![super::common::bundle_issue(
             "export_bundle.missing_object",
             "compiler_ir.mir must be a JSON object",
         )];
@@ -76,7 +73,7 @@ fn export_bundle_mir_issues(
             .and_then(serde_json::Value::as_str)
             .is_none_or(str::is_empty)
         {
-            issues.push(bundle_issue(
+            issues.push(super::common::bundle_issue(
                 "export_bundle.missing_compiler_ir_field",
                 format!("compiler_ir.mir.{field} must be a non-empty string"),
             ));
@@ -87,7 +84,7 @@ fn export_bundle_mir_issues(
         .and_then(serde_json::Value::as_str)
         != Some("toolchain-coupled")
     {
-        issues.push(bundle_issue(
+        issues.push(super::common::bundle_issue(
             "export_bundle.mir_stability_overclaim",
             "MIR summaries must declare toolchain-coupled stability",
         ));

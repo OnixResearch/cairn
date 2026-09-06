@@ -798,7 +798,6 @@ fn is_safe_relative_path(path: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
 
     use super::*;
 
@@ -983,7 +982,7 @@ mod tests {
             mode: WORKSPACE_CONTRACT_MODE_OPTIONAL.to_string(),
             required_boundary: "declared edge health only".to_string(),
         };
-        let receipt = json!({
+        let receipt = serde_json::json!({
             "schema": WORKSPACE_CONTRACT_MATRIX_RECEIPT_SCHEMA_V1,
             "valid": true,
             "receipt_hash": HASH_A,
@@ -1020,7 +1019,7 @@ mod tests {
     fn value_parser_covers_fixture_matrix_shape() {
         // r[verify cairn.workspace_contract_matrix.final_validation]
         // r[verify cairn.workspace_contract_matrix.final_validation.fixtures]
-        let value = json!({
+        let value = serde_json::json!({
             "matrix": {
                 "schema_version": WORKSPACE_CONTRACT_MATRIX_SCHEMA_V1,
                 "non_claims": REQUIRED_NON_CLAIMS,

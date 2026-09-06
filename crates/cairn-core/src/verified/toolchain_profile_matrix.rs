@@ -376,7 +376,6 @@ fn push_issue(
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
 
     use super::*;
 
@@ -476,7 +475,7 @@ mod tests {
     fn value_parser_and_fixture_matrix_cover_success_and_failure() {
         // r[verify cairn.toolchain_profile_matrix.final_validation]
         // r[verify cairn.toolchain_profile_matrix.final_validation.fixtures]
-        let value = json!({
+        let value = serde_json::json!({
             "matrix": {
                 "schema_version": TOOLCHAIN_PROFILE_MATRIX_SCHEMA_V1,
                 "non_claims": REQUIRED_NON_CLAIMS,
@@ -499,7 +498,7 @@ mod tests {
             valid_report.issues
         );
 
-        let invalid = json!({
+        let invalid = serde_json::json!({
             "matrix": {
                 "schema_version": TOOLCHAIN_PROFILE_MATRIX_SCHEMA_V1,
                 "non_claims": REQUIRED_NON_CLAIMS,

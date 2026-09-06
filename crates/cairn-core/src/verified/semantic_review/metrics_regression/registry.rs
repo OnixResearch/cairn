@@ -1,8 +1,5 @@
 // r[impl cairn.semantic_review.metrics_regression_split.focused_helpers]
 
-use super::super::common::push_issue;
-use super::super::{SemanticReviewIssue, REVIEW_CATEGORIES, REVIEW_SOURCES};
-
 const REQUIRED_CATEGORY_FIELDS: &[&str] = &[
     "code",
     "metrics_class",
@@ -22,13 +19,13 @@ const METRICS_STAGES: &[&str] = &[
 
 pub(super) fn validate_categories(
     value: &serde_json::Value,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::super::SemanticReviewIssue>,
 ) {
     let Some(categories) = value
         .get("categories")
         .and_then(serde_json::Value::as_array)
     else {
-        push_issue(
+        super::super::common::push_issue(
             issues,
             "missing_registry_categories",
             "categories",
@@ -37,7 +34,7 @@ pub(super) fn validate_categories(
         return;
     };
     if categories.is_empty() {
-        push_issue(
+        super::super::common::push_issue(
             issues,
             "empty_registry_categories",
             "categories",
@@ -66,10 +63,10 @@ pub(super) fn validate_categories(
 fn validate_category_fields(
     category: &serde_json::Value,
     index: usize,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::super::SemanticReviewIssue>,
 ) {
     if !category.is_object() {
-        push_issue(
+        super::super::common::push_issue(
             issues,
             "invalid_registry_category",
             &format!("categories[{index}]"),
@@ -80,7 +77,7 @@ fn validate_category_fields(
     for field in REQUIRED_CATEGORY_FIELDS {
         match category.get(*field).and_then(serde_json::Value::as_str) {
             Some(text) if !text.trim().is_empty() => {}
-            Some(_) | None => push_issue(
+            Some(_) | None => super::super::common::push_issue(
                 issues,
                 "missing_registry_binding",
                 &format!("categories[{index}].{field}"),
@@ -88,9 +85,21 @@ fn validate_category_fields(
             ),
         }
     }
-    validate_allowed(category, index, "metrics_class", REVIEW_CATEGORIES, issues);
+    validate_allowed(
+        category,
+        index,
+        "metrics_class",
+        super::super::REVIEW_CATEGORIES,
+        issues,
+    );
     validate_allowed(category, index, "metrics_stage", METRICS_STAGES, issues);
-    validate_allowed(category, index, "metrics_source", REVIEW_SOURCES, issues);
+    validate_allowed(
+        category,
+        index,
+        "metrics_source",
+        super::super::REVIEW_SOURCES,
+        issues,
+    );
 }
 
 fn validate_allowed(
@@ -98,11 +107,11 @@ fn validate_allowed(
     index: usize,
     field: &str,
     allowed: &[&str],
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::super::SemanticReviewIssue>,
 ) {
     if let Some(actual) = category.get(field).and_then(serde_json::Value::as_str) {
         if !actual.trim().is_empty() && !allowed.contains(&actual) {
-            push_issue(
+            super::super::common::push_issue(
                 issues,
                 "invalid_registry_binding",
                 &format!("categories[{index}].{field}"),
@@ -117,14 +126,14 @@ fn track_unique(
     index: usize,
     field: &str,
     seen: &mut std::collections::BTreeSet<String>,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::super::SemanticReviewIssue>,
 ) {
     if let Some(actual) = category.get(field).and_then(serde_json::Value::as_str) {
         if actual.trim().is_empty() {
             return;
         }
         if !seen.insert(actual.to_string()) {
-            push_issue(
+            super::super::common::push_issue(
                 issues,
                 "duplicate_registry_binding",
                 &format!("categories[{index}].{field}"),

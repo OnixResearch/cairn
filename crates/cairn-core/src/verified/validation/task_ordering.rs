@@ -1,8 +1,3 @@
-use super::{
-    spec::{fence_boundary, visible_text_without_comments},
-    substance::valid_lifecycle_id,
-};
-
 pub const TASK_ORDER_ISSUE_MARKER_POLICY: &str = "task_ordering.marker_policy";
 pub const TASK_ORDER_ISSUE_ID_MISSING: &str = "task_ordering.task_id.missing";
 pub const TASK_ORDER_ISSUE_ID_MALFORMED: &str = "task_ordering.task_id.malformed";
@@ -255,11 +250,11 @@ fn observe_tasks(
     let mut is_fenced = false;
     let mut is_in_comment = false;
     for (line_index, line) in markdown.lines().enumerate() {
-        if fence_boundary(line) && !is_in_comment {
+        if super::spec::fence_boundary(line) && !is_in_comment {
             is_fenced = !is_fenced;
             continue;
         }
-        let visible = visible_text_without_comments(line, &mut is_in_comment);
+        let visible = super::spec::visible_text_without_comments(line, &mut is_in_comment);
         if is_fenced {
             continue;
         }
@@ -315,7 +310,7 @@ fn observe_markers(
             break;
         };
         let target = after_prefix[..end].trim();
-        if !valid_lifecycle_id(target) {
+        if !super::substance::valid_lifecycle_id(target) {
             issues.push(malformed_marker_issue(
                 issue_code,
                 line_number,
@@ -546,10 +541,9 @@ fn task_state(trimmed: &str) -> Option<TaskOrderingState> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::verified::policy::parse_policy_json;
 
     fn policy() -> crate::verified::policy::Policy {
-        parse_policy_json(include_str!(
+        crate::verified::policy::parse_policy_json(include_str!(
             "../../../../../cairn-policy/generated/cairn-policy.json"
         ))
         .expect("generated policy")

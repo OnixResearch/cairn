@@ -2,12 +2,9 @@
 // r[impl electrical_circuit_primitives.topology.reference_node]
 // r[impl electrical_circuit_primitives.topology.connection_arity]
 
-use super::components::component_binding_issues;
-use super::issues::{issue, CircuitPrimitiveIssue};
-
 pub(super) fn topology_issues(
     object: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<CircuitPrimitiveIssue> {
+) -> Vec<super::issues::CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(8);
     let node_ids = collect_ids(object.get("nodes"));
     let net_ids = collect_ids(object.get("nets"));
@@ -16,14 +13,14 @@ pub(super) fn topology_issues(
         .get("reference_node")
         .and_then(serde_json::Value::as_str)
     else {
-        issues.push(issue(
+        issues.push(super::issues::issue(
             "circuit_primitive.reference_node_missing",
             "reference_node must identify a node id or an explicit none value in future schemas",
         ));
         return issues;
     };
     if !node_ids.iter().any(|node| node == reference_node) {
-        issues.push(issue(
+        issues.push(super::issues::issue(
             "circuit_primitive.reference_node_unknown",
             "reference_node must match a declared node id",
         ));
@@ -31,7 +28,10 @@ pub(super) fn topology_issues(
 
     issues.extend(duplicate_id_issues("node", &node_ids));
     issues.extend(duplicate_id_issues("net", &net_ids));
-    issues.extend(component_binding_issues(object.get("components"), &net_ids));
+    issues.extend(super::components::component_binding_issues(
+        object.get("components"),
+        &net_ids,
+    ));
     issues
 }
 
@@ -48,11 +48,11 @@ fn collect_ids(value: Option<&serde_json::Value>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-fn duplicate_id_issues(kind: &str, ids: &[String]) -> Vec<CircuitPrimitiveIssue> {
+fn duplicate_id_issues(kind: &str, ids: &[String]) -> Vec<super::issues::CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(ids.len());
     for (index, id) in ids.iter().enumerate() {
         if ids.iter().skip(index + 1).any(|other| other == id) {
-            issues.push(issue(
+            issues.push(super::issues::issue(
                 "circuit_primitive.duplicate_id",
                 format!("duplicate {kind} id: {id}"),
             ));

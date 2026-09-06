@@ -1,7 +1,3 @@
-use thiserror::Error;
-
-use super::evidence::canonical_json_hash;
-
 pub const WORKSET_STATE_SCHEMA_V1: &str = "cairn.workset-state.v1";
 pub const WORKSET_TRANSITION_PLAN_SCHEMA_V1: &str = "cairn.workset-transition-plan.v1";
 pub const WORKSET_OPEN_PLAN_SCHEMA_V1: &str = "cairn.workset-open-plan.v1";
@@ -356,7 +352,7 @@ impl WorksetOpenPlan {
     }
 }
 
-#[derive(Clone, Debug, Eq, Error, PartialEq)]
+#[derive(Clone, Debug, Eq, thiserror::Error, PartialEq)]
 pub enum WorksetError {
     #[error("{field} is empty")]
     EmptyField { field: String },
@@ -1213,7 +1209,7 @@ fn hash_serializable<T: serde::Serialize>(value: &T) -> Result<String, WorksetEr
     let value = serde_json::to_value(value).map_err(|error| WorksetError::Serialization {
         reason: error.to_string(),
     })?;
-    Ok(canonical_json_hash(&value))
+    Ok(super::evidence::canonical_json_hash(&value))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, serde::Serialize)]

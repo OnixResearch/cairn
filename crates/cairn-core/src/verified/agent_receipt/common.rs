@@ -1,5 +1,3 @@
-use super::types::AgentRunGateIssue;
-
 pub(super) fn is_digest<Role: crate::verified::nominal_identity::DigestRoleMarker>(
     candidate: &str,
 ) -> bool {
@@ -11,8 +9,11 @@ pub(super) fn is_digest<Role: crate::verified::nominal_identity::DigestRoleMarke
     .is_ok()
 }
 
-pub(super) fn issue(code: impl Into<String>, message: impl Into<String>) -> AgentRunGateIssue {
-    AgentRunGateIssue {
+pub(super) fn issue(
+    code: impl Into<String>,
+    message: impl Into<String>,
+) -> super::types::AgentRunGateIssue {
+    super::types::AgentRunGateIssue {
         code: code.into(),
         message: message.into(),
     }

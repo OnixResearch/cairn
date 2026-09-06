@@ -1,7 +1,3 @@
-use super::markdown::{
-    has_requirement_strength, has_scenario_clause, markdown_heading, next_heading_at_or_above,
-};
-
 const REQUIREMENT_HEADING_PREFIX: &str = "Requirement:";
 const SCENARIO_HEADING_PREFIX: &str = "Scenario:";
 const REQUIREMENT_HEADING_LEVEL: usize = 3;
@@ -51,7 +47,7 @@ pub fn validate_spec_source(source: &crate::verified::repo::SpecSource) -> Vec<S
     let lines = source.markdown.lines().collect::<Vec<_>>();
     let mut issues = Vec::with_capacity(lines.len().saturating_div(REQUIREMENT_HEADING_LEVEL));
     for (index, line) in lines.iter().enumerate() {
-        let Some((level, heading)) = markdown_heading(line) else {
+        let Some((level, heading)) = super::markdown::markdown_heading(line) else {
             continue;
         };
         if level == REQUIREMENT_HEADING_LEVEL && heading.starts_with(REQUIREMENT_HEADING_PREFIX) {
@@ -177,7 +173,7 @@ fn visible_heading_inventory(lines: &[&str]) -> Vec<VisibleHeading> {
         if fenced || visible.trim().is_empty() {
             continue;
         }
-        if let Some((level, text)) = markdown_heading(visible.trim_end()) {
+        if let Some((level, text)) = super::markdown::markdown_heading(visible.trim_end()) {
             headings.push(VisibleHeading {
                 line_index,
                 level,
@@ -334,8 +330,9 @@ fn validate_requirement_block_compatibility(
     index: usize,
     heading: &str,
 ) -> Option<String> {
-    let end = next_heading_at_or_above(lines, index + 1, REQUIREMENT_HEADING_LEVEL);
-    if has_requirement_strength(&lines[index + 1..end]) {
+    let end =
+        super::markdown::next_heading_at_or_above(lines, index + 1, REQUIREMENT_HEADING_LEVEL);
+    if super::markdown::has_requirement_strength(&lines[index + 1..end]) {
         return None;
     }
     Some(format!(
@@ -350,7 +347,7 @@ fn validate_scenario_block(
     index: usize,
     heading: &str,
 ) -> Option<String> {
-    let end = next_heading_at_or_above(lines, index + 1, SCENARIO_HEADING_LEVEL);
+    let end = super::markdown::next_heading_at_or_above(lines, index + 1, SCENARIO_HEADING_LEVEL);
     scenario_clause_issue(source, heading, &lines[index + 1..end])
 }
 
@@ -375,13 +372,13 @@ fn scenario_clause_issue(
     block: &[&str],
 ) -> Option<String> {
     let mut missing = Vec::with_capacity(REQUIREMENT_HEADING_LEVEL);
-    if !has_scenario_clause(block, "GIVEN") {
+    if !super::markdown::has_scenario_clause(block, "GIVEN") {
         missing.push("GIVEN");
     }
-    if !has_scenario_clause(block, "WHEN") {
+    if !super::markdown::has_scenario_clause(block, "WHEN") {
         missing.push("WHEN");
     }
-    if !has_scenario_clause(block, "THEN") {
+    if !super::markdown::has_scenario_clause(block, "THEN") {
         missing.push("THEN");
     }
     if missing.is_empty() {

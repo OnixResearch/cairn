@@ -1,13 +1,6 @@
-use super::model::{
-    GeneratedWorkflowDestinationSnapshot, GeneratedWorkflowFileObservation,
-    GeneratedWorkflowFreshness, GeneratedWorkflowManifest, GeneratedWorkflowManifestObservation,
-    GeneratedWorkflowObservedKind, GENERATED_AGENT_WORKFLOW_GENERATOR_VERSION,
-    GENERATED_AGENT_WORKFLOW_MANIFEST_SCHEMA_V1,
-};
-
 pub(super) fn observation_map(
-    files: &[GeneratedWorkflowFileObservation],
-) -> std::collections::BTreeMap<&str, &GeneratedWorkflowFileObservation> {
+    files: &[super::model::GeneratedWorkflowFileObservation],
+) -> std::collections::BTreeMap<&str, &super::model::GeneratedWorkflowFileObservation> {
     files
         .iter()
         .map(|file| (file.relative_path.as_str(), file))
@@ -15,87 +8,99 @@ pub(super) fn observation_map(
 }
 
 pub(super) fn classify_file(
-    observation: Option<&&GeneratedWorkflowFileObservation>,
+    observation: Option<&&super::model::GeneratedWorkflowFileObservation>,
     expected_prior: Option<&str>,
     generated: &str,
     has_prior_manifest: bool,
-) -> GeneratedWorkflowFreshness {
+) -> super::model::GeneratedWorkflowFreshness {
     let Some(observation) = observation else {
-        return GeneratedWorkflowFreshness::Missing;
+        return super::model::GeneratedWorkflowFreshness::Missing;
     };
     match observation.kind {
-        GeneratedWorkflowObservedKind::Missing => GeneratedWorkflowFreshness::Missing,
-        GeneratedWorkflowObservedKind::Symlink => GeneratedWorkflowFreshness::SymlinkConflict,
-        GeneratedWorkflowObservedKind::Other => GeneratedWorkflowFreshness::UnmanagedConflict,
-        GeneratedWorkflowObservedKind::Regular => {
+        super::model::GeneratedWorkflowObservedKind::Missing => {
+            super::model::GeneratedWorkflowFreshness::Missing
+        }
+        super::model::GeneratedWorkflowObservedKind::Symlink => {
+            super::model::GeneratedWorkflowFreshness::SymlinkConflict
+        }
+        super::model::GeneratedWorkflowObservedKind::Other => {
+            super::model::GeneratedWorkflowFreshness::UnmanagedConflict
+        }
+        super::model::GeneratedWorkflowObservedKind::Regular => {
             classify_regular_file(observation, expected_prior, generated, has_prior_manifest)
         }
     }
 }
 
 pub(super) fn file_blocks_install(
-    freshness: &GeneratedWorkflowFreshness,
+    freshness: &super::model::GeneratedWorkflowFreshness,
     had_expected_prior: bool,
 ) -> bool {
     matches!(
         freshness,
-        GeneratedWorkflowFreshness::Modified
-            | GeneratedWorkflowFreshness::UnmanagedConflict
-            | GeneratedWorkflowFreshness::UnsupportedVersion
-            | GeneratedWorkflowFreshness::SymlinkConflict
-    ) || (*freshness == GeneratedWorkflowFreshness::Missing && had_expected_prior)
+        super::model::GeneratedWorkflowFreshness::Modified
+            | super::model::GeneratedWorkflowFreshness::UnmanagedConflict
+            | super::model::GeneratedWorkflowFreshness::UnsupportedVersion
+            | super::model::GeneratedWorkflowFreshness::SymlinkConflict
+    ) || (*freshness == super::model::GeneratedWorkflowFreshness::Missing && had_expected_prior)
 }
 
 pub(super) fn supported_prior_manifest(
-    snapshot: &GeneratedWorkflowDestinationSnapshot,
+    snapshot: &super::model::GeneratedWorkflowDestinationSnapshot,
     adapter_id: &str,
     adapter_version: u32,
-) -> Option<GeneratedWorkflowManifest> {
+) -> Option<super::model::GeneratedWorkflowManifest> {
     match &snapshot.manifest {
-        GeneratedWorkflowManifestObservation::Present(manifest)
+        super::model::GeneratedWorkflowManifestObservation::Present(manifest)
             if validate_generated_workflow_manifest(manifest)
                 && manifest.adapter_id == adapter_id
                 && manifest.adapter_version == adapter_version =>
         {
             Some((**manifest).clone())
         }
-        GeneratedWorkflowManifestObservation::Missing
-        | GeneratedWorkflowManifestObservation::Invalid(_)
-        | GeneratedWorkflowManifestObservation::Symlink
-        | GeneratedWorkflowManifestObservation::Other
-        | GeneratedWorkflowManifestObservation::Present(_) => None,
+        super::model::GeneratedWorkflowManifestObservation::Missing
+        | super::model::GeneratedWorkflowManifestObservation::Invalid(_)
+        | super::model::GeneratedWorkflowManifestObservation::Symlink
+        | super::model::GeneratedWorkflowManifestObservation::Other
+        | super::model::GeneratedWorkflowManifestObservation::Present(_) => None,
     }
 }
 
 pub(super) fn classify_manifest(
-    snapshot: &GeneratedWorkflowDestinationSnapshot,
-    prior: Option<&GeneratedWorkflowManifest>,
-    desired: &GeneratedWorkflowManifest,
-) -> GeneratedWorkflowFreshness {
+    snapshot: &super::model::GeneratedWorkflowDestinationSnapshot,
+    prior: Option<&super::model::GeneratedWorkflowManifest>,
+    desired: &super::model::GeneratedWorkflowManifest,
+) -> super::model::GeneratedWorkflowFreshness {
     match &snapshot.manifest {
-        GeneratedWorkflowManifestObservation::Missing => GeneratedWorkflowFreshness::Missing,
-        GeneratedWorkflowManifestObservation::Invalid(_) => {
-            GeneratedWorkflowFreshness::UnsupportedVersion
+        super::model::GeneratedWorkflowManifestObservation::Missing => {
+            super::model::GeneratedWorkflowFreshness::Missing
         }
-        GeneratedWorkflowManifestObservation::Symlink => {
-            GeneratedWorkflowFreshness::SymlinkConflict
+        super::model::GeneratedWorkflowManifestObservation::Invalid(_) => {
+            super::model::GeneratedWorkflowFreshness::UnsupportedVersion
         }
-        GeneratedWorkflowManifestObservation::Other => {
-            GeneratedWorkflowFreshness::UnmanagedConflict
+        super::model::GeneratedWorkflowManifestObservation::Symlink => {
+            super::model::GeneratedWorkflowFreshness::SymlinkConflict
         }
-        GeneratedWorkflowManifestObservation::Present(_) if prior.is_none() => {
-            GeneratedWorkflowFreshness::UnsupportedVersion
+        super::model::GeneratedWorkflowManifestObservation::Other => {
+            super::model::GeneratedWorkflowFreshness::UnmanagedConflict
         }
-        GeneratedWorkflowManifestObservation::Present(manifest)
+        super::model::GeneratedWorkflowManifestObservation::Present(_) if prior.is_none() => {
+            super::model::GeneratedWorkflowFreshness::UnsupportedVersion
+        }
+        super::model::GeneratedWorkflowManifestObservation::Present(manifest)
             if manifest.manifest_identity == desired.manifest_identity =>
         {
-            GeneratedWorkflowFreshness::Current
+            super::model::GeneratedWorkflowFreshness::Current
         }
-        GeneratedWorkflowManifestObservation::Present(_) => GeneratedWorkflowFreshness::StaleSource,
+        super::model::GeneratedWorkflowManifestObservation::Present(_) => {
+            super::model::GeneratedWorkflowFreshness::StaleSource
+        }
     }
 }
 
-pub fn generated_workflow_manifest_identity(manifest: &GeneratedWorkflowManifest) -> String {
+pub fn generated_workflow_manifest_identity(
+    manifest: &super::model::GeneratedWorkflowManifest,
+) -> String {
     crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "schema": manifest.schema,
         "generator_version": manifest.generator_version,
@@ -110,7 +115,9 @@ pub fn generated_workflow_manifest_identity(manifest: &GeneratedWorkflowManifest
     }))
 }
 
-pub fn validate_generated_workflow_manifest(manifest: &GeneratedWorkflowManifest) -> bool {
+pub fn validate_generated_workflow_manifest(
+    manifest: &super::model::GeneratedWorkflowManifest,
+) -> bool {
     let prefix = format!("{}/", manifest.destination);
     let file_paths = manifest
         .files
@@ -127,8 +134,8 @@ pub fn validate_generated_workflow_manifest(manifest: &GeneratedWorkflowManifest
         .iter()
         .map(String::as_str)
         .collect::<std::collections::BTreeSet<_>>();
-    manifest.schema == GENERATED_AGENT_WORKFLOW_MANIFEST_SCHEMA_V1
-        && manifest.generator_version == GENERATED_AGENT_WORKFLOW_GENERATOR_VERSION
+    manifest.schema == super::model::GENERATED_AGENT_WORKFLOW_MANIFEST_SCHEMA_V1
+        && manifest.generator_version == super::model::GENERATED_AGENT_WORKFLOW_GENERATOR_VERSION
         && !manifest.adapter_id.is_empty()
         && manifest.adapter_version > 0
         && safe_manifest_path(&manifest.destination)
@@ -179,20 +186,20 @@ fn safe_manifest_path(path: &str) -> bool {
 }
 
 fn classify_regular_file(
-    observation: &GeneratedWorkflowFileObservation,
+    observation: &super::model::GeneratedWorkflowFileObservation,
     expected_prior: Option<&str>,
     generated: &str,
     has_prior_manifest: bool,
-) -> GeneratedWorkflowFreshness {
+) -> super::model::GeneratedWorkflowFreshness {
     let observed = observation.content_blake3.as_deref();
     if !has_prior_manifest || expected_prior.is_none() {
-        return GeneratedWorkflowFreshness::UnmanagedConflict;
+        return super::model::GeneratedWorkflowFreshness::UnmanagedConflict;
     }
     if observed == Some(generated) {
-        return GeneratedWorkflowFreshness::Current;
+        return super::model::GeneratedWorkflowFreshness::Current;
     }
     if observed == expected_prior {
-        return GeneratedWorkflowFreshness::StaleSource;
+        return super::model::GeneratedWorkflowFreshness::StaleSource;
     }
-    GeneratedWorkflowFreshness::Modified
+    super::model::GeneratedWorkflowFreshness::Modified
 }

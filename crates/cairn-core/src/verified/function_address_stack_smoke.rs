@@ -1,5 +1,3 @@
-use crate::{blake3_hex, canonical_json_hash};
-
 const BLAKE3_PREFIX: &str = "b3:";
 const BLAKE3_HEX_LENGTH: usize = blake3::OUT_LEN * 2;
 const CLAIM_SCOPE: &str = "function_address.v1.lifecycle_policy_conformance";
@@ -64,8 +62,8 @@ pub fn evaluate_function_address_stack_smoke(
     validate_non_claims(input, &mut issues);
     issues.sort_by(|left, right| (&left.code, &left.field).cmp(&(&right.code, &right.field)));
     issues.dedup();
-    let input_hash = canonical_json_hash(&serde_json::json!({
-        "source_hash": blake3_hex(input.source),
+    let input_hash = crate::canonical_json_hash(&serde_json::json!({
+        "source_hash": crate::blake3_hex(input.source),
         "expected": input.expected,
         "octet": input.octet,
         "kamacite": input.kamacite,
@@ -90,7 +88,7 @@ fn validate_octet(
         .pointer("/source_envelopes/0/source_identity")
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default();
-    let computed_source = format!("{BLAKE3_PREFIX}{}", blake3_hex(input.source));
+    let computed_source = format!("{BLAKE3_PREFIX}{}", crate::blake3_hex(input.source));
     require_equal(
         expected_source,
         actual_source,

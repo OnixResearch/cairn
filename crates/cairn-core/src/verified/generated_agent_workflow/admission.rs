@@ -1,13 +1,3 @@
-use super::model::{
-    AdmittedGeneratedWorkflowCatalog, GeneratedAgentWorkflowPolicy, GeneratedWorkflowAdapter,
-    GeneratedWorkflowAdapterFormat, GeneratedWorkflowDescriptor, GeneratedWorkflowIssue,
-    GeneratedWorkflowMutationClass, GeneratedWorkflowPermission,
-    GENERATED_AGENT_WORKFLOW_EXPLORE_ID, GENERATED_AGENT_WORKFLOW_EXPLORE_NO_WRITE,
-    GENERATED_AGENT_WORKFLOW_GENERATOR_VERSION, GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
-    GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR, GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
-    GENERATED_AGENT_WORKFLOW_POLICY_SCHEMA_V1, INITIAL_ADAPTER_IDS, INITIAL_WORKFLOW_IDS,
-};
-
 const REQUIRED_RECEIPT_FIELDS: &[&str] = &[
     "adapter",
     "destination",
@@ -27,8 +17,9 @@ const MINIMUM_DESCRIPTOR_VERSION: u32 = 1;
 // r[impl cairn.generated_agent_workflows.explore.valid]
 // r[impl cairn.generated_agent_workflows.explore.invalid]
 pub fn admit_generated_agent_workflow_policy(
-    policy: &GeneratedAgentWorkflowPolicy,
-) -> Result<AdmittedGeneratedWorkflowCatalog, Vec<GeneratedWorkflowIssue>> {
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+) -> Result<super::model::AdmittedGeneratedWorkflowCatalog, Vec<super::model::GeneratedWorkflowIssue>>
+{
     let mut issues = validate_policy_header(policy);
     let command_permissions = validate_command_classes(policy, &mut issues);
     validate_descriptors(policy, &command_permissions, &mut issues);
@@ -70,16 +61,16 @@ pub fn admit_generated_agent_workflow_policy(
         "bounds": normalized.bounds,
         "non_claims": normalized.required_non_claims,
     }));
-    Ok(AdmittedGeneratedWorkflowCatalog {
+    Ok(super::model::AdmittedGeneratedWorkflowCatalog {
         policy: normalized,
         catalog_identity,
     })
 }
 
 pub fn find_generated_workflow_descriptor<'a>(
-    catalog: &'a AdmittedGeneratedWorkflowCatalog,
+    catalog: &'a super::model::AdmittedGeneratedWorkflowCatalog,
     id: &str,
-) -> Result<&'a GeneratedWorkflowDescriptor, GeneratedWorkflowIssue> {
+) -> Result<&'a super::model::GeneratedWorkflowDescriptor, super::model::GeneratedWorkflowIssue> {
     catalog
         .policy
         .descriptors
@@ -87,20 +78,20 @@ pub fn find_generated_workflow_descriptor<'a>(
         .find(|descriptor| descriptor.id == id)
         .ok_or_else(|| {
             issue(
-                GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
                 "workflow",
                 format!(
                     "unknown workflow {id}; known workflows: {}",
-                    INITIAL_WORKFLOW_IDS.join(", ")
+                    super::model::INITIAL_WORKFLOW_IDS.join(", ")
                 ),
             )
         })
 }
 
 pub fn find_generated_workflow_adapter<'a>(
-    catalog: &'a AdmittedGeneratedWorkflowCatalog,
+    catalog: &'a super::model::AdmittedGeneratedWorkflowCatalog,
     id: &str,
-) -> Result<&'a GeneratedWorkflowAdapter, GeneratedWorkflowIssue> {
+) -> Result<&'a super::model::GeneratedWorkflowAdapter, super::model::GeneratedWorkflowIssue> {
     catalog
         .policy
         .adapters
@@ -108,28 +99,30 @@ pub fn find_generated_workflow_adapter<'a>(
         .find(|adapter| adapter.id == id)
         .ok_or_else(|| {
             issue(
-                GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
                 "adapter",
                 format!(
                     "unknown adapter {id}; known adapters: {}",
-                    INITIAL_ADAPTER_IDS.join(", ")
+                    super::model::INITIAL_ADAPTER_IDS.join(", ")
                 ),
             )
         })
 }
 
-fn validate_policy_header(policy: &GeneratedAgentWorkflowPolicy) -> Vec<GeneratedWorkflowIssue> {
+fn validate_policy_header(
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+) -> Vec<super::model::GeneratedWorkflowIssue> {
     let mut issues = Vec::new();
-    if policy.schema != GENERATED_AGENT_WORKFLOW_POLICY_SCHEMA_V1 {
+    if policy.schema != super::model::GENERATED_AGENT_WORKFLOW_POLICY_SCHEMA_V1 {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             "generated_agent_workflow_policy.schema",
             "generated workflow policy schema is unsupported",
         ));
     }
-    if policy.generator_version != GENERATED_AGENT_WORKFLOW_GENERATOR_VERSION {
+    if policy.generator_version != super::model::GENERATED_AGENT_WORKFLOW_GENERATOR_VERSION {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             "generated_agent_workflow_policy.generator_version",
             "generated workflow generator version is unsupported",
         ));
@@ -146,7 +139,7 @@ fn validate_policy_header(policy: &GeneratedAgentWorkflowPolicy) -> Vec<Generate
         || bounds.max_issues == 0
     {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             "generated_agent_workflow_policy.bounds",
             "all generated workflow bounds must be positive",
         ));
@@ -156,7 +149,7 @@ fn validate_policy_header(policy: &GeneratedAgentWorkflowPolicy) -> Vec<Generate
         || policy.command_classes.len() > bounds.max_command_classes
     {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             "generated_agent_workflow_policy",
             "generated workflow policy exceeds a collection bound",
         ));
@@ -166,7 +159,7 @@ fn validate_policy_header(policy: &GeneratedAgentWorkflowPolicy) -> Vec<Generate
         || !unique_nonempty(&policy.required_non_claims)
     {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             "generated_agent_workflow_policy.receipt_fields",
             "generated workflow receipt fields or non-claims are incomplete",
         ));
@@ -175,9 +168,9 @@ fn validate_policy_header(policy: &GeneratedAgentWorkflowPolicy) -> Vec<Generate
 }
 
 fn validate_command_classes(
-    policy: &GeneratedAgentWorkflowPolicy,
-    issues: &mut Vec<GeneratedWorkflowIssue>,
-) -> std::collections::BTreeMap<String, GeneratedWorkflowPermission> {
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+    issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
+) -> std::collections::BTreeMap<String, super::model::GeneratedWorkflowPermission> {
     let mut permissions = std::collections::BTreeMap::new();
     for (index, command) in policy.command_classes.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.command_classes[{index}]");
@@ -187,7 +180,7 @@ fn validate_command_classes(
                 .is_some()
         {
             issues.push(issue(
-                GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
                 format!("{path}.id"),
                 "command class IDs must be safe and unique",
             ));
@@ -195,7 +188,7 @@ fn validate_command_classes(
     }
     if permissions.is_empty() {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             "generated_agent_workflow_policy.command_classes",
             "at least one command class is required",
         ));
@@ -204,9 +197,12 @@ fn validate_command_classes(
 }
 
 fn validate_descriptors(
-    policy: &GeneratedAgentWorkflowPolicy,
-    command_permissions: &std::collections::BTreeMap<String, GeneratedWorkflowPermission>,
-    issues: &mut Vec<GeneratedWorkflowIssue>,
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+    command_permissions: &std::collections::BTreeMap<
+        String,
+        super::model::GeneratedWorkflowPermission,
+    >,
+    issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
 ) {
     let mut ids = std::collections::BTreeSet::new();
     for (index, descriptor) in policy.descriptors.iter().enumerate() {
@@ -215,63 +211,65 @@ fn validate_descriptors(
         let mut has_mutation = false;
         for command in &descriptor.command_classes {
             match command_permissions.get(command) {
-                Some(GeneratedWorkflowPermission::Mutation) => has_mutation = true,
-                Some(GeneratedWorkflowPermission::Read) => {}
+                Some(super::model::GeneratedWorkflowPermission::Mutation) => has_mutation = true,
+                Some(super::model::GeneratedWorkflowPermission::Read) => {}
                 None => issues.push(issue(
-                    GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                    super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
                     format!("{path}.command_classes"),
                     format!("unknown command class: {command}"),
                 )),
             }
         }
-        if descriptor.mutation_class == GeneratedWorkflowMutationClass::ReadOnly && has_mutation {
+        if descriptor.mutation_class == super::model::GeneratedWorkflowMutationClass::ReadOnly
+            && has_mutation
+        {
             issues.push(issue(
-                GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
                 format!("{path}.mutation_class"),
                 "read-only workflow references a mutation command class",
             ));
         }
-        if descriptor.id == GENERATED_AGENT_WORKFLOW_EXPLORE_ID
+        if descriptor.id == super::model::GENERATED_AGENT_WORKFLOW_EXPLORE_ID
             && (has_mutation
-                || descriptor.mutation_class != GeneratedWorkflowMutationClass::ReadOnly
-                || !descriptor
-                    .constraints
-                    .iter()
-                    .any(|constraint| constraint == GENERATED_AGENT_WORKFLOW_EXPLORE_NO_WRITE))
+                || descriptor.mutation_class
+                    != super::model::GeneratedWorkflowMutationClass::ReadOnly
+                || !descriptor.constraints.iter().any(|constraint| {
+                    constraint == super::model::GENERATED_AGENT_WORKFLOW_EXPLORE_NO_WRITE
+                }))
         {
             issues.push(issue(
-                GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
                 path,
                 "explore must be read-only and include the exact no-write constraint",
             ));
         }
     }
     let actual = ids.iter().map(String::as_str).collect::<Vec<_>>();
-    if actual != INITIAL_WORKFLOW_IDS {
+    if actual != super::model::INITIAL_WORKFLOW_IDS {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             "generated_agent_workflow_policy.descriptors",
             format!(
                 "initial workflow catalog must be: {}",
-                INITIAL_WORKFLOW_IDS.join(", ")
+                super::model::INITIAL_WORKFLOW_IDS.join(", ")
             ),
         ));
     }
 }
 
 fn validate_descriptor_shape(
-    descriptor: &GeneratedWorkflowDescriptor,
+    descriptor: &super::model::GeneratedWorkflowDescriptor,
     path: &str,
-    policy: &GeneratedAgentWorkflowPolicy,
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
     ids: &mut std::collections::BTreeSet<String>,
-    issues: &mut Vec<GeneratedWorkflowIssue>,
+    issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
 ) {
     if !valid_id(&descriptor.id)
         || !ids.insert(descriptor.id.clone())
         || descriptor.version < MINIMUM_DESCRIPTOR_VERSION
     {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
             format!("{path}.id"),
             "workflow descriptor ID, version, or uniqueness is invalid",
         ));
@@ -287,7 +285,7 @@ fn validate_descriptor_shape(
         .any(|text| !bounded_text(text, policy.bounds.max_text_bytes))
     {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
             path,
             "workflow descriptor scalar text is empty or out of bounds",
         ));
@@ -308,7 +306,7 @@ fn validate_descriptor_shape(
     }) || !contains_all(&descriptor.non_claims, &policy.required_non_claims)
     {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
             path,
             "workflow descriptor lists or non-claims are incomplete or out of bounds",
         ));
@@ -316,19 +314,20 @@ fn validate_descriptor_shape(
 }
 
 fn validate_adapters(
-    policy: &GeneratedAgentWorkflowPolicy,
-    issues: &mut Vec<GeneratedWorkflowIssue>,
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+    issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
 ) {
     let mut ids = std::collections::BTreeSet::new();
     for (index, adapter) in policy.adapters.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.adapters[{index}]");
         let expected_shape = match adapter.format {
-            GeneratedWorkflowAdapterFormat::AgentSkills => {
+            super::model::GeneratedWorkflowAdapterFormat::AgentSkills => {
                 adapter.front_matter
                     && adapter.file_suffix.is_empty()
                     && adapter.directory_suffix == "/SKILL.md"
             }
-            GeneratedWorkflowAdapterFormat::Claude | GeneratedWorkflowAdapterFormat::Codex => {
+            super::model::GeneratedWorkflowAdapterFormat::Claude
+            | super::model::GeneratedWorkflowAdapterFormat::Codex => {
                 !adapter.front_matter
                     && adapter.file_suffix == ".md"
                     && adapter.directory_suffix.is_empty()
@@ -343,20 +342,20 @@ fn validate_adapters(
             || !expected_shape
         {
             issues.push(issue(
-                GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
                 path,
                 "adapter identity, version, format, paths, or bounds are invalid",
             ));
         }
     }
     let actual = ids.iter().map(String::as_str).collect::<Vec<_>>();
-    if actual != INITIAL_ADAPTER_IDS {
+    if actual != super::model::INITIAL_ADAPTER_IDS {
         issues.push(issue(
-            GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
             "generated_agent_workflow_policy.adapters",
             format!(
                 "initial adapter catalog must be: {}",
-                INITIAL_ADAPTER_IDS.join(", ")
+                super::model::INITIAL_ADAPTER_IDS.join(", ")
             ),
         ));
     }
@@ -413,8 +412,8 @@ pub(super) fn issue(
     code: impl Into<String>,
     field_path: impl Into<String>,
     message: impl Into<String>,
-) -> GeneratedWorkflowIssue {
-    GeneratedWorkflowIssue {
+) -> super::model::GeneratedWorkflowIssue {
+    super::model::GeneratedWorkflowIssue {
         code: code.into(),
         field_path: field_path.into(),
         message: message.into(),

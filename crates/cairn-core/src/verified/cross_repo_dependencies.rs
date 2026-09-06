@@ -1,5 +1,3 @@
-use crate::canonical_json_hash;
-
 pub const CROSS_REPO_DEPENDENCY_SCHEMA_V1: &str = "cairn.cross-repo-dependency.v1";
 pub const CROSS_REPO_RECEIPT_SCHEMA_V1: &str = "cairn.cross-repo-dependency-receipt.v1";
 pub const CROSS_REPO_NON_CLAIM_LINKAGE: &str =
@@ -175,7 +173,7 @@ pub fn build_radicle_issue_receipt(
         status: PASS_STATUS.to_string(),
         policy_hash: None,
         subject_hash: Some(observation.subject_hash.clone()),
-        receipt_hash: canonical_json_hash(&serde_json::json!({
+        receipt_hash: crate::canonical_json_hash(&serde_json::json!({
             "repo": observation.repo,
             "issue_id": observation.issue_id,
             "object_id": observation.object_id,
@@ -255,7 +253,7 @@ pub fn evaluate_cross_repo_dependencies(
         "evidence": evidence_json(&sorted_evidence),
         "policy_hash": policy_hash,
     });
-    let input_hash = canonical_json_hash(&input_material);
+    let input_hash = crate::canonical_json_hash(&input_material);
     let receipt_material = serde_json::json!({
         "schema": CROSS_REPO_RECEIPT_SCHEMA_V1,
         "dependency_count": rows.len(),
@@ -266,7 +264,7 @@ pub fn evaluate_cross_repo_dependencies(
         "policy_hash": policy_hash,
         "non_claims": default_non_claims(),
     });
-    let receipt_hash = canonical_json_hash(&receipt_material);
+    let receipt_hash = crate::canonical_json_hash(&receipt_material);
     CrossRepoDependencyReport {
         dependency_count: rows.len(),
         satisfied_count,
@@ -592,7 +590,7 @@ fn diagnostic(
     actual: Option<String>,
     artifact_ref: Option<String>,
 ) -> CrossRepoDependencyDiagnostic {
-    let diagnostic_id = canonical_json_hash(&serde_json::json!({
+    let diagnostic_id = crate::canonical_json_hash(&serde_json::json!({
         "dependency_id": dependency.id,
         "code": code,
         "status": status,

@@ -1,5 +1,3 @@
-use crate::verified::requirement_id_registry::RequirementIdRegistry;
-
 pub const TRACEABILITY_PROFILE_CAIRN_DEFAULT: &str = "cairn-default";
 pub const TRACEABILITY_PROFILE_TRELLIS_RUST: &str = "trellis-rust";
 pub const TRACEABILITY_VERB_IMPL: &str = "impl";
@@ -99,7 +97,7 @@ pub struct TraceabilityMarkerValidationInput {
     pub marker_strings: Vec<String>,
     pub vocabulary: Vec<String>,
     pub allowed_namespaces: Vec<String>,
-    pub registry: Option<RequirementIdRegistry>,
+    pub registry: Option<crate::verified::requirement_id_registry::RequirementIdRegistry>,
     pub consumer: String,
     pub expected_owner: String,
     pub require_registry: bool,
@@ -628,10 +626,6 @@ pub fn unique_sorted_strings(values: &[String]) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::verified::requirement_id_registry::{
-        RequirementIdAlias, RequirementIdRegistry, RequirementRegistryRow,
-        REQUIREMENT_ID_REGISTRY_BOUNDARY, REQUIREMENT_ID_REGISTRY_SCHEMA_V1,
-    };
 
     use super::*;
 
@@ -699,23 +693,30 @@ mod tests {
         }
     }
 
-    fn marker_registry() -> RequirementIdRegistry {
-        RequirementIdRegistry {
-            schema_version: REQUIREMENT_ID_REGISTRY_SCHEMA_V1.to_string(),
-            boundary: REQUIREMENT_ID_REGISTRY_BOUNDARY.to_string(),
-            rows: vec![RequirementRegistryRow {
-                requirement_id: "cairn.marker.contract".to_string(),
-                namespace: "cairn.marker".to_string(),
-                owner_repo: "cairn".to_string(),
-                accepted_spec: ".cairn/specs/requirement-id-registry/spec.md".to_string(),
-                status: "active".to_string(),
-                aliases: vec![RequirementIdAlias {
-                    id: "cairn.marker.compat".to_string(),
+    fn marker_registry() -> crate::verified::requirement_id_registry::RequirementIdRegistry {
+        crate::verified::requirement_id_registry::RequirementIdRegistry {
+            schema_version:
+                crate::verified::requirement_id_registry::REQUIREMENT_ID_REGISTRY_SCHEMA_V1
+                    .to_string(),
+            boundary: crate::verified::requirement_id_registry::REQUIREMENT_ID_REGISTRY_BOUNDARY
+                .to_string(),
+            rows: vec![
+                crate::verified::requirement_id_registry::RequirementRegistryRow {
+                    requirement_id: "cairn.marker.contract".to_string(),
+                    namespace: "cairn.marker".to_string(),
+                    owner_repo: "cairn".to_string(),
+                    accepted_spec: ".cairn/specs/requirement-id-registry/spec.md".to_string(),
                     status: "active".to_string(),
-                    reason: "compatibility spelling".to_string(),
-                }],
-                allowed_consumers: vec!["cairn".to_string()],
-            }],
+                    aliases: vec![
+                        crate::verified::requirement_id_registry::RequirementIdAlias {
+                            id: "cairn.marker.compat".to_string(),
+                            status: "active".to_string(),
+                            reason: "compatibility spelling".to_string(),
+                        },
+                    ],
+                    allowed_consumers: vec!["cairn".to_string()],
+                },
+            ],
             non_claims: vec![
                 "not requirement satisfaction".to_string(),
                 "not implementation correctness".to_string(),

@@ -1,5 +1,3 @@
-use super::evidence::canonical_json_hash;
-
 pub const OXIDE_LIFECYCLE_PATTERN_SCHEMA_V1: &str = "cairn.oxide-lifecycle-patterns.v1";
 pub const OXIDE_LIFECYCLE_PATTERN_BOUNDARY: &str = "Oxide repositories are reference-only inputs for lifecycle, test, bundle, observability, archive, operator, and diagnostic patterns; Cairn does not import their domain-specific correctness claims, and passing pattern validation does not prove lifecycle correctness or release eligibility";
 
@@ -108,7 +106,7 @@ pub struct OxideLifecyclePatternReport {
 pub fn validate_oxide_lifecycle_patterns_value(
     value: &serde_json::Value,
 ) -> OxideLifecyclePatternReport {
-    let input_hash = canonical_json_hash(value);
+    let input_hash = super::evidence::canonical_json_hash(value);
     let Ok(bundle) = serde_json::from_value::<OxideLifecyclePatternBundle>(value.clone()) else {
         return OxideLifecyclePatternReport {
             valid: false,

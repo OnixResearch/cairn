@@ -1,30 +1,21 @@
-use super::{
-    collaboration_change::{state_to_compatibility, ChangeCollaborationState},
-    radicle_change::{ChangeBaseRevision, ChangeCobError, ChangeLifecycleView},
-    radicle_checkout::{
-        plan_change_cob_checkout, ChangeCheckoutDestination, ChangeCheckoutFile,
-        ChangeCobLocalSnapshot,
-    },
-};
-
 // r[impl cairn.collaboration_backend.semantic_core]
 
-pub type ChangeCollaborationLocalSnapshot = ChangeCobLocalSnapshot;
+pub type ChangeCollaborationLocalSnapshot = super::radicle_checkout::ChangeCobLocalSnapshot;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChangeCollaborationCheckoutPlan {
     pub change_id: String,
     pub workspace_id: String,
-    pub base_revision: ChangeBaseRevision,
+    pub base_revision: super::radicle_change::ChangeBaseRevision,
     pub policy_hash: String,
     pub state_hash: String,
     pub content_root: Option<String>,
     pub content_conflicts: Vec<String>,
-    pub lifecycle: ChangeLifecycleView,
+    pub lifecycle: super::radicle_change::ChangeLifecycleView,
     pub evidence_count: usize,
     pub current_evidence_count: usize,
-    pub files: Vec<ChangeCheckoutFile>,
-    pub destination: ChangeCheckoutDestination,
+    pub files: Vec<super::radicle_checkout::ChangeCheckoutFile>,
+    pub destination: super::radicle_checkout::ChangeCheckoutDestination,
     pub blockers: Vec<String>,
 }
 
@@ -33,21 +24,23 @@ impl ChangeCollaborationCheckoutPlan {
         self.blockers.is_empty()
             && matches!(
                 self.destination,
-                ChangeCheckoutDestination::Absent | ChangeCheckoutDestination::Current
+                super::radicle_checkout::ChangeCheckoutDestination::Absent
+                    | super::radicle_checkout::ChangeCheckoutDestination::Current
             )
     }
 
     pub fn already_current(&self) -> bool {
-        self.destination == ChangeCheckoutDestination::Current && self.blockers.is_empty()
+        self.destination == super::radicle_checkout::ChangeCheckoutDestination::Current
+            && self.blockers.is_empty()
     }
 }
 
 pub fn plan_change_collaboration_checkout(
-    state: &ChangeCollaborationState,
+    state: &super::collaboration_change::ChangeCollaborationState,
     local: ChangeCollaborationLocalSnapshot,
-) -> Result<ChangeCollaborationCheckoutPlan, ChangeCobError> {
-    let compatibility = state_to_compatibility(state)?;
-    let plan = plan_change_cob_checkout(&compatibility, local)?;
+) -> Result<ChangeCollaborationCheckoutPlan, super::radicle_change::ChangeCobError> {
+    let compatibility = super::collaboration_change::state_to_compatibility(state)?;
+    let plan = super::radicle_checkout::plan_change_cob_checkout(&compatibility, local)?;
     Ok(ChangeCollaborationCheckoutPlan {
         change_id: plan.change_id,
         workspace_id: state.workspace_id.clone(),
@@ -67,28 +60,27 @@ pub fn plan_change_collaboration_checkout(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
 
     use super::*;
-    use crate::{
-        initialize_change_collaboration, ChangeArtifactId, ChangeCollaborationAction,
-        ChangeCollaborationInit, ChangeCollaborationOperation,
-    };
 
     const POLICY_HASH: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
-    fn state() -> ChangeCollaborationState {
-        initialize_change_collaboration(ChangeCollaborationOperation {
+    fn state() -> super::super::collaboration_change::ChangeCollaborationState {
+        crate::initialize_change_collaboration(crate::ChangeCollaborationOperation {
             id: "operation:root".to_string(),
             actor: "actor:portable".to_string(),
             is_delegate: false,
-            actions: vec![ChangeCollaborationAction::Init {
-                state: ChangeCollaborationInit::new(
+            actions: vec![crate::ChangeCollaborationAction::Init {
+                state: crate::ChangeCollaborationInit::new(
                     "portable-checkout",
                     "workspace:portable",
-                    ChangeBaseRevision::new("opaque", "revision-one").unwrap(),
+                    super::super::radicle_change::ChangeBaseRevision::new("opaque", "revision-one")
+                        .unwrap(),
                     POLICY_HASH,
-                    BTreeMap::from([(ChangeArtifactId::proposal(), "# Proposal\n".to_string())]),
+                    std::collections::BTreeMap::from([(
+                        crate::ChangeArtifactId::proposal(),
+                        "# Proposal\n".to_string(),
+                    )]),
                 ),
             }],
         })
@@ -103,14 +95,20 @@ mod tests {
             plan_change_collaboration_checkout(&state, ChangeCollaborationLocalSnapshot::absent())
                 .unwrap();
         assert!(absent.checkout_ready());
-        assert_eq!(absent.destination, ChangeCheckoutDestination::Absent);
+        assert_eq!(
+            absent.destination,
+            super::super::radicle_checkout::ChangeCheckoutDestination::Absent
+        );
         assert_eq!(absent.base_revision.kind, "opaque");
 
         let exact = plan_change_collaboration_checkout(
             &state,
             ChangeCollaborationLocalSnapshot {
                 exists: true,
-                files: BTreeMap::from([("proposal.md".to_string(), "# Proposal\n".to_string())]),
+                files: std::collections::BTreeMap::from([(
+                    "proposal.md".to_string(),
+                    "# Proposal\n".to_string(),
+                )]),
                 issues: Vec::new(),
             },
         )
@@ -125,12 +123,18 @@ mod tests {
             &state(),
             ChangeCollaborationLocalSnapshot {
                 exists: true,
-                files: BTreeMap::from([("proposal.md".to_string(), "# Divergent\n".to_string())]),
+                files: std::collections::BTreeMap::from([(
+                    "proposal.md".to_string(),
+                    "# Divergent\n".to_string(),
+                )]),
                 issues: Vec::new(),
             },
         )
         .unwrap();
-        assert_eq!(plan.destination, ChangeCheckoutDestination::Divergent);
+        assert_eq!(
+            plan.destination,
+            super::super::radicle_checkout::ChangeCheckoutDestination::Divergent
+        );
         assert!(!plan.checkout_ready());
     }
 }

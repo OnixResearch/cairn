@@ -1,11 +1,3 @@
-use super::model::{
-    WorkflowOutcomeMachineEvidenceObservation, WorkflowProfileIssue, WorkflowSchemaPolicy,
-    OUTCOME_MACHINE_REVIEW_SCHEMA_V1, WORKFLOW_ADMISSION_OUTCOME_MACHINE,
-    WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY, WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION,
-    WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE, WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
-    WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE, WORKFLOW_PROFILE_STAGE_COMPLETION,
-};
-
 const PROFILE_STAGE_DESIGN: &str = "design";
 const REVIEW_PLACEHOLDER: &str = "CAIRN_PLACEHOLDER";
 const COMPLETION_AUTHORITY_REPOSITORY: &str = "repository";
@@ -149,10 +141,10 @@ pub fn outcome_machine_evidence_paths(value: Option<&serde_json::Value>) -> Vec<
 }
 
 pub fn evaluate_outcome_machine_review(
-    profile: &WorkflowSchemaPolicy,
+    profile: &super::model::WorkflowSchemaPolicy,
     value: Option<&serde_json::Value>,
-    observed_evidence: &[WorkflowOutcomeMachineEvidenceObservation],
-) -> Vec<WorkflowProfileIssue> {
+    observed_evidence: &[super::model::WorkflowOutcomeMachineEvidenceObservation],
+) -> Vec<super::model::WorkflowProfileIssue> {
     // r[impl cairn.outcome_machine_profile.routes]
     // r[impl cairn.outcome_machine_profile.completion]
     // r[impl cairn.outcome_machine_profile.fresh_state]
@@ -160,30 +152,32 @@ pub fn evaluate_outcome_machine_review(
     let Some(artifact_id) = profile
         .artifacts
         .iter()
-        .find(|artifact| artifact.structural_admission == WORKFLOW_ADMISSION_OUTCOME_MACHINE)
+        .find(|artifact| {
+            artifact.structural_admission == super::model::WORKFLOW_ADMISSION_OUTCOME_MACHINE
+        })
         .map(|artifact| artifact.id.clone())
     else {
         return Vec::new();
     };
     let Some(value) = value else {
         return vec![design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE,
             &artifact_id,
             "outcome-machine review is missing or invalid JSON",
         )];
     };
     let Ok(review) = serde_json::from_value::<OutcomeMachineReview>(value.clone()) else {
         return vec![design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE,
             &artifact_id,
             "outcome-machine review does not match the supported schema",
         )];
     };
 
     let mut issues = Vec::new();
-    if review.schema != OUTCOME_MACHINE_REVIEW_SCHEMA_V1 {
+    if review.schema != super::model::OUTCOME_MACHINE_REVIEW_SCHEMA_V1 {
         issues.push(design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE,
             &artifact_id,
             "outcome-machine review schema is unsupported",
         ));
@@ -211,7 +205,7 @@ pub fn evaluate_outcome_machine_review(
     validate_ai_assistance(&review.ai_assistance, &artifact_id, &mut issues);
     if review.activity_counts_are_completion_evidence {
         issues.push(design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY,
             &artifact_id,
             "activity counts cannot serve as completion evidence",
         ));
@@ -241,7 +235,7 @@ pub fn evaluate_outcome_machine_review(
 fn validate_route(
     route: &OutcomeMachineRoute,
     artifact_id: &str,
-    issues: &mut Vec<WorkflowProfileIssue>,
+    issues: &mut Vec<super::model::WorkflowProfileIssue>,
 ) {
     match route {
         OutcomeMachineRoute::Delivery(delivery) => {
@@ -334,18 +328,18 @@ fn validate_route(
 fn validate_ai_assistance(
     ai: &AiAssistance,
     artifact_id: &str,
-    issues: &mut Vec<WorkflowProfileIssue>,
+    issues: &mut Vec<super::model::WorkflowProfileIssue>,
 ) {
     if ai.hidden_session_state_required {
         issues.push(design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY,
             artifact_id,
             "hidden session state cannot be a required input",
         ));
     }
     if ai.completion_authority != COMPLETION_AUTHORITY_REPOSITORY {
         issues.push(design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY,
             artifact_id,
             "completion authority must remain with the repository",
         ));
@@ -355,8 +349,8 @@ fn validate_ai_assistance(
 fn validate_fresh_state(
     fresh_state: &FreshStateDisposition,
     artifact_id: &str,
-    observed_evidence: &[WorkflowOutcomeMachineEvidenceObservation],
-    issues: &mut Vec<WorkflowProfileIssue>,
+    observed_evidence: &[super::model::WorkflowOutcomeMachineEvidenceObservation],
+    issues: &mut Vec<super::model::WorkflowProfileIssue>,
 ) {
     match fresh_state.status {
         FreshStateStatus::Planned => {
@@ -368,13 +362,13 @@ fn validate_fresh_state(
             );
             if !fresh_state.evidence.is_empty() {
                 issues.push(design_issue(
-                    WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE,
+                    super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE,
                     artifact_id,
                     "planned fresh-state reproduction cannot contain observed evidence",
                 ));
             }
             issues.push(completion_issue(
-                WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE,
+                super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE,
                 "fresh-state reproduction remains planned",
             ));
         }
@@ -388,7 +382,7 @@ fn validate_fresh_state(
             validate_completion_evidence(
                 "fresh_state_reproduction.evidence",
                 &fresh_state.evidence,
-                WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE,
+                super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE,
                 observed_evidence,
                 issues,
             );
@@ -402,7 +396,7 @@ fn validate_fresh_state(
             );
             if !fresh_state.evidence.is_empty() {
                 issues.push(design_issue(
-                    WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE,
+                    super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE,
                     artifact_id,
                     "not-applicable fresh-state reproduction cannot contain evidence",
                 ));
@@ -414,27 +408,27 @@ fn validate_fresh_state(
 fn validate_completion(
     completion: &CompletionDisposition,
     artifact_id: &str,
-    observed_evidence: &[WorkflowOutcomeMachineEvidenceObservation],
-    issues: &mut Vec<WorkflowProfileIssue>,
+    observed_evidence: &[super::model::WorkflowOutcomeMachineEvidenceObservation],
+    issues: &mut Vec<super::model::WorkflowProfileIssue>,
 ) {
     match completion.status {
         CompletionStatus::Planned => {
             if !completion.evidence.is_empty() {
                 issues.push(design_issue(
-                    WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION,
+                    super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION,
                     artifact_id,
                     "planned completion cannot contain observed evidence",
                 ));
             }
             issues.push(completion_issue(
-                WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION,
+                super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION,
                 "observed completion evidence is missing",
             ));
         }
         CompletionStatus::Observed => validate_completion_evidence(
             "completion.evidence",
             &completion.evidence,
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION,
             observed_evidence,
             issues,
         ),
@@ -445,8 +439,8 @@ fn validate_completion_evidence(
     field: &str,
     evidence: &[EvidenceReference],
     issue_code: &str,
-    observed_evidence: &[WorkflowOutcomeMachineEvidenceObservation],
-    issues: &mut Vec<WorkflowProfileIssue>,
+    observed_evidence: &[super::model::WorkflowOutcomeMachineEvidenceObservation],
+    issues: &mut Vec<super::model::WorkflowProfileIssue>,
 ) {
     if evidence.is_empty() || evidence.len() > OUTCOME_MACHINE_MAX_EVIDENCE_ITEMS {
         issues.push(completion_issue(
@@ -496,11 +490,11 @@ fn validate_text_list(
     field: &str,
     values: &[String],
     artifact_id: &str,
-    issues: &mut Vec<WorkflowProfileIssue>,
+    issues: &mut Vec<super::model::WorkflowProfileIssue>,
 ) {
     if values.is_empty() || values.len() > OUTCOME_MACHINE_MAX_LIST_ITEMS {
         issues.push(design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
             artifact_id,
             format!("{field} must contain bounded values"),
         ));
@@ -509,7 +503,7 @@ fn validate_text_list(
     for value in values {
         if !text_is_valid(value) {
             issues.push(design_issue(
-                WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
+                super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
                 artifact_id,
                 format!("{field} contains an invalid value"),
             ));
@@ -521,11 +515,11 @@ fn validate_text(
     field: &str,
     value: &str,
     artifact_id: &str,
-    issues: &mut Vec<WorkflowProfileIssue>,
+    issues: &mut Vec<super::model::WorkflowProfileIssue>,
 ) {
     if !text_is_valid(value) {
         issues.push(design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
             artifact_id,
             format!("{field} must be substantive and bounded"),
         ));
@@ -536,11 +530,11 @@ fn validate_optional_text(
     field: &str,
     value: &str,
     artifact_id: &str,
-    issues: &mut Vec<WorkflowProfileIssue>,
+    issues: &mut Vec<super::model::WorkflowProfileIssue>,
 ) {
     if !value.is_empty() && !text_is_valid(value) {
         issues.push(design_issue(
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
+            super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE,
             artifact_id,
             format!("{field} must be bounded when present"),
         ));
@@ -554,8 +548,12 @@ fn text_is_valid(value: &str) -> bool {
         && !trimmed.contains(REVIEW_PLACEHOLDER)
 }
 
-fn design_issue(code: &str, artifact_id: &str, message: impl Into<String>) -> WorkflowProfileIssue {
-    WorkflowProfileIssue {
+fn design_issue(
+    code: &str,
+    artifact_id: &str,
+    message: impl Into<String>,
+) -> super::model::WorkflowProfileIssue {
+    super::model::WorkflowProfileIssue {
         code: code.to_string(),
         artifact_id: Some(artifact_id.to_string()),
         stage: PROFILE_STAGE_DESIGN.to_string(),
@@ -563,40 +561,38 @@ fn design_issue(code: &str, artifact_id: &str, message: impl Into<String>) -> Wo
     }
 }
 
-fn completion_issue(code: &str, message: impl Into<String>) -> WorkflowProfileIssue {
-    WorkflowProfileIssue {
+fn completion_issue(code: &str, message: impl Into<String>) -> super::model::WorkflowProfileIssue {
+    super::model::WorkflowProfileIssue {
         code: code.to_string(),
         artifact_id: None,
-        stage: WORKFLOW_PROFILE_STAGE_COMPLETION.to_string(),
+        stage: super::model::WORKFLOW_PROFILE_STAGE_COMPLETION.to_string(),
         message: message.into(),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
 
     use super::*;
-    use crate::verified::artifact_workflow::{
-        profile_issue_applies_to_stage, WorkflowArtifactPolicy, WorkflowBounds,
-        WORKFLOW_PATH_KIND_FILE, WORKFLOW_SCHEMA_VERSION_V1, WORKFLOW_SPEC_EFFECT_DELTA,
-        WORKFLOW_SUPPORTED_STATES, WORKFLOW_TASK_LINK_REQUIREMENT,
-    };
 
     const TEST_BOUND: usize = 8;
     const TEST_BYTE_BOUND: usize = 4096;
     const EXPECTED_PLANNED_ISSUES: usize = 2;
 
-    fn profile() -> WorkflowSchemaPolicy {
-        WorkflowSchemaPolicy {
-            schema_version: WORKFLOW_SCHEMA_VERSION_V1.to_string(),
+    fn profile() -> super::super::model::WorkflowSchemaPolicy {
+        super::super::model::WorkflowSchemaPolicy {
+            schema_version: crate::verified::artifact_workflow::WORKFLOW_SCHEMA_VERSION_V1
+                .to_string(),
             id: "outcome-machine".to_string(),
             profile_version: 1,
             description: "outcome-machine test".to_string(),
-            spec_effect: WORKFLOW_SPEC_EFFECT_DELTA.to_string(),
-            task_link_class: WORKFLOW_TASK_LINK_REQUIREMENT.to_string(),
-            states: WORKFLOW_SUPPORTED_STATES.map(ToOwned::to_owned).to_vec(),
-            bounds: WorkflowBounds {
+            spec_effect: crate::verified::artifact_workflow::WORKFLOW_SPEC_EFFECT_DELTA.to_string(),
+            task_link_class: crate::verified::artifact_workflow::WORKFLOW_TASK_LINK_REQUIREMENT
+                .to_string(),
+            states: crate::verified::artifact_workflow::WORKFLOW_SUPPORTED_STATES
+                .map(ToOwned::to_owned)
+                .to_vec(),
+            bounds: crate::verified::artifact_workflow::WorkflowBounds {
                 max_artifacts: TEST_BOUND,
                 max_dependencies: TEST_BOUND,
                 max_files_per_artifact: TEST_BOUND,
@@ -609,12 +605,13 @@ mod tests {
                 max_directory_depth: TEST_BOUND,
                 max_directory_entries: TEST_BOUND,
             },
-            artifacts: vec![WorkflowArtifactPolicy {
+            artifacts: vec![crate::verified::artifact_workflow::WorkflowArtifactPolicy {
                 id: "outcome-machine".to_string(),
                 generates: "outcome-machine.json".to_string(),
                 output_path: "outcome-machine.json".to_string(),
-                path_kind: WORKFLOW_PATH_KIND_FILE.to_string(),
-                structural_admission: WORKFLOW_ADMISSION_OUTCOME_MACHINE.to_string(),
+                path_kind: crate::verified::artifact_workflow::WORKFLOW_PATH_KIND_FILE.to_string(),
+                structural_admission: super::super::model::WORKFLOW_ADMISSION_OUTCOME_MACHINE
+                    .to_string(),
                 requires: Vec::new(),
                 stage: PROFILE_STAGE_DESIGN.to_string(),
                 instruction_template: "Write the outcome-machine record.".to_string(),
@@ -640,7 +637,7 @@ mod tests {
         completion_status: &str,
     ) -> serde_json::Value {
         let fresh_evidence = if fresh_status == "observed" {
-            vec![json!({
+            vec![serde_json::json!({
                 "kind": "replay",
                 "path": "evidence/fresh-state.json",
                 "blake3": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -649,7 +646,7 @@ mod tests {
             Vec::new()
         };
         let completion_evidence = if completion_status == "observed" {
-            vec![json!({
+            vec![serde_json::json!({
                 "kind": "test",
                 "path": "evidence/completion.json",
                 "blake3": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
@@ -657,8 +654,8 @@ mod tests {
         } else {
             Vec::new()
         };
-        json!({
-            "schema": OUTCOME_MACHINE_REVIEW_SCHEMA_V1,
+        serde_json::json!({
+            "schema": super::super::model::OUTCOME_MACHINE_REVIEW_SCHEMA_V1,
             "route": route,
             "maintenance_owner": "repository maintainer",
             "tracked_inputs": ["source", "policy"],
@@ -684,22 +681,24 @@ mod tests {
 
     fn observed_evidence(
         value: &serde_json::Value,
-    ) -> Vec<WorkflowOutcomeMachineEvidenceObservation> {
+    ) -> Vec<super::super::model::WorkflowOutcomeMachineEvidenceObservation> {
         ["fresh_state_reproduction", "completion"]
             .iter()
             .flat_map(|section| value[*section]["evidence"].as_array().into_iter().flatten())
-            .map(|evidence| WorkflowOutcomeMachineEvidenceObservation {
-                path: evidence["path"]
-                    .as_str()
-                    .expect("evidence path")
-                    .to_string(),
-                blake3: Some(
-                    evidence["blake3"]
+            .map(
+                |evidence| super::super::model::WorkflowOutcomeMachineEvidenceObservation {
+                    path: evidence["path"]
                         .as_str()
-                        .expect("evidence BLAKE3")
+                        .expect("evidence path")
                         .to_string(),
-                ),
-            })
+                    blake3: Some(
+                        evidence["blake3"]
+                            .as_str()
+                            .expect("evidence BLAKE3")
+                            .to_string(),
+                    ),
+                },
+            )
             .collect()
     }
 
@@ -709,7 +708,7 @@ mod tests {
         // r[verify cairn.outcome_machine_profile.completion]
         // r[verify cairn.outcome_machine_profile.fresh_state]
         let routes = [
-            json!({
+            serde_json::json!({
                 "kind": "delivery",
                 "details": {
                     "immediate_outcome": "The operator receives a bounded result.",
@@ -718,7 +717,7 @@ mod tests {
                     "repeatability_plan": "Run the same checks from tracked inputs."
                 }
             }),
-            json!({
+            serde_json::json!({
                 "kind": "foundation",
                 "details": {
                     "current_consumer": "workspace operator",
@@ -727,7 +726,7 @@ mod tests {
                     "repeatability_plan": "Run the profile fixtures."
                 }
             }),
-            json!({
+            serde_json::json!({
                 "kind": "bounded_exception",
                 "details": {
                     "immediate_outcome": "Restore the blocked service.",
@@ -752,7 +751,7 @@ mod tests {
     fn planned_record_emits_only_completion_blockers() {
         // r[verify cairn.outcome_machine_profile.completion]
         let value = common(
-            json!({
+            serde_json::json!({
                 "kind": "delivery",
                 "details": {
                     "immediate_outcome": "Deliver the requested result.",
@@ -769,11 +768,21 @@ mod tests {
         assert_eq!(issues.len(), EXPECTED_PLANNED_ISSUES);
         assert!(issues
             .iter()
-            .all(|issue| issue.stage == WORKFLOW_PROFILE_STAGE_COMPLETION));
+            .all(|issue| issue.stage == super::super::model::WORKFLOW_PROFILE_STAGE_COMPLETION));
         for issue in &issues {
-            assert!(!profile_issue_applies_to_stage(issue, "proposal"));
-            assert!(!profile_issue_applies_to_stage(issue, "design"));
-            assert!(!profile_issue_applies_to_stage(issue, "tasks"));
+            assert!(
+                !crate::verified::artifact_workflow::profile_issue_applies_to_stage(
+                    issue, "proposal"
+                )
+            );
+            assert!(
+                !crate::verified::artifact_workflow::profile_issue_applies_to_stage(
+                    issue, "design"
+                )
+            );
+            assert!(
+                !crate::verified::artifact_workflow::profile_issue_applies_to_stage(issue, "tasks")
+            );
         }
     }
 
@@ -781,7 +790,7 @@ mod tests {
     fn not_applicable_fresh_state_requires_a_rationale() {
         // r[verify cairn.outcome_machine_profile.fresh_state]
         let mut value = common(
-            json!({
+            serde_json::json!({
                 "kind": "bounded_exception",
                 "details": {
                     "immediate_outcome": "Restore the blocked service.",
@@ -795,15 +804,15 @@ mod tests {
             "observed",
         );
         value["fresh_state_reproduction"]["rationale"] =
-            json!("The incident repair has no replayable execution path.");
+            serde_json::json!("The incident repair has no replayable execution path.");
         let evidence = observed_evidence(&value);
         assert!(evaluate_outcome_machine_review(&profile(), Some(&value), &evidence).is_empty());
 
-        value["fresh_state_reproduction"]["rationale"] = json!("");
+        value["fresh_state_reproduction"]["rationale"] = serde_json::json!("");
         let issues = evaluate_outcome_machine_review(&profile(), Some(&value), &evidence);
         assert!(issues
             .iter()
-            .any(|issue| issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE));
+            .any(|issue| issue.code == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE));
     }
 
     #[test]
@@ -811,7 +820,7 @@ mod tests {
         // r[verify cairn.outcome_machine_profile.routes]
         // r[verify cairn.outcome_machine_profile.boundary]
         let mut value = common(
-            json!({
+            serde_json::json!({
                 "kind": "foundation",
                 "details": {
                     "current_consumer": "",
@@ -823,18 +832,18 @@ mod tests {
             "observed",
             "observed",
         );
-        value["ai_assistance"]["hidden_session_state_required"] = json!(true);
-        value["ai_assistance"]["completion_authority"] = json!("model");
-        value["activity_counts_are_completion_evidence"] = json!(true);
+        value["ai_assistance"]["hidden_session_state_required"] = serde_json::json!(true);
+        value["ai_assistance"]["completion_authority"] = serde_json::json!("model");
+        value["activity_counts_are_completion_evidence"] = serde_json::json!(true);
         let evidence = observed_evidence(&value);
         let issues = evaluate_outcome_machine_review(&profile(), Some(&value), &evidence);
 
         assert!(issues.iter().any(|issue| {
-            issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE
+            issue.code == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_ROUTE
                 && issue.stage == PROFILE_STAGE_DESIGN
         }));
         assert!(issues.iter().any(|issue| {
-            issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY
+            issue.code == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_AUTHORITY
                 && issue.stage == PROFILE_STAGE_DESIGN
         }));
     }
@@ -842,16 +851,17 @@ mod tests {
     #[test]
     fn malformed_record_and_empty_observed_evidence_fail_closed() {
         // r[verify cairn.outcome_machine_profile.verification]
-        let malformed = json!({"schema": OUTCOME_MACHINE_REVIEW_SCHEMA_V1});
+        let malformed =
+            serde_json::json!({"schema": super::super::model::OUTCOME_MACHINE_REVIEW_SCHEMA_V1});
         let malformed_issues = evaluate_outcome_machine_review(&profile(), Some(&malformed), &[]);
         assert_eq!(malformed_issues.len(), 1);
         assert_eq!(
             malformed_issues[0].code,
-            WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE
+            super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_SHAPE
         );
 
         let mut empty = common(
-            json!({
+            serde_json::json!({
                 "kind": "delivery",
                 "details": {
                     "immediate_outcome": "Deliver the requested result.",
@@ -863,20 +873,20 @@ mod tests {
             "observed",
             "observed",
         );
-        empty["fresh_state_reproduction"]["evidence"] = json!([]);
-        empty["completion"]["evidence"] = json!([]);
+        empty["fresh_state_reproduction"]["evidence"] = serde_json::json!([]);
+        empty["completion"]["evidence"] = serde_json::json!([]);
         let empty_issues = evaluate_outcome_machine_review(&profile(), Some(&empty), &[]);
         assert!(empty_issues.iter().any(|issue| {
-            issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE
-                && issue.stage == WORKFLOW_PROFILE_STAGE_COMPLETION
+            issue.code == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE
+                && issue.stage == super::super::model::WORKFLOW_PROFILE_STAGE_COMPLETION
         }));
         assert!(empty_issues.iter().any(|issue| {
-            issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION
-                && issue.stage == WORKFLOW_PROFILE_STAGE_COMPLETION
+            issue.code == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION
+                && issue.stage == super::super::model::WORKFLOW_PROFILE_STAGE_COMPLETION
         }));
 
         let mut invalid_identity = common(
-            json!({
+            serde_json::json!({
                 "kind": "delivery",
                 "details": {
                     "immediate_outcome": "Deliver the requested result.",
@@ -888,7 +898,7 @@ mod tests {
             "observed",
             "observed",
         );
-        invalid_identity["completion"]["evidence"][0]["blake3"] = json!("not-a-digest");
+        invalid_identity["completion"]["evidence"][0]["blake3"] = serde_json::json!("not-a-digest");
         let identity_evidence = observed_evidence(&invalid_identity);
         let identity_issues = evaluate_outcome_machine_review(
             &profile(),
@@ -897,10 +907,11 @@ mod tests {
         );
         assert!(identity_issues
             .iter()
-            .any(|issue| issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION));
+            .any(|issue| issue.code
+                == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION));
 
         let mut unsafe_path = common(
-            json!({
+            serde_json::json!({
                 "kind": "delivery",
                 "details": {
                     "immediate_outcome": "Deliver the requested result.",
@@ -912,16 +923,17 @@ mod tests {
             "observed",
             "observed",
         );
-        unsafe_path["completion"]["evidence"][0]["path"] = json!("../outside.json");
+        unsafe_path["completion"]["evidence"][0]["path"] = serde_json::json!("../outside.json");
         let unsafe_evidence = observed_evidence(&unsafe_path);
         let unsafe_issues =
             evaluate_outcome_machine_review(&profile(), Some(&unsafe_path), &unsafe_evidence);
         assert!(unsafe_issues
             .iter()
-            .any(|issue| issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION));
+            .any(|issue| issue.code
+                == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION));
 
         let missing = common(
-            json!({
+            serde_json::json!({
                 "kind": "delivery",
                 "details": {
                     "immediate_outcome": "Deliver the requested result.",
@@ -936,9 +948,11 @@ mod tests {
         let missing_issues = evaluate_outcome_machine_review(&profile(), Some(&missing), &[]);
         assert!(missing_issues
             .iter()
-            .any(|issue| issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION));
+            .any(|issue| issue.code
+                == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_COMPLETION));
         assert!(missing_issues
             .iter()
-            .any(|issue| issue.code == WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE));
+            .any(|issue| issue.code
+                == super::super::model::WORKFLOW_ISSUE_OUTCOME_MACHINE_FRESH_STATE));
     }
 }

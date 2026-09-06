@@ -1,6 +1,3 @@
-use super::common::{count_string_field, increment_count, issues_json, sort_count_map};
-use super::{review_receipt_hash, validate_review_receipt, REVIEW_ANALYTICS_SCHEMA_V1};
-
 pub fn review_ledger_analytics(receipts: &[serde_json::Value]) -> serde_json::Value {
     // r[impl cairn.semantic_review.review_ledger_analytics.aggregate]
     // r[impl cairn.semantic_review.review_ledger_analytics.aggregate.aggregate.counts]
@@ -8,18 +5,18 @@ pub fn review_ledger_analytics(receipts: &[serde_json::Value]) -> serde_json::Va
     let mut valid_receipts = Vec::new();
     let mut invalid_inputs = Vec::new();
     for (index, receipt) in receipts.iter().enumerate() {
-        let validation = validate_review_receipt(receipt, &[]);
+        let validation = super::validate_review_receipt(receipt, &[]);
         if validation.valid {
             valid_receipts.push(receipt.clone());
         } else {
             invalid_inputs.push(serde_json::json!({
                 "index": index,
-                "issues": issues_json(&validation.issues),
+                "issues": super::common::issues_json(&validation.issues),
             }));
         }
     }
-    let by_kind = count_string_field(&valid_receipts, "review_kind");
-    let by_decision = count_string_field(&valid_receipts, "decision");
+    let by_kind = super::common::count_string_field(&valid_receipts, "review_kind");
+    let by_decision = super::common::count_string_field(&valid_receipts, "decision");
     let mut by_category: serde_json::Map<String, serde_json::Value> = serde_json::Map::new();
     for receipt in &valid_receipts {
         if let Some(findings) = receipt
@@ -29,15 +26,15 @@ pub fn review_ledger_analytics(receipts: &[serde_json::Value]) -> serde_json::Va
             for finding in findings {
                 if let Some(category) = finding.get("category").and_then(serde_json::Value::as_str)
                 {
-                    increment_count(&mut by_category, category);
+                    super::common::increment_count(&mut by_category, category);
                 }
             }
         }
     }
-    let by_category = sort_count_map(&mut by_category);
+    let by_category = super::common::sort_count_map(&mut by_category);
     let mut input_receipt_hashes = valid_receipts
         .iter()
-        .map(review_receipt_hash)
+        .map(super::review_receipt_hash)
         .collect::<Vec<_>>();
     input_receipt_hashes.sort();
     let mut warnings = Vec::new();
@@ -47,7 +44,7 @@ pub fn review_ledger_analytics(receipts: &[serde_json::Value]) -> serde_json::Va
         );
     }
     let mut receipt = serde_json::json!({
-        "schema_version": REVIEW_ANALYTICS_SCHEMA_V1,
+        "schema_version": super::REVIEW_ANALYTICS_SCHEMA_V1,
         "valid": invalid_inputs.is_empty(),
         "verdict": if invalid_inputs.is_empty() {"PASS"} else {"FAIL"},
         "input_count": receipts.len(),

@@ -1,10 +1,3 @@
-use super::changes::change_issues;
-use super::{
-    references::reference_hygiene_issues,
-    substance::{artifact_substance_issues, ArtifactSubstanceInventory},
-    task_ordering::{build_task_ordering_graph, TaskOrderingGraph, TaskOrderingIssue},
-};
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GateStage {
     Proposal,
@@ -36,8 +29,8 @@ pub struct GateReport {
     pub stage: String,
     pub verdict: String,
     pub issues: Vec<GateIssue>,
-    pub substance: Vec<ArtifactSubstanceInventory>,
-    pub task_ordering: Option<TaskOrderingGraph>,
+    pub substance: Vec<super::substance::ArtifactSubstanceInventory>,
+    pub task_ordering: Option<super::task_ordering::TaskOrderingGraph>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -130,7 +123,7 @@ pub fn evaluate_gate_snapshot(
     issues.extend(required_artifact_issues(change, stage, policy));
     let task_ordering = if matches!(stage, GateStage::Tasks) {
         snapshot.tasks.as_ref().map(|tasks| {
-            let graph = build_task_ordering_graph(&tasks.markdown, policy);
+            let graph = super::task_ordering::build_task_ordering_graph(&tasks.markdown, policy);
             issues.extend(
                 graph
                     .issues
@@ -144,14 +137,17 @@ pub fn evaluate_gate_snapshot(
     };
     if matches!(stage, GateStage::Tasks) {
         issues.extend(
-            change_issues(change, policy)
+            super::changes::change_issues(change, policy)
                 .into_iter()
                 .map(|message| gate_issue(message, policy)),
         );
     }
-    let (substance_issues, substance) = artifact_substance_issues(snapshot, stage, policy);
+    let (substance_issues, substance) =
+        super::substance::artifact_substance_issues(snapshot, stage, policy);
     issues.extend(substance_issues);
-    issues.extend(reference_hygiene_issues(snapshot, stage, policy));
+    issues.extend(super::references::reference_hygiene_issues(
+        snapshot, stage, policy,
+    ));
     let verdict = if issues.is_empty() { "PASS" } else { "FAIL" }.to_string();
     GateReport {
         change: change.name.clone(),
@@ -350,7 +346,7 @@ pub(super) fn gate_issue(message: String, policy: &crate::verified::policy::Poli
 
 fn task_ordering_gate_issue(
     path: &str,
-    issue: &TaskOrderingIssue,
+    issue: &super::task_ordering::TaskOrderingIssue,
     policy: &crate::verified::policy::Policy,
 ) -> GateIssue {
     let location = issue

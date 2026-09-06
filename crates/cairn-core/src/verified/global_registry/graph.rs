@@ -1,10 +1,5 @@
 use std::collections::VecDeque;
 
-use super::{
-    issue, issue_order, registry_non_claims, report_hash, GlobalRegistrySnapshot, RegistryEdge,
-    RegistryGraphDirection, RegistryGraphProfile, RegistryGraphReport,
-};
-
 const MAX_CYCLE_WITNESS_NODES: usize = 64;
 
 // r[impl cairn.global_registry.graph]
@@ -14,11 +9,11 @@ const MAX_CYCLE_WITNESS_NODES: usize = 64;
 // r[impl cairn.global_registry.dag_profiles.cycle]
 // r[impl cairn.global_registry.dag_profiles.non_dag]
 pub fn evaluate_registry_graph(
-    snapshot: &GlobalRegistrySnapshot,
-    profile: &RegistryGraphProfile,
+    snapshot: &super::GlobalRegistrySnapshot,
+    profile: &super::RegistryGraphProfile,
     start_id: Option<&str>,
-    direction: RegistryGraphDirection,
-) -> RegistryGraphReport {
+    direction: super::RegistryGraphDirection,
+) -> super::RegistryGraphReport {
     let mut issues = Vec::new();
     let allowed_nodes = snapshot
         .nodes
@@ -27,7 +22,7 @@ pub fn evaluate_registry_graph(
         .map(|node| node.stable_id.clone())
         .collect::<std::collections::BTreeSet<_>>();
     if profile.id.is_empty() || profile.allowed_edge_kinds.is_empty() {
-        issues.push(issue(
+        issues.push(super::issue(
             "registry.graph_profile_invalid",
             "graph_profile",
             &profile.id,
@@ -39,7 +34,7 @@ pub fn evaluate_registry_graph(
     }
     if let Some(start) = start_id {
         if !allowed_nodes.contains(start) {
-            issues.push(issue(
+            issues.push(super::issue(
                 "registry.graph_start_unknown",
                 "graph_query",
                 start,
@@ -63,7 +58,7 @@ pub fn evaluate_registry_graph(
         for endpoint in [&edge.from_id, &edge.to_id] {
             if !allowed_nodes.contains(endpoint) {
                 unresolved.insert(endpoint.clone());
-                issues.push(issue(
+                issues.push(super::issue(
                     "registry.graph_unresolved_endpoint",
                     "edge",
                     &edge.stable_id,
@@ -75,7 +70,7 @@ pub fn evaluate_registry_graph(
             }
         }
         if edge.from_id == edge.to_id {
-            issues.push(issue(
+            issues.push(super::issue(
                 "registry.graph_self_edge",
                 "edge",
                 &edge.stable_id,
@@ -87,7 +82,7 @@ pub fn evaluate_registry_graph(
         }
         let key = (&edge.kind, &edge.from_id, &edge.to_id);
         if !edge_keys.insert(key) {
-            issues.push(issue(
+            issues.push(super::issue(
                 "registry.graph_duplicate_edge",
                 "edge",
                 &edge.stable_id,
@@ -107,7 +102,7 @@ pub fn evaluate_registry_graph(
         .collect::<Vec<_>>();
     let cycle_witness = canonical_cycle_witness(&traversed, &traversed_edges);
     if profile.require_dag && !cycle_witness.is_empty() {
-        issues.push(issue(
+        issues.push(super::issue(
             "registry.graph_cycle",
             "graph_profile",
             &profile.id,
@@ -133,7 +128,7 @@ pub fn evaluate_registry_graph(
         .collect::<Vec<_>>();
     selected_edge_ids.sort();
     selected_edge_ids.dedup();
-    issues.sort_by(issue_order);
+    issues.sort_by(super::issue_order);
     let result_hash = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "profile_id": profile.id,
         "snapshot_hash": snapshot.snapshot_hash,
@@ -144,7 +139,7 @@ pub fn evaluate_registry_graph(
         "unresolved_nodes": unresolved,
     }));
     let valid = issues.is_empty();
-    let mut report = RegistryGraphReport {
+    let mut report = super::RegistryGraphReport {
         valid,
         verdict: if valid { "PASS" } else { "FAIL" }.to_string(),
         profile_id: profile.id.clone(),
@@ -157,17 +152,17 @@ pub fn evaluate_registry_graph(
         issues,
         result_hash,
         receipt_hash: String::new(),
-        non_claims: registry_non_claims(snapshot),
+        non_claims: super::registry_non_claims(snapshot),
     };
-    report.receipt_hash = report_hash(&report);
+    report.receipt_hash = super::report_hash(&report);
     report
 }
 
 fn traversal_set(
     nodes: &std::collections::BTreeSet<String>,
-    edges: &[RegistryEdge],
+    edges: &[super::RegistryEdge],
     start_id: Option<&str>,
-    direction: RegistryGraphDirection,
+    direction: super::RegistryGraphDirection,
 ) -> std::collections::BTreeSet<String> {
     let Some(start) = start_id else {
         return nodes.clone();
@@ -191,11 +186,13 @@ fn traversal_set(
     let mut queue = VecDeque::from([start]);
     while let Some(current) = queue.pop_front() {
         let neighbors = match direction {
-            RegistryGraphDirection::Descendants => {
+            super::RegistryGraphDirection::Descendants => {
                 forward.get(current).cloned().unwrap_or_default()
             }
-            RegistryGraphDirection::Ancestors => reverse.get(current).cloned().unwrap_or_default(),
-            RegistryGraphDirection::Both => {
+            super::RegistryGraphDirection::Ancestors => {
+                reverse.get(current).cloned().unwrap_or_default()
+            }
+            super::RegistryGraphDirection::Both => {
                 let mut values = forward.get(current).cloned().unwrap_or_default();
                 values.extend(reverse.get(current).cloned().unwrap_or_default());
                 values.sort();
@@ -214,7 +211,7 @@ fn traversal_set(
 
 fn stable_topological_order(
     nodes: &std::collections::BTreeSet<String>,
-    edges: &[RegistryEdge],
+    edges: &[super::RegistryEdge],
 ) -> Vec<String> {
     let mut indegree = nodes
         .iter()
@@ -257,7 +254,7 @@ fn stable_topological_order(
 
 fn canonical_cycle_witness(
     nodes: &std::collections::BTreeSet<String>,
-    edges: &[RegistryEdge],
+    edges: &[super::RegistryEdge],
 ) -> Vec<String> {
     let mut adjacency: std::collections::BTreeMap<&str, Vec<&str>> =
         std::collections::BTreeMap::new();

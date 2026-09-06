@@ -1,5 +1,3 @@
-use super::evidence::blake3_hex;
-
 const ACCEPTED_REQUIREMENTS_HEADING: &str = "## Requirements";
 const ADDED_REQUIREMENTS_HEADING: &str = "## ADDED Requirements";
 const MODIFIED_REQUIREMENTS_HEADING: &str = "## MODIFIED Requirements";
@@ -112,8 +110,8 @@ pub fn merge_delta_spec(accepted: Option<&str>, delta: &str, spec_id: &str) -> D
         .filter(|text| !text.trim().is_empty())
         .map(ToOwned::to_owned)
         .unwrap_or_else(|| empty_accepted_spec(spec_id));
-    let accepted_hash = blake3_hex(base.as_bytes());
-    let delta_hash = blake3_hex(delta.as_bytes());
+    let accepted_hash = super::evidence::blake3_hex(base.as_bytes());
+    let delta_hash = super::evidence::blake3_hex(delta.as_bytes());
 
     let (operations, mut diagnostics) = parse_delta_operations(delta);
     let accepted_document = parse_accepted_document(&base, &mut diagnostics);
@@ -138,7 +136,7 @@ pub fn merge_delta_spec(accepted: Option<&str>, delta: &str, spec_id: &str) -> D
     }
     let changed = !blocked && computed_markdown != base;
     let markdown = if blocked { base } else { computed_markdown };
-    let result_hash = blake3_hex(markdown.as_bytes());
+    let result_hash = super::evidence::blake3_hex(markdown.as_bytes());
     let added_blocks = operations
         .iter()
         .filter(|operation| operation.kind != DeltaOperationKind::Removed)
@@ -338,7 +336,7 @@ fn operation_from_block(
         kind,
         requirement_id: ids[0].clone(),
         heading,
-        block_hash: blake3_hex(block.as_bytes()),
+        block_hash: super::evidence::blake3_hex(block.as_bytes()),
         block: block.to_string(),
     })
 }

@@ -1,5 +1,3 @@
-use super::evidence::canonical_json_hash;
-
 pub const AUTHENTICATED_EVIDENCE_SCHEMA_V1: &str = "cairn.authenticated-evidence.v1";
 pub const AUTHENTICATED_EVIDENCE_PROFILE_DIAGNOSTIC: &str = "diagnostic";
 pub const AUTHENTICATED_EVIDENCE_PROFILE_ONIX_RELEASE: &str = "onix-release";
@@ -180,7 +178,7 @@ pub fn evaluate_authenticated_evidence(
     sort_issues(&mut issues);
     let passed = issues.is_empty();
     let authentication_hash = passed.then(|| {
-        canonical_json_hash(&serde_json::json!({
+        super::evidence::canonical_json_hash(&serde_json::json!({
             "policy": policy,
             "input": input,
         }))

@@ -4,8 +4,6 @@
 // r[impl electrical_circuit_primitives.units]
 // r[impl electrical_circuit_primitives.units.dimensioned_values]
 
-use super::issues::{issue, CircuitPrimitiveIssue};
-
 const REQUIRED_VALUE_FIELDS: &[&str] = &[
     "normalized_value",
     "si_dimension",
@@ -26,13 +24,13 @@ const REQUIRED_TERMINALS: &[&str] = &["p", "n"];
 
 pub(super) fn component_issues(
     object: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<CircuitPrimitiveIssue> {
+) -> Vec<super::issues::CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(8);
     let Some(components) = object
         .get("components")
         .and_then(serde_json::Value::as_array)
     else {
-        issues.push(issue(
+        issues.push(super::issues::issue(
             "circuit_primitive.components_not_array",
             "components must be an array",
         ));
@@ -40,7 +38,7 @@ pub(super) fn component_issues(
     };
     for component in components {
         let Some(component_object) = component.as_object() else {
-            issues.push(issue(
+            issues.push(super::issues::issue(
                 "circuit_primitive.component_not_object",
                 "each component must be a JSON object",
             ));
@@ -63,7 +61,7 @@ pub(super) fn component_issues(
 pub(super) fn component_binding_issues(
     components: Option<&serde_json::Value>,
     net_ids: &[String],
-) -> Vec<CircuitPrimitiveIssue> {
+) -> Vec<super::issues::CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(8);
     let Some(component_entries) = components.and_then(serde_json::Value::as_array) else {
         return issues;
@@ -77,7 +75,7 @@ pub(super) fn component_binding_issues(
             .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
         if !TWO_TERMINAL_KINDS.contains(&kind) && !MODEL_CAVEATED_KINDS.contains(&kind) {
-            issues.push(issue(
+            issues.push(super::issues::issue(
                 "circuit_primitive.unknown_component_kind",
                 format!("component kind is outside the closed first-pass vocabulary: {kind}"),
             ));
@@ -87,7 +85,7 @@ pub(super) fn component_binding_issues(
             .get("terminal_bindings")
             .and_then(serde_json::Value::as_object)
         else {
-            issues.push(issue(
+            issues.push(super::issues::issue(
                 "circuit_primitive.terminal_bindings_missing",
                 "component must declare terminal_bindings",
             ));
@@ -96,11 +94,11 @@ pub(super) fn component_binding_issues(
         for terminal in REQUIRED_TERMINALS {
             match bindings.get(*terminal).and_then(serde_json::Value::as_str) {
                 Some(net_id) if net_ids.iter().any(|declared| declared == net_id) => {}
-                Some(_) => issues.push(issue(
+                Some(_) => issues.push(super::issues::issue(
                     "circuit_primitive.terminal_net_unknown",
                     format!("terminal {terminal} must bind to a declared net id"),
                 )),
-                None => issues.push(issue(
+                None => issues.push(super::issues::issue(
                     "circuit_primitive.terminal_binding_missing",
                     format!("missing required terminal binding: {terminal}"),
                 )),
@@ -112,20 +110,20 @@ pub(super) fn component_binding_issues(
 
 fn passive_value_issues(
     component: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<CircuitPrimitiveIssue> {
+) -> Vec<super::issues::CircuitPrimitiveIssue> {
     let mut issues = Vec::with_capacity(REQUIRED_VALUE_FIELDS.len());
     let Some(value) = component
         .get("value")
         .and_then(serde_json::Value::as_object)
     else {
-        return vec![issue(
+        return vec![super::issues::issue(
             "circuit_primitive.value_missing",
             "passive primitives must carry a dimensioned value object",
         )];
     };
     for field in REQUIRED_VALUE_FIELDS {
         if !value.contains_key(*field) {
-            issues.push(issue(
+            issues.push(super::issues::issue(
                 "circuit_primitive.dimensioned_value_missing_field",
                 format!("dimensioned value missing required field: {field}"),
             ));
@@ -135,7 +133,7 @@ fn passive_value_issues(
         .get("normalized_value")
         .is_some_and(|entry| entry.is_number())
     {
-        issues.push(issue(
+        issues.push(super::issues::issue(
             "circuit_primitive.normalized_value_not_number",
             "normalized_value must be numeric",
         ));
@@ -145,7 +143,7 @@ fn passive_value_issues(
 
 fn model_caveat_issues(
     component: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<CircuitPrimitiveIssue> {
+) -> Vec<super::issues::CircuitPrimitiveIssue> {
     let has_provenance = component
         .get("model_provenance")
         .and_then(serde_json::Value::as_str)
@@ -156,13 +154,13 @@ fn model_caveat_issues(
         .is_some_and(|entries| !entries.is_empty());
     let mut issues = Vec::with_capacity(2);
     if !has_provenance {
-        issues.push(issue(
+        issues.push(super::issues::issue(
             "circuit_primitive.model_provenance_missing",
             "behavioral and vendor-model components must record model provenance",
         ));
     }
     if !has_caveats {
-        issues.push(issue(
+        issues.push(super::issues::issue(
             "circuit_primitive.model_caveats_missing",
             "behavioral and vendor-model components must record explicit caveats",
         ));

@@ -9,8 +9,6 @@ mod tests;
 
 use artifact_auth_core::{ArtifactStatement, AuthenticationPolicy, AuthenticationScope};
 
-use crate::AuthenticatedEvidenceIssue;
-
 pub use compatibility::{
     compare_cairn_artifact_auth, CairnArtifactAuthCompatibilityClassification,
     CairnArtifactAuthCompatibilityDimension, CairnArtifactAuthCompatibilityDisposition,
@@ -53,7 +51,7 @@ pub struct CairnArtifactAuthReport {
     pub measured_subject_hash: String,
     pub producer: String,
     pub key_id: String,
-    pub issues: Vec<AuthenticatedEvidenceIssue>,
+    pub issues: Vec<crate::AuthenticatedEvidenceIssue>,
     pub boundary: String,
     pub standalone_statement_blake3: Option<String>,
     pub standalone_policy_blake3: String,

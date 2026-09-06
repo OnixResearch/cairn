@@ -1,10 +1,8 @@
-use super::SemanticReviewIssue;
-
 pub(super) fn require_string(
     value: &serde_json::Value,
     field: &'static str,
     expected: &str,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
 ) {
     match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if actual == expected => {}
@@ -17,7 +15,7 @@ pub(super) fn require_known_string(
     value: &serde_json::Value,
     field: &'static str,
     allowed: &[&str],
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
 ) -> Option<String> {
     match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if allowed.contains(&actual) => Some(actual.to_string()),
@@ -37,7 +35,7 @@ pub(super) fn require_known_string_at(
     field: &'static str,
     allowed: &[&str],
     prefix: &str,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
 ) -> Option<String> {
     match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if allowed.contains(&actual) => Some(actual.to_string()),
@@ -65,7 +63,7 @@ pub(super) fn require_known_string_at(
 pub(super) fn require_hex_string(
     value: &serde_json::Value,
     field: &'static str,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
 ) {
     match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if is_blake3_hex(actual) => {}
@@ -82,7 +80,7 @@ pub(super) fn require_hex_string(
 pub(super) fn validate_optional_hash(
     value: &serde_json::Value,
     field: &'static str,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
 ) {
     if let Some(actual) = value.get(field).and_then(serde_json::Value::as_str) {
         if !is_blake3_hex(actual) {
@@ -95,7 +93,7 @@ pub(super) fn validate_hash_field(
     value: &serde_json::Value,
     field: &'static str,
     prefix: &str,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
 ) {
     match value.get(field).and_then(serde_json::Value::as_str) {
         Some(actual) if is_blake3_hex(actual) => {}
@@ -116,7 +114,7 @@ pub(super) fn validate_hash_field(
 
 pub(super) fn validate_optional_receipt_hash(
     value: &serde_json::Value,
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
     expected: String,
 ) {
     if let Some(actual) = value
@@ -134,7 +132,7 @@ pub(super) fn validate_optional_receipt_hash(
     }
 }
 
-pub fn issues_json(issues: &[SemanticReviewIssue]) -> serde_json::Value {
+pub fn issues_json(issues: &[super::SemanticReviewIssue]) -> serde_json::Value {
     serde_json::Value::Array(
         issues
             .iter()
@@ -204,12 +202,12 @@ pub(super) fn is_blake3_hex(value: &str) -> bool {
 }
 
 pub(super) fn push_issue(
-    issues: &mut Vec<SemanticReviewIssue>,
+    issues: &mut Vec<super::SemanticReviewIssue>,
     code: &str,
     field_path: &str,
     message: &str,
 ) {
-    issues.push(SemanticReviewIssue {
+    issues.push(super::SemanticReviewIssue {
         code: code.to_string(),
         field_path: field_path.to_string(),
         message: message.to_string(),

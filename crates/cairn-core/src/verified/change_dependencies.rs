@@ -1,5 +1,3 @@
-use crate::verified::repo::ChangeMetadata;
-
 pub const DEPENDENCY_ISSUE_DUPLICATE: &str = "change_dependency.duplicate_dependency";
 pub const DEPENDENCY_ISSUE_UNKNOWN: &str = "change_dependency.unknown_dependency";
 pub const DEPENDENCY_ISSUE_SELF: &str = "change_dependency.self_dependency";
@@ -256,11 +254,11 @@ pub fn plan_change_dependency_edit(
 pub fn change_metadata_with_dependencies(
     change: &crate::verified::repo::ChangeStatus,
     depends_on: Vec<String>,
-) -> ChangeMetadata {
+) -> crate::verified::repo::ChangeMetadata {
     let mut dependencies = depends_on;
     dependencies.sort();
     dependencies.dedup();
-    ChangeMetadata {
+    crate::verified::repo::ChangeMetadata {
         groups: change.metadata.groups.clone(),
         target_date: change.metadata.target_date.clone(),
         status: change.metadata.status.clone(),
@@ -269,7 +267,9 @@ pub fn change_metadata_with_dependencies(
     }
 }
 
-pub fn render_change_metadata_json(metadata: &ChangeMetadata) -> Result<String, serde_json::Error> {
+pub fn render_change_metadata_json(
+    metadata: &crate::verified::repo::ChangeMetadata,
+) -> Result<String, serde_json::Error> {
     // r[impl cairn.change_dependency_graph.authoring_cli]
     let mut object = serde_json::Map::new();
     if !metadata.groups.is_empty() {
@@ -747,7 +747,6 @@ impl ChangeDependencyGraph {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::verified::repo::{ChangeMetadata, TaskCounts};
 
     fn change(name: &str, depends_on: &[&str]) -> crate::verified::repo::ChangeStatus {
         crate::verified::repo::ChangeStatus {
@@ -757,14 +756,14 @@ mod tests {
             has_design: true,
             has_tasks: true,
             delta_specs: vec![format!(".cairn/changes/{name}/specs/demo/spec.md")],
-            task_counts: Some(TaskCounts {
+            task_counts: Some(crate::verified::repo::TaskCounts {
                 total: TASK_TOTAL,
                 done: TASK_TOTAL,
                 in_progress: 0,
                 todo: 0,
                 unmarked: 0,
             }),
-            metadata: ChangeMetadata {
+            metadata: crate::verified::repo::ChangeMetadata {
                 groups: Vec::new(),
                 target_date: None,
                 status: None,

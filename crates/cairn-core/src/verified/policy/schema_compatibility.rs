@@ -1,5 +1,3 @@
-use super::PolicyError;
-
 pub const POLICY_SCHEMA_METADATA_FIELD: &str = "policy_schema_compatibility";
 pub const CURRENT_POLICY_SCHEMA_VERSION: &str = "cairn.policy-schema.v1";
 pub const CURRENT_POLICY_FIELD_SET_DIGEST_MATERIAL: &str = concat!(
@@ -96,7 +94,7 @@ pub fn default_policy_schema_metadata() -> PolicySchemaCompatibilityMetadata {
 
 pub fn policy_schema_metadata(
     value: &serde_json::Value,
-) -> Result<Option<PolicySchemaCompatibilityMetadata>, PolicyError> {
+) -> Result<Option<PolicySchemaCompatibilityMetadata>, super::PolicyError> {
     let Some(metadata) = value.get(POLICY_SCHEMA_METADATA_FIELD) else {
         return Ok(None);
     };
@@ -104,13 +102,13 @@ pub fn policy_schema_metadata(
     let producer = metadata_string_field(metadata, FIELD_PRODUCER)?;
     let field_set_digest = metadata_string_field(metadata, FIELD_FIELD_SET_DIGEST)?;
     if !is_blake3_hex(&field_set_digest) {
-        return Err(PolicyError::InvalidField(
+        return Err(super::PolicyError::InvalidField(
             "policy_schema_compatibility.field_set_digest",
         ));
     }
     let refresh_command = metadata_string_field(metadata, FIELD_REFRESH_COMMAND)?;
     if schema_version != CURRENT_POLICY_SCHEMA_VERSION {
-        return Err(PolicyError::UnsupportedPolicySchema {
+        return Err(super::PolicyError::UnsupportedPolicySchema {
             found: schema_version,
             expected: CURRENT_POLICY_SCHEMA_VERSION,
         });
@@ -126,7 +124,7 @@ pub fn policy_schema_metadata(
 #[must_use]
 pub fn classify_policy_schema_compatibility(
     value: &serde_json::Value,
-    parse_error: Option<&PolicyError>,
+    parse_error: Option<&super::PolicyError>,
 ) -> PolicySchemaCompatibilityReport {
     if let Some(error) = parse_error {
         return classify_policy_schema_parse_error(value, error);
@@ -134,7 +132,9 @@ pub fn classify_policy_schema_compatibility(
     match policy_schema_metadata(value) {
         Ok(Some(metadata)) => current_report(metadata),
         Ok(None) => missing_metadata_report(),
-        Err(PolicyError::UnsupportedPolicySchema { found, .. }) => unsupported_schema_report(found),
+        Err(super::PolicyError::UnsupportedPolicySchema { found, .. }) => {
+            unsupported_schema_report(found)
+        }
         Err(_) => malformed_metadata_report(),
     }
 }
@@ -142,7 +142,7 @@ pub fn classify_policy_schema_compatibility(
 #[must_use]
 pub fn policy_schema_compatibility_diagnostic(
     value: &serde_json::Value,
-    parse_error: &PolicyError,
+    parse_error: &super::PolicyError,
 ) -> Option<String> {
     let report = classify_policy_schema_compatibility(value, Some(parse_error));
     (report.status == COMPAT_REFRESH_REQUIRED).then(|| {
@@ -160,13 +160,13 @@ pub fn policy_schema_compatibility_diagnostic(
 
 fn classify_policy_schema_parse_error(
     value: &serde_json::Value,
-    parse_error: &PolicyError,
+    parse_error: &super::PolicyError,
 ) -> PolicySchemaCompatibilityReport {
     match parse_error {
-        PolicyError::MissingField(field) if refresh_required_field(field) => {
+        super::PolicyError::MissingField(field) if refresh_required_field(field) => {
             refresh_required_report((*field).to_string(), refresh_command_from_value(value))
         }
-        PolicyError::UnsupportedPolicySchema { found, .. } => {
+        super::PolicyError::UnsupportedPolicySchema { found, .. } => {
             unsupported_schema_report(found.clone())
         }
         _ => classify_policy_schema_compatibility(value, None),
@@ -234,7 +234,7 @@ fn refresh_required_report(
 fn metadata_string_field(
     value: &serde_json::Value,
     field: &'static str,
-) -> Result<String, PolicyError> {
+) -> Result<String, super::PolicyError> {
     value
         .get(field)
         .and_then(serde_json::Value::as_str)
@@ -243,13 +243,13 @@ fn metadata_string_field(
         .ok_or_else(|| metadata_field_error(field))
 }
 
-fn metadata_field_error(field: &'static str) -> PolicyError {
+fn metadata_field_error(field: &'static str) -> super::PolicyError {
     for required in REQUIRED_METADATA_FIELDS {
         if *required == field {
-            return PolicyError::MissingField(metadata_field_path(field));
+            return super::PolicyError::MissingField(metadata_field_path(field));
         }
     }
-    PolicyError::MissingField(POLICY_SCHEMA_METADATA_FIELD)
+    super::PolicyError::MissingField(POLICY_SCHEMA_METADATA_FIELD)
 }
 
 fn metadata_field_path(field: &'static str) -> &'static str {

@@ -1,15 +1,3 @@
-use thiserror::Error;
-
-use super::{
-    collaboration_change::{
-        change_collaboration_content_root, change_collaboration_state_hash,
-        validate_change_collaboration_state, ChangeCollaborationError, ChangeCollaborationState,
-    },
-    evidence::canonical_json_hash,
-    radicle_change::ChangeCobError,
-    radicle_change::CHANGE_COLLABORATION_SCHEMA_V1,
-};
-
 pub const PORTABLE_COLLABORATION_SCHEMA_V1: &str = "cairn.portable-change-collaboration.v1";
 pub const PORTABLE_COLLABORATION_BACKEND_V1: &str = "portable-json.v1";
 
@@ -19,13 +7,13 @@ pub const PORTABLE_COLLABORATION_BACKEND_V1: &str = "portable-json.v1";
 pub struct PortableChangeCollaboration {
     pub schema: String,
     pub backend: String,
-    pub state: ChangeCollaborationState,
+    pub state: super::collaboration_change::ChangeCollaborationState,
     pub content_root: Option<String>,
     pub state_hash: String,
     pub envelope_hash: String,
 }
 
-#[derive(Debug, Error, Clone, PartialEq, Eq)]
+#[derive(Debug, thiserror::Error, Clone, PartialEq, Eq)]
 pub enum PortableChangeCollaborationError {
     #[error("unsupported portable collaboration schema: {schema}")]
     UnsupportedEnvelopeSchema { schema: String },
@@ -45,18 +33,18 @@ pub enum PortableChangeCollaborationError {
     #[error("portable collaboration envelope hash mismatch: stated {stated}, computed {computed}")]
     EnvelopeHashMismatch { stated: String, computed: String },
     #[error("collaboration state is invalid: {0}")]
-    State(#[from] ChangeCollaborationError),
+    State(#[from] super::collaboration_change::ChangeCollaborationError),
     #[error("portable collaboration serialization failed: {reason}")]
     Serialization { reason: String },
 }
 
 pub fn build_portable_change_collaboration(
-    state: ChangeCollaborationState,
+    state: super::collaboration_change::ChangeCollaborationState,
 ) -> Result<PortableChangeCollaboration, PortableChangeCollaborationError> {
     require_neutral_state(&state)?;
-    validate_change_collaboration_state(&state)?;
+    super::collaboration_change::validate_change_collaboration_state(&state)?;
     let content_root = portable_content_root(&state)?;
-    let state_hash = change_collaboration_state_hash(&state)?;
+    let state_hash = super::collaboration_change::change_collaboration_state_hash(&state)?;
     let envelope_hash = portable_envelope_hash(&state, &content_root, &state_hash)?;
     Ok(PortableChangeCollaboration {
         schema: PORTABLE_COLLABORATION_SCHEMA_V1.to_string(),
@@ -70,7 +58,8 @@ pub fn build_portable_change_collaboration(
 
 pub fn validate_portable_change_collaboration(
     envelope: &PortableChangeCollaboration,
-) -> Result<ChangeCollaborationState, PortableChangeCollaborationError> {
+) -> Result<super::collaboration_change::ChangeCollaborationState, PortableChangeCollaborationError>
+{
     if envelope.schema != PORTABLE_COLLABORATION_SCHEMA_V1 {
         return Err(
             PortableChangeCollaborationError::UnsupportedEnvelopeSchema {
@@ -84,7 +73,7 @@ pub fn validate_portable_change_collaboration(
         });
     }
     require_neutral_state(&envelope.state)?;
-    validate_change_collaboration_state(&envelope.state)?;
+    super::collaboration_change::validate_change_collaboration_state(&envelope.state)?;
     let content_root = portable_content_root(&envelope.state)?;
     if content_root != envelope.content_root {
         return Err(PortableChangeCollaborationError::ContentRootMismatch {
@@ -92,7 +81,7 @@ pub fn validate_portable_change_collaboration(
             computed: content_root,
         });
     }
-    let state_hash = change_collaboration_state_hash(&envelope.state)?;
+    let state_hash = super::collaboration_change::change_collaboration_state_hash(&envelope.state)?;
     if state_hash != envelope.state_hash {
         return Err(PortableChangeCollaborationError::StateHashMismatch {
             stated: envelope.state_hash.clone(),
@@ -114,19 +103,19 @@ pub fn validate_portable_change_collaboration(
 }
 
 fn portable_content_root(
-    state: &ChangeCollaborationState,
+    state: &super::collaboration_change::ChangeCollaborationState,
 ) -> Result<Option<String>, PortableChangeCollaborationError> {
-    match change_collaboration_content_root(state) {
+    match super::collaboration_change::change_collaboration_content_root(state) {
         Ok(content_root) => Ok(Some(content_root)),
-        Err(ChangeCobError::ArtifactConflict { .. }) => Ok(None),
+        Err(super::radicle_change::ChangeCobError::ArtifactConflict { .. }) => Ok(None),
         Err(error) => Err(PortableChangeCollaborationError::State(error)),
     }
 }
 
 fn require_neutral_state(
-    state: &ChangeCollaborationState,
+    state: &super::collaboration_change::ChangeCollaborationState,
 ) -> Result<(), PortableChangeCollaborationError> {
-    if state.schema == CHANGE_COLLABORATION_SCHEMA_V1 {
+    if state.schema == super::radicle_change::CHANGE_COLLABORATION_SCHEMA_V1 {
         return Ok(());
     }
     Err(PortableChangeCollaborationError::NonNeutralStateSchema {
@@ -135,7 +124,7 @@ fn require_neutral_state(
 }
 
 fn portable_envelope_hash(
-    state: &ChangeCollaborationState,
+    state: &super::collaboration_change::ChangeCollaborationState,
     content_root: &Option<String>,
     state_hash: &str,
 ) -> Result<String, PortableChangeCollaborationError> {
@@ -151,28 +140,22 @@ fn portable_envelope_hash(
             reason: error.to_string(),
         }
     })?;
-    Ok(canonical_json_hash(&value))
+    Ok(super::evidence::canonical_json_hash(&value))
 }
 
 #[derive(serde::Serialize)]
 struct PortableEnvelopeIdentity<'a> {
     schema: &'a str,
     backend: &'a str,
-    state: &'a ChangeCollaborationState,
+    state: &'a super::collaboration_change::ChangeCollaborationState,
     content_root: &'a Option<String>,
     state_hash: &'a str,
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
 
     use super::*;
-    use crate::{
-        apply_change_collaboration_operation, initialize_change_collaboration, ChangeArtifactId,
-        ChangeBaseRevision, ChangeCollaborationAction, ChangeCollaborationInit,
-        ChangeCollaborationOperation,
-    };
 
     const CHANGE_ID: &str = "portable-roundtrip";
     const WORKSPACE_ID: &str = "workspace:portable";
@@ -182,18 +165,21 @@ mod tests {
     const LEFT_OPERATION_ID: &str = "operation:portable-left";
     const RIGHT_OPERATION_ID: &str = "operation:portable-right";
 
-    fn state() -> ChangeCollaborationState {
-        initialize_change_collaboration(ChangeCollaborationOperation {
+    fn state() -> super::super::collaboration_change::ChangeCollaborationState {
+        crate::initialize_change_collaboration(crate::ChangeCollaborationOperation {
             id: OPERATION_ID.to_string(),
             actor: ACTOR.to_string(),
             is_delegate: false,
-            actions: vec![ChangeCollaborationAction::Init {
-                state: ChangeCollaborationInit::new(
+            actions: vec![crate::ChangeCollaborationAction::Init {
+                state: crate::ChangeCollaborationInit::new(
                     CHANGE_ID,
                     WORKSPACE_ID,
-                    ChangeBaseRevision::new("opaque", "revision-one").unwrap(),
+                    crate::ChangeBaseRevision::new("opaque", "revision-one").unwrap(),
                     POLICY_HASH,
-                    BTreeMap::from([(ChangeArtifactId::proposal(), "# Proposal\n".to_string())]),
+                    std::collections::BTreeMap::from([(
+                        crate::ChangeArtifactId::proposal(),
+                        "# Proposal\n".to_string(),
+                    )]),
                 ),
             }],
         })
@@ -209,12 +195,12 @@ mod tests {
             "schema": PORTABLE_COLLABORATION_SCHEMA_V1,
             "backend": PORTABLE_COLLABORATION_BACKEND_V1,
             "state": &state,
-            "content_root": change_collaboration_content_root(&state).unwrap(),
-            "state_hash": change_collaboration_state_hash(&state).unwrap(),
+            "content_root": super::super::collaboration_change::change_collaboration_content_root(&state).unwrap(),
+            "state_hash": super::super::collaboration_change::change_collaboration_state_hash(&state).unwrap(),
         });
         assert_eq!(
             envelope.envelope_hash,
-            canonical_json_hash(&legacy_identity)
+            super::super::evidence::canonical_json_hash(&legacy_identity)
         );
         let bytes = serde_json::to_vec(&envelope).unwrap();
         let decoded: PortableChangeCollaboration = serde_json::from_slice(&bytes).unwrap();
@@ -224,30 +210,33 @@ mod tests {
         );
         assert_eq!(
             decoded.content_root,
-            Some(change_collaboration_content_root(&state).unwrap())
+            Some(
+                super::super::collaboration_change::change_collaboration_content_root(&state)
+                    .unwrap()
+            )
         );
         assert_eq!(
             decoded.state_hash,
-            change_collaboration_state_hash(&state).unwrap()
+            super::super::collaboration_change::change_collaboration_state_hash(&state).unwrap()
         );
     }
 
     #[test]
     fn portable_round_trip_preserves_conflicted_state_without_claiming_content_root() {
         let mut state = state();
-        let basis = BTreeSet::from([OPERATION_ID.to_string()]);
+        let basis = std::collections::BTreeSet::from([OPERATION_ID.to_string()]);
         for (operation_id, content) in [
             (LEFT_OPERATION_ID, "# Left\n"),
             (RIGHT_OPERATION_ID, "# Right\n"),
         ] {
-            apply_change_collaboration_operation(
+            crate::apply_change_collaboration_operation(
                 &mut state,
-                ChangeCollaborationOperation {
+                crate::ChangeCollaborationOperation {
                     id: operation_id.to_string(),
                     actor: ACTOR.to_string(),
                     is_delegate: false,
-                    actions: vec![ChangeCollaborationAction::SetArtifact {
-                        artifact: ChangeArtifactId::proposal(),
+                    actions: vec![crate::ChangeCollaborationAction::SetArtifact {
+                        artifact: crate::ChangeArtifactId::proposal(),
                         content: Some(content.to_string()),
                         basis: basis.clone(),
                     }],
@@ -305,9 +294,15 @@ mod tests {
 
         let mut recomputed = build_portable_change_collaboration(state()).unwrap();
         recomputed.state.operations.clear();
-        recomputed.content_root =
-            Some(change_collaboration_content_root(&recomputed.state).unwrap());
-        recomputed.state_hash = change_collaboration_state_hash(&recomputed.state).unwrap();
+        recomputed.content_root = Some(
+            super::super::collaboration_change::change_collaboration_content_root(
+                &recomputed.state,
+            )
+            .unwrap(),
+        );
+        recomputed.state_hash =
+            super::super::collaboration_change::change_collaboration_state_hash(&recomputed.state)
+                .unwrap();
         recomputed.envelope_hash = portable_envelope_hash(
             &recomputed.state,
             &recomputed.content_root,
