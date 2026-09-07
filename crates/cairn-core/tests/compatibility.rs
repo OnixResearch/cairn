@@ -289,3 +289,22 @@ fn cargo_output_legacy_names_remain_callable_and_fail_closed() {
     assert!(cairn_core::verified::check_evidence::cargo_coverage(valid).passed);
     assert!(!cairn_core::verified::check_evidence::cargo_coverage(b"invalid\n").passed);
 }
+
+#[test]
+fn octet_adapter_legacy_names_remain_callable_and_keep_wire_states() {
+    let _: fn(
+        &serde_json::Value,
+    ) -> Result<
+        cairn_core::verified::check_evidence::OctetAdmission,
+        cairn_core::verified::check_evidence::ProducerIssue,
+    > = cairn_core::verified::check_evidence::admit_octet_json;
+    let passed = cairn_core::verified::check_evidence::OctetStatus::Passed;
+    assert_eq!(
+        serde_json::to_string(&passed).expect("status bytes"),
+        "\"passed\""
+    );
+    assert!(
+        serde_json::from_str::<cairn_core::verified::check_evidence::OctetStatus>("\"unknown\"")
+            .is_err()
+    );
+}

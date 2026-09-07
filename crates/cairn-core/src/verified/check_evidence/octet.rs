@@ -13,7 +13,7 @@ const MAX_NATIVE_ROWS: usize = MAX_CHECKS;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum OctetStatus {
+pub enum Status {
     Passed,
     Failed,
     Blocked,
@@ -28,7 +28,7 @@ struct Digest {
 #[serde(deny_unknown_fields)]
 struct Stage {
     name: String,
-    status: OctetStatus,
+    status: Status,
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -47,7 +47,7 @@ struct Artifact {
 #[serde(deny_unknown_fields)]
 struct VerificationCommand {
     command: String,
-    status: OctetStatus,
+    status: Status,
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -83,7 +83,7 @@ struct Receipt {
     inputs: Vec<Input>,
     stages: Vec<Stage>,
     artifacts: Vec<Artifact>,
-    status: OctetStatus,
+    status: Status,
     warnings: Vec<String>,
     errors: Vec<String>,
     verification_commands: Vec<VerificationCommand>,
@@ -94,9 +94,9 @@ struct Receipt {
 }
 
 #[derive(Debug, Serialize)]
-pub struct OctetAdmission {
+pub struct Admission {
     pub producer_revision: &'static str,
-    pub native_status: OctetStatus,
+    pub native_status: Status,
     pub native_receipt_hash: String,
     pub warning_count: usize,
     pub error_count: usize,
@@ -109,7 +109,7 @@ pub struct OctetAdmission {
 }
 
 // r[impl cairn.check_evidence_producer.adapters]
-pub fn admit_octet_json(value: &Value) -> Result<OctetAdmission, ProducerIssue> {
+pub fn admit_json(value: &Value) -> Result<Admission, ProducerIssue> {
     let r: Receipt =
         serde_json::from_value(value.clone()).map_err(|_| ProducerIssue::Observation)?;
     if r.schema_version != RECEIPT_SCHEMA
@@ -156,11 +156,11 @@ pub fn admit_octet_json(value: &Value) -> Result<OctetAdmission, ProducerIssue> 
     {
         return Err(ProducerIssue::Observation);
     }
-    Ok(OctetAdmission {
+    Ok(Admission {
         producer_revision: OCTET_REVISION, native_status:r.status,
         native_receipt_hash: canonical_json_hash(value), warning_count:r.warnings.len(), error_count:r.errors.len(),
-        nonpassing_stage_count:r.stages.iter().filter(|s| s.status != OctetStatus::Passed).count(),
-        nonpassing_command_count:r.verification_commands.iter().filter(|s| s.status != OctetStatus::Passed).count(),
+        nonpassing_stage_count:r.stages.iter().filter(|s| s.status != Status::Passed).count(),
+        nonpassing_command_count:r.verification_commands.iter().filter(|s| s.status != Status::Passed).count(),
         evidence_tiers:r.provenance_records.iter().map(|p| p.evidence_tier.clone()).collect(),
         checked_scope_hashes:r.provenance_records.iter().map(|p| canonical_json_hash(&json!(p.checked_scope))).collect(),
         completion_eligible:false,
@@ -218,16 +218,13 @@ mod tests {
     // r[verify cairn.check_evidence_producer.adapters]
     fn pinned_shape_preserves_status_and_never_invents_strict_scope() {
         let current = fixture();
-        assert_eq!(
-            admit_octet_json(&current).unwrap().native_status,
-            OctetStatus::Passed
-        );
+        assert_eq!(admit_json(&current).unwrap().native_status, Status::Passed);
         for status in ["passed", "failed", "blocked"] {
             let mut warning = current.clone();
             warning["status"] = json!(status);
             warning["warnings"] = json!(["secret-like native text"]);
             warning["stages"][0]["status"] = json!("failed");
-            let admitted = admit_octet_json(&warning).unwrap();
+            let admitted = admit_json(&warning).unwrap();
             assert!(!admitted.completion_eligible);
             assert_eq!(admitted.warning_count, 1);
             assert_eq!(admitted.nonpassing_stage_count, 1);
@@ -242,10 +239,10 @@ mod tests {
         ] {
             let mut invalid = current.clone();
             invalid[field] = bad;
-            assert!(admit_octet_json(&invalid).is_err(), "admitted {field}");
+            assert!(admit_json(&invalid).is_err(), "admitted {field}");
         }
         let mut missing = current;
         missing.as_object_mut().unwrap().remove("stages");
-        assert!(admit_octet_json(&missing).is_err());
+        assert!(admit_json(&missing).is_err());
     }
 }

@@ -32,7 +32,31 @@ pub use manifest::{
 mod octet;
 mod types;
 mod valence;
-pub use octet::{admit_octet_json, OctetAdmission, OctetStatus, OCTET_REVISION};
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "the published admit_octet_json name remains available while the implementation avoids repeating its octet module segment"
+    )
+)]
+pub use octet::admit_json as admit_octet_json;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "the published OctetAdmission name remains available while the implementation avoids repeating its octet module segment"
+    )
+)]
+pub use octet::Admission as OctetAdmission;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "the published OctetStatus name remains available while the implementation avoids repeating its octet module segment"
+    )
+)]
+pub use octet::Status as OctetStatus;
+pub use octet::{admit_json, Admission, Status, OCTET_REVISION};
 pub use valence::{admit_valence_json, ValenceAdmission, VALENCE_REVISION};
 
 pub use admission::{admit_plan, authorize_attempt, profile_command, valid_applicability};
