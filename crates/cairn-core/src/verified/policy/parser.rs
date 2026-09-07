@@ -1,5 +1,5 @@
 use super::{
-    agent_guidance::agent_guidance_policy,
+    agent_guidance::parse,
     developer_loop::developer_loop_policy,
     document_collaboration::document_collaboration_policy,
     fields::{exemption_marker_policy, receipt_schemas},
@@ -44,7 +44,7 @@ pub fn validate_policy_json(value: serde_json::Value) -> Result<super::Policy, s
             path: error.path,
             message: error.message,
         })?;
-    let agent_guidance_policy = agent_guidance_policy(&value)?;
+    let agent_guidance_policy = parse(&value)?;
     let developer_loop_policy = developer_loop_policy(&value)?;
     let generated_agent_workflow_policy = generated_agent_workflow_policy(&value)?;
     let task_marker = super::fields::task_marker_fields(&value)?;

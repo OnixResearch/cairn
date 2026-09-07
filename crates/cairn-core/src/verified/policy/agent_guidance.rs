@@ -1,4 +1,4 @@
-pub(super) fn agent_guidance_policy(
+pub(super) fn parse(
     value: &serde_json::Value,
 ) -> Result<crate::verified::agent_guidance::Policy, super::PolicyError> {
     // r[impl cairn.agent_guidance_context.project_config]

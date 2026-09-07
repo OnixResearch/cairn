@@ -20,8 +20,8 @@ Reasons:
 Next catalog batches:
 - Build the resolved public-name inventory first (the export facade split in
   `cb7e9f0` is the starting point).
-- Repair the separate `verified/policy/agent_guidance.rs` repetition only after
-  selecting a non-conflicting local function name.
+- The separate `verified/policy/agent_guidance.rs` helper now uses the local
+  name `parse`; its two findings are removed.
 - Rename one implementation module at a time with compiler-driven call-site
   updates and a facade-only compatibility decision where public names must stay.
 - Add positive and negative compatibility controls with each public facade
