@@ -1,20 +1,20 @@
 //! Stable libtest summary admission. This is an oracle grammar, not proof of test truth.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CargoCoverage {
+pub struct Coverage {
     pub passed: bool,
     pub executed: u64,
 }
 
 /// Admit complete UTF-8 libtest summaries paired with their announced test counts.
 /// Other output grants no coverage. Malformed, unmatched, or failing summaries fail closed.
-pub fn cargo_coverage(bytes: &[u8]) -> CargoCoverage {
-    parse(bytes).unwrap_or(CargoCoverage {
+pub fn coverage(bytes: &[u8]) -> Coverage {
+    parse(bytes).unwrap_or(Coverage {
         passed: false,
         executed: 0,
     })
 }
 
-fn parse(bytes: &[u8]) -> Option<CargoCoverage> {
+fn parse(bytes: &[u8]) -> Option<Coverage> {
     let text = std::str::from_utf8(bytes).ok()?;
     // A prefix ending inside the final summary is not a complete payload.
     if !text.ends_with('\n') {
@@ -77,7 +77,7 @@ fn parse(bytes: &[u8]) -> Option<CargoCoverage> {
     if pending.is_some() || summaries == 0 {
         return None;
     }
-    Some(CargoCoverage {
+    Some(Coverage {
         passed: passed && executed > 0,
         executed,
     })
@@ -93,8 +93,8 @@ mod tests {
     fn complete_nonempty_summary_and_negative_grammar_controls() {
         let good = "running 1 test\n.\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n";
         assert_eq!(
-            cargo_coverage(good.as_bytes()),
-            CargoCoverage {
+            coverage(good.as_bytes()),
+            Coverage {
                 passed: true,
                 executed: 1
             }
@@ -116,12 +116,12 @@ mod tests {
             good.replace("0 measured; ", ""),
             good.replace("0 measured; ", "0 measured; 0 retired; "),
         ] {
-            assert!(!cargo_coverage(invalid.as_bytes()).passed);
+            assert!(!coverage(invalid.as_bytes()).passed);
         }
         let empty = good
             .replace("running 1 test", "running 0 tests")
             .replace("1 passed", "0 passed");
-        assert!(!cargo_coverage(empty.as_bytes()).passed);
-        assert!(!cargo_coverage(&[INVALID_UTF8_BYTE]).passed);
+        assert!(!coverage(empty.as_bytes()).passed);
+        assert!(!coverage(&[INVALID_UTF8_BYTE]).passed);
     }
 }

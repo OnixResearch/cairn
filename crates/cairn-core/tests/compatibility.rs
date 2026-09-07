@@ -280,3 +280,12 @@ fn collaboration_change_root_names_remain_callable() {
         cairn_core::ChangeCollaborationError,
     > = cairn_core::current_change_collaboration_evidence;
 }
+
+#[test]
+fn cargo_output_legacy_names_remain_callable_and_fail_closed() {
+    let _: fn(&[u8]) -> cairn_core::verified::check_evidence::CargoCoverage =
+        cairn_core::verified::check_evidence::cargo_coverage;
+    let valid = b"running 1 test\n.\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n";
+    assert!(cairn_core::verified::check_evidence::cargo_coverage(valid).passed);
+    assert!(!cairn_core::verified::check_evidence::cargo_coverage(b"invalid\n").passed);
+}

@@ -2,7 +2,23 @@
 //! Admission is not execution, authority, freshness observation, or publication.
 mod admission;
 mod cargo_output;
-pub use cargo_output::{cargo_coverage, CargoCoverage};
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "the published cargo_coverage name remains available while the implementation avoids repeating its cargo_output module segment"
+    )
+)]
+pub use cargo_output::coverage as cargo_coverage;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "the published CargoCoverage name remains available while the implementation avoids repeating its cargo_output module segment"
+    )
+)]
+pub use cargo_output::Coverage as CargoCoverage;
+pub use cargo_output::{coverage, Coverage};
 mod kiln;
 pub use kiln::{admit_kiln_json, KilnAdmission, KILN_REVISION};
 mod lattice;
