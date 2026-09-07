@@ -4,6 +4,13 @@ const STORE_ID: &str = "alpha";
 const REMOTE_HINT: &str = "https://example.invalid/alpha.git";
 const CHECKOUT_PATH: &str = "/home/operator/alpha";
 const SOURCE_MATERIAL: &[u8] = b"lifecycle wrapper compatibility";
+const CONTEXT_ROOT: &str = "/stores/context";
+const CONTEXT_STORE: &str = "context";
+const CONTEXT_DIGEST: &str = "b3:context";
+const CONTEXT_SPEC: &str = "context-spec";
+const RELATED_ROOT: &str = "/stores/related";
+const RELATED_STORE: &str = "related";
+const RELATED_DIGEST: &str = "b3:related";
 
 fn projection() -> cairn_core::LifecycleStoreIdentityProjection {
     cairn_core::LifecycleStoreIdentityProjection {
@@ -95,4 +102,97 @@ fn root_api_rejects_invalid_projection() {
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.field == "store_id"));
+}
+
+#[test]
+fn context_root_api_remains_usable() {
+    let selector = cairn_core::ExplicitLifecycleStoreSelector {
+        store_id: CONTEXT_STORE.to_string(),
+    };
+    let _: &cairn_core::ExplicitLifecycleStoreSelector = &selector;
+    let observed = cairn_core::StoreIdentityObservation {
+        store_id: CONTEXT_STORE.to_string(),
+        store_identity: CONTEXT_DIGEST.to_string(),
+    };
+    let _: &cairn_core::StoreIdentityObservation = &observed;
+    let entry = cairn_core::LocatorStoreObservation {
+        store_id: CONTEXT_STORE.to_string(),
+        root: CONTEXT_ROOT.to_string(),
+        store_identity: CONTEXT_DIGEST.to_string(),
+        registration_current: true,
+    };
+    let _: &cairn_core::LocatorStoreObservation = &entry;
+    let related_entry = cairn_core::LocatorStoreObservation {
+        store_id: RELATED_STORE.to_string(),
+        root: RELATED_ROOT.to_string(),
+        store_identity: RELATED_DIGEST.to_string(),
+        registration_current: true,
+    };
+    let locator = cairn_core::LocatorSnapshot {
+        stores: vec![entry, related_entry],
+    };
+    let root_observations = cairn_core::RootResolutionObservations {
+        explicit_root: None,
+        explicit_lifecycle_store: Some(selector),
+        vcs_boundary: cairn_core::VcsBoundaryFacts::Unknown,
+        native_roots: Vec::new(),
+        project_pointers: Vec::new(),
+        locator: locator.clone(),
+        fallback: cairn_core::FallbackFacts {
+            current_directory: CONTEXT_ROOT.to_string(),
+            classic_root: CONTEXT_ROOT.to_string(),
+        },
+    };
+    let resolution = cairn_core::resolve_lifecycle_root(&root_observations);
+    assert!(resolution.valid, "{:?}", resolution.findings);
+    let selected = resolution.selected.as_ref().expect("resolved root");
+    let _: &cairn_core::ResolvedLifecycleRoot = selected;
+
+    let references = vec![cairn_core::DirectStoreReference {
+        store_id: RELATED_STORE.to_string(),
+        remote_hint: None,
+    }];
+    let reference = references.first().expect("direct reference");
+    let _: &cairn_core::DirectStoreReference = reference;
+    let observations = cairn_core::ContextObservations {
+        resolution,
+        direct_references: references,
+        locator,
+        accepted_specs: vec![cairn_core::AcceptedSpecSnapshot {
+            store_id: RELATED_STORE.to_string(),
+            store_identity: RELATED_DIGEST.to_string(),
+            specs: vec![cairn_core::AcceptedSpecMetadata {
+                spec_id: CONTEXT_SPEC.to_string(),
+                title: "Context specification".to_string(),
+                purpose_summary: "Root API compatibility control".to_string(),
+            }],
+        }],
+    };
+    let _: &cairn_core::ContextObservations = &observations;
+    let result = cairn_core::build_lifecycle_store_context(&observations);
+    let _: &cairn_core::ContextResult = &result;
+    assert!(result.valid, "{:?}", result.doctor_findings);
+    assert!(result.healthy, "{:?}", result.doctor_findings);
+    let _: &cairn_core::ContextBoundary = &result.boundary;
+    let _: cairn_core::LifecycleAuthorityEffect = result.boundary.authority_effect;
+    let spec = result.specs.first().expect("context specification");
+    let _: &cairn_core::ContextSpecResult = spec;
+    assert_eq!(
+        spec.fetch_command,
+        cairn_core::store_qualified_spec_fetch_command(CONTEXT_SPEC, RELATED_STORE)
+    );
+}
+
+#[test]
+fn context_root_api_rejects_self_reference() {
+    let references = vec![cairn_core::DirectStoreReference {
+        store_id: CONTEXT_STORE.to_string(),
+        remote_hint: None,
+    }];
+    let normalized = cairn_core::normalize_direct_references(Some(CONTEXT_STORE), &references);
+    assert!(!normalized.valid);
+    assert!(normalized.references.is_empty());
+    let finding = normalized.findings.first().expect("self-reference finding");
+    let _: &cairn_core::LifecycleStoreDoctorFinding = finding;
+    assert_eq!(finding.code, cairn_core::REFERENCE_SELF);
 }

@@ -1,7 +1,14 @@
 macro_rules! root_function_compatibility {
-    ($($local:ident => $root:ident => $reason:literal;)+) => {$(
+    ($module:ident; $($local:ident => $root:ident => $reason:literal;)+) => {$(
         #[cfg_attr(dylint_lib = "octet", allow(renamed_imports, reason = $reason))]
-        pub use crate::verified::lifecycle_store_identity::$local as $root;
+        pub use crate::verified::$module::$local as $root;
+    )+};
+}
+
+macro_rules! root_type_compatibility {
+    ($module:ident; $($local:ident => $root:ident => $reason:literal;)+) => {$(
+        #[cfg_attr(dylint_lib = "octet", allow(renamed_imports, reason = $reason))]
+        pub use crate::verified::$module::$local as $root;
     )+};
 }
 
@@ -74,173 +81,61 @@ pub use crate::verified::lifecycle_receipt::{
     LIFECYCLE_RECEIPT_ISSUE_UNSUPPORTED_VERDICT, LIFECYCLE_RECEIPT_ISSUE_WEAK_NON_CLAIM,
 };
 pub use crate::verified::lifecycle_store_context::{
-    build_lifecycle_store_context, normalize_direct_references, resolve_lifecycle_root,
-    store_qualified_spec_fetch_command, AcceptedSpecMetadata, AcceptedSpecSnapshot,
-    ContextBoundary, ContextObservations, ContextResult, ContextSpecResult,
-    DirectReferenceNormalization, DirectStoreReference, DoctorFindingStatus,
-    ExplicitLifecycleStoreSelector, ExplicitRootSelector, FallbackFacts, LifecycleAuthorityEffect,
-    LifecycleStoreDoctorFinding, LocatorSnapshot, LocatorStoreObservation, NativeRootCandidate,
-    ProjectPointerObservation, ReferenceContentBoundary, ReferenceTraversalBoundary,
-    RegistryLookupBoundary, ResolvedLifecycleRoot, RootResolutionObservations,
-    RootResolutionResult, RootResolutionSource, StoreIdentityObservation, VcsBoundaryFacts,
-    REFERENCE_AVAILABLE, REFERENCE_DUPLICATE, REFERENCE_SELF, REFERENCE_SNAPSHOT_AMBIGUOUS,
-    REFERENCE_SNAPSHOT_MISSING, REFERENCE_SNAPSHOT_STALE, REFERENCE_SPEC_DUPLICATE,
-    REFERENCE_STORE_AMBIGUOUS, REFERENCE_STORE_MISSING, REFERENCE_STORE_STALE,
-    ROOT_PROJECT_POINTER_STALE, ROOT_SELECTOR_CONFLICT, ROOT_STORE_AMBIGUOUS, ROOT_STORE_MISSING,
-    ROOT_STORE_STALE,
+    normalize_direct_references, AcceptedSpecMetadata, AcceptedSpecSnapshot,
+    DirectReferenceNormalization, DoctorFindingStatus, ExplicitRootSelector, FallbackFacts,
+    LocatorSnapshot, NativeRootCandidate, ProjectPointerObservation, ReferenceContentBoundary,
+    ReferenceTraversalBoundary, RegistryLookupBoundary, RootResolutionObservations,
+    RootResolutionResult, RootResolutionSource, VcsBoundaryFacts, REFERENCE_AVAILABLE,
+    REFERENCE_DUPLICATE, REFERENCE_SELF, REFERENCE_SNAPSHOT_AMBIGUOUS, REFERENCE_SNAPSHOT_MISSING,
+    REFERENCE_SNAPSHOT_STALE, REFERENCE_SPEC_DUPLICATE, REFERENCE_STORE_AMBIGUOUS,
+    REFERENCE_STORE_MISSING, REFERENCE_STORE_STALE, ROOT_PROJECT_POINTER_STALE,
+    ROOT_SELECTOR_CONFLICT, ROOT_STORE_AMBIGUOUS, ROOT_STORE_MISSING, ROOT_STORE_STALE,
 };
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreIdentityAdmission root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::Admission as LifecycleStoreIdentityAdmission;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreIdentity root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::Admitted as LifecycleStoreIdentity;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreCheckoutPath root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::CheckoutPath as LifecycleStoreCheckoutPath;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreDiagnostic root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::Diagnostic as LifecycleStoreDiagnostic;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreBlake3Identity root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::Digest as LifecycleStoreBlake3Identity;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreId root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::Id as LifecycleStoreId;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorAdmission root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::LocatorAdmission as LifecycleStoreLocatorAdmission;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorApplication root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::LocatorApplication as LifecycleStoreLocatorApplication;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorLocalFacts root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::LocatorLocalFacts as LifecycleStoreLocatorLocalFacts;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorOperation root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::LocatorOperation as LifecycleStoreLocatorOperation;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorPlan root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::LocatorPlan as LifecycleStoreLocatorPlan;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorPortableFacts root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::LocatorPortableFacts as LifecycleStoreLocatorPortableFacts;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorProjection root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::LocatorProjection as LifecycleStoreLocatorProjection;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorState root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::LocatorState as LifecycleStoreLocatorState;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorMapping root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::Mapping as LifecycleStoreLocatorMapping;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorMappingProjection root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::MappingProjection as LifecycleStoreLocatorMappingProjection;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreNonClaim root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::NonClaim as LifecycleStoreNonClaim;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreIdentityProjection root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::Projection as LifecycleStoreIdentityProjection;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented LifecycleStoreRemoteHint root type."
-    )
-)]
-pub use crate::verified::lifecycle_store_identity::RemoteHint as LifecycleStoreRemoteHint;
+#[rustfmt::skip]
+root_type_compatibility! {
+    lifecycle_store_context;
+    ExplicitSelector => ExplicitLifecycleStoreSelector => "Root explicit store selector.";
+    IdentityObservation => StoreIdentityObservation => "Root store identity observation.";
+    LocatorObservation => LocatorStoreObservation => "Root locator store observation.";
+    ResolvedRoot => ResolvedLifecycleRoot => "Root resolved lifecycle root.";
+    DoctorFinding => LifecycleStoreDoctorFinding => "Root lifecycle store finding.";
+    DirectReference => DirectStoreReference => "Root direct store reference.";
+    Observations => ContextObservations => "Root context observations.";
+    SpecResult => ContextSpecResult => "Root context spec result.";
+    AuthorityEffect => LifecycleAuthorityEffect => "Root lifecycle authority effect.";
+    Boundary => ContextBoundary => "Root context boundary.";
+    BuildResult => ContextResult => "Root context result.";
+}
+#[rustfmt::skip]
+root_function_compatibility! {
+    lifecycle_store_context;
+    resolve_root => resolve_lifecycle_root => "Root lifecycle root resolution.";
+    build => build_lifecycle_store_context => "Root lifecycle store context.";
+    qualified_fetch_command => store_qualified_spec_fetch_command => "Root qualified spec fetch command.";
+}
+#[rustfmt::skip]
+root_type_compatibility! {
+    lifecycle_store_identity;
+    Admission => LifecycleStoreIdentityAdmission => "Root identity admission type.";
+    Admitted => LifecycleStoreIdentity => "Root identity type.";
+    CheckoutPath => LifecycleStoreCheckoutPath => "Root checkout path type.";
+    Diagnostic => LifecycleStoreDiagnostic => "Root diagnostic type.";
+    Digest => LifecycleStoreBlake3Identity => "Root BLAKE3 identity type.";
+    Id => LifecycleStoreId => "Root store ID type.";
+    LocatorAdmission => LifecycleStoreLocatorAdmission => "Root locator admission type.";
+    LocatorApplication => LifecycleStoreLocatorApplication => "Root locator application type.";
+    LocatorLocalFacts => LifecycleStoreLocatorLocalFacts => "Root locator local facts type.";
+    LocatorOperation => LifecycleStoreLocatorOperation => "Root locator operation type.";
+    LocatorPlan => LifecycleStoreLocatorPlan => "Root locator plan type.";
+    LocatorPortableFacts => LifecycleStoreLocatorPortableFacts => "Root locator portable facts type.";
+    LocatorProjection => LifecycleStoreLocatorProjection => "Root locator projection type.";
+    LocatorState => LifecycleStoreLocatorState => "Root locator state type.";
+    Mapping => LifecycleStoreLocatorMapping => "Root locator mapping type.";
+    MappingProjection => LifecycleStoreLocatorMappingProjection => "Root locator mapping projection type.";
+    NonClaim => LifecycleStoreNonClaim => "Root non-claim type.";
+    Projection => LifecycleStoreIdentityProjection => "Root identity projection type.";
+    RemoteHint => LifecycleStoreRemoteHint => "Root remote hint type.";
+}
 pub use crate::verified::lifecycle_store_identity::{
     BLAKE3_IDENTITY_HEX_LENGTH, LIFECYCLE_STORE_CHECKOUT_PATH_MAX_BYTES,
     LIFECYCLE_STORE_DIAGNOSTIC_MAX_COUNT, LIFECYCLE_STORE_IDENTITY_NON_CLAIMS,
@@ -255,6 +150,7 @@ pub use crate::verified::lifecycle_store_identity::{
 };
 #[rustfmt::skip]
 root_function_compatibility! {
+    lifecycle_store_identity;
     admit => admit_lifecycle_store_identity => "Root identity admission.";
     admit_locator => admit_lifecycle_store_locator => "Root locator admission.";
     apply_locator_plan => apply_lifecycle_store_locator_plan => "Root locator plan application.";
