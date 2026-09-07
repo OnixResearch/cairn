@@ -1,9 +1,9 @@
 // r[impl cairn.collaboration_backend.semantic_core]
 
-pub type ChangeCollaborationLocalSnapshot = super::radicle_checkout::ChangeCobLocalSnapshot;
+pub type LocalSnapshot = super::radicle_checkout::ChangeCobLocalSnapshot;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChangeCollaborationCheckoutPlan {
+pub struct Plan {
     pub change_id: String,
     pub workspace_id: String,
     pub base_revision: super::radicle_change::ChangeBaseRevision,
@@ -19,7 +19,7 @@ pub struct ChangeCollaborationCheckoutPlan {
     pub blockers: Vec<String>,
 }
 
-impl ChangeCollaborationCheckoutPlan {
+impl Plan {
     pub fn checkout_ready(&self) -> bool {
         self.blockers.is_empty()
             && matches!(
@@ -37,11 +37,11 @@ impl ChangeCollaborationCheckoutPlan {
 
 pub fn plan_change_collaboration_checkout(
     state: &super::collaboration_change::ChangeCollaborationState,
-    local: ChangeCollaborationLocalSnapshot,
-) -> Result<ChangeCollaborationCheckoutPlan, super::radicle_change::ChangeCobError> {
+    local: LocalSnapshot,
+) -> Result<Plan, super::radicle_change::ChangeCobError> {
     let compatibility = super::collaboration_change::state_to_compatibility(state)?;
     let plan = super::radicle_checkout::plan_change_cob_checkout(&compatibility, local)?;
-    Ok(ChangeCollaborationCheckoutPlan {
+    Ok(Plan {
         change_id: plan.change_id,
         workspace_id: state.workspace_id.clone(),
         base_revision: state.base_revision.clone(),
@@ -89,11 +89,9 @@ mod tests {
 
     // r[verify cairn.collaboration_backend.portable_shell.positive]
     #[test]
-    fn neutral_checkout_plan_supports_absent_and_exact_destinations() {
+    fn neutral_plan_supports_absent_and_exact_destinations() {
         let state = state();
-        let absent =
-            plan_change_collaboration_checkout(&state, ChangeCollaborationLocalSnapshot::absent())
-                .unwrap();
+        let absent = plan_change_collaboration_checkout(&state, LocalSnapshot::absent()).unwrap();
         assert!(absent.checkout_ready());
         assert_eq!(
             absent.destination,
@@ -103,7 +101,7 @@ mod tests {
 
         let exact = plan_change_collaboration_checkout(
             &state,
-            ChangeCollaborationLocalSnapshot {
+            LocalSnapshot {
                 exists: true,
                 files: std::collections::BTreeMap::from([(
                     "proposal.md".to_string(),
@@ -118,10 +116,10 @@ mod tests {
 
     // r[verify cairn.collaboration_backend.portable_shell.negative]
     #[test]
-    fn neutral_checkout_plan_blocks_divergent_destination() {
+    fn neutral_plan_blocks_divergent_destination() {
         let plan = plan_change_collaboration_checkout(
             &state(),
-            ChangeCollaborationLocalSnapshot {
+            LocalSnapshot {
                 exists: true,
                 files: std::collections::BTreeMap::from([(
                     "proposal.md".to_string(),

@@ -8,10 +8,23 @@ pub use crate::verified::collaboration_change::{
     ChangeCollaborationInit, ChangeCollaborationOperation, ChangeCollaborationState,
     BASE_REVISION_KIND_GIT_OID,
 };
-pub use crate::verified::collaboration_checkout::{
-    plan_change_collaboration_checkout, ChangeCollaborationCheckoutPlan,
-    ChangeCollaborationLocalSnapshot,
-};
+pub use crate::verified::collaboration_checkout::plan_change_collaboration_checkout;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration checkout local snapshot type."
+    )
+)]
+pub use crate::verified::collaboration_checkout::LocalSnapshot as ChangeCollaborationLocalSnapshot;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration checkout plan type."
+    )
+)]
+pub use crate::verified::collaboration_checkout::Plan as ChangeCollaborationCheckoutPlan;
 #[cfg_attr(
     dylint_lib = "octet",
     allow(

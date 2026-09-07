@@ -246,3 +246,13 @@ fn collaboration_import_root_names_remain_callable() {
     ) -> Result<String, cairn_core::ChangeCollaborationError> =
         cairn_core::change_collaboration_import_operation_id;
 }
+
+#[test]
+fn collaboration_checkout_root_names_remain_callable() {
+    let _: fn(
+        &cairn_core::ChangeCollaborationState,
+        cairn_core::ChangeCollaborationLocalSnapshot,
+    )
+        -> Result<cairn_core::ChangeCollaborationCheckoutPlan, cairn_core::ChangeCobError> =
+        cairn_core::plan_change_collaboration_checkout;
+}
