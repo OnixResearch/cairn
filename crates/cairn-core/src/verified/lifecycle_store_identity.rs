@@ -79,9 +79,9 @@ pub const DIAGNOSTIC_PLAN_NEXT_STATE_MISSING: &str = "lifecycle_store.locator.st
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
-pub struct LifecycleStoreId(String);
+pub struct Id(String);
 
-impl LifecycleStoreId {
+impl Id {
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -90,9 +90,9 @@ impl LifecycleStoreId {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
-pub struct LifecycleStoreRemoteHint(String);
+pub struct RemoteHint(String);
 
-impl LifecycleStoreRemoteHint {
+impl RemoteHint {
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -101,9 +101,9 @@ impl LifecycleStoreRemoteHint {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
-pub struct LifecycleStoreNonClaim(String);
+pub struct NonClaim(String);
 
-impl LifecycleStoreNonClaim {
+impl NonClaim {
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -112,9 +112,9 @@ impl LifecycleStoreNonClaim {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
-pub struct LifecycleStoreBlake3Identity(String);
+pub struct Digest(String);
 
-impl LifecycleStoreBlake3Identity {
+impl Digest {
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -128,9 +128,9 @@ impl LifecycleStoreBlake3Identity {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(transparent)]
-pub struct LifecycleStoreCheckoutPath(String);
+pub struct CheckoutPath(String);
 
-impl LifecycleStoreCheckoutPath {
+impl CheckoutPath {
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -151,12 +151,12 @@ pub struct LifecycleStoreIdentityProjection {
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreIdentity {
     pub schema: String,
-    pub store_id: LifecycleStoreId,
-    pub remote_hint: Option<LifecycleStoreRemoteHint>,
-    pub non_claims: Vec<LifecycleStoreNonClaim>,
+    pub store_id: Id,
+    pub remote_hint: Option<RemoteHint>,
+    pub non_claims: Vec<NonClaim>,
     #[serde(rename = "source_blake3")]
-    pub source_identity: LifecycleStoreBlake3Identity,
-    pub store_identity: LifecycleStoreBlake3Identity,
+    pub source_identity: Digest,
+    pub store_identity: Digest,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
@@ -193,17 +193,17 @@ pub struct LifecycleStoreLocatorProjection {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 pub struct LifecycleStoreLocatorMapping {
-    pub store_id: LifecycleStoreId,
-    pub checkout_path: LifecycleStoreCheckoutPath,
-    pub store_identity: LifecycleStoreBlake3Identity,
+    pub store_id: Id,
+    pub checkout_path: CheckoutPath,
+    pub store_identity: Digest,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct LifecycleStoreLocatorState {
     pub schema: String,
     pub mappings: Vec<LifecycleStoreLocatorMapping>,
-    pub state_identity: LifecycleStoreBlake3Identity,
-    pub portable_state_identity: LifecycleStoreBlake3Identity,
+    pub state_identity: Digest,
+    pub portable_state_identity: Digest,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
@@ -458,7 +458,7 @@ pub fn plan_lifecycle_store_unregistration(
             &mut diagnostics,
             DIAGNOSTIC_STORE_UNKNOWN,
             "store_id",
-            store_id.as_ref().map_or("", LifecycleStoreId::as_str),
+            store_id.as_ref().map_or("", Id::as_str),
             "store ID does not resolve to a local locator mapping",
         );
     }
@@ -473,7 +473,7 @@ pub fn plan_lifecycle_store_unregistration(
     build_locator_plan(
         current,
         LifecycleStoreLocatorOperation::Unregister,
-        store_id.as_ref().map_or("", LifecycleStoreId::as_str),
+        store_id.as_ref().map_or("", Id::as_str),
         mapping.as_ref(),
         next_state,
         diagnostics,
@@ -601,7 +601,7 @@ fn parse_store_id(
     value: &str,
     field: &str,
     diagnostics: &mut Vec<LifecycleStoreDiagnostic>,
-) -> Option<LifecycleStoreId> {
+) -> Option<Id> {
     let length_valid = !value.is_empty() && value.len() <= LIFECYCLE_STORE_ID_MAX_BYTES;
     let prefix_valid = value
         .as_bytes()
@@ -611,7 +611,7 @@ fn parse_store_id(
         byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'_' | b'-')
     });
     if length_valid && prefix_valid && alphabet_valid {
-        Some(LifecycleStoreId(value.to_string()))
+        Some(Id(value.to_string()))
     } else {
         push_diagnostic(
             diagnostics,
@@ -627,12 +627,12 @@ fn parse_store_id(
 fn parse_remote_hint(
     value: &Option<String>,
     diagnostics: &mut Vec<LifecycleStoreDiagnostic>,
-) -> Option<LifecycleStoreRemoteHint> {
+) -> Option<RemoteHint> {
     let Some(value) = value else {
         return None;
     };
     if is_safe_remote_hint(value) {
-        Some(LifecycleStoreRemoteHint(value.clone()))
+        Some(RemoteHint(value.clone()))
     } else {
         push_diagnostic(
             diagnostics,
@@ -648,7 +648,7 @@ fn parse_remote_hint(
 fn parse_non_claims(
     values: &[String],
     diagnostics: &mut Vec<LifecycleStoreDiagnostic>,
-) -> Vec<LifecycleStoreNonClaim> {
+) -> Vec<NonClaim> {
     if values.len() > LIFECYCLE_STORE_NON_CLAIMS_MAX_COUNT {
         push_diagnostic(
             diagnostics,
@@ -682,7 +682,7 @@ fn parse_non_claims(
             );
             continue;
         }
-        accepted.push(LifecycleStoreNonClaim(value.clone()));
+        accepted.push(NonClaim(value.clone()));
     }
     accepted.sort();
     for required in LIFECYCLE_STORE_IDENTITY_NON_CLAIMS {
@@ -700,10 +700,10 @@ fn parse_non_claims(
 }
 
 fn build_store_identity(
-    store_id: Option<LifecycleStoreId>,
-    remote_hint: Option<LifecycleStoreRemoteHint>,
-    non_claims: Vec<LifecycleStoreNonClaim>,
-    source_identity: Option<LifecycleStoreBlake3Identity>,
+    store_id: Option<Id>,
+    remote_hint: Option<RemoteHint>,
+    non_claims: Vec<NonClaim>,
+    source_identity: Option<Digest>,
 ) -> Option<LifecycleStoreIdentity> {
     let (Some(store_id), Some(source_identity)) = (store_id, source_identity) else {
         return None;
@@ -715,13 +715,11 @@ fn build_store_identity(
     let material = canonical_store_identity_material(
         LIFECYCLE_STORE_IDENTITY_SCHEMA_V1,
         store_id.as_str(),
-        remote_hint.as_ref().map(LifecycleStoreRemoteHint::as_str),
+        remote_hint.as_ref().map(RemoteHint::as_str),
         &non_claim_text,
         source_identity.as_str(),
     );
-    let store_identity = LifecycleStoreBlake3Identity::from_computed(super::evidence::blake3_hex(
-        material.as_bytes(),
-    ));
+    let store_identity = Digest::from_computed(super::evidence::blake3_hex(material.as_bytes()));
     Some(LifecycleStoreIdentity {
         schema: LIFECYCLE_STORE_IDENTITY_SCHEMA_V1.to_string(),
         store_id,
@@ -842,9 +840,9 @@ fn parse_checkout_path(
     value: &str,
     field: &str,
     diagnostics: &mut Vec<LifecycleStoreDiagnostic>,
-) -> Option<LifecycleStoreCheckoutPath> {
+) -> Option<CheckoutPath> {
     if is_safe_bounded_text(value, LIFECYCLE_STORE_CHECKOUT_PATH_MAX_BYTES) {
-        Some(LifecycleStoreCheckoutPath(value.to_string()))
+        Some(CheckoutPath(value.to_string()))
     } else {
         push_diagnostic(
             diagnostics,
@@ -862,9 +860,9 @@ fn parse_blake3_identity(
     field: &str,
     code: &str,
     diagnostics: &mut Vec<LifecycleStoreDiagnostic>,
-) -> Option<LifecycleStoreBlake3Identity> {
+) -> Option<Digest> {
     if is_blake3_identity(value) {
-        Some(LifecycleStoreBlake3Identity(value.to_string()))
+        Some(Digest(value.to_string()))
     } else {
         push_diagnostic(
             diagnostics,
@@ -992,10 +990,8 @@ fn build_locator_state(
     LifecycleStoreLocatorState {
         schema: LIFECYCLE_STORE_LOCATOR_SCHEMA_V1.to_string(),
         mappings,
-        state_identity: LifecycleStoreBlake3Identity::from_computed(state_identity),
-        portable_state_identity: LifecycleStoreBlake3Identity::from_computed(
-            portable_state_identity,
-        ),
+        state_identity: Digest::from_computed(state_identity),
+        portable_state_identity: Digest::from_computed(portable_state_identity),
     }
 }
 

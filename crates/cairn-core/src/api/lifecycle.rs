@@ -82,30 +82,68 @@ pub use crate::verified::lifecycle_store_context::{
     ROOT_PROJECT_POINTER_STALE, ROOT_SELECTOR_CONFLICT, ROOT_STORE_AMBIGUOUS, ROOT_STORE_MISSING,
     ROOT_STORE_STALE,
 };
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreCheckoutPath root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::CheckoutPath as LifecycleStoreCheckoutPath;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreBlake3Identity root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::Digest as LifecycleStoreBlake3Identity;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreId root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::Id as LifecycleStoreId;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreNonClaim root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::NonClaim as LifecycleStoreNonClaim;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreRemoteHint root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::RemoteHint as LifecycleStoreRemoteHint;
 pub use crate::verified::lifecycle_store_identity::{
     admit_lifecycle_store_identity, admit_lifecycle_store_locator,
     apply_lifecycle_store_locator_plan, empty_lifecycle_store_locator,
     lifecycle_store_identity_material, lifecycle_store_locator_plan_hash,
     lifecycle_store_locator_portable_hash, lifecycle_store_locator_projection,
     lifecycle_store_source_identity, plan_lifecycle_store_registration,
-    plan_lifecycle_store_unregistration, LifecycleStoreBlake3Identity, LifecycleStoreCheckoutPath,
-    LifecycleStoreDiagnostic, LifecycleStoreId, LifecycleStoreIdentity,
+    plan_lifecycle_store_unregistration, LifecycleStoreDiagnostic, LifecycleStoreIdentity,
     LifecycleStoreIdentityAdmission, LifecycleStoreIdentityProjection,
     LifecycleStoreLocatorAdmission, LifecycleStoreLocatorApplication,
     LifecycleStoreLocatorLocalFacts, LifecycleStoreLocatorMapping,
     LifecycleStoreLocatorMappingProjection, LifecycleStoreLocatorOperation,
     LifecycleStoreLocatorPlan, LifecycleStoreLocatorPortableFacts, LifecycleStoreLocatorProjection,
-    LifecycleStoreLocatorState, LifecycleStoreNonClaim, LifecycleStoreRemoteHint,
-    BLAKE3_IDENTITY_HEX_LENGTH, LIFECYCLE_STORE_CHECKOUT_PATH_MAX_BYTES,
-    LIFECYCLE_STORE_DIAGNOSTIC_MAX_COUNT, LIFECYCLE_STORE_IDENTITY_NON_CLAIMS,
-    LIFECYCLE_STORE_IDENTITY_OBSERVATION_NON_CLAIM, LIFECYCLE_STORE_IDENTITY_READINESS_NON_CLAIM,
-    LIFECYCLE_STORE_IDENTITY_REMOTE_NON_CLAIM, LIFECYCLE_STORE_IDENTITY_SCHEMA_V1,
-    LIFECYCLE_STORE_ID_MAX_BYTES, LIFECYCLE_STORE_LOCAL_EVIDENCE_CLASS,
-    LIFECYCLE_STORE_LOCATOR_MAX_MAPPINGS, LIFECYCLE_STORE_LOCATOR_NON_CLAIM,
-    LIFECYCLE_STORE_LOCATOR_PLAN_SCHEMA_V1, LIFECYCLE_STORE_LOCATOR_SCHEMA_V1,
-    LIFECYCLE_STORE_NON_CLAIMS_MAX_COUNT, LIFECYCLE_STORE_NON_CLAIM_MAX_BYTES,
-    LIFECYCLE_STORE_PORTABLE_FACT_CLASS, LIFECYCLE_STORE_REMOTE_HINT_MAX_BYTES,
-    LIFECYCLE_STORE_REQUIRED_NON_CLAIMS,
+    LifecycleStoreLocatorState, BLAKE3_IDENTITY_HEX_LENGTH,
+    LIFECYCLE_STORE_CHECKOUT_PATH_MAX_BYTES, LIFECYCLE_STORE_DIAGNOSTIC_MAX_COUNT,
+    LIFECYCLE_STORE_IDENTITY_NON_CLAIMS, LIFECYCLE_STORE_IDENTITY_OBSERVATION_NON_CLAIM,
+    LIFECYCLE_STORE_IDENTITY_READINESS_NON_CLAIM, LIFECYCLE_STORE_IDENTITY_REMOTE_NON_CLAIM,
+    LIFECYCLE_STORE_IDENTITY_SCHEMA_V1, LIFECYCLE_STORE_ID_MAX_BYTES,
+    LIFECYCLE_STORE_LOCAL_EVIDENCE_CLASS, LIFECYCLE_STORE_LOCATOR_MAX_MAPPINGS,
+    LIFECYCLE_STORE_LOCATOR_NON_CLAIM, LIFECYCLE_STORE_LOCATOR_PLAN_SCHEMA_V1,
+    LIFECYCLE_STORE_LOCATOR_SCHEMA_V1, LIFECYCLE_STORE_NON_CLAIMS_MAX_COUNT,
+    LIFECYCLE_STORE_NON_CLAIM_MAX_BYTES, LIFECYCLE_STORE_PORTABLE_FACT_CLASS,
+    LIFECYCLE_STORE_REMOTE_HINT_MAX_BYTES, LIFECYCLE_STORE_REQUIRED_NON_CLAIMS,
 };
 pub use crate::verified::lifecycle_worksets::{
     apply_workset_transition, opener_profile_identity, plan_workset_create, plan_workset_open,
