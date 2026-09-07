@@ -1,13 +1,182 @@
 pub use crate::verified::adoption_report::*;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented admit_agent_guidance_declaration root function."
+    )
+)]
+pub use crate::verified::agent_guidance::admit_declaration as admit_agent_guidance_declaration;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented admit_portable_agent_guidance_result root function."
+    )
+)]
+pub use crate::verified::agent_guidance::admit_portable_result as admit_portable_agent_guidance_result;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented build_agent_guidance_result root function."
+    )
+)]
+pub use crate::verified::agent_guidance::build_result as build_agent_guidance_result;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented portable_agent_guidance_result root function."
+    )
+)]
+pub use crate::verified::agent_guidance::portable_result as portable_agent_guidance_result;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented select_agent_guidance root function."
+    )
+)]
+pub use crate::verified::agent_guidance::select as select_agent_guidance;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented validate_agent_guidance_policy root function."
+    )
+)]
+pub use crate::verified::agent_guidance::validate_policy as validate_agent_guidance_policy;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AdmittedAgentGuidance root type."
+    )
+)]
+pub use crate::verified::agent_guidance::Admitted as AdmittedAgentGuidance;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentArtifactGuidance root type."
+    )
+)]
+pub use crate::verified::agent_guidance::ArtifactAdvice as AgentArtifactGuidance;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceBounds root type."
+    )
+)]
+pub use crate::verified::agent_guidance::Bounds as AgentGuidanceBounds;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentContextReference root type."
+    )
+)]
+pub use crate::verified::agent_guidance::ContextReference as AgentContextReference;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceDeclaration root type."
+    )
+)]
+pub use crate::verified::agent_guidance::Declaration as AgentGuidanceDeclaration;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceEntry root type."
+    )
+)]
+pub use crate::verified::agent_guidance::Entry as AgentGuidanceEntry;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceResult root type."
+    )
+)]
+pub use crate::verified::agent_guidance::Evaluation as AgentGuidanceResult;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceIssue root type."
+    )
+)]
+pub use crate::verified::agent_guidance::Issue as AgentGuidanceIssue;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceObservationStatus root type."
+    )
+)]
+pub use crate::verified::agent_guidance::ObservationStatus as AgentGuidanceObservationStatus;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentOperationGuidance root type."
+    )
+)]
+pub use crate::verified::agent_guidance::OperationAdvice as AgentOperationGuidance;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidancePolicy root type."
+    )
+)]
+pub use crate::verified::agent_guidance::Policy as AgentGuidancePolicy;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented PortableAgentGuidanceEntry root type."
+    )
+)]
+pub use crate::verified::agent_guidance::PortableEntry as PortableAgentGuidanceEntry;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented PortableAgentGuidanceResult root type."
+    )
+)]
+pub use crate::verified::agent_guidance::PortableEvaluation as PortableAgentGuidanceResult;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceRequest root type."
+    )
+)]
+pub use crate::verified::agent_guidance::Request as AgentGuidanceRequest;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceSelectionPlan root type."
+    )
+)]
+pub use crate::verified::agent_guidance::SelectionPlan as AgentGuidanceSelectionPlan;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented AgentGuidanceSourceObservation root type."
+    )
+)]
+pub use crate::verified::agent_guidance::SourceObservation as AgentGuidanceSourceObservation;
 pub use crate::verified::agent_guidance::{
-    admit_agent_guidance_declaration, admit_portable_agent_guidance_result,
-    build_agent_guidance_result, portable_agent_guidance_result, safe_relative_context_path,
-    select_agent_guidance, validate_agent_guidance_policy, AdmittedAgentGuidance,
-    AgentArtifactGuidance, AgentContextReference, AgentGuidanceBounds, AgentGuidanceDeclaration,
-    AgentGuidanceEntry, AgentGuidanceIssue, AgentGuidanceObservationStatus, AgentGuidancePolicy,
-    AgentGuidanceRequest, AgentGuidanceResult, AgentGuidanceSelectionPlan,
-    AgentGuidanceSourceObservation, AgentOperationGuidance, PortableAgentGuidanceEntry,
-    PortableAgentGuidanceResult, AGENT_GUIDANCE_AUTHORITY_ADVISORY, AGENT_GUIDANCE_AUTHORITY_FACT,
+    safe_relative_context_path, AGENT_GUIDANCE_AUTHORITY_ADVISORY, AGENT_GUIDANCE_AUTHORITY_FACT,
     AGENT_GUIDANCE_AUTHORITY_POLICY, AGENT_GUIDANCE_ISSUE_AUTHORITY,
     AGENT_GUIDANCE_ISSUE_DECLARATION, AGENT_GUIDANCE_ISSUE_OBSERVATION, AGENT_GUIDANCE_ISSUE_PATH,
     AGENT_GUIDANCE_ISSUE_PORTABLE_INVALID, AGENT_GUIDANCE_ISSUE_PORTABLE_RAW,

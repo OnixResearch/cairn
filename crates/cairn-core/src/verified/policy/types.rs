@@ -16,7 +16,7 @@ pub struct Policy {
     pub artifact_substance_policy: ArtifactSubstancePolicy,
     pub workflow_schemas: Vec<crate::verified::artifact_workflow::WorkflowSchemaPolicy>,
     pub workflow_profile_policy: crate::verified::artifact_workflow::WorkflowProfileRegistryPolicy,
-    pub agent_guidance_policy: crate::verified::agent_guidance::AgentGuidancePolicy,
+    pub agent_guidance_policy: crate::verified::agent_guidance::Policy,
     pub developer_loop_policy: crate::verified::developer_loop::DeveloperLoopPolicy,
     pub generated_agent_workflow_policy:
         crate::verified::generated_agent_workflow::GeneratedAgentWorkflowPolicy,
