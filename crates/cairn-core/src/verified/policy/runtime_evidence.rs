@@ -1,4 +1,4 @@
-pub(super) fn runtime_evidence_policy(
+pub(super) fn from_value(
     value: &serde_json::Value,
 ) -> Result<crate::verified::runtime_evidence::RuntimeEvidencePolicy, super::PolicyError> {
     // r[impl cairn.runtime_evidence.policy_schema]

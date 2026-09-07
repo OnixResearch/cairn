@@ -1,6 +1,6 @@
 const NOMINAL_IDENTITY_POLICY_FIELD: &str = "nominal_identity_policy";
 
-pub(super) fn nominal_identity_policy(
+pub(super) fn from_value(
     value: &serde_json::Value,
 ) -> Result<crate::verified::nominal_identity::NominalIdentityPolicy, super::PolicyError> {
     // r[impl cairn.nominal_evidence_identities.policy]

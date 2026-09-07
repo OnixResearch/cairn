@@ -1,4 +1,4 @@
-pub(super) fn stack_provenance_policy(
+pub(super) fn from_value(
     value: &serde_json::Value,
 ) -> Result<crate::verified::stack_provenance::StackProvenancePolicy, super::PolicyError> {
     // r[impl cairn.stack_provenance_gates.policy]

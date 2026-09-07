@@ -1,15 +1,11 @@
 use super::{
-    agent_guidance::parse,
-    developer_loop::developer_loop_policy,
+    agent_guidance, developer_loop,
     document_collaboration::document_collaboration_policy,
     fields::{exemption_marker_policy, receipt_schemas},
-    function_address::function_address_policy,
+    function_address,
     generated_agent_workflow::generated_agent_workflow_policy,
     lifecycle_store::lifecycle_store_policy,
-    machine::machine_contract_policy,
-    nominal_identity::nominal_identity_policy,
-    runtime_evidence::runtime_evidence_policy,
-    stack_provenance::stack_provenance_policy,
+    machine, nominal_identity, runtime_evidence, stack_provenance,
     steel::steel_orchestration_policy,
     traceability::traceability_policy,
 };
@@ -44,8 +40,8 @@ pub fn validate_policy_json(value: serde_json::Value) -> Result<super::Policy, s
             path: error.path,
             message: error.message,
         })?;
-    let agent_guidance_policy = parse(&value)?;
-    let developer_loop_policy = developer_loop_policy(&value)?;
+    let agent_guidance_policy = agent_guidance::parse(&value)?;
+    let developer_loop_policy = developer_loop::from_value(&value)?;
     let generated_agent_workflow_policy = generated_agent_workflow_policy(&value)?;
     let task_marker = super::fields::task_marker_fields(&value)?;
     let task_marker_tokens = super::fields::task_markers(&value)?;
@@ -76,7 +72,7 @@ pub fn validate_policy_json(value: serde_json::Value) -> Result<super::Policy, s
             "gate_policy.substance.dependency_target_class",
         ));
     }
-    let machine_contract_policy = machine_contract_policy(&value)?;
+    let machine_contract_policy = machine::from_value(&value)?;
     let document_collaboration_policy = document_collaboration_policy(&value)?;
     let mutation = super::fields::mutation_policy_fields(&value)?;
     let should_require_receipt_hashes = super::fields::bool_field(
@@ -90,10 +86,10 @@ pub fn validate_policy_json(value: serde_json::Value) -> Result<super::Policy, s
     let change_metadata = super::fields::change_metadata_fields(&value)?;
     let steel_orchestration_policy = steel_orchestration_policy(&value)?;
     let traceability_policy = traceability_policy(&value)?;
-    let stack_provenance_policy = stack_provenance_policy(&value)?;
-    let function_address_policy = function_address_policy(&value)?;
-    let runtime_evidence_policy = runtime_evidence_policy(&value)?;
-    let nominal_identity_policy = nominal_identity_policy(&value)?;
+    let stack_provenance_policy = stack_provenance::from_value(&value)?;
+    let function_address_policy = function_address::from_value(&value)?;
+    let runtime_evidence_policy = runtime_evidence::from_value(&value)?;
+    let nominal_identity_policy = nominal_identity::from_value(&value)?;
     let lifecycle_store_policy = lifecycle_store_policy(&value)?;
     let policy_schema_compatibility = super::schema_compatibility::policy_schema_metadata(&value)?
         .ok_or(super::PolicyError::MissingField(

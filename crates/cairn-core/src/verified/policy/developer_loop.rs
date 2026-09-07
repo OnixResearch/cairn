@@ -1,4 +1,4 @@
-pub(super) fn developer_loop_policy(
+pub(super) fn from_value(
     value: &serde_json::Value,
 ) -> Result<crate::verified::developer_loop::DeveloperLoopPolicy, super::PolicyError> {
     let field = value

@@ -1,4 +1,4 @@
-pub(super) fn function_address_policy(
+pub(super) fn from_value(
     value: &serde_json::Value,
 ) -> Result<crate::verified::function_address_gates::FunctionAddressPolicy, super::PolicyError> {
     // r[impl cairn.function_address_gates.policy]

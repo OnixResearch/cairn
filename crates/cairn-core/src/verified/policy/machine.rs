@@ -25,7 +25,7 @@ const FIELD_REQUIRED_NON_CLAIMS: &str = "machine_contract_policy.required_non_cl
 const EXPECTED_DIAGNOSTIC_FIELDS: &[&str] = &["code", "severity", "message", "target", "fix"];
 const SERIALIZATION_OVERHEAD_PER_ENTRY: usize = 128;
 
-pub(super) fn machine_contract_policy(
+pub(super) fn from_value(
     value: &serde_json::Value,
 ) -> Result<crate::verified::cli_machine::MachineContractPolicy, super::PolicyError> {
     // r[impl cairn.cli_machine_contract.policy]
