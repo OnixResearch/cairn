@@ -17,10 +17,7 @@ pub struct Snapshot {
 
 pub fn plan(
     snapshot: Snapshot,
-) -> Result<
-    super::collaboration_change::ChangeCollaborationInit,
-    super::collaboration_change::ChangeCollaborationError,
-> {
+) -> Result<super::collaboration_change::Init, super::collaboration_change::Error> {
     let mut artifacts = std::collections::BTreeMap::new();
     insert_present_artifact(
         &mut artifacts,
@@ -48,7 +45,7 @@ pub fn plan(
             content,
         );
     }
-    let init = super::collaboration_change::ChangeCollaborationInit::new(
+    let init = super::collaboration_change::Init::new(
         snapshot.change_id,
         snapshot.workspace_id,
         snapshot.base_revision,
@@ -60,48 +57,41 @@ pub fn plan(
 }
 
 pub fn initialize(
-    init: super::collaboration_change::ChangeCollaborationInit,
+    init: super::collaboration_change::Init,
     actor: impl Into<String>,
-) -> Result<
-    super::collaboration_change::ChangeCollaborationState,
-    super::collaboration_change::ChangeCollaborationError,
-> {
+) -> Result<super::collaboration_change::State, super::collaboration_change::Error> {
     let actor = actor.into();
     let id = operation_id(&init, &actor)?;
     super::collaboration_change::initialize_change_collaboration(
-        super::collaboration_change::ChangeCollaborationOperation {
+        super::collaboration_change::Operation {
             id,
             actor,
             is_delegate: false,
-            actions: vec![
-                super::collaboration_change::ChangeCollaborationAction::Init { state: init },
-            ],
+            actions: vec![super::collaboration_change::Action::Init { state: init }],
         },
     )
 }
 
 pub fn operation_id(
-    init: &super::collaboration_change::ChangeCollaborationInit,
+    init: &super::collaboration_change::Init,
     actor: &str,
-) -> Result<String, super::collaboration_change::ChangeCollaborationError> {
+) -> Result<String, super::collaboration_change::Error> {
     let identity = OperationIdentity {
         domain: IMPORT_OPERATION_DOMAIN,
         actor,
         init,
     };
     let value = serde_json::to_value(identity).map_err(|error| {
-        super::collaboration_change::ChangeCollaborationError::Serialization {
+        super::collaboration_change::Error::Serialization {
             reason: error.to_string(),
         }
     })?;
     let hash = super::evidence::canonical_json_hash(&value);
     let operation =
         super::nominal_identity::OperationId::parse(&hash, "collaboration.import_operation_id")
-            .map_err(|issue| {
-                super::collaboration_change::ChangeCollaborationError::InvalidField {
-                    field: issue.field.to_owned(),
-                    reason: issue.code.to_owned(),
-                }
+            .map_err(|issue| super::collaboration_change::Error::InvalidField {
+                field: issue.field.to_owned(),
+                reason: issue.code.to_owned(),
             })?;
     debug_assert_eq!(operation.as_str(), hash);
     Ok(operation.as_str().to_owned())
@@ -121,7 +111,7 @@ fn insert_present_artifact(
 struct OperationIdentity<'a> {
     domain: &'a str,
     actor: &'a str,
-    init: &'a super::collaboration_change::ChangeCollaborationInit,
+    init: &'a super::collaboration_change::Init,
 }
 
 #[cfg(test)]

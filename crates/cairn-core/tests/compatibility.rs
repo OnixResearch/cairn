@@ -256,3 +256,27 @@ fn collaboration_checkout_root_names_remain_callable() {
         -> Result<cairn_core::ChangeCollaborationCheckoutPlan, cairn_core::ChangeCobError> =
         cairn_core::plan_change_collaboration_checkout;
 }
+
+#[test]
+fn collaboration_change_root_names_remain_callable() {
+    let _: fn(
+        cairn_core::ChangeCollaborationOperation,
+    ) -> Result<
+        cairn_core::ChangeCollaborationState,
+        cairn_core::ChangeCollaborationError,
+    > = cairn_core::initialize_change_collaboration;
+    let _: fn(
+        &cairn_core::ChangeCollaborationInit,
+    ) -> Result<(), cairn_core::ChangeCollaborationError> =
+        cairn_core::validate_change_collaboration_init;
+    let _: fn(
+        &cairn_core::ChangeCollaborationAction,
+    ) -> Result<serde_json::Value, cairn_core::ChangeCollaborationError> =
+        cairn_core::change_collaboration_action_json;
+    let _: fn(
+        &cairn_core::ChangeCollaborationState,
+    ) -> Result<
+        Vec<cairn_core::ChangeCollaborationEvidence>,
+        cairn_core::ChangeCollaborationError,
+    > = cairn_core::current_change_collaboration_evidence;
+}

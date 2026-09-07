@@ -36,7 +36,7 @@ impl Plan {
 }
 
 pub fn plan_change_collaboration_checkout(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     local: LocalSnapshot,
 ) -> Result<Plan, super::radicle_change::ChangeCobError> {
     let compatibility = super::collaboration_change::state_to_compatibility(state)?;
@@ -65,7 +65,7 @@ mod tests {
 
     const POLICY_HASH: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
-    fn state() -> super::super::collaboration_change::ChangeCollaborationState {
+    fn state() -> super::super::collaboration_change::State {
         crate::initialize_change_collaboration(crate::ChangeCollaborationOperation {
             id: "operation:root".to_string(),
             actor: "actor:portable".to_string(),

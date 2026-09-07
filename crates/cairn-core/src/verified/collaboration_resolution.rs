@@ -74,7 +74,7 @@ pub struct ChangeCollaborationResolutionPlan {
     pub is_delegate: bool,
     pub input_state_hash: String,
     pub operation_id: String,
-    pub actions: Vec<super::collaboration_change::ChangeCollaborationAction>,
+    pub actions: Vec<super::collaboration_change::Action>,
     pub selected_artifacts: Vec<ChangeArtifactHeadSelection>,
     pub lifecycle_reset: bool,
     pub expected_state_hash: String,
@@ -95,7 +95,7 @@ pub struct ChangeCobResolutionPlan {
 }
 
 pub fn inspect_change_collaboration_conflicts(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
 ) -> Result<ChangeCollaborationConflictInspection, super::radicle_change::ChangeCobError> {
     super::collaboration_change::validate_change_collaboration_state(state)?;
     let artifact_conflicts = state
@@ -151,7 +151,7 @@ pub fn inspect_change_cob_conflicts(
 }
 
 pub fn inspect_change_collaboration_conflict_value(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     artifact: &super::radicle_change::ChangeArtifactId,
     revision_id: &str,
 ) -> Result<ChangeArtifactConflictValue, super::radicle_change::ChangeCobError> {
@@ -215,7 +215,7 @@ pub fn inspect_change_cob_conflict_value(
 }
 
 pub fn plan_change_collaboration_resolution(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     snapshot: ChangeCollaborationResolutionSnapshot,
 ) -> Result<ChangeCollaborationResolutionPlan, super::radicle_change::ChangeCobError> {
     super::collaboration_change::validate_change_collaboration_state(state)?;
@@ -256,27 +256,23 @@ pub fn plan_change_collaboration_resolution(
                 "selected artifact revision is missing",
             )
         })?;
-        artifact_actions.push(
-            super::collaboration_change::ChangeCollaborationAction::SetArtifact {
-                artifact: selection.artifact.clone(),
-                content: revision.value.clone(),
-                basis,
-            },
-        );
+        artifact_actions.push(super::collaboration_change::Action::SetArtifact {
+            artifact: selection.artifact.clone(),
+            content: revision.value.clone(),
+            basis,
+        });
     }
 
     let resolved_content_root = simulate_resolved_content(state, &snapshot, &artifact_actions)?;
     let lifecycle_reset = !inspection.lifecycle_heads.is_empty();
     let mut actions = artifact_actions;
     if lifecycle_reset {
-        actions.push(
-            super::collaboration_change::ChangeCollaborationAction::SetLifecycle {
-                status: super::radicle_change::ChangeLifecycleStatus::Open,
-                subject_root: resolved_content_root,
-                evidence: std::collections::BTreeSet::new(),
-                basis: state.lifecycle.head_ids(),
-            },
-        );
+        actions.push(super::collaboration_change::Action::SetLifecycle {
+            status: super::radicle_change::ChangeLifecycleStatus::Open,
+            subject_root: resolved_content_root,
+            evidence: std::collections::BTreeSet::new(),
+            basis: state.lifecycle.head_ids(),
+        });
     }
     let input_state_hash = inspection.state_hash;
     let operation_id = resolution_operation_id(
@@ -288,7 +284,7 @@ pub fn plan_change_collaboration_resolution(
     let mut simulated = state.clone();
     super::collaboration_change::apply_change_collaboration_operation(
         &mut simulated,
-        super::collaboration_change::ChangeCollaborationOperation {
+        super::collaboration_change::Operation {
             id: operation_id.clone(),
             actor: snapshot.actor.clone(),
             is_delegate: snapshot.is_delegate,
@@ -339,12 +335,9 @@ pub fn plan_change_cob_resolution(
 }
 
 pub fn apply_planned_change_collaboration_resolution(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     plan: &ChangeCollaborationResolutionPlan,
-) -> Result<
-    super::collaboration_change::ChangeCollaborationState,
-    super::radicle_change::ChangeCobError,
-> {
+) -> Result<super::collaboration_change::State, super::radicle_change::ChangeCobError> {
     let current_state_hash = super::collaboration_change::change_collaboration_state_hash(state)?;
     if !same_digest::<super::nominal_identity::StateDigestRole>(
         &current_state_hash,
@@ -358,7 +351,7 @@ pub fn apply_planned_change_collaboration_resolution(
     let mut resolved = state.clone();
     super::collaboration_change::apply_change_collaboration_operation(
         &mut resolved,
-        super::collaboration_change::ChangeCollaborationOperation {
+        super::collaboration_change::Operation {
             id: plan.operation_id.clone(),
             actor: plan.actor.clone(),
             is_delegate: plan.is_delegate,
@@ -420,7 +413,7 @@ fn resolution_plan_hash<T: serde::Serialize>(
 }
 
 fn validate_resolution_context(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     snapshot: &ChangeCollaborationResolutionSnapshot,
 ) -> Result<(), super::radicle_change::ChangeCobError> {
     let state_change =
@@ -578,9 +571,9 @@ fn validate_lifecycle_selection(
 }
 
 fn simulate_resolved_content(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     snapshot: &ChangeCollaborationResolutionSnapshot,
-    artifact_actions: &[super::collaboration_change::ChangeCollaborationAction],
+    artifact_actions: &[super::collaboration_change::Action],
 ) -> Result<String, super::radicle_change::ChangeCobError> {
     if artifact_actions.is_empty() {
         return super::collaboration_change::change_collaboration_content_root(state);
@@ -588,7 +581,7 @@ fn simulate_resolved_content(
     let mut simulated = state.clone();
     super::collaboration_change::apply_change_collaboration_operation(
         &mut simulated,
-        super::collaboration_change::ChangeCollaborationOperation {
+        super::collaboration_change::Operation {
             id: RESOLUTION_SIMULATION_OPERATION.to_string(),
             actor: snapshot.actor.clone(),
             is_delegate: snapshot.is_delegate,
@@ -599,7 +592,7 @@ fn simulate_resolved_content(
 }
 
 fn require_conflict_free_result(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
 ) -> Result<(), super::radicle_change::ChangeCobError> {
     let _content_root = super::collaboration_change::change_collaboration_content_root(state)?;
     match super::collaboration_change::change_collaboration_lifecycle_view(state)? {
@@ -653,7 +646,7 @@ fn resolution_operation_id(
     input_state_hash: &str,
     actor: &str,
     is_delegate: bool,
-    actions: &[super::collaboration_change::ChangeCollaborationAction],
+    actions: &[super::collaboration_change::Action],
 ) -> Result<String, super::radicle_change::ChangeCobError> {
     let value = serde_json::to_value(ResolutionOperationIdentity {
         domain: RESOLUTION_OPERATION_DOMAIN,
@@ -689,7 +682,7 @@ struct ResolutionOperationIdentity<'a> {
     input_state_hash: &'a str,
     actor: &'a str,
     is_delegate: bool,
-    actions: &'a [super::collaboration_change::ChangeCollaborationAction],
+    actions: &'a [super::collaboration_change::Action],
 }
 
 #[cfg(test)]
@@ -713,7 +706,7 @@ mod tests {
     const RESOLUTION_ACTION_COUNT: usize = 2;
     const RESOLVED_PROPOSAL_REVISION_COUNT: usize = 4;
 
-    fn initial_state() -> super::super::collaboration_change::ChangeCollaborationState {
+    fn initial_state() -> super::super::collaboration_change::State {
         let init =
             crate::plan_change_collaboration_import(crate::ChangeCollaborationImportSnapshot {
                 change_id: CHANGE_ID.to_string(),
@@ -731,7 +724,7 @@ mod tests {
     }
 
     fn add_artifact_conflict(
-        state: &mut super::super::collaboration_change::ChangeCollaborationState,
+        state: &mut super::super::collaboration_change::State,
         artifact: super::super::radicle_change::ChangeArtifactId,
         operations: [(&str, Option<&str>); CONCURRENT_HEAD_COUNT],
     ) {
@@ -739,11 +732,11 @@ mod tests {
         for (operation_id, content) in operations {
             crate::apply_change_collaboration_operation(
                 state,
-                super::super::collaboration_change::ChangeCollaborationOperation {
+                super::super::collaboration_change::Operation {
                     id: operation_id.to_string(),
                     actor: CREATOR.to_string(),
                     is_delegate: false,
-                    actions: vec![super::super::collaboration_change::ChangeCollaborationAction::SetArtifact {
+                    actions: vec![super::super::collaboration_change::Action::SetArtifact {
                         artifact: artifact.clone(),
                         content: content.map(str::to_string),
                         basis: basis.clone(),
@@ -754,7 +747,7 @@ mod tests {
         }
     }
 
-    fn conflicted_state() -> super::super::collaboration_change::ChangeCollaborationState {
+    fn conflicted_state() -> super::super::collaboration_change::State {
         let mut state = initial_state();
         add_artifact_conflict(
             &mut state,
@@ -831,7 +824,7 @@ mod tests {
         assert_eq!(first.actions.len(), RESOLUTION_ACTION_COUNT);
         assert_eq!(
             first.actions[0],
-            super::super::collaboration_change::ChangeCollaborationAction::SetArtifact {
+            super::super::collaboration_change::Action::SetArtifact {
                 artifact: super::super::radicle_change::ChangeArtifactId::design(),
                 content: None,
                 basis: std::collections::BTreeSet::from([
@@ -871,12 +864,13 @@ mod tests {
         for operation_id in [LIFECYCLE_LEFT_OPERATION, LIFECYCLE_RIGHT_OPERATION] {
             crate::apply_change_collaboration_operation(
                 &mut state,
-                super::super::collaboration_change::ChangeCollaborationOperation {
+                super::super::collaboration_change::Operation {
                     id: operation_id.to_string(),
                     actor: DELEGATE.to_string(),
                     is_delegate: true,
-                    actions: vec![super::super::collaboration_change::ChangeCollaborationAction::SetLifecycle {
-                        status: super::super::radicle_change::ChangeLifecycleStatus::ReviewRequested,
+                    actions: vec![super::super::collaboration_change::Action::SetLifecycle {
+                        status:
+                            super::super::radicle_change::ChangeLifecycleStatus::ReviewRequested,
                         subject_root: content_root.clone(),
                         evidence: std::collections::BTreeSet::new(),
                         basis: basis.clone(),

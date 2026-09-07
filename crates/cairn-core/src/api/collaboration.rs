@@ -1,12 +1,65 @@
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration action JSON function."
+    )
+)]
+pub use crate::verified::collaboration_change::action_json as change_collaboration_action_json;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration action type."
+    )
+)]
+pub use crate::verified::collaboration_change::Action as ChangeCollaborationAction;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration error type."
+    )
+)]
+pub use crate::verified::collaboration_change::Error as ChangeCollaborationError;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration evidence type."
+    )
+)]
+pub use crate::verified::collaboration_change::Evidence as ChangeCollaborationEvidence;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration init type."
+    )
+)]
+pub use crate::verified::collaboration_change::Init as ChangeCollaborationInit;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration operation type."
+    )
+)]
+pub use crate::verified::collaboration_change::Operation as ChangeCollaborationOperation;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration state type."
+    )
+)]
+pub use crate::verified::collaboration_change::State as ChangeCollaborationState;
 pub use crate::verified::collaboration_change::{
-    apply_change_collaboration_operation, change_collaboration_action_json,
-    change_collaboration_content_root, change_collaboration_lifecycle_view,
-    change_collaboration_state_hash, current_change_collaboration_evidence,
-    initialize_change_collaboration, materialize_change_collaboration,
-    validate_change_collaboration_init, validate_change_collaboration_state,
-    ChangeCollaborationAction, ChangeCollaborationError, ChangeCollaborationEvidence,
-    ChangeCollaborationInit, ChangeCollaborationOperation, ChangeCollaborationState,
-    BASE_REVISION_KIND_GIT_OID,
+    apply_change_collaboration_operation, change_collaboration_content_root,
+    change_collaboration_lifecycle_view, change_collaboration_state_hash,
+    current_change_collaboration_evidence, initialize_change_collaboration,
+    materialize_change_collaboration, validate_change_collaboration_init,
+    validate_change_collaboration_state, BASE_REVISION_KIND_GIT_OID,
 };
 pub use crate::verified::collaboration_checkout::plan_change_collaboration_checkout;
 #[cfg_attr(

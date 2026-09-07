@@ -7,7 +7,7 @@ pub const PORTABLE_COLLABORATION_BACKEND_V1: &str = "portable-json.v1";
 pub struct Envelope {
     pub schema: String,
     pub backend: String,
-    pub state: super::collaboration_change::ChangeCollaborationState,
+    pub state: super::collaboration_change::State,
     pub content_root: Option<String>,
     pub state_hash: String,
     pub envelope_hash: String,
@@ -33,14 +33,12 @@ pub enum Failure {
     #[error("portable collaboration envelope hash mismatch: stated {stated}, computed {computed}")]
     EnvelopeHashMismatch { stated: String, computed: String },
     #[error("collaboration state is invalid: {0}")]
-    State(#[from] super::collaboration_change::ChangeCollaborationError),
+    State(#[from] super::collaboration_change::Error),
     #[error("portable collaboration serialization failed: {reason}")]
     Serialization { reason: String },
 }
 
-pub fn build(
-    state: super::collaboration_change::ChangeCollaborationState,
-) -> Result<Envelope, Failure> {
+pub fn build(state: super::collaboration_change::State) -> Result<Envelope, Failure> {
     require_neutral_state(&state)?;
     super::collaboration_change::validate_change_collaboration_state(&state)?;
     let content_root = derive_content_root(&state)?;
@@ -56,9 +54,7 @@ pub fn build(
     })
 }
 
-pub fn validate(
-    envelope: &Envelope,
-) -> Result<super::collaboration_change::ChangeCollaborationState, Failure> {
+pub fn validate(envelope: &Envelope) -> Result<super::collaboration_change::State, Failure> {
     if envelope.schema != PORTABLE_COLLABORATION_SCHEMA_V1 {
         return Err(Failure::UnsupportedEnvelopeSchema {
             schema: envelope.schema.clone(),
@@ -100,7 +96,7 @@ pub fn validate(
 }
 
 fn derive_content_root(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
 ) -> Result<Option<String>, Failure> {
     match super::collaboration_change::change_collaboration_content_root(state) {
         Ok(content_root) => Ok(Some(content_root)),
@@ -109,9 +105,7 @@ fn derive_content_root(
     }
 }
 
-fn require_neutral_state(
-    state: &super::collaboration_change::ChangeCollaborationState,
-) -> Result<(), Failure> {
+fn require_neutral_state(state: &super::collaboration_change::State) -> Result<(), Failure> {
     if state.schema == super::radicle_change::CHANGE_COLLABORATION_SCHEMA_V1 {
         return Ok(());
     }
@@ -121,7 +115,7 @@ fn require_neutral_state(
 }
 
 fn hash_envelope(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     content_root: &Option<String>,
     state_hash: &str,
 ) -> Result<String, Failure> {
@@ -142,7 +136,7 @@ fn hash_envelope(
 struct EnvelopeIdentity<'a> {
     schema: &'a str,
     backend: &'a str,
-    state: &'a super::collaboration_change::ChangeCollaborationState,
+    state: &'a super::collaboration_change::State,
     content_root: &'a Option<String>,
     state_hash: &'a str,
 }
@@ -160,7 +154,7 @@ mod tests {
     const LEFT_OPERATION_ID: &str = "operation:portable-left";
     const RIGHT_OPERATION_ID: &str = "operation:portable-right";
 
-    fn state() -> super::super::collaboration_change::ChangeCollaborationState {
+    fn state() -> super::super::collaboration_change::State {
         crate::initialize_change_collaboration(crate::ChangeCollaborationOperation {
             id: OPERATION_ID.to_string(),
             actor: ACTOR.to_string(),

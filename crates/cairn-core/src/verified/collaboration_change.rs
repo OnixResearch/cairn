@@ -7,8 +7,8 @@ pub const BASE_REVISION_KIND_GIT_OID: &str = "git_oid";
 
 // r[impl cairn.collaboration_backend.semantic_core]
 
-pub type ChangeCollaborationEvidence = super::radicle_change::ChangeCobEvidence;
-pub type ChangeCollaborationError = super::radicle_change::ChangeCobError;
+pub type Evidence = super::radicle_change::ChangeCobEvidence;
+pub type Error = super::radicle_change::ChangeCobError;
 
 #[derive(Debug)]
 struct AdmittedInit {
@@ -35,7 +35,7 @@ struct AdmittedState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct ChangeCollaborationInit {
+pub struct Init {
     pub schema: String,
     pub change_id: String,
     pub workspace_id: String,
@@ -46,7 +46,7 @@ pub struct ChangeCollaborationInit {
     pub artifacts: std::collections::BTreeMap<super::radicle_change::ChangeArtifactId, String>,
 }
 
-impl ChangeCollaborationInit {
+impl Init {
     pub fn new(
         change_id: impl Into<String>,
         workspace_id: impl Into<String>,
@@ -73,9 +73,9 @@ impl ChangeCollaborationInit {
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-pub enum ChangeCollaborationAction {
+pub enum Action {
     Init {
-        state: ChangeCollaborationInit,
+        state: Init,
     },
     SetArtifact {
         artifact: super::radicle_change::ChangeArtifactId,
@@ -83,7 +83,7 @@ pub enum ChangeCollaborationAction {
         basis: std::collections::BTreeSet<String>,
     },
     AttachEvidence {
-        evidence: ChangeCollaborationEvidence,
+        evidence: Evidence,
     },
     SetLifecycle {
         status: super::radicle_change::ChangeLifecycleStatus,
@@ -94,15 +94,15 @@ pub enum ChangeCollaborationAction {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChangeCollaborationOperation {
+pub struct Operation {
     pub id: String,
     pub actor: String,
     pub is_delegate: bool,
-    pub actions: Vec<ChangeCollaborationAction>,
+    pub actions: Vec<Action>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct ChangeCollaborationState {
+pub struct State {
     pub schema: String,
     pub change_id: String,
     pub workspace_id: String,
@@ -115,19 +115,17 @@ pub struct ChangeCollaborationState {
         super::radicle_change::ChangeArtifactId,
         super::radicle_change::ChangeRevisionSet<Option<String>>,
     >,
-    pub evidence: std::collections::BTreeMap<String, ChangeCollaborationEvidence>,
+    pub evidence: std::collections::BTreeMap<String, Evidence>,
     pub lifecycle:
         super::radicle_change::ChangeRevisionSet<super::radicle_change::ChangeLifecycleRecord>,
     pub operations: std::collections::BTreeSet<String>,
 }
 
-pub fn initialize_change_collaboration(
-    operation: ChangeCollaborationOperation,
-) -> Result<ChangeCollaborationState, ChangeCollaborationError> {
+pub fn initialize_change_collaboration(operation: Operation) -> Result<State, Error> {
     let enforce_nominal = operation.actions.iter().any(|action| {
         matches!(
             action,
-            ChangeCollaborationAction::Init { state }
+            Action::Init { state }
                 if state.schema == super::radicle_change::CHANGE_COLLABORATION_SCHEMA_V1
         )
     });
@@ -139,9 +137,9 @@ pub fn initialize_change_collaboration(
 }
 
 pub fn apply_change_collaboration_operation(
-    state: &mut ChangeCollaborationState,
-    operation: ChangeCollaborationOperation,
-) -> Result<(), ChangeCollaborationError> {
+    state: &mut State,
+    operation: Operation,
+) -> Result<(), Error> {
     let mut compatibility = state_to_compatibility(state)?;
     let enforce_nominal = state.schema == super::radicle_change::CHANGE_COLLABORATION_SCHEMA_V1;
     super::radicle_change::apply_change_cob_operation(
@@ -152,51 +150,39 @@ pub fn apply_change_collaboration_operation(
     Ok(())
 }
 
-pub fn validate_change_collaboration_init(
-    init: &ChangeCollaborationInit,
-) -> Result<(), ChangeCollaborationError> {
+pub fn validate_change_collaboration_init(init: &Init) -> Result<(), Error> {
     super::radicle_change::validate_change_cob_init(&init_to_compatibility(init.clone())?)
 }
 
-pub fn validate_change_collaboration_state(
-    state: &ChangeCollaborationState,
-) -> Result<(), ChangeCollaborationError> {
+pub fn validate_change_collaboration_state(state: &State) -> Result<(), Error> {
     super::radicle_change::validate_change_cob_state(&state_to_compatibility(state)?)
 }
 
-pub fn change_collaboration_content_root(
-    state: &ChangeCollaborationState,
-) -> Result<String, ChangeCollaborationError> {
+pub fn change_collaboration_content_root(state: &State) -> Result<String, Error> {
     super::radicle_change::change_cob_content_root(&state_to_compatibility(state)?)
 }
 
-pub fn change_collaboration_state_hash(
-    state: &ChangeCollaborationState,
-) -> Result<String, ChangeCollaborationError> {
+pub fn change_collaboration_state_hash(state: &State) -> Result<String, Error> {
     super::radicle_change::change_cob_state_hash(&state_to_compatibility(state)?)
 }
 
 pub fn materialize_change_collaboration(
-    state: &ChangeCollaborationState,
-) -> Result<Vec<super::radicle_change::ChangeMaterializedFile>, ChangeCollaborationError> {
+    state: &State,
+) -> Result<Vec<super::radicle_change::ChangeMaterializedFile>, Error> {
     super::radicle_change::materialize_change_cob(&state_to_compatibility(state)?)
 }
 
-pub fn current_change_collaboration_evidence(
-    state: &ChangeCollaborationState,
-) -> Result<Vec<ChangeCollaborationEvidence>, ChangeCollaborationError> {
+pub fn current_change_collaboration_evidence(state: &State) -> Result<Vec<Evidence>, Error> {
     super::radicle_change::current_change_cob_evidence(&state_to_compatibility(state)?)
 }
 
 pub fn change_collaboration_lifecycle_view(
-    state: &ChangeCollaborationState,
-) -> Result<super::radicle_change::ChangeLifecycleView, ChangeCollaborationError> {
+    state: &State,
+) -> Result<super::radicle_change::ChangeLifecycleView, Error> {
     super::radicle_change::change_cob_lifecycle_view(&state_to_compatibility(state)?)
 }
 
-pub fn change_collaboration_action_json(
-    action: &ChangeCollaborationAction,
-) -> Result<serde_json::Value, ChangeCollaborationError> {
+pub fn action_json(action: &Action) -> Result<serde_json::Value, Error> {
     serde_json::to_value(action).map_err(|error| {
         super::radicle_change::ChangeCobError::Serialization {
             reason: error.to_string(),
@@ -205,8 +191,8 @@ pub fn change_collaboration_action_json(
 }
 
 pub(crate) fn state_to_compatibility(
-    state: &ChangeCollaborationState,
-) -> Result<super::radicle_change::ChangeCobState, ChangeCollaborationError> {
+    state: &State,
+) -> Result<super::radicle_change::ChangeCobState, Error> {
     if state.schema != super::radicle_change::CHANGE_COLLABORATION_SCHEMA_V1 {
         return Ok(super::radicle_change::ChangeCobState {
             schema: state.schema.clone(),
@@ -248,7 +234,7 @@ pub(crate) fn state_to_compatibility(
 
 pub(crate) fn state_from_compatibility(
     state: super::radicle_change::ChangeCobState,
-) -> Result<ChangeCollaborationState, ChangeCollaborationError> {
+) -> Result<State, Error> {
     let base_revision = if state.schema == super::radicle_change::RADICLE_CHANGE_COB_SCHEMA_V1 {
         super::radicle_change::ChangeBaseRevision::new(
             BASE_REVISION_KIND_GIT_OID,
@@ -257,7 +243,7 @@ pub(crate) fn state_from_compatibility(
     } else {
         super::radicle_change::decode_base_revision(&state.base_git_oid)?
     };
-    let result = ChangeCollaborationState {
+    let result = State {
         schema: state.schema,
         change_id: state.change_id,
         workspace_id: state.repository_id,
@@ -277,9 +263,9 @@ pub(crate) fn state_from_compatibility(
 }
 
 fn operation_into_compatibility(
-    operation: ChangeCollaborationOperation,
+    operation: Operation,
     enforce_nominal: bool,
-) -> Result<super::radicle_change::ChangeCobOperation, ChangeCollaborationError> {
+) -> Result<super::radicle_change::ChangeCobOperation, Error> {
     let identities = if enforce_nominal {
         Some(admit_operation(&operation)?)
     } else {
@@ -307,13 +293,13 @@ fn operation_into_compatibility(
 }
 
 pub(crate) fn action_into_compatibility(
-    action: ChangeCollaborationAction,
-) -> Result<super::radicle_change::ChangeCobAction, ChangeCollaborationError> {
+    action: Action,
+) -> Result<super::radicle_change::ChangeCobAction, Error> {
     Ok(match action {
-        ChangeCollaborationAction::Init { state } => super::radicle_change::ChangeCobAction::Init {
+        Action::Init { state } => super::radicle_change::ChangeCobAction::Init {
             state: init_to_compatibility(state)?,
         },
-        ChangeCollaborationAction::SetArtifact {
+        Action::SetArtifact {
             artifact,
             content,
             basis,
@@ -322,10 +308,10 @@ pub(crate) fn action_into_compatibility(
             content,
             basis,
         },
-        ChangeCollaborationAction::AttachEvidence { evidence } => {
+        Action::AttachEvidence { evidence } => {
             super::radicle_change::ChangeCobAction::AttachEvidence { evidence }
         }
-        ChangeCollaborationAction::SetLifecycle {
+        Action::SetLifecycle {
             status,
             subject_root,
             evidence,
@@ -339,9 +325,7 @@ pub(crate) fn action_into_compatibility(
     })
 }
 
-fn init_to_compatibility(
-    init: ChangeCollaborationInit,
-) -> Result<super::radicle_change::ChangeCobInit, ChangeCollaborationError> {
+fn init_to_compatibility(init: Init) -> Result<super::radicle_change::ChangeCobInit, Error> {
     if init.schema != super::radicle_change::CHANGE_COLLABORATION_SCHEMA_V1 {
         return Ok(super::radicle_change::ChangeCobInit {
             schema: init.schema.clone(),
@@ -369,9 +353,7 @@ fn init_to_compatibility(
     })
 }
 
-fn admit_collaboration_init(
-    init: &ChangeCollaborationInit,
-) -> Result<AdmittedInit, ChangeCollaborationError> {
+fn admit_collaboration_init(init: &Init) -> Result<AdmittedInit, Error> {
     Ok(AdmittedInit {
         change_id: super::nominal_identity::ChangeId::parse(
             &init.change_id,
@@ -393,9 +375,7 @@ fn admit_collaboration_init(
     })
 }
 
-fn admit_operation(
-    operation: &ChangeCollaborationOperation,
-) -> Result<AdmittedOperation, ChangeCollaborationError> {
+fn admit_operation(operation: &Operation) -> Result<AdmittedOperation, Error> {
     Ok(AdmittedOperation {
         id: super::nominal_identity::OperationId::parse(
             &operation.id,
@@ -407,9 +387,7 @@ fn admit_operation(
     })
 }
 
-fn admit_collaboration_state(
-    state: &ChangeCollaborationState,
-) -> Result<AdmittedState, ChangeCollaborationError> {
+fn admit_collaboration_state(state: &State) -> Result<AdmittedState, Error> {
     Ok(AdmittedState {
         change_id: super::nominal_identity::ChangeId::parse(
             &state.change_id,
@@ -444,15 +422,14 @@ fn admit_collaboration_state(
 fn admit_actor_set(
     values: &std::collections::BTreeSet<String>,
     field: &'static str,
-) -> Result<std::collections::BTreeSet<super::nominal_identity::ActorId>, ChangeCollaborationError>
-{
+) -> Result<std::collections::BTreeSet<super::nominal_identity::ActorId>, Error> {
     values
         .iter()
         .map(|value| super::nominal_identity::ActorId::parse(value, field).map_err(nominal_error))
         .collect()
 }
 
-fn nominal_error(issue: super::nominal_identity::IdentityIssue) -> ChangeCollaborationError {
+fn nominal_error(issue: super::nominal_identity::IdentityIssue) -> Error {
     super::radicle_change::ChangeCobError::InvalidField {
         field: issue.field.to_owned(),
         reason: issue.code.to_owned(),
@@ -462,7 +439,7 @@ fn nominal_error(issue: super::nominal_identity::IdentityIssue) -> ChangeCollabo
 fn compatibility_base_revision(
     schema: &str,
     revision: &super::radicle_change::ChangeBaseRevision,
-) -> Result<String, ChangeCollaborationError> {
+) -> Result<String, Error> {
     if schema == super::radicle_change::RADICLE_CHANGE_COB_SCHEMA_V1 {
         if revision.kind != BASE_REVISION_KIND_GIT_OID {
             return Err(super::radicle_change::ChangeCobError::InvalidField {
@@ -491,8 +468,8 @@ mod tests {
     const ROOT_OPERATION: &str = "operation:root";
     const LEGACY_GIT_OID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    fn neutral_init() -> ChangeCollaborationInit {
-        ChangeCollaborationInit::new(
+    fn neutral_init() -> Init {
+        Init::new(
             CHANGE_ID,
             WORKSPACE_ID,
             super::super::radicle_change::ChangeBaseRevision::new(
@@ -508,12 +485,12 @@ mod tests {
         )
     }
 
-    fn neutral_state() -> ChangeCollaborationState {
-        initialize_change_collaboration(ChangeCollaborationOperation {
+    fn neutral_state() -> State {
+        initialize_change_collaboration(Operation {
             id: ROOT_OPERATION.to_string(),
             actor: ACTOR.to_string(),
             is_delegate: false,
-            actions: vec![ChangeCollaborationAction::Init {
+            actions: vec![Action::Init {
                 state: neutral_init(),
             }],
         })
@@ -537,11 +514,11 @@ mod tests {
         ] {
             apply_change_collaboration_operation(
                 &mut state,
-                ChangeCollaborationOperation {
+                Operation {
                     id: id.to_string(),
                     actor: ACTOR.to_string(),
                     is_delegate: false,
-                    actions: vec![ChangeCollaborationAction::SetArtifact {
+                    actions: vec![Action::SetArtifact {
                         artifact: super::super::radicle_change::ChangeArtifactId::proposal(),
                         content: Some(content.to_string()),
                         basis: root_head.clone(),
@@ -632,7 +609,7 @@ mod tests {
 
     #[test]
     fn generic_action_json_uses_transport_neutral_fields() {
-        let value = change_collaboration_action_json(&ChangeCollaborationAction::Init {
+        let value = action_json(&Action::Init {
             state: neutral_init(),
         })
         .unwrap();

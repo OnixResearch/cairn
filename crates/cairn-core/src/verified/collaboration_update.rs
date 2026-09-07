@@ -23,7 +23,7 @@ pub struct ChangeCollaborationUpdatePlan {
     pub input_state_hash: String,
     pub input_content_root: String,
     pub operation_id: String,
-    pub actions: Vec<super::collaboration_change::ChangeCollaborationAction>,
+    pub actions: Vec<super::collaboration_change::Action>,
     pub changed_artifacts: Vec<String>,
     pub expected_content_root: String,
 }
@@ -54,7 +54,7 @@ impl ChangeCobUpdatePlan {
 }
 
 pub fn plan_change_collaboration_update(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     snapshot: ChangeCollaborationUpdateSnapshot,
 ) -> Result<ChangeCollaborationUpdatePlan, super::radicle_change::ChangeCobError> {
     super::collaboration_change::validate_change_collaboration_state(state)?;
@@ -72,20 +72,19 @@ pub fn plan_change_collaboration_update(
     let changed_artifacts = actions
         .iter()
         .filter_map(|action| match action {
-            super::collaboration_change::ChangeCollaborationAction::SetArtifact {
-                artifact,
-                ..
-            } => Some(artifact.as_str().to_string()),
-            super::collaboration_change::ChangeCollaborationAction::Init { .. }
-            | super::collaboration_change::ChangeCollaborationAction::AttachEvidence { .. }
-            | super::collaboration_change::ChangeCollaborationAction::SetLifecycle { .. } => None,
+            super::collaboration_change::Action::SetArtifact { artifact, .. } => {
+                Some(artifact.as_str().to_string())
+            }
+            super::collaboration_change::Action::Init { .. }
+            | super::collaboration_change::Action::AttachEvidence { .. }
+            | super::collaboration_change::Action::SetLifecycle { .. } => None,
         })
         .collect::<Vec<_>>();
     let mut simulated = state.clone();
     if !actions.is_empty() {
         super::collaboration_change::apply_change_collaboration_operation(
             &mut simulated,
-            super::collaboration_change::ChangeCollaborationOperation {
+            super::collaboration_change::Operation {
                 id: operation_id.clone(),
                 actor: snapshot.actor.clone(),
                 is_delegate: snapshot.is_delegate,
@@ -133,12 +132,9 @@ pub fn plan_change_cob_update(
 }
 
 pub fn apply_planned_change_collaboration_update(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     plan: &ChangeCollaborationUpdatePlan,
-) -> Result<
-    super::collaboration_change::ChangeCollaborationState,
-    super::radicle_change::ChangeCobError,
-> {
+) -> Result<super::collaboration_change::State, super::radicle_change::ChangeCobError> {
     let current_state_hash = super::collaboration_change::change_collaboration_state_hash(state)?;
     if !same_digest::<super::nominal_identity::StateDigestRole>(
         &current_state_hash,
@@ -155,7 +151,7 @@ pub fn apply_planned_change_collaboration_update(
     let mut updated = state.clone();
     super::collaboration_change::apply_change_collaboration_operation(
         &mut updated,
-        super::collaboration_change::ChangeCollaborationOperation {
+        super::collaboration_change::Operation {
             id: plan.operation_id.clone(),
             actor: plan.actor.clone(),
             is_delegate: plan.is_delegate,
@@ -206,7 +202,7 @@ fn update_plan_hash<T: serde::Serialize>(
 }
 
 fn validate_snapshot_context(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     snapshot: &ChangeCollaborationUpdateSnapshot,
 ) -> Result<(), super::radicle_change::ChangeCobError> {
     let state_change =
@@ -264,7 +260,7 @@ fn validate_snapshot_context(
 }
 
 fn require_conflict_free_state(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
 ) -> Result<String, super::radicle_change::ChangeCobError> {
     let content_root = super::collaboration_change::change_collaboration_content_root(state)?;
     match super::collaboration_change::change_collaboration_lifecycle_view(state)? {
@@ -329,12 +325,9 @@ fn insert_present_artifact(
 }
 
 fn artifact_update_actions(
-    state: &super::collaboration_change::ChangeCollaborationState,
+    state: &super::collaboration_change::State,
     desired: std::collections::BTreeMap<super::radicle_change::ChangeArtifactId, String>,
-) -> Result<
-    Vec<super::collaboration_change::ChangeCollaborationAction>,
-    super::radicle_change::ChangeCobError,
-> {
+) -> Result<Vec<super::collaboration_change::Action>, super::radicle_change::ChangeCobError> {
     let artifact_ids = state
         .artifacts
         .keys()
@@ -362,13 +355,11 @@ fn artifact_update_actions(
         };
         let next = desired.get(&artifact).cloned();
         if current != next {
-            actions.push(
-                super::collaboration_change::ChangeCollaborationAction::SetArtifact {
-                    artifact,
-                    content: next,
-                    basis,
-                },
-            );
+            actions.push(super::collaboration_change::Action::SetArtifact {
+                artifact,
+                content: next,
+                basis,
+            });
         }
     }
     Ok(actions)
@@ -404,7 +395,7 @@ fn update_operation_id(
     input_state_hash: &str,
     actor: &str,
     is_delegate: bool,
-    actions: &[super::collaboration_change::ChangeCollaborationAction],
+    actions: &[super::collaboration_change::Action],
 ) -> Result<String, super::radicle_change::ChangeCobError> {
     let identity = UpdateOperationIdentity {
         domain: UPDATE_OPERATION_DOMAIN,
@@ -427,7 +418,7 @@ struct UpdateOperationIdentity<'a> {
     input_state_hash: &'a str,
     actor: &'a str,
     is_delegate: bool,
-    actions: &'a [super::collaboration_change::ChangeCollaborationAction],
+    actions: &'a [super::collaboration_change::Action],
 }
 
 #[cfg(test)]
@@ -443,7 +434,7 @@ mod tests {
     const EDIT_OPERATION: &str = "edit-operation";
     const CONCURRENT_OPERATION: &str = "concurrent-operation";
 
-    fn state() -> super::super::collaboration_change::ChangeCollaborationState {
+    fn state() -> super::super::collaboration_change::State {
         let init =
             crate::plan_change_collaboration_import(crate::ChangeCollaborationImportSnapshot {
                 change_id: CHANGE_ID.to_string(),
@@ -584,11 +575,11 @@ mod tests {
         ] {
             crate::apply_change_collaboration_operation(
                 &mut content_conflict,
-                super::super::collaboration_change::ChangeCollaborationOperation {
+                super::super::collaboration_change::Operation {
                     id: id.to_string(),
                     actor: CREATOR.to_string(),
                     is_delegate: false,
-                    actions: vec![super::super::collaboration_change::ChangeCollaborationAction::SetArtifact {
+                    actions: vec![super::super::collaboration_change::Action::SetArtifact {
                         artifact: super::super::radicle_change::ChangeArtifactId::proposal(),
                         content: Some(content.to_string()),
                         basis: std::collections::BTreeSet::from([root.clone()]),
@@ -614,11 +605,11 @@ mod tests {
         ] {
             crate::apply_change_collaboration_operation(
                 &mut lifecycle_conflict,
-                super::super::collaboration_change::ChangeCollaborationOperation {
+                super::super::collaboration_change::Operation {
                     id: id.to_string(),
                     actor: DELEGATE.to_string(),
                     is_delegate: true,
-                    actions: vec![super::super::collaboration_change::ChangeCollaborationAction::SetLifecycle {
+                    actions: vec![super::super::collaboration_change::Action::SetLifecycle {
                         status,
                         subject_root: subject_root.clone(),
                         evidence: std::collections::BTreeSet::new(),
