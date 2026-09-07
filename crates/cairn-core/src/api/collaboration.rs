@@ -12,10 +12,38 @@ pub use crate::verified::collaboration_checkout::{
     plan_change_collaboration_checkout, ChangeCollaborationCheckoutPlan,
     ChangeCollaborationLocalSnapshot,
 };
-pub use crate::verified::collaboration_import::{
-    change_collaboration_import_operation_id, initialize_change_collaboration_import,
-    plan_change_collaboration_import, ChangeCollaborationImportSnapshot,
-};
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration import initialize function."
+    )
+)]
+pub use crate::verified::collaboration_import::initialize as initialize_change_collaboration_import;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration import operation identity function."
+    )
+)]
+pub use crate::verified::collaboration_import::operation_id as change_collaboration_import_operation_id;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration import plan function."
+    )
+)]
+pub use crate::verified::collaboration_import::plan as plan_change_collaboration_import;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration import snapshot type."
+    )
+)]
+pub use crate::verified::collaboration_import::Snapshot as ChangeCollaborationImportSnapshot;
 #[cfg_attr(
     dylint_lib = "octet",
     allow(

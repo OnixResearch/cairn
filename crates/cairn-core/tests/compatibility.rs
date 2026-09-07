@@ -220,3 +220,29 @@ fn portable_collaboration_root_names_remain_callable() {
         cairn_core::PortableChangeCollaborationError,
     > = cairn_core::validate_portable_change_collaboration;
 }
+
+fn initialize_import(
+    init: cairn_core::ChangeCollaborationInit,
+) -> Result<cairn_core::ChangeCollaborationState, cairn_core::ChangeCollaborationError> {
+    cairn_core::initialize_change_collaboration_import(init, String::new())
+}
+
+#[test]
+fn collaboration_import_root_names_remain_callable() {
+    let _: fn(
+        cairn_core::ChangeCollaborationImportSnapshot,
+    )
+        -> Result<cairn_core::ChangeCollaborationInit, cairn_core::ChangeCollaborationError> =
+        cairn_core::plan_change_collaboration_import;
+    let _: fn(
+        cairn_core::ChangeCollaborationInit,
+    ) -> Result<
+        cairn_core::ChangeCollaborationState,
+        cairn_core::ChangeCollaborationError,
+    > = initialize_import;
+    let _: fn(
+        &cairn_core::ChangeCollaborationInit,
+        &str,
+    ) -> Result<String, cairn_core::ChangeCollaborationError> =
+        cairn_core::change_collaboration_import_operation_id;
+}
