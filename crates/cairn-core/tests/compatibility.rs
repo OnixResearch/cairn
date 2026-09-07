@@ -204,3 +204,19 @@ fn agent_guidance_root_preserves_serde_shapes_and_rejects_raw_portable_data() {
         r#"["present","missing_optional","missing_required","invalid"]"#
     );
 }
+
+#[test]
+fn portable_collaboration_root_names_remain_callable() {
+    let _: fn(
+        cairn_core::ChangeCollaborationState,
+    ) -> Result<
+        cairn_core::PortableChangeCollaboration,
+        cairn_core::PortableChangeCollaborationError,
+    > = cairn_core::build_portable_change_collaboration;
+    let _: fn(
+        &cairn_core::PortableChangeCollaboration,
+    ) -> Result<
+        cairn_core::ChangeCollaborationState,
+        cairn_core::PortableChangeCollaborationError,
+    > = cairn_core::validate_portable_change_collaboration;
+}

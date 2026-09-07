@@ -16,9 +16,39 @@ pub use crate::verified::collaboration_import::{
     change_collaboration_import_operation_id, initialize_change_collaboration_import,
     plan_change_collaboration_import, ChangeCollaborationImportSnapshot,
 };
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented portable collaboration build function."
+    )
+)]
+pub use crate::verified::collaboration_portable::build as build_portable_change_collaboration;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented portable collaboration validation function."
+    )
+)]
+pub use crate::verified::collaboration_portable::validate as validate_portable_change_collaboration;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented portable collaboration envelope type."
+    )
+)]
+pub use crate::verified::collaboration_portable::Envelope as PortableChangeCollaboration;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented portable collaboration error type."
+    )
+)]
+pub use crate::verified::collaboration_portable::Failure as PortableChangeCollaborationError;
 pub use crate::verified::collaboration_portable::{
-    build_portable_change_collaboration, validate_portable_change_collaboration,
-    PortableChangeCollaboration, PortableChangeCollaborationError,
     PORTABLE_COLLABORATION_BACKEND_V1, PORTABLE_COLLABORATION_SCHEMA_V1,
 };
 pub use crate::verified::collaboration_resolution::{

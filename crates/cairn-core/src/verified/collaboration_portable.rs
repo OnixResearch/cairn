@@ -4,7 +4,7 @@ pub const PORTABLE_COLLABORATION_BACKEND_V1: &str = "portable-json.v1";
 // r[impl cairn.collaboration_backend.portable_state]
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct PortableChangeCollaboration {
+pub struct Envelope {
     pub schema: String,
     pub backend: String,
     pub state: super::collaboration_change::ChangeCollaborationState,
@@ -14,7 +14,7 @@ pub struct PortableChangeCollaboration {
 }
 
 #[derive(Debug, thiserror::Error, Clone, PartialEq, Eq)]
-pub enum PortableChangeCollaborationError {
+pub enum Failure {
     #[error("unsupported portable collaboration schema: {schema}")]
     UnsupportedEnvelopeSchema { schema: String },
     #[error("unsupported portable collaboration backend: {backend}")]
@@ -38,15 +38,15 @@ pub enum PortableChangeCollaborationError {
     Serialization { reason: String },
 }
 
-pub fn build_portable_change_collaboration(
+pub fn build(
     state: super::collaboration_change::ChangeCollaborationState,
-) -> Result<PortableChangeCollaboration, PortableChangeCollaborationError> {
+) -> Result<Envelope, Failure> {
     require_neutral_state(&state)?;
     super::collaboration_change::validate_change_collaboration_state(&state)?;
     let content_root = derive_content_root(&state)?;
     let state_hash = super::collaboration_change::change_collaboration_state_hash(&state)?;
     let envelope_hash = hash_envelope(&state, &content_root, &state_hash)?;
-    Ok(PortableChangeCollaboration {
+    Ok(Envelope {
         schema: PORTABLE_COLLABORATION_SCHEMA_V1.to_string(),
         backend: PORTABLE_COLLABORATION_BACKEND_V1.to_string(),
         state,
@@ -56,19 +56,16 @@ pub fn build_portable_change_collaboration(
     })
 }
 
-pub fn validate_portable_change_collaboration(
-    envelope: &PortableChangeCollaboration,
-) -> Result<super::collaboration_change::ChangeCollaborationState, PortableChangeCollaborationError>
-{
+pub fn validate(
+    envelope: &Envelope,
+) -> Result<super::collaboration_change::ChangeCollaborationState, Failure> {
     if envelope.schema != PORTABLE_COLLABORATION_SCHEMA_V1 {
-        return Err(
-            PortableChangeCollaborationError::UnsupportedEnvelopeSchema {
-                schema: envelope.schema.clone(),
-            },
-        );
+        return Err(Failure::UnsupportedEnvelopeSchema {
+            schema: envelope.schema.clone(),
+        });
     }
     if envelope.backend != PORTABLE_COLLABORATION_BACKEND_V1 {
-        return Err(PortableChangeCollaborationError::UnsupportedBackend {
+        return Err(Failure::UnsupportedBackend {
             backend: envelope.backend.clone(),
         });
     }
@@ -76,14 +73,14 @@ pub fn validate_portable_change_collaboration(
     super::collaboration_change::validate_change_collaboration_state(&envelope.state)?;
     let content_root = derive_content_root(&envelope.state)?;
     if content_root != envelope.content_root {
-        return Err(PortableChangeCollaborationError::ContentRootMismatch {
+        return Err(Failure::ContentRootMismatch {
             stated: envelope.content_root.clone(),
             computed: content_root,
         });
     }
     let state_hash = super::collaboration_change::change_collaboration_state_hash(&envelope.state)?;
     if state_hash != envelope.state_hash {
-        return Err(PortableChangeCollaborationError::StateHashMismatch {
+        return Err(Failure::StateHashMismatch {
             stated: envelope.state_hash.clone(),
             computed: state_hash,
         });
@@ -94,7 +91,7 @@ pub fn validate_portable_change_collaboration(
         &envelope.state_hash,
     )?;
     if envelope_hash != envelope.envelope_hash {
-        return Err(PortableChangeCollaborationError::EnvelopeHashMismatch {
+        return Err(Failure::EnvelopeHashMismatch {
             stated: envelope.envelope_hash.clone(),
             computed: envelope_hash,
         });
@@ -104,21 +101,21 @@ pub fn validate_portable_change_collaboration(
 
 fn derive_content_root(
     state: &super::collaboration_change::ChangeCollaborationState,
-) -> Result<Option<String>, PortableChangeCollaborationError> {
+) -> Result<Option<String>, Failure> {
     match super::collaboration_change::change_collaboration_content_root(state) {
         Ok(content_root) => Ok(Some(content_root)),
         Err(super::radicle_change::ChangeCobError::ArtifactConflict { .. }) => Ok(None),
-        Err(error) => Err(PortableChangeCollaborationError::State(error)),
+        Err(error) => Err(Failure::State(error)),
     }
 }
 
 fn require_neutral_state(
     state: &super::collaboration_change::ChangeCollaborationState,
-) -> Result<(), PortableChangeCollaborationError> {
+) -> Result<(), Failure> {
     if state.schema == super::radicle_change::CHANGE_COLLABORATION_SCHEMA_V1 {
         return Ok(());
     }
-    Err(PortableChangeCollaborationError::NonNeutralStateSchema {
+    Err(Failure::NonNeutralStateSchema {
         schema: state.schema.clone(),
     })
 }
@@ -127,7 +124,7 @@ fn hash_envelope(
     state: &super::collaboration_change::ChangeCollaborationState,
     content_root: &Option<String>,
     state_hash: &str,
-) -> Result<String, PortableChangeCollaborationError> {
+) -> Result<String, Failure> {
     let identity = EnvelopeIdentity {
         schema: PORTABLE_COLLABORATION_SCHEMA_V1,
         backend: PORTABLE_COLLABORATION_BACKEND_V1,
@@ -135,10 +132,8 @@ fn hash_envelope(
         content_root,
         state_hash,
     };
-    let value = serde_json::to_value(identity).map_err(|error| {
-        PortableChangeCollaborationError::Serialization {
-            reason: error.to_string(),
-        }
+    let value = serde_json::to_value(identity).map_err(|error| Failure::Serialization {
+        reason: error.to_string(),
     })?;
     Ok(super::evidence::canonical_json_hash(&value))
 }
@@ -190,7 +185,7 @@ mod tests {
     #[test]
     fn round_trip_preserves_exact_state_and_hashes() {
         let state = state();
-        let envelope = build_portable_change_collaboration(state.clone()).unwrap();
+        let envelope = build(state.clone()).unwrap();
         let legacy_identity = serde_json::json!({
             "schema": PORTABLE_COLLABORATION_SCHEMA_V1,
             "backend": PORTABLE_COLLABORATION_BACKEND_V1,
@@ -203,11 +198,8 @@ mod tests {
             super::super::evidence::canonical_json_hash(&legacy_identity)
         );
         let bytes = serde_json::to_vec(&envelope).unwrap();
-        let decoded: PortableChangeCollaboration = serde_json::from_slice(&bytes).unwrap();
-        assert_eq!(
-            validate_portable_change_collaboration(&decoded).unwrap(),
-            state
-        );
+        let decoded: Envelope = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(validate(&decoded).unwrap(), state);
         assert_eq!(
             decoded.content_root,
             Some(
@@ -244,20 +236,17 @@ mod tests {
             )
             .unwrap();
         }
-        let envelope = build_portable_change_collaboration(state.clone()).unwrap();
+        let envelope = build(state.clone()).unwrap();
         assert!(envelope.content_root.is_none());
         let bytes = serde_json::to_vec(&envelope).unwrap();
-        let decoded: PortableChangeCollaboration = serde_json::from_slice(&bytes).unwrap();
-        assert_eq!(
-            validate_portable_change_collaboration(&decoded).unwrap(),
-            state
-        );
+        let decoded: Envelope = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(validate(&decoded).unwrap(), state);
     }
 
     // r[verify cairn.collaboration_backend.portable_state.tamper]
     #[test]
     fn validation_rejects_labels_hashes_and_state_tampering() {
-        let envelope = build_portable_change_collaboration(state()).unwrap();
+        let envelope = build(state()).unwrap();
         let mut cases = Vec::new();
 
         let mut schema = envelope.clone();
@@ -289,10 +278,10 @@ mod tests {
         cases.push(state_value);
 
         for case in cases {
-            assert!(validate_portable_change_collaboration(&case).is_err());
+            assert!(validate(&case).is_err());
         }
 
-        let mut recomputed = build_portable_change_collaboration(state()).unwrap();
+        let mut recomputed = build(state()).unwrap();
         recomputed.state.operations.clear();
         recomputed.content_root = Some(
             super::super::collaboration_change::change_collaboration_content_root(
@@ -309,9 +298,6 @@ mod tests {
             &recomputed.state_hash,
         )
         .unwrap();
-        assert!(matches!(
-            validate_portable_change_collaboration(&recomputed),
-            Err(PortableChangeCollaborationError::State(_))
-        ));
+        assert!(matches!(validate(&recomputed), Err(Failure::State(_))));
     }
 }
