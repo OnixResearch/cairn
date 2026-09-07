@@ -1,6 +1,6 @@
 # Round-three worker evidence
 
-Status: verification incomplete. This report records this worker's commands, not commands from other concurrent sessions.
+Status: all required check commands passed on the final observed source, including the repeat flake check. Verification remains open for coordinator reconciliation of concurrent accepted-spec changes. This report records this worker's commands, not commands from other concurrent sessions.
 
 ## Source and concurrency
 
@@ -88,7 +88,9 @@ Logs are under `/home/brittonr/git/OnixResearch/cairn/.pi/cairn-rest-1295/` with
 | 1528 | Stage restored condition and commit | Exit 0, `59aeaf9` |
 | 1510 | Full frozen-command battery, `battery-exits.log` | All eight commands exited 0; archive preview remains blocked |
 | 1549 | Independent live fmt/policy/validate/traceability and previews, `live-exits.log` | All six commands exited 0 |
-| 1561 | Repeat flake on the changed live tree, `flake-live.log` | Running when this section was written |
+| 1561 | Repeat flake on the changed live tree, `flake-live.log` | Exit 0, all 26 flake checks passed |
+| 1595 | Compile isolated consumer capture driver, `capture.log` | Exit 1, mismatched serde_json build artifact |
+| 1596 | Compile with matching serde_json artifact and capture replay, `capture-2.log` | Exit 0, exact comparison and CLI/MCP reports retained |
 | 1565 | `git apply --check` for the retained mutant, diff check, status | Exit 0; patch applies to restored source |
 
 Task 1497 ran these checks in order:
@@ -159,5 +161,5 @@ Another session cleared finished Pueue history during this run. The durable log 
 2. Preserve the restored uncertainty condition from `59aeaf9`. Do not use `6d4ceca` alone.
 3. Retain the declared-link fallback limit. Positive Valence span admission needs a reviewed compatible published contract and an authorized immutable revision.
 4. Inspect all per-command battery exits and dry-run receipts. Rerun the complete battery on one frozen final tree after the coordinator resolves the accepted-spec changes.
-5. Retain exact JSON comparison inputs and reports for the final consumer replay. The integration tests regenerate those values but remove their temporary files. Their source and assertion logs are retained, not frozen JSON comparison artifacts.
-6. Keep verification open until every required check passes. Only the coordinator can execute sync, archive, or push.
+5. The final capture now retains `guide3-2746-consumer-input.json`, `guide3-2746-consumer-cli.json`, and `guide3-2746-consumer-mcp.json` in this evidence directory. An isolated Rust driver included the existing integration-test helpers and linked the already-tested core. It reproduced complete CLI/MCP equality, the two required checks, stale prior evidence, and no execution. The first compile selected an incompatible cached serde_json artifact; task 1596 used the matching artifact and passed. No production or test source changed for capture.
+6. All required check commands now pass, including the repeat flake check. Keep the distinction between this observed tree and the earlier failing snapshot. Verification remains open for the coordinator to reconcile the untracked accepted-spec directory and its ownership before final closure. Only the coordinator can execute sync, archive, or push.

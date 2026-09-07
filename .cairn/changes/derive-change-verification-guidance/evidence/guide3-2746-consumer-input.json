@@ -1,0 +1,315 @@
+{
+  "after_manifest": {
+    "identity": "4c89ff2430c7b65bd02e3ceb129ab884a9b79d6b50134773832b80cf6f60c735",
+    "members": [
+      {
+        "content_blake3": "cec241b8ee68dfa64d4ef15d316002c9531bfef43fff850b65b050069cc725f6",
+        "generated": false,
+        "path": "crates/cairn-cli/src/verification_impact.rs"
+      }
+    ],
+    "scope": {
+      "features": [
+        "default"
+      ],
+      "repository_id": "onixresearch/cairn",
+      "target": "x86_64-linux"
+    }
+  },
+  "after_trace_index": {
+    "boundary": "content-bound trace index validation proves canonical identity, current-input freshness, and declared marker linkage only; it does not prove requirement satisfaction, implementation correctness, test adequacy, proof soundness, release eligibility, lifecycle readiness, or behavioral correctness",
+    "index_blake3": "a27152d3287aae0661f6aceb8bca9499c753f4cababbeab5468538cdb5316379",
+    "links": [
+      {
+        "link_blake3": "32cb4f5d5d1fe11339cc01b09ecc8e1d081aff0971572a957f6de1fe15dda39e",
+        "marker_blake3": "cf32489d2982e854fc9c4ea56465c76a21bc81eb50dfdc48235ac2b02211c4b2",
+        "marker_span": {
+          "end_byte": 2809,
+          "end_line": 67,
+          "start_byte": 2765,
+          "start_line": 67
+        },
+        "requirement_id": "cairn.verification_impact.interfaces",
+        "requirement_row_blake3": "e5d25543c886aa815f50e6427e8db9ef4307b2c977d16f576937bac3f1ccd779",
+        "role": "impl",
+        "source_file_blake3": "cec241b8ee68dfa64d4ef15d316002c9531bfef43fff850b65b050069cc725f6",
+        "source_path": "crates/cairn-cli/src/verification_impact.rs"
+      },
+      {
+        "link_blake3": "31262520ec4e5050fc0569bc525238c621e67202a70f990e1d9df2e03adbe95b",
+        "marker_blake3": "b9843f3b922bf361d7e7bf0f65b61f68d577173c41f73f9aca91681a5b1c67ce",
+        "marker_span": {
+          "end_byte": 6825,
+          "end_line": 174,
+          "start_byte": 6779,
+          "start_line": 174
+        },
+        "requirement_id": "cairn.verification_impact.interfaces",
+        "requirement_row_blake3": "e5d25543c886aa815f50e6427e8db9ef4307b2c977d16f576937bac3f1ccd779",
+        "role": "verify",
+        "source_file_blake3": "cec241b8ee68dfa64d4ef15d316002c9531bfef43fff850b65b050069cc725f6",
+        "source_path": "crates/cairn-cli/src/verification_impact.rs"
+      }
+    ],
+    "non_claims": [
+      "not requirement satisfaction",
+      "not implementation correctness",
+      "not test adequacy",
+      "not proof soundness",
+      "not release eligibility"
+    ],
+    "policy_blake3": "a5ec756e3a5f20b8c083d0feb9df877bf0c5dd2f74d3b58ea592cc40b04d9040",
+    "profile": {
+      "anchor_kind": "exact_marker_bytes",
+      "assurance_level": "declared",
+      "evidence_sources": [
+        {
+          "extensions": [
+            "rs"
+          ],
+          "root": "crates",
+          "source_kind": "rust_source"
+        }
+      ],
+      "id": "guidance-controls",
+      "marker_verbs": [
+        "impl",
+        "verify"
+      ],
+      "requirement_sources": [
+        {
+          "extensions": [
+            "md"
+          ],
+          "root": ".cairn/specs",
+          "source_kind": "accepted_specs"
+        }
+      ]
+    },
+    "profile_blake3": "b3efa60e1522ca5cce1ce864a93188b59b7587f34f7af4e2bc77455ddda7ce4b",
+    "requirement_registry_blake3": "62e5f0b15f2360350254c0d4773101ad36ec06ca826992a29e6635277242f97b",
+    "requirements": [
+      {
+        "requirement_body_blake3": "f7f6b62f1f202f9915a3986c709d3ae13a2c6f45472dbc045017a12f13f02c69",
+        "requirement_id": "cairn.verification.demo",
+        "row_blake3": "1d563fe1bc2e73bac9b5082e937487f8b051f10747c6f31f0c9af41ac1fe6fa5",
+        "source_span": {
+          "end_byte": 115,
+          "end_line": 6,
+          "start_byte": 47,
+          "start_line": 6
+        },
+        "specification_blake3": "32ce5184b99ee25239af0184d86611e39907ec10336a1110fbb26e08b0733bb9",
+        "specification_path": ".cairn/specs/demo/spec.md"
+      },
+      {
+        "requirement_body_blake3": "7986fe1b217815b1c3ad82004d7059ee6c661d3fdc2e9f36e80f03d26c3b11d9",
+        "requirement_id": "cairn.verification_impact.interfaces",
+        "row_blake3": "e5d25543c886aa815f50e6427e8db9ef4307b2c977d16f576937bac3f1ccd779",
+        "source_span": {
+          "end_byte": 139,
+          "end_line": 6,
+          "start_byte": 57,
+          "start_line": 6
+        },
+        "specification_blake3": "3c363aa8f8caf5a101d981017133690c2ab9f2cd02832b14ff31f4a70ea80852",
+        "specification_path": ".cairn/specs/change-verification-guidance/spec.md"
+      }
+    ],
+    "schema_version": "cairn.content-bound-trace-index.v1",
+    "sources": [
+      {
+        "content_blake3": "cec241b8ee68dfa64d4ef15d316002c9531bfef43fff850b65b050069cc725f6",
+        "path": "crates/cairn-cli/src/verification_impact.rs"
+      }
+    ]
+  },
+  "asserted_changed_paths": [
+    "crates/cairn-cli/src/verification_impact.rs"
+  ],
+  "before_manifest": {
+    "identity": "41c6d6095ca9e73bba1d7a32280975ae5ba9ad4ee290d8351e57e5420dbe47a6",
+    "members": [
+      {
+        "content_blake3": "e58ef9d3b70165c55ed9fb8e7e6eac2f7164906234c3a54c4daa58e34b2bcf3a",
+        "generated": false,
+        "path": "crates/cairn-cli/src/verification_impact.rs"
+      }
+    ],
+    "scope": {
+      "features": [
+        "default"
+      ],
+      "repository_id": "onixresearch/cairn",
+      "target": "x86_64-linux"
+    }
+  },
+  "before_trace_index": {
+    "boundary": "content-bound trace index validation proves canonical identity, current-input freshness, and declared marker linkage only; it does not prove requirement satisfaction, implementation correctness, test adequacy, proof soundness, release eligibility, lifecycle readiness, or behavioral correctness",
+    "index_blake3": "2e42ae77e73a741ccbb59265ffcc8ff50908982d3be9c6df21c2284741cd7bef",
+    "links": [
+      {
+        "link_blake3": "7e8e9f5e84ca9b775b4e6b501fd9b7812e052b34c4ee6182461fcd4327a905c4",
+        "marker_blake3": "cf32489d2982e854fc9c4ea56465c76a21bc81eb50dfdc48235ac2b02211c4b2",
+        "marker_span": {
+          "end_byte": 2809,
+          "end_line": 67,
+          "start_byte": 2765,
+          "start_line": 67
+        },
+        "requirement_id": "cairn.verification_impact.interfaces",
+        "requirement_row_blake3": "e5d25543c886aa815f50e6427e8db9ef4307b2c977d16f576937bac3f1ccd779",
+        "role": "impl",
+        "source_file_blake3": "e58ef9d3b70165c55ed9fb8e7e6eac2f7164906234c3a54c4daa58e34b2bcf3a",
+        "source_path": "crates/cairn-cli/src/verification_impact.rs"
+      },
+      {
+        "link_blake3": "2cbc0641e04a264b70177834c69c77df8b18b9468e39504474c277cb588744da",
+        "marker_blake3": "b9843f3b922bf361d7e7bf0f65b61f68d577173c41f73f9aca91681a5b1c67ce",
+        "marker_span": {
+          "end_byte": 6825,
+          "end_line": 174,
+          "start_byte": 6779,
+          "start_line": 174
+        },
+        "requirement_id": "cairn.verification_impact.interfaces",
+        "requirement_row_blake3": "e5d25543c886aa815f50e6427e8db9ef4307b2c977d16f576937bac3f1ccd779",
+        "role": "verify",
+        "source_file_blake3": "e58ef9d3b70165c55ed9fb8e7e6eac2f7164906234c3a54c4daa58e34b2bcf3a",
+        "source_path": "crates/cairn-cli/src/verification_impact.rs"
+      }
+    ],
+    "non_claims": [
+      "not requirement satisfaction",
+      "not implementation correctness",
+      "not test adequacy",
+      "not proof soundness",
+      "not release eligibility"
+    ],
+    "policy_blake3": "a5ec756e3a5f20b8c083d0feb9df877bf0c5dd2f74d3b58ea592cc40b04d9040",
+    "profile": {
+      "anchor_kind": "exact_marker_bytes",
+      "assurance_level": "declared",
+      "evidence_sources": [
+        {
+          "extensions": [
+            "rs"
+          ],
+          "root": "crates",
+          "source_kind": "rust_source"
+        }
+      ],
+      "id": "guidance-controls",
+      "marker_verbs": [
+        "impl",
+        "verify"
+      ],
+      "requirement_sources": [
+        {
+          "extensions": [
+            "md"
+          ],
+          "root": ".cairn/specs",
+          "source_kind": "accepted_specs"
+        }
+      ]
+    },
+    "profile_blake3": "b3efa60e1522ca5cce1ce864a93188b59b7587f34f7af4e2bc77455ddda7ce4b",
+    "requirement_registry_blake3": "62e5f0b15f2360350254c0d4773101ad36ec06ca826992a29e6635277242f97b",
+    "requirements": [
+      {
+        "requirement_body_blake3": "f7f6b62f1f202f9915a3986c709d3ae13a2c6f45472dbc045017a12f13f02c69",
+        "requirement_id": "cairn.verification.demo",
+        "row_blake3": "1d563fe1bc2e73bac9b5082e937487f8b051f10747c6f31f0c9af41ac1fe6fa5",
+        "source_span": {
+          "end_byte": 115,
+          "end_line": 6,
+          "start_byte": 47,
+          "start_line": 6
+        },
+        "specification_blake3": "32ce5184b99ee25239af0184d86611e39907ec10336a1110fbb26e08b0733bb9",
+        "specification_path": ".cairn/specs/demo/spec.md"
+      },
+      {
+        "requirement_body_blake3": "7986fe1b217815b1c3ad82004d7059ee6c661d3fdc2e9f36e80f03d26c3b11d9",
+        "requirement_id": "cairn.verification_impact.interfaces",
+        "row_blake3": "e5d25543c886aa815f50e6427e8db9ef4307b2c977d16f576937bac3f1ccd779",
+        "source_span": {
+          "end_byte": 139,
+          "end_line": 6,
+          "start_byte": 57,
+          "start_line": 6
+        },
+        "specification_blake3": "3c363aa8f8caf5a101d981017133690c2ab9f2cd02832b14ff31f4a70ea80852",
+        "specification_path": ".cairn/specs/change-verification-guidance/spec.md"
+      }
+    ],
+    "schema_version": "cairn.content-bound-trace-index.v1",
+    "sources": [
+      {
+        "content_blake3": "e58ef9d3b70165c55ed9fb8e7e6eac2f7164906234c3a54c4daa58e34b2bcf3a",
+        "path": "crates/cairn-cli/src/verification_impact.rs"
+      }
+    ]
+  },
+  "check_map": {
+    "checks": [
+      {
+        "check_id": "focused",
+        "features": [
+          "default"
+        ],
+        "mandatory": false,
+        "target": "x86_64-linux"
+      },
+      {
+        "check_id": "policy-fresh",
+        "features": [
+          "default"
+        ],
+        "mandatory": true,
+        "target": "x86_64-linux"
+      },
+      {
+        "check_id": "workspace-tests",
+        "features": [
+          "default"
+        ],
+        "mandatory": false,
+        "target": "x86_64-linux"
+      }
+    ],
+    "coverage_complete": true,
+    "default_check_ids": [
+      "workspace-tests"
+    ],
+    "dependency_edges": [],
+    "dependency_hashes": [],
+    "generated_source_paths": [],
+    "incomplete_source_paths": [],
+    "macro_opaque_paths": [],
+    "map_id": "cairn-local",
+    "requirement_checks": [
+      {
+        "check_id": "focused",
+        "requirement_id": "cairn.verification.demo"
+      }
+    ],
+    "schema_version": "cairn.verification-check-map.v1"
+  },
+  "prior_evidence": [
+    {
+      "applicability": {
+        "dependency_hashes": [],
+        "policy_hash": "97143d3c095b24d3105d19838860b745282e8bd6a457da8ca857a06b9278ac0f",
+        "source_projection_hash": "bb78122a643c3e61cb9198023198d295602ffa39592ed2fbbeffc25fd8b186e5",
+        "subject_hash": "41c6d6095ca9e73bba1d7a32280975ae5ba9ad4ee290d8351e57e5420dbe47a6"
+      },
+      "check_ids": [
+        "workspace-tests"
+      ],
+      "evidence_id": "before"
+    }
+  ],
+  "schema_version": "cairn.verification-impact.v1"
+}
