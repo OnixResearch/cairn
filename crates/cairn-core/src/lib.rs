@@ -632,12 +632,13 @@ pub use verified::validation::{
 };
 pub use verified::verification_impact::{
     derive_verification_impact, VerificationCheckDefinition, VerificationCheckMap,
-    VerificationImpactCausalPath, VerificationImpactInput, VerificationImpactIssue,
-    VerificationImpactReport, VerificationImpactScope, VerificationImpactUncertainty,
-    VerificationRequirementCheck, VerificationRequirementEdge, VerificationSourceChange,
-    VerificationSourceChangeKind, VerificationSourceManifest, VerificationSourceMember,
-    MAX_IMPACT_CHANGED_PATHS, MAX_IMPACT_CHECKS, MAX_IMPACT_EDGES, MAX_IMPACT_FEATURES,
-    MAX_IMPACT_PATH_BYTES, MAX_IMPACT_REQUIREMENT_BINDINGS, MAX_IMPACT_SOURCE_MEMBERS,
+    VerificationEvidenceRefresh, VerificationImpactCausalPath, VerificationImpactInput,
+    VerificationImpactIssue, VerificationImpactReport, VerificationImpactScope,
+    VerificationImpactUncertainty, VerificationPriorEvidence, VerificationRequirementCheck,
+    VerificationRequirementEdge, VerificationSourceChange, VerificationSourceChangeKind,
+    VerificationSourceManifest, VerificationSourceMember, MAX_IMPACT_CHANGED_PATHS,
+    MAX_IMPACT_CHECKS, MAX_IMPACT_EDGES, MAX_IMPACT_FEATURES, MAX_IMPACT_PATH_BYTES,
+    MAX_IMPACT_PRIOR_EVIDENCE, MAX_IMPACT_REQUIREMENT_BINDINGS, MAX_IMPACT_SOURCE_MEMBERS,
     MAX_IMPACT_TEXT_BYTES, VERIFICATION_CHECK_MAP_SCHEMA_V1, VERIFICATION_IMPACT_BOUNDARY,
     VERIFICATION_IMPACT_SCHEMA_V1,
 };

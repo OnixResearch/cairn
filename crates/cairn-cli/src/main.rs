@@ -57,6 +57,7 @@ mod test_harness;
 mod toolchain_profile_matrix;
 mod trace_index;
 mod tracey;
+mod verification_impact;
 mod view;
 mod vo;
 mod workflow;
@@ -99,6 +100,7 @@ use state_machine_receipt::run_state_machine_receipt;
 use support::{print_usage, read_option, reject_legacy_only_lifecycle_root, usage_text};
 use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
+use verification_impact::run_verification_impact;
 use view::run_view;
 use vo::run_vo;
 use workflow::run_workflow;
@@ -157,6 +159,7 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "lifecycle"
             | "traceability"
             | "tracey"
+            | "verification-impact"
             | "gate"
             | "gate-context"
             | "sync"
@@ -257,6 +260,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "state-machine-receipt" => run_state_machine_receipt(args.collect())?,
         "traceability" => run_traceability(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
+        "verification-impact" => run_verification_impact(args.collect())?,
         "review" => run_review(args.collect())?,
         "steel-orchestration" => steel_orchestration::run_steel_orchestration(args.collect())?,
         "test-harness" => test_harness::run_test_harness(args.collect())?,

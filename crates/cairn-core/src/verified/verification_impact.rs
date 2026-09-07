@@ -3,6 +3,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use crate::verified::check_evidence::{
+    valid_applicability, whole_subject_evidence_current, Applicability, MAX_CHECKS,
+};
 use crate::verified::{
     content_bound_trace_index::{
         validate_content_bound_trace_index, ContentBoundTraceIndex, ContentBoundTraceLink,
@@ -21,6 +24,7 @@ pub const MAX_IMPACT_EDGES: usize = 4_096;
 pub const MAX_IMPACT_FEATURES: usize = 64;
 pub const MAX_IMPACT_PATH_BYTES: usize = 4_096;
 pub const MAX_IMPACT_TEXT_BYTES: usize = 512;
+pub const MAX_IMPACT_PRIOR_EVIDENCE: usize = 128;
 
 const HEX_DIGEST_LENGTH: usize = 64;
 const ISSUE_BOUNDS: &str = "verification_impact.bounds";
@@ -35,6 +39,12 @@ const ISSUE_SOURCE_STALE: &str = "verification_impact.source_stale";
 const ISSUE_TRACE_INDEX: &str = "verification_impact.trace_index";
 const ISSUE_UNKNOWN_CHECK: &str = "verification_impact.unknown_check";
 const ISSUE_UNKNOWN_REQUIREMENT: &str = "verification_impact.unknown_requirement";
+const ISSUE_PRIOR_EVIDENCE: &str = "verification_impact.prior_evidence";
+
+const STALE_REASON_DEPENDENCIES: &str = "dependency_drift";
+const STALE_REASON_POLICY: &str = "policy_changed";
+const STALE_REASON_PROJECTION: &str = "projection_changed";
+const STALE_REASON_SUBJECT: &str = "subject_changed";
 
 const UNCERTAINTY_GENERATED_SOURCE: &str = "generated_source";
 const UNCERTAINTY_INCOMPLETE_COVERAGE: &str = "incomplete_coverage";
@@ -108,6 +118,9 @@ pub struct VerificationCheckMap {
     pub checks: Vec<VerificationCheckDefinition>,
     pub requirement_checks: Vec<VerificationRequirementCheck>,
     pub dependency_edges: Vec<VerificationRequirementEdge>,
+    /// Declared build-dependency identities for applicability evaluation.
+    /// Sorted unique BLAKE3 digests; bounded like the producer applicability.
+    pub dependency_hashes: Vec<String>,
     pub macro_opaque_paths: Vec<String>,
     pub generated_source_paths: Vec<String>,
     pub incomplete_source_paths: Vec<String>,
@@ -123,6 +136,30 @@ pub struct VerificationImpactInput {
     pub before_trace_index: ContentBoundTraceIndex,
     pub after_trace_index: ContentBoundTraceIndex,
     pub check_map: VerificationCheckMap,
+    /// Prior whole-subject completion receipts re-evaluated against the
+    /// current state. Records carry the producer applicability they were
+    /// admitted under; freshness never depends on marker links.
+    pub prior_evidence: Vec<VerificationPriorEvidence>,
+}
+
+/// A prior whole-subject completion receipt bound to the applicability it was
+/// admitted under and the declared checks it covered.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct VerificationPriorEvidence {
+    pub evidence_id: String,
+    pub check_ids: Vec<String>,
+    pub applicability: Applicability,
+}
+
+/// Applicability verdict for one prior receipt under the current state.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct VerificationEvidenceRefresh {
+    pub evidence_id: String,
+    pub check_ids: Vec<String>,
+    pub current: bool,
+    pub stale_reasons: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -184,6 +221,8 @@ pub struct VerificationImpactReport {
     pub full_required_checks: Vec<String>,
     pub causal_paths: Vec<VerificationImpactCausalPath>,
     pub uncertainty: Vec<VerificationImpactUncertainty>,
+    pub evidence_refresh: Vec<VerificationEvidenceRefresh>,
+    pub current_applicability: Option<Applicability>,
     pub blockers: Vec<VerificationImpactIssue>,
     pub non_claims: Vec<String>,
     pub semantic_hash: String,
@@ -226,6 +265,8 @@ pub fn derive_verification_impact(input: &VerificationImpactInput) -> Verificati
             full_required_checks,
             causal_paths: Vec::new(),
             uncertainty: Vec::new(),
+            evidence_refresh: Vec::new(),
+            current_applicability: None,
             blockers,
             non_claims: NON_CLAIMS
                 .iter()
@@ -305,6 +346,8 @@ pub fn derive_verification_impact(input: &VerificationImpactInput) -> Verificati
     }
     sort_uncertainty(&mut uncertainty);
     sort_causal_paths(&mut causal_paths);
+    let current_applicability = derive_current_applicability(input);
+    let evidence_refresh = derive_evidence_refresh(input, &current_applicability);
     finalize_report(VerificationImpactReport {
         schema_version: VERIFICATION_IMPACT_SCHEMA_V1.to_string(),
         valid: true,
@@ -318,6 +361,8 @@ pub fn derive_verification_impact(input: &VerificationImpactInput) -> Verificati
         full_required_checks,
         causal_paths,
         uncertainty,
+        evidence_refresh,
+        current_applicability: Some(current_applicability),
         blockers,
         non_claims: NON_CLAIMS
             .iter()
@@ -339,6 +384,7 @@ fn validate_input(input: &VerificationImpactInput) -> Vec<VerificationImpactIssu
     validate_manifest(&input.before_manifest, "before_manifest", &mut issues);
     validate_manifest(&input.after_manifest, "after_manifest", &mut issues);
     validate_check_map(&input.check_map, &mut issues);
+    validate_prior_evidence(input, &mut issues);
     validate_trace_index(
         &input.before_trace_index,
         &input.before_manifest,
@@ -524,6 +570,20 @@ fn validate_check_map(map: &VerificationCheckMap, issues: &mut Vec<VerificationI
         }
     }
     validate_path_lists(map, issues);
+    if map.dependency_hashes.len() > MAX_CHECKS {
+        issues.push(issue(
+            ISSUE_BOUNDS,
+            "check_map.dependency_hashes",
+            "declared dependency identities exceed the shared applicability bound",
+        ));
+    }
+    if !canonical(&map.dependency_hashes) || map.dependency_hashes.iter().any(|h| !digest(h)) {
+        issues.push(issue(
+            ISSUE_CHECK_MAP,
+            "check_map.dependency_hashes",
+            "declared dependency identities must be sorted, unique BLAKE3 digests",
+        ));
+    }
     if dependency_cycle(map) {
         issues.push(issue(
             ISSUE_GRAPH_CYCLE,
@@ -589,6 +649,163 @@ fn validate_trace_index(
             "trace-index sources must match the admitted source manifest exactly",
         ));
     }
+}
+
+fn validate_prior_evidence(
+    input: &VerificationImpactInput,
+    issues: &mut Vec<VerificationImpactIssue>,
+) {
+    if input.prior_evidence.len() > MAX_IMPACT_PRIOR_EVIDENCE {
+        issues.push(issue(
+            ISSUE_BOUNDS,
+            "prior_evidence",
+            "prior evidence record count exceeds the named verification-impact bound",
+        ));
+    }
+    let declared_checks = input
+        .check_map
+        .checks
+        .iter()
+        .map(|check| check.check_id.clone())
+        .collect::<BTreeSet<_>>();
+    let mut seen_evidence = BTreeSet::new();
+    for (index, record) in input.prior_evidence.iter().enumerate() {
+        let field = format!("prior_evidence[{index}]");
+        if !label(&record.evidence_id) {
+            issues.push(issue(
+                ISSUE_PRIOR_EVIDENCE,
+                &format!("{field}.evidence_id"),
+                "prior evidence identity must use the verification-impact label grammar",
+            ));
+        }
+        if !seen_evidence.insert(record.evidence_id.clone()) {
+            issues.push(issue(
+                ISSUE_DUPLICATE,
+                &format!("{field}.evidence_id"),
+                "prior evidence identities must be unique",
+            ));
+        }
+        if record.check_ids.is_empty()
+            || !canonical(&record.check_ids)
+            || record
+                .check_ids
+                .iter()
+                .any(|check_id| !declared_checks.contains(check_id))
+        {
+            issues.push(issue(
+                ISSUE_PRIOR_EVIDENCE,
+                &format!("{field}.check_ids"),
+                "prior evidence must cover declared checks in sorted unique order",
+            ));
+        }
+        if !valid_applicability(&record.applicability) {
+            issues.push(issue(
+                ISSUE_PRIOR_EVIDENCE,
+                &format!("{field}.applicability"),
+                "prior evidence applicability failed the shared applicability validator",
+            ));
+        }
+    }
+}
+
+fn derive_current_applicability(input: &VerificationImpactInput) -> Applicability {
+    // The repository-owned check map is the declared policy. Its identity is
+    // derived from sorted canonical content so input ordering cannot drift it.
+    let checks = input
+        .check_map
+        .checks
+        .iter()
+        .map(|check| check.check_id.as_str())
+        .collect::<BTreeSet<_>>();
+    let bindings = input
+        .check_map
+        .requirement_checks
+        .iter()
+        .map(|binding| (binding.requirement_id.as_str(), binding.check_id.as_str()))
+        .collect::<BTreeSet<_>>();
+    let edges = input
+        .check_map
+        .dependency_edges
+        .iter()
+        .map(|edge| {
+            (
+                edge.from_requirement_id.as_str(),
+                edge.to_requirement_id.as_str(),
+            )
+        })
+        .collect::<BTreeSet<_>>();
+    let defaults = input
+        .check_map
+        .default_check_ids
+        .iter()
+        .map(String::as_str)
+        .collect::<BTreeSet<_>>();
+    Applicability {
+        subject_hash: input.after_manifest.identity.clone(),
+        policy_hash: canonical_json_hash(&json!({
+            "schema": input.check_map.schema_version,
+            "map_id": input.check_map.map_id,
+            "coverage_complete": input.check_map.coverage_complete,
+            "default_check_ids": defaults,
+            "checks": checks,
+            "requirement_checks": bindings,
+            "dependency_edges": edges,
+        })),
+        dependency_hashes: input.check_map.dependency_hashes.clone(),
+        source_projection_hash: projection_hash(&input.after_manifest),
+    }
+}
+
+fn projection_hash(manifest: &VerificationSourceManifest) -> String {
+    let paths = manifest
+        .members
+        .iter()
+        .map(|member| member.path.as_str())
+        .collect::<BTreeSet<_>>();
+    canonical_json_hash(&json!(paths))
+}
+
+fn derive_evidence_refresh(
+    input: &VerificationImpactInput,
+    current: &Applicability,
+) -> Vec<VerificationEvidenceRefresh> {
+    let mut refresh = input
+        .prior_evidence
+        .iter()
+        .map(|record| {
+            // Freshness comes from the shared whole-subject validator, never
+            // from marker links: an unlinked source change still changes the
+            // subject and keeps old whole-subject receipts stale.
+            let current_evidence = whole_subject_evidence_current(&record.applicability, current);
+            let mut stale_reasons = Vec::new();
+            if record.applicability.subject_hash != current.subject_hash {
+                stale_reasons.push(STALE_REASON_SUBJECT.to_string());
+            }
+            if record.applicability.policy_hash != current.policy_hash {
+                stale_reasons.push(STALE_REASON_POLICY.to_string());
+            }
+            if record.applicability.dependency_hashes != current.dependency_hashes {
+                stale_reasons.push(STALE_REASON_DEPENDENCIES.to_string());
+            }
+            if record.applicability.source_projection_hash != current.source_projection_hash {
+                stale_reasons.push(STALE_REASON_PROJECTION.to_string());
+            }
+            stale_reasons.sort();
+            VerificationEvidenceRefresh {
+                evidence_id: record.evidence_id.clone(),
+                check_ids: record.check_ids.clone(),
+                current: current_evidence,
+                stale_reasons,
+            }
+        })
+        .collect::<Vec<_>>();
+    refresh.sort_by(|left, right| {
+        right
+            .current
+            .cmp(&left.current)
+            .then(left.evidence_id.cmp(&right.evidence_id))
+    });
+    refresh
 }
 
 fn derive_source_delta(
@@ -1127,6 +1344,7 @@ mod tests {
                 },
             ],
             dependency_edges: Vec::new(),
+            dependency_hashes: Vec::new(),
             macro_opaque_paths: Vec::new(),
             generated_source_paths: Vec::new(),
             incomplete_source_paths: Vec::new(),
@@ -1158,6 +1376,7 @@ mod tests {
             before_trace_index,
             after_trace_index,
             check_map: check_map(),
+            prior_evidence: Vec::new(),
         }
     }
 
@@ -1203,6 +1422,7 @@ mod tests {
             before_trace_index,
             after_trace_index,
             check_map: check_map(),
+            prior_evidence: Vec::new(),
         };
         let report = derive_verification_impact(&input);
         assert!(report.valid, "blockers: {:?}", report.blockers);
@@ -1226,6 +1446,7 @@ mod tests {
             before_trace_index,
             after_trace_index,
             check_map: check_map(),
+            prior_evidence: Vec::new(),
         };
         let report = derive_verification_impact(&input);
         assert!(report.valid, "blockers: {:?}", report.blockers);
@@ -1253,6 +1474,7 @@ mod tests {
             before_trace_index,
             after_trace_index,
             check_map: check_map(),
+            prior_evidence: Vec::new(),
         };
         let report = derive_verification_impact(&input);
         assert!(report.valid, "blockers: {:?}", report.blockers);
@@ -1302,6 +1524,7 @@ mod tests {
             before_trace_index,
             after_trace_index,
             check_map: check_map(),
+            prior_evidence: Vec::new(),
         };
         let report = derive_verification_impact(&input);
         assert!(report.valid, "blockers: {:?}", report.blockers);
@@ -1403,5 +1626,191 @@ mod tests {
         assert_eq!(first_report.selected_checks, second_report.selected_checks);
         assert_eq!(first_report.causal_paths, second_report.causal_paths);
         assert_eq!(first_report.uncertainty, second_report.uncertainty);
+    }
+
+    fn prior_record(
+        evidence_id: &str,
+        check_ids: &[&str],
+        applicability: Applicability,
+    ) -> VerificationPriorEvidence {
+        let mut check_ids = check_ids
+            .iter()
+            .map(|id| (*id).to_string())
+            .collect::<Vec<_>>();
+        check_ids.sort();
+        VerificationPriorEvidence {
+            evidence_id: evidence_id.to_string(),
+            check_ids,
+            applicability,
+        }
+    }
+
+    #[test]
+    fn current_whole_subject_evidence_reports_applicable() {
+        // r[verify cairn.verification_impact.applicability]
+        let probe = derive_verification_impact(&base_input());
+        assert!(probe.valid, "blockers: {:?}", probe.blockers);
+        let current = probe
+            .current_applicability
+            .clone()
+            .expect("valid reports carry the derived current applicability");
+        let mut input = base_input();
+        input.prior_evidence = vec![prior_record(
+            "after-receipt",
+            &[DEFAULT_CHECK, LINKED_CHECK],
+            current,
+        )];
+        let report = derive_verification_impact(&input);
+        assert!(report.valid, "blockers: {:?}", report.blockers);
+        assert_eq!(report.evidence_refresh.len(), 1);
+        let refresh = &report.evidence_refresh[0];
+        assert!(
+            refresh.current,
+            "stale reasons: {:?}",
+            refresh.stale_reasons
+        );
+        assert!(refresh.stale_reasons.is_empty());
+        assert_eq!(
+            refresh.check_ids,
+            vec![LINKED_CHECK.to_string(), DEFAULT_CHECK.to_string()]
+        );
+    }
+
+    #[test]
+    fn unlinked_edit_cannot_preserve_whole_subject_evidence() {
+        // r[verify cairn.verification_impact.applicability]
+        let before_trace_index = trace_index(vec![trace_file(UNLINKED_PATH, "fn before() {}\n")]);
+        let after_trace_index = trace_index(vec![trace_file(UNLINKED_PATH, "fn after() {}\n")]);
+        let current = derive_current_applicability_from(&after_trace_index, &hash('b'));
+        let mut input = VerificationImpactInput {
+            schema_version: VERIFICATION_IMPACT_SCHEMA_V1.to_string(),
+            before_manifest: manifest(&before_trace_index, &hash('a')),
+            after_manifest: manifest(&after_trace_index, &hash('b')),
+            asserted_changed_paths: vec![UNLINKED_PATH.to_string()],
+            before_trace_index,
+            after_trace_index,
+            check_map: check_map(),
+            prior_evidence: vec![prior_record(
+                "before-receipt",
+                &[DEFAULT_CHECK, LINKED_CHECK],
+                current,
+            )],
+        };
+        input.prior_evidence[0].applicability.subject_hash = hash('a');
+        let report = derive_verification_impact(&input);
+        assert!(report.valid, "blockers: {:?}", report.blockers);
+        assert!(report
+            .uncertainty
+            .iter()
+            .any(|entry| entry.code == UNCERTAINTY_UNLINKED_SOURCE));
+        assert_eq!(report.evidence_refresh.len(), 1);
+        let refresh = &report.evidence_refresh[0];
+        assert!(!refresh.current);
+        assert_eq!(
+            refresh.stale_reasons,
+            vec![STALE_REASON_SUBJECT.to_string()]
+        );
+    }
+
+    fn derive_current_applicability_from(
+        index: &ContentBoundTraceIndex,
+        identity: &str,
+    ) -> Applicability {
+        let input = VerificationImpactInput {
+            schema_version: VERIFICATION_IMPACT_SCHEMA_V1.to_string(),
+            before_manifest: manifest(index, identity),
+            after_manifest: manifest(index, identity),
+            asserted_changed_paths: Vec::new(),
+            before_trace_index: index.clone(),
+            after_trace_index: index.clone(),
+            check_map: check_map(),
+            prior_evidence: Vec::new(),
+        };
+        derive_current_applicability(&input)
+    }
+
+    #[test]
+    fn policy_and_dependency_drift_report_exact_stale_reasons() {
+        // r[verify cairn.verification_impact.applicability]
+        let probe = derive_verification_impact(&base_input());
+        let mut current = probe.current_applicability.clone().expect("current");
+        current.policy_hash = hash('e');
+        current.dependency_hashes = vec![hash('f')];
+        let mut input = base_input();
+        input.prior_evidence = vec![prior_record("drifted", &[DEFAULT_CHECK], current)];
+        let report = derive_verification_impact(&input);
+        assert!(report.valid, "blockers: {:?}", report.blockers);
+        assert_eq!(
+            report.evidence_refresh[0].stale_reasons,
+            vec![
+                STALE_REASON_DEPENDENCIES.to_string(),
+                STALE_REASON_POLICY.to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn invalid_prior_evidence_applicability_blocks_admission() {
+        // r[verify cairn.verification_impact.applicability]
+        let mut drifted = Applicability {
+            subject_hash: hash('b'),
+            policy_hash: hash('e'),
+            dependency_hashes: vec![hash('f'), hash('e')],
+            source_projection_hash: hash('p'),
+        };
+        drifted.dependency_hashes.sort();
+        drifted.dependency_hashes.reverse();
+        let mut input = base_input();
+        input.prior_evidence = vec![prior_record("unsorted", &[DEFAULT_CHECK], drifted)];
+        let report = derive_verification_impact(&input);
+        assert!(!report.valid);
+        assert!(codes(&report).contains(&ISSUE_PRIOR_EVIDENCE.to_string()));
+    }
+
+    #[test]
+    fn prior_evidence_for_unknown_check_blocks_admission() {
+        // r[verify cairn.verification_impact.applicability]
+        let mut input = base_input();
+        input.prior_evidence = vec![prior_record(
+            "unknown-check",
+            &["no-such-check"],
+            Applicability {
+                subject_hash: hash('b'),
+                policy_hash: hash('e'),
+                dependency_hashes: Vec::new(),
+                source_projection_hash: hash('p'),
+            },
+        )];
+        let report = derive_verification_impact(&input);
+        assert!(!report.valid);
+        assert!(codes(&report).contains(&ISSUE_PRIOR_EVIDENCE.to_string()));
+    }
+
+    #[test]
+    fn reordered_prior_evidence_preserves_refresh_ordering() {
+        // r[verify cairn.verification_impact.applicability]
+        let probe = derive_verification_impact(&base_input());
+        let current = probe.current_applicability.clone().expect("current");
+        let mut stale = current.clone();
+        stale.subject_hash = hash('a');
+        let mut first = base_input();
+        first.prior_evidence = vec![
+            prior_record("aaa-stale", &[DEFAULT_CHECK], stale.clone()),
+            prior_record("zzz-current", &[LINKED_CHECK], current.clone()),
+        ];
+        let mut second = base_input();
+        second.prior_evidence = vec![
+            prior_record("zzz-current", &[LINKED_CHECK], current),
+            prior_record("aaa-stale", &[DEFAULT_CHECK], stale),
+        ];
+        let first_report = derive_verification_impact(&first);
+        let second_report = derive_verification_impact(&second);
+        assert_eq!(
+            first_report.evidence_refresh,
+            second_report.evidence_refresh
+        );
+        assert_eq!(first_report.evidence_refresh.len(), 2);
+        assert!(first_report.evidence_refresh[0].current);
+        assert!(!first_report.evidence_refresh[1].current);
     }
 }

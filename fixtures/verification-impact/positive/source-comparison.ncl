@@ -27,8 +27,10 @@ let h = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" in
     ],
     requirement_checks = [{ requirement_id = "cairn.verification.demo", check_id = "demo-tests" }],
     dependency_edges = [],
+    dependency_hashes = [],
     macro_opaque_paths = [],
     generated_source_paths = [],
     incomplete_source_paths = [],
   },
+  prior_evidence = [],
 } | C.source_comparison

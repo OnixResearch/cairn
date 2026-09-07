@@ -103,6 +103,16 @@ fn classify_payload(profile: &CheckProfile, o: &AttemptObservation) -> &'static 
     }
 }
 
+// r[impl cairn.check_evidence_producer.applicability]
+// r[impl cairn.verification_impact.applicability]
+/// Single home for whole-subject evidence reuse: recorded evidence stays
+/// current only under exact applicability equality with the current state.
+/// Source changes, policy changes, dependency drift, and projection changes
+/// each force staleness; missing marker links never preserve evidence.
+pub fn whole_subject_evidence_current(recorded: &Applicability, current: &Applicability) -> bool {
+    recorded == current
+}
+
 // r[impl cairn.check_evidence_producer.publication]
 pub fn publication_decision(
     plan: &CheckEvidencePlan,
@@ -110,7 +120,7 @@ pub fn publication_decision(
     artifacts: &[PublishedArtifact],
     current: &Applicability,
 ) -> PublicationDecision {
-    if current != &plan.applicability
+    if !whole_subject_evidence_current(&plan.applicability, current)
         || attempts.len() != plan.profiles.len()
         || artifacts.len() != attempts.len()
         || artifacts.len() > MAX_CHECKS

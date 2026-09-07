@@ -107,6 +107,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Inspect change readiness without execution or mutation",
         ),
         mcp_tool(
+            "cairn_verification_impact",
+            true,
+            false,
+            "Derive read-only verification guidance from an admitted source comparison",
+        ),
+        mcp_tool(
             "cairn_adoption_report",
             true,
             false,
@@ -227,6 +233,19 @@ fn mcp_input_schema(name: &str) -> Value {
                 json!("Explicit repository-relative receipt summary files only");
             schema
         }
+        "cairn_verification_impact" => json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "input": {"type": "object", "description": "Admitted cairn.verification-impact.v1 source comparison"},
+                "root": {"type": "string", "description": mcp_argument_description("root")},
+                "change": {"type": "string", "description": mcp_argument_description("change")},
+                "contract": {"type": "string"},
+                "profiles": {"type": "string"},
+                "applicability": {"type": "string"}
+            },
+            "required": ["input"]
+        }),
         "cairn_workflow_status" => mcp_object_schema(&["change"], &["root", "policy", "schema"]),
         "cairn_workflow_instructions" => {
             mcp_object_schema(&["change", "artifact"], &["root", "policy", "schema"])
@@ -364,6 +383,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
                 &["root", "policy", "contract", "results", "subject_hash"],
             )
         }
+        "cairn_verification_impact" => validate_verification_impact_args(name, object),
         "cairn_workflow_status" => {
             validate_string_args(name, object, &["change"], &["root", "policy", "schema"])
         }
@@ -393,6 +413,40 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_agent_completion_validate" => validate_agent_completion_args(name, object),
         unknown => Err(format!("unknown MCP tool: {unknown}").into()),
     }
+}
+
+fn validate_verification_impact_args(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    for key in object.keys() {
+        if ![
+            "input",
+            "root",
+            "change",
+            "contract",
+            "profiles",
+            "applicability",
+        ]
+        .contains(&key.as_str())
+        {
+            return Err(format!("invalid arguments for {tool}: unknown argument {key}").into());
+        }
+    }
+    let Some(input) = object.get("input") else {
+        return Err(
+            format!("invalid arguments for {tool}: missing required argument input").into(),
+        );
+    };
+    if !input.is_object() {
+        return Err(format!("invalid arguments for {tool}: input must be an object").into());
+    }
+    for key in ["root", "change", "contract", "profiles", "applicability"] {
+        if object.get(key).is_some_and(|value| !value.is_string()) {
+            return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+        }
+    }
+    Ok(())
 }
 
 fn validate_lifecycle_mutation_args(

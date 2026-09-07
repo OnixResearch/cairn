@@ -119,7 +119,9 @@ pub fn admit_plan(
     Ok(plan)
 }
 
-fn valid_applicability(a: &Applicability) -> bool {
+// r[impl cairn.check_evidence_producer.applicability]
+// r[impl cairn.verification_impact.applicability]
+pub fn valid_applicability(a: &Applicability) -> bool {
     digest(&a.subject_hash)
         && digest(&a.policy_hash)
         && digest(&a.source_projection_hash)

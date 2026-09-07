@@ -19,8 +19,8 @@ mod valence;
 pub use octet::{admit_octet_json, OctetAdmission, OctetStatus, OCTET_REVISION};
 pub use valence::{admit_valence_json, ValenceAdmission, VALENCE_REVISION};
 
-pub use admission::{admit_plan, authorize_attempt, profile_command};
-pub use normalization::{normalize_attempt, publication_decision};
+pub use admission::{admit_plan, authorize_attempt, profile_command, valid_applicability};
+pub use normalization::{normalize_attempt, publication_decision, whole_subject_evidence_current};
 pub use types::*;
 
 #[cfg(test)]

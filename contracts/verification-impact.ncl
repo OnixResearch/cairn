@@ -8,6 +8,8 @@ let MaximumEdges = 4096 in
 let MaximumFeatures = 64 in
 let MaximumPathBytes = 4096 in
 let MaximumTextBytes = 512 in
+let MaximumPriorEvidence = 128 in
+let MaximumDependencies = 64 in
 let Digest = std.contract.from_predicate (fun value =>
   std.is_string value && std.string.is_match "^[0-9a-f]{64}$" value
 ) in
@@ -74,6 +76,17 @@ let RequirementEdge = {
   from_requirement_id | RequirementId,
   to_requirement_id | RequirementId,
 } in
+let Applicability = {
+  subject_hash | Digest,
+  policy_hash | Digest,
+  dependency_hashes | CanonicalStringArray MaximumDependencies,
+  source_projection_hash | Digest,
+} in
+let PriorEvidence = {
+  evidence_id | Label,
+  check_ids | CanonicalStringArray MaximumChecks,
+  applicability | Applicability,
+} in
 let CheckMap = {
   schema_version | std.contract.from_predicate (fun value => value == "cairn.verification-check-map.v1"),
   map_id | Label,
@@ -82,6 +95,7 @@ let CheckMap = {
   checks | BoundedArray MaximumChecks | Array CheckDefinition,
   requirement_checks | BoundedArray MaximumRequirementBindings | Array RequirementCheck,
   dependency_edges | BoundedArray MaximumEdges | Array RequirementEdge,
+  dependency_hashes | CanonicalStringArray MaximumDependencies,
   macro_opaque_paths | CanonicalStringArray MaximumChangedPaths,
   generated_source_paths | CanonicalStringArray MaximumChangedPaths,
   incomplete_source_paths | CanonicalStringArray MaximumChangedPaths,
@@ -95,6 +109,7 @@ let SourceComparison = {
   before_trace_index,
   after_trace_index,
   check_map | CheckMap,
+  prior_evidence | BoundedArray MaximumPriorEvidence | Array PriorEvidence,
 } in
 let Uncertainty = {
   code | Label,
@@ -116,6 +131,8 @@ let Explanation = {
   requirement_edge = RequirementEdge,
   check_map = CheckMap,
   source_comparison = SourceComparison,
+  applicability = Applicability,
+  prior_evidence = PriorEvidence,
   uncertainty = Uncertainty,
   explanation = Explanation,
   bounds = {
@@ -127,5 +144,7 @@ let Explanation = {
     max_features = MaximumFeatures,
     max_path_bytes = MaximumPathBytes,
     max_text_bytes = MaximumTextBytes,
+    max_prior_evidence = MaximumPriorEvidence,
+    max_dependencies = MaximumDependencies,
   },
 }
