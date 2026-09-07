@@ -86,10 +86,34 @@ pub use crate::verified::lifecycle_store_context::{
     dylint_lib = "octet",
     allow(
         renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreIdentityAdmission root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::Admission as LifecycleStoreIdentityAdmission;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreIdentity root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::Admitted as LifecycleStoreIdentity;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
         reason = "Cairn core API: preserves the documented LifecycleStoreCheckoutPath root type."
     )
 )]
 pub use crate::verified::lifecycle_store_identity::CheckoutPath as LifecycleStoreCheckoutPath;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreDiagnostic root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::Diagnostic as LifecycleStoreDiagnostic;
 #[cfg_attr(
     dylint_lib = "octet",
     allow(
@@ -110,10 +134,98 @@ pub use crate::verified::lifecycle_store_identity::Id as LifecycleStoreId;
     dylint_lib = "octet",
     allow(
         renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorAdmission root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::LocatorAdmission as LifecycleStoreLocatorAdmission;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorApplication root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::LocatorApplication as LifecycleStoreLocatorApplication;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorLocalFacts root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::LocatorLocalFacts as LifecycleStoreLocatorLocalFacts;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorOperation root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::LocatorOperation as LifecycleStoreLocatorOperation;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorPlan root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::LocatorPlan as LifecycleStoreLocatorPlan;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorPortableFacts root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::LocatorPortableFacts as LifecycleStoreLocatorPortableFacts;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorProjection root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::LocatorProjection as LifecycleStoreLocatorProjection;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorState root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::LocatorState as LifecycleStoreLocatorState;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorMapping root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::Mapping as LifecycleStoreLocatorMapping;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreLocatorMappingProjection root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::MappingProjection as LifecycleStoreLocatorMappingProjection;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
         reason = "Cairn core API: preserves the documented LifecycleStoreNonClaim root type."
     )
 )]
 pub use crate::verified::lifecycle_store_identity::NonClaim as LifecycleStoreNonClaim;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented LifecycleStoreIdentityProjection root type."
+    )
+)]
+pub use crate::verified::lifecycle_store_identity::Projection as LifecycleStoreIdentityProjection;
 #[cfg_attr(
     dylint_lib = "octet",
     allow(
@@ -128,13 +240,7 @@ pub use crate::verified::lifecycle_store_identity::{
     lifecycle_store_identity_material, lifecycle_store_locator_plan_hash,
     lifecycle_store_locator_portable_hash, lifecycle_store_locator_projection,
     lifecycle_store_source_identity, plan_lifecycle_store_registration,
-    plan_lifecycle_store_unregistration, LifecycleStoreDiagnostic, LifecycleStoreIdentity,
-    LifecycleStoreIdentityAdmission, LifecycleStoreIdentityProjection,
-    LifecycleStoreLocatorAdmission, LifecycleStoreLocatorApplication,
-    LifecycleStoreLocatorLocalFacts, LifecycleStoreLocatorMapping,
-    LifecycleStoreLocatorMappingProjection, LifecycleStoreLocatorOperation,
-    LifecycleStoreLocatorPlan, LifecycleStoreLocatorPortableFacts, LifecycleStoreLocatorProjection,
-    LifecycleStoreLocatorState, BLAKE3_IDENTITY_HEX_LENGTH,
+    plan_lifecycle_store_unregistration, BLAKE3_IDENTITY_HEX_LENGTH,
     LIFECYCLE_STORE_CHECKOUT_PATH_MAX_BYTES, LIFECYCLE_STORE_DIAGNOSTIC_MAX_COUNT,
     LIFECYCLE_STORE_IDENTITY_NON_CLAIMS, LIFECYCLE_STORE_IDENTITY_OBSERVATION_NON_CLAIM,
     LIFECYCLE_STORE_IDENTITY_READINESS_NON_CLAIM, LIFECYCLE_STORE_IDENTITY_REMOTE_NON_CLAIM,
