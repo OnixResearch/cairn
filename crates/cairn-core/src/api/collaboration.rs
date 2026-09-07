@@ -155,12 +155,63 @@ pub use crate::verified::collaboration_resolution::{
     ChangeCollaborationConflictInspection, ChangeCollaborationResolutionPlan,
     ChangeCollaborationResolutionSnapshot, ChangeLifecycleConflictHead,
 };
-pub use crate::verified::collaboration_update::{
-    apply_planned_change_collaboration_update, change_cob_update_plan_hash,
-    change_collaboration_update_plan_hash, plan_change_cob_update,
-    plan_change_collaboration_update, ChangeCobUpdatePlan, ChangeCollaborationUpdatePlan,
-    ChangeCollaborationUpdateSnapshot,
-};
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration update apply function."
+    )
+)]
+pub use crate::verified::collaboration_update::apply as apply_planned_change_collaboration_update;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration update planning function."
+    )
+)]
+pub use crate::verified::collaboration_update::build_plan as plan_change_collaboration_update;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented COB update plan hash function."
+    )
+)]
+pub use crate::verified::collaboration_update::cob_plan_hash as change_cob_update_plan_hash;
+pub use crate::verified::collaboration_update::plan_change_cob_update;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration update plan hash function."
+    )
+)]
+pub use crate::verified::collaboration_update::plan_hash as change_collaboration_update_plan_hash;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented COB update plan type."
+    )
+)]
+pub use crate::verified::collaboration_update::CobPlan as ChangeCobUpdatePlan;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration update plan type."
+    )
+)]
+pub use crate::verified::collaboration_update::Plan as ChangeCollaborationUpdatePlan;
+#[cfg_attr(
+    dylint_lib = "octet",
+    allow(
+        renamed_imports,
+        reason = "Cairn core API: preserves the documented collaboration update snapshot type."
+    )
+)]
+pub use crate::verified::collaboration_update::Snapshot as ChangeCollaborationUpdateSnapshot;
 pub use crate::verified::document_collaboration::*;
 pub use crate::verified::radicle_change::{
     apply_change_cob_operation, change_cob_action_json, change_cob_content_root,

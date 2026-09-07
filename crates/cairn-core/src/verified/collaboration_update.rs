@@ -3,7 +3,7 @@ const UPDATE_OPERATION_DOMAIN: &str = "cairn-change-collaboration-update-v1";
 // r[impl cairn.collaboration_update.plan]
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChangeCollaborationUpdateSnapshot {
+pub struct Snapshot {
     pub change_id: String,
     pub policy_hash: String,
     pub actor: String,
@@ -16,7 +16,7 @@ pub struct ChangeCollaborationUpdateSnapshot {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct ChangeCollaborationUpdatePlan {
+pub struct Plan {
     pub change_id: String,
     pub actor: String,
     pub is_delegate: bool,
@@ -28,14 +28,14 @@ pub struct ChangeCollaborationUpdatePlan {
     pub expected_content_root: String,
 }
 
-impl ChangeCollaborationUpdatePlan {
+impl Plan {
     pub fn is_noop(&self) -> bool {
         self.actions.is_empty()
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct ChangeCobUpdatePlan {
+pub struct CobPlan {
     pub change_id: String,
     pub actor: String,
     pub is_delegate: bool,
@@ -47,16 +47,16 @@ pub struct ChangeCobUpdatePlan {
     pub expected_content_root: String,
 }
 
-impl ChangeCobUpdatePlan {
+impl CobPlan {
     pub fn is_noop(&self) -> bool {
         self.actions.is_empty()
     }
 }
 
-pub fn plan_change_collaboration_update(
+pub fn build_plan(
     state: &super::collaboration_change::State,
-    snapshot: ChangeCollaborationUpdateSnapshot,
-) -> Result<ChangeCollaborationUpdatePlan, super::radicle_change::ChangeCobError> {
+    snapshot: Snapshot,
+) -> Result<Plan, super::radicle_change::ChangeCobError> {
     super::collaboration_change::validate_change_collaboration_state(state)?;
     validate_snapshot_context(state, &snapshot)?;
     let input_state_hash = super::collaboration_change::change_collaboration_state_hash(state)?;
@@ -94,7 +94,7 @@ pub fn plan_change_collaboration_update(
     }
     let expected_content_root =
         super::collaboration_change::change_collaboration_content_root(&simulated)?;
-    Ok(ChangeCollaborationUpdatePlan {
+    Ok(Plan {
         change_id: state.change_id.clone(),
         actor: snapshot.actor,
         is_delegate: snapshot.is_delegate,
@@ -109,16 +109,16 @@ pub fn plan_change_collaboration_update(
 
 pub fn plan_change_cob_update(
     state: &super::radicle_change::ChangeCobState,
-    snapshot: ChangeCollaborationUpdateSnapshot,
-) -> Result<ChangeCobUpdatePlan, super::radicle_change::ChangeCobError> {
+    snapshot: Snapshot,
+) -> Result<CobPlan, super::radicle_change::ChangeCobError> {
     let neutral = super::collaboration_change::state_from_compatibility(state.clone())?;
-    let plan = plan_change_collaboration_update(&neutral, snapshot)?;
+    let plan = build_plan(&neutral, snapshot)?;
     let actions = plan
         .actions
         .into_iter()
         .map(super::collaboration_change::action_into_compatibility)
         .collect::<Result<Vec<_>, _>>()?;
-    Ok(ChangeCobUpdatePlan {
+    Ok(CobPlan {
         change_id: plan.change_id,
         actor: plan.actor,
         is_delegate: plan.is_delegate,
@@ -131,9 +131,9 @@ pub fn plan_change_cob_update(
     })
 }
 
-pub fn apply_planned_change_collaboration_update(
+pub fn apply(
     state: &super::collaboration_change::State,
-    plan: &ChangeCollaborationUpdatePlan,
+    plan: &Plan,
 ) -> Result<super::collaboration_change::State, super::radicle_change::ChangeCobError> {
     let current_state_hash = super::collaboration_change::change_collaboration_state_hash(state)?;
     if !same_digest::<super::nominal_identity::StateDigestRole>(
@@ -171,15 +171,11 @@ pub fn apply_planned_change_collaboration_update(
     Ok(updated)
 }
 
-pub fn change_collaboration_update_plan_hash(
-    plan: &ChangeCollaborationUpdatePlan,
-) -> Result<String, super::radicle_change::ChangeCobError> {
+pub fn plan_hash(plan: &Plan) -> Result<String, super::radicle_change::ChangeCobError> {
     hash_plan(plan)
 }
 
-pub fn change_cob_update_plan_hash(
-    plan: &ChangeCobUpdatePlan,
-) -> Result<String, super::radicle_change::ChangeCobError> {
+pub fn cob_plan_hash(plan: &CobPlan) -> Result<String, super::radicle_change::ChangeCobError> {
     hash_plan(plan)
 }
 
@@ -203,7 +199,7 @@ fn hash_plan<T: serde::Serialize>(
 
 fn validate_snapshot_context(
     state: &super::collaboration_change::State,
-    snapshot: &ChangeCollaborationUpdateSnapshot,
+    snapshot: &Snapshot,
 ) -> Result<(), super::radicle_change::ChangeCobError> {
     let state_change =
         super::nominal_identity::ChangeId::parse(&state.change_id, "update.state_change_id")
@@ -279,7 +275,7 @@ fn require_conflict_free_state(
 }
 
 fn desired_artifacts(
-    snapshot: &ChangeCollaborationUpdateSnapshot,
+    snapshot: &Snapshot,
 ) -> Result<
     std::collections::BTreeMap<super::radicle_change::ChangeArtifactId, String>,
     super::radicle_change::ChangeCobError,
@@ -454,8 +450,8 @@ mod tests {
         crate::initialize_change_collaboration_import(init, CREATOR).unwrap()
     }
 
-    fn snapshot(actor: &str) -> ChangeCollaborationUpdateSnapshot {
-        ChangeCollaborationUpdateSnapshot {
+    fn snapshot(actor: &str) -> Snapshot {
+        Snapshot {
             change_id: CHANGE_ID.to_string(),
             policy_hash: POLICY_HASH.to_string(),
             actor: actor.to_string(),
@@ -472,8 +468,8 @@ mod tests {
     #[test]
     fn plans_and_applies_sorted_add_change_remove_actions() {
         let state = state();
-        let first = plan_change_collaboration_update(&state, snapshot(CREATOR)).unwrap();
-        let second = plan_change_collaboration_update(&state, snapshot(CREATOR)).unwrap();
+        let first = build_plan(&state, snapshot(CREATOR)).unwrap();
+        let second = build_plan(&state, snapshot(CREATOR)).unwrap();
         assert_eq!(first, second);
         assert_eq!(
             first.changed_artifacts,
@@ -483,11 +479,8 @@ mod tests {
                 format!("spec:{CHANGE_ID}"),
             ]
         );
-        assert_eq!(
-            change_collaboration_update_plan_hash(&first).unwrap(),
-            change_collaboration_update_plan_hash(&second).unwrap()
-        );
-        let updated = apply_planned_change_collaboration_update(&state, &first).unwrap();
+        assert_eq!(plan_hash(&first).unwrap(), plan_hash(&second).unwrap());
+        let updated = apply(&state, &first).unwrap();
         assert_eq!(
             super::super::collaboration_change::change_collaboration_content_root(&updated)
                 .unwrap(),
@@ -507,9 +500,9 @@ mod tests {
     #[test]
     fn byte_equivalent_change_is_noop() {
         let state = state();
-        let plan = plan_change_collaboration_update(
+        let plan = build_plan(
             &state,
-            ChangeCollaborationUpdateSnapshot {
+            Snapshot {
                 change_id: CHANGE_ID.to_string(),
                 policy_hash: POLICY_HASH.to_string(),
                 actor: CREATOR.to_string(),
@@ -527,10 +520,7 @@ mod tests {
         .unwrap();
         assert!(plan.is_noop());
         assert_eq!(plan.input_content_root, plan.expected_content_root);
-        assert_eq!(
-            apply_planned_change_collaboration_update(&state, &plan).unwrap(),
-            state
-        );
+        assert_eq!(apply(&state, &plan).unwrap(), state);
     }
 
     // r[verify cairn.collaboration_update.plan.blocked]
@@ -539,14 +529,14 @@ mod tests {
         let state = state();
         let mut wrong_change = snapshot(CREATOR);
         wrong_change.change_id = "other-change".to_string();
-        assert!(plan_change_collaboration_update(&state, wrong_change).is_err());
+        assert!(build_plan(&state, wrong_change).is_err());
 
         let mut stale_policy = snapshot(CREATOR);
         stale_policy.policy_hash = "c".repeat(crate::BLAKE3_HEX_LENGTH);
-        assert!(plan_change_collaboration_update(&state, stale_policy).is_err());
+        assert!(build_plan(&state, stale_policy).is_err());
 
         assert!(matches!(
-            plan_change_collaboration_update(&state, snapshot(OUTSIDER)),
+            build_plan(&state, snapshot(OUTSIDER)),
             Err(super::super::radicle_change::ChangeCobError::Unauthorized { .. })
         ));
 
@@ -554,12 +544,12 @@ mod tests {
         malformed_spec
             .delta_specs
             .insert("../escape".to_string(), "# Bad\n".to_string());
-        assert!(plan_change_collaboration_update(&state, malformed_spec).is_err());
+        assert!(build_plan(&state, malformed_spec).is_err());
 
         let mut oversized = snapshot(CREATOR);
         oversized.design = Some("x".repeat(crate::MAX_ARTIFACT_BYTES.saturating_add(1)));
         assert!(matches!(
-            plan_change_collaboration_update(&state, oversized),
+            build_plan(&state, oversized),
             Err(super::super::radicle_change::ChangeCobError::ByteLimitExceeded { .. })
         ));
     }
@@ -589,7 +579,7 @@ mod tests {
             .unwrap();
         }
         assert!(matches!(
-            plan_change_collaboration_update(&content_conflict, snapshot(CREATOR)),
+            build_plan(&content_conflict, snapshot(CREATOR)),
             Err(super::super::radicle_change::ChangeCobError::ArtifactConflict { .. })
         ));
 
@@ -620,7 +610,7 @@ mod tests {
             .unwrap();
         }
         assert!(matches!(
-            plan_change_collaboration_update(&lifecycle_conflict, snapshot(DELEGATE)),
+            build_plan(&lifecycle_conflict, snapshot(DELEGATE)),
             Err(super::super::radicle_change::ChangeCobError::InvalidField { field, .. }) if field == "update.lifecycle"
         ));
     }
