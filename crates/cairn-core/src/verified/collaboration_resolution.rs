@@ -27,14 +27,14 @@ pub struct ChangeLifecycleConflictHead {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct ChangeCollaborationConflictInspection {
+pub struct Inspection {
     pub change_id: String,
     pub state_hash: String,
     pub artifact_conflicts: Vec<ChangeArtifactConflict>,
     pub lifecycle_heads: Vec<ChangeLifecycleConflictHead>,
 }
 
-impl ChangeCollaborationConflictInspection {
+impl Inspection {
     pub fn has_conflicts(&self) -> bool {
         !self.artifact_conflicts.is_empty() || !self.lifecycle_heads.is_empty()
     }
@@ -58,7 +58,7 @@ pub struct ChangeArtifactHeadSelection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChangeCollaborationResolutionSnapshot {
+pub struct Snapshot {
     pub change_id: String,
     pub policy_hash: String,
     pub actor: String,
@@ -68,7 +68,7 @@ pub struct ChangeCollaborationResolutionSnapshot {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct ChangeCollaborationResolutionPlan {
+pub struct Plan {
     pub change_id: String,
     pub actor: String,
     pub is_delegate: bool,
@@ -82,7 +82,7 @@ pub struct ChangeCollaborationResolutionPlan {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct ChangeCobResolutionPlan {
+pub struct CobPlan {
     pub change_id: String,
     pub actor: String,
     pub is_delegate: bool,
@@ -94,9 +94,9 @@ pub struct ChangeCobResolutionPlan {
     pub expected_content_root: String,
 }
 
-pub fn inspect_change_collaboration_conflicts(
+pub fn inspect(
     state: &super::collaboration_change::State,
-) -> Result<ChangeCollaborationConflictInspection, super::radicle_change::ChangeCobError> {
+) -> Result<Inspection, super::radicle_change::ChangeCobError> {
     super::collaboration_change::validate_change_collaboration_state(state)?;
     let artifact_conflicts = state
         .artifacts
@@ -134,7 +134,7 @@ pub fn inspect_change_collaboration_conflicts(
     } else {
         Vec::new()
     };
-    Ok(ChangeCollaborationConflictInspection {
+    Ok(Inspection {
         change_id: state.change_id.clone(),
         state_hash: super::collaboration_change::change_collaboration_state_hash(state)?,
         artifact_conflicts,
@@ -144,18 +144,18 @@ pub fn inspect_change_collaboration_conflicts(
 
 pub fn inspect_change_cob_conflicts(
     state: &super::radicle_change::ChangeCobState,
-) -> Result<ChangeCollaborationConflictInspection, super::radicle_change::ChangeCobError> {
-    inspect_change_collaboration_conflicts(&super::collaboration_change::state_from_compatibility(
+) -> Result<Inspection, super::radicle_change::ChangeCobError> {
+    inspect(&super::collaboration_change::state_from_compatibility(
         state.clone(),
     )?)
 }
 
-pub fn inspect_change_collaboration_conflict_value(
+pub fn inspect_value(
     state: &super::collaboration_change::State,
     artifact: &super::radicle_change::ChangeArtifactId,
     revision_id: &str,
 ) -> Result<ChangeArtifactConflictValue, super::radicle_change::ChangeCobError> {
-    let inspection = inspect_change_collaboration_conflicts(state)?;
+    let inspection = inspect(state)?;
     let Some(conflict) = inspection
         .artifact_conflicts
         .iter()
@@ -207,20 +207,20 @@ pub fn inspect_change_cob_conflict_value(
     artifact: &super::radicle_change::ChangeArtifactId,
     revision_id: &str,
 ) -> Result<ChangeArtifactConflictValue, super::radicle_change::ChangeCobError> {
-    inspect_change_collaboration_conflict_value(
+    inspect_value(
         &super::collaboration_change::state_from_compatibility(state.clone())?,
         artifact,
         revision_id,
     )
 }
 
-pub fn plan_change_collaboration_resolution(
+pub fn plan(
     state: &super::collaboration_change::State,
-    snapshot: ChangeCollaborationResolutionSnapshot,
-) -> Result<ChangeCollaborationResolutionPlan, super::radicle_change::ChangeCobError> {
+    snapshot: Snapshot,
+) -> Result<Plan, super::radicle_change::ChangeCobError> {
     super::collaboration_change::validate_change_collaboration_state(state)?;
     validate_resolution_context(state, &snapshot)?;
-    let inspection = inspect_change_collaboration_conflicts(state)?;
+    let inspection = inspect(state)?;
     if !inspection.has_conflicts() {
         return Err(invalid(
             "resolution.conflicts",
@@ -292,7 +292,7 @@ pub fn plan_change_collaboration_resolution(
         },
     )?;
     require_conflict_free_result(&simulated)?;
-    Ok(ChangeCollaborationResolutionPlan {
+    Ok(Plan {
         change_id: state.change_id.clone(),
         actor: snapshot.actor,
         is_delegate: snapshot.is_delegate,
@@ -312,16 +312,16 @@ pub fn plan_change_collaboration_resolution(
 
 pub fn plan_change_cob_resolution(
     state: &super::radicle_change::ChangeCobState,
-    snapshot: ChangeCollaborationResolutionSnapshot,
-) -> Result<ChangeCobResolutionPlan, super::radicle_change::ChangeCobError> {
+    snapshot: Snapshot,
+) -> Result<CobPlan, super::radicle_change::ChangeCobError> {
     let neutral = super::collaboration_change::state_from_compatibility(state.clone())?;
-    let plan = plan_change_collaboration_resolution(&neutral, snapshot)?;
+    let plan = plan(&neutral, snapshot)?;
     let actions = plan
         .actions
         .into_iter()
         .map(super::collaboration_change::action_into_compatibility)
         .collect::<Result<Vec<_>, _>>()?;
-    Ok(ChangeCobResolutionPlan {
+    Ok(CobPlan {
         change_id: plan.change_id,
         actor: plan.actor,
         is_delegate: plan.is_delegate,
@@ -334,9 +334,9 @@ pub fn plan_change_cob_resolution(
     })
 }
 
-pub fn apply_planned_change_collaboration_resolution(
+pub fn apply(
     state: &super::collaboration_change::State,
-    plan: &ChangeCollaborationResolutionPlan,
+    plan: &Plan,
 ) -> Result<super::collaboration_change::State, super::radicle_change::ChangeCobError> {
     let current_state_hash = super::collaboration_change::change_collaboration_state_hash(state)?;
     if !same_digest::<super::nominal_identity::StateDigestRole>(
@@ -382,15 +382,11 @@ pub fn apply_planned_change_collaboration_resolution(
     Ok(resolved)
 }
 
-pub fn change_collaboration_resolution_plan_hash(
-    plan: &ChangeCollaborationResolutionPlan,
-) -> Result<String, super::radicle_change::ChangeCobError> {
+pub fn hash_plan(plan: &Plan) -> Result<String, super::radicle_change::ChangeCobError> {
     plan_hash(plan)
 }
 
-pub fn change_cob_resolution_plan_hash(
-    plan: &ChangeCobResolutionPlan,
-) -> Result<String, super::radicle_change::ChangeCobError> {
+pub fn hash_cob_plan(plan: &CobPlan) -> Result<String, super::radicle_change::ChangeCobError> {
     plan_hash(plan)
 }
 
@@ -414,7 +410,7 @@ fn plan_hash<T: serde::Serialize>(
 
 fn validate_resolution_context(
     state: &super::collaboration_change::State,
-    snapshot: &ChangeCollaborationResolutionSnapshot,
+    snapshot: &Snapshot,
 ) -> Result<(), super::radicle_change::ChangeCobError> {
     let state_change =
         super::nominal_identity::ChangeId::parse(&state.change_id, "resolution.state_change_id")
@@ -494,7 +490,7 @@ fn unique_selections(
 }
 
 fn validate_complete_selections(
-    inspection: &ChangeCollaborationConflictInspection,
+    inspection: &Inspection,
     selections: &std::collections::BTreeMap<
         super::radicle_change::ChangeArtifactId,
         ChangeArtifactHeadSelection,
@@ -545,7 +541,7 @@ fn validate_complete_selections(
 }
 
 fn validate_lifecycle_selection(
-    inspection: &ChangeCollaborationConflictInspection,
+    inspection: &Inspection,
     lifecycle_status: Option<super::radicle_change::ChangeLifecycleStatus>,
 ) -> Result<(), super::radicle_change::ChangeCobError> {
     if inspection.lifecycle_heads.is_empty() {
@@ -572,7 +568,7 @@ fn validate_lifecycle_selection(
 
 fn simulate_resolved_content(
     state: &super::collaboration_change::State,
-    snapshot: &ChangeCollaborationResolutionSnapshot,
+    snapshot: &Snapshot,
     artifact_actions: &[super::collaboration_change::Action],
 ) -> Result<String, super::radicle_change::ChangeCobError> {
     if artifact_actions.is_empty() {
@@ -763,8 +759,8 @@ mod tests {
         state
     }
 
-    fn snapshot() -> ChangeCollaborationResolutionSnapshot {
-        ChangeCollaborationResolutionSnapshot {
+    fn snapshot() -> Snapshot {
+        Snapshot {
             change_id: CHANGE_ID.to_string(),
             policy_hash: POLICY_HASH.to_string(),
             actor: CREATOR.to_string(),
@@ -788,20 +784,20 @@ mod tests {
     #[test]
     fn inspection_lists_every_head_and_discloses_only_selected_value() {
         let state = conflicted_state();
-        let inspection = inspect_change_collaboration_conflicts(&state).unwrap();
+        let inspection = inspect(&state).unwrap();
         assert_eq!(inspection.artifact_conflicts.len(), CONFLICT_ARTIFACT_COUNT);
         assert!(inspection
             .artifact_conflicts
             .iter()
             .all(|conflict| conflict.heads.len() == CONCURRENT_HEAD_COUNT));
-        let shown = inspect_change_collaboration_conflict_value(
+        let shown = inspect_value(
             &state,
             &super::super::radicle_change::ChangeArtifactId::proposal(),
             LEFT_OPERATION,
         )
         .unwrap();
         assert_eq!(shown.content.as_deref(), Some("# Left proposal\n"));
-        assert!(inspect_change_collaboration_conflict_value(
+        assert!(inspect_value(
             &state,
             &super::super::radicle_change::ChangeArtifactId::tasks(),
             LEFT_OPERATION,
@@ -813,8 +809,8 @@ mod tests {
     #[test]
     fn complete_selection_supersedes_all_heads_and_preserves_history() {
         let state = conflicted_state();
-        let first = plan_change_collaboration_resolution(&state, snapshot()).unwrap();
-        let second = plan_change_collaboration_resolution(&state, snapshot()).unwrap();
+        let first = plan(&state, snapshot()).unwrap();
+        let second = plan(&state, snapshot()).unwrap();
         assert_eq!(first, second);
         assert_eq!(first.actions.len(), RESOLUTION_ACTION_COUNT);
         assert_eq!(
@@ -828,7 +824,7 @@ mod tests {
                 ]),
             }
         );
-        let resolved = apply_planned_change_collaboration_resolution(&state, &first).unwrap();
+        let resolved = apply(&state, &first).unwrap();
         assert_eq!(
             super::super::collaboration_change::change_collaboration_state_hash(&resolved).unwrap(),
             first.expected_state_hash
@@ -844,9 +840,7 @@ mod tests {
                 .len(),
             RESOLVED_PROPOSAL_REVISION_COUNT
         );
-        assert!(!inspect_change_collaboration_conflicts(&resolved)
-            .unwrap()
-            .has_conflicts());
+        assert!(!inspect(&resolved).unwrap().has_conflicts());
     }
 
     // r[verify cairn.collaboration_resolution.plan.lifecycle]
@@ -874,7 +868,7 @@ mod tests {
             )
             .unwrap();
         }
-        let mut resolution = ChangeCollaborationResolutionSnapshot {
+        let mut resolution = Snapshot {
             change_id: CHANGE_ID.to_string(),
             policy_hash: POLICY_HASH.to_string(),
             actor: DELEGATE.to_string(),
@@ -882,15 +876,15 @@ mod tests {
             artifact_selections: Vec::new(),
             lifecycle_status: None,
         };
-        assert!(plan_change_collaboration_resolution(&state, resolution.clone()).is_err());
+        assert!(plan(&state, resolution.clone()).is_err());
         resolution.lifecycle_status =
             Some(super::super::radicle_change::ChangeLifecycleStatus::Approved);
-        assert!(plan_change_collaboration_resolution(&state, resolution.clone()).is_err());
+        assert!(plan(&state, resolution.clone()).is_err());
         resolution.lifecycle_status =
             Some(super::super::radicle_change::ChangeLifecycleStatus::Open);
-        let plan = plan_change_collaboration_resolution(&state, resolution).unwrap();
+        let plan = plan(&state, resolution).unwrap();
         assert!(plan.lifecycle_reset);
-        let resolved = apply_planned_change_collaboration_resolution(&state, &plan).unwrap();
+        let resolved = apply(&state, &plan).unwrap();
         assert!(matches!(
             super::super::collaboration_change::change_collaboration_lifecycle_view(&resolved).unwrap(),
             super::super::radicle_change::ChangeLifecycleView::Current(super::super::radicle_change::ChangeLifecycleRecord {
@@ -907,33 +901,33 @@ mod tests {
         let state = conflicted_state();
         let mut missing = snapshot();
         missing.artifact_selections.pop();
-        assert!(plan_change_collaboration_resolution(&state, missing).is_err());
+        assert!(plan(&state, missing).is_err());
 
         let mut duplicate = snapshot();
         duplicate
             .artifact_selections
             .push(duplicate.artifact_selections[0].clone());
-        assert!(plan_change_collaboration_resolution(&state, duplicate).is_err());
+        assert!(plan(&state, duplicate).is_err());
 
         let mut stale = snapshot();
         stale.artifact_selections[0].revision_id = "operation:stale".to_string();
-        assert!(plan_change_collaboration_resolution(&state, stale).is_err());
+        assert!(plan(&state, stale).is_err());
 
         let mut unauthorized = snapshot();
         unauthorized.actor = OUTSIDER.to_string();
         assert!(matches!(
-            plan_change_collaboration_resolution(&state, unauthorized),
+            plan(&state, unauthorized),
             Err(super::super::radicle_change::ChangeCobError::Unauthorized { .. })
         ));
 
         let mut stale_policy = snapshot();
         stale_policy.policy_hash = "c".repeat(crate::BLAKE3_HEX_LENGTH);
-        assert!(plan_change_collaboration_resolution(&state, stale_policy).is_err());
-        assert!(plan_change_collaboration_resolution(&initial_state(), snapshot()).is_err());
+        assert!(plan(&state, stale_policy).is_err());
+        assert!(plan(&initial_state(), snapshot()).is_err());
 
-        let plan = plan_change_collaboration_resolution(&state, snapshot()).unwrap();
+        let plan = plan(&state, snapshot()).unwrap();
         let mut drifted = state;
         drifted.policy_hash = "d".repeat(crate::BLAKE3_HEX_LENGTH);
-        assert!(apply_planned_change_collaboration_resolution(&drifted, &plan).is_err());
+        assert!(apply(&drifted, &plan).is_err());
     }
 }

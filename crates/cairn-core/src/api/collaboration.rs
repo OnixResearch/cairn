@@ -1,59 +1,21 @@
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration action JSON function."
-    )
-)]
-pub use crate::verified::collaboration_change::action_json as change_collaboration_action_json;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration action type."
-    )
-)]
-pub use crate::verified::collaboration_change::Action as ChangeCollaborationAction;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration error type."
-    )
-)]
-pub use crate::verified::collaboration_change::Error as ChangeCollaborationError;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration evidence type."
-    )
-)]
-pub use crate::verified::collaboration_change::Evidence as ChangeCollaborationEvidence;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration init type."
-    )
-)]
-pub use crate::verified::collaboration_change::Init as ChangeCollaborationInit;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration operation type."
-    )
-)]
-pub use crate::verified::collaboration_change::Operation as ChangeCollaborationOperation;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration state type."
-    )
-)]
-pub use crate::verified::collaboration_change::State as ChangeCollaborationState;
+macro_rules! root_compatibility {
+    ($module:ident; $($local:ident => $root:ident => $reason:literal;)+) => {$(
+        #[cfg_attr(dylint_lib = "octet", allow(renamed_imports, reason = $reason))]
+        pub use crate::verified::$module::$local as $root;
+    )+};
+}
+
+#[rustfmt::skip]
+root_compatibility! {
+    collaboration_change;
+    action_json => change_collaboration_action_json => "Root collaboration action JSON function.";
+    Action => ChangeCollaborationAction => "Root collaboration action type.";
+    Error => ChangeCollaborationError => "Root collaboration error type.";
+    Evidence => ChangeCollaborationEvidence => "Root collaboration evidence type.";
+    Init => ChangeCollaborationInit => "Root collaboration init type.";
+    Operation => ChangeCollaborationOperation => "Root collaboration operation type.";
+    State => ChangeCollaborationState => "Root collaboration state type.";
+}
 pub use crate::verified::collaboration_change::{
     apply_change_collaboration_operation, change_collaboration_content_root,
     change_collaboration_lifecycle_view, change_collaboration_state_hash,
@@ -145,73 +107,37 @@ pub use crate::verified::collaboration_portable::Failure as PortableChangeCollab
 pub use crate::verified::collaboration_portable::{
     PORTABLE_COLLABORATION_BACKEND_V1, PORTABLE_COLLABORATION_SCHEMA_V1,
 };
+#[rustfmt::skip]
+root_compatibility! {
+    collaboration_resolution;
+    Inspection => ChangeCollaborationConflictInspection => "Root collaboration conflict inspection type.";
+    Snapshot => ChangeCollaborationResolutionSnapshot => "Root collaboration resolution snapshot type.";
+    Plan => ChangeCollaborationResolutionPlan => "Root collaboration resolution plan type.";
+    CobPlan => ChangeCobResolutionPlan => "Root COB resolution plan type.";
+    inspect => inspect_change_collaboration_conflicts => "Root collaboration conflict inspection function.";
+    inspect_value => inspect_change_collaboration_conflict_value => "Root collaboration conflict value function.";
+    plan => plan_change_collaboration_resolution => "Root collaboration resolution planning function.";
+    apply => apply_planned_change_collaboration_resolution => "Root collaboration resolution apply function.";
+    hash_plan => change_collaboration_resolution_plan_hash => "Root collaboration resolution plan hash function.";
+    hash_cob_plan => change_cob_resolution_plan_hash => "Root COB resolution plan hash function.";
+}
 pub use crate::verified::collaboration_resolution::{
-    apply_planned_change_collaboration_resolution, change_cob_resolution_plan_hash,
-    change_collaboration_resolution_plan_hash, inspect_change_cob_conflict_value,
-    inspect_change_cob_conflicts, inspect_change_collaboration_conflict_value,
-    inspect_change_collaboration_conflicts, plan_change_cob_resolution,
-    plan_change_collaboration_resolution, ChangeArtifactConflict, ChangeArtifactConflictHead,
-    ChangeArtifactConflictValue, ChangeArtifactHeadSelection, ChangeCobResolutionPlan,
-    ChangeCollaborationConflictInspection, ChangeCollaborationResolutionPlan,
-    ChangeCollaborationResolutionSnapshot, ChangeLifecycleConflictHead,
+    inspect_change_cob_conflict_value, inspect_change_cob_conflicts, plan_change_cob_resolution,
+    ChangeArtifactConflict, ChangeArtifactConflictHead, ChangeArtifactConflictValue,
+    ChangeArtifactHeadSelection, ChangeLifecycleConflictHead,
 };
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration update apply function."
-    )
-)]
-pub use crate::verified::collaboration_update::apply as apply_planned_change_collaboration_update;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration update planning function."
-    )
-)]
-pub use crate::verified::collaboration_update::build_plan as plan_change_collaboration_update;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented COB update plan hash function."
-    )
-)]
-pub use crate::verified::collaboration_update::cob_plan_hash as change_cob_update_plan_hash;
+#[rustfmt::skip]
+root_compatibility! {
+    collaboration_update;
+    apply => apply_planned_change_collaboration_update => "Root collaboration update apply function.";
+    build_plan => plan_change_collaboration_update => "Root collaboration update planning function.";
+    cob_plan_hash => change_cob_update_plan_hash => "Root COB update plan hash function.";
+    plan_hash => change_collaboration_update_plan_hash => "Root collaboration update plan hash function.";
+    CobPlan => ChangeCobUpdatePlan => "Root COB update plan type.";
+    Plan => ChangeCollaborationUpdatePlan => "Root collaboration update plan type.";
+    Snapshot => ChangeCollaborationUpdateSnapshot => "Root collaboration update snapshot type.";
+}
 pub use crate::verified::collaboration_update::plan_change_cob_update;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration update plan hash function."
-    )
-)]
-pub use crate::verified::collaboration_update::plan_hash as change_collaboration_update_plan_hash;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented COB update plan type."
-    )
-)]
-pub use crate::verified::collaboration_update::CobPlan as ChangeCobUpdatePlan;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration update plan type."
-    )
-)]
-pub use crate::verified::collaboration_update::Plan as ChangeCollaborationUpdatePlan;
-#[cfg_attr(
-    dylint_lib = "octet",
-    allow(
-        renamed_imports,
-        reason = "Cairn core API: preserves the documented collaboration update snapshot type."
-    )
-)]
-pub use crate::verified::collaboration_update::Snapshot as ChangeCollaborationUpdateSnapshot;
 pub use crate::verified::document_collaboration::*;
 pub use crate::verified::radicle_change::{
     apply_change_cob_operation, change_cob_action_json, change_cob_content_root,

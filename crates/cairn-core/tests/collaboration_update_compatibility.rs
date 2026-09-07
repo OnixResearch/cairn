@@ -1,4 +1,4 @@
-//! Root API controls for collaboration update naming repairs.
+//! Root API controls for collaboration naming repairs.
 
 const CHANGE_ID: &str = "compatibility-change";
 const WORKSPACE_ID: &str = "workspace:compatibility";
@@ -67,4 +67,37 @@ fn root_api_rejects_unauthorized_update_actor() {
         error,
         cairn_core::ChangeCobError::Unauthorized { .. }
     ));
+}
+
+#[test]
+fn resolution_root_api_names_remain_callable() {
+    let _: fn(
+        &cairn_core::ChangeCollaborationState,
+    ) -> Result<
+        cairn_core::ChangeCollaborationConflictInspection,
+        cairn_core::ChangeCobError,
+    > = cairn_core::inspect_change_collaboration_conflicts;
+    let _: fn(
+        &cairn_core::ChangeCollaborationState,
+        &cairn_core::ChangeArtifactId,
+        &str,
+    ) -> Result<cairn_core::ChangeArtifactConflictValue, cairn_core::ChangeCobError> =
+        cairn_core::inspect_change_collaboration_conflict_value;
+    let _: fn(
+        &cairn_core::ChangeCollaborationState,
+        cairn_core::ChangeCollaborationResolutionSnapshot,
+    )
+        -> Result<cairn_core::ChangeCollaborationResolutionPlan, cairn_core::ChangeCobError> =
+        cairn_core::plan_change_collaboration_resolution;
+    let _: fn(
+        &cairn_core::ChangeCollaborationState,
+        &cairn_core::ChangeCollaborationResolutionPlan,
+    ) -> Result<cairn_core::ChangeCollaborationState, cairn_core::ChangeCobError> =
+        cairn_core::apply_planned_change_collaboration_resolution;
+    let _: fn(
+        &cairn_core::ChangeCollaborationResolutionPlan,
+    ) -> Result<String, cairn_core::ChangeCobError> =
+        cairn_core::change_collaboration_resolution_plan_hash;
+    let _: fn(&cairn_core::ChangeCobResolutionPlan) -> Result<String, cairn_core::ChangeCobError> =
+        cairn_core::change_cob_resolution_plan_hash;
 }
