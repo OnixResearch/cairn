@@ -335,7 +335,7 @@ pub fn derive_verification_impact(input: &VerificationImpactInput) -> Verificati
             reason: "mandatory_check_preserved".to_string(),
         });
     }
-    if uncertainty.is_empty() {
+    if !uncertainty.is_empty() {
         selected.extend(input.check_map.default_check_ids.iter().cloned());
         for check_id in &input.check_map.default_check_ids {
             causal_paths.push(VerificationImpactCausalPath {
