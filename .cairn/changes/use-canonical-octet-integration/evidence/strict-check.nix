@@ -15,7 +15,6 @@ let
       producer.lib.mkConsumerCheck {
         inherit system packages;
         src = flake.outPath;
-        cargoLock = flake.outPath + "/Cargo.lock";
         cargoExtraArgs = "--all-targets --all-features";
         nativeBuildInputs = workspace.nativeBuildInputs;
       };
@@ -28,5 +27,10 @@ selected.overrideAttrs (old: {
   nativeBuildInputs = old.nativeBuildInputs ++ [ runner ];
   OCTET_PRECOMMIT_USE_INSTALLED = "true";
   DYLINT_RUSTFLAGS = "-D warnings";
-  buildCommand = command;
+  buildCommand = ''
+    export CARGO_HOME="$TMPDIR/cairn-cargo-home"
+    mkdir -p "$CARGO_HOME"
+    cp ${workspace.cargoVendorDir}/config.toml "$CARGO_HOME/config.toml"
+  ''
+  + command;
 })

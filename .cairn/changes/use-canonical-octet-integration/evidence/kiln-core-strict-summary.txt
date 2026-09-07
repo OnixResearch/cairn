@@ -1,0 +1,54 @@
+Selected excerpts from .pi/cairn-rest-1295/kiln-core-strict.log.
+Full log BLAKE3: 6b56b89a70989d94751f405bd98489fea8bb9aa261d601e1da1f493a3273dbca
+Derivation: /nix/store/bz3sip2kadprs9w1viqld8mwb9nps06x-octet-consumer-check.drv
+
+    Checking kiln-core v0.1.0 (https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git?rev=5d99f4e9bb954743443e340baece31256b4c53f1#5d99f4e9)
+    Checking cairn-core v0.1.0 (/build/source/crates/cairn-core)
+error: source file is 2032 lines (limit: 300)
+    --> crates/cairn-core/src/verified/adoption_report.rs:1:1
+error: could not compile `cairn-core` (lib) due to 3786 previous errors
+error: could not compile `cairn-core` (lib test) due to 4356 previous errors
+--- octet summary ---
+Status: integration-failure
+Findings: 8142
+Warnings: 0
+Errors: 8142
+Autofixable: 287
+Tool: cargo-octet 0.1.0
+Toolchain: nightly-2026-03-21-x86_64-unknown-linux-gnu
+Config hash: b3:0cd481490e0ef8d0ed1524fad0b060f67ffad9d4052760cbce9ac5c9291cdee9
+Profile hash: b3:16d36a4f5229b89fc47bff0758ca63f6d1faa7e920ce9354eded5ea49c40105b
+
+By lint:
+  path_segment_repetition              2196
+  assertion_density                    1324
+  borrowed_argument_types              882
+  missing_const_fn                     592
+  non_trait_imports                    483
+  ambiguous_params                     469
+  numeric_units                        378
+  bool_naming                          287
+  unbounded_collection_growth          243
+  raw_arithmetic_overflow              236
+  excessive_file_length                174
+  underscore_in_module_filename        165
+  function_length                      143
+  explicit_defaults                    126
+  fragile_exhaustive_enum_match        104
+  compound_condition                   103
+  too_many_parameters                  98
+  no_unwrap                            36
+  allocation_in_loop                   16
+  no_recursion                         16
+  foreign_enum_catch_all               14
+  module_file_count                    11
+  unjustified_allow                    10
+  usize_in_public_api                  10
+  nested_conditionals                  7
+  catch_all_on_enum                    6
+  sentinel_fallback                    6
+  fallible_int_fallback                4
+  renamed_imports                      2
+  compound_assertion                   1
+
+Counts include overlapping library and library-test diagnostics, not distinct defects.

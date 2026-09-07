@@ -174,14 +174,29 @@
                 builtins.readFile "${mantle}/crates/mantle-build-contract/Cargo.toml"
               );
             };
+            kiln = self.inputs.kiln-core;
+            kilnSourceFacts = {
+              revision = kiln.rev;
+              narHash = kiln.narHash;
+              packages = builtins.filter (package: package.name == "kiln-core") facts.lock.package;
+            };
+            kilnPackaging = {
+              workspace = builtins.fromTOML (builtins.readFile "${kiln}/Cargo.toml");
+              manifest = builtins.fromTOML (builtins.readFile "${kiln}/crates/kiln-core/Cargo.toml");
+              notices = builtins.mapAttrs (
+                name: _: builtins.hashFile "sha256" "${kiln}/${name}"
+              ) checker.kilnNotices;
+            };
             vendor = import ./nix/producer-cargo-vendor.nix {
               inherit pkgs;
               crane = octet.inputs.crane;
               mantleSource = mantle;
+              kilnSource = kiln;
               cargoLock = ./Cargo.lock;
             };
           in
           assert checker.validate facts;
+          assert checker.kilnSelfTest kilnSourceFacts kilnPackaging;
           assert !(checker.validate changed);
           assert
             !(checker.validate (
@@ -938,6 +953,7 @@
               inherit pkgs;
               crane = octet.inputs.crane;
               mantleSource = self.inputs.mantle-build-contract;
+              kilnSource = self.inputs.kiln-core;
               cargoLock = ./Cargo.lock;
             };
             consumer = octet.lib.mkConsumerCheck {
@@ -950,6 +966,10 @@
             };
           in
           consumer.overrideAttrs (old: {
+            # Package-scoped evidence helpers must use the same admitted vendor.
+            passthru = (old.passthru or { }) // {
+              cargoVendorDir = vendor;
+            };
             buildCommand = ''
               export CARGO_HOME="$TMPDIR/cairn-cargo-home"
               mkdir -p "$CARGO_HOME"
