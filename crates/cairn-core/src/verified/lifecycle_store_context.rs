@@ -248,7 +248,7 @@ pub fn resolve_lifecycle_root(observations: &RootResolutionObservations) -> Root
 
     if let Some(selector) = &observations.explicit_lifecycle_store {
         let mut findings = Vec::new();
-        let selected = resolve_locator_store(
+        let selected = resolve_locator(
             &selector.store_id,
             RootResolutionSource::ExplicitLifecycleStore,
             None,
@@ -306,7 +306,7 @@ pub fn resolve_lifecycle_root(observations: &RootResolutionObservations) -> Root
             );
         }
         let mut findings = Vec::new();
-        let selected = resolve_locator_store(
+        let selected = resolve_locator(
             &pointer.store_id,
             RootResolutionSource::ProjectPointer,
             Some(pointer.project_identity.clone()),
@@ -426,7 +426,7 @@ pub fn build_lifecycle_store_context(observations: &ContextObservations) -> Cont
         direct_references: normalized.references,
         specs,
         doctor_findings: findings,
-        boundary: context_boundary(),
+        boundary: boundary(),
     }
 }
 
@@ -498,7 +498,7 @@ fn project_pointer_is_admissible(
     }
 }
 
-fn resolve_locator_store(
+fn resolve_locator(
     store_id: &str,
     source: RootResolutionSource,
     project_identity: Option<String>,
@@ -728,7 +728,7 @@ fn accepted_spec_ids_have_duplicates(specs: &[AcceptedSpecMetadata]) -> bool {
     false
 }
 
-fn context_boundary() -> ContextBoundary {
+fn boundary() -> ContextBoundary {
     ContextBoundary {
         traversal: ReferenceTraversalBoundary::DirectOnly,
         content: ReferenceContentBoundary::AcceptedSpecsOnly,
@@ -788,7 +788,7 @@ mod tests {
     const BOUNDARY_MAX_ANCESTORS: usize = 1;
     const EXPECTED_CONTEXT_SPEC_COUNT: usize = 2;
 
-    fn locator_store(store_id: &str, store_identity: &str) -> LocatorStoreObservation {
+    fn locator_entry(store_id: &str, store_identity: &str) -> LocatorStoreObservation {
         LocatorStoreObservation {
             store_id: store_id.to_string(),
             root: format!("/stores/{store_id}"),
@@ -830,7 +830,7 @@ mod tests {
             native_roots: Vec::new(),
             project_pointers: Vec::new(),
             locator: LocatorSnapshot {
-                stores: vec![locator_store(STORE_ID, STORE_IDENTITY)],
+                stores: vec![locator_entry(STORE_ID, STORE_IDENTITY)],
             },
             fallback: FallbackFacts {
                 current_directory: CURRENT_DIRECTORY.to_string(),
@@ -908,7 +908,7 @@ mod tests {
     }
 
     #[test]
-    fn explicit_lifecycle_store_resolves_only_from_local_locator() {
+    fn explicit_selector_resolves_only_from_local_locator() {
         // r[verify cairn.lifecycle_stores.root_resolution.explicit]
         let mut observations = base_resolution_observations();
         observations.explicit_lifecycle_store = Some(ExplicitLifecycleStoreSelector {
@@ -931,7 +931,7 @@ mod tests {
     }
 
     #[test]
-    fn checked_project_pointer_resolves_registered_store() {
+    fn checked_project_pointer_resolves_registered_entry() {
         // r[verify cairn.lifecycle_stores.project_config.pointer]
         let mut observations = base_resolution_observations();
         observations
@@ -952,7 +952,7 @@ mod tests {
     }
 
     #[test]
-    fn missing_explicit_store_fails_without_implicit_discovery() {
+    fn missing_explicit_selector_fails_without_implicit_discovery() {
         // r[verify cairn.lifecycle_stores.root_resolution.explicit]
         let mut observations = base_resolution_observations();
         observations.explicit_lifecycle_store = Some(ExplicitLifecycleStoreSelector {
@@ -1104,7 +1104,7 @@ mod tests {
                 },
             ],
             locator: LocatorSnapshot {
-                stores: vec![locator_store(STORE_ID, STORE_IDENTITY)],
+                stores: vec![locator_entry(STORE_ID, STORE_IDENTITY)],
             },
             accepted_specs: vec![accepted_snapshot(
                 STORE_ID,
@@ -1129,7 +1129,7 @@ mod tests {
     }
 
     #[test]
-    fn context_is_sorted_and_uses_exact_store_qualified_fetch_commands() {
+    fn references_are_sorted_and_use_exact_fetch_commands() {
         // r[verify cairn.lifecycle_stores.references.index]
         // r[verify cairn.lifecycle_stores.context.healthy]
         let observations = ContextObservations {
@@ -1146,8 +1146,8 @@ mod tests {
             ],
             locator: LocatorSnapshot {
                 stores: vec![
-                    locator_store(STORE_ID, STORE_IDENTITY),
-                    locator_store(OTHER_STORE_ID, OTHER_STORE_IDENTITY),
+                    locator_entry(STORE_ID, STORE_IDENTITY),
+                    locator_entry(OTHER_STORE_ID, OTHER_STORE_IDENTITY),
                 ],
             },
             accepted_specs: vec![
@@ -1182,7 +1182,7 @@ mod tests {
     }
 
     #[test]
-    fn context_uses_direct_accepted_specs_without_authority_promotion() {
+    fn direct_accepted_specs_do_not_promote_authority() {
         // r[verify cairn.lifecycle_stores.references.non_authority]
         // r[verify cairn.lifecycle_stores.boundary.bounded]
         let observations = ContextObservations {
@@ -1193,8 +1193,8 @@ mod tests {
             }],
             locator: LocatorSnapshot {
                 stores: vec![
-                    locator_store(STORE_ID, STORE_IDENTITY),
-                    locator_store(TRANSITIVE_STORE_ID, "b3:transitive"),
+                    locator_entry(STORE_ID, STORE_IDENTITY),
+                    locator_entry(TRANSITIVE_STORE_ID, "b3:transitive"),
                 ],
             },
             accepted_specs: vec![
