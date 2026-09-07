@@ -1,3 +1,10 @@
+macro_rules! root_function_compatibility {
+    ($($local:ident => $root:ident => $reason:literal;)+) => {$(
+        #[cfg_attr(dylint_lib = "octet", allow(renamed_imports, reason = $reason))]
+        pub use crate::verified::lifecycle_store_identity::$local as $root;
+    )+};
+}
+
 pub use crate::verified::archive_compaction::{
     append_compaction_receipt, build_archive_manifest, build_compaction_plan,
     build_compaction_receipt, build_unpack_plan, build_verification_receipt, compaction_chain_hash,
@@ -235,22 +242,32 @@ pub use crate::verified::lifecycle_store_identity::Projection as LifecycleStoreI
 )]
 pub use crate::verified::lifecycle_store_identity::RemoteHint as LifecycleStoreRemoteHint;
 pub use crate::verified::lifecycle_store_identity::{
-    admit_lifecycle_store_identity, admit_lifecycle_store_locator,
-    apply_lifecycle_store_locator_plan, empty_lifecycle_store_locator,
-    lifecycle_store_identity_material, lifecycle_store_locator_plan_hash,
-    lifecycle_store_locator_portable_hash, lifecycle_store_locator_projection,
-    lifecycle_store_source_identity, plan_lifecycle_store_registration,
-    plan_lifecycle_store_unregistration, BLAKE3_IDENTITY_HEX_LENGTH,
-    LIFECYCLE_STORE_CHECKOUT_PATH_MAX_BYTES, LIFECYCLE_STORE_DIAGNOSTIC_MAX_COUNT,
-    LIFECYCLE_STORE_IDENTITY_NON_CLAIMS, LIFECYCLE_STORE_IDENTITY_OBSERVATION_NON_CLAIM,
-    LIFECYCLE_STORE_IDENTITY_READINESS_NON_CLAIM, LIFECYCLE_STORE_IDENTITY_REMOTE_NON_CLAIM,
-    LIFECYCLE_STORE_IDENTITY_SCHEMA_V1, LIFECYCLE_STORE_ID_MAX_BYTES,
-    LIFECYCLE_STORE_LOCAL_EVIDENCE_CLASS, LIFECYCLE_STORE_LOCATOR_MAX_MAPPINGS,
-    LIFECYCLE_STORE_LOCATOR_NON_CLAIM, LIFECYCLE_STORE_LOCATOR_PLAN_SCHEMA_V1,
-    LIFECYCLE_STORE_LOCATOR_SCHEMA_V1, LIFECYCLE_STORE_NON_CLAIMS_MAX_COUNT,
-    LIFECYCLE_STORE_NON_CLAIM_MAX_BYTES, LIFECYCLE_STORE_PORTABLE_FACT_CLASS,
-    LIFECYCLE_STORE_REMOTE_HINT_MAX_BYTES, LIFECYCLE_STORE_REQUIRED_NON_CLAIMS,
+    BLAKE3_IDENTITY_HEX_LENGTH, LIFECYCLE_STORE_CHECKOUT_PATH_MAX_BYTES,
+    LIFECYCLE_STORE_DIAGNOSTIC_MAX_COUNT, LIFECYCLE_STORE_IDENTITY_NON_CLAIMS,
+    LIFECYCLE_STORE_IDENTITY_OBSERVATION_NON_CLAIM, LIFECYCLE_STORE_IDENTITY_READINESS_NON_CLAIM,
+    LIFECYCLE_STORE_IDENTITY_REMOTE_NON_CLAIM, LIFECYCLE_STORE_IDENTITY_SCHEMA_V1,
+    LIFECYCLE_STORE_ID_MAX_BYTES, LIFECYCLE_STORE_LOCAL_EVIDENCE_CLASS,
+    LIFECYCLE_STORE_LOCATOR_MAX_MAPPINGS, LIFECYCLE_STORE_LOCATOR_NON_CLAIM,
+    LIFECYCLE_STORE_LOCATOR_PLAN_SCHEMA_V1, LIFECYCLE_STORE_LOCATOR_SCHEMA_V1,
+    LIFECYCLE_STORE_NON_CLAIMS_MAX_COUNT, LIFECYCLE_STORE_NON_CLAIM_MAX_BYTES,
+    LIFECYCLE_STORE_PORTABLE_FACT_CLASS, LIFECYCLE_STORE_REMOTE_HINT_MAX_BYTES,
+    LIFECYCLE_STORE_REQUIRED_NON_CLAIMS,
 };
+#[rustfmt::skip]
+root_function_compatibility! {
+    admit => admit_lifecycle_store_identity => "Root identity admission.";
+    admit_locator => admit_lifecycle_store_locator => "Root locator admission.";
+    apply_locator_plan => apply_lifecycle_store_locator_plan => "Root locator plan application.";
+    empty_locator => empty_lifecycle_store_locator => "Root empty locator.";
+    locator_projection => lifecycle_store_locator_projection => "Root locator projection.";
+    material => lifecycle_store_identity_material => "Root identity material.";
+    plan_hash => lifecycle_store_locator_plan_hash => "Root locator plan hash.";
+    plan_registration => plan_lifecycle_store_registration => "Root registration plan.";
+    plan_unregistration => plan_lifecycle_store_unregistration => "Root unregistration plan.";
+    portable_hash => lifecycle_store_locator_portable_hash => "Root portable hash.";
+    source_digest => lifecycle_store_source_identity => "Root source digest.";
+}
+
 pub use crate::verified::lifecycle_worksets::{
     apply_workset_transition, opener_profile_identity, plan_workset_create, plan_workset_open,
     plan_workset_remove, recheck_workset_open_plan, workset_identity, workset_open_plan_identity,

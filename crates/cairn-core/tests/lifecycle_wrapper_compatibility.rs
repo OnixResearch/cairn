@@ -19,7 +19,7 @@ fn projection() -> cairn_core::LifecycleStoreIdentityProjection {
 }
 
 #[test]
-fn opaque_root_types_remain_usable() {
+fn root_api_remains_usable() {
     // r[verify cairn.lifecycle_stores.identity.valid]
     let admission = cairn_core::admit_lifecycle_store_identity(&projection());
     let _: &cairn_core::LifecycleStoreIdentityAdmission = &admission;
@@ -32,6 +32,8 @@ fn opaque_root_types_remain_usable() {
     let _: &cairn_core::LifecycleStoreNonClaim =
         identity.non_claims.first().expect("required non-claim");
     let _: &cairn_core::LifecycleStoreBlake3Identity = &identity.store_identity;
+    let identity_material = cairn_core::lifecycle_store_identity_material(&identity);
+    assert!(!identity_material.is_empty());
 
     let current = cairn_core::empty_lifecycle_store_locator();
     let _: &cairn_core::LifecycleStoreLocatorState = &current;
@@ -68,13 +70,16 @@ fn opaque_root_types_remain_usable() {
     let _: &cairn_core::LifecycleStoreCheckoutPath = &mapping.checkout_path;
     assert_eq!(mapping.store_id.as_str(), STORE_ID);
 
+    let unregister = cairn_core::plan_lifecycle_store_unregistration(&state, STORE_ID);
+    assert!(!unregister.blocked, "{:?}", unregister.diagnostics);
+
     let persisted = cairn_core::lifecycle_store_locator_projection(&state);
     let mapping_projection = persisted.mappings.first().expect("registered projection");
     let _: &cairn_core::LifecycleStoreLocatorMappingProjection = mapping_projection;
 }
 
 #[test]
-fn opaque_root_types_reject_invalid_projection() {
+fn root_api_rejects_invalid_projection() {
     // r[verify cairn.lifecycle_stores.identity.invalid]
     let mut candidate = projection();
     candidate.store_id = "../escape".to_string();
