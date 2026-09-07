@@ -161,7 +161,7 @@ pub fn inspect_change_collaboration_conflict_value(
         .iter()
         .find(|conflict| &conflict.artifact == artifact)
     else {
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.show.artifact",
             "selected artifact is not currently conflicted",
         ));
@@ -171,19 +171,19 @@ pub fn inspect_change_collaboration_conflict_value(
         .iter()
         .any(|head| head.revision_id == revision_id)
     {
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.show.revision",
             "selected revision is not a current conflict head",
         ));
     }
     let history = state.artifacts.get(artifact).ok_or_else(|| {
-        invalid_resolution(
+        invalid(
             "resolution.show.artifact",
             "selected artifact history is missing",
         )
     })?;
     let revision = history.revisions.get(revision_id).ok_or_else(|| {
-        invalid_resolution(
+        invalid(
             "resolution.show.revision",
             "selected revision history is missing",
         )
@@ -222,7 +222,7 @@ pub fn plan_change_collaboration_resolution(
     validate_resolution_context(state, &snapshot)?;
     let inspection = inspect_change_collaboration_conflicts(state)?;
     if !inspection.has_conflicts() {
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.conflicts",
             "collaboration state has no current conflicts",
         ));
@@ -235,7 +235,7 @@ pub fn plan_change_collaboration_resolution(
     let mut artifact_actions = Vec::with_capacity(selected_artifacts.len());
     for selection in &selected_artifacts {
         let history = state.artifacts.get(&selection.artifact).ok_or_else(|| {
-            invalid_resolution(
+            invalid(
                 "resolution.artifact",
                 "selected artifact history is missing",
             )
@@ -245,13 +245,13 @@ pub fn plan_change_collaboration_resolution(
             .iter()
             .find(|revision| same_operation_id(revision, &selection.revision_id))
             .ok_or_else(|| {
-                invalid_resolution(
+                invalid(
                     "resolution.revision",
                     "selected artifact revision is not a current head",
                 )
             })?;
         let revision = history.revisions.get(selected_revision).ok_or_else(|| {
-            invalid_resolution(
+            invalid(
                 "resolution.revision",
                 "selected artifact revision is missing",
             )
@@ -275,7 +275,7 @@ pub fn plan_change_collaboration_resolution(
         });
     }
     let input_state_hash = inspection.state_hash;
-    let operation_id = resolution_operation_id(
+    let operation_id = operation_id(
         &input_state_hash,
         &snapshot.actor,
         snapshot.is_delegate,
@@ -343,7 +343,7 @@ pub fn apply_planned_change_collaboration_resolution(
         &current_state_hash,
         &plan.input_state_hash,
     ) {
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.input_state_hash",
             "collaboration state changed after planning",
         ));
@@ -364,7 +364,7 @@ pub fn apply_planned_change_collaboration_resolution(
         &state_hash,
         &plan.expected_state_hash,
     ) {
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.expected_state_hash",
             "resolved state does not match the reviewed plan",
         ));
@@ -374,7 +374,7 @@ pub fn apply_planned_change_collaboration_resolution(
         &content_root,
         &plan.expected_content_root,
     ) {
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.expected_content_root",
             "resolved content does not match the reviewed plan",
         ));
@@ -385,16 +385,16 @@ pub fn apply_planned_change_collaboration_resolution(
 pub fn change_collaboration_resolution_plan_hash(
     plan: &ChangeCollaborationResolutionPlan,
 ) -> Result<String, super::radicle_change::ChangeCobError> {
-    resolution_plan_hash(plan)
+    plan_hash(plan)
 }
 
 pub fn change_cob_resolution_plan_hash(
     plan: &ChangeCobResolutionPlan,
 ) -> Result<String, super::radicle_change::ChangeCobError> {
-    resolution_plan_hash(plan)
+    plan_hash(plan)
 }
 
-fn resolution_plan_hash<T: serde::Serialize>(
+fn plan_hash<T: serde::Serialize>(
     plan: &T,
 ) -> Result<String, super::radicle_change::ChangeCobError> {
     let value = serde_json::to_value(plan).map_err(|error| {
@@ -425,7 +425,7 @@ fn validate_resolution_context(
     )
     .map_err(nominal_error)?;
     if state_change != snapshot_change {
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.change_id",
             "snapshot and collaboration state name different changes",
         ));
@@ -443,7 +443,7 @@ fn validate_resolution_context(
     )
     .map_err(nominal_error)?;
     if state_policy != snapshot_policy {
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.policy_hash",
             "current policy does not match collaboration state",
         ));
@@ -484,7 +484,7 @@ fn unique_selections(
             .insert(selection.artifact.clone(), selection.clone())
             .is_some()
         {
-            return Err(invalid_resolution(
+            return Err(invalid(
                 "resolution.selections",
                 "an artifact has more than one selected head",
             ));
@@ -518,14 +518,14 @@ fn validate_complete_selections(
             .difference(&conflicted)
             .cloned()
             .collect::<Vec<_>>();
-        return Err(invalid_resolution(
+        return Err(invalid(
             "resolution.selections",
             format!("selections must cover exactly every conflict; missing {missing:?}, extra {extra:?}"),
         ));
     }
     for conflict in &inspection.artifact_conflicts {
         let selection = selections.get(&conflict.artifact).ok_or_else(|| {
-            invalid_resolution(
+            invalid(
                 "resolution.selections",
                 "conflicted artifact selection is missing",
             )
@@ -535,7 +535,7 @@ fn validate_complete_selections(
             .iter()
             .any(|head| same_operation_id(&head.revision_id, &selection.revision_id))
         {
-            return Err(invalid_resolution(
+            return Err(invalid(
                 "resolution.revision",
                 "selected artifact revision is not a current conflict head",
             ));
@@ -550,7 +550,7 @@ fn validate_lifecycle_selection(
 ) -> Result<(), super::radicle_change::ChangeCobError> {
     if inspection.lifecycle_heads.is_empty() {
         if lifecycle_status.is_some() {
-            return Err(invalid_resolution(
+            return Err(invalid(
                 "resolution.lifecycle",
                 "lifecycle selection was provided without a lifecycle conflict",
             ));
@@ -559,11 +559,11 @@ fn validate_lifecycle_selection(
     }
     match lifecycle_status {
         Some(super::radicle_change::ChangeLifecycleStatus::Open) => Ok(()),
-        Some(_) => Err(invalid_resolution(
+        Some(_) => Err(invalid(
             "resolution.lifecycle",
             "conflicted lifecycle may only be reset explicitly to open",
         )),
-        None => Err(invalid_resolution(
+        None => Err(invalid(
             "resolution.lifecycle",
             "lifecycle conflict requires explicit open reset",
         )),
@@ -596,12 +596,10 @@ fn require_conflict_free_result(
 ) -> Result<(), super::radicle_change::ChangeCobError> {
     let _content_root = super::collaboration_change::change_collaboration_content_root(state)?;
     match super::collaboration_change::change_collaboration_lifecycle_view(state)? {
-        super::radicle_change::ChangeLifecycleView::Conflicted { revisions } => {
-            Err(invalid_resolution(
-                "resolution.result.lifecycle",
-                format!("resolution left lifecycle heads conflicted: {revisions:?}"),
-            ))
-        }
+        super::radicle_change::ChangeLifecycleView::Conflicted { revisions } => Err(invalid(
+            "resolution.result.lifecycle",
+            format!("resolution left lifecycle heads conflicted: {revisions:?}"),
+        )),
         super::radicle_change::ChangeLifecycleView::ContentConflicted { artifacts } => {
             Err(super::radicle_change::ChangeCobError::ArtifactConflict { artifacts })
         }
@@ -642,13 +640,13 @@ fn nominal_error(
     }
 }
 
-fn resolution_operation_id(
+fn operation_id(
     input_state_hash: &str,
     actor: &str,
     is_delegate: bool,
     actions: &[super::collaboration_change::Action],
 ) -> Result<String, super::radicle_change::ChangeCobError> {
-    let value = serde_json::to_value(ResolutionOperationIdentity {
+    let value = serde_json::to_value(OperationIdentity {
         domain: RESOLUTION_OPERATION_DOMAIN,
         input_state_hash,
         actor,
@@ -666,10 +664,7 @@ fn resolution_operation_id(
     Ok(operation.as_str().to_owned())
 }
 
-fn invalid_resolution(
-    field: &str,
-    reason: impl Into<String>,
-) -> super::radicle_change::ChangeCobError {
+fn invalid(field: &str, reason: impl Into<String>) -> super::radicle_change::ChangeCobError {
     super::radicle_change::ChangeCobError::InvalidField {
         field: field.to_string(),
         reason: reason.into(),
@@ -677,7 +672,7 @@ fn invalid_resolution(
 }
 
 #[derive(serde::Serialize)]
-struct ResolutionOperationIdentity<'a> {
+struct OperationIdentity<'a> {
     domain: &'a str,
     input_state_hash: &'a str,
     actor: &'a str,
@@ -908,7 +903,7 @@ mod tests {
 
     // r[verify cairn.collaboration_resolution.plan.blocked]
     #[test]
-    fn incomplete_duplicate_stale_unauthorized_and_drifted_resolution_fail_closed() {
+    fn incomplete_duplicate_stale_unauthorized_and_drifted_input_fails_closed() {
         let state = conflicted_state();
         let mut missing = snapshot();
         missing.artifact_selections.pop();
