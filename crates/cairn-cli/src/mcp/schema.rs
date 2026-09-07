@@ -238,6 +238,7 @@ fn mcp_input_schema(name: &str) -> Value {
             "additionalProperties": false,
             "properties": {
                 "input": {"type": "object", "description": "Admitted cairn.verification-impact.v1 source comparison"},
+                "evidence": {"type": "object", "description": "Optional source-bound structural observations; no completion authority"},
                 "root": {"type": "string", "description": mcp_argument_description("root")},
                 "change": {"type": "string", "description": mcp_argument_description("change")},
                 "contract": {"type": "string"},
@@ -422,6 +423,7 @@ fn validate_verification_impact_args(
     for key in object.keys() {
         if ![
             "input",
+            "evidence",
             "root",
             "change",
             "contract",
@@ -441,9 +443,22 @@ fn validate_verification_impact_args(
     if !input.is_object() {
         return Err(format!("invalid arguments for {tool}: input must be an object").into());
     }
+    if object
+        .get("evidence")
+        .is_some_and(|value| !value.is_object())
+    {
+        return Err(format!("invalid arguments for {tool}: evidence must be an object").into());
+    }
     for key in ["root", "change", "contract", "profiles", "applicability"] {
-        if object.get(key).is_some_and(|value| !value.is_string()) {
-            return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+        if object.get(key).is_some_and(|value| {
+            value
+                .as_str()
+                .is_none_or(|text| text.is_empty() || text.starts_with("--"))
+        }) {
+            return Err(format!(
+                "invalid arguments for {tool}: {key} must be a nonempty string, not an option"
+            )
+            .into());
         }
     }
     Ok(())

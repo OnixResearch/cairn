@@ -111,6 +111,19 @@ let SourceComparison = {
   check_map | CheckMap,
   prior_evidence | BoundedArray MaximumPriorEvidence | Array PriorEvidence,
 } in
+# Native receipt shape remains owned by the pinned check_evidence translator.
+# Valence span admission is unavailable at the current reviewed producer pin.
+let StructuralEvidence = {
+  schema_version | std.contract.from_predicate (fun value => value == "cairn.verification-impact-evidence.v1"),
+  source_identity | Digest,
+  scope | Scope,
+  octet | optional | {
+    producer_revision | std.contract.from_predicate (fun value => value == "890f424cd7b1b2015f39c0eb5747f1bd1e576028"),
+    receipt_hash | Digest,
+    receipt,
+  },
+  valence | optional,
+} in
 let Uncertainty = {
   code | Label,
   target | String,
@@ -131,6 +144,7 @@ let Explanation = {
   requirement_edge = RequirementEdge,
   check_map = CheckMap,
   source_comparison = SourceComparison,
+  structural_evidence = StructuralEvidence,
   applicability = Applicability,
   prior_evidence = PriorEvidence,
   uncertainty = Uncertainty,

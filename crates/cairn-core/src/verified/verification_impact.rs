@@ -1,3 +1,5 @@
+pub mod adapters;
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
@@ -333,7 +335,7 @@ pub fn derive_verification_impact(input: &VerificationImpactInput) -> Verificati
             reason: "mandatory_check_preserved".to_string(),
         });
     }
-    if !uncertainty.is_empty() {
+    if uncertainty.is_empty() {
         selected.extend(input.check_map.default_check_ids.iter().cloned());
         for check_id in &input.check_map.default_check_ids {
             causal_paths.push(VerificationImpactCausalPath {
@@ -1386,6 +1388,64 @@ mod tests {
             .iter()
             .map(|issue| issue.code.clone())
             .collect()
+    }
+
+    #[test]
+    // r[verify cairn.verification_impact.uncertainty]
+    fn structural_admission_preserves_fallback_and_rejects_substitutions() {
+        use super::adapters::*;
+        use crate::verified::check_evidence::OCTET_REVISION;
+        let input = base_input();
+        let receipt = serde_json::from_str(include_str!(
+            "../../../../fixtures/check-evidence/octet-producer-fixture.json"
+        ))
+        .expect("published Octet fixture");
+        let evidence = VerificationStructuralEvidence {
+            schema_version: STRUCTURAL_EVIDENCE_SCHEMA.to_string(),
+            source_identity: input.after_manifest.identity.clone(),
+            scope: input.after_manifest.scope.clone(),
+            octet: Some(BoundOctetReceipt {
+                producer_revision: OCTET_REVISION.to_string(),
+                receipt_hash: canonical_json_hash(&receipt),
+                receipt,
+            }),
+            valence: None,
+        };
+        let admitted = admit_verification_structural_evidence(&input, Some(&evidence));
+        assert!(admitted.valid);
+        assert!(!admitted.completion_eligible);
+        assert!(!admitted.octet.unwrap().completion_eligible);
+        assert_eq!(admitted.selection_scope, DECLARED_LINK_FALLBACK);
+        let fallback = admit_verification_structural_evidence(&input, None);
+        assert!(fallback.valid);
+        assert_eq!(fallback.selection_scope, DECLARED_LINK_FALLBACK);
+        for field in [
+            "schema", "source", "target", "features", "cohort", "hash", "receipt", "valence",
+        ] {
+            let mut bad = evidence.clone();
+            match field {
+                "schema" => bad.schema_version = "substituted".into(),
+                "source" => bad.source_identity = hash('c'),
+                "target" => bad.scope.target = "wasm32-unknown-unknown".into(),
+                "features" => bad.scope.features.clear(),
+                "cohort" => bad.octet.as_mut().unwrap().producer_revision = "substituted".into(),
+                "hash" => bad.octet.as_mut().unwrap().receipt_hash = hash('c'),
+                "receipt" => {
+                    let octet = bad.octet.as_mut().unwrap();
+                    octet.receipt["schema_version"] = json!("substituted");
+                    octet.receipt_hash = canonical_json_hash(&octet.receipt);
+                }
+                "valence" => {
+                    bad.valence =
+                        Some(json!({"schema":"valence.evidence-admission.v1", "valid":true}))
+                }
+                _ => unreachable!(),
+            }
+            let report = admit_verification_structural_evidence(&input, Some(&bad));
+            assert!(!report.valid, "admitted {field}");
+            assert!(report.octet.is_none());
+            assert!(!report.completion_eligible);
+        }
     }
 
     #[test]

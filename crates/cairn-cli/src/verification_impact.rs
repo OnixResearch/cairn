@@ -1,5 +1,8 @@
 use std::{collections::BTreeMap, error::Error, path::Path};
 
+use cairn_core::verified::verification_impact::adapters::{
+    admit_verification_structural_evidence, VerificationStructuralEvidence,
+};
 use cairn_core::{canonical_json_hash, derive_verification_impact, VerificationImpactInput};
 use serde_json::{json, Value};
 
@@ -27,7 +30,7 @@ pub(crate) fn guidance_value_from_mcp(input: &Value) -> Result<Value, Box<dyn Er
         profiles: input["profiles"].as_str().map(ToString::to_string),
         applicability: input["applicability"].as_str().map(ToString::to_string),
     };
-    derive_value(source, &request)
+    derive_value(source, input.get("evidence").cloned(), &request)
 }
 
 fn guidance_value(args: &[String]) -> Result<Value, Box<dyn Error>> {
@@ -37,6 +40,13 @@ fn guidance_value(args: &[String]) -> Result<Value, Box<dyn Error>> {
     let root = CapabilityRoot::open(CapabilityRootKind::Repository, Path::new(root_path))?;
     let bytes = root.read_bounded(Path::new(input_path), MAX_INPUT_BYTES)?;
     let input = serde_json::from_slice(&bytes)?;
+    let evidence = options
+        .get("--evidence")
+        .map(|path| {
+            let bytes = root.read_bounded(Path::new(path), MAX_INPUT_BYTES)?;
+            Ok::<Value, Box<dyn Error>>(serde_json::from_slice(&bytes)?)
+        })
+        .transpose()?;
     let request = GuidanceRequest {
         root: root_path.to_string(),
         change: options.get("--change").map(|value| (*value).to_string()),
@@ -46,23 +56,40 @@ fn guidance_value(args: &[String]) -> Result<Value, Box<dyn Error>> {
             .get("--applicability")
             .map(|value| (*value).to_string()),
     };
-    derive_value(input, &request)
+    derive_value(input, evidence, &request)
 }
 
-fn derive_value(input: Value, request: &GuidanceRequest) -> Result<Value, Box<dyn Error>> {
+fn derive_value(
+    input: Value,
+    evidence: Option<Value>,
+    request: &GuidanceRequest,
+) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.verification_impact.interfaces]
+    let plan_parts = [&request.contract, &request.profiles, &request.applicability];
+    if plan_parts.iter().any(|part| part.is_some()) && plan_parts.iter().any(|part| part.is_none())
+    {
+        return Err(
+            "producer-plan request requires contract, profiles, and applicability together".into(),
+        );
+    }
+    let input_hash = canonical_json_hash(&json!({"input":input,"evidence":evidence}));
     let impact: VerificationImpactInput = serde_json::from_value(input)?;
+    let evidence: Option<VerificationStructuralEvidence> =
+        evidence.map(serde_json::from_value).transpose()?;
+    let admission = admit_verification_structural_evidence(&impact, evidence.as_ref());
     let report = derive_verification_impact(&impact);
+    let valid = report.valid && admission.valid;
     let report_value = json!(report);
     Ok(json!({
         "schema": "cairn.verification-impact-guidance.v1",
-        "valid": report_value["valid"],
+        "valid": valid,
         "checks_executed": false,
         "mutation_authorized": false,
         "read_only": true,
-        "input_hash": canonical_json_hash(&report_value),
+        "input_hash": input_hash,
         "report": report_value,
-        "actions": guidance_actions(request),
+        "structural_evidence": admission,
+        "actions": if valid { guidance_actions(request) } else { Vec::new() },
     }))
 }
 
@@ -72,6 +99,10 @@ fn guidance_actions(request: &GuidanceRequest) -> Vec<Value> {
         actions.push(json!({
             "kind": "unified_readiness",
             "command": format!("cairn readiness {} --root {}", change, request.root),
+            "command_is_display_only": true,
+            "argv": ["cairn", "readiness", change, "--root", &request.root],
+            "tool": "cairn_readiness",
+            "arguments": {"change": change, "root": request.root},
             "mutation_authorized": false,
             "full_gate_authoritative": true,
         }));
@@ -85,6 +116,11 @@ fn guidance_actions(request: &GuidanceRequest) -> Vec<Value> {
                 "cairn check-evidence plan --root {} --contract {} --profiles {} --applicability {}",
                 request.root, contract, profiles, applicability
             ),
+            "command_is_display_only": true,
+            "argv": ["cairn", "check-evidence", "plan", "--root", &request.root,
+                "--contract", contract, "--profiles", profiles, "--applicability", applicability],
+            "arguments": {"root": request.root, "contract": contract,
+                "profiles": profiles, "applicability": applicability},
             "checks_executed": false,
             "publication_performed": false,
             "requires_operator_review": true,
@@ -112,6 +148,7 @@ fn named_options(args: &[String]) -> Result<BTreeMap<&str, &str>, Box<dyn Error>
         "--contract",
         "--profiles",
         "--applicability",
+        "--evidence",
     ];
     let mut options = BTreeMap::new();
     for pair in args.chunks_exact(2) {
