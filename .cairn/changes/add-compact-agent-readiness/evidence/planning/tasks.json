@@ -1,0 +1,327 @@
+{
+  "acceptance_ids": [],
+  "change": "add-compact-agent-readiness",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "fcd4372212864b2ca8e1f475d99fde74c3a3ca43a80058fffc811eaa45446fd2",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "policy_selection": {
+    "blake3": "7a67802377005c18ebded42899e7f564f5d87087b6c14ca70464b35886f340a9",
+    "installation_receipt": false,
+    "locator": "cairn-policy/generated/cairn-policy.json",
+    "source": "legacy_default"
+  },
+  "probe_evidence": {
+    "declarations_present": false,
+    "probes": []
+  },
+  "profile_identity_hash": "a09e7db9c77f971cc57a4c91a752c80171b7b16d2f53ce06fa5eae1a8c67944b",
+  "receipt_hash": "bd9b6db0e35c9e2dd73944f8f2b8d9e685fc1b4103cbaace0dbc2f06b919c3e1",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "tasks",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "design",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-compact-agent-readiness/design.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 40,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-compact-agent-readiness/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 24,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-compact-agent-readiness/specs/unified-change-readiness/spec.md",
+      "requirement_blocks": 5,
+      "scenario_blocks": 10,
+      "substantive_lines": 35,
+      "substantive_requirement_blocks": 5,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 11,
+      "kind": "tasks",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-compact-agent-readiness/tasks.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 14,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 11,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 11
+    }
+  ],
+  "task_ordering": {
+    "active": true,
+    "edges": [
+      {
+        "predecessor": "negative",
+        "task": "benchmark"
+      },
+      {
+        "predecessor": "baseline",
+        "task": "contracts"
+      },
+      {
+        "predecessor": "transport",
+        "task": "detail"
+      },
+      {
+        "predecessor": "benchmark",
+        "task": "docs"
+      },
+      {
+        "predecessor": "verify",
+        "task": "handoff"
+      },
+      {
+        "predecessor": "positive",
+        "task": "negative"
+      },
+      {
+        "predecessor": "detail",
+        "task": "positive"
+      },
+      {
+        "predecessor": "contracts",
+        "task": "projection"
+      },
+      {
+        "predecessor": "projection",
+        "task": "transport"
+      },
+      {
+        "predecessor": "docs",
+        "task": "verify"
+      }
+    ],
+    "issues": [],
+    "nodes": [
+      {
+        "blocked_by": [],
+        "blocks": [
+          "contracts"
+        ],
+        "id": "baseline",
+        "line": 5,
+        "predecessors": [],
+        "ready": true,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "negative"
+        ],
+        "blocks": [
+          "docs"
+        ],
+        "id": "benchmark",
+        "line": 15,
+        "predecessors": [
+          "negative"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "baseline"
+        ],
+        "blocks": [
+          "projection"
+        ],
+        "id": "contracts",
+        "line": 6,
+        "predecessors": [
+          "baseline"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "transport"
+        ],
+        "blocks": [
+          "positive"
+        ],
+        "id": "detail",
+        "line": 9,
+        "predecessors": [
+          "transport"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "benchmark"
+        ],
+        "blocks": [
+          "verify"
+        ],
+        "id": "docs",
+        "line": 16,
+        "predecessors": [
+          "benchmark"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "verify"
+        ],
+        "blocks": [],
+        "id": "handoff",
+        "line": 18,
+        "predecessors": [
+          "verify"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "positive"
+        ],
+        "blocks": [
+          "benchmark"
+        ],
+        "id": "negative",
+        "line": 14,
+        "predecessors": [
+          "positive"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "detail"
+        ],
+        "blocks": [
+          "negative"
+        ],
+        "id": "positive",
+        "line": 13,
+        "predecessors": [
+          "detail"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "contracts"
+        ],
+        "blocks": [
+          "transport"
+        ],
+        "id": "projection",
+        "line": 7,
+        "predecessors": [
+          "contracts"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "projection"
+        ],
+        "blocks": [
+          "detail"
+        ],
+        "id": "transport",
+        "line": 8,
+        "predecessors": [
+          "projection"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "docs"
+        ],
+        "blocks": [
+          "handoff"
+        ],
+        "id": "verify",
+        "line": 17,
+        "predecessors": [
+          "docs"
+        ],
+        "ready": false,
+        "state": "todo"
+      }
+    ],
+    "order": [
+      "baseline",
+      "contracts",
+      "projection",
+      "transport",
+      "detail",
+      "positive",
+      "negative",
+      "benchmark",
+      "docs",
+      "verify",
+      "handoff"
+    ],
+    "ready_tasks": [
+      "baseline"
+    ],
+    "valid": true
+  },
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

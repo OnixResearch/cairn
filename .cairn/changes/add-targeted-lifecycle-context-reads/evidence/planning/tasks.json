@@ -1,0 +1,327 @@
+{
+  "acceptance_ids": [],
+  "change": "add-targeted-lifecycle-context-reads",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "5cff342f8a7695e44def112f554a99bfc5d888856a849e882145cf1004ae8717",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "policy_selection": {
+    "blake3": "7a67802377005c18ebded42899e7f564f5d87087b6c14ca70464b35886f340a9",
+    "installation_receipt": false,
+    "locator": "cairn-policy/generated/cairn-policy.json",
+    "source": "legacy_default"
+  },
+  "probe_evidence": {
+    "declarations_present": false,
+    "probes": []
+  },
+  "profile_identity_hash": "8d03dc49ac93b825fdb41966d9830c737346d2d2e55d565dfbd4fb7d8367c1dc",
+  "receipt_hash": "73593da542c8fc3bc511dcd597e07593d6b7423bd8602360ec332b6326e4f7a2",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "tasks",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "design",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/design.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 38,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 23,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/specs/lifecycle-context-reads/spec.md",
+      "requirement_blocks": 5,
+      "scenario_blocks": 10,
+      "substantive_lines": 35,
+      "substantive_requirement_blocks": 5,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 11,
+      "kind": "tasks",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/tasks.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 14,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 11,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 11
+    }
+  ],
+  "task_ordering": {
+    "active": true,
+    "edges": [
+      {
+        "predecessor": "negative",
+        "task": "benchmark"
+      },
+      {
+        "predecessor": "selectors",
+        "task": "context"
+      },
+      {
+        "predecessor": "baseline",
+        "task": "contracts"
+      },
+      {
+        "predecessor": "benchmark",
+        "task": "docs"
+      },
+      {
+        "predecessor": "verify",
+        "task": "handoff"
+      },
+      {
+        "predecessor": "positive",
+        "task": "negative"
+      },
+      {
+        "predecessor": "transport",
+        "task": "positive"
+      },
+      {
+        "predecessor": "contracts",
+        "task": "selectors"
+      },
+      {
+        "predecessor": "context",
+        "task": "transport"
+      },
+      {
+        "predecessor": "docs",
+        "task": "verify"
+      }
+    ],
+    "issues": [],
+    "nodes": [
+      {
+        "blocked_by": [],
+        "blocks": [
+          "contracts"
+        ],
+        "id": "baseline",
+        "line": 5,
+        "predecessors": [],
+        "ready": true,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "negative"
+        ],
+        "blocks": [
+          "docs"
+        ],
+        "id": "benchmark",
+        "line": 15,
+        "predecessors": [
+          "negative"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "selectors"
+        ],
+        "blocks": [
+          "transport"
+        ],
+        "id": "context",
+        "line": 8,
+        "predecessors": [
+          "selectors"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "baseline"
+        ],
+        "blocks": [
+          "selectors"
+        ],
+        "id": "contracts",
+        "line": 6,
+        "predecessors": [
+          "baseline"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "benchmark"
+        ],
+        "blocks": [
+          "verify"
+        ],
+        "id": "docs",
+        "line": 16,
+        "predecessors": [
+          "benchmark"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "verify"
+        ],
+        "blocks": [],
+        "id": "handoff",
+        "line": 18,
+        "predecessors": [
+          "verify"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "positive"
+        ],
+        "blocks": [
+          "benchmark"
+        ],
+        "id": "negative",
+        "line": 14,
+        "predecessors": [
+          "positive"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "transport"
+        ],
+        "blocks": [
+          "negative"
+        ],
+        "id": "positive",
+        "line": 13,
+        "predecessors": [
+          "transport"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "contracts"
+        ],
+        "blocks": [
+          "context"
+        ],
+        "id": "selectors",
+        "line": 7,
+        "predecessors": [
+          "contracts"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "context"
+        ],
+        "blocks": [
+          "positive"
+        ],
+        "id": "transport",
+        "line": 9,
+        "predecessors": [
+          "context"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "docs"
+        ],
+        "blocks": [
+          "handoff"
+        ],
+        "id": "verify",
+        "line": 17,
+        "predecessors": [
+          "docs"
+        ],
+        "ready": false,
+        "state": "todo"
+      }
+    ],
+    "order": [
+      "baseline",
+      "contracts",
+      "selectors",
+      "context",
+      "transport",
+      "positive",
+      "negative",
+      "benchmark",
+      "docs",
+      "verify",
+      "handoff"
+    ],
+    "ready_tasks": [
+      "baseline"
+    ],
+    "valid": true
+  },
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}
