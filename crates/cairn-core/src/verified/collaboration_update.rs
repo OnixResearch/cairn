@@ -62,8 +62,8 @@ pub fn plan_change_collaboration_update(
     let input_state_hash = super::collaboration_change::change_collaboration_state_hash(state)?;
     let input_content_root = require_conflict_free_state(state)?;
     let desired = desired_artifacts(&snapshot)?;
-    let actions = artifact_update_actions(state, desired)?;
-    let operation_id = update_operation_id(
+    let actions = artifact_actions(state, desired)?;
+    let operation_id = derive_operation_id(
         &input_state_hash,
         &snapshot.actor,
         snapshot.is_delegate,
@@ -174,16 +174,16 @@ pub fn apply_planned_change_collaboration_update(
 pub fn change_collaboration_update_plan_hash(
     plan: &ChangeCollaborationUpdatePlan,
 ) -> Result<String, super::radicle_change::ChangeCobError> {
-    update_plan_hash(plan)
+    hash_plan(plan)
 }
 
 pub fn change_cob_update_plan_hash(
     plan: &ChangeCobUpdatePlan,
 ) -> Result<String, super::radicle_change::ChangeCobError> {
-    update_plan_hash(plan)
+    hash_plan(plan)
 }
 
-fn update_plan_hash<T: serde::Serialize>(
+fn hash_plan<T: serde::Serialize>(
     plan: &T,
 ) -> Result<String, super::radicle_change::ChangeCobError> {
     let value = serde_json::to_value(plan).map_err(|error| {
@@ -324,7 +324,7 @@ fn insert_present_artifact(
     }
 }
 
-fn artifact_update_actions(
+fn artifact_actions(
     state: &super::collaboration_change::State,
     desired: std::collections::BTreeMap<super::radicle_change::ChangeArtifactId, String>,
 ) -> Result<Vec<super::collaboration_change::Action>, super::radicle_change::ChangeCobError> {
@@ -391,13 +391,13 @@ fn nominal_error(
     }
 }
 
-fn update_operation_id(
+fn derive_operation_id(
     input_state_hash: &str,
     actor: &str,
     is_delegate: bool,
     actions: &[super::collaboration_change::Action],
 ) -> Result<String, super::radicle_change::ChangeCobError> {
-    let identity = UpdateOperationIdentity {
+    let identity = OperationIdentity {
         domain: UPDATE_OPERATION_DOMAIN,
         input_state_hash,
         actor,
@@ -413,7 +413,7 @@ fn update_operation_id(
 }
 
 #[derive(serde::Serialize)]
-struct UpdateOperationIdentity<'a> {
+struct OperationIdentity<'a> {
     domain: &'a str,
     input_state_hash: &'a str,
     actor: &'a str,
@@ -505,7 +505,7 @@ mod tests {
 
     // r[verify cairn.collaboration_update.plan.noop]
     #[test]
-    fn byte_equivalent_update_is_noop() {
+    fn byte_equivalent_change_is_noop() {
         let state = state();
         let plan = plan_change_collaboration_update(
             &state,
