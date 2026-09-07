@@ -11,7 +11,7 @@ pub type ChangeCollaborationEvidence = super::radicle_change::ChangeCobEvidence;
 pub type ChangeCollaborationError = super::radicle_change::ChangeCobError;
 
 #[derive(Debug)]
-struct AdmittedCollaborationInit {
+struct AdmittedInit {
     change_id: super::nominal_identity::ChangeId,
     workspace_id: super::nominal_identity::WorkspaceId,
     policy_hash: super::nominal_identity::PolicyDigest,
@@ -19,13 +19,13 @@ struct AdmittedCollaborationInit {
 }
 
 #[derive(Debug)]
-struct AdmittedCollaborationOperation {
+struct AdmittedOperation {
     id: super::nominal_identity::OperationId,
     actor: super::nominal_identity::ActorId,
 }
 
 #[derive(Debug)]
-struct AdmittedCollaborationState {
+struct AdmittedState {
     change_id: super::nominal_identity::ChangeId,
     workspace_id: super::nominal_identity::WorkspaceId,
     policy_hash: super::nominal_identity::PolicyDigest,
@@ -281,7 +281,7 @@ fn operation_into_compatibility(
     enforce_nominal: bool,
 ) -> Result<super::radicle_change::ChangeCobOperation, ChangeCollaborationError> {
     let identities = if enforce_nominal {
-        Some(admit_collaboration_operation(&operation)?)
+        Some(admit_operation(&operation)?)
     } else {
         None
     };
@@ -371,8 +371,8 @@ fn init_to_compatibility(
 
 fn admit_collaboration_init(
     init: &ChangeCollaborationInit,
-) -> Result<AdmittedCollaborationInit, ChangeCollaborationError> {
-    Ok(AdmittedCollaborationInit {
+) -> Result<AdmittedInit, ChangeCollaborationError> {
+    Ok(AdmittedInit {
         change_id: super::nominal_identity::ChangeId::parse(
             &init.change_id,
             "collaboration.change_id",
@@ -393,10 +393,10 @@ fn admit_collaboration_init(
     })
 }
 
-fn admit_collaboration_operation(
+fn admit_operation(
     operation: &ChangeCollaborationOperation,
-) -> Result<AdmittedCollaborationOperation, ChangeCollaborationError> {
-    Ok(AdmittedCollaborationOperation {
+) -> Result<AdmittedOperation, ChangeCollaborationError> {
+    Ok(AdmittedOperation {
         id: super::nominal_identity::OperationId::parse(
             &operation.id,
             "collaboration.operation_id",
@@ -409,8 +409,8 @@ fn admit_collaboration_operation(
 
 fn admit_collaboration_state(
     state: &ChangeCollaborationState,
-) -> Result<AdmittedCollaborationState, ChangeCollaborationError> {
-    Ok(AdmittedCollaborationState {
+) -> Result<AdmittedState, ChangeCollaborationError> {
+    Ok(AdmittedState {
         change_id: super::nominal_identity::ChangeId::parse(
             &state.change_id,
             "collaboration.change_id",
