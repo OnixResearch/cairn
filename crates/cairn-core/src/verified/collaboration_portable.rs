@@ -43,9 +43,9 @@ pub fn build_portable_change_collaboration(
 ) -> Result<PortableChangeCollaboration, PortableChangeCollaborationError> {
     require_neutral_state(&state)?;
     super::collaboration_change::validate_change_collaboration_state(&state)?;
-    let content_root = portable_content_root(&state)?;
+    let content_root = derive_content_root(&state)?;
     let state_hash = super::collaboration_change::change_collaboration_state_hash(&state)?;
-    let envelope_hash = portable_envelope_hash(&state, &content_root, &state_hash)?;
+    let envelope_hash = hash_envelope(&state, &content_root, &state_hash)?;
     Ok(PortableChangeCollaboration {
         schema: PORTABLE_COLLABORATION_SCHEMA_V1.to_string(),
         backend: PORTABLE_COLLABORATION_BACKEND_V1.to_string(),
@@ -74,7 +74,7 @@ pub fn validate_portable_change_collaboration(
     }
     require_neutral_state(&envelope.state)?;
     super::collaboration_change::validate_change_collaboration_state(&envelope.state)?;
-    let content_root = portable_content_root(&envelope.state)?;
+    let content_root = derive_content_root(&envelope.state)?;
     if content_root != envelope.content_root {
         return Err(PortableChangeCollaborationError::ContentRootMismatch {
             stated: envelope.content_root.clone(),
@@ -88,7 +88,7 @@ pub fn validate_portable_change_collaboration(
             computed: state_hash,
         });
     }
-    let envelope_hash = portable_envelope_hash(
+    let envelope_hash = hash_envelope(
         &envelope.state,
         &envelope.content_root,
         &envelope.state_hash,
@@ -102,7 +102,7 @@ pub fn validate_portable_change_collaboration(
     Ok(envelope.state.clone())
 }
 
-fn portable_content_root(
+fn derive_content_root(
     state: &super::collaboration_change::ChangeCollaborationState,
 ) -> Result<Option<String>, PortableChangeCollaborationError> {
     match super::collaboration_change::change_collaboration_content_root(state) {
@@ -123,12 +123,12 @@ fn require_neutral_state(
     })
 }
 
-fn portable_envelope_hash(
+fn hash_envelope(
     state: &super::collaboration_change::ChangeCollaborationState,
     content_root: &Option<String>,
     state_hash: &str,
 ) -> Result<String, PortableChangeCollaborationError> {
-    let identity = PortableEnvelopeIdentity {
+    let identity = EnvelopeIdentity {
         schema: PORTABLE_COLLABORATION_SCHEMA_V1,
         backend: PORTABLE_COLLABORATION_BACKEND_V1,
         state,
@@ -144,7 +144,7 @@ fn portable_envelope_hash(
 }
 
 #[derive(serde::Serialize)]
-struct PortableEnvelopeIdentity<'a> {
+struct EnvelopeIdentity<'a> {
     schema: &'a str,
     backend: &'a str,
     state: &'a super::collaboration_change::ChangeCollaborationState,
@@ -188,7 +188,7 @@ mod tests {
 
     // r[verify cairn.collaboration_backend.portable_state.roundtrip]
     #[test]
-    fn portable_round_trip_preserves_exact_state_and_hashes() {
+    fn round_trip_preserves_exact_state_and_hashes() {
         let state = state();
         let envelope = build_portable_change_collaboration(state.clone()).unwrap();
         let legacy_identity = serde_json::json!({
@@ -222,7 +222,7 @@ mod tests {
     }
 
     #[test]
-    fn portable_round_trip_preserves_conflicted_state_without_claiming_content_root() {
+    fn round_trip_preserves_conflicted_state_without_claiming_content_root() {
         let mut state = state();
         let basis = std::collections::BTreeSet::from([OPERATION_ID.to_string()]);
         for (operation_id, content) in [
@@ -256,7 +256,7 @@ mod tests {
 
     // r[verify cairn.collaboration_backend.portable_state.tamper]
     #[test]
-    fn portable_validation_rejects_labels_hashes_and_state_tampering() {
+    fn validation_rejects_labels_hashes_and_state_tampering() {
         let envelope = build_portable_change_collaboration(state()).unwrap();
         let mut cases = Vec::new();
 
@@ -303,7 +303,7 @@ mod tests {
         recomputed.state_hash =
             super::super::collaboration_change::change_collaboration_state_hash(&recomputed.state)
                 .unwrap();
-        recomputed.envelope_hash = portable_envelope_hash(
+        recomputed.envelope_hash = hash_envelope(
             &recomputed.state,
             &recomputed.content_root,
             &recomputed.state_hash,
