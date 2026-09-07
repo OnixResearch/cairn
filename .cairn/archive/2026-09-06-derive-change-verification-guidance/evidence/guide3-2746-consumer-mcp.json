@@ -1,0 +1,161 @@
+{
+  "content": [
+    {
+      "text": "cairn_verification_impact: {\"actions\":[{\"arguments\":{\"change\":\"derive-change-verification-guidance\",\"root\":\".\"},\"argv\":[\"cairn\",\"readiness\",\"derive-change-verification-guidance\",\"--root\",\".\"],\"command\":\"cairn readiness derive-change-verification-guidance --root .\",\"command_is_display_only\":true,\"full_gate_authoritative\":true,\"kind\":\"unified_readiness\",\"mutation_authorized\":false,\"tool\":\"cairn_readiness\"},{\"arguments\":{\"applicability\":\"applicability.json\",\"contract\":\"contract with spaces; not-executed.json\",\"profiles\":\"profiles.json\",\"root\":\".\"},\"argv\":[\"cairn\",\"check-evidence\",\"plan\",\"--root\",\".\",\"--contract\",\"contract with spaces; not-executed.json\",\"--profiles\",\"profiles.json\",\"--applicability\",\"applicability.json\"],\"checks_executed\":false,\"command\":\"cairn check-evidence plan --root . --contract contract with spaces; not-executed.json --profiles profiles.json --applicability applicability.json\",\"command_is_display_only\":true,\"kind\":\"check_evidence_plan_request\",\"publication_performed\":false,\"requires_operator_review\":true}],\"checks_executed\":false,\"input_hash\":\"06cc1b32bcb3e8d227bf89d733d3f0ac1bf5997c5eb95887f7eb0c05be74b220\",\"mutation_authorized\":false,\"read_only\":true,\"report\":{\"affected_requirements\":[\"cairn.verification_impact.interfaces\"],\"after_source_identity\":\"4c89ff2430c7b65bd02e3ceb129ab884a9b79d6b50134773832b80cf6f60c735\",\"before_source_identity\":\"41c6d6095ca9e73bba1d7a32280975ae5ba9ad4ee290d8351e57e5420dbe47a6\",\"blockers\":[],\"boundary\":\"verification impact guidance is advisory check selection over admitted source, trace, and check-map facts; it does not execute checks, prove independence, satisfy full gates, or authorize evidence reuse\",\"causal_paths\":[{\"check_id\":\"policy-fresh\",\"reason\":\"mandatory_check_preserved\",\"requirement_id\":\"*\",\"source_path\":\"*\"},{\"check_id\":\"workspace-tests\",\"reason\":\"conservative_default_due_to_uncertainty\",\"requirement_id\":\"*\",\"source_path\":\"*\"}],\"current_applicability\":{\"dependency_hashes\":[],\"policy_hash\":\"97143d3c095b24d3105d19838860b745282e8bd6a457da8ca857a06b9278ac0f\",\"source_projection_hash\":\"bb78122a643c3e61cb9198023198d295602ffa39592ed2fbbeffc25fd8b186e5\",\"subject_hash\":\"4c89ff2430c7b65bd02e3ceb129ab884a9b79d6b50134773832b80cf6f60c735\"},\"evidence_refresh\":[{\"check_ids\":[\"workspace-tests\"],\"current\":false,\"evidence_id\":\"before\",\"stale_reasons\":[\"subject_changed\"]}],\"full_required_checks\":[\"policy-fresh\",\"workspace-tests\"],\"input_hash\":\"a04336e6b27338c1bedba3301668b799d0e3596f17e201a90ff336cf3233adfc\",\"non_claims\":[\"advisory guidance does not execute checks\",\"selected checks do not prove omitted checks are safe\",\"declared marker links are not behavioral proof\",\"whole-subject evidence reuse still requires the original applicability validator\",\"full gate obligations remain authoritative\"],\"schema_version\":\"cairn.verification-impact.v1\",\"selected_checks\":[\"policy-fresh\",\"workspace-tests\"],\"semantic_hash\":\"65a437a000e67742d3f8ebb06df8c8a7ab094d9f46fdbdb486d2732383ee13a0\",\"source_delta\":[{\"after_blake3\":\"cec241b8ee68dfa64d4ef15d316002c9531bfef43fff850b65b050069cc725f6\",\"before_blake3\":\"e58ef9d3b70165c55ed9fb8e7e6eac2f7164906234c3a54c4daa58e34b2bcf3a\",\"counterpart_path\":null,\"kind\":\"modified\",\"path\":\"crates/cairn-cli/src/verification_impact.rs\"}],\"uncertainty\":[{\"code\":\"missing_check_mapping\",\"message\":\"affected requirement has no admitted check mapping\",\"target\":\"cairn.verification_impact.interfaces\"},{\"code\":\"unlinked_source\",\"message\":\"changed source path has no admitted requirement-to-check explanation\",\"target\":\"crates/cairn-cli/src/verification_impact.rs\"}],\"valid\":true},\"schema\":\"cairn.verification-impact-guidance.v1\",\"structural_evidence\":{\"blockers\":[],\"completion_eligible\":false,\"non_claims\":[\"producer observations do not establish dependency closure or safe omission\",\"receipt hashes and declared scope bindings do not establish authenticity\",\"Valence stack provenance sidecars are not evidence-admission span receipts\"],\"octet\":null,\"selection_scope\":\"declared_links_only\",\"unavailable_contracts\":[\"valence_span_contract_unavailable\"],\"valid\":true},\"valid\":true}",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "actions": [
+      {
+        "arguments": {
+          "change": "derive-change-verification-guidance",
+          "root": "."
+        },
+        "argv": [
+          "cairn",
+          "readiness",
+          "derive-change-verification-guidance",
+          "--root",
+          "."
+        ],
+        "command": "cairn readiness derive-change-verification-guidance --root .",
+        "command_is_display_only": true,
+        "full_gate_authoritative": true,
+        "kind": "unified_readiness",
+        "mutation_authorized": false,
+        "tool": "cairn_readiness"
+      },
+      {
+        "arguments": {
+          "applicability": "applicability.json",
+          "contract": "contract with spaces; not-executed.json",
+          "profiles": "profiles.json",
+          "root": "."
+        },
+        "argv": [
+          "cairn",
+          "check-evidence",
+          "plan",
+          "--root",
+          ".",
+          "--contract",
+          "contract with spaces; not-executed.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json"
+        ],
+        "checks_executed": false,
+        "command": "cairn check-evidence plan --root . --contract contract with spaces; not-executed.json --profiles profiles.json --applicability applicability.json",
+        "command_is_display_only": true,
+        "kind": "check_evidence_plan_request",
+        "publication_performed": false,
+        "requires_operator_review": true
+      }
+    ],
+    "checks_executed": false,
+    "input_hash": "06cc1b32bcb3e8d227bf89d733d3f0ac1bf5997c5eb95887f7eb0c05be74b220",
+    "mutation_authorized": false,
+    "read_only": true,
+    "report": {
+      "affected_requirements": [
+        "cairn.verification_impact.interfaces"
+      ],
+      "after_source_identity": "4c89ff2430c7b65bd02e3ceb129ab884a9b79d6b50134773832b80cf6f60c735",
+      "before_source_identity": "41c6d6095ca9e73bba1d7a32280975ae5ba9ad4ee290d8351e57e5420dbe47a6",
+      "blockers": [],
+      "boundary": "verification impact guidance is advisory check selection over admitted source, trace, and check-map facts; it does not execute checks, prove independence, satisfy full gates, or authorize evidence reuse",
+      "causal_paths": [
+        {
+          "check_id": "policy-fresh",
+          "reason": "mandatory_check_preserved",
+          "requirement_id": "*",
+          "source_path": "*"
+        },
+        {
+          "check_id": "workspace-tests",
+          "reason": "conservative_default_due_to_uncertainty",
+          "requirement_id": "*",
+          "source_path": "*"
+        }
+      ],
+      "current_applicability": {
+        "dependency_hashes": [],
+        "policy_hash": "97143d3c095b24d3105d19838860b745282e8bd6a457da8ca857a06b9278ac0f",
+        "source_projection_hash": "bb78122a643c3e61cb9198023198d295602ffa39592ed2fbbeffc25fd8b186e5",
+        "subject_hash": "4c89ff2430c7b65bd02e3ceb129ab884a9b79d6b50134773832b80cf6f60c735"
+      },
+      "evidence_refresh": [
+        {
+          "check_ids": [
+            "workspace-tests"
+          ],
+          "current": false,
+          "evidence_id": "before",
+          "stale_reasons": [
+            "subject_changed"
+          ]
+        }
+      ],
+      "full_required_checks": [
+        "policy-fresh",
+        "workspace-tests"
+      ],
+      "input_hash": "a04336e6b27338c1bedba3301668b799d0e3596f17e201a90ff336cf3233adfc",
+      "non_claims": [
+        "advisory guidance does not execute checks",
+        "selected checks do not prove omitted checks are safe",
+        "declared marker links are not behavioral proof",
+        "whole-subject evidence reuse still requires the original applicability validator",
+        "full gate obligations remain authoritative"
+      ],
+      "schema_version": "cairn.verification-impact.v1",
+      "selected_checks": [
+        "policy-fresh",
+        "workspace-tests"
+      ],
+      "semantic_hash": "65a437a000e67742d3f8ebb06df8c8a7ab094d9f46fdbdb486d2732383ee13a0",
+      "source_delta": [
+        {
+          "after_blake3": "cec241b8ee68dfa64d4ef15d316002c9531bfef43fff850b65b050069cc725f6",
+          "before_blake3": "e58ef9d3b70165c55ed9fb8e7e6eac2f7164906234c3a54c4daa58e34b2bcf3a",
+          "counterpart_path": null,
+          "kind": "modified",
+          "path": "crates/cairn-cli/src/verification_impact.rs"
+        }
+      ],
+      "uncertainty": [
+        {
+          "code": "missing_check_mapping",
+          "message": "affected requirement has no admitted check mapping",
+          "target": "cairn.verification_impact.interfaces"
+        },
+        {
+          "code": "unlinked_source",
+          "message": "changed source path has no admitted requirement-to-check explanation",
+          "target": "crates/cairn-cli/src/verification_impact.rs"
+        }
+      ],
+      "valid": true
+    },
+    "schema": "cairn.verification-impact-guidance.v1",
+    "structural_evidence": {
+      "blockers": [],
+      "completion_eligible": false,
+      "non_claims": [
+        "producer observations do not establish dependency closure or safe omission",
+        "receipt hashes and declared scope bindings do not establish authenticity",
+        "Valence stack provenance sidecars are not evidence-admission span receipts"
+      ],
+      "octet": null,
+      "selection_scope": "declared_links_only",
+      "unavailable_contracts": [
+        "valence_span_contract_unavailable"
+      ],
+      "valid": true
+    },
+    "valid": true
+  }
+}

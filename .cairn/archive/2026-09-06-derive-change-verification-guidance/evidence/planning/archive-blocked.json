@@ -1,0 +1,51 @@
+{
+  "acceptance_ids": [],
+  "actions": [],
+  "blocked": true,
+  "change": "derive-change-verification-guidance",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "da089c8ce440e796590048b06cadac574ae7b81910ba727f45b5ccb6433bcf5d",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+    "receipt_hash": "ddd8b0ca042c1dcdeb7be5c99360796c8a1f1c101ace754a2eae78db9bb164c1",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "dry_run": true,
+  "input_hash": "c46f0eadd0a3e0b877b19092183c41fd78439f768352387f1d415ebc0002ded6",
+  "layout": "cairn",
+  "mutated": false,
+  "mutation_manifest": null,
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "0e166fa360666df204ca5adf600ef1ed928aac26e9da0ce77e954ee1e1c19c07",
+  "policy": "cairn-default",
+  "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "profile_identity_hash": "621d82e8c62a29b412ce0709a08a6c2897af4287c5773547608c11d587f92e2c",
+  "reasons": [
+    "derive-change-verification-guidance: change_dependency.unsatisfied_dependency: dependency produce-check-evidence-with-stack-adapters is not archived",
+    "derive-change-verification-guidance: change_dependency.unsatisfied_dependency: dependency unify-change-readiness-and-next-actions is not archived",
+    "derive-change-verification-guidance: tasks not archive-ready (todo: 10, in_progress: 0, unmarked: 0)"
+  ],
+  "receipt_hash": "40a98425068eb11ac22a9cc5d2bfc3d6f740f0459f3df32003133d411eaac6d0",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

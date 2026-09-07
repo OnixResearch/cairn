@@ -1,3 +1,4 @@
+pub use crate::verified::adoption_report::*;
 pub use crate::verified::agent_guidance::{
     admit_agent_guidance_declaration, admit_portable_agent_guidance_result,
     build_agent_guidance_result, portable_agent_guidance_result, safe_relative_context_path,
@@ -82,4 +83,16 @@ pub use crate::verified::developer_experience::{
 };
 pub use crate::verified::developer_loop::*;
 pub use crate::verified::generated_agent_workflow::*;
+pub use crate::verified::verification_impact::{
+    derive_verification_impact, VerificationCheckDefinition, VerificationCheckMap,
+    VerificationEvidenceRefresh, VerificationImpactCausalPath, VerificationImpactInput,
+    VerificationImpactIssue, VerificationImpactReport, VerificationImpactScope,
+    VerificationImpactUncertainty, VerificationPriorEvidence, VerificationRequirementCheck,
+    VerificationRequirementEdge, VerificationSourceChange, VerificationSourceChangeKind,
+    VerificationSourceManifest, VerificationSourceMember, MAX_IMPACT_CHANGED_PATHS,
+    MAX_IMPACT_CHECKS, MAX_IMPACT_EDGES, MAX_IMPACT_FEATURES, MAX_IMPACT_PATH_BYTES,
+    MAX_IMPACT_PRIOR_EVIDENCE, MAX_IMPACT_REQUIREMENT_BINDINGS, MAX_IMPACT_SOURCE_MEMBERS,
+    MAX_IMPACT_TEXT_BYTES, VERIFICATION_CHECK_MAP_SCHEMA_V1, VERIFICATION_IMPACT_BOUNDARY,
+    VERIFICATION_IMPACT_SCHEMA_V1,
+};
 pub use crate::verified::workflow_collaboration::*;

@@ -1,0 +1,11 @@
+{
+  "depends_on": [
+    "produce-check-evidence-with-stack-adapters",
+    "unify-change-readiness-and-next-actions"
+  ],
+  "workflow_profile": {
+    "id": "spec-driven",
+    "source": "change_create",
+    "version": 1
+  }
+}

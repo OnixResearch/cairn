@@ -272,6 +272,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bounded-exec"
+version = "0.1.0"
+source = "git+https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525#29dac88ecded94457572db3fdfaaaab95fa91525"
+dependencies = [
+ "bounded-exec-core",
+ "nix 0.30.1",
+]
+
+[[package]]
+name = "bounded-exec-core"
+version = "0.1.0"
+source = "git+https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525#29dac88ecded94457572db3fdfaaaab95fa91525"
+
+[[package]]
 name = "bounded-tree-cap"
 version = "0.1.0"
 dependencies = [
@@ -317,12 +331,17 @@ dependencies = [
  "artifact-auth-core",
  "artifact-auth-ed25519",
  "blake3",
+ "bounded-exec",
  "bounded-tree-cap",
  "bounded-tree-core",
  "cairn-core",
+ "cap-fs-ext",
+ "cap-root-core",
  "cap-std",
  "crossterm 0.28.1",
+ "durable-file-publication",
  "ed25519-dalek",
+ "mantle-build-contract",
  "nickel-export-core",
  "onix-cairn-radicle-cob",
  "rat-nodegraph",
@@ -339,6 +358,7 @@ dependencies = [
  "artifact-auth-core",
  "blake3",
  "iddqd",
+ "kiln-core",
  "preserves",
  "serde",
  "serde_json",
@@ -383,6 +403,11 @@ dependencies = [
  "windows-sys 0.61.2",
  "winx",
 ]
+
+[[package]]
+name = "cap-root-core"
+version = "0.1.0"
+source = "git+https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git?rev=8991e2572578c16e590c2f1c0915db6c46c5d9cb#8991e2572578c16e590c2f1c0915db6c46c5d9cb"
 
 [[package]]
 name = "cap-std"
@@ -779,6 +804,14 @@ name = "dtoa"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
+
+[[package]]
+name = "durable-file-publication"
+version = "0.1.0"
+source = "git+https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git?rev=951c27f59003cea9bfdb40ed4d89653d50fada1f#951c27f59003cea9bfdb40ed4d89653d50fada1f"
+dependencies = [
+ "rustix 1.1.4",
+]
 
 [[package]]
 name = "ec25519"
@@ -1365,6 +1398,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "kiln-core"
+version = "0.1.0"
+source = "git+https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git?rev=5d99f4e9bb954743443e340baece31256b4c53f1#5d99f4e9bb954743443e340baece31256b4c53f1"
+dependencies = [
+ "blake3",
+ "serde",
+]
+
+[[package]]
 name = "lab"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1478,8 +1520,17 @@ version = "1.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0aeb26bf5e836cc1c341c8106051b573f1766dfa05aa87f0b98be5e51b02303"
 dependencies = [
- "nix",
+ "nix 0.29.0",
  "winapi",
+]
+
+[[package]]
+name = "mantle-build-contract"
+version = "0.1.0"
+source = "git+ssh://git@github.com/OnixResearch/mantle.git?rev=0bbab77e23ab95caa4e4184b9945cfaa5c8040e2#0bbab77e23ab95caa4e4184b9945cfaa5c8040e2"
+dependencies = [
+ "blake3",
+ "serde",
 ]
 
 [[package]]
@@ -1572,6 +1623,18 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "memoffset",
+]
+
+[[package]]
+name = "nix"
+version = "0.30.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
+dependencies = [
+ "bitflags 2.13.0",
+ "cfg-if",
+ "cfg_aliases",
+ "libc",
 ]
 
 [[package]]
@@ -2849,7 +2912,7 @@ dependencies = [
  "libc",
  "log",
  "memmem",
- "nix",
+ "nix 0.29.0",
  "num-derive",
  "num-traits",
  "ordered-float",

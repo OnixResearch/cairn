@@ -82,6 +82,8 @@ nix run path:$CAIRN_SOURCE#cairn -- gate tasks add-friendly-start --root "$REPO"
 Templates, scaffolds, sync, archive, and migration are preview-first. Add `--execute` only after you review the plan.
 
 Read the [Make a Cairn tutorial](docs/tutorials/make-a-cairn.md) or the [copyable example](examples/make-a-cairn/README.md).
+[Consumer bootstrap](docs/consumer-bootstrap-preview.md) previews and applies an exact policy and project-local guidance plan.
+Apply requires `--execute --plan-hash HASH`. Interrupted installation requires explicit manual recovery.
 
 Direct CLI agents can use `cairn --machine <command> ...` for one versioned JSON outcome.
 Read the [CLI machine contract](docs/cli-machine-contract.md) before you depend on its status and failure rules.
@@ -107,9 +109,12 @@ nix run path:$PWD#cairn -- context --root . --profile assurance --artifact tasks
 
 Read [Workflow profiles](docs/workflow-profiles.md) for selection, obligations, review evidence, sync, archive, compatibility, and non-claims.
 Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, fields, MCP parity, and claim boundaries.
+Read [Change readiness](docs/change-readiness.md) for the additive report, explicit completion inputs, and current observation limits.
 Read [Agent guidance context](docs/agent-guidance-context.md) before you declare local context or advisory text.
 Read [Generated agent workflows](docs/generated-agent-workflows.md) before you install project-local agent guidance.
 Read [Developer-loop profiles](docs/developer-loop-profiles.md) before you define or verify a fast local loop.
+Read [Check evidence producer](docs/check-evidence-producer.md) for pure admission, read-only planning, and the current execution/import blockers.
+Read [Verification guidance](docs/verification-impact.md) for advisory check selection, exact plan requests, and structural evidence limits.
 Read [RFD collaboration](docs/rfd-collaboration.md) before you use the RFD document commands.
 Read [ADR collaboration](docs/adr-collaboration.md) before you use the ADR document commands.
 Read [Verification-obligation collaboration](docs/verification-obligation.md) before you use the verification-obligation commands.
@@ -245,6 +250,7 @@ A matching witness checkpoint proves only a bounded witnessed prefix. Cairn does
 ### Stable receipt compatibility
 
 Stable public gate fields include `change`, `stage`, `verdict`, `valid`, issues, and receipt hashes.
+CLI gates also report `policy_selection` with the exact source, locator, and BLAKE3 identity. This field does not certify installation.
 
 Stable public lifecycle
 receipt fields include the command result, actions, policy identity, and receipt identity. The sync receipts also include `delta_specs`.

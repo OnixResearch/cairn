@@ -9,10 +9,9 @@ use serde_json::{json, Value};
 use crate::cross_repo_dependencies::{cross_repo_reports, load_cross_repo_evidence, reports_json};
 use crate::lifecycle_store_shell::{attach_resolution, RootLocalInvocation};
 use crate::support::{
-    collect_archived_change_ids, collect_validation_spec_sources, default_policy_path,
-    detect_layout, has_flag, load_policy_file, print_json, read_gate_snapshot, read_option,
-    read_repeated_path_options, scan_repo, spec_substance_inventory_json, substance_inventory_json,
-    validation_findings_json,
+    collect_archived_change_ids, collect_validation_spec_sources, detect_layout, has_flag,
+    load_policy_file, print_json, read_gate_snapshot, read_option, read_repeated_path_options,
+    scan_repo, spec_substance_inventory_json, substance_inventory_json, validation_findings_json,
 };
 
 pub(crate) fn run_validate(
@@ -21,11 +20,17 @@ pub(crate) fn run_validate(
 ) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.rust_nickel_only_gates.gates]
     let root = read_option(args.clone(), "--root", ".");
-    let policy_path = read_option(args.clone(), "--policy", default_policy_path());
+    let selected_policy = crate::project_policy::load(&root, &args)?;
     let is_strict = has_flag(&args, "--strict");
     let cross_repo_evidence = read_repeated_path_options(&args, "--cross-repo-evidence");
+    let mut value =
+        validation_with_policy(root.clone(), &selected_policy.policy, &cross_repo_evidence)?;
+    value["policy_selection"] = selected_policy.selection;
+    if let Some(object) = value.as_object_mut() {
+        object.remove("receipt_hash");
+    }
     let receipt = attach_resolution(
-        cairn_validation_receipt_with_cross_repo_evidence(root, policy_path, &cross_repo_evidence)?,
+        crate::support::with_portable_receipt_hash(&root, value),
         invocation,
     );
     print_json(receipt.clone())?;
@@ -48,11 +53,19 @@ pub(crate) fn cairn_validation_receipt_with_cross_repo_evidence(
     evidence_inputs: &[PathBuf],
 ) -> Result<Value, Box<dyn Error>> {
     let policy = load_policy_file(policy_path)?;
+    validation_with_policy(root, &policy, evidence_inputs)
+}
+
+fn validation_with_policy(
+    root: PathBuf,
+    policy: &cairn_core::Policy,
+    evidence_inputs: &[PathBuf],
+) -> Result<Value, Box<dyn Error>> {
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
     let archived_changes = collect_archived_change_ids(&root, selected.layout)?;
     let mut change_issues =
-        validate_changes_with_archives(&status.changes, &archived_changes, &policy);
+        validate_changes_with_archives(&status.changes, &archived_changes, policy);
     let loaded_evidence = load_cross_repo_evidence(&root, evidence_inputs);
     let policy_hash = canonical_json_hash(&policy.raw);
     let cross_repo_reports =
@@ -89,10 +102,10 @@ pub(crate) fn cairn_validation_receipt_with_cross_repo_evidence(
             &root,
             selected.layout,
             &change.name,
-            &policy,
+            policy,
         ) {
             Ok(profile_context) => {
-                let report = profile_context.gate_report(&snapshot, GateStage::Tasks, &policy);
+                let report = profile_context.gate_report(&snapshot, GateStage::Tasks, policy);
                 substance_issues.extend(
                     report
                         .issues

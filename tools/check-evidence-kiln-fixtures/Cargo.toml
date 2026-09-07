@@ -1,0 +1,12 @@
+[package]
+name = "cairn-kiln-producer-fixtures"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[workspace]
+
+[dependencies]
+kiln-core = { git = "https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git", rev = "5d99f4e9bb954743443e340baece31256b4c53f1" }
+serde_json = "1.0"

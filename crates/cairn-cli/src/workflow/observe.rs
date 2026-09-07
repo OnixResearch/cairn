@@ -33,18 +33,24 @@ struct BoundedArtifact {
 }
 
 // r[impl cairn.artifact_workflow_contract.functional_boundary.shell]
-pub(crate) fn observe_workflow_artifacts(
+pub(crate) fn observe_workflow_artifact_subset_with_budget(
     root: &Path,
     layout: LifecycleLayout,
     change: &str,
     schema: &WorkflowSchemaPolicy,
     policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+    selected: Option<&[String]>,
 ) -> Result<Vec<WorkflowArtifactObservation>, Box<dyn Error>> {
-    let capability = CapabilityRoot::open(CapabilityRootKind::Scan, root)?;
+    let capability =
+        CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?.with_budget(budget);
     let change_relative = PathBuf::from(cairn_core::changes_dir(layout)).join(change);
     require_change_directory(&capability, &change_relative, change)?;
     let mut bounded = Vec::with_capacity(schema.artifacts.len());
     for artifact in &schema.artifacts {
+        if selected.is_some_and(|ids| !ids.contains(&artifact.id)) {
+            continue;
+        }
         bounded.push(observe_artifact(
             &capability,
             &change_relative,

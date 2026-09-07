@@ -1,10 +1,14 @@
 use std::{env, error::Error, path::Path};
 
+mod adoption;
 mod adr;
 mod agent_guidance_shell;
 mod agent_receipt;
 mod archive_compaction;
 mod authenticated_inputs;
+mod bootstrap;
+mod bootstrap_fs;
+mod check_evidence;
 mod cross_repo_dependencies;
 mod determinism;
 mod developer_experience;
@@ -31,7 +35,9 @@ mod policy;
 mod policy_exception;
 mod preserves_corpus;
 mod probe;
+mod project_policy;
 mod radicle_change;
+mod readiness;
 mod receipt_preserves_diff;
 mod receipt_verify_content_hash;
 mod release_decision;
@@ -51,6 +57,7 @@ mod test_harness;
 mod toolchain_profile_matrix;
 mod trace_index;
 mod tracey;
+mod verification_impact;
 mod view;
 mod vo;
 mod workflow;
@@ -64,6 +71,7 @@ mod collaboration;
 mod config_export;
 mod content_addressed_evidence;
 
+use adoption::run_adoption;
 use adr::run_adr;
 use collaboration::run_collaboration;
 use determinism::run_determinism;
@@ -92,6 +100,7 @@ use state_machine_receipt::run_state_machine_receipt;
 use support::{print_usage, read_option, reject_legacy_only_lifecycle_root, usage_text};
 use toolchain_profile_matrix::run_toolchain_profile;
 use tracey::{run_traceability, run_tracey};
+use verification_impact::run_verification_impact;
 use view::run_view;
 use vo::run_vo;
 use workflow::run_workflow;
@@ -144,10 +153,13 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "validate"
             | "view"
             | "workflow"
+            | "readiness"
+            | "adoption"
             | "release-readiness"
             | "lifecycle"
             | "traceability"
             | "tracey"
+            | "verification-impact"
             | "gate"
             | "gate-context"
             | "sync"
@@ -171,7 +183,9 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
     match command.as_str() {
         "--help" | "-h" | "help" => print_usage(),
         "init" => run_init(args.collect())?,
+        "setup" => bootstrap::run(args.collect())?,
         "change" => run_change(args.collect())?,
+        "check-evidence" => check_evidence::run_check_evidence(args.collect())?,
         "compact" => archive_compaction::run_compact(args.collect())?,
         "template" => developer_experience::run_template(args.collect())?,
         "scaffold" => developer_experience::run_scaffold(args.collect())?,
@@ -210,6 +224,8 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         )?,
         "view" => run_view(args.collect())?,
         "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
+        "readiness" => readiness::run_readiness(args.collect())?,
+        "adoption" => run_adoption(args.collect())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,
         "release-decision" => run_release(args.collect())?,
@@ -244,6 +260,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "state-machine-receipt" => run_state_machine_receipt(args.collect())?,
         "traceability" => run_traceability(args.collect())?,
         "tracey" => run_tracey(args.collect())?,
+        "verification-impact" => run_verification_impact(args.collect())?,
         "review" => run_review(args.collect())?,
         "steel-orchestration" => steel_orchestration::run_steel_orchestration(args.collect())?,
         "test-harness" => test_harness::run_test_harness(args.collect())?,

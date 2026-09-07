@@ -16,6 +16,24 @@ fn cairn() -> Command {
     command
 }
 
+#[cfg(feature = "redb-registry")]
+fn cairn_redb() -> Command {
+    let mut command = Command::new(env!("CARGO"));
+    command.current_dir(root());
+    command.args([
+        "run",
+        "-q",
+        "-p",
+        "cairn-cli",
+        "--features",
+        "redb-registry",
+        "--bin",
+        "cairn",
+        "--",
+    ]);
+    command
+}
+
 fn run_json(command: &mut Command) -> Result<Value, Box<dyn Error>> {
     let output = command.output()?;
     assert!(
@@ -335,7 +353,7 @@ fn redb_cli_exports_backend_independent_snapshot() -> Result<(), Box<dyn Error>>
         }
     }
     let store_text = store.to_str().ok_or("redb path")?;
-    let imported = run_json(cairn().args([
+    let imported = run_json(cairn_redb().args([
         "registry",
         "import",
         "--scope",
@@ -351,7 +369,7 @@ fn redb_cli_exports_backend_independent_snapshot() -> Result<(), Box<dyn Error>>
         "--execute",
     ]))?;
     assert_eq!(imported["valid"], true, "{imported:#}");
-    let exported = run_json(cairn().args([
+    let exported = run_json(cairn_redb().args([
         "registry",
         "export",
         "--scope",
@@ -368,7 +386,7 @@ fn redb_cli_exports_backend_independent_snapshot() -> Result<(), Box<dyn Error>>
         exported["snapshot_hash"],
         imported["candidate_snapshot"]["snapshot_hash"]
     );
-    let verified = run_json(cairn().args([
+    let verified = run_json(cairn_redb().args([
         "registry",
         "verify",
         "--registry",

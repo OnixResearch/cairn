@@ -3,7 +3,7 @@ use crate::verified::change_dependencies::{
     DEPENDENCY_ISSUE_INVALID_TYPE,
 };
 
-pub(super) fn parse_change_metadata(
+pub fn parse_change_metadata(
     change_name: &str,
     metadata_json: Option<&str>,
 ) -> (super::ChangeMetadata, Vec<String>) {

@@ -191,6 +191,8 @@ fn mcp_tool_requires_native_lifecycle(name: &str) -> bool {
             | "cairn_gate_context"
             | "cairn_change_graph"
             | "cairn_drain_plan"
+            | "cairn_verification_impact"
+            | "cairn_adoption_report"
             | "cairn_sync_plan"
             | "cairn_archive_plan"
             | "cairn_sync_execute"
@@ -231,6 +233,11 @@ pub(crate) fn mcp_call_tool(
             "cairn_agent_receipt_validate" => mcp_agent_receipt_validate(input)?,
             "cairn_agent_completion_validate" => mcp_agent_completion_validate(input)?,
             "cairn_drain_plan" => mcp_drain_plan(input)?,
+            "cairn_readiness" => crate::readiness::readiness_value(input)?,
+            "cairn_verification_impact" => {
+                crate::verification_impact::guidance_value_from_mcp(input)?
+            }
+            "cairn_adoption_report" => crate::adoption::adoption_report_value(input)?,
             "cairn_sync_plan" => mcp_sync(input, false)?,
             "cairn_archive_plan" => mcp_archive(input, false)?,
             "cairn_migrate_plan" => mcp_migrate(input, false)?,

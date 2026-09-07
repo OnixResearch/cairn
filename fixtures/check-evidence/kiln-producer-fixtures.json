@@ -1,0 +1,263 @@
+{
+  "observation": {
+    "attempt_id": "attempt",
+    "candidate_id": "candidate",
+    "effect_id": "effect",
+    "execution": {
+      "contract_version": 1,
+      "native_id": "execution",
+      "native_kind": "execution",
+      "provider_namespace": "lattice"
+    },
+    "idempotency_key": "0000000000000000000000000000000000000000000000000000000000000000",
+    "logs": [],
+    "nodes": [
+      {
+        "adapter": {
+          "contract_version": 1,
+          "native_id": "build-adapter",
+          "native_kind": "adapter",
+          "provider_namespace": "lattice"
+        },
+        "node_id": "build",
+        "receipt": {
+          "contract_version": 1,
+          "native_id": "build-receipt",
+          "native_kind": "receipt",
+          "provider_namespace": "lattice"
+        },
+        "state": "Completed",
+        "successful": true,
+        "terminal": true
+      },
+      {
+        "adapter": {
+          "contract_version": 1,
+          "native_id": "test-adapter",
+          "native_kind": "adapter",
+          "provider_namespace": "lattice"
+        },
+        "node_id": "test",
+        "receipt": {
+          "contract_version": 1,
+          "native_id": "test-receipt",
+          "native_kind": "receipt",
+          "provider_namespace": "lattice"
+        },
+        "state": "Completed",
+        "successful": true,
+        "terminal": true
+      }
+    ],
+    "outcome": "Success",
+    "pipeline_revision_id": "pipeline",
+    "provider_profile": "lattice-v1",
+    "receipt": {
+      "contract_version": 1,
+      "native_id": "workflow-receipt",
+      "native_kind": "receipt",
+      "provider_namespace": "lattice"
+    },
+    "sequence": 4,
+    "state": "Completed",
+    "successful": true,
+    "terminal": true,
+    "workflow": {
+      "contract_version": 1,
+      "native_id": "workflow",
+      "native_kind": "workflow",
+      "provider_namespace": "lattice"
+    },
+    "workflow_policy_id": "workflow-policy"
+  },
+  "plan": {
+    "attempt_id": "attempt",
+    "bounds": {
+      "max_edges": 16,
+      "max_log_read_bytes": 4096,
+      "max_log_references": 8,
+      "max_nodes": 8,
+      "max_total_log_bytes": 16384
+    },
+    "candidate_id": "candidate",
+    "controls": {
+      "cancel": true,
+      "pause": true,
+      "resume": true
+    },
+    "edges": [
+      {
+        "source": "build",
+        "target": "test"
+      }
+    ],
+    "effect_id": "effect",
+    "idempotency_key": "0000000000000000000000000000000000000000000000000000000000000000",
+    "nodes": [
+      {
+        "adapter_kind": "local",
+        "effect_class": "Build",
+        "id": "build",
+        "kind": "build",
+        "operation_identity": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "adapter_kind": "remote",
+        "effect_class": "Test",
+        "id": "test",
+        "kind": "test",
+        "operation_identity": "2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    ],
+    "pipeline_revision_id": "pipeline",
+    "platform": "linux-x86_64",
+    "provider_profile": "lattice-v1",
+    "source": null,
+    "workflow_policy_id": "workflow-policy"
+  },
+  "producer_revision": "5d99f4e9bb954743443e340baece31256b4c53f1",
+  "rejected": {
+    "false_paused_success": {
+      "attempt_id": "attempt",
+      "candidate_id": "candidate",
+      "effect_id": "effect",
+      "execution": {
+        "contract_version": 1,
+        "native_id": "execution",
+        "native_kind": "execution",
+        "provider_namespace": "lattice"
+      },
+      "idempotency_key": "0000000000000000000000000000000000000000000000000000000000000000",
+      "logs": [],
+      "nodes": [
+        {
+          "adapter": {
+            "contract_version": 1,
+            "native_id": "build-adapter",
+            "native_kind": "adapter",
+            "provider_namespace": "lattice"
+          },
+          "node_id": "build",
+          "receipt": {
+            "contract_version": 1,
+            "native_id": "build-receipt",
+            "native_kind": "receipt",
+            "provider_namespace": "lattice"
+          },
+          "state": "Completed",
+          "successful": true,
+          "terminal": true
+        },
+        {
+          "adapter": {
+            "contract_version": 1,
+            "native_id": "test-adapter",
+            "native_kind": "adapter",
+            "provider_namespace": "lattice"
+          },
+          "node_id": "test",
+          "receipt": {
+            "contract_version": 1,
+            "native_id": "test-receipt",
+            "native_kind": "receipt",
+            "provider_namespace": "lattice"
+          },
+          "state": "Completed",
+          "successful": true,
+          "terminal": true
+        }
+      ],
+      "outcome": "Success",
+      "pipeline_revision_id": "pipeline",
+      "provider_profile": "lattice-v1",
+      "receipt": {
+        "contract_version": 1,
+        "native_id": "workflow-receipt",
+        "native_kind": "receipt",
+        "provider_namespace": "lattice"
+      },
+      "sequence": 4,
+      "state": "Paused",
+      "successful": true,
+      "terminal": true,
+      "workflow": {
+        "contract_version": 1,
+        "native_id": "workflow",
+        "native_kind": "workflow",
+        "provider_namespace": "lattice"
+      },
+      "workflow_policy_id": "workflow-policy"
+    },
+    "stale_attempt": {
+      "attempt_id": "stale-attempt",
+      "candidate_id": "candidate",
+      "effect_id": "effect",
+      "execution": {
+        "contract_version": 1,
+        "native_id": "execution",
+        "native_kind": "execution",
+        "provider_namespace": "lattice"
+      },
+      "idempotency_key": "0000000000000000000000000000000000000000000000000000000000000000",
+      "logs": [],
+      "nodes": [
+        {
+          "adapter": {
+            "contract_version": 1,
+            "native_id": "build-adapter",
+            "native_kind": "adapter",
+            "provider_namespace": "lattice"
+          },
+          "node_id": "build",
+          "receipt": {
+            "contract_version": 1,
+            "native_id": "build-receipt",
+            "native_kind": "receipt",
+            "provider_namespace": "lattice"
+          },
+          "state": "Completed",
+          "successful": true,
+          "terminal": true
+        },
+        {
+          "adapter": {
+            "contract_version": 1,
+            "native_id": "test-adapter",
+            "native_kind": "adapter",
+            "provider_namespace": "lattice"
+          },
+          "node_id": "test",
+          "receipt": {
+            "contract_version": 1,
+            "native_id": "test-receipt",
+            "native_kind": "receipt",
+            "provider_namespace": "lattice"
+          },
+          "state": "Completed",
+          "successful": true,
+          "terminal": true
+        }
+      ],
+      "outcome": "Success",
+      "pipeline_revision_id": "pipeline",
+      "provider_profile": "lattice-v1",
+      "receipt": {
+        "contract_version": 1,
+        "native_id": "workflow-receipt",
+        "native_kind": "receipt",
+        "provider_namespace": "lattice"
+      },
+      "sequence": 4,
+      "state": "Completed",
+      "successful": true,
+      "terminal": true,
+      "workflow": {
+        "contract_version": 1,
+        "native_id": "workflow",
+        "native_kind": "workflow",
+        "provider_namespace": "lattice"
+      },
+      "workflow_policy_id": "workflow-policy"
+    }
+  }
+}

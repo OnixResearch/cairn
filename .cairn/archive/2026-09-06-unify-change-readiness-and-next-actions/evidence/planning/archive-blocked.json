@@ -1,0 +1,49 @@
+{
+  "acceptance_ids": [],
+  "actions": [],
+  "blocked": true,
+  "change": "unify-change-readiness-and-next-actions",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "da089c8ce440e796590048b06cadac574ae7b81910ba727f45b5ccb6433bcf5d",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+    "receipt_hash": "ddd8b0ca042c1dcdeb7be5c99360796c8a1f1c101ace754a2eae78db9bb164c1",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "dry_run": true,
+  "input_hash": "508dde8d3d022f9a333a29dbdcce21cd81f1edc751cba5912d79a7246320692d",
+  "layout": "cairn",
+  "mutated": false,
+  "mutation_manifest": null,
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "e0945dac23fc2b5db97afe884754db2df3314542b5d81996daff5f5073a51bc8",
+  "policy": "cairn-default",
+  "policy_hash": "302bc1f8bcb27920c37a6bdc21865e2ca1fbb5a38c268570b3fc326734e59942",
+  "profile_identity_hash": "323f71853bf300e0af19b8406c415f4edbb1d7a2b3cd12341a345d5358760348",
+  "reasons": [
+    "unify-change-readiness-and-next-actions: tasks not archive-ready (todo: 10, in_progress: 0, unmarked: 0)"
+  ],
+  "receipt_hash": "1c1d668207167da7f9001170802aad76fe8f32ea68761244183a311567df8a8e",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

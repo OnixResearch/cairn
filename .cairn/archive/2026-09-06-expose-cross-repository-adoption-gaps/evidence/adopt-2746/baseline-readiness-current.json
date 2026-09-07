@@ -1,0 +1,475 @@
+{
+  "actions": [
+    {
+      "argv": [],
+      "authority": "advisory",
+      "causes": [
+        "e59b1e77f10534768ae90290e5bc6e08d089cd2aba3b427771fd743d47528545"
+      ],
+      "expected_observation": "reviewed remediation rule for this exact diagnostic",
+      "id": "e1aba89038371b2b38c4dcb6dd8385a6aa2e3c5d8dd4c7c40884447312f8e00f",
+      "kind": "unresolved",
+      "prerequisites": [
+        "71fbeb3fd714b80c70cf5af3f95859039d3edb503ac29b640b5477f752785e24",
+        "880373aac72dfc62836ffc310594a0f8c05578da3d8fce3a72d2fe7af6345556",
+        "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d"
+      ],
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "argv": [],
+      "authority": "advisory",
+      "causes": [
+        "e7b06c44ea8c3383dbf8fc62b8e3eabdc30e3e3ba14160ae7e58d4c034b217d8"
+      ],
+      "expected_observation": "reviewed remediation rule for this exact diagnostic",
+      "id": "e96cea718b5b25652aed40badc5fd776ba25888213b14ab6feecd02ae7939b1d",
+      "kind": "unresolved",
+      "prerequisites": [
+        "71fbeb3fd714b80c70cf5af3f95859039d3edb503ac29b640b5477f752785e24",
+        "880373aac72dfc62836ffc310594a0f8c05578da3d8fce3a72d2fe7af6345556",
+        "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d"
+      ],
+      "target": "expose-cross-repository-adoption-gaps"
+    }
+  ],
+  "blockers": [
+    {
+      "code": "plan.blocked",
+      "id": "e59b1e77f10534768ae90290e5bc6e08d089cd2aba3b427771fd743d47528545",
+      "message": "expose-cross-repository-adoption-gaps: tasks not archive-ready (todo: 10, in_progress: 0, unmarked: 0)",
+      "stage": "archive",
+      "target": "expose-cross-repository-adoption-gaps"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "e7b06c44ea8c3383dbf8fc62b8e3eabdc30e3e3ba14160ae7e58d4c034b217d8",
+      "message": "Observation is unavailable",
+      "stage": "completion",
+      "target": "expose-cross-repository-adoption-gaps"
+    }
+  ],
+  "classification": "unavailable",
+  "diagnostics": [],
+  "input_hash": "371d1baf504747a2bd31d71abf68751ff52a1bd32e277de117dd14817dcaa8fa",
+  "mutation_authorized": false,
+  "non_claims": [
+    "Readiness does not authorize mutation or execute checks",
+    "Readiness does not prove evidence truth, code correctness, or release eligibility"
+  ],
+  "readiness_policy_hash": "3daf5296f1c72472fa26cb1aa80b6c661ecf791b500443457c6f1c256669ad98",
+  "receipt_hash": "eaf64cad9f1aceb8c0eade6e7746f2888b6ba0e294460248ea7731ba8e3f397a",
+  "schema": "cairn.readiness.v1",
+  "scope": {
+    "change": "expose-cross-repository-adoption-gaps",
+    "evidence_hash": "71fbeb3fd714b80c70cf5af3f95859039d3edb503ac29b640b5477f752785e24",
+    "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+    "source_hash": "880373aac72dfc62836ffc310594a0f8c05578da3d8fce3a72d2fe7af6345556"
+  },
+  "stages": [
+    {
+      "decision": {
+        "artifacts": [
+          {
+            "blockers": [],
+            "files": [
+              {
+                "blake3": "6431aa95a1bdc1e223755a3607e5dc3dd062c18fb3784349fc4e615108e7cf03",
+                "path": ".cairn/changes/expose-cross-repository-adoption-gaps/proposal.md"
+              }
+            ],
+            "id": "proposal",
+            "missing": [],
+            "output_path": "proposal.md",
+            "path_kind": "file",
+            "requires": [],
+            "stage": "proposal",
+            "state": "done",
+            "structural_admission": "proposal",
+            "unlocks": [
+              "specs",
+              "design"
+            ]
+          },
+          {
+            "blockers": [],
+            "files": [
+              {
+                "blake3": "76d62560f0e374f79595bb42f64d4e2b1b327e4de6d9eca02dd464223b0a3e5a",
+                "path": ".cairn/changes/expose-cross-repository-adoption-gaps/specs/cross-repository-adoption/spec.md"
+              }
+            ],
+            "id": "specs",
+            "missing": [],
+            "output_path": "specs",
+            "path_kind": "spec_directory",
+            "requires": [
+              "proposal"
+            ],
+            "stage": "design",
+            "state": "done",
+            "structural_admission": "delta_specs",
+            "unlocks": [
+              "tasks"
+            ]
+          },
+          {
+            "blockers": [],
+            "files": [
+              {
+                "blake3": "84b1ff7f05262c5a818620ea94aea467c3453b9a3141edd02465232f3ad096f4",
+                "path": ".cairn/changes/expose-cross-repository-adoption-gaps/design.md"
+              }
+            ],
+            "id": "design",
+            "missing": [],
+            "output_path": "design.md",
+            "path_kind": "file",
+            "requires": [
+              "proposal"
+            ],
+            "stage": "design",
+            "state": "done",
+            "structural_admission": "design",
+            "unlocks": [
+              "tasks"
+            ]
+          },
+          {
+            "blockers": [],
+            "files": [
+              {
+                "blake3": "8dc32ec68dd69fe9f0aee9ca566b152c28c03b96c15f09eed1a28c20ee6e07c3",
+                "path": ".cairn/changes/expose-cross-repository-adoption-gaps/tasks.md"
+              }
+            ],
+            "id": "tasks",
+            "missing": [],
+            "output_path": "tasks.md",
+            "path_kind": "file",
+            "requires": [
+              "specs",
+              "design"
+            ],
+            "stage": "tasks",
+            "state": "done",
+            "structural_admission": "tasks",
+            "unlocks": []
+          }
+        ],
+        "issues": [],
+        "next_actions": [],
+        "non_claims": [
+          "workflow state proves only the selected policy graph and observed structural artifact facts",
+          "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+          "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+          "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+        ],
+        "profile_evaluation": {
+          "acceptance_ids": [],
+          "issues": [],
+          "non_claims": [
+            "workflow state proves only the selected policy graph and observed structural artifact facts",
+            "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+            "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+            "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+          ],
+          "profile_id": "spec-driven",
+          "profile_version": 1,
+          "review_receipt_hashes": [],
+          "spec_effect": "delta"
+        },
+        "schema_description": "Cairn proposal, delta-spec, design, and tasks lifecycle",
+        "schema_id": "spec-driven",
+        "schema_version": "cairn.workflow-status.v1",
+        "valid": true
+      },
+      "decision_hash": "69769fa793c37706eaa3b1310723866e10dc22724a076dec692d878d7385d7f5",
+      "stage": "artifact",
+      "state": "ready"
+    },
+    {
+      "decision": {
+        "change": "expose-cross-repository-adoption-gaps",
+        "issues": [],
+        "stage": "proposal",
+        "verdict": "PASS"
+      },
+      "decision_hash": "cc8698d61406d97ed8fcc63e34cb86907c5c47036213d01f0fb97551d27a5383",
+      "stage": "proposal",
+      "state": "ready"
+    },
+    {
+      "decision": {
+        "change": "expose-cross-repository-adoption-gaps",
+        "issues": [],
+        "stage": "design",
+        "verdict": "PASS"
+      },
+      "decision_hash": "9d95e64bed86741d9e7f4b4d45dca42c20a803df7d55bb4aed71c7aef5d01032",
+      "stage": "design",
+      "state": "ready"
+    },
+    {
+      "decision": {
+        "change": "expose-cross-repository-adoption-gaps",
+        "issues": [],
+        "stage": "tasks",
+        "verdict": "PASS"
+      },
+      "decision_hash": "2ff40df5d84578278d41a58e109b92783cdf743362e8baccc44af53ae25673c0",
+      "stage": "tasks",
+      "state": "ready"
+    },
+    {
+      "decision": null,
+      "decision_hash": "03f88b99c3d8073bba8948d6e762aac443b265f606cc05abd4d172f03a4def6a",
+      "stage": "completion",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "cross_repo_dependencies": {
+          "blocked_count": 0,
+          "dependency_count": 0,
+          "input_hash": "db590aa05b790925fdf986f022250368d1d39b2a83586461571de4946c808d37",
+          "non_claims": [
+            "dependency satisfaction proves presented receipt linkage only",
+            "dependency satisfaction does not prove upstream correctness or remote trust",
+            "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+          ],
+          "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+          "receipt_hash": "a904c2e684f22844da630261b04dcd4f165f82816b2d7612b88f0099fedec311",
+          "rows": [],
+          "satisfied_count": 0,
+          "schema": "cairn.cross-repo-dependency-receipt.v1",
+          "valid": true,
+          "verdict": "PASS"
+        },
+        "gate_required": true,
+        "merge_preflight": {
+          "documents": [
+            {
+              "accepted_before_exists": false,
+              "accepted_before_hash": "06e027d6576b1940361b0321d2fc67b5ad7776aa9d7d36d6fa09f9be4ad6532b",
+              "blocked": false,
+              "changed": true,
+              "delta_hash": "76d62560f0e374f79595bb42f64d4e2b1b327e4de6d9eca02dd464223b0a3e5a",
+              "destination": ".cairn/specs/cross-repository-adoption/spec.md",
+              "diagnostics": [],
+              "expected_after_hash": "284255dc24d06bbed6790cd74c530004c5a558d019b5f4c21cc53199e32486af",
+              "operations": [
+                {
+                  "block_hash": "61862eceb55df5cf7407b218d7911064845f6aa18236ec74db54a3bc955d2f37",
+                  "heading": "### Requirement: Explicit producer snapshots",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.inputs"
+                },
+                {
+                  "block_hash": "a3255cb639b7c5f3fa785068e336b87002f5fa5c546a68f2b061e74bc3ad54cb",
+                  "heading": "### Requirement: Separate adoption stages",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.stages"
+                },
+                {
+                  "block_hash": "cf7e8e5e10790e54e0f10c5587f75883ab68c865d447e616a2076760196484b7",
+                  "heading": "### Requirement: Unknown and unsafe states remain visible",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.unknowns"
+                },
+                {
+                  "block_hash": "920ceadcef0f9532c6fb93c2e2c084d0eadb69de67d78feb12d161595675b7d9",
+                  "heading": "### Requirement: Deterministic bounded queries",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.queries"
+                },
+                {
+                  "block_hash": "48852e07dfb80b1c2bb560f5eab2e69964832c3792a536950ae1c0d9c6e3d034",
+                  "heading": "### Requirement: External owners retain authority",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.boundary"
+                },
+                {
+                  "block_hash": "68f065a627ee82c6b3ec57be7e108aa912b3e83339e912e40b647f27a52e708a",
+                  "heading": "### Requirement: Maintained consumer-chain conformance",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.conformance"
+                }
+              ],
+              "outcomes": [
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.inputs",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.stages",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.unknowns",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.queries",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.boundary",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.conformance",
+                  "state": "applied"
+                }
+              ],
+              "source": ".cairn/changes/expose-cross-repository-adoption-gaps/specs/cross-repository-adoption/spec.md"
+            }
+          ]
+        },
+        "preview_argv": [
+          "cairn",
+          "sync",
+          "expose-cross-repository-adoption-gaps",
+          "--root",
+          ".",
+          "--policy",
+          "cairn-policy/generated/cairn-policy.json"
+        ],
+        "reasons": [],
+        "validation_input_hash": "70b7983e2d0aee7ae6001c5e5b8eb529b6f73f309dc50b9ff1cb82c2dc891a62"
+      },
+      "decision_hash": "ed39a4e7d85262dc6cc07273b4671d7e9fa150d47ff4215856f9ac3cde9df39a",
+      "stage": "sync",
+      "state": "blocked"
+    },
+    {
+      "decision": {
+        "cross_repo_dependencies": {
+          "blocked_count": 0,
+          "dependency_count": 0,
+          "input_hash": "db590aa05b790925fdf986f022250368d1d39b2a83586461571de4946c808d37",
+          "non_claims": [
+            "dependency satisfaction proves presented receipt linkage only",
+            "dependency satisfaction does not prove upstream correctness or remote trust",
+            "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+          ],
+          "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+          "receipt_hash": "a904c2e684f22844da630261b04dcd4f165f82816b2d7612b88f0099fedec311",
+          "rows": [],
+          "satisfied_count": 0,
+          "schema": "cairn.cross-repo-dependency-receipt.v1",
+          "valid": true,
+          "verdict": "PASS"
+        },
+        "gate_required": false,
+        "merge_preflight": {
+          "documents": [
+            {
+              "accepted_before_exists": false,
+              "accepted_before_hash": "06e027d6576b1940361b0321d2fc67b5ad7776aa9d7d36d6fa09f9be4ad6532b",
+              "blocked": false,
+              "changed": true,
+              "delta_hash": "76d62560f0e374f79595bb42f64d4e2b1b327e4de6d9eca02dd464223b0a3e5a",
+              "destination": ".cairn/specs/cross-repository-adoption/spec.md",
+              "diagnostics": [],
+              "expected_after_hash": "284255dc24d06bbed6790cd74c530004c5a558d019b5f4c21cc53199e32486af",
+              "operations": [
+                {
+                  "block_hash": "61862eceb55df5cf7407b218d7911064845f6aa18236ec74db54a3bc955d2f37",
+                  "heading": "### Requirement: Explicit producer snapshots",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.inputs"
+                },
+                {
+                  "block_hash": "a3255cb639b7c5f3fa785068e336b87002f5fa5c546a68f2b061e74bc3ad54cb",
+                  "heading": "### Requirement: Separate adoption stages",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.stages"
+                },
+                {
+                  "block_hash": "cf7e8e5e10790e54e0f10c5587f75883ab68c865d447e616a2076760196484b7",
+                  "heading": "### Requirement: Unknown and unsafe states remain visible",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.unknowns"
+                },
+                {
+                  "block_hash": "920ceadcef0f9532c6fb93c2e2c084d0eadb69de67d78feb12d161595675b7d9",
+                  "heading": "### Requirement: Deterministic bounded queries",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.queries"
+                },
+                {
+                  "block_hash": "48852e07dfb80b1c2bb560f5eab2e69964832c3792a536950ae1c0d9c6e3d034",
+                  "heading": "### Requirement: External owners retain authority",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.boundary"
+                },
+                {
+                  "block_hash": "68f065a627ee82c6b3ec57be7e108aa912b3e83339e912e40b647f27a52e708a",
+                  "heading": "### Requirement: Maintained consumer-chain conformance",
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.conformance"
+                }
+              ],
+              "outcomes": [
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.inputs",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.stages",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.unknowns",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.queries",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.boundary",
+                  "state": "applied"
+                },
+                {
+                  "kind": "added",
+                  "requirement_id": "cairn.adoption_report.conformance",
+                  "state": "applied"
+                }
+              ],
+              "source": ".cairn/changes/expose-cross-repository-adoption-gaps/specs/cross-repository-adoption/spec.md"
+            }
+          ]
+        },
+        "preview_argv": [
+          "cairn",
+          "archive",
+          "expose-cross-repository-adoption-gaps",
+          "--root",
+          ".",
+          "--policy",
+          "cairn-policy/generated/cairn-policy.json"
+        ],
+        "reasons": [
+          "expose-cross-repository-adoption-gaps: tasks not archive-ready (todo: 10, in_progress: 0, unmarked: 0)"
+        ]
+      },
+      "decision_hash": "c99b4d26d0d54e1cb6c228e125439d34d50daab1c93459979e7024f3213270b3",
+      "stage": "archive",
+      "state": "blocked"
+    }
+  ],
+  "valid": true
+}
