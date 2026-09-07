@@ -17,7 +17,7 @@
 
 - [x] [serial] [task:mutation] [after:controls] Retain a failing unsafe-omission mutant and direct positive controls for required-check preservation. r[cairn.verification_impact.conformance]
 - [x] [serial] [task:consumer] [after:mutation] Replay fresh Cairn source comparisons and document selections, refresh needs, fallback scope, and outstanding full gates. r[cairn.verification_impact.applicability] r[cairn.verification_impact.interfaces]
-- [ ] [serial] [task:verification] [after:consumer] Run focused and full checks, retain exact comparison receipts, and prepare reviewed sync and archive plans. r[cairn.verification_impact.conformance]
+- [x] [serial] [task:verification] [after:consumer] Run focused and full checks, retain exact comparison receipts, and prepare reviewed sync and archive plans. r[cairn.verification_impact.conformance]
 
 All tasks describe future implementation. Planning gates do not complete these tasks.
 Archive execution is not a prerequisite of any task. Use the normal lifecycle after implementation evidence passes.
