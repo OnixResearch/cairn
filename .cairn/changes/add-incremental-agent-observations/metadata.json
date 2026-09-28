@@ -1,0 +1,11 @@
+{
+  "depends_on": [
+    "add-compact-agent-readiness",
+    "add-targeted-lifecycle-context-reads"
+  ],
+  "workflow_profile": {
+    "id": "spec-driven",
+    "source": "change_create",
+    "version": 1
+  }
+}

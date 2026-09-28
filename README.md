@@ -692,6 +692,9 @@ Normal lifecycle commands reject a legacy-only `cairn/` root. Run the explicit m
 
 ## Agent workflow source
 
+The [agent efficiency roadmap](docs/agent-efficiency-roadmap.md) tracks planned improvements to agent guidance, context, readiness, MCP output, and token measurement.
+These changes are plans, not implemented features.
+
 `docs/hermes/cairn-workflow-skill.md` contains the repository-maintained agent workflow. It documents native lifecycle, boundaries, checks, commands, and known errors.
 
 Cairn also generates bounded, project-local workflows for Agent Skills, Claude, and Codex. Generation uses the checked policy projection without network or model calls.

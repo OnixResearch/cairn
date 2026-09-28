@@ -1,0 +1,399 @@
+{
+  "active_change_count": 8,
+  "archived_changes": [
+    "add-adr-radicle-cob",
+    "add-agent-guidance-context",
+    "add-agent-receipt-preserves-hash-cli",
+    "add-artifact-workflow-contract",
+    "add-ast-grep-lifecycle-gate",
+    "add-cairn-mcp",
+    "add-change-dependency-graph",
+    "add-cli-machine-contract",
+    "add-developer-loop-profiles",
+    "add-electrical-circuit-primitives",
+    "add-generated-agent-workflows",
+    "add-lifecycle-stores",
+    "add-lifecycle-views",
+    "add-mcp-drain-all",
+    "add-outcome-machine-profile",
+    "add-policy-exception-radicle-cob",
+    "add-policy-owned-workflow-profiles",
+    "add-preserves-canonicalization-fixture-corpus",
+    "add-preserves-corpus-ci-guard",
+    "add-preserves-corpus-update-rail",
+    "add-preserves-dependency-bump-runbook",
+    "add-preserves-golden-receipt-consumer",
+    "add-preserves-hash-cli-replay-policy",
+    "add-preserves-operator-docs",
+    "add-preserves-receipt-canonicalization",
+    "add-preserves-receipt-field-drift-diagnostics",
+    "add-release-decision-radicle-cob",
+    "add-review-metrics-regression-rail",
+    "add-rfd-radicle-cob",
+    "add-task-ordering",
+    "add-verification-obligation-radicle-cob",
+    "adopt-bounded-tree",
+    "adopt-cap-std-evidence-boundaries",
+    "adopt-nickel-1-17-cohort",
+    "adopt-standalone-nickel-export-shell",
+    "agent-evidence-bundle-verification",
+    "agent-receipt-bundle-submodule-split",
+    "agent-receipt-replay-evidence",
+    "agent-receipt-replay-group-coverage",
+    "agent-receipt-validation-surface",
+    "agent-run-receipts",
+    "ai-assisted-spec-draft-evidence",
+    "archive-compaction-chain-hashing",
+    "authenticate-stack-provenance-inputs",
+    "automate-current-head-release-evidence-index",
+    "cairn-hermes-workflow-skill",
+    "change-dependency-authoring-ux",
+    "change-groups-metadata",
+    "ci-replay-consumability",
+    "cob-interoperability-fixtures",
+    "collaboration-backend-agnostic",
+    "collaboration-conflict-resolution",
+    "collaboration-sync",
+    "collaboration-update",
+    "complete-preserves-content-hash-binding-readiness",
+    "completeness-check-rail",
+    "consume-artifact-auth-from-unified-workspace",
+    "content-addressed-rust-evidence",
+    "content-bound-trace-index",
+    "cross-repo-change-dependencies",
+    "default-dot-cairn-layout",
+    "derive-change-verification-guidance",
+    "determinism-coverage-release-evidence",
+    "determinism-entropy-inventory",
+    "deterministic-policy-receipts",
+    "deterministic-surface-coverage-audit",
+    "durable-release-run-ledger",
+    "ears-property-vocabulary-gate",
+    "evidence-bundle-verify-command",
+    "evidence-chain-readiness-gates",
+    "evidence-export-bundle",
+    "evidence-export-submodule-split",
+    "evidence-import-consume-rail",
+    "evidence-import-republish-rail",
+    "evidence-index-submodule-split",
+    "evidence-manifest-generate",
+    "evidence-publish-index-rail",
+    "evidence-registry-consume-rail",
+    "evidence-registry-consume-submodule-split",
+    "evidence-registry-rail",
+    "evidence-republish-submodule-split",
+    "export-content-bound-requirement-registry",
+    "expose-cross-repository-adoption-gaps",
+    "external-witness-runtime-evidence",
+    "extract-artifact-auth-repository",
+    "fetch-execute-policy-docs",
+    "formal-proof-readiness-fixture",
+    "function-address-digest-input-normalization",
+    "function-address-preserves-readiness",
+    "function-address-readiness-gates",
+    "function-address-readiness-input-schema",
+    "function-address-stack-smoke-fixtures",
+    "gate-probe-execution-boundary",
+    "global-registry-adapters-tags-dag",
+    "hash-algorithm-exceptions",
+    "hash-bound-cairn-migration",
+    "iddqd-workspace-contract-indexes",
+    "implement-electrical-circuit-primitive-receipts",
+    "kani-receipt-gates",
+    "lifecycle-receipt-core",
+    "make-agent-completion-receipts-authoritative",
+    "make-consumer-bootstrap-repeatable",
+    "make-probe-gates-authoritative",
+    "make-sync-delta-merge-fail-closed",
+    "mcp-agent-smoke-receipts",
+    "native-lifecycle-source-submodule-split",
+    "octet-evidence-format-contracts",
+    "onboarding-template-catalog-expansion",
+    "onboarding-template-ux",
+    "oxide-lifecycle-processing-patterns",
+    "package-policy-export-runtime",
+    "policy-driven-replay-groups",
+    "policy-driven-replay-plan",
+    "policy-schema-compatibility",
+    "portable-determinism-usage-rails",
+    "preserves-evidence-envelope-ingest",
+    "produce-check-evidence-with-stack-adapters",
+    "promote-preserves-authoritative-content-hash",
+    "prompt-to-change-scaffolding",
+    "publish-kiln-gate-contract",
+    "radicle-change-cob",
+    "radicle-cob-only",
+    "radicle-import-cli",
+    "radicle-issue-cross-repo-dependency",
+    "radicle-status-checkout-cli",
+    "radicle-two-peer-convergence",
+    "receipt-schema-stability",
+    "registry-channel-metadata-rail",
+    "registry-fetch-execution-receipts",
+    "registry-manifest-binding-rail",
+    "registry-mirror-verification-rail",
+    "reject-vacuous-lifecycle-gates",
+    "release-evidence-cli-source-split",
+    "release-evidence-current-head-staleness-guard",
+    "release-evidence-publish-materialization",
+    "release-evidence-publish-submodule-split",
+    "release-evidence-retention-rotation",
+    "release-evidence-tests-submodule-split",
+    "release-readiness-receipt-bundle",
+    "remove-legacy-fallback",
+    "remove-repo-openspec-root",
+    "rename-ironspec-to-cairn",
+    "replay-environment-attestation",
+    "replay-receipt-verification",
+    "repo-owned-traceability-rail",
+    "repo-verification",
+    "requirement-id-registry",
+    "reverse-spec-directory-inventory",
+    "reverse-spec-discovery",
+    "review-gate-policy-profiles",
+    "review-ledger-analytics",
+    "review-rejection-taxonomy",
+    "revision-handoff-receipts",
+    "roi-01-current-head-release-evidence-snapshot",
+    "roi-01-post-tag-remote-install-smoke",
+    "roi-01-split-main-compat-release-cli",
+    "roi-02-preserves-release-readiness-summary",
+    "roi-02-split-lifecycle-tests",
+    "roi-02-v010-release-evidence-publication",
+    "roi-03-git-remote-relocation-cleanup",
+    "roi-03-preserves-corpus-policy-inventory",
+    "roi-03-split-determinism-tests",
+    "roi-04-cli-maintainability-hotspot-inventory",
+    "roi-04-preserves-corpus-explain-cli",
+    "roi-04-split-circuit-primitive-core",
+    "roi-05-aarch64-release-support-boundary",
+    "roi-05-current-head-release-evidence-index",
+    "roi-05-preserves-workflow-test-split",
+    "rust-nickel-only-gates",
+    "semantic-review-boundary",
+    "semantic-review-readiness-gate",
+    "semantic-review-receipts",
+    "separate-cli-license-boundary",
+    "signed-evidence-manifest",
+    "split-agent-receipt-cli",
+    "split-agent-receipt-cli-source",
+    "split-agent-receipt-core",
+    "split-cli-integration-tests",
+    "split-core-policy-parser-boundaries",
+    "split-core-validation-modules",
+    "split-determinism-cli",
+    "split-determinism-cli-source",
+    "split-determinism-cli-tests",
+    "split-determinism-replay-submodules",
+    "split-developer-experience-cli",
+    "split-evidence-cli-source",
+    "split-evidence-manifest-cli-source",
+    "split-evidence-registry-cli-source",
+    "split-evidence-registry-cli-tests",
+    "split-evidence-registry-tests",
+    "split-export-bundle-core",
+    "split-lifecycle-cli",
+    "split-lifecycle-cli-tests",
+    "split-lifecycle-tests",
+    "split-main-compat-release-cli",
+    "split-mcp-cli-source",
+    "split-mcp-cli-tests",
+    "split-receipt-release-tests",
+    "split-release-receipts-submodules",
+    "split-repo-core",
+    "split-semantic-review-core",
+    "split-semantic-review-core-boundaries",
+    "split-semantic-review-metrics-regression",
+    "split-steel-orchestration-boundaries",
+    "stack-provenance-release-gates",
+    "steel-cli-docs",
+    "steel-lifecycle-orchestration",
+    "strengthen-nickel-contracts",
+    "strict-mcp-tool-schemas",
+    "support-helper-submodule-split",
+    "test-harness-failure-taxonomy",
+    "test-harness-fixture-artifact-integrity",
+    "test-harness-flake-triage",
+    "test-harness-rail-split-selftest",
+    "test-harness-real-rails",
+    "test-harness-receipts-replay",
+    "test-harness-submodule-split",
+    "tla-state-machine-receipts",
+    "toolchain-profile-matrix",
+    "trace-index-evidence-bundle",
+    "trace-index-live-proof",
+    "traceability-marker-core",
+    "trellis-proof-readiness-gates",
+    "type-lifecycle-evidence-identities",
+    "typed-lifecycle-probes",
+    "unify-change-readiness-and-next-actions",
+    "verification-role-recorded-only-schema",
+    "workspace-contract-matrix",
+    "workspace-replay-oracle"
+  ],
+  "command": "change graph",
+  "drain_order": [
+    "measure-agent-lifecycle-token-cost",
+    "add-compact-agent-readiness",
+    "add-targeted-lifecycle-context-reads",
+    "add-incremental-agent-observations",
+    "add-task-scoped-mcp-discovery",
+    "adopt-readiness-in-agent-workflows",
+    "keep-agent-guidance-current",
+    "reduce-duplicate-mcp-receipts"
+  ],
+  "edges": [
+    {
+      "dependency": "measure-agent-lifecycle-token-cost",
+      "dependent": "add-compact-agent-readiness",
+      "satisfied": false
+    },
+    {
+      "dependency": "add-compact-agent-readiness",
+      "dependent": "add-incremental-agent-observations",
+      "satisfied": false
+    },
+    {
+      "dependency": "add-targeted-lifecycle-context-reads",
+      "dependent": "add-incremental-agent-observations",
+      "satisfied": false
+    },
+    {
+      "dependency": "measure-agent-lifecycle-token-cost",
+      "dependent": "add-targeted-lifecycle-context-reads",
+      "satisfied": false
+    },
+    {
+      "dependency": "measure-agent-lifecycle-token-cost",
+      "dependent": "add-task-scoped-mcp-discovery",
+      "satisfied": false
+    },
+    {
+      "dependency": "add-compact-agent-readiness",
+      "dependent": "adopt-readiness-in-agent-workflows",
+      "satisfied": false
+    },
+    {
+      "dependency": "adopt-readiness-in-agent-workflows",
+      "dependent": "keep-agent-guidance-current",
+      "satisfied": false
+    },
+    {
+      "dependency": "measure-agent-lifecycle-token-cost",
+      "dependent": "reduce-duplicate-mcp-receipts",
+      "satisfied": false
+    }
+  ],
+  "issues": [],
+  "layout": "cairn",
+  "nodes": [
+    {
+      "blocked_by": [
+        "measure-agent-lifecycle-token-cost"
+      ],
+      "blocks": [
+        "add-incremental-agent-observations",
+        "adopt-readiness-in-agent-workflows"
+      ],
+      "dependencies": [
+        "measure-agent-lifecycle-token-cost"
+      ],
+      "dependency_ready": false,
+      "name": "add-compact-agent-readiness",
+      "satisfied_dependencies": []
+    },
+    {
+      "blocked_by": [
+        "add-compact-agent-readiness",
+        "add-targeted-lifecycle-context-reads"
+      ],
+      "blocks": [],
+      "dependencies": [
+        "add-compact-agent-readiness",
+        "add-targeted-lifecycle-context-reads"
+      ],
+      "dependency_ready": false,
+      "name": "add-incremental-agent-observations",
+      "satisfied_dependencies": []
+    },
+    {
+      "blocked_by": [
+        "measure-agent-lifecycle-token-cost"
+      ],
+      "blocks": [
+        "add-incremental-agent-observations"
+      ],
+      "dependencies": [
+        "measure-agent-lifecycle-token-cost"
+      ],
+      "dependency_ready": false,
+      "name": "add-targeted-lifecycle-context-reads",
+      "satisfied_dependencies": []
+    },
+    {
+      "blocked_by": [
+        "measure-agent-lifecycle-token-cost"
+      ],
+      "blocks": [],
+      "dependencies": [
+        "measure-agent-lifecycle-token-cost"
+      ],
+      "dependency_ready": false,
+      "name": "add-task-scoped-mcp-discovery",
+      "satisfied_dependencies": []
+    },
+    {
+      "blocked_by": [
+        "add-compact-agent-readiness"
+      ],
+      "blocks": [
+        "keep-agent-guidance-current"
+      ],
+      "dependencies": [
+        "add-compact-agent-readiness"
+      ],
+      "dependency_ready": false,
+      "name": "adopt-readiness-in-agent-workflows",
+      "satisfied_dependencies": []
+    },
+    {
+      "blocked_by": [
+        "adopt-readiness-in-agent-workflows"
+      ],
+      "blocks": [],
+      "dependencies": [
+        "adopt-readiness-in-agent-workflows"
+      ],
+      "dependency_ready": false,
+      "name": "keep-agent-guidance-current",
+      "satisfied_dependencies": []
+    },
+    {
+      "blocked_by": [],
+      "blocks": [
+        "add-compact-agent-readiness",
+        "add-targeted-lifecycle-context-reads",
+        "add-task-scoped-mcp-discovery",
+        "reduce-duplicate-mcp-receipts"
+      ],
+      "dependencies": [],
+      "dependency_ready": true,
+      "name": "measure-agent-lifecycle-token-cost",
+      "satisfied_dependencies": []
+    },
+    {
+      "blocked_by": [
+        "measure-agent-lifecycle-token-cost"
+      ],
+      "blocks": [],
+      "dependencies": [
+        "measure-agent-lifecycle-token-cost"
+      ],
+      "dependency_ready": false,
+      "name": "reduce-duplicate-mcp-receipts",
+      "satisfied_dependencies": []
+    }
+  ],
+  "root": ".",
+  "valid": true
+}
