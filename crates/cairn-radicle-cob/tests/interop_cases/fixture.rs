@@ -1,8 +1,7 @@
 use std::{error::Error, num::NonZeroUsize};
 
-use onix_cairn_radicle_cob::{
-    inspect_change, CairnChangeCob, CobError, CobRepository, CobStoreError, TYPENAME,
-};
+use onix_cairn_radicle_cob::{inspect_change, CairnChangeCob, CobError, TYPENAME};
+use onix_radicle_cob_git_store::{GitCobStore, GitCobStoreError};
 use radicle_cob::{change, Evaluate, Manifest, Version};
 
 use crate::interop_support::{
@@ -27,7 +26,7 @@ const RADICLE_NODE_PACKAGE: &str = "radicle-node";
 const UNSUPPORTED_VERSION_NUMBER: usize = 2;
 const FORBIDDEN_CONSUMER_DEPENDENCIES: &[&str] = &[
     "cairn_core",
-    "CobRepository",
+    "GitCobStore",
     "CairnChangeCob",
     "inspect_change",
     "apply_change_cob_operation",
@@ -143,7 +142,7 @@ fn tampered_missing_unsigned_and_version_fixtures_fail_closed() -> Result<(), Bo
     )?;
     assert!(matches!(
         inspect_change(&unsigned.repository, &provenance.fixture.change_id),
-        Err(CobError::Store(CobStoreError::InvalidCobChange { .. }))
+        Err(CobError::Store(GitCobStoreError::InvalidCobChange { .. }))
     ));
 
     let missing = ExternalFixture::new("missing-ref", &provenance)?;
@@ -156,12 +155,12 @@ fn tampered_missing_unsigned_and_version_fixtures_fail_closed() -> Result<(), Bo
     ));
 
     let incompatible = ExternalFixture::new("incompatible-version", &provenance)?;
-    let storage = CobRepository::open(&incompatible.repository)?;
+    let storage = GitCobStore::open(&incompatible.repository)?;
     let operation = provenance
         .fixture
         .operation_id
         .parse::<radicle_oid::Oid>()?;
-    let mut entry = <CobRepository as change::Storage>::load(&storage, operation)?;
+    let mut entry = <GitCobStore as change::Storage>::load(&storage, operation)?;
     let version = NonZeroUsize::new(UNSUPPORTED_VERSION_NUMBER)
         .ok_or("unsupported fixture version must be non-zero")?;
     entry.manifest = Manifest::new(TYPENAME.clone(), Version::from(version));

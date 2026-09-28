@@ -9,17 +9,13 @@ use nonempty::NonEmpty;
 use radicle_cob::{
     change::Entry, CollaborativeObject, Create, Evaluate, ObjectId, TypeName, Update, Version,
 };
-use radicle_crypto::{
-    signature::Keypair as _,
-    ssh::keystore::{MemorySigner, MemorySignerError},
-    PublicKey,
-};
+use radicle_crypto::{signature::Keypair as _, ssh::keystore::MemorySignerError, PublicKey};
 use radicle_oid::Oid;
 use serde_json::Error as JsonError;
 use thiserror::Error;
 
-use crate::store::CobRepository;
 use crate::CobMutationOutcome;
+use onix_radicle_cob_git_store::{GitCobStore, GitCobStoreError};
 
 pub const CREATE_MESSAGE_PREFIX: &str = "Import RFD";
 pub const UPDATE_MESSAGE_PREFIX: &str = "Update RFD";
@@ -53,10 +49,10 @@ impl CairnRfdCob {
 
 // r[impl cairn.document_collaboration.radicle_adapter.mapping]
 // r[impl cairn.rfd_cob.interop.negative]
-impl Evaluate<CobRepository> for CairnRfdCob {
+impl Evaluate<GitCobStore> for CairnRfdCob {
     type Error = RfdCobError;
 
-    fn init(entry: &Entry, _store: &CobRepository) -> Result<Self, Self::Error> {
+    fn init(entry: &Entry, _store: &GitCobStore) -> Result<Self, Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
         validate_root_base(entry, &actions)?;
@@ -70,7 +66,7 @@ impl Evaluate<CobRepository> for CairnRfdCob {
         &mut self,
         entry: &Entry,
         _concurrent: I,
-        _store: &CobRepository,
+        _store: &GitCobStore,
     ) -> Result<(), Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
@@ -91,7 +87,7 @@ pub struct RfdCobInspection {
 #[derive(Debug, Error)]
 pub enum RfdCobError {
     #[error(transparent)]
-    Store(#[from] crate::CobStoreError),
+    Store(#[from] GitCobStoreError),
     #[error("COB operation failed: {0}")]
     Operation(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Cairn rejected the RFD COB operation: {0}")]
@@ -134,10 +130,16 @@ pub enum RfdCobError {
     SignerUnavailable(String),
 }
 
-pub fn load_signer(keystore_path: &Path) -> Result<MemorySigner, RfdCobError> {
-    let signer = crate::load_signer(keystore_path)
-        .map_err(|error| RfdCobError::SignerUnavailable(error.to_string()))?;
-    Ok(signer)
+fn map_signer_error(error: onix_radicle_cob_git_store::LoadSignerError) -> RfdCobError {
+    match error {
+        onix_radicle_cob_git_store::LoadSignerError::SymlinkKeystore { path } => {
+            RfdCobError::SymlinkKeystore { path }
+        }
+        onix_radicle_cob_git_store::LoadSignerError::KeystoreIo(source) => {
+            RfdCobError::Filesystem(source)
+        }
+        onix_radicle_cob_git_store::LoadSignerError::Signer(source) => RfdCobError::Signer(source),
+    }
 }
 
 // r[verify cairn.rfd_cob.interop.outward]
@@ -145,12 +147,12 @@ pub fn inspect_rfd(
     repository_path: &Path,
     document_id: &str,
 ) -> Result<RfdCobInspection, RfdCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     inspect_open_rfd(&repository, document_id)
 }
 
 fn inspect_open_rfd(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     document_id: &str,
 ) -> Result<RfdCobInspection, RfdCobError> {
     let mut matches = Vec::new();
@@ -190,7 +192,7 @@ pub fn create_rfd(
     init: DocumentInit,
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, RfdCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
     match inspect_open_rfd(&repository, &init.document_id) {
         Ok(existing) => {
@@ -203,7 +205,8 @@ pub fn create_rfd(
         Err(error) => return Err(error),
     }
     validate_document_init(&init)?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     let planned_root = document_init_content_root(&init)?;
@@ -253,9 +256,10 @@ pub fn update_rfd(
     actions: &[DocumentAction],
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, RfdCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     if actor != planned_actor {
@@ -313,7 +317,7 @@ pub fn update_rfd(
 }
 
 fn load_required_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: &str,
 ) -> Result<CollaborativeObject<CairnRfdCob>, RfdCobError> {
     let parsed = ObjectId::from_str(object_id).map_err(|_| RfdCobError::InvalidGitOid {
@@ -325,14 +329,14 @@ fn load_required_object(
 }
 
 fn load_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: ObjectId,
 ) -> Result<Option<CollaborativeObject<CairnRfdCob>>, RfdCobError> {
     radicle_cob::get::<CairnRfdCob, _>(repository, &TYPE, &object_id).map_err(operation_error)
 }
 
 fn mutation_outcome_or_restore(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     namespace: &PublicKey,
     prior_target: Option<Oid>,
     new_target: Oid,
@@ -519,7 +523,7 @@ mod tests {
         }
 
         fn init(&self) -> Result<DocumentInit, Box<dyn Error>> {
-            let repository = CobRepository::open(&self.repository)?;
+            let repository = GitCobStore::open(&self.repository)?;
             let base = format!("{BASE_REVISION_KIND_GIT_OID}:{}", repository.head_oid()?);
             Ok(DocumentInit {
                 schema: RFD_SCHEMA_V1.to_string(),

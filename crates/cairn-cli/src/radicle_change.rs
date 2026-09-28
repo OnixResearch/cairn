@@ -16,9 +16,10 @@ use cairn_core::{
 };
 use onix_cairn_radicle_cob::{
     create_change, find_change, parse_delegate_ids, signer_actor, CobMutationLock,
-    CobMutationOutcome, CobRepository, GIT2_LIBRARY_VERSION, GIT_REF_FORMAT_LIBRARY_VERSION,
+    CobMutationOutcome, GIT2_LIBRARY_VERSION, GIT_REF_FORMAT_LIBRARY_VERSION,
     RADICLE_COB_LIBRARY_VERSION, RADICLE_CRYPTO_LIBRARY_VERSION, RADICLE_OID_LIBRARY_VERSION,
 };
+use onix_radicle_cob_git_store::GitCobStore;
 use serde_json::{json, Value};
 
 use crate::{
@@ -159,7 +160,7 @@ fn run_cob_import(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn inspect_import(options: &CobImportOptions) -> Result<ImportInspection, Box<dyn Error>> {
-    let repository = CobRepository::open(&options.git_repository)?;
+    let repository = GitCobStore::open(&options.git_repository)?;
     Ok(ImportInspection {
         actor: signer_actor(&options.keystore)?,
         repository_head_oid: repository.head_oid()?.to_string(),

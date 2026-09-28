@@ -9,13 +9,13 @@ use nonempty::NonEmpty;
 use radicle_cob::{
     change::Entry, CollaborativeObject, Create, Evaluate, ObjectId, TypeName, Update, Version,
 };
-use radicle_crypto::{signature::Keypair as _, ssh::keystore::MemorySigner, PublicKey};
+use radicle_crypto::{signature::Keypair as _, ssh::keystore::MemorySignerError, PublicKey};
 use radicle_oid::Oid;
 use serde_json::Error as JsonError;
 use thiserror::Error;
 
-use crate::store::CobRepository;
 use crate::CobMutationOutcome;
+use onix_radicle_cob_git_store::{GitCobStore, GitCobStoreError};
 
 pub const CREATE_MESSAGE_PREFIX: &str = "Import ADR";
 pub const UPDATE_MESSAGE_PREFIX: &str = "Update ADR";
@@ -56,10 +56,10 @@ impl CairnAdrCob {
 }
 
 // r[verify cairn.adr_cob.backends]
-impl Evaluate<CobRepository> for CairnAdrCob {
+impl Evaluate<GitCobStore> for CairnAdrCob {
     type Error = AdrCobError;
 
-    fn init(entry: &Entry, _store: &CobRepository) -> Result<Self, Self::Error> {
+    fn init(entry: &Entry, _store: &GitCobStore) -> Result<Self, Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
         validate_root_base(entry, &actions)?;
@@ -73,7 +73,7 @@ impl Evaluate<CobRepository> for CairnAdrCob {
         &mut self,
         entry: &Entry,
         _concurrent: I,
-        _store: &CobRepository,
+        _store: &GitCobStore,
     ) -> Result<(), Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
@@ -93,7 +93,7 @@ pub struct AdrCobInspection {
 #[derive(Debug, Error)]
 pub enum AdrCobError {
     #[error(transparent)]
-    Store(#[from] crate::CobStoreError),
+    Store(#[from] GitCobStoreError),
     #[error("COB operation failed: {0}")]
     Operation(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Cairn rejected the ADR COB operation: {0}")]
@@ -136,11 +136,16 @@ pub enum AdrCobError {
     SignerUnavailable(String),
 }
 
-use radicle_crypto::ssh::keystore::MemorySignerError;
-
-pub fn load_signer(keystore_path: &Path) -> Result<MemorySigner, AdrCobError> {
-    crate::load_signer(keystore_path)
-        .map_err(|error| AdrCobError::SignerUnavailable(error.to_string()))
+fn map_signer_error(error: onix_radicle_cob_git_store::LoadSignerError) -> AdrCobError {
+    match error {
+        onix_radicle_cob_git_store::LoadSignerError::SymlinkKeystore { path } => {
+            AdrCobError::SymlinkKeystore { path }
+        }
+        onix_radicle_cob_git_store::LoadSignerError::KeystoreIo(source) => {
+            AdrCobError::Filesystem(source)
+        }
+        onix_radicle_cob_git_store::LoadSignerError::Signer(source) => AdrCobError::Signer(source),
+    }
 }
 
 // r[verify cairn.adr_cob.interop.outward]
@@ -148,12 +153,12 @@ pub fn inspect_adr(
     repository_path: &Path,
     document_id: &str,
 ) -> Result<AdrCobInspection, AdrCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     inspect_open_adr(&repository, document_id)
 }
 
 fn inspect_open_adr(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     document_id: &str,
 ) -> Result<AdrCobInspection, AdrCobError> {
     let mut matches = Vec::new();
@@ -195,7 +200,7 @@ pub fn create_adr(
     init: DocumentInit,
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, AdrCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
     match inspect_open_adr(&repository, &init.document_id) {
         Ok(existing) => {
@@ -208,7 +213,8 @@ pub fn create_adr(
         Err(error) => return Err(error),
     }
     validate_document_init(&init)?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     let planned_root = document_init_content_root(&init)?;
@@ -257,9 +263,10 @@ pub fn update_adr(
     actions: &[DocumentAction],
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, AdrCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     if actor != planned_actor {
@@ -317,7 +324,7 @@ pub fn update_adr(
 }
 
 fn load_required_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: &str,
 ) -> Result<CollaborativeObject<CairnAdrCob>, AdrCobError> {
     let parsed = ObjectId::from_str(object_id).map_err(|_| AdrCobError::InvalidGitOid {
@@ -329,14 +336,14 @@ fn load_required_object(
 }
 
 fn load_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: ObjectId,
 ) -> Result<Option<CollaborativeObject<CairnAdrCob>>, AdrCobError> {
     radicle_cob::get::<CairnAdrCob, _>(repository, &TYPE, &object_id).map_err(operation_error)
 }
 
 fn mutation_outcome_or_restore(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     namespace: &PublicKey,
     prior_target: Option<Oid>,
     new_target: Oid,

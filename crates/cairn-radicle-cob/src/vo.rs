@@ -14,8 +14,8 @@ use radicle_oid::Oid;
 use serde_json::Error as JsonError;
 use thiserror::Error;
 
-use crate::store::CobRepository;
 use crate::CobMutationOutcome;
+use onix_radicle_cob_git_store::{GitCobStore, GitCobStoreError};
 
 pub const CREATE_MESSAGE_PREFIX: &str = "Import verification obligation";
 pub const UPDATE_MESSAGE_PREFIX: &str = "Update verification obligation";
@@ -43,10 +43,10 @@ impl CairnVerificationObligationCob {
     }
 }
 
-impl Evaluate<CobRepository> for CairnVerificationObligationCob {
+impl Evaluate<GitCobStore> for CairnVerificationObligationCob {
     type Error = VoCobError;
 
-    fn init(entry: &Entry, _store: &CobRepository) -> Result<Self, Self::Error> {
+    fn init(entry: &Entry, _store: &GitCobStore) -> Result<Self, Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
         validate_root_base(entry, &actions)?;
@@ -60,7 +60,7 @@ impl Evaluate<CobRepository> for CairnVerificationObligationCob {
         &mut self,
         entry: &Entry,
         _concurrent: I,
-        _store: &CobRepository,
+        _store: &GitCobStore,
     ) -> Result<(), Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
@@ -80,7 +80,7 @@ pub struct VoCobInspection {
 #[derive(Debug, Error)]
 pub enum VoCobError {
     #[error(transparent)]
-    Store(#[from] crate::CobStoreError),
+    Store(#[from] GitCobStoreError),
     #[error("COB operation failed: {0}")]
     Operation(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Cairn rejected the verification-obligation COB operation: {0}")]
@@ -119,11 +119,13 @@ pub enum VoCobError {
     SignerUnavailable(String),
 }
 
-pub fn load_signer(
-    keystore_path: &Path,
-) -> Result<radicle_crypto::ssh::keystore::MemorySigner, VoCobError> {
-    crate::load_signer(keystore_path)
-        .map_err(|error| VoCobError::SignerUnavailable(error.to_string()))
+fn map_signer_error(error: onix_radicle_cob_git_store::LoadSignerError) -> VoCobError {
+    match error {
+        onix_radicle_cob_git_store::LoadSignerError::SymlinkKeystore { path } => {
+            VoCobError::SymlinkKeystore { path }
+        }
+        other => VoCobError::SignerUnavailable(other.to_string()),
+    }
 }
 
 // r[verify cairn.verification_obligation_cob.interop.outward]
@@ -131,12 +133,12 @@ pub fn inspect_vo(
     repository_path: &Path,
     obligation_id: &str,
 ) -> Result<VoCobInspection, VoCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     inspect_open_vo(&repository, obligation_id)
 }
 
 fn inspect_open_vo(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     obligation_id: &str,
 ) -> Result<VoCobInspection, VoCobError> {
     let mut matches = Vec::new();
@@ -188,7 +190,7 @@ pub fn create_vo(
     init: WorkflowInit,
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, VoCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
     match inspect_open_vo(&repository, &init.obligation_id) {
         Ok(existing) => {
@@ -201,7 +203,8 @@ pub fn create_vo(
         Err(error) => return Err(error),
     }
     validate_workflow_init(&init)?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     let init_operation = WorkflowOperation {
@@ -258,9 +261,10 @@ pub fn update_vo(
     actions: &[WorkflowAction],
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, VoCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     if actor != planned_actor {
@@ -318,7 +322,7 @@ pub fn update_vo(
 }
 
 fn load_required_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: &str,
 ) -> Result<CollaborativeObject<CairnVerificationObligationCob>, VoCobError> {
     let parsed = ObjectId::from_str(object_id).map_err(|_| VoCobError::InvalidGitOid {
@@ -330,7 +334,7 @@ fn load_required_object(
 }
 
 fn load_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: ObjectId,
 ) -> Result<Option<CollaborativeObject<CairnVerificationObligationCob>>, VoCobError> {
     radicle_cob::get::<CairnVerificationObligationCob, _>(repository, &TYPE, &object_id)
@@ -338,7 +342,7 @@ fn load_object(
 }
 
 fn mutation_outcome_or_restore(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     namespace: &PublicKey,
     prior_target: Option<Oid>,
     new_target: Oid,

@@ -15,8 +15,8 @@ use radicle_oid::Oid;
 use serde_json::Error as JsonError;
 use thiserror::Error;
 
-use crate::store::CobRepository;
 use crate::CobMutationOutcome;
+use onix_radicle_cob_git_store::{GitCobStore, GitCobStoreError};
 
 pub const CREATE_MESSAGE_PREFIX: &str = "Import policy exception";
 pub const UPDATE_MESSAGE_PREFIX: &str = "Update policy exception";
@@ -50,10 +50,10 @@ impl CairnPolicyExceptionCob {
 // r[impl cairn.policy_exception_cob.interop]
 // r[impl cairn.policy_exception_cob.interop.negative]
 // r[impl cairn.policy_exception_cob.backends.boundary]
-impl Evaluate<CobRepository> for CairnPolicyExceptionCob {
+impl Evaluate<GitCobStore> for CairnPolicyExceptionCob {
     type Error = PolicyExceptionCobError;
 
-    fn init(entry: &Entry, _store: &CobRepository) -> Result<Self, Self::Error> {
+    fn init(entry: &Entry, _store: &GitCobStore) -> Result<Self, Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
         validate_root_base(entry, &actions)?;
@@ -66,7 +66,7 @@ impl Evaluate<CobRepository> for CairnPolicyExceptionCob {
         &mut self,
         entry: &Entry,
         _concurrent: I,
-        _store: &CobRepository,
+        _store: &GitCobStore,
     ) -> Result<(), Self::Error> {
         validate_manifest(entry)?;
         apply_exception_operation(&mut self.state, operation(entry, decode_actions(entry)?))?;
@@ -84,7 +84,7 @@ pub struct PolicyExceptionInspection {
 #[derive(Debug, Error)]
 pub enum PolicyExceptionCobError {
     #[error(transparent)]
-    Store(#[from] crate::CobStoreError),
+    Store(#[from] GitCobStoreError),
     #[error("COB operation failed: {0}")]
     Operation(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Cairn rejected the policy-exception COB operation: {0}")]
@@ -123,11 +123,13 @@ pub enum PolicyExceptionCobError {
     SignerUnavailable(String),
 }
 
-pub fn load_signer(
-    keystore_path: &Path,
-) -> Result<radicle_crypto::ssh::keystore::MemorySigner, PolicyExceptionCobError> {
-    crate::load_signer(keystore_path)
-        .map_err(|error| PolicyExceptionCobError::SignerUnavailable(error.to_string()))
+fn map_signer_error(error: onix_radicle_cob_git_store::LoadSignerError) -> PolicyExceptionCobError {
+    match error {
+        onix_radicle_cob_git_store::LoadSignerError::SymlinkKeystore { path } => {
+            PolicyExceptionCobError::SymlinkKeystore { path }
+        }
+        other => PolicyExceptionCobError::SignerUnavailable(other.to_string()),
+    }
 }
 
 // r[verify cairn.policy_exception_cob.interop.outward]
@@ -135,7 +137,7 @@ pub fn inspect_exception(
     repository_path: &Path,
     exception_id: &str,
 ) -> Result<PolicyExceptionInspection, PolicyExceptionCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     let mut matches = Vec::new();
     for object_id in repository.object_ids(&TYPE)? {
         let Some(object) = load_object(&repository, object_id)? else {
@@ -172,10 +174,11 @@ pub fn create_exception(
     init: PolicyExceptionInit,
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, PolicyExceptionCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
     validate_exception_init(&init)?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     let init_operation = PolicyExceptionOperation {
@@ -239,9 +242,10 @@ pub fn update_exception(
     actions: &[PolicyExceptionAction],
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, PolicyExceptionCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     if actor != planned_actor {
@@ -300,7 +304,7 @@ pub fn update_exception(
 }
 
 fn load_required_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: &str,
 ) -> Result<CollaborativeObject<CairnPolicyExceptionCob>, PolicyExceptionCobError> {
     let parsed =
@@ -313,7 +317,7 @@ fn load_required_object(
 }
 
 fn load_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: ObjectId,
 ) -> Result<Option<CollaborativeObject<CairnPolicyExceptionCob>>, PolicyExceptionCobError> {
     radicle_cob::get::<CairnPolicyExceptionCob, _>(repository, &TYPE, &object_id)
@@ -321,7 +325,7 @@ fn load_object(
 }
 
 fn mutation_outcome_or_restore(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     namespace: &PublicKey,
     prior_target: Option<Oid>,
     new_target: Oid,

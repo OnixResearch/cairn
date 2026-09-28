@@ -12,9 +12,8 @@ use cairn_core::{
     CHANGE_COLLABORATION_SCHEMA_V1, RADICLE_CHANGE_COB_TYPE_NAME,
 };
 use git2::Repository;
-use onix_cairn_radicle_cob::{
-    create_change, inspect_change, update_change, CobRepository, CobStoreError, TYPENAME,
-};
+use onix_cairn_radicle_cob::{create_change, inspect_change, update_change, TYPENAME};
+use onix_radicle_cob_git_store::{GitCobStore, GitCobStoreError};
 use radicle_crypto::{ssh::Keystore, KeyPair, PublicKey, Seed};
 
 const CHANGE_ID: &str = "format-compatibility";
@@ -73,7 +72,7 @@ impl Fixture {
     }
 
     fn init(&self) -> Result<ChangeCobInit, Box<dyn Error>> {
-        let head = CobRepository::open(&self.repository)?.head_oid()?;
+        let head = GitCobStore::open(&self.repository)?.head_oid()?;
         Ok(ChangeCobInit {
             schema: CHANGE_COLLABORATION_SCHEMA_V1.to_string(),
             change_id: CHANGE_ID.to_string(),
@@ -333,13 +332,13 @@ fn concurrent_signed_heads_resolve_without_losing_history() -> Result<(), Box<dy
     let reloaded = inspect_change(&fixture.repository, CHANGE_ID)?;
     assert_eq!(change_cob_content_root(&reloaded.state)?, expected_root);
 
-    let repository = CobRepository::open(&fixture.repository)?;
+    let repository = GitCobStore::open(&fixture.repository)?;
     let object_id = created.object_id.parse::<radicle_cob::ObjectId>()?;
     let stale_entry = delegate_operation
         .operation_id
         .parse::<radicle_cob::change::EntryId>()?;
     let before_ref = repository.namespace_ref_target(&fixture.other, &TYPENAME, &object_id)?;
-    let stale_update = <CobRepository as radicle_cob::object::Storage>::update(
+    let stale_update = <GitCobStore as radicle_cob::object::Storage>::update(
         &repository,
         &fixture.other,
         &TYPENAME,
@@ -348,7 +347,7 @@ fn concurrent_signed_heads_resolve_without_losing_history() -> Result<(), Box<dy
     );
     assert!(matches!(
         stale_update,
-        Err(CobStoreError::ReferenceDrift { .. })
+        Err(GitCobStoreError::ReferenceDrift { .. })
     ));
     assert_eq!(
         repository.namespace_ref_target(&fixture.other, &TYPENAME, &object_id)?,

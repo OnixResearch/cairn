@@ -4,7 +4,6 @@ mod adr;
 mod policy;
 mod release;
 mod rfd;
-mod store;
 mod vo;
 
 pub use crate::adr::{
@@ -44,16 +43,12 @@ use nonempty::NonEmpty;
 use radicle_cob::{
     change::Entry, CollaborativeObject, Create, Evaluate, ObjectId, TypeName, Update, Version,
 };
-use radicle_crypto::{
-    signature::Keypair as _,
-    ssh::keystore::{Keystore, MemorySigner, MemorySignerError},
-    PublicKey,
-};
+use radicle_crypto::{signature::Keypair as _, ssh::keystore::MemorySignerError, PublicKey};
 use radicle_oid::Oid;
 use serde_json::Error as JsonError;
 use thiserror::Error;
 
-pub use store::{CobRepository, CobStoreError};
+use onix_radicle_cob_git_store::{load_signer, GitCobStore, GitCobStoreError, LoadSignerError};
 
 pub const RADICLE_COB_LIBRARY_VERSION: &str = "0.20.0";
 pub const RADICLE_CRYPTO_LIBRARY_VERSION: &str = "0.17.0";
@@ -69,6 +64,9 @@ const MUTATION_LOCK_CONTENT: &[u8] = b"cairn-cob-mutation\n";
 
 // r[impl cairn.radicle_cob_only.dependencies]
 // r[impl cairn.radicle_cob_only.store]
+// r[impl cairn.radicle_cob_store_extraction.pinned_vendor]
+// r[impl cairn.radicle_cob_store_extraction.cutover]
+// r[impl cairn.radicle_cob_store_extraction.boundary]
 // r[impl cairn.radicle_cob_only.authority]
 // r[impl cairn.radicle_cob_only.compatibility]
 // r[impl cairn.radicle_change_cob.radicle_adapter]
@@ -95,10 +93,10 @@ impl CairnChangeCob {
 }
 
 // r[impl cairn.radicle_change_cob.radicle_adapter.mapping]
-impl Evaluate<CobRepository> for CairnChangeCob {
+impl Evaluate<GitCobStore> for CairnChangeCob {
     type Error = CobError;
 
-    fn init(entry: &Entry, _store: &CobRepository) -> Result<Self, Self::Error> {
+    fn init(entry: &Entry, _store: &GitCobStore) -> Result<Self, Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
         validate_root_base(entry, &actions)?;
@@ -112,7 +110,7 @@ impl Evaluate<CobRepository> for CairnChangeCob {
         &mut self,
         entry: &Entry,
         _concurrent: I,
-        _store: &CobRepository,
+        _store: &GitCobStore,
     ) -> Result<(), Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
@@ -142,7 +140,7 @@ pub struct CobMutationOutcome {
 #[derive(Debug, Error)]
 pub enum CobError {
     #[error(transparent)]
-    Store(#[from] CobStoreError),
+    Store(#[from] GitCobStoreError),
     #[error("COB operation failed: {0}")]
     Operation(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("COB action JSON is invalid: {0}")]
@@ -188,7 +186,7 @@ pub enum CobError {
     #[error("COB postcondition failed ({mutation}) and reference rollback failed ({rollback})")]
     PostconditionRollback {
         mutation: Box<CobError>,
-        rollback: CobStoreError,
+        rollback: GitCobStoreError,
     },
     #[error("another local COB mutation is active for change {change_id}; after confirming no mutation is running, remove stale lock {path}")]
     ConcurrentMutation { change_id: String, path: String },
@@ -215,7 +213,7 @@ pub struct CobMutationLock {
 
 impl CobMutationLock {
     pub fn acquire(repository_path: &Path, change_id: &str) -> Result<Self, CobError> {
-        let repository = CobRepository::open(repository_path)?;
+        let repository = GitCobStore::open(repository_path)?;
         let directory = repository.raw().path().join(MUTATION_LOCK_DIRECTORY);
         fs::create_dir_all(&directory)?;
         let lock_name = format!("{change_id}.lock");
@@ -281,14 +279,14 @@ impl Drop for CobMutationLock {
     }
 }
 
-pub fn load_signer(keystore_path: &Path) -> Result<MemorySigner, CobError> {
-    let metadata = fs::symlink_metadata(keystore_path)?;
-    if metadata.file_type().is_symlink() {
-        return Err(CobError::SymlinkKeystore {
-            path: keystore_path.display().to_string(),
-        });
+impl From<LoadSignerError> for CobError {
+    fn from(error: LoadSignerError) -> Self {
+        match error {
+            LoadSignerError::SymlinkKeystore { path } => Self::SymlinkKeystore { path },
+            LoadSignerError::KeystoreIo(source) => Self::Filesystem(source),
+            LoadSignerError::Signer(source) => Self::Signer(source),
+        }
     }
-    Ok(MemorySigner::load(&Keystore::new(&keystore_path), None)?)
 }
 
 pub fn signer_actor(keystore_path: &Path) -> Result<String, CobError> {
@@ -299,12 +297,12 @@ pub fn inspect_change(
     repository_path: &Path,
     change_id: &str,
 ) -> Result<CobChangeInspection, CobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     inspect_open_change(&repository, change_id)
 }
 
 pub fn inspect_open_change(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     change_id: &str,
 ) -> Result<CobChangeInspection, CobError> {
     let mut matches = Vec::new();
@@ -354,7 +352,7 @@ pub fn create_change(
     init: ChangeCobInit,
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, CobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
     match inspect_open_change(&repository, &init.change_id) {
         Ok(existing) => {
@@ -415,7 +413,7 @@ pub fn update_change(
     actions: &[ChangeCobAction],
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, CobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
     let signer = load_signer(keystore_path)?;
     let public_key = signer.verifying_key();
@@ -479,7 +477,7 @@ pub fn update_change(
 }
 
 fn load_required_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: &str,
 ) -> Result<CollaborativeObject<CairnChangeCob>, CobError> {
     let parsed = ObjectId::from_str(object_id).map_err(|_| CobError::InvalidGitOid {
@@ -491,7 +489,7 @@ fn load_required_object(
 }
 
 fn load_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: ObjectId,
 ) -> Result<Option<CollaborativeObject<CairnChangeCob>>, CobError> {
     radicle_cob::get::<CairnChangeCob, _>(repository, &TYPENAME, &object_id)
@@ -499,7 +497,7 @@ fn load_object(
 }
 
 fn mutation_outcome_or_restore(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     namespace: &PublicKey,
     prior_target: Option<Oid>,
     new_target: Oid,
@@ -760,7 +758,7 @@ mod tests {
         }
 
         fn init(&self) -> Result<ChangeCobInit, Box<dyn Error>> {
-            let repository = CobRepository::open(&self.repository)?;
+            let repository = GitCobStore::open(&self.repository)?;
             let base_revision = ChangeBaseRevision::new(
                 BASE_REVISION_KIND_GIT_OID,
                 repository.head_oid()?.to_string(),
@@ -973,7 +971,7 @@ mod tests {
     #[test]
     fn outsider_and_concurrent_lock_fail_before_ref_update() -> Result<(), Box<dyn Error>> {
         let fixture = Fixture::new("negative")?;
-        let repository = CobRepository::open(&fixture.repository)?;
+        let repository = GitCobStore::open(&fixture.repository)?;
         let mut local_config = repository
             .raw()
             .config()?
@@ -981,7 +979,7 @@ mod tests {
         local_config.remove("user.name")?;
         assert!(matches!(
             repository.validate_local_commit_identity(),
-            Err(CobStoreError::MissingLocalCommitIdentity { field: "user.name" })
+            Err(GitCobStoreError::MissingLocalCommitIdentity { field: "user.name" })
         ));
         local_config.set_str("user.name", GIT_AUTHOR_NAME)?;
         assert!(matches!(

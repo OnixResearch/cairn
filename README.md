@@ -371,6 +371,8 @@ Actor and workspace values are declarations. They are not signatures or remote a
 
 The `radicle-cob.v1` adapter uses an explicit Git repository and keystore. It does not run a Radicle node.
 
+The local COB Git storage and explicit signer loader come from the commit-pinned, in-repository `onix-radicle-cob-git-store` vendor package. Cairn continues to own reducers, authority, locks, and receipts. See [the source pin, archive digest, and import procedure](docs/radicle-cob-git-store-adoption.md); this local source import is not a published transport or remote.
+
 ```bash
 cairn collaboration import my-change \
   --backend radicle-cob.v1 \

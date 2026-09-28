@@ -15,8 +15,8 @@ use radicle_oid::Oid;
 use serde_json::Error as JsonError;
 use thiserror::Error;
 
-use crate::store::CobRepository;
 use crate::CobMutationOutcome;
+use onix_radicle_cob_git_store::{GitCobStore, GitCobStoreError};
 
 pub const CREATE_MESSAGE_PREFIX: &str = "Import release decision";
 pub const UPDATE_MESSAGE_PREFIX: &str = "Update release decision";
@@ -53,10 +53,10 @@ impl CairnReleaseDecisionCob {
     }
 }
 
-impl Evaluate<CobRepository> for CairnReleaseDecisionCob {
+impl Evaluate<GitCobStore> for CairnReleaseDecisionCob {
     type Error = ReleaseCobError;
 
-    fn init(entry: &Entry, _store: &CobRepository) -> Result<Self, Self::Error> {
+    fn init(entry: &Entry, _store: &GitCobStore) -> Result<Self, Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
         validate_root_base(entry, &actions)?;
@@ -70,7 +70,7 @@ impl Evaluate<CobRepository> for CairnReleaseDecisionCob {
         &mut self,
         entry: &Entry,
         _concurrent: I,
-        _store: &CobRepository,
+        _store: &GitCobStore,
     ) -> Result<(), Self::Error> {
         validate_manifest(entry)?;
         let actions = decode_actions(entry)?;
@@ -89,7 +89,7 @@ pub struct ReleaseDecisionInspection {
 #[derive(Debug, Error)]
 pub enum ReleaseCobError {
     #[error(transparent)]
-    Store(#[from] crate::CobStoreError),
+    Store(#[from] GitCobStoreError),
     #[error("COB operation failed: {0}")]
     Operation(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Cairn rejected the release-decision COB operation: {0}")]
@@ -128,11 +128,13 @@ pub enum ReleaseCobError {
     SignerUnavailable(String),
 }
 
-pub fn load_signer(
-    keystore_path: &Path,
-) -> Result<radicle_crypto::ssh::keystore::MemorySigner, ReleaseCobError> {
-    crate::load_signer(keystore_path)
-        .map_err(|error| ReleaseCobError::SignerUnavailable(error.to_string()))
+fn map_signer_error(error: onix_radicle_cob_git_store::LoadSignerError) -> ReleaseCobError {
+    match error {
+        onix_radicle_cob_git_store::LoadSignerError::SymlinkKeystore { path } => {
+            ReleaseCobError::SymlinkKeystore { path }
+        }
+        other => ReleaseCobError::SignerUnavailable(other.to_string()),
+    }
 }
 
 // r[verify cairn.release_decision_cob.interop.outward]
@@ -140,12 +142,12 @@ pub fn inspect_release(
     repository_path: &Path,
     decision_id: &str,
 ) -> Result<ReleaseDecisionInspection, ReleaseCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     inspect_open_release(&repository, decision_id)
 }
 
 fn inspect_open_release(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     decision_id: &str,
 ) -> Result<ReleaseDecisionInspection, ReleaseCobError> {
     let mut matches = Vec::new();
@@ -184,7 +186,7 @@ pub fn create_release(
     init: ReleaseDecisionInit,
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, ReleaseCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
     match inspect_open_release(&repository, &init.decision_id) {
         Ok(existing) => {
@@ -197,7 +199,8 @@ pub fn create_release(
         Err(error) => return Err(error),
     }
     validate_release_init(&init)?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     let init_operation = ReleaseDecisionOperation {
@@ -260,9 +263,10 @@ pub fn update_release(
     actions: &[ReleaseDecisionAction],
     expected_content_root: &str,
 ) -> Result<CobMutationOutcome, ReleaseCobError> {
-    let repository = CobRepository::open(repository_path)?;
+    let repository = GitCobStore::open(repository_path)?;
     repository.validate_local_commit_identity()?;
-    let signer = load_signer(keystore_path)?;
+    let signer =
+        onix_radicle_cob_git_store::load_signer(keystore_path).map_err(map_signer_error)?;
     let public_key = signer.verifying_key();
     let actor = public_key.to_string();
     if actor != planned_actor {
@@ -321,7 +325,7 @@ pub fn update_release(
 }
 
 fn load_required_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: &str,
 ) -> Result<CollaborativeObject<CairnReleaseDecisionCob>, ReleaseCobError> {
     let parsed = ObjectId::from_str(object_id).map_err(|_| ReleaseCobError::InvalidGitOid {
@@ -333,7 +337,7 @@ fn load_required_object(
 }
 
 fn load_object(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     object_id: ObjectId,
 ) -> Result<Option<CollaborativeObject<CairnReleaseDecisionCob>>, ReleaseCobError> {
     radicle_cob::get::<CairnReleaseDecisionCob, _>(repository, &TYPE, &object_id)
@@ -341,7 +345,7 @@ fn load_object(
 }
 
 fn mutation_outcome_or_restore(
-    repository: &CobRepository,
+    repository: &GitCobStore,
     namespace: &PublicKey,
     prior_target: Option<Oid>,
     new_target: Oid,

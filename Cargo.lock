@@ -344,6 +344,7 @@ dependencies = [
  "mantle-build-contract",
  "nickel-export-core",
  "onix-cairn-radicle-cob",
+ "onix-radicle-cob-git-store",
  "rat-nodegraph",
  "ratatui",
  "redb",
@@ -1784,14 +1785,28 @@ version = "0.1.0"
 dependencies = [
  "blake3",
  "cairn-core",
+ "git2",
+ "nonempty",
+ "onix-radicle-cob-git-store",
+ "radicle-cob",
+ "radicle-crypto",
+ "radicle-oid",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "onix-radicle-cob-git-store"
+version = "0.1.0"
+dependencies = [
  "git-ref-format-core",
  "git2",
  "nonempty",
  "radicle-cob",
  "radicle-crypto",
  "radicle-oid",
- "serde",
- "serde_json",
+ "tempfile",
  "thiserror 2.0.18",
 ]
 

@@ -33,6 +33,7 @@ ed25519-dalek.workspace = true
 mantle-build-contract.workspace = true
 nickel-export-core.workspace = true
 onix-cairn-radicle-cob = { path = "../cairn-radicle-cob" }
+onix-radicle-cob-git-store.workspace = true
 rat-nodegraph.workspace = true
 ratatui.workspace = true
 redb = { workspace = true, optional = true }
