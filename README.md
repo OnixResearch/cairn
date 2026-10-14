@@ -708,9 +708,9 @@ Installation is preview-first. Add `--execute --plan-hash <PLAN_HASH>` only afte
 
 ## License
 
-`cairn-core` and reusable templates use `MIT OR Apache-2.0`. The `cairn-cli` shell uses `AGPL-3.0-or-later`.
+`cairn-core` and reusable templates use `MIT OR Apache-2.0`. The `cairn-cli` shell uses `AGPL-3.0-or-later`. The [named policy inputs and projection](cairn-policy/LICENSING.md), including their pinned historical versions, also offer an `MIT OR Apache-2.0` choice.
 
-Complete texts are in [LICENSES](LICENSES). The package map is in [docs/licensing.md](docs/licensing.md).
+Complete texts are in [LICENSES](LICENSES). The repository license map is in [docs/licensing.md](docs/licensing.md).
 
 The license split does not turn lifecycle conformance into code-correctness or release evidence.
 

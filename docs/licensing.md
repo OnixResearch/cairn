@@ -4,7 +4,9 @@
 |---|---|
 | `crates/cairn-core/**` | `MIT OR Apache-2.0` |
 | `crates/cairn-gate-contract/**` | `MIT OR Apache-2.0` |
+| `crates/cairn-radicle-cob/**` | `MIT OR Apache-2.0` |
 | `templates/**` and reusable lifecycle examples | `MIT OR Apache-2.0` |
+| Policy inputs and generated JSON named in [`cairn-policy/LICENSING.md`](../cairn-policy/LICENSING.md) | `AGPL-3.0-or-later OR MIT OR Apache-2.0`, including the specified historical revision |
 | `crates/cairn-cli/**` | `AGPL-3.0-or-later` |
 | Repository documentation and lifecycle material not carrying another notice | `AGPL-3.0-or-later` |
 | Dependencies, generated artifacts containing upstream material, and vendored/reference code | Their stated upstream terms |
