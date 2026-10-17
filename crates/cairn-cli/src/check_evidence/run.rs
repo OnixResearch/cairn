@@ -1,4 +1,4 @@
-use super::{local, named_options, publication::Publisher, read_input};
+use super::{dependencies, local, named_options, publication::Publisher, read_input};
 use crate::support::print_json;
 use cairn_core::verified::check_evidence::*;
 use cairn_core::{canonical_json_hash, AgentVerificationContract};
@@ -14,6 +14,11 @@ struct AttemptState {
     published: Vec<PublishedArtifact>,
     artifacts: BTreeMap<String, String>,
     blockers: Vec<&'static str>,
+}
+
+struct Projections<'a> {
+    source: &'a [String],
+    dependencies: &'a [String],
 }
 
 pub(super) fn source(args: &[String]) -> Result<(), Box<dyn Error>> {
@@ -50,6 +55,7 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
             "--applicability",
             "--policy",
             "--projection",
+            "--dependencies",
             "--plan-hash",
             "--attempt",
             "--out",
@@ -74,9 +80,11 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
     if applicability.policy_hash != canonical_json_hash(&policy.raw) {
         return Err("check-evidence policy identity is stale".into());
     }
-    if !applicability.dependency_hashes.is_empty() {
-        return Err("local dependency observation contract unavailable; no execution".into());
-    }
+    let dependency_paths = dependencies::load(
+        &root,
+        opts.get("--dependencies").copied(),
+        &applicability.dependency_hashes,
+    )?;
     if applicability.source_projection_hash != canonical_json_hash(&json!(paths))
         || applicability.subject_hash != local::source_hash(&root, &paths)?
     {
@@ -121,7 +129,10 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
     );
     if let Err(blocker) = execute_attempts(
         &root,
-        &paths,
+        Projections {
+            source: &paths,
+            dependencies: &dependency_paths,
+        },
         &plan,
         attempt,
         cancel,
@@ -129,6 +140,13 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
         &mut state,
     ) {
         state.blockers.push(blocker);
+    }
+    // Final dependency drift must not leave passing rows for the completion consumer.
+    if let Err(blocker) =
+        dependencies::recheck(&root, &dependency_paths, &applicability.dependency_hashes)
+    {
+        state.blockers.push(blocker);
+        state.attempts.clear();
     }
     let results: Vec<_> = state
         .attempts
@@ -156,12 +174,17 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
             state.blockers.push("artifact_readback_changed");
         }
     }
-    let current = local::source_hash(&root, &paths).map(|subject_hash| Applicability {
-        subject_hash,
-        ..applicability
-    });
-    if current.is_err() {
-        state.blockers.push("source_unavailable");
+    let current = (|| -> Result<Applicability, &'static str> {
+        let subject_hash = local::source_hash(&root, &paths).map_err(|_| "source_unavailable")?;
+        let dependency_hashes = dependencies::observe(&root, &dependency_paths)?;
+        Ok(Applicability {
+            subject_hash,
+            dependency_hashes,
+            ..applicability
+        })
+    })();
+    if let Err(blocker) = &current {
+        state.blockers.push(blocker);
     }
     let complete = state.blockers.is_empty()
         && current.is_ok_and(|current| {
@@ -184,7 +207,7 @@ pub(super) fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
 
 fn execute_attempts(
     root: &crate::support::CapabilityRoot,
-    paths: &[String],
+    projections: Projections<'_>,
     plan: &CheckEvidencePlan,
     attempt: &str,
     cancel: &str,
@@ -192,6 +215,10 @@ fn execute_attempts(
     state: &mut AttemptState,
 ) -> Result<(), &'static str> {
     use std::os::fd::AsRawFd;
+    let Projections {
+        source: paths,
+        dependencies: dependency_paths,
+    } = projections;
     let directory = root
         .clone_directory_file()
         .map_err(|_| "working_root_unavailable")?;
@@ -202,6 +229,11 @@ fn execute_attempts(
         {
             return Err("source_changed");
         }
+        dependencies::recheck(
+            root,
+            dependency_paths,
+            &plan.applicability().dependency_hashes,
+        )?;
         let executable =
             local::executable_hash(&profile.executable).map_err(|_| "executable_unavailable")?;
         authorize_attempt(
@@ -222,14 +254,17 @@ fn execute_attempts(
         let request = local::request(profile, &cwd).map_err(|_| "execution_request_rejected")?;
         let output = local::execute(request, root, cancel);
         let after = local::source_hash(root, paths);
+        let dependencies_after = dependencies::observe(root, dependency_paths);
         // Empty identity explicitly records an unavailable observation. Core admission rejects it.
-        let (observation, evidence) = local::observation(
+        let (mut observation, evidence) = local::observation(
             plan,
             profile,
             attempt,
             after.as_ref().cloned().unwrap_or_default(),
             output,
         );
+        observation.applicability.dependency_hashes =
+            dependencies_after.as_ref().cloned().unwrap_or_default();
         state.observations.push(observation.clone());
         let bytes = serde_json::to_vec(&evidence).map_err(|_| "facts_encoding_failed")?;
         let leaf = format!("{}.facts.json", profile.check_id);
@@ -245,6 +280,9 @@ fn execute_attempts(
         }
         if after.map_err(|_| "source_unavailable")? != plan.applicability().subject_hash {
             return Err("source_changed");
+        }
+        if dependencies_after? != plan.applicability().dependency_hashes {
+            return Err("dependency identities changed");
         }
         let normalized =
             normalize_attempt(plan, &observation).map_err(|_| "observation_not_applicable")?;

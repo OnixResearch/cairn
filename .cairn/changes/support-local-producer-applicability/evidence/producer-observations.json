@@ -1,0 +1,2840 @@
+{
+  "schema": "cairn.authorized-producer-observations.v1",
+  "source": {
+    "base_revision": "d2c1dd7867350b787cfffe0e311fd20115238339",
+    "branch": "change/chaoscontrol-producer-readiness-20261017",
+    "dirty_during_execution": true,
+    "root": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+    "boundary": "Mechanism commands ran in the dedicated worktree; no clean-source whole-repository or release verdict is inferred."
+  },
+  "executable": {
+    "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+    "digest": "blake3:c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+    "bytes": 241234872
+  },
+  "direct": {
+    "schema": "cairn.direct-producer-conformance.v1",
+    "valid": true,
+    "production_ready": false,
+    "positive": {
+      "native_build": true,
+      "nonempty_dependencies": true,
+      "original_completion": true,
+      "manifest_verification": true
+    },
+    "negative": {
+      "missing_dependencies": true,
+      "dependency_drift": true,
+      "stale_manifest": true,
+      "failed_native_build": true,
+      "exit_zero_nonpassing_report": true
+    },
+    "commands": [
+      {
+        "name": "dependencies",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "dependencies",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--projection",
+          "dependencies.json"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/dependencies.stdout.json",
+          "digest": "blake3:006ebcf4d806fcbe32e02cf7a7d46a206dc09d2599eb3e135f277d0a00774eb2"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/dependencies.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": null
+      },
+      {
+        "name": "plan",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "plan",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/plan.stdout.json",
+          "digest": "blake3:91fb18c67d1de9b883ae08887650a69f07d4d1154fd56a5c86e98657c1ed1a7a"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/plan.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": true
+      },
+      {
+        "name": "run",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "run",
+          "--execute",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "--projection",
+          "projection.json",
+          "--dependencies",
+          "dependencies.json",
+          "--plan-hash",
+          "2c8d7ee509657ba23eef970303807d030879bbc8c5801e9745b017294075f1a5",
+          "--attempt",
+          "ba422ff1980342f20a1cd89e52135332f86f6808841fdf2d91457a533c3ed7ad",
+          "--cancel-file",
+          "cancel",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/successful-evidence"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/run.stdout.json",
+          "digest": "blake3:c05e2c28363dba58f9166e201d7c03b6f24d11e68389726bd79c8b4b78ac433a"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/run.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": true
+      },
+      {
+        "name": "verify",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "verify",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "--projection",
+          "projection.json",
+          "--dependencies",
+          "dependencies.json",
+          "--plan-hash",
+          "2c8d7ee509657ba23eef970303807d030879bbc8c5801e9745b017294075f1a5",
+          "--attempt",
+          "ba422ff1980342f20a1cd89e52135332f86f6808841fdf2d91457a533c3ed7ad",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/successful-evidence"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/verify.stdout.json",
+          "digest": "blake3:8008a40cbf4e867ae9ded4abfc6e81e0466bc279a975d36ca46146b19fd32759"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/verify.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": true
+      },
+      {
+        "name": "complete",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "agent-receipt",
+          "complete",
+          "--contract",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/contract.json",
+          "--results",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/successful-evidence/results.json",
+          "--subject-hash",
+          "6d19bdfb0f2f7563cb25d1c8d6da7755fcef4ccf1bd3ba0362889008ab1c4110"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/complete.stdout.json",
+          "digest": "blake3:99be3966ac4c528fc2b4ee20a7dd6ec6dcd932f3e97d6a7b5aa3e6df4998cc80"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/complete.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": true
+      },
+      {
+        "name": "missing-dependencies",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "run",
+          "--execute",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "--projection",
+          "projection.json",
+          "--plan-hash",
+          "2c8d7ee509657ba23eef970303807d030879bbc8c5801e9745b017294075f1a5",
+          "--attempt",
+          "5ad05c0d4aed2c0707481ca0e4536d4ef2db6a3e9dcba96685c13128199a2bd5",
+          "--cancel-file",
+          "cancel",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/missing-evidence"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 1,
+        "expected_blocked": true,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/missing-dependencies.stdout.json",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/missing-dependencies.stderr.log",
+          "digest": "blake3:c365d1b94a94076f217d0bfb50ebe753cc085790005319763ef6da1d989c925c"
+        }
+      },
+      {
+        "name": "changed-dependencies",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "run",
+          "--execute",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "--projection",
+          "projection.json",
+          "--dependencies",
+          "dependencies.json",
+          "--plan-hash",
+          "2c8d7ee509657ba23eef970303807d030879bbc8c5801e9745b017294075f1a5",
+          "--attempt",
+          "6b941f9e82591e028e648db980a7e701a60a7fcbd7523c7c2aa71c91cdaaa5f4",
+          "--cancel-file",
+          "cancel",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/changed-evidence"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 1,
+        "expected_blocked": true,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/changed-dependencies.stdout.json",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/changed-dependencies.stderr.log",
+          "digest": "blake3:7e39938a09134924cb97581b3091b2d3b95ca1b207dfbfda7c956c3ad6b89ca0"
+        }
+      },
+      {
+        "name": "stale-verify",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "verify",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "--projection",
+          "projection.json",
+          "--dependencies",
+          "dependencies.json",
+          "--plan-hash",
+          "2c8d7ee509657ba23eef970303807d030879bbc8c5801e9745b017294075f1a5",
+          "--attempt",
+          "ba422ff1980342f20a1cd89e52135332f86f6808841fdf2d91457a533c3ed7ad",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/successful-evidence"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 1,
+        "expected_blocked": true,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/stale-verify.stdout.json",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/stale-verify.stderr.log",
+          "digest": "blake3:7e39938a09134924cb97581b3091b2d3b95ca1b207dfbfda7c956c3ad6b89ca0"
+        }
+      },
+      {
+        "name": "restored-verify",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "verify",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "--projection",
+          "projection.json",
+          "--dependencies",
+          "dependencies.json",
+          "--plan-hash",
+          "2c8d7ee509657ba23eef970303807d030879bbc8c5801e9745b017294075f1a5",
+          "--attempt",
+          "ba422ff1980342f20a1cd89e52135332f86f6808841fdf2d91457a533c3ed7ad",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/successful-evidence"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/restored-verify.stdout.json",
+          "digest": "blake3:8008a40cbf4e867ae9ded4abfc6e81e0466bc279a975d36ca46146b19fd32759"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/restored-verify.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": true
+      },
+      {
+        "name": "negative-plan",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "plan",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/negative-plan.stdout.json",
+          "digest": "blake3:17d45119911f40ccdad9b6c8704f144400f6706726ab99299ad4ab4009bbaab7"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/negative-plan.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": true
+      },
+      {
+        "name": "failed-build",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "check-evidence",
+          "run",
+          "--execute",
+          "--root",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649",
+          "--contract",
+          "contract.json",
+          "--profiles",
+          "profiles.json",
+          "--applicability",
+          "applicability.json",
+          "--policy",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "--projection",
+          "projection.json",
+          "--dependencies",
+          "dependencies.json",
+          "--plan-hash",
+          "a1a7f1497400ec109e17bfc0c5bd1261fd16366d9157869e3731b857b1229f0c",
+          "--attempt",
+          "6935dae0d882a6fe50f8aecac21ee56f7159dacd23340599e83204b108b5343b",
+          "--cancel-file",
+          "cancel",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/failed-build-evidence"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/failed-build.stdout.json",
+          "digest": "blake3:92a52cec0450be3fdd7c027e4bdf71af284b4f411b77c07c100ffb20a226256a"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/failed-build.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": false
+      },
+      {
+        "name": "failed-complete",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "agent-receipt",
+          "complete",
+          "--contract",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/contract.json",
+          "--results",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/failed-build-evidence/results.json",
+          "--subject-hash",
+          "db2a3f140f7d34cabf43aad40f17dcb1afdc7de1db24057c5f26c1678e7a63d9"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "expected_blocked": false,
+        "stdout": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/failed-complete.stdout.json",
+          "digest": "blake3:44f4f9063fd667f1a09c13d6587a8aba005bf219c13ac6f27eb3e175adff4332"
+        },
+        "stderr": {
+          "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/failed-complete.stderr.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        "valid": false
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+        "digest": "blake3:c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/check.nix",
+        "digest": "blake3:585ffacf3310dba15c26d54a2171edd9c5f4f0798e598c477e16f46a23fd5af3"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/nix-conf/nix.conf",
+        "digest": "blake3:8063b6f96a49b0b1d74f5e9acfb160e7dd528fdd6b75d70c149244382dec7816"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/dependency.lock",
+        "digest": "blake3:3a532bf411d94c699dd8e86d1e501d54dccb52d23b33ac90cf5e10ece0934fa6"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/projection.json",
+        "digest": "blake3:5c07e893b9a2f36ccabd9f8d7ee6e3ca2c811bd92c81ad14d5836858a2baf069"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/dependencies.json",
+        "digest": "blake3:735fb43c72f23df5f9c8568a77cc77b341cec9bafdbb1e4d52416195cd552cb0"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/contract.json",
+        "digest": "blake3:b50501ed4a6c4d2f6f9b3e1addaf0f3d39697c06c4fe21a5c3a6b5c3a3c951d8"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/profiles.json",
+        "digest": "blake3:356e20557fe389363cd632dcf60501e7505f767c18eadcac8b3bf37e24cedda8"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/applicability.json",
+        "digest": "blake3:f76a185bbce8178037d2a979862068281ba697150b91497f2e406d7157ae6e27"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/check.nix",
+        "digest": "blake3:d1ca597d8c4af22488124ef50111ed2d8122823c018e798e0dde4a134a77c904"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/nix-conf/nix.conf",
+        "digest": "blake3:8063b6f96a49b0b1d74f5e9acfb160e7dd528fdd6b75d70c149244382dec7816"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/dependency.lock",
+        "digest": "blake3:3a532bf411d94c699dd8e86d1e501d54dccb52d23b33ac90cf5e10ece0934fa6"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/projection.json",
+        "digest": "blake3:5c07e893b9a2f36ccabd9f8d7ee6e3ca2c811bd92c81ad14d5836858a2baf069"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/dependencies.json",
+        "digest": "blake3:735fb43c72f23df5f9c8568a77cc77b341cec9bafdbb1e4d52416195cd552cb0"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/contract.json",
+        "digest": "blake3:7de57220fd0d8b610664e1b09862ecf419bb3f8ee2590a46841a225716a7455e"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/profiles.json",
+        "digest": "blake3:fef213b91f91a95acf4b528a05700c55c0a42002588bc53c499ac7b33bdc38df"
+      },
+      {
+        "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/applicability.json",
+        "digest": "blake3:ccc17179328df829ccc894357e58e301793a1df564a54c99142b6f4f3cadfb34"
+      }
+    ],
+    "non_claims": [
+      "Disposable producer mechanism proof, not ChaosControl required-check completion or production readiness",
+      "Build-only evidence; no VM execution, test coverage, fresh builder execution or oracle-truth claim"
+    ]
+  },
+  "mcp": {
+    "schema": "cairn.producer-mcp-consumer-conformance.v1",
+    "valid": true,
+    "production_ready": false,
+    "scope": "Cairn producer mechanism controls only; not ChaosControl full required-check completion or its mcp_agent_smoke readiness input",
+    "commands": [
+      {
+        "name": "positive",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "mcp",
+          "--call",
+          "cairn_agent_completion_validate",
+          "{\"root\":\"/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649\",\"contract\":{\"schema\":\"cairn.agent-completion.v2\",\"repository_id\":\"nix-live\",\"registry_id\":\"checks\",\"registry_hash\":\"7c8404e815ddd73ea587d57b2fa3342155f9d5e3b8b5f69f6e3aa7f13416cfd2\",\"selection_hash\":\"3fe9e71902a640c29d6a42e6773275292ae88fb5259cf868fa5b41e005e43e79\",\"policy_hash\":\"c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d\",\"final_subject_hash\":\"6d19bdfb0f2f7563cb25d1c8d6da7755fcef4ccf1bd3ba0362889008ab1c4110\",\"required_checks\":[{\"check_id\":\"build\",\"command\":[\"/nix/store/6rwk5j1qqk7na4la5m2ka34p734braxa-nix-2.36.0/bin/nix\",\"build\",\"--offline\",\"--no-link\",\"--json\",\"--file\",\"./check.nix\"],\"command_hash\":\"1c0c796b3c33afeefa98cbd550573e1e10540f451fb8005709ed70e15607a106\",\"prerequisites\":[]}]},\"results\":[{\"check_id\":\"build\",\"status\":\"passed\",\"command\":[\"/nix/store/6rwk5j1qqk7na4la5m2ka34p734braxa-nix-2.36.0/bin/nix\",\"build\",\"--offline\",\"--no-link\",\"--json\",\"--file\",\"./check.nix\"],\"command_hash\":\"1c0c796b3c33afeefa98cbd550573e1e10540f451fb8005709ed70e15607a106\",\"subject_hash\":\"6d19bdfb0f2f7563cb25d1c8d6da7755fcef4ccf1bd3ba0362889008ab1c4110\",\"registry_hash\":\"7c8404e815ddd73ea587d57b2fa3342155f9d5e3b8b5f69f6e3aa7f13416cfd2\",\"selection_hash\":\"3fe9e71902a640c29d6a42e6773275292ae88fb5259cf868fa5b41e005e43e79\",\"policy_hash\":\"c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d\",\"evidence_hash\":\"17c71805eef667c1a5549339ffcd5112ed823e1a98c79f61cc55f1d1528cf5b5\",\"execution_receipt_hash\":\"3bfaecaaa5a89a8a673046cd33f8305a9b58e26cf2df10625c33ae12d496f6d0\",\"artifacts\":[],\"diagnostic\":null}],\"subject_hash\":\"6d19bdfb0f2f7563cb25d1c8d6da7755fcef4ccf1bd3ba0362889008ab1c4110\"}"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "valid": true,
+        "checks_executed": false,
+        "artifacts": [
+          {
+            "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649/contract.json",
+            "digest": "blake3:b50501ed4a6c4d2f6f9b3e1addaf0f3d39697c06c4fe21a5c3a6b5c3a3c951d8"
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/direct-smoke/successful-evidence/results.json",
+            "digest": "blake3:8bb18e4111430bac7bd0525f0998129b626bc754c3c71fe6855a5aa5d5e1a12e"
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke/positive.stdout.json",
+            "digest": "blake3:f2c51c5682814b55e01cb26442bcba69614acde69622a51d34a4dd1d9a6feeb7"
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke/positive.stderr.log",
+            "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+          }
+        ]
+      },
+      {
+        "name": "failed-build",
+        "command": [
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "mcp",
+          "--call",
+          "cairn_agent_completion_validate",
+          "{\"root\":\"/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649\",\"contract\":{\"schema\":\"cairn.agent-completion.v2\",\"repository_id\":\"nix-live\",\"registry_id\":\"checks\",\"registry_hash\":\"7c8404e815ddd73ea587d57b2fa3342155f9d5e3b8b5f69f6e3aa7f13416cfd2\",\"selection_hash\":\"3fe9e71902a640c29d6a42e6773275292ae88fb5259cf868fa5b41e005e43e79\",\"policy_hash\":\"c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d\",\"final_subject_hash\":\"db2a3f140f7d34cabf43aad40f17dcb1afdc7de1db24057c5f26c1678e7a63d9\",\"required_checks\":[{\"check_id\":\"build\",\"command\":[\"/nix/store/6rwk5j1qqk7na4la5m2ka34p734braxa-nix-2.36.0/bin/nix\",\"build\",\"--offline\",\"--no-link\",\"--json\",\"--file\",\"./check.nix\"],\"command_hash\":\"1c0c796b3c33afeefa98cbd550573e1e10540f451fb8005709ed70e15607a106\",\"prerequisites\":[]}]},\"results\":[{\"check_id\":\"build\",\"status\":\"failed\",\"command\":[\"/nix/store/6rwk5j1qqk7na4la5m2ka34p734braxa-nix-2.36.0/bin/nix\",\"build\",\"--offline\",\"--no-link\",\"--json\",\"--file\",\"./check.nix\"],\"command_hash\":\"1c0c796b3c33afeefa98cbd550573e1e10540f451fb8005709ed70e15607a106\",\"subject_hash\":\"db2a3f140f7d34cabf43aad40f17dcb1afdc7de1db24057c5f26c1678e7a63d9\",\"registry_hash\":\"7c8404e815ddd73ea587d57b2fa3342155f9d5e3b8b5f69f6e3aa7f13416cfd2\",\"selection_hash\":\"3fe9e71902a640c29d6a42e6773275292ae88fb5259cf868fa5b41e005e43e79\",\"policy_hash\":\"c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d\",\"evidence_hash\":\"74fbb5ed75c07777153613619b422dd10beaa146f9998356ba352f5b9fdd49de\",\"execution_receipt_hash\":\"d1a4a79a1f69fa32f4431b86a664281000622d9998cb3bd00eac0f3b207ede6f\",\"artifacts\":[],\"diagnostic\":null}],\"subject_hash\":\"db2a3f140f7d34cabf43aad40f17dcb1afdc7de1db24057c5f26c1678e7a63d9\"}"
+        ],
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "exit_code": 0,
+        "valid": false,
+        "checks_executed": false,
+        "artifacts": [
+          {
+            "path": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649/contract.json",
+            "digest": "blake3:7de57220fd0d8b610664e1b09862ecf419bb3f8ee2590a46841a225716a7455e"
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/direct-smoke/failed-build-evidence/results.json",
+            "digest": "blake3:0c0850a2282f0712ab792deff9f741e3ed3ee089927ab93ba930adba4f675b94"
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke/failed-build.stdout.json",
+            "digest": "blake3:870b5c05beaecaee4b78418786c8e4c42938b77d25107c81384ac42fb5650276"
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke/failed-build.stderr.log",
+            "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+          }
+        ]
+      }
+    ],
+    "executable": {
+      "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+      "digest": "blake3:c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968"
+    }
+  },
+  "required_checks": {
+    "schema": "cairn.bounded-producer-required-checks.v1",
+    "all_passed": false,
+    "production_ready": false,
+    "checks": [
+      {
+        "name": "workspace-tests",
+        "execution": {
+          "schema": "chaoscontrol.local-command-observation.v1",
+          "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "command": [
+            "cargo",
+            "test",
+            "--workspace"
+          ],
+          "display_command": "cargo test --workspace",
+          "timeout_seconds": 600,
+          "operational_timeout": true,
+          "exit_code": 124,
+          "started": "2026-10-17T06:04:34.754553+00:00",
+          "finished": "2026-10-17T06:14:34.773297+00:00",
+          "elapsed_seconds": 600.0187706130091,
+          "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+          "artifacts": [
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/workspace-tests/stdout.log",
+              "digest": "blake3:d0a91e252ccf2d458c96136f8e74f5fd1c9a836de2d4673bd670a5c9d71fb669",
+              "bytes": 33458
+            },
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/workspace-tests/stderr.log",
+              "digest": "blake3:eade84c73709d39c50f671aaa1bfb70bc743404b777d6a50edf94e4357ceffc9",
+              "bytes": 5831
+            }
+          ]
+        },
+        "passed": false
+      },
+      {
+        "name": "clippy",
+        "execution": {
+          "schema": "chaoscontrol.local-command-observation.v1",
+          "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "command": [
+            "cargo",
+            "clippy",
+            "--workspace",
+            "--all-targets",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "display_command": "cargo clippy --workspace --all-targets -- -D warnings",
+          "timeout_seconds": 600,
+          "operational_timeout": false,
+          "exit_code": 0,
+          "started": "2026-10-17T06:14:34.947830+00:00",
+          "finished": "2026-10-17T06:14:53.629869+00:00",
+          "elapsed_seconds": 18.68204523800523,
+          "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+          "artifacts": [
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/clippy/stdout.log",
+              "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+              "bytes": 0
+            },
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/clippy/stderr.log",
+              "digest": "blake3:a32120118d92d8cae532dc4efe047b7d49d83cdc4930ca134153df41cfa73bef",
+              "bytes": 338
+            }
+          ]
+        },
+        "passed": true
+      },
+      {
+        "name": "formatting",
+        "execution": {
+          "schema": "chaoscontrol.local-command-observation.v1",
+          "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "command": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--",
+            "--check"
+          ],
+          "display_command": "cargo fmt --all -- --check",
+          "timeout_seconds": 120,
+          "operational_timeout": false,
+          "exit_code": 0,
+          "started": "2026-10-17T06:14:53.725395+00:00",
+          "finished": "2026-10-17T06:14:54.993429+00:00",
+          "elapsed_seconds": 1.2680414100177586,
+          "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+          "artifacts": [
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/formatting/stdout.log",
+              "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+              "bytes": 0
+            },
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/formatting/stderr.log",
+              "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+              "bytes": 0
+            }
+          ]
+        },
+        "passed": true
+      },
+      {
+        "name": "policy-freshness",
+        "execution": {
+          "schema": "chaoscontrol.local-command-observation.v1",
+          "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "command": [
+            "nix",
+            "run",
+            "--no-update-lock-file",
+            "path:/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26#cairn",
+            "--",
+            "policy",
+            "export",
+            "--check"
+          ],
+          "display_command": "nix run --no-update-lock-file 'path:/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26#cairn' -- policy export --check",
+          "timeout_seconds": 600,
+          "operational_timeout": true,
+          "exit_code": 124,
+          "started": "2026-10-17T06:14:55.040671+00:00",
+          "finished": "2026-10-17T06:24:55.056897+00:00",
+          "elapsed_seconds": 600.0162529680238,
+          "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+          "artifacts": [
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/policy-freshness/stdout.log",
+              "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+              "bytes": 0
+            },
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/policy-freshness/stderr.log",
+              "digest": "blake3:90ecba8193fe0d6d4ace75526d46c9da56698ec15785983f35460db7e37c2267",
+              "bytes": 136
+            }
+          ]
+        },
+        "passed": false
+      },
+      {
+        "name": "native-validation",
+        "execution": {
+          "schema": "chaoscontrol.local-command-observation.v1",
+          "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "command": [
+            "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target/debug/cairn",
+            "validate",
+            "--root",
+            ".",
+            "--policy",
+            "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json"
+          ],
+          "display_command": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target/debug/cairn validate --root . --policy /tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "timeout_seconds": 120,
+          "operational_timeout": false,
+          "exit_code": 0,
+          "started": "2026-10-17T06:24:55.111232+00:00",
+          "finished": "2026-10-17T06:24:55.325498+00:00",
+          "elapsed_seconds": 0.21428133797599003,
+          "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+          "artifacts": [
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/native-validation/stdout.log",
+              "digest": "blake3:4e0d36dd78601cd4400f3c0faff359b99891cfa993bc17f8d9c5d8f985ed106f",
+              "bytes": 42105
+            },
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/native-validation/stderr.log",
+              "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+              "bytes": 0
+            }
+          ]
+        },
+        "passed": true,
+        "report": {
+          "change_issues": [],
+          "changes": 10,
+          "cross_repo_dependencies": [],
+          "cross_repo_evidence_issues": [],
+          "findings": [],
+          "issues": [],
+          "layout": "cairn",
+          "policy": "cairn-default",
+          "policy_selection": {
+            "blake3": "7a67802377005c18ebded42899e7f564f5d87087b6c14ca70464b35886f340a9",
+            "installation_receipt": false,
+            "locator": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+            "source": "explicit"
+          },
+          "profile_issues": [],
+          "receipt_hash": "f88a92a1494f8c280e3820111abb6f8e3b8f9cae8a04be88883ac8ee6e72b65a",
+          "resolution": {
+            "diagnostics": [],
+            "locator_consulted": false,
+            "registry_lookup": "local_locator_only",
+            "selected": {
+              "project_identity": null,
+              "root": ".",
+              "source": "explicit_root",
+              "store_id": null,
+              "store_identity": null
+            },
+            "valid": true
+          },
+          "spec_findings": [],
+          "spec_issues": [],
+          "spec_substance": [
+            {
+              "path": "./.cairn/changes/add-compact-agent-readiness/specs/unified-change-readiness/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/changes/add-incremental-agent-observations/specs/incremental-agent-observations/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/specs/lifecycle-context-reads/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/changes/add-task-scoped-mcp-discovery/specs/mcp-discovery/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/changes/adopt-readiness-in-agent-workflows/specs/generated-agent-workflows/spec.md",
+              "requirement_blocks": 1,
+              "scenario_blocks": 2,
+              "substantive_requirement_blocks": 1
+            },
+            {
+              "path": "./.cairn/changes/adopt-readiness-in-agent-workflows/specs/mcp-drain/spec.md",
+              "requirement_blocks": 4,
+              "scenario_blocks": 8,
+              "substantive_requirement_blocks": 4
+            },
+            {
+              "path": "./.cairn/changes/keep-agent-guidance-current/specs/generated-agent-workflows/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/changes/measure-agent-lifecycle-token-cost/specs/agent-efficiency-benchmark/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/changes/reduce-duplicate-mcp-receipts/specs/mcp-response-projection/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/changes/support-local-producer-applicability/specs/check-evidence-producer/spec.md",
+              "requirement_blocks": 2,
+              "scenario_blocks": 4,
+              "substantive_requirement_blocks": 2
+            },
+            {
+              "path": "./.cairn/changes/use-canonical-octet-integration/specs/octet-consumer-integration/spec.md",
+              "requirement_blocks": 3,
+              "scenario_blocks": 6,
+              "substantive_requirement_blocks": 3
+            },
+            {
+              "path": "./.cairn/specs/adr-radicle-cob/spec.md",
+              "requirement_blocks": 11,
+              "scenario_blocks": 26,
+              "substantive_requirement_blocks": 11
+            },
+            {
+              "path": "./.cairn/specs/agent-completion/spec.md",
+              "requirement_blocks": 8,
+              "scenario_blocks": 23,
+              "substantive_requirement_blocks": 8
+            },
+            {
+              "path": "./.cairn/specs/agent-guidance-context/spec.md",
+              "requirement_blocks": 13,
+              "scenario_blocks": 25,
+              "substantive_requirement_blocks": 13
+            },
+            {
+              "path": "./.cairn/specs/ai-spec-drafts/spec.md",
+              "requirement_blocks": 7,
+              "scenario_blocks": 11,
+              "substantive_requirement_blocks": 7
+            },
+            {
+              "path": "./.cairn/specs/artifact-auth-repository/spec.md",
+              "requirement_blocks": 10,
+              "scenario_blocks": 20,
+              "substantive_requirement_blocks": 10
+            },
+            {
+              "path": "./.cairn/specs/artifact-workflow-contract/spec.md",
+              "requirement_blocks": 9,
+              "scenario_blocks": 17,
+              "substantive_requirement_blocks": 9
+            },
+            {
+              "path": "./.cairn/specs/ast-grep-lifecycle-gate/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 6,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/bounded-tree-adoption/spec.md",
+              "requirement_blocks": 7,
+              "scenario_blocks": 14,
+              "substantive_requirement_blocks": 7
+            },
+            {
+              "path": "./.cairn/specs/change-dependency-graph/spec.md",
+              "requirement_blocks": 25,
+              "scenario_blocks": 58,
+              "substantive_requirement_blocks": 25
+            },
+            {
+              "path": "./.cairn/specs/change-verification-guidance/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 12,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/check-evidence-producer/spec.md",
+              "requirement_blocks": 8,
+              "scenario_blocks": 16,
+              "substantive_requirement_blocks": 8
+            },
+            {
+              "path": "./.cairn/specs/cli-machine-contract/spec.md",
+              "requirement_blocks": 11,
+              "scenario_blocks": 20,
+              "substantive_requirement_blocks": 11
+            },
+            {
+              "path": "./.cairn/specs/cli-maintainability/spec.md",
+              "requirement_blocks": 56,
+              "scenario_blocks": 112,
+              "substantive_requirement_blocks": 56
+            },
+            {
+              "path": "./.cairn/specs/cob-interoperability-fixtures/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 9,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/collaboration-backend-agnostic/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 10,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/collaboration-conflict-resolution/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 11,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/collaboration-sync/spec.md",
+              "requirement_blocks": 1,
+              "scenario_blocks": 1,
+              "substantive_requirement_blocks": 1
+            },
+            {
+              "path": "./.cairn/specs/collaboration-update/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 9,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/specs/consumer-bootstrap/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 12,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/cross-repository-adoption/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 12,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/determinism/spec.md",
+              "requirement_blocks": 13,
+              "scenario_blocks": 48,
+              "substantive_requirement_blocks": 13
+            },
+            {
+              "path": "./.cairn/specs/developer-experience/spec.md",
+              "requirement_blocks": 36,
+              "scenario_blocks": 46,
+              "substantive_requirement_blocks": 36
+            },
+            {
+              "path": "./.cairn/specs/developer-loop-profiles/spec.md",
+              "requirement_blocks": 10,
+              "scenario_blocks": 15,
+              "substantive_requirement_blocks": 10
+            },
+            {
+              "path": "./.cairn/specs/document-collaboration/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 14,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/ears-vocabulary/spec.md",
+              "requirement_blocks": 4,
+              "scenario_blocks": 6,
+              "substantive_requirement_blocks": 4
+            },
+            {
+              "path": "./.cairn/specs/electrical-circuit-primitive-receipts/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 9,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/electrical-circuit-primitives/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 7,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/specs/gate-interchange/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 11,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/generated-agent-workflows/spec.md",
+              "requirement_blocks": 12,
+              "scenario_blocks": 23,
+              "substantive_requirement_blocks": 12
+            },
+            {
+              "path": "./.cairn/specs/global-registry/spec.md",
+              "requirement_blocks": 14,
+              "scenario_blocks": 34,
+              "substantive_requirement_blocks": 14
+            },
+            {
+              "path": "./.cairn/specs/hash-algorithm-policy/spec.md",
+              "requirement_blocks": 4,
+              "scenario_blocks": 5,
+              "substantive_requirement_blocks": 4
+            },
+            {
+              "path": "./.cairn/specs/ironspec-supersession/spec.md",
+              "requirement_blocks": 127,
+              "scenario_blocks": 290,
+              "substantive_requirement_blocks": 127
+            },
+            {
+              "path": "./.cairn/specs/kani-receipt-gates/spec.md",
+              "requirement_blocks": 7,
+              "scenario_blocks": 11,
+              "substantive_requirement_blocks": 7
+            },
+            {
+              "path": "./.cairn/specs/lifecycle-directory/spec.md",
+              "requirement_blocks": 4,
+              "scenario_blocks": 13,
+              "substantive_requirement_blocks": 4
+            },
+            {
+              "path": "./.cairn/specs/lifecycle-orchestration/spec.md",
+              "requirement_blocks": 12,
+              "scenario_blocks": 29,
+              "substantive_requirement_blocks": 12
+            },
+            {
+              "path": "./.cairn/specs/lifecycle-stores/spec.md",
+              "requirement_blocks": 14,
+              "scenario_blocks": 31,
+              "substantive_requirement_blocks": 14
+            },
+            {
+              "path": "./.cairn/specs/lifecycle-validation/spec.md",
+              "requirement_blocks": 7,
+              "scenario_blocks": 16,
+              "substantive_requirement_blocks": 7
+            },
+            {
+              "path": "./.cairn/specs/lifecycle-views/spec.md",
+              "requirement_blocks": 9,
+              "scenario_blocks": 16,
+              "substantive_requirement_blocks": 9
+            },
+            {
+              "path": "./.cairn/specs/lifecycle-workflow-profiles/spec.md",
+              "requirement_blocks": 19,
+              "scenario_blocks": 39,
+              "substantive_requirement_blocks": 19
+            },
+            {
+              "path": "./.cairn/specs/mcp-drain/spec.md",
+              "requirement_blocks": 1,
+              "scenario_blocks": 4,
+              "substantive_requirement_blocks": 1
+            },
+            {
+              "path": "./.cairn/specs/nickel-export-infrastructure/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 12,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/nickel-toolchain/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 6,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/specs/nominal-evidence-identities/spec.md",
+              "requirement_blocks": 11,
+              "scenario_blocks": 14,
+              "substantive_requirement_blocks": 11
+            },
+            {
+              "path": "./.cairn/specs/octet-consumer-integration/spec.md",
+              "requirement_blocks": 3,
+              "scenario_blocks": 6,
+              "substantive_requirement_blocks": 3
+            },
+            {
+              "path": "./.cairn/specs/policy-exception-radicle-cob/spec.md",
+              "requirement_blocks": 12,
+              "scenario_blocks": 31,
+              "substantive_requirement_blocks": 12
+            },
+            {
+              "path": "./.cairn/specs/policy-schema-compatibility/spec.md",
+              "requirement_blocks": 3,
+              "scenario_blocks": 5,
+              "substantive_requirement_blocks": 3
+            },
+            {
+              "path": "./.cairn/specs/preserves-evidence-ingest/spec.md",
+              "requirement_blocks": 4,
+              "scenario_blocks": 5,
+              "substantive_requirement_blocks": 4
+            },
+            {
+              "path": "./.cairn/specs/probe-execution-boundary/spec.md",
+              "requirement_blocks": 12,
+              "scenario_blocks": 28,
+              "substantive_requirement_blocks": 12
+            },
+            {
+              "path": "./.cairn/specs/radicle-change-cob/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 14,
+              "substantive_requirement_blocks": 5
+            },
+            {
+              "path": "./.cairn/specs/radicle-cob-only/spec.md",
+              "requirement_blocks": 8,
+              "scenario_blocks": 19,
+              "substantive_requirement_blocks": 8
+            },
+            {
+              "path": "./.cairn/specs/radicle-cob-store-extraction/spec.md",
+              "requirement_blocks": 3,
+              "scenario_blocks": 5,
+              "substantive_requirement_blocks": 3
+            },
+            {
+              "path": "./.cairn/specs/radicle-import-cli/spec.md",
+              "requirement_blocks": 1,
+              "scenario_blocks": 1,
+              "substantive_requirement_blocks": 1
+            },
+            {
+              "path": "./.cairn/specs/radicle-status-checkout-cli/spec.md",
+              "requirement_blocks": 1,
+              "scenario_blocks": 2,
+              "substantive_requirement_blocks": 1
+            },
+            {
+              "path": "./.cairn/specs/radicle-two-peer-convergence/spec.md",
+              "requirement_blocks": 1,
+              "scenario_blocks": 1,
+              "substantive_requirement_blocks": 1
+            },
+            {
+              "path": "./.cairn/specs/release-decision-radicle-cob/spec.md",
+              "requirement_blocks": 13,
+              "scenario_blocks": 31,
+              "substantive_requirement_blocks": 13
+            },
+            {
+              "path": "./.cairn/specs/release-evidence/spec.md",
+              "requirement_blocks": 56,
+              "scenario_blocks": 84,
+              "substantive_requirement_blocks": 56
+            },
+            {
+              "path": "./.cairn/specs/requirement-id-registry/spec.md",
+              "requirement_blocks": 12,
+              "scenario_blocks": 18,
+              "substantive_requirement_blocks": 12
+            },
+            {
+              "path": "./.cairn/specs/rfd-radicle-cob/spec.md",
+              "requirement_blocks": 8,
+              "scenario_blocks": 18,
+              "substantive_requirement_blocks": 8
+            },
+            {
+              "path": "./.cairn/specs/runtime-evidence/spec.md",
+              "requirement_blocks": 13,
+              "scenario_blocks": 25,
+              "substantive_requirement_blocks": 13
+            },
+            {
+              "path": "./.cairn/specs/semantic-review/spec.md",
+              "requirement_blocks": 19,
+              "scenario_blocks": 44,
+              "substantive_requirement_blocks": 19
+            },
+            {
+              "path": "./.cairn/specs/stack-provenance-gates/spec.md",
+              "requirement_blocks": 42,
+              "scenario_blocks": 62,
+              "substantive_requirement_blocks": 42
+            },
+            {
+              "path": "./.cairn/specs/structured-lifecycle/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 20,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/sync-archive/spec.md",
+              "requirement_blocks": 23,
+              "scenario_blocks": 52,
+              "substantive_requirement_blocks": 23
+            },
+            {
+              "path": "./.cairn/specs/task-ordering/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 12,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/test-harness/spec.md",
+              "requirement_blocks": 13,
+              "scenario_blocks": 29,
+              "substantive_requirement_blocks": 13
+            },
+            {
+              "path": "./.cairn/specs/toolchain-profile-matrix/spec.md",
+              "requirement_blocks": 4,
+              "scenario_blocks": 5,
+              "substantive_requirement_blocks": 4
+            },
+            {
+              "path": "./.cairn/specs/trace-index/spec.md",
+              "requirement_blocks": 18,
+              "scenario_blocks": 32,
+              "substantive_requirement_blocks": 18
+            },
+            {
+              "path": "./.cairn/specs/unified-change-readiness/spec.md",
+              "requirement_blocks": 6,
+              "scenario_blocks": 12,
+              "substantive_requirement_blocks": 6
+            },
+            {
+              "path": "./.cairn/specs/verification-obligation-radicle-cob/spec.md",
+              "requirement_blocks": 10,
+              "scenario_blocks": 23,
+              "substantive_requirement_blocks": 10
+            },
+            {
+              "path": "./.cairn/specs/verification-role/spec.md",
+              "requirement_blocks": 4,
+              "scenario_blocks": 6,
+              "substantive_requirement_blocks": 4
+            },
+            {
+              "path": "./.cairn/specs/workflow-collaboration/spec.md",
+              "requirement_blocks": 8,
+              "scenario_blocks": 19,
+              "substantive_requirement_blocks": 8
+            }
+          ],
+          "specs_validated": 82,
+          "substance": [
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-compact-agent-readiness/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 40,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-compact-agent-readiness/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 24,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-compact-agent-readiness/specs/unified-change-readiness/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_lines": 35,
+              "substantive_requirement_blocks": 5,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 11,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-compact-agent-readiness/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 11,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 11
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-incremental-agent-observations/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 41,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-incremental-agent-observations/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 24,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-incremental-agent-observations/specs/incremental-agent-observations/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_lines": 35,
+              "substantive_requirement_blocks": 5,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 11,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-incremental-agent-observations/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 11,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 11
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 38,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 23,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/specs/lifecycle-context-reads/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_lines": 35,
+              "substantive_requirement_blocks": 5,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 11,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-targeted-lifecycle-context-reads/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 11,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 11
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-task-scoped-mcp-discovery/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 37,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-task-scoped-mcp-discovery/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 24,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-task-scoped-mcp-discovery/specs/mcp-discovery/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_lines": 35,
+              "substantive_requirement_blocks": 5,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 11,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/add-task-scoped-mcp-discovery/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 11,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 11
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/adopt-readiness-in-agent-workflows/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 40,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/adopt-readiness-in-agent-workflows/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 24,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/adopt-readiness-in-agent-workflows/specs/generated-agent-workflows/spec.md",
+              "requirement_blocks": 1,
+              "scenario_blocks": 2,
+              "substantive_lines": 7,
+              "substantive_requirement_blocks": 1,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/adopt-readiness-in-agent-workflows/specs/mcp-drain/spec.md",
+              "requirement_blocks": 4,
+              "scenario_blocks": 8,
+              "substantive_lines": 28,
+              "substantive_requirement_blocks": 4,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 11,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/adopt-readiness-in-agent-workflows/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 11,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 11
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/keep-agent-guidance-current/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 41,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/keep-agent-guidance-current/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 23,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/keep-agent-guidance-current/specs/generated-agent-workflows/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_lines": 35,
+              "substantive_requirement_blocks": 5,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 11,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/keep-agent-guidance-current/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 11,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 11
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/measure-agent-lifecycle-token-cost/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 40,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/measure-agent-lifecycle-token-cost/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 25,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/measure-agent-lifecycle-token-cost/specs/agent-efficiency-benchmark/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_lines": 35,
+              "substantive_requirement_blocks": 5,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 11,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/measure-agent-lifecycle-token-cost/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 11,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 11
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/reduce-duplicate-mcp-receipts/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 33,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/reduce-duplicate-mcp-receipts/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 26,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/reduce-duplicate-mcp-receipts/specs/mcp-response-projection/spec.md",
+              "requirement_blocks": 5,
+              "scenario_blocks": 10,
+              "substantive_lines": 36,
+              "substantive_requirement_blocks": 5,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 11,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/reduce-duplicate-mcp-receipts/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 11,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 11
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/support-local-producer-applicability/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 28,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/support-local-producer-applicability/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 14,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/support-local-producer-applicability/specs/check-evidence-producer/spec.md",
+              "requirement_blocks": 2,
+              "scenario_blocks": 4,
+              "substantive_lines": 21,
+              "substantive_requirement_blocks": 2,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 4,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/support-local-producer-applicability/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 5,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 4,
+              "task_done": 1,
+              "task_in_progress": 0,
+              "task_todo": 3
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "design",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/use-canonical-octet-integration/design.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 52,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "proposal",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/use-canonical-octet-integration/proposal.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 16,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 0,
+              "kind": "delta_spec",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/use-canonical-octet-integration/specs/octet-consumer-integration/spec.md",
+              "requirement_blocks": 3,
+              "scenario_blocks": 6,
+              "substantive_lines": 29,
+              "substantive_requirement_blocks": 3,
+              "substantive_tasks": 0,
+              "task_done": 0,
+              "task_in_progress": 0,
+              "task_todo": 0
+            },
+            {
+              "checkbox_tasks": 9,
+              "kind": "tasks",
+              "malformed_dependency_markers": 0,
+              "path": "./.cairn/changes/use-canonical-octet-integration/tasks.md",
+              "requirement_blocks": 0,
+              "scenario_blocks": 0,
+              "substantive_lines": 9,
+              "substantive_requirement_blocks": 0,
+              "substantive_tasks": 9,
+              "task_done": 5,
+              "task_in_progress": 0,
+              "task_todo": 4
+            }
+          ],
+          "substance_findings": [],
+          "substance_issues": [],
+          "valid": true,
+          "workflow_profiles": [
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "a09e7db9c77f971cc57a4c91a752c80171b7b16d2f53ce06fa5eae1a8c67944b",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "bbf841892baacca4e79a00621a93f252e91f61aaaf279a2a1d09343aa2994e5f",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "8d03dc49ac93b825fdb41966d9830c737346d2d2e55d565dfbd4fb7d8367c1dc",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "440b448fe556d7c6fd4165338ad2dd79d718166a62f3f49aef329d393100712a",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "91aa70a34c85fad44b0919c6cde3e375165986a4a7b339454b47e5e872eaba5f",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "01c6baaf3b4ae21d7220047d8c3dd4667e1421185cc61fabd6b9a687fa33fec8",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "f24bc0fc510fd8056ccf25eb71a74080660b7d1eba3995112b38097a317b24f1",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "7610d90c99ab5938f5148fbc324e1dcecff169ca3a668a6ffd62e95ebb305886",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "f52b2bcbe1c9c5b39aabbb4751bf1e8b4bc51f42d718480e8af9a379d33a85a6",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            },
+            {
+              "acceptance_ids": [],
+              "non_claims": [
+                "workflow state proves only the selected policy graph and observed structural artifact facts",
+                "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+                "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+                "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+              ],
+              "profile_identity_hash": "5b9689af040ece9d07c1549fcf5de1220aa2d8ca36fbb2c82e4e951bf195bb03",
+              "review_receipt_hashes": [],
+              "spec_effect": "delta",
+              "workflow_profile": "spec-driven",
+              "workflow_profile_compatibility_fallback": false,
+              "workflow_profile_source": "change_create",
+              "workflow_profile_version": 1
+            }
+          ]
+        }
+      },
+      {
+        "name": "native-traceability",
+        "execution": {
+          "schema": "chaoscontrol.local-command-observation.v1",
+          "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "command": [
+            "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target/debug/cairn",
+            "traceability",
+            "coverage",
+            "--root",
+            ".",
+            "--policy",
+            "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json"
+          ],
+          "display_command": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target/debug/cairn traceability coverage --root . --policy /tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/cairn-policy/generated/cairn-policy.json",
+          "timeout_seconds": 120,
+          "operational_timeout": false,
+          "exit_code": 1,
+          "started": "2026-10-17T06:24:55.381504+00:00",
+          "finished": "2026-10-17T06:24:55.746239+00:00",
+          "elapsed_seconds": 0.3647349819948431,
+          "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+          "artifacts": [
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/native-traceability/stdout.log",
+              "digest": "blake3:d1b5eef96d36640f8fcd0168d120db3943c69451244e7bf1c17ca6aa6e5af306",
+              "bytes": 1703
+            },
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/native-traceability/stderr.log",
+              "digest": "blake3:0d6b37b85f7098e17c14dfd421bdf089b3b545a8c04e73e315c9f32fc26a50be",
+              "bytes": 36
+            }
+          ]
+        },
+        "passed": false,
+        "report": {
+          "command": "traceability coverage",
+          "dangling": [],
+          "input_hash": "68a0bcdc4dbc4cdb1f20a0da45e4da620fb62b4fc65307f25d197efc3660e7ec",
+          "missing": [
+            "cairn.license_boundary.policy_reuse_grant",
+            "cairn.license_boundary.policy_reuse_scope"
+          ],
+          "policy": "cairn-default",
+          "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+          "profile": {
+            "anchor_kind": "exact_marker_bytes",
+            "assurance_level": "declared",
+            "evidence_sources": [
+              {
+                "extensions": [
+                  "rs"
+                ],
+                "root": "crates",
+                "source_kind": "rust_source"
+              },
+              {
+                "extensions": [
+                  "ncl"
+                ],
+                "root": "crates",
+                "source_kind": "nickel_source"
+              },
+              {
+                "extensions": [
+                  "rs",
+                  "ncl"
+                ],
+                "root": "tools",
+                "source_kind": "tool_source"
+              }
+            ],
+            "id": "cairn-default",
+            "marker_verbs": [
+              "impl",
+              "verify",
+              "depends",
+              "related"
+            ],
+            "requirement_sources": [
+              {
+                "extensions": [
+                  "md"
+                ],
+                "root": ".cairn/specs",
+                "source_kind": "accepted_specs"
+              }
+            ]
+          },
+          "profile_id": "cairn-default",
+          "receipt_hash": "5a14858ef1570150f8d32d87bfbdf79b61088d1e60bb0af21081f381b3920f36",
+          "referenced": 2333,
+          "requirements": 2335,
+          "root": ".",
+          "source_summary": {
+            "evidence_files": 577,
+            "evidence_manifest_hash": "6564c79f5f57c15d6f2c13dfecdb2c1cbc089d5de9562e91ae9cb0486cdf6a9f",
+            "requirement_files": 71,
+            "requirement_manifest_hash": "50e54f1c3f7ad7caf78fe8a751664b7766837b0cf85a26aad0a15a5f9108e0ff"
+          },
+          "valid": false,
+          "verdict": "fail"
+        }
+      },
+      {
+        "name": "octet",
+        "execution": {
+          "schema": "chaoscontrol.local-command-observation.v1",
+          "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "command": [
+            "cargo",
+            "octet",
+            "check",
+            "--output-format",
+            "json",
+            "--artifact-dir",
+            "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/octet-artifacts"
+          ],
+          "display_command": "cargo octet check --output-format json --artifact-dir /home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/octet-artifacts",
+          "timeout_seconds": 600,
+          "operational_timeout": false,
+          "exit_code": 2,
+          "started": "2026-10-17T06:24:55.796902+00:00",
+          "finished": "2026-10-17T06:25:11.300324+00:00",
+          "elapsed_seconds": 15.503431740013184,
+          "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+          "artifacts": [
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/octet/stdout.log",
+              "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+              "bytes": 0
+            },
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/octet/stderr.log",
+              "digest": "blake3:620bf104f9b75ee12a5261356c245bf477aed33751925c6067d5aacc423f9fbc",
+              "bytes": 885
+            }
+          ]
+        },
+        "passed": false
+      },
+      {
+        "name": "nix-checks",
+        "execution": {
+          "schema": "chaoscontrol.local-command-observation.v1",
+          "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "command": [
+            "nix",
+            "flake",
+            "check",
+            "--no-update-lock-file",
+            "path:/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+            "-L"
+          ],
+          "display_command": "nix flake check --no-update-lock-file path:/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26 -L",
+          "timeout_seconds": 1200,
+          "operational_timeout": true,
+          "exit_code": 124,
+          "started": "2026-10-17T06:25:11.349506+00:00",
+          "finished": "2026-10-17T06:45:11.466061+00:00",
+          "elapsed_seconds": 1200.1165685830056,
+          "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+          "artifacts": [
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/nix-checks/stdout.log",
+              "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+              "bytes": 0
+            },
+            {
+              "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/nix-checks/stderr.log",
+              "digest": "blake3:4021e18b347f5dda569daacdc592aec00cfae5a6ac56a8f3b3e98f3dac78cae7",
+              "bytes": 405
+            }
+          ]
+        },
+        "passed": false
+      }
+    ],
+    "non_claim": "Actual command and report outcomes only; unrelated failures are retained and no release, archive, or publication authority is inferred."
+  },
+  "commands": [
+    {
+      "name": "baseline",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/baseline/execution.json",
+        "digest": "blake3:dc922fd2c91bcd7f285358f37b14181f0d3895533be4a99401dc35906cc355d8",
+        "bytes": 1168
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "nix",
+          "develop",
+          "--no-update-lock-file",
+          "-c",
+          "cargo",
+          "test",
+          "-p",
+          "cairn-core",
+          "check_evidence"
+        ],
+        "display_command": "nix develop --no-update-lock-file -c cargo test -p cairn-core check_evidence",
+        "timeout_seconds": 300,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T05:15:39.336136+00:00",
+        "finished": "2026-10-17T05:16:47.367869+00:00",
+        "elapsed_seconds": 68.03173207299551,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/baseline/stdout.log",
+            "digest": "blake3:f6e08be6707625ef31191b5c67a885b53ace6926ae0009f58ccf6cf4b2fae458",
+            "bytes": 3931
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/baseline/stderr.log",
+            "digest": "blake3:453c1b8bd13fb109f80f7b2c88c7bb67703f9c8113ec7cc271c27a62680adf7c",
+            "bytes": 2627
+          }
+        ]
+      }
+    },
+    {
+      "name": "proposal-gate",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/proposal-gate/execution.json",
+        "digest": "blake3:7673b9f11043fc0d666d913052165f73c6eec9366861c3918588e0ba25fa0bc6",
+        "bytes": 1134
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "cairn",
+          "gate",
+          "proposal",
+          "support-local-producer-applicability",
+          "--root",
+          "."
+        ],
+        "display_command": "cairn gate proposal support-local-producer-applicability --root .",
+        "timeout_seconds": 60,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T05:18:35.960473+00:00",
+        "finished": "2026-10-17T05:18:35.976130+00:00",
+        "elapsed_seconds": 0.015656666015274823,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/proposal-gate/stdout.log",
+            "digest": "blake3:4c6a5702dc38163fbb187d6e68c175dc8b3962de1733df00cc5f5fcb4cb984b8",
+            "bytes": 2106
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/proposal-gate/stderr.log",
+            "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+            "bytes": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "design-gate",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/design-gate/execution.json",
+        "digest": "blake3:8059bd7364483fac530be9eba90fa1f03f9bc5111029a8b3315b048250f8e4cf",
+        "bytes": 1125
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "cairn",
+          "gate",
+          "design",
+          "support-local-producer-applicability",
+          "--root",
+          "."
+        ],
+        "display_command": "cairn gate design support-local-producer-applicability --root .",
+        "timeout_seconds": 60,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T05:18:51.666110+00:00",
+        "finished": "2026-10-17T05:18:51.701004+00:00",
+        "elapsed_seconds": 0.03488931601168588,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/design-gate/stdout.log",
+            "digest": "blake3:f6c25308564d861d109e4872cdde3cf2e1a492c59a27298c7059d262adfb6a31",
+            "bytes": 2978
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/design-gate/stderr.log",
+            "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+            "bytes": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "tasks-gate",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tasks-gate/execution.json",
+        "digest": "blake3:83c003e88f4110e44d32f287794f09fd1e3ebb78c1699823a0c9eea87df08079",
+        "bytes": 1121
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "cairn",
+          "gate",
+          "tasks",
+          "support-local-producer-applicability",
+          "--root",
+          "."
+        ],
+        "display_command": "cairn gate tasks support-local-producer-applicability --root .",
+        "timeout_seconds": 60,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T05:18:51.926797+00:00",
+        "finished": "2026-10-17T05:18:51.962138+00:00",
+        "elapsed_seconds": 0.03534591299830936,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tasks-gate/stdout.log",
+            "digest": "blake3:1b6ca943af59dcbeedb6deb2b729afdef9dc3ddb539723b6a48f22a4a12fca8d",
+            "bytes": 5105
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tasks-gate/stderr.log",
+            "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+            "bytes": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "core-verify",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/core-verify/execution.json",
+        "digest": "blake3:c91970e4e58ea82f18585f73071d3bf8ca1d48c9dec83cdab49dfcdb5ecd0877",
+        "bytes": 1702
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "env",
+          "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+          "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target",
+          "TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp",
+          "RUSTC_WRAPPER=",
+          "nix",
+          "develop",
+          "--no-update-lock-file",
+          "-c",
+          "cargo",
+          "test",
+          "-p",
+          "cairn-core",
+          "check_evidence"
+        ],
+        "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp RUSTC_WRAPPER= nix develop --no-update-lock-file -c cargo test -p cairn-core check_evidence",
+        "timeout_seconds": 300,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T05:32:47.744757+00:00",
+        "finished": "2026-10-17T05:33:11.997195+00:00",
+        "elapsed_seconds": 24.252451171021676,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/core-verify/stdout.log",
+            "digest": "blake3:bcb225ce5b1e575a7f2a36a84e78d052205028abfd6ffd9bf121172a4bf3ea5a",
+            "bytes": 4636
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/core-verify/stderr.log",
+            "digest": "blake3:379d6aa5aa74aadd6bc43ebc3b4523e14d6b79986b9694c7ab104f77d84d7db6",
+            "bytes": 1111
+          }
+        ]
+      }
+    },
+    {
+      "name": "cli-verify",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cli-verify/execution.json",
+        "digest": "blake3:cbb8d3d8224f555d3c87b35d60ce8236309443f7895602e6e74819c78fb098fc",
+        "bytes": 1799
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "env",
+          "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+          "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target",
+          "TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp",
+          "RUSTC_WRAPPER=",
+          "nix",
+          "develop",
+          "--no-update-lock-file",
+          "-c",
+          "cargo",
+          "test",
+          "-p",
+          "cairn-cli",
+          "--test",
+          "check_evidence_local",
+          "--test",
+          "check_evidence_nix"
+        ],
+        "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp RUSTC_WRAPPER= nix develop --no-update-lock-file -c cargo test -p cairn-cli --test check_evidence_local --test check_evidence_nix",
+        "timeout_seconds": 300,
+        "operational_timeout": false,
+        "exit_code": 101,
+        "started": "2026-10-17T05:34:55.969970+00:00",
+        "finished": "2026-10-17T05:38:55.057794+00:00",
+        "elapsed_seconds": 239.08782635300304,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cli-verify/stdout.log",
+            "digest": "blake3:eeb07d7d3dd11072cc85ed5435b387cb164c7bc9ada4d8bb68e1f91530414790",
+            "bytes": 2613
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cli-verify/stderr.log",
+            "digest": "blake3:e5fca39ef1aa85ab011d7d814084d01c124e572c32681896803bf04706e28bfb",
+            "bytes": 1990
+          }
+        ]
+      }
+    },
+    {
+      "name": "nix-cli-verify",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/nix-cli-verify/execution.json",
+        "digest": "blake3:fff4e39f286906c1a0c74eda511a8cedf88267727872cae8d2920d1068322bd8",
+        "bytes": 1733
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "env",
+          "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+          "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target",
+          "TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp",
+          "RUSTC_WRAPPER=",
+          "nix",
+          "develop",
+          "--no-update-lock-file",
+          "-c",
+          "cargo",
+          "test",
+          "-p",
+          "cairn-cli",
+          "--test",
+          "check_evidence_nix"
+        ],
+        "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp RUSTC_WRAPPER= nix develop --no-update-lock-file -c cargo test -p cairn-cli --test check_evidence_nix",
+        "timeout_seconds": 300,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T05:42:14.844025+00:00",
+        "finished": "2026-10-17T05:46:44.205998+00:00",
+        "elapsed_seconds": 269.36196020498755,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/nix-cli-verify/stdout.log",
+            "digest": "blake3:864309b8af0d2d3be84ef898b1c2c85488a7a349055f1becf5835fbcaa0a780d",
+            "bytes": 309
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/nix-cli-verify/stderr.log",
+            "digest": "blake3:85fac4a767231b1801f516429c18893219058e8f30e12c959fb84787914f99ed",
+            "bytes": 323
+          }
+        ]
+      }
+    },
+    {
+      "name": "fixture28-verify",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture28-verify/execution.json",
+        "digest": "blake3:18d1241c0be5b11d38df8d3b2a39e6122c6138f5469afb071a4aa42ce08ba241",
+        "bytes": 1926
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "env",
+          "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+          "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target",
+          "TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp",
+          "RUSTC_WRAPPER=",
+          "nix",
+          "develop",
+          "--no-update-lock-file",
+          "-c",
+          "cargo",
+          "test",
+          "-p",
+          "cairn-cli",
+          "--test",
+          "check_evidence_local",
+          "dependency_projection_rejects_invalid_and_no_follow_members_and_bounds",
+          "--",
+          "--exact"
+        ],
+        "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp RUSTC_WRAPPER= nix develop --no-update-lock-file -c cargo test -p cairn-cli --test check_evidence_local dependency_projection_rejects_invalid_and_no_follow_members_and_bounds -- --exact",
+        "timeout_seconds": 300,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T05:45:38.759431+00:00",
+        "finished": "2026-10-17T05:47:39.855658+00:00",
+        "elapsed_seconds": 121.09622532399953,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture28-verify/stdout.log",
+            "digest": "blake3:a78a03d0d4734fefd5c1aa018581b1a72e249b56a942e552cad95c0dd8894e74",
+            "bytes": 196
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture28-verify/stderr.log",
+            "digest": "blake3:df8201a5974ade98198ee61064748bded40a38afd6dcf1021c16f49cc07656e6",
+            "bytes": 449
+          }
+        ]
+      }
+    },
+    {
+      "name": "fixture30-format",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-format/execution.json",
+        "digest": "blake3:944d08b7afa61d7afde4d05ea461b9cec02e49b9162b881268398da19e074112",
+        "bytes": 1645
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "env",
+          "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+          "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target",
+          "TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp",
+          "RUSTC_WRAPPER=",
+          "nix",
+          "develop",
+          "--no-update-lock-file",
+          "-c",
+          "cargo",
+          "fmt",
+          "--all"
+        ],
+        "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp RUSTC_WRAPPER= nix develop --no-update-lock-file -c cargo fmt --all",
+        "timeout_seconds": 300,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T06:03:21.036796+00:00",
+        "finished": "2026-10-17T06:03:45.121389+00:00",
+        "elapsed_seconds": 24.084594285988715,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-format/stdout.log",
+            "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+            "bytes": 0
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-format/stderr.log",
+            "digest": "blake3:9c6db78308e078dacf8a4e586a77614e130f80d4495613291dd7fc74c5dae245",
+            "bytes": 88
+          }
+        ]
+      }
+    },
+    {
+      "name": "post30-direct-smoke-command",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke-command/execution.json",
+        "digest": "blake3:4bddbebae904f2910b85009ef7b89703907ba79cdd6847601cde16563007ba9c",
+        "bytes": 2340
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "python3",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/direct-producer-smoke.py",
+          "--repo",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+          "--cairn",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "--fixture",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649",
+          "--negative-fixture",
+          "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke"
+        ],
+        "display_command": "python3 /home/brittonr/git/OnixResearch/cairn/target/cc-producer26/direct-producer-smoke.py --repo /tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26 --cairn /home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968 --fixture /tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-pass-626649 --negative-fixture /tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26/target/producer-nix-fail-626649 --out /home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke",
+        "timeout_seconds": 180,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T06:41:46.764995+00:00",
+        "finished": "2026-10-17T06:41:49.606268+00:00",
+        "elapsed_seconds": 2.8412782149971463,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke-command/stdout.log",
+            "digest": "blake3:d1fedf8989e1ae86ce36cf312400e92fb3a967d8a9851b365be001e187d6138f",
+            "bytes": 23611
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke-command/stderr.log",
+            "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+            "bytes": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "mcp-consumer-smoke-command",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke-command/execution.json",
+        "digest": "blake3:49e4a2539e25cb003ec7834a24e84cb6cadb0a7603ed39feeb9a4a6712d70904",
+        "bytes": 1663
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "python3",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/direct-mcp-consumer-smoke.py",
+          "--cairn",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968",
+          "--out",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke"
+        ],
+        "display_command": "python3 /home/brittonr/git/OnixResearch/cairn/target/cc-producer26/direct-mcp-consumer-smoke.py --cairn /home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cairn-c3e613d967d417a50c8bb804ed97d035f1a307221934cddf6268ff8ceca88968 --out /home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke",
+        "timeout_seconds": 150,
+        "operational_timeout": false,
+        "exit_code": 0,
+        "started": "2026-10-17T06:41:46.815131+00:00",
+        "finished": "2026-10-17T06:41:47.133420+00:00",
+        "elapsed_seconds": 0.3182949560286943,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke-command/stdout.log",
+            "digest": "blake3:2ba96f1fbe78cc805d79641aa728dbe7dc54791230dc31da7e11fb129cbbe6fe",
+            "bytes": 7147
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke-command/stderr.log",
+            "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+            "bytes": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "fixture30-checks-command",
+      "observation": {
+        "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks-command/execution.json",
+        "digest": "blake3:ad090858feec5087912bae4d7db72617b08abb977e20cb2757a5e0fd0fa30ef7",
+        "bytes": 1808
+      },
+      "execution": {
+        "schema": "chaoscontrol.local-command-observation.v1",
+        "cwd": "/tmp/chaoscontrol-production-readiness-closure-20261015/cairn-producer26",
+        "command": [
+          "env",
+          "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+          "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target",
+          "TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp",
+          "RUSTC_WRAPPER=",
+          "nix",
+          "develop",
+          "--no-update-lock-file",
+          "-c",
+          "python3",
+          "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/run-fixture30-checks.py"
+        ],
+        "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/cargo-target TMPDIR=/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/tmp RUSTC_WRAPPER= nix develop --no-update-lock-file -c python3 /home/brittonr/git/OnixResearch/cairn/target/cc-producer26/run-fixture30-checks.py",
+        "timeout_seconds": 4200,
+        "operational_timeout": false,
+        "exit_code": 1,
+        "started": "2026-10-17T06:04:22.625720+00:00",
+        "finished": "2026-10-17T06:45:11.573576+00:00",
+        "elapsed_seconds": 2448.9479068559885,
+        "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+        "artifacts": [
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks-command/stdout.log",
+            "digest": "blake3:0d7fd19691b8bbdcad2207a584d1e10d2e4032700524233b5b5c1473e3bb39e8",
+            "bytes": 9898
+          },
+          {
+            "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks-command/stderr.log",
+            "digest": "blake3:f3eae46f51316b1037cc58c1ffef17d86a73f82466b53202fe0bb158127f23cc",
+            "bytes": 88
+          }
+        ]
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/direct-producer-smoke.py",
+      "digest": "blake3:0e3d3666ae83498608e1dc6310fc1d3e8ff7b529f39783bbc8c685d00c7e7fd1",
+      "bytes": 6910
+    },
+    {
+      "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/direct-mcp-consumer-smoke.py",
+      "digest": "blake3:d114a2a7760fe1eed19bf2c4b988dcfdd2f269297681a2e611abef91a16d4772",
+      "bytes": 2752
+    },
+    {
+      "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/run-fixture30-checks.py",
+      "digest": "blake3:213827fe9a783a779dc1a234287a2fbe1be53aa6d49d2c4d388e3096d90d11c3",
+      "bytes": 2781
+    },
+    {
+      "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/post30-direct-smoke/summary.json",
+      "digest": "blake3:d1fedf8989e1ae86ce36cf312400e92fb3a967d8a9851b365be001e187d6138f",
+      "bytes": 23611
+    },
+    {
+      "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/mcp-consumer-smoke/summary.json",
+      "digest": "blake3:2ba96f1fbe78cc805d79641aa728dbe7dc54791230dc31da7e11fb129cbbe6fe",
+      "bytes": 7147
+    },
+    {
+      "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/fixture30-checks/summary.json",
+      "digest": "blake3:8a7a4b22a91410e8169949d27d7cb3b6dcb79e886438f3305068ff25df939b4c",
+      "bytes": 64529
+    },
+    {
+      "path": "/home/brittonr/git/OnixResearch/cairn/target/cc-producer26/retained-producer.json",
+      "digest": "blake3:6c665f389cd244a0dba5be1ed95fdc2d8350b2a74121ae6c6a1f4a2ddf71a5ea",
+      "bytes": 325
+    }
+  ],
+  "diagnosis": [
+    {
+      "id": "workspace-command-timeout",
+      "observed": "600-second outer bound expired after producer-local (12) and native Nix (3) cases passed; the command had entered the later evidence_registry executable. Earlier bootstrap unit/integration batches took 116.88, 170.69, and 197.42 seconds.",
+      "non_claim": "Not a passing workspace verdict and not evidence of a guest bug or of an evidence_registry defect."
+    },
+    {
+      "id": "nix-lock-waits",
+      "observed": "Both packaged policy freshness and flake checking logged auto-GC and waiting for the big garbage collector lock before their 600/1200-second deadlines.",
+      "non_claim": "No host configuration or deadline change was made; no package/policy freshness success is inferred."
+    },
+    {
+      "id": "independent-native-gaps",
+      "observed": "Native validation has valid=true and no issues. Traceability remains nonpassing for the two license-boundary IDs; Octet rejects noncanonical finding paths.",
+      "non_claim": "No accepted requirement, license policy, native check, or finding was suppressed."
+    }
+  ],
+  "consumer_full_contract_exercised": false,
+  "archive_authorized_by_evidence": false
+}

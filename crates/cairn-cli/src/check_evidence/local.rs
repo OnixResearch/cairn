@@ -19,8 +19,8 @@ use std::{
 pub(super) const PRODUCER: &str = LOCAL_EXECUTOR_REVISION;
 pub(super) const CANCEL_BYTES: u64 = 1;
 const MAX_SOURCE_FILES: usize = 4096;
-const MAX_SOURCE_FILE_BYTES: u64 = 16 * 1024 * 1024;
-const MAX_SOURCE_TOTAL_BYTES: usize = 64 * 1024 * 1024;
+pub(super) const MAX_SOURCE_FILE_BYTES: u64 = 16 * 1024 * 1024;
+pub(super) const MAX_SOURCE_TOTAL_BYTES: usize = 64 * 1024 * 1024;
 const MAX_EXECUTABLE_BYTES: usize = 256 * 1024 * 1024;
 const HASH_BUFFER_BYTES: usize = 8192;
 const CONTROL_POLL_MS: u64 = 10;
@@ -168,6 +168,7 @@ pub(super) fn execute(
     })
 }
 
+// r[impl cairn.check_evidence_producer.native_nix_build]
 pub(super) fn observation(
     plan: &CheckEvidencePlan,
     profile: &CheckProfile,
@@ -186,20 +187,28 @@ pub(super) fn observation(
                 Disposition::Cancelled => ProcessOutcome::Cancelled,
                 Disposition::OutputLimitExceeded(_) => ProcessOutcome::OutputOverflow,
             };
-            let coverage = cargo_coverage(&output.stdout.bytes);
-            let payload = match profile.kind {
-                CheckKind::CargoTest => coverage.passed,
-                // Nix exit zero is not a separately admitted build payload.
-                // Until a native payload contract is available, retain the process fact only.
-                CheckKind::NixCheck => false,
+            let (payload, tests, nix_build) = match profile.kind {
+                CheckKind::CargoTest => {
+                    let coverage = cargo_coverage(&output.stdout.bytes);
+                    (coverage.passed, coverage.executed, Value::Null)
+                }
+                CheckKind::NixCheck => {
+                    let native = serde_json::from_slice::<Value>(&output.stdout.bytes)
+                        .ok()
+                        .filter(nix_build_payload_passed);
+                    let passed =
+                        native.is_some() && !output.stdout.truncated && !output.stderr.truncated;
+                    (passed, 0, native.unwrap_or(Value::Null))
+                }
             };
             let facts = json!({"outcome": outcome, "exit_code": output.exit_code, "signal": output.signal,
                 "stdout_hash": blake3::hash(&output.stdout.bytes).to_hex().to_string(),
                 "stderr_hash": blake3::hash(&output.stderr.bytes).to_hex().to_string(),
                 "stdout_observed_bytes": output.stdout.observed_bytes, "stderr_observed_bytes": output.stderr.observed_bytes,
                 "stdout_truncated": output.stdout.truncated, "stderr_truncated": output.stderr.truncated,
-                "natural_exit": output.completion == Completion::Exited});
-            (outcome, payload, coverage.executed, true, facts)
+                "natural_exit": output.completion == Completion::Exited,
+                "nix_build": nix_build});
+            (outcome, payload, tests, true, facts)
         }
         Err(_) => (
             ProcessOutcome::TeardownFailed,
@@ -256,23 +265,25 @@ mod tests {
     use super::*;
     use std::{
         fs,
-        os::unix::{fs::symlink, net::UnixListener},
+        os::{
+            fd::AsRawFd,
+            unix::{fs::symlink, net::UnixListener},
+        },
     };
 
     #[test]
     fn source_projection_accepts_regular_files_and_rejects_unsafe_members(
     ) -> Result<(), Box<dyn Error>> {
-        let path =
-            std::env::temp_dir().join(format!("cairn-producer-source-{}", std::process::id()));
-        if path.exists() {
-            fs::remove_dir_all(&path)?;
-        }
+        let workspace = tempfile::tempdir()?;
+        let path = workspace.path();
         fs::create_dir_all(path.join("nested"))?;
         fs::write(path.join("nested/source"), b"source")?;
         symlink("nested", path.join("linked"))?;
         symlink("nested/source", path.join("leaf"))?;
-        let _socket = UnixListener::bind(path.join("socket"))?;
-        let root = open_root(&path)?;
+        let directory = fs::File::open(path)?;
+        let _socket =
+            UnixListener::bind(format!("/proc/self/fd/{}/socket", directory.as_raw_fd()))?;
+        let root = open_root(path)?;
         let paths = vec!["nested/source".into()];
         let before = source_hash(&root, &paths)?;
         assert_eq!(before, source_hash(&root, &paths)?);
@@ -296,7 +307,6 @@ mod tests {
         let oversized = fs::File::create(path.join("oversized"))?;
         oversized.set_len(MAX_SOURCE_FILE_BYTES + 1)?;
         assert!(source_hash(&root, &["oversized".into()]).is_err());
-        fs::remove_dir_all(path)?;
         Ok(())
     }
 }

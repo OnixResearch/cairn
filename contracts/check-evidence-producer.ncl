@@ -2,6 +2,27 @@
 let MaximumDeadlineMs = 3600000 in
 let MaximumTeardownMs = 60000 in
 let MaximumStreamBytes = 1048576 in
+let MaximumDependencyFiles = 64 in
+let MaximumDependencyFileBytes = 16777216 in
+let MaximumDependencyTotalBytes = 67108864 in
+let DependencyPath = fun value =>
+  std.is_string value
+  && std.string.is_match "^[^\\x00]+$" value
+  && std.array.all
+    (fun part => part != "" && part != "." && part != "..")
+    (std.string.split "/" value)
+in
+let DependencyProjection = std.contract.from_predicate (fun value =>
+  std.is_array value
+  && std.array.length value <= MaximumDependencyFiles
+  && std.array.all DependencyPath value
+  && std.array.sort std.string.compare value == value
+  && std.array.all (fun item =>
+    std.array.fold_left
+      (fun count candidate => if candidate == item then count + 1 else count)
+      0 value == 1
+  ) value
+) in
 let Digest = std.contract.from_predicate (fun value =>
   std.is_string value && std.string.is_match "^[0-9a-f]{64}$" value
 ) in
@@ -34,6 +55,14 @@ let Profile = {
 {
   profile = Profile,
   bounds = Bounds,
+  dependency_projection = DependencyProjection,
+  dependency_bounds = {
+    maximum_files = MaximumDependencyFiles,
+    maximum_file_bytes = MaximumDependencyFileBytes,
+    maximum_total_bytes = MaximumDependencyTotalBytes,
+  },
+  # Projection members name actual no-follow regular files; byte bounds are checked at observation.
+  # A projection is not dependency-closure review, package resolution, or remote attestation.
   # The pure Rust admission also checks exact argv, canonical sets, and byte bounds.
   # No default environment, zero-test waiver, cache waiver, or executable is supplied.
 }

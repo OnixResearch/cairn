@@ -4,16 +4,30 @@ use serde_json::{json, Value};
 use std::collections::BTreeMap;
 
 fn fixture() -> (CheckEvidencePlan, String, Value, BTreeMap<String, Vec<u8>>) {
-    let (contract, profiles, applicability) = super::tests::fixture();
+    fixture_for(CheckKind::CargoTest)
+}
+
+fn fixture_for(kind: CheckKind) -> (CheckEvidencePlan, String, Value, BTreeMap<String, Vec<u8>>) {
+    let (contract, profiles, applicability) = match kind {
+        CheckKind::CargoTest => super::tests::fixture(),
+        CheckKind::NixCheck => super::tests::nix_fixture(),
+    };
     let plan = admit_plan(&contract, &profiles, &applicability).unwrap();
     let mut observation = super::tests::observation(&plan);
+    if kind == CheckKind::NixCheck {
+        observation.role = EvidenceRole::Build;
+        observation.executed_tests = 0;
+    }
     observation.producer_identity = blake3::hash(LOCAL_EXECUTOR_REVISION.as_bytes())
         .to_hex()
         .to_string();
     let attempt = observation.attempt_hash.clone();
-    let facts = json!({"schema":"cairn.local-check-facts.v1", "producer_revision":LOCAL_EXECUTOR_REVISION, "attempt_hash":attempt,
-        "plan_hash":plan.identity(), "check_id":"tests", "executed_tests":1, "payload_passed":true,
+    let mut facts = json!({"schema":"cairn.local-check-facts.v1", "producer_revision":LOCAL_EXECUTOR_REVISION, "attempt_hash":attempt,
+        "plan_hash":plan.identity(), "check_id":"tests", "executed_tests":observation.executed_tests, "payload_passed":true,
         "facts":{"outcome":"exited_zero","stdout_truncated":false,"stderr_truncated":false}});
+    if kind == CheckKind::NixCheck {
+        facts["facts"]["nix_build"] = super::tests::native_nix_payload();
+    }
     observation.evidence_hash = canonical_json_hash(&facts);
     let normalized = normalize_attempt(&plan, &observation).unwrap();
     let results = json!([normalized.result()]);
@@ -119,6 +133,126 @@ fn rehashed_nonpassing_observations_cannot_hide_behind_passing_rows() {
         rehash(&mut receipt, &changed);
         assert!(
             admit_manifest(&plan, &attempt, &receipt, &changed).is_err(),
+            "admitted {field}"
+        );
+    }
+}
+
+// Rebind every integrity link so negative controls exercise admission, not stale hashes.
+fn rebind(
+    manifest: &mut Value,
+    artifacts: &mut BTreeMap<String, Vec<u8>>,
+    observations: &mut Value,
+    facts: &Value,
+) {
+    let evidence_hash = canonical_json_hash(facts);
+    observations[0]["evidence_hash"] = json!(evidence_hash);
+    manifest["results"][0]["evidence_hash"] = json!(evidence_hash);
+    manifest["results"][0]["execution_receipt_hash"] = json!(canonical_json_hash(
+        &json!({"schema":"cairn.check-observation.v1","observation":observations[0],"non_claims":NON_CLAIMS})
+    ));
+    artifacts.insert(
+        "tests.facts.json".into(),
+        serde_json::to_vec(facts).unwrap(),
+    );
+    artifacts.insert(
+        "observations.json".into(),
+        serde_json::to_vec(observations).unwrap(),
+    );
+    artifacts.insert(
+        "results.json".into(),
+        serde_json::to_vec(&manifest["results"]).unwrap(),
+    );
+    rehash(manifest, artifacts);
+}
+
+#[test]
+// r[verify cairn.check_evidence_producer.native_nix_build]
+fn native_nix_build_only_manifest_requires_independently_admitted_payload() {
+    let (plan, attempt, manifest, artifacts) = fixture_for(CheckKind::NixCheck);
+    assert!(admit_manifest(&plan, &attempt, &manifest, &artifacts).is_ok());
+    let facts: Value = serde_json::from_slice(&artifacts["tests.facts.json"]).unwrap();
+    let observations: Value = serde_json::from_slice(&artifacts["observations.json"]).unwrap();
+    for payload in [
+        json!(null),
+        json!(1),
+        json!(true),
+        json!([]),
+        json!({"success":true}),
+        json!([{"path":facts["facts"]["nix_build"][0]["outputs"]["out"]}]),
+        json!([{"drvPath":facts["facts"]["nix_build"][0]["drvPath"],"outputs":{}}]),
+        json!([
+            facts["facts"]["nix_build"][0],
+            facts["facts"]["nix_build"][0]
+        ]),
+    ] {
+        let mut changed_facts = facts.clone();
+        changed_facts["facts"]["nix_build"] = payload;
+        let mut changed_observations = observations.clone();
+        let mut changed_manifest = manifest.clone();
+        let mut changed_artifacts = artifacts.clone();
+        rebind(
+            &mut changed_manifest,
+            &mut changed_artifacts,
+            &mut changed_observations,
+            &changed_facts,
+        );
+        assert!(admit_manifest(&plan, &attempt, &changed_manifest, &changed_artifacts).is_err());
+    }
+}
+
+#[test]
+// r[verify cairn.check_evidence_producer.native_nix_build]
+fn rehashed_native_nix_payload_cannot_override_failure_truncation_or_test_claims() {
+    let (plan, attempt, manifest, artifacts) = fixture_for(CheckKind::NixCheck);
+    let facts: Value = serde_json::from_slice(&artifacts["tests.facts.json"]).unwrap();
+    let observations: Value = serde_json::from_slice(&artifacts["observations.json"]).unwrap();
+    for (pointer, value) in [
+        ("/payload_passed", json!(false)),
+        ("/facts/outcome", json!("exited_nonzero")),
+        ("/facts/stdout_truncated", json!(true)),
+        ("/facts/stderr_truncated", json!(true)),
+    ] {
+        let mut changed_facts = facts.clone();
+        *changed_facts.pointer_mut(pointer).unwrap() = value;
+        let mut changed_observations = observations.clone();
+        let mut changed_manifest = manifest.clone();
+        let mut changed_artifacts = artifacts.clone();
+        rebind(
+            &mut changed_manifest,
+            &mut changed_artifacts,
+            &mut changed_observations,
+            &changed_facts,
+        );
+        assert!(admit_manifest(&plan, &attempt, &changed_manifest, &changed_artifacts).is_err());
+    }
+    for (field, value) in [
+        ("outcome", json!("exited_nonzero")),
+        ("outcome", json!("timed_out")),
+        ("outcome", json!("cancelled")),
+        ("outcome", json!("output_overflow")),
+        ("teardown_complete", json!(false)),
+        ("execution_observed", json!(false)),
+        ("cache_claimed", json!(true)),
+        ("native_status", json!("failed")),
+        ("payload_passed", json!(false)),
+        ("role", json!("test")),
+        ("executed_tests", json!(1)),
+    ] {
+        let mut changed_facts = facts.clone();
+        let mut changed_observations = observations.clone();
+        changed_observations[0][field] = value;
+        changed_facts["executed_tests"] = changed_observations[0]["executed_tests"].clone();
+        let mut changed_manifest = manifest.clone();
+        let mut changed_artifacts = artifacts.clone();
+        rebind(
+            &mut changed_manifest,
+            &mut changed_artifacts,
+            &mut changed_observations,
+            &changed_facts,
+        );
+        assert!(
+            admit_manifest(&plan, &attempt, &changed_manifest, &changed_artifacts).is_err(),
             "admitted {field}"
         );
     }

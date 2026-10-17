@@ -42,3 +42,4 @@ serde_json.workspace = true
 
 [dev-dependencies]
 artifact-auth-core.workspace = true
+tempfile = "3.20"

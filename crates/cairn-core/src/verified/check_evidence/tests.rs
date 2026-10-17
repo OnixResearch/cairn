@@ -57,6 +57,25 @@ pub(super) fn fixture() -> (AgentVerificationContract, Vec<CheckProfile>, Applic
     };
     (contract, vec![profile], applicability)
 }
+pub(super) fn nix_fixture() -> (AgentVerificationContract, Vec<CheckProfile>, Applicability) {
+    let (mut contract, mut profiles, applicability) = fixture();
+    profiles[0].kind = CheckKind::NixCheck;
+    profiles[0].executable = "/nix/store/reviewed-nix/bin/nix".into();
+    profiles[0].target = "x86_64-linux".into();
+    contract.required_checks[0].command = profile_command(&profiles[0]);
+    contract.required_checks[0].command_hash =
+        authoritative_command_hash(&contract.required_checks[0].command);
+    contract.selection_hash = authoritative_selection_hash(&contract.required_checks);
+    (contract, profiles, applicability)
+}
+
+pub(super) fn native_nix_payload() -> serde_json::Value {
+    json!([{
+        "drvPath":"/nix/store/1n6shkyf223h8ap2g2wffrq99p0lwkiy-cairn-native-nix-observation.drv",
+        "outputs":{"out":"/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-cairn-native-nix-observation"}
+    }])
+}
+
 pub(super) fn observation(plan: &CheckEvidencePlan) -> AttemptObservation {
     let p = &plan.profiles()[0];
     AttemptObservation {
@@ -407,13 +426,8 @@ fn prerequisites_require_exact_prior_success_and_never_retry() {
 
 #[test]
 fn nix_check_is_only_a_build_obligation() {
-    let (mut c, mut p, a) = fixture();
-    p[0].kind = CheckKind::NixCheck;
-    p[0].executable = "/nix/store/reviewed-nix/bin/nix".into();
-    p[0].target = "x86_64-linux".into();
-    c.required_checks[0].command = profile_command(&p[0]);
-    c.required_checks[0].command_hash = authoritative_command_hash(&c.required_checks[0].command);
-    c.selection_hash = authoritative_selection_hash(&c.required_checks);
+    // r[verify cairn.check_evidence_producer.native_nix_build]
+    let (c, p, a) = nix_fixture();
     let plan = admit_plan(&c, &p, &a).unwrap();
     let mut o = observation(&plan);
     assert_eq!(
@@ -426,6 +440,12 @@ fn nix_check_is_only_a_build_obligation() {
         normalize_attempt(&plan, &o).unwrap().result().status,
         "passed"
     );
+    o.executed_tests = 1;
+    assert_eq!(
+        normalize_attempt(&plan, &o).unwrap().result().status,
+        "blocked"
+    );
+    o.executed_tests = 0;
     o.cache_claimed = true;
     assert_eq!(
         normalize_attempt(&plan, &o).unwrap().result().status,
@@ -512,4 +532,165 @@ fn target_features_and_environment_change_review_identity() {
     c.required_checks[0].command_hash = authoritative_command_hash(&c.required_checks[0].command);
     c.selection_hash = authoritative_selection_hash(&c.required_checks);
     assert_ne!(admit_plan(&c, &p, &a).unwrap().identity(), plan.identity());
+}
+
+#[test]
+// r[verify cairn.check_evidence_producer.native_nix_build]
+fn native_nix_build_contract_rejects_legacy_evaluation_selection() {
+    let (mut contract, profiles, applicability) = nix_fixture();
+    contract.required_checks[0].command = [
+        profiles[0].executable.as_str(),
+        "build",
+        "--offline",
+        "--no-link",
+        "--json",
+        "--file",
+        "./check.nix",
+    ]
+    .into_iter()
+    .map(String::from)
+    .collect();
+    contract.required_checks[0].command_hash =
+        authoritative_command_hash(&contract.required_checks[0].command);
+    contract.selection_hash = authoritative_selection_hash(&contract.required_checks);
+    assert!(admit_plan(&contract, &profiles, &applicability).is_ok());
+    contract.required_checks[0].command = [
+        profiles[0].executable.as_str(),
+        "eval",
+        "--offline",
+        "--json",
+        "--file",
+        "./check.nix",
+    ]
+    .into_iter()
+    .map(String::from)
+    .collect();
+    contract.required_checks[0].command_hash =
+        authoritative_command_hash(&contract.required_checks[0].command);
+    contract.selection_hash = authoritative_selection_hash(&contract.required_checks);
+    assert!(admit_plan(&contract, &profiles, &applicability).is_err());
+}
+
+#[test]
+// r[verify cairn.check_evidence_producer.native_nix_build]
+fn native_nix_derivation_outputs_admit_supported_timings_and_multiple_outputs() {
+    let payload = native_nix_payload();
+    assert!(nix_build_payload_passed(&payload));
+    for (field, value) in [
+        ("startTime", json!(1720000000)),
+        ("stopTime", json!(1720000001)),
+        ("cpuUser", json!(0.001)),
+        ("cpuSystem", json!(0)),
+    ] {
+        let mut timed = payload.clone();
+        timed[0][field] = value;
+        assert!(nix_build_payload_passed(&timed));
+    }
+    let mut multiple = payload.clone();
+    multiple[0]["outputs"]["dev"] =
+        json!("/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-cairn-native-nix-observation-dev");
+    let mut second = payload[0].clone();
+    second["drvPath"] = json!("/nix/store/1n6shkyf223h8ap2g2wffrq99p0lwkiy-second.drv");
+    second["outputs"]["out"] = json!("/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-second");
+    multiple.as_array_mut().unwrap().push(second);
+    assert!(nix_build_payload_passed(&multiple));
+}
+
+#[test]
+// r[verify cairn.check_evidence_producer.native_nix_build]
+fn native_nix_rejects_nonbuild_partial_unsupported_and_duplicate_payloads() {
+    let payload = native_nix_payload();
+    for invalid in [
+        json!(null),
+        json!(true),
+        json!(1),
+        json!({"success":true}),
+        json!([]),
+        json!([null]),
+        json!([{}]),
+        json!([payload[0], payload[0]]),
+        json!([{"path":payload[0]["outputs"]["out"]}]),
+        json!([{"drvPath":payload[0]["drvPath"]}]),
+        json!([{"outputs":payload[0]["outputs"]}]),
+    ] {
+        assert!(!nix_build_payload_passed(&invalid), "admitted {invalid}");
+    }
+    for (field, value) in [
+        ("outputs", json!({})),
+        ("outputs", json!([])),
+        ("outputs", json!({"out":null})),
+        ("outputs", json!({"out":false})),
+        ("outputs", json!({"":payload[0]["outputs"]["out"]})),
+        (
+            "outputs",
+            json!({"out":payload[0]["outputs"]["out"], "dev":payload[0]["outputs"]["out"]}),
+        ),
+        ("drvPath", json!(null)),
+        ("drvPath", json!({"output":"out"})),
+        ("drvPath", payload[0]["outputs"]["out"].clone()),
+        ("success", json!(true)),
+        ("status", json!("failed")),
+        ("startTime", json!(null)),
+        ("startTime", json!(0)),
+        ("startTime", json!(-1)),
+        ("stopTime", json!(1.5)),
+        ("cpuUser", json!(-0.1)),
+        ("cpuSystem", json!("0.1")),
+    ] {
+        let mut invalid = payload.clone();
+        invalid[0][field] = value;
+        assert!(!nix_build_payload_passed(&invalid), "admitted {invalid}");
+    }
+    let mut reversed = payload.clone();
+    reversed[0]["startTime"] = json!(2);
+    reversed[0]["stopTime"] = json!(1);
+    assert!(!nix_build_payload_passed(&reversed));
+}
+
+#[test]
+// r[verify cairn.check_evidence_producer.native_nix_build]
+fn native_nix_rejects_invalid_store_leaves_and_exceeded_bounds() {
+    let payload = native_nix_payload();
+    for path in [
+        "/nix/store/short-name",
+        "/tmp/3x4awq38gccmqc3d6ajhyn824j7f0hd4-name",
+        "/nix/store/ex4awq38gccmqc3d6ajhyn824j7f0hd4-name",
+        "/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4/name",
+        "/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-",
+        "/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-..",
+        "/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-.-name",
+        "/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-name/child",
+        "/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-name with space",
+    ] {
+        let mut invalid = payload.clone();
+        invalid[0]["outputs"]["out"] = json!(path);
+        assert!(!nix_build_payload_passed(&invalid), "admitted {path}");
+    }
+    let mut rows = Vec::new();
+    for index in 0..=MAX_CHECKS {
+        let mut row = payload[0].clone();
+        row["drvPath"] = json!(format!(
+            "/nix/store/1n6shkyf223h8ap2g2wffrq99p0lwkiy-{index}.drv"
+        ));
+        rows.push(row);
+    }
+    assert!(nix_build_payload_passed(&json!(&rows[..MAX_CHECKS])));
+    assert!(!nix_build_payload_passed(&json!(rows)));
+    let mut outputs = serde_json::Map::new();
+    for index in 0..=MAX_CHECKS {
+        outputs.insert(
+            format!("out{index}"),
+            json!(format!(
+                "/nix/store/3x4awq38gccmqc3d6ajhyn824j7f0hd4-{index}"
+            )),
+        );
+    }
+    let mut excessive = payload;
+    excessive[0]["outputs"] = json!(outputs);
+    assert!(!nix_build_payload_passed(&excessive));
+    excessive[0]["outputs"]
+        .as_object_mut()
+        .unwrap()
+        .remove("out64");
+    assert!(nix_build_payload_passed(&excessive));
 }

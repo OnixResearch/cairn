@@ -5,7 +5,16 @@ use cairn_core::{
     AgentRequiredCheck, AgentVerificationContract,
 };
 use serde_json::{json, Value};
-use std::{collections::BTreeMap, error::Error, fs, path::PathBuf, process::Command};
+use std::{
+    collections::BTreeMap,
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
+
+const FIXTURE_CONTENT: &str = "native-build\n";
+const FIXTURE_CONFIG: &str = "experimental-features = nix-command flakes\nsandbox = false\nbuild-users-group =\nbuilders =\n";
 
 fn binary(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     for directory in std::env::split_paths(&std::env::var_os("PATH").ok_or("missing PATH")?) {
@@ -16,78 +25,131 @@ fn binary(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     }
     Err("required fixture executable unavailable".into())
 }
-/// Fixtures supply an expression file for the fixed `nix eval` grammar: the
-/// pass fixture evaluates to a value (zero exit) and the fail fixture throws
-/// during evaluation (nonzero exit). This keeps the controlled property —
-/// disposition classification of a real Nix process — while working inside a
-/// sandboxed Nix check derivation, where no store daemon is reachable and
-/// real builds cannot run.
-#[test]
-fn real_nix_success_is_not_an_admitted_payload_or_test_coverage() -> Result<(), Box<dyn Error>> {
-    nix_fixture("pass", "42", true)
+
+fn cli(repo: &Path, args: &[&str]) -> Result<Value, Box<dyn Error>> {
+    let output = Command::new(env!("CARGO_BIN_EXE_cairn"))
+        .current_dir(repo)
+        .args(args)
+        .output()?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    Ok(serde_json::from_slice(&output.stdout)?)
 }
 
+fn derivation(name: &str, fail: bool) -> String {
+    // Nix's fixed-output builder requires an interoperability SHA-256.
+    // Applicability, tool identities, attempts, and retained evidence use BLAKE3.
+    let expected = if fail {
+        "different-content\n"
+    } else {
+        FIXTURE_CONTENT
+    };
+    format!(
+        "let content = {}; source = builtins.toFile \"producer-input\" content; in builtins.derivation {{ name = \"producer-{name}\"; system = builtins.currentSystem; builder = \"builtin:fetchurl\"; url = \"file://${{source}}\"; outputHashAlgo = \"sha256\"; outputHashMode = \"flat\"; outputHash = builtins.hashString \"sha256\" {}; }}\n",
+        json!(FIXTURE_CONTENT), json!(expected)
+    )
+}
+
+// r[verify cairn.check_evidence_producer.native_nix_build]
+#[test]
+fn real_nix_build_reaches_original_consumers_without_test_coverage() -> Result<(), Box<dyn Error>> {
+    nix_fixture("pass", &derivation("pass", false), "exited_zero", true)
+}
+
+// r[verify cairn.check_evidence_producer.native_nix_build]
 #[test]
 fn real_nix_build_failure_cannot_complete() -> Result<(), Box<dyn Error>> {
-    nix_fixture("fail", "builtins.throw \"producer-control failed\"", false)
+    nix_fixture("fail", &derivation("fail", true), "exited_nonzero", false)
 }
 
-fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn Error>> {
+// r[verify cairn.check_evidence_producer.native_nix_build]
+#[test]
+fn real_nix_empty_build_set_cannot_complete_after_zero_exit() -> Result<(), Box<dyn Error>> {
+    nix_fixture("empty", "[]", "exited_zero", false)
+}
+
+fn nix_fixture(
+    name: &str,
+    script: &str,
+    expected_outcome: &str,
+    expected_complete: bool,
+) -> Result<(), Box<dyn Error>> {
     let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let root = repo
-        .join("target")
-        .join(format!("producer-nix-{name}-{}", std::process::id()));
-    if root.exists() {
-        fs::remove_dir_all(&root)?;
-    }
+    let workspace = tempfile::Builder::new()
+        .prefix(&format!("cairn-native-nix-{name}-"))
+        .tempdir()?;
+    let root = workspace.path();
     fs::create_dir_all(root.join("evidence"))?;
-    fs::write(root.join("check.nix"), format!("{script}\n"))?;
-    fs::write(root.join("projection.json"), b"[\"check.nix\"]")?;
+    fs::create_dir(root.join("nix-conf"))?;
+    fs::write(root.join("check.nix"), script)?;
+    fs::write(root.join("nix-conf/nix.conf"), FIXTURE_CONFIG)?;
+    fs::write(
+        root.join("projection.json"),
+        b"[\"check.nix\",\"nix-conf/nix.conf\"]",
+    )?;
+    fs::write(root.join("dependencies.json"), b"[\"dependency.lock\"]")?;
     fs::write(root.join("cancel"), b"0")?;
-    let source = Command::new(env!("CARGO_BIN_EXE_cairn"))
-        .current_dir(&repo)
-        .args(["check-evidence", "source", "--root"])
-        .arg(&root)
-        .args(["--projection", "projection.json"])
-        .output()?;
-    assert!(source.status.success());
-    let source: Value = serde_json::from_slice(&source.stdout)?;
     let nix = binary("nix")?;
-    let hash = blake3::hash(&fs::read(&nix)?).to_hex().to_string();
-    let mut environment = BTreeMap::new();
-    for key in ["PATH", "HOME", "NIX_REMOTE", "NIX_SSL_CERT_FILE"] {
-        if let Ok(v) = std::env::var(key) {
-            environment.insert(key.into(), v);
-        }
-    }
-    environment.insert(
-        "NIX_CONFIG".into(),
-        "experimental-features = nix-command flakes".into(),
-    );
-    // A sandboxed Nix build exposes a read-only /nix/var; the real nix process
-    // needs writable state directories inside the fixture root instead.
-    environment.insert(
-        "NIX_STATE_DIR".into(),
-        root.join("nix-state").to_str().ok_or("path")?.into(),
-    );
-    // Diagnostic capture: mirror the exact profile command so a sandbox-only
-    // failure reports the real nix diagnostics in the panic message.
-    {
-        let mut diagnostic = Command::new(&nix);
-        diagnostic.current_dir(&root).args([
-            "eval",
-            "--offline",
-            "--json",
-            "--file",
-            "./check.nix",
-        ]);
-        for (key, value) in &environment {
-            diagnostic.env(key, value);
-        }
-        let output = diagnostic.output()?;
-        fs::write(root.join("evidence/nix-stderr.txt"), &output.stderr)?;
-        fs::write(root.join("evidence/nix-stdout.txt"), &output.stdout)?;
-    }
+    let mut executable_hash = blake3::Hasher::new();
+    executable_hash.update_reader(fs::File::open(&nix)?)?;
+    let hash = executable_hash.finalize().to_hex().to_string();
+    fs::write(
+        root.join("dependency.lock"),
+        format!("nix-executable-blake3={hash}\n"),
+    )?;
+    let source = cli(
+        &repo,
+        &[
+            "check-evidence",
+            "source",
+            "--root",
+            root.to_str().ok_or("path")?,
+            "--projection",
+            "projection.json",
+        ],
+    )?;
+    let dependencies = cli(
+        &repo,
+        &[
+            "check-evidence",
+            "dependencies",
+            "--root",
+            root.to_str().ok_or("path")?,
+            "--projection",
+            "dependencies.json",
+        ],
+    )?;
+    // The private store and its private config work inside a sandboxed Nix check.
+    // No daemon, host configuration change, shell closure, or external download is needed.
+    let environment = BTreeMap::from([
+        (
+            "PATH".into(),
+            nix.parent()
+                .ok_or("nix directory")?
+                .to_str()
+                .ok_or("path")?
+                .into(),
+        ),
+        ("HOME".into(), root.to_str().ok_or("path")?.into()),
+        (
+            "NIX_CONF_DIR".into(),
+            root.join("nix-conf").to_str().ok_or("path")?.into(),
+        ),
+        (
+            "NIX_USER_CONF_FILES".into(),
+            root.join("nix-conf/nix.conf")
+                .to_str()
+                .ok_or("path")?
+                .into(),
+        ),
+        (
+            "NIX_REMOTE".into(),
+            format!("local?root={}", root.join("store").display()),
+        ),
+    ]);
     let profile = CheckProfile {
         schema: PROFILE_SCHEMA.into(),
         check_id: "build".into(),
@@ -95,7 +157,7 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
         executable: nix.to_str().ok_or("path")?.into(),
         executable_hash: hash.clone(),
         tool_cohort_hash: hash,
-        target: "x86_64-linux".into(),
+        target: format!("{}-linux", std::env::consts::ARCH),
         features: vec![],
         environment,
         working_root: ".".into(),
@@ -121,7 +183,9 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
         schema: "cairn.agent-completion.v2".into(),
         repository_id: "nix-live".into(),
         registry_id: "checks".into(),
-        registry_hash: "a".repeat(64),
+        registry_hash: canonical_json_hash(
+            &json!({"schema":"cairn.nix-fixture-registry.v1","checks":checks}),
+        ),
         selection_hash: authoritative_selection_hash(&checks),
         policy_hash: canonical_json_hash(&policy),
         final_subject_hash: source["subject_hash"].as_str().ok_or("subject")?.into(),
@@ -130,7 +194,7 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
     let applicability = Applicability {
         subject_hash: contract.final_subject_hash.clone(),
         policy_hash: contract.policy_hash.clone(),
-        dependency_hashes: vec![],
+        dependency_hashes: serde_json::from_value(dependencies["dependency_hashes"].clone())?,
         source_projection_hash: source["source_projection_hash"]
             .as_str()
             .ok_or("projection")?
@@ -146,11 +210,17 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
         root.join("applicability.json"),
         serde_json::to_vec(&applicability)?,
     )?;
-    let output = Command::new(env!("CARGO_BIN_EXE_cairn"))
-        .current_dir(&repo)
-        .args(["check-evidence", "run", "--execute", "--root"])
-        .arg(&root)
-        .args([
+    let attempt = blake3::hash(format!("cairn-live-nix:{name}:{}", std::process::id()).as_bytes())
+        .to_hex()
+        .to_string();
+    let result = cli(
+        &repo,
+        &[
+            "check-evidence",
+            "run",
+            "--execute",
+            "--root",
+            root.to_str().ok_or("path")?,
             "--profiles",
             "profiles.json",
             "--contract",
@@ -159,50 +229,84 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
             "applicability.json",
             "--projection",
             "projection.json",
+            "--dependencies",
+            "dependencies.json",
             "--plan-hash",
             plan.identity(),
             "--attempt",
-            &"b".repeat(64),
+            &attempt,
             "--cancel-file",
             "cancel",
             "--out",
-        ])
-        .arg(root.join("evidence"))
-        .output()?;
-    assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
+            root.join("evidence").to_str().ok_or("path")?,
+        ],
+    )?;
+    let facts: Value = serde_json::from_slice(&fs::read(root.join("evidence/build.facts.json"))?)?;
+    assert_eq!(
+        result["valid"],
+        expected_complete,
+        "result={result} facts={facts} root={}",
+        root.display()
     );
-    let result: Value = serde_json::from_slice(&output.stdout)?;
-    assert_eq!(result["valid"], false, "{result}");
-    assert!(!root.join("evidence/manifest.json").exists());
-    let completion = Command::new(env!("CARGO_BIN_EXE_cairn"))
-        .current_dir(&repo)
-        .args(["agent-receipt", "complete", "--contract"])
-        .arg(root.join("contract.json"))
-        .arg("--results")
-        .arg(root.join("evidence/results.json"))
-        .args(["--subject-hash", &contract.final_subject_hash])
-        .output()?;
-    assert!(completion.status.success());
-    let completion: Value = serde_json::from_slice(&completion.stdout)?;
-    assert_eq!(completion["valid"], false);
+    assert_eq!(
+        root.join("evidence/manifest.json").exists(),
+        expected_complete
+    );
+    let completion = cli(
+        &repo,
+        &[
+            "agent-receipt",
+            "complete",
+            "--contract",
+            root.join("contract.json").to_str().ok_or("path")?,
+            "--results",
+            root.join("evidence/results.json").to_str().ok_or("path")?,
+            "--subject-hash",
+            &contract.final_subject_hash,
+        ],
+    )?;
+    assert_eq!(completion["valid"], expected_complete, "{completion}");
+    let verification = cli(
+        &repo,
+        &[
+            "check-evidence",
+            "verify",
+            "--root",
+            root.to_str().ok_or("path")?,
+            "--out",
+            root.join("evidence").to_str().ok_or("path")?,
+            "--profiles",
+            "profiles.json",
+            "--contract",
+            "contract.json",
+            "--applicability",
+            "applicability.json",
+            "--projection",
+            "projection.json",
+            "--dependencies",
+            "dependencies.json",
+            "--plan-hash",
+            plan.identity(),
+            "--attempt",
+            &attempt,
+        ],
+    )?;
+    assert_eq!(verification["valid"], expected_complete, "{verification}");
     let observations: Value =
         serde_json::from_slice(&fs::read(root.join("evidence/observations.json"))?)?;
     assert_eq!(observations[0]["role"], "build");
-    assert_eq!(
-        observations[0]["outcome"],
-        if expected {
-            "exited_zero"
-        } else {
-            "exited_nonzero"
-        },
-        "inner nix stderr: {} | stdout: {}",
-        std::fs::read_to_string(root.join("evidence/nix-stderr.txt")).unwrap_or_default(),
-        std::fs::read_to_string(root.join("evidence/nix-stdout.txt")).unwrap_or_default()
-    );
-    assert_eq!(observations[0]["payload_passed"], false);
+    assert_eq!(observations[0]["outcome"], expected_outcome, "{facts}");
+    assert_eq!(observations[0]["payload_passed"], expected_complete);
     assert_eq!(observations[0]["executed_tests"], json!(0));
+    if expected_complete {
+        assert!(nix_build_payload_passed(&facts["facts"]["nix_build"]));
+        let output = facts["facts"]["nix_build"][0]["outputs"]["out"]
+            .as_str()
+            .ok_or("native output")?;
+        let realized = root
+            .join("store")
+            .join(output.strip_prefix('/').ok_or("absolute output")?);
+        assert_eq!(fs::read_to_string(realized)?, FIXTURE_CONTENT);
+    }
     Ok(())
 }

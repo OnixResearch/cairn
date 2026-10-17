@@ -36,15 +36,15 @@ struct Fixture {
     root: PathBuf,
     out: PathBuf,
     plan: CheckEvidencePlan,
+    dependency_projection: Option<&'static str>,
+    _workspace: tempfile::TempDir,
 }
 impl Fixture {
     fn new(name: &str, body: &str, harness: bool, deadline: u64) -> Result<Self, Box<dyn Error>> {
-        let root = repo()
-            .join("target")
-            .join(format!("producer-live-{name}-{}", std::process::id()));
-        if root.exists() {
-            fs::remove_dir_all(&root)?;
-        }
+        let workspace = tempfile::Builder::new()
+            .prefix(&format!("cairn-producer-{name}-"))
+            .tempdir()?;
+        let root = workspace.path().to_path_buf();
         fs::create_dir_all(root.join("src"))?;
         let out = root.join("evidence");
         fs::create_dir(&out)?;
@@ -141,7 +141,35 @@ impl Fixture {
         save(&root.join("contract.json"), &contract)?;
         save(&root.join("profiles.json"), &vec![p])?;
         save(&root.join("applicability.json"), &applicability)?;
-        Ok(Self { root, out, plan })
+        Ok(Self {
+            root,
+            out,
+            plan,
+            dependency_projection: None,
+            _workspace: workspace,
+        })
+    }
+    fn bind_dependencies(&mut self, paths: &[&str]) -> Result<Value, Box<dyn Error>> {
+        save(&self.root.join("dependencies.json"), &paths)?;
+        let observed = cli(&[
+            "check-evidence",
+            "dependencies",
+            "--root",
+            self.root.to_str().ok_or("path")?,
+            "--projection",
+            "dependencies.json",
+        ])?;
+        let contract: AgentVerificationContract =
+            serde_json::from_slice(&fs::read(self.root.join("contract.json"))?)?;
+        let profiles: Vec<CheckProfile> =
+            serde_json::from_slice(&fs::read(self.root.join("profiles.json"))?)?;
+        let mut applicability = self.plan.applicability().clone();
+        applicability.dependency_hashes =
+            serde_json::from_value(observed["dependency_hashes"].clone())?;
+        self.plan = admit_plan(&contract, &profiles, &applicability)?;
+        save(&self.root.join("applicability.json"), &applicability)?;
+        self.dependency_projection = Some("dependencies.json");
+        Ok(observed)
     }
     fn command(&self) -> Command {
         let mut command = Command::new(env!("CARGO_BIN_EXE_cairn"));
@@ -167,6 +195,9 @@ impl Fixture {
                 "--out",
             ])
             .arg(&self.out);
+        if let Some(projection) = self.dependency_projection {
+            command.args(["--dependencies", projection]);
+        }
         command
     }
     fn run(&self) -> Result<Value, Box<dyn Error>> {
@@ -178,27 +209,41 @@ impl Fixture {
         );
         Ok(serde_json::from_slice(&output.stdout)?)
     }
+    fn verification_command(&self) -> Command {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_cairn"));
+        command
+            .current_dir(repo())
+            .args(["check-evidence", "verify", "--root"])
+            .arg(&self.root)
+            .arg("--out")
+            .arg(&self.out)
+            .args([
+                "--contract",
+                "contract.json",
+                "--profiles",
+                "profiles.json",
+                "--applicability",
+                "applicability.json",
+                "--projection",
+                "projection.json",
+                "--plan-hash",
+                self.plan.identity(),
+                "--attempt",
+                &"b".repeat(64),
+            ]);
+        if let Some(projection) = self.dependency_projection {
+            command.args(["--dependencies", projection]);
+        }
+        command
+    }
     fn verify(&self) -> Result<Value, Box<dyn Error>> {
-        cli(&[
-            "check-evidence",
-            "verify",
-            "--root",
-            self.root.to_str().ok_or("path")?,
-            "--out",
-            self.out.to_str().ok_or("path")?,
-            "--contract",
-            "contract.json",
-            "--profiles",
-            "profiles.json",
-            "--applicability",
-            "applicability.json",
-            "--projection",
-            "projection.json",
-            "--plan-hash",
-            self.plan.identity(),
-            "--attempt",
-            &"b".repeat(64),
-        ])
+        let output = self.verification_command().output()?;
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        Ok(serde_json::from_slice(&output.stdout)?)
     }
     fn completion(&self) -> Result<Value, Box<dyn Error>> {
         cli(&[
@@ -217,21 +262,43 @@ impl Fixture {
 #[test]
 fn real_developer_loop_profile_receipt_passes_the_original_validator() -> Result<(), Box<dyn Error>>
 {
-    let out = repo()
-        .join("target")
-        .join(format!("producer-loop-{}", std::process::id()));
-    if out.exists() {
-        fs::remove_dir_all(&out)?;
+    let workspace = tempfile::tempdir()?;
+    let root = workspace.path();
+    for directory in [
+        "crates",
+        ".cairn/specs/producer-loop",
+        ".cairn/changes",
+        ".cairn/archive",
+        "cairn-policy/generated",
+        "evidence",
+    ] {
+        fs::create_dir_all(root.join(directory))?;
     }
-    fs::create_dir_all(&out)?;
+    fs::write(
+        root.join("Cargo.toml"),
+        "[package]\nname = \"producer-loop\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[lib]\npath = \"crates/lib.rs\"\n[workspace]\n",
+    )?;
+    fs::write(
+        root.join("crates/lib.rs"),
+        format!("// {}[impl producer.loop.checked_add]\npub fn checked_add(left: u64, right: u64) -> Option<u64> {{\n    left.checked_add(right)\n}}\n", "r"),
+    )?;
+    fs::write(
+        root.join(".cairn/specs/producer-loop/spec.md"),
+        format!("# Producer loop\n\n## Purpose\n\nExercise the real producer loop on an isolated consumer.\n\n## Requirements\n\n### Requirement: Checked arithmetic\n\n{}[producer.loop.checked_add] The library MUST reject overflowing addition.\n\n#### Scenario: Overflow\n\n- GIVEN the maximum u64 value\n- WHEN one is added\n- THEN the operation returns no value.\n", "r"),
+    )?;
+    fs::copy(
+        repo().join("cairn-policy/generated/cairn-policy.json"),
+        root.join("cairn-policy/generated/cairn-policy.json"),
+    )?;
+    let out = root.join("evidence");
     let subject = "c".repeat(64);
     let denied = Command::new(env!("CARGO_BIN_EXE_cairn"))
-        .current_dir(repo())
+        .current_dir(root)
         .args([
             "check-evidence",
             "developer-loop",
             "--root",
-            repo().to_str().ok_or("path")?,
+            root.to_str().ok_or("path")?,
             "--profile",
             "cairn-local",
             "--subject-hash",
@@ -244,13 +311,13 @@ fn real_developer_loop_profile_receipt_passes_the_original_validator() -> Result
     assert!(!out.join("developer-loop-receipt.json").exists());
 
     let produced = Command::new(env!("CARGO_BIN_EXE_cairn"))
-        .current_dir(repo())
+        .current_dir(root)
         .args([
             "check-evidence",
             "developer-loop",
             "--execute",
             "--root",
-            repo().to_str().ok_or("path")?,
+            root.to_str().ok_or("path")?,
             "--profile",
             "cairn-local",
             "--subject-hash",
@@ -275,7 +342,7 @@ fn real_developer_loop_profile_receipt_passes_the_original_validator() -> Result
         "verify",
         "cairn-local",
         "--root",
-        repo().to_str().ok_or("path")?,
+        root.to_str().ok_or("path")?,
         "--receipt",
         out.join("developer-loop-receipt.json")
             .to_str()
@@ -289,7 +356,7 @@ fn real_developer_loop_profile_receipt_passes_the_original_validator() -> Result
         "verify",
         "cairn-local",
         "--root",
-        repo().to_str().ok_or("path")?,
+        root.to_str().ok_or("path")?,
         "--receipt",
         out.join("developer-loop-receipt.json")
             .to_str()
@@ -510,5 +577,249 @@ fn facts_collision_preserves_observation_and_existing_bytes() -> Result<(), Box<
     assert_eq!(observed.as_array().ok_or("observations")?.len(), 1);
     assert!(!f.out.join("manifest.json").exists());
     assert!(f.out.join("incomplete.json").exists());
+    Ok(())
+}
+
+// r[verify cairn.check_evidence_producer.dependency_observation]
+#[test]
+fn observed_dependencies_reach_original_consumers_and_reject_stale_verification(
+) -> Result<(), Box<dyn Error>> {
+    let mut f = Fixture::new(
+        "dependencies-pass",
+        "#[test] fn passes() { assert_eq!(2+2,4); }",
+        true,
+        30000,
+    )?;
+    fs::write(f.root.join("dependency-a"), b"reviewed bytes")?;
+    fs::write(f.root.join("dependency-b"), b"reviewed bytes")?;
+    let observed = f.bind_dependencies(&["dependency-a", "dependency-b"])?;
+    let mut expected: Vec<_> = ["dependency-a", "dependency-b"]
+        .iter()
+        .map(|path| {
+            canonical_json_hash(
+                &serde_json::json!({"schema":"cairn.check-dependency.v1", "path":path,
+            "content_hash":blake3::hash(b"reviewed bytes").to_hex().to_string()}),
+            )
+        })
+        .collect();
+    expected.sort();
+    assert_eq!(observed["dependency_hashes"], serde_json::json!(expected));
+    assert_eq!(
+        observed["dependency_projection_hash"],
+        canonical_json_hash(&serde_json::json!(["dependency-a", "dependency-b"]))
+    );
+    assert_eq!(observed["checks_executed"], false);
+    assert_eq!(f.run()?["complete"], true);
+    assert_eq!(f.completion()?["valid"], true);
+    assert_eq!(f.verify()?["valid"], true);
+    fs::write(f.root.join("dependency-a"), b"changed bytes")?;
+    assert!(!f.verification_command().output()?.status.success());
+    fs::write(f.root.join("dependency-a"), b"reviewed bytes")?;
+    assert_eq!(f.verify()?["valid"], true);
+    // The same bytes at a different path are not the declared dependency.
+    fs::write(f.root.join("substitute"), b"reviewed bytes")?;
+    save(
+        &f.root.join("dependencies.json"),
+        &vec!["dependency-b", "substitute"],
+    )?;
+    assert!(!f.verification_command().output()?.status.success());
+    save(&f.root.join("dependencies.json"), &Vec::<String>::new())?;
+    assert!(!f.verification_command().output()?.status.success());
+    f.dependency_projection = None;
+    assert!(!f.verification_command().output()?.status.success());
+    f.dependency_projection = Some("dependencies.json");
+    save(
+        &f.root.join("dependencies.json"),
+        &vec!["dependency-a", "dependency-b"],
+    )?;
+    fs::remove_file(f.root.join("dependency-a"))?;
+    assert!(!f.verification_command().output()?.status.success());
+    Ok(())
+}
+
+// r[verify cairn.check_evidence_producer.dependency_observation]
+#[test]
+fn dependency_preflight_rejects_missing_stale_omitted_and_substituted_scope(
+) -> Result<(), Box<dyn Error>> {
+    let mut f = Fixture::new(
+        "dependencies-preflight",
+        "#[test] fn passes() { assert!(true); }",
+        true,
+        30000,
+    )?;
+    fs::write(f.root.join("dependency"), b"reviewed")?;
+    fs::write(f.root.join("substitute"), b"reviewed")?;
+    f.bind_dependencies(&["dependency"])?;
+    f.dependency_projection = None;
+    assert!(!f.command().arg("--execute").output()?.status.success());
+    f.dependency_projection = Some("dependencies.json");
+    save(&f.root.join("dependencies.json"), &Vec::<String>::new())?;
+    assert!(!f.command().arg("--execute").output()?.status.success());
+    save(&f.root.join("dependencies.json"), &vec!["substitute"])?;
+    assert!(!f.command().arg("--execute").output()?.status.success());
+    save(&f.root.join("dependencies.json"), &vec!["dependency"])?;
+    fs::write(f.root.join("dependency"), b"stale")?;
+    assert!(!f.command().arg("--execute").output()?.status.success());
+    fs::remove_file(f.root.join("dependency"))?;
+    assert!(!f.command().arg("--execute").output()?.status.success());
+    assert!(!f.root.join("build").exists());
+    assert!(!f.out.join("attempt.json").exists());
+    // A supplied nonempty projection cannot be ignored by an empty declaration either.
+    fs::write(f.root.join("dependency"), b"reviewed")?;
+    let contract: AgentVerificationContract =
+        serde_json::from_slice(&fs::read(f.root.join("contract.json"))?)?;
+    let profiles: Vec<CheckProfile> =
+        serde_json::from_slice(&fs::read(f.root.join("profiles.json"))?)?;
+    let mut applicability = f.plan.applicability().clone();
+    applicability.dependency_hashes.clear();
+    f.plan = admit_plan(&contract, &profiles, &applicability)?;
+    save(&f.root.join("applicability.json"), &applicability)?;
+    assert!(!f.command().arg("--execute").output()?.status.success());
+    assert!(!f.out.join("attempt.json").exists());
+    Ok(())
+}
+
+// r[verify cairn.check_evidence_producer.dependency_observation]
+#[test]
+fn dependency_drift_after_child_preserves_facts_but_never_completion() -> Result<(), Box<dyn Error>>
+{
+    for (name, body, unavailable) in [
+        (
+            "dependencies-changed",
+            "#[test] fn changes() { std::fs::write(\"dependency\", b\"changed\").unwrap(); }",
+            false,
+        ),
+        (
+            "dependencies-removed",
+            "#[test] fn removes() { std::fs::remove_file(\"dependency\").unwrap(); }",
+            true,
+        ),
+    ] {
+        let mut f = Fixture::new(name, body, true, 30000)?;
+        fs::write(f.root.join("dependency"), b"reviewed")?;
+        f.bind_dependencies(&["dependency"])?;
+        let receipt = f.run()?;
+        assert_eq!(receipt["complete"], false);
+        assert_eq!(receipt["results"], serde_json::json!([]));
+        assert_eq!(f.completion()?["valid"], false);
+        assert!(!f.out.join("manifest.json").exists());
+        assert!(f.out.join("incomplete.json").exists());
+        let facts: Value = serde_json::from_slice(&fs::read(f.out.join("tests.facts.json"))?)?;
+        assert_eq!(facts["payload_passed"], true);
+        assert_eq!(facts["executed_tests"], 1);
+        let observations: Value =
+            serde_json::from_slice(&fs::read(f.out.join("observations.json"))?)?;
+        assert_eq!(observations[0]["outcome"], "exited_zero");
+        assert_ne!(
+            observations[0]["applicability"]["dependency_hashes"],
+            serde_json::json!(f.plan.applicability().dependency_hashes)
+        );
+        if unavailable {
+            assert_eq!(
+                observations[0]["applicability"]["dependency_hashes"],
+                serde_json::json!([])
+            );
+        } else {
+            let expected = canonical_json_hash(
+                &serde_json::json!({"schema":"cairn.check-dependency.v1", "path":"dependency",
+                "content_hash":blake3::hash(b"changed").to_hex().to_string()}),
+            );
+            assert_eq!(
+                observations[0]["applicability"]["dependency_hashes"],
+                serde_json::json!([expected])
+            );
+        }
+    }
+    Ok(())
+}
+
+// r[verify cairn.check_evidence_producer.dependency_observation]
+#[test]
+fn dependency_projection_rejects_invalid_and_no_follow_members_and_bounds(
+) -> Result<(), Box<dyn Error>> {
+    use std::os::{
+        fd::AsRawFd,
+        unix::{fs::symlink, net::UnixListener},
+    };
+    let f = Fixture::new(
+        "dependencies-invalid",
+        "#[test] fn passes() { assert!(true); }",
+        true,
+        30000,
+    )?;
+    fs::create_dir(f.root.join("nested"))?;
+    fs::write(f.root.join("nested/dependency"), b"bytes")?;
+    symlink("nested", f.root.join("linked"))?;
+    symlink("nested/dependency", f.root.join("leaf"))?;
+    // Bind through a held directory descriptor, independent of checkout path length.
+    let socket_directory = fs::File::open(&f.root)?;
+    let _socket = UnixListener::bind(format!(
+        "/proc/self/fd/{}/socket",
+        socket_directory.as_raw_fd()
+    ))?;
+    let observe = || {
+        Command::new(env!("CARGO_BIN_EXE_cairn"))
+            .current_dir(repo())
+            .args(["check-evidence", "dependencies", "--root"])
+            .arg(&f.root)
+            .args(["--projection", "dependencies.json"])
+            .output()
+    };
+    for paths in [
+        vec!["linked/dependency"],
+        vec!["leaf"],
+        vec!["nested"],
+        vec!["socket"],
+        vec!["absent"],
+        vec!["../dependency"],
+        vec!["/etc/passwd"],
+        vec![""],
+        vec!["./nested/dependency"],
+        vec!["nested//dependency"],
+        vec!["nested/../nested/dependency"],
+        vec!["nested/dependency", "nested/dependency"],
+        vec!["socket", "nested/dependency"],
+        vec!["nul\0member"],
+    ] {
+        save(&f.root.join("dependencies.json"), &paths)?;
+        let output = observe()?;
+        assert!(!output.status.success(), "admitted {paths:?}");
+        assert!(!String::from_utf8_lossy(&output.stderr).contains("/etc/passwd"));
+    }
+    let paths: Vec<_> = (0..64).map(|index| format!("dep-{index:02}")).collect();
+    for path in &paths {
+        fs::write(f.root.join(path), b"bounded")?;
+    }
+    save(&f.root.join("dependencies.json"), &paths)?;
+    let accepted: Value = serde_json::from_slice(&observe()?.stdout)?;
+    let mut expected: Vec<_> = paths.iter().map(|path| canonical_json_hash(&serde_json::json!({
+        "schema":"cairn.check-dependency.v1", "path":path, "content_hash":blake3::hash(b"bounded").to_hex().to_string()
+    }))).collect();
+    expected.sort();
+    assert_eq!(accepted["dependency_hashes"], serde_json::json!(expected));
+    let mut too_many = paths;
+    too_many.push("dep-64".into());
+    save(&f.root.join("dependencies.json"), &too_many)?;
+    assert!(!observe()?.status.success());
+    let oversized = fs::File::create(f.root.join("oversized"))?;
+    oversized.set_len(16 * 1024 * 1024 + 1)?;
+    save(&f.root.join("dependencies.json"), &vec!["oversized"])?;
+    assert!(!observe()?.status.success());
+    let aggregate: Vec<_> = (0..5).map(|index| format!("large-{index}")).collect();
+    for path in &aggregate {
+        fs::File::create(f.root.join(path))?.set_len(16 * 1024 * 1024)?;
+    }
+    save(&f.root.join("dependencies.json"), &aggregate)?;
+    assert!(!observe()?.status.success());
+    save(&f.root.join("dependencies.json"), &Vec::<String>::new())?;
+    let empty: Value = serde_json::from_slice(&observe()?.stdout)?;
+    assert_eq!(empty["dependency_hashes"], serde_json::json!([]));
+    fs::rename(
+        f.root.join("dependencies.json"),
+        f.root.join("real-projection.json"),
+    )?;
+    symlink("real-projection.json", f.root.join("dependencies.json"))?;
+    assert!(!observe()?.status.success());
+    assert!(!f.out.join("attempt.json").exists());
     Ok(())
 }

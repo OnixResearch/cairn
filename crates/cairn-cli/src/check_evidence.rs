@@ -1,5 +1,7 @@
 //! Producer composition root. Execution requires a reviewed plan and explicit authority.
 #[cfg(target_os = "linux")]
+mod dependencies;
+#[cfg(target_os = "linux")]
 mod developer_loop;
 #[cfg(target_os = "linux")]
 mod local;
@@ -32,6 +34,8 @@ pub(crate) fn run_check_evidence(args: Vec<String>) -> Result<(), Box<dyn Error>
         Some("run") => run::run(&args[1..]),
         #[cfg(target_os = "linux")]
         Some("source") => run::source(&args[1..]),
+        #[cfg(target_os = "linux")]
+        Some("dependencies") => dependencies::run(&args[1..]),
         #[cfg(target_os = "linux")]
         Some("developer-loop") => developer_loop::run(&args[1..]),
         #[cfg(target_os = "linux")]
