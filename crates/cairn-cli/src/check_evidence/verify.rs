@@ -1,5 +1,5 @@
 //! Read-only bundle consumer. Interrupted output never authorizes recovery mutation.
-use super::{local, named_options, read_input, reads};
+use super::{dependencies, local, named_options, read_input, reads};
 use crate::support::{print_json, CapabilityRoot, CapabilityRootKind};
 use cairn_core::verified::check_evidence::*;
 use cairn_core::{canonical_json_hash, AgentVerificationContract};
@@ -17,6 +17,7 @@ pub(super) fn verify(args: &[String]) -> Result<(), Box<dyn Error>> {
             "--profiles",
             "--applicability",
             "--projection",
+            "--dependencies",
             "--policy",
             "--plan-hash",
             "--attempt",
@@ -33,6 +34,11 @@ pub(super) fn verify(args: &[String]) -> Result<(), Box<dyn Error>> {
     let profiles: Vec<CheckProfile> = read_input(&root, required("--profiles")?)?;
     let applicability: Applicability = read_input(&root, required("--applicability")?)?;
     let projection: Vec<String> = read_input(&root, required("--projection")?)?;
+    let dependency_paths = dependencies::load(
+        &root,
+        options.get("--dependencies").copied(),
+        &applicability.dependency_hashes,
+    )?;
     let policy = super::policy::load(Path::new(
         options
             .get("--policy")
@@ -42,7 +48,6 @@ pub(super) fn verify(args: &[String]) -> Result<(), Box<dyn Error>> {
     if applicability.policy_hash != canonical_json_hash(&policy.raw)
         || applicability.source_projection_hash != canonical_json_hash(&json!(projection))
         || applicability.subject_hash != local::source_hash(&root, &projection)?
-        || !applicability.dependency_hashes.is_empty()
     {
         return Err("manifest applicability is stale or unsupported".into());
     }
@@ -83,6 +88,10 @@ pub(super) fn verify(args: &[String]) -> Result<(), Box<dyn Error>> {
             artifacts.insert(leaf, bytes);
         }
         admit_manifest(&plan, required("--attempt")?, &manifest, &artifacts)?;
+        if applicability.subject_hash != local::source_hash(&root, &projection)? {
+            return Err("manifest source applicability changed".into());
+        }
+        dependencies::recheck(&root, &dependency_paths, &applicability.dependency_hashes)?;
         Ok(())
     })()
     .is_ok();

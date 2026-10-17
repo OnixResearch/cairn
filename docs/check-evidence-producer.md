@@ -33,6 +33,19 @@ Policy read and validation errors omit paths, contents, and parser diagnostics.
 The selected file set does not prove source-closure completeness.
 Consumers retain projection review, including build inputs and exclusions for evidence and build output.
 
+For nonempty dependency identities, author a sorted, unique JSON array of reviewed repository-relative files in `dependencies.json` and observe it before completing applicability:
+
+```console
+cairn check-evidence dependencies --root REPOSITORY --projection dependencies.json
+```
+
+The receipt supplies `dependency_hashes` and `dependency_projection_hash` without executing checks.
+Each identity binds the exact relative path and BLAKE3 byte identity under `cairn.check-dependency.v1`.
+Admission allows at most 64 no-follow regular files, 16 MiB per file and 64 MiB total; aliases, duplicates, links and special files fail closed.
+The consumer owns dependency-closure review: these file observations do not prove package resolution or remote-source identity.
+Pass `--dependencies dependencies.json` to execution and verification whenever it supplies the declared identity set.
+Omitting that option is valid only for an empty declared set; a supplied projection must still match exactly.
+
 6. Run the read-only plan command:
 
 ```console
@@ -53,6 +66,7 @@ Each input file has a 1 MiB bound.
 cairn check-evidence run --execute --root REPOSITORY \
   --contract contract.json --profiles profiles.json \
   --applicability applicability.json --projection projection.json \
+  --dependencies dependencies.json \
   --plan-hash REVIEWED_HASH --attempt ATTEMPT_BLAKE3 \
   --cancel-file cancel --out OUTPUT_DIRECTORY
 ```
@@ -65,11 +79,11 @@ A failed or uncertain attempt has no automatic retry.
 
 The fixed grammars are `cargo_test` and `nix_check`. Neither accepts shell text or arbitrary trailing arguments.
 Cargo selects workspace tests, all targets, an explicit target and feature set, locked offline dependencies, and no default features.
-Nix evaluates a fixture-owned expression file offline for an explicit working root, so the same profile runs in a shell and inside a sandboxed check.
-A Nix check is a build obligation, not test coverage.
-The local Nix adapter records process success but has no admitted native build-payload decoder.
-It therefore emits no passing completion row, even after exit zero.
-Its process success also does not establish nonempty executed-test coverage.
+Nix runs `nix build --offline --no-link --json --file ./check.nix` for the explicit working root.
+The consumer-owned expression and its inputs belong in the reviewed source projection.
+The native Nix 2.31 derivation/output JSON is admitted independently of process success and retained in the facts artifact.
+Empty, malformed, truncated, duplicate, unsupported or incomplete build payloads cannot produce passing completion rows, even after exit zero.
+A Nix check remains build-only evidence with zero executed-test claims; store reuse is allowed and does not prove fresh builder execution or oracle truth.
 
 Profiles bind a Nix-store executable, byte identity, declared cohort identity, explicit environment, working root, and named bounds.
 The environment is cleared before explicit entries are applied. Profiles must not contain secrets.
@@ -77,8 +91,8 @@ The cohort label is a binding, not independent attestation of a complete tool cl
 Execution rechecks executable bytes before each child and after each result.
 The child working directory refers to the held repository directory through a Linux file descriptor.
 
-The source projection is observed before execution, between attempts, and before final publication.
-Nonempty dependency identity sets remain blocked because a dependency-observation contract is absent.
+Source and dependency projections are observed before execution, between checks, after each child and before final publication.
+Missing, changed or substituted dependencies withhold completion, and verification re-observes the declared dependency files.
 The mechanism does not prevent a hostile same-authority process from changing files between observations.
 
 Cargo coverage admission pairs stable libtest `running N tests` announcements with complete result summaries.
@@ -114,6 +128,7 @@ Only an admitted complete manifest closes the publication attempt.
 cairn check-evidence verify --root REPOSITORY --out OUTPUT_DIRECTORY \
   --contract contract.json --profiles profiles.json \
   --applicability applicability.json --projection projection.json \
+  --dependencies dependencies.json \
   --plan-hash REVIEWED_HASH --attempt ATTEMPT_BLAKE3
 ```
 

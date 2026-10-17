@@ -146,12 +146,21 @@ pub fn admit_manifest(
 }
 
 fn local_payload_matches(profile: &CheckProfile, observation: &Value, facts: &Value) -> bool {
-    // Only Cargo has an admitted local payload grammar. Nix remains process-only.
-    profile.kind == CheckKind::CargoTest
-        && observation["role"] == "test"
-        && observation["executed_tests"]
-            .as_u64()
-            .is_some_and(|count| count > 0)
+    let role_matches = match profile.kind {
+        CheckKind::CargoTest => {
+            observation["role"] == "test"
+                && observation["executed_tests"]
+                    .as_u64()
+                    .is_some_and(|count| count > 0)
+        }
+        // r[impl cairn.check_evidence_producer.native_nix_build]
+        CheckKind::NixCheck => {
+            observation["role"] == "build"
+                && observation["executed_tests"].as_u64() == Some(0)
+                && nix_build_payload_passed(&facts["facts"]["nix_build"])
+        }
+    };
+    role_matches
         && facts["executed_tests"] == observation["executed_tests"]
         && facts["payload_passed"] == true
         && facts["facts"]["outcome"] == "exited_zero"

@@ -86,19 +86,24 @@ mod tests {
     use cap_std::ambient_authority;
     use std::{
         fs,
-        os::unix::{fs::symlink, net::UnixListener},
+        os::{
+            fd::AsRawFd,
+            unix::{fs::symlink, net::UnixListener},
+        },
     };
 
     #[test]
     fn held_inode_reads_reject_links_special_files_and_bounds() -> io::Result<()> {
-        let path =
-            std::env::temp_dir().join(format!("cairn-producer-nofollow-{}", std::process::id()));
+        let workspace = tempfile::tempdir()?;
+        let path = workspace.path();
         fs::create_dir_all(path.join("nested"))?;
         fs::write(path.join("nested/source"), b"source")?;
         symlink("nested", path.join("parent-link"))?;
         symlink("nested/source", path.join("leaf-link"))?;
-        let _socket = UnixListener::bind(path.join("socket"))?;
-        let root = Dir::open_ambient_dir(&path, ambient_authority())?;
+        let directory = fs::File::open(path)?;
+        let _socket =
+            UnixListener::bind(format!("/proc/self/fd/{}/socket", directory.as_raw_fd()))?;
+        let root = Dir::open_ambient_dir(path, ambient_authority())?;
         const LIMIT: u64 = 6;
         assert_eq!(read(&root, Path::new("nested/source"), LIMIT)?, b"source");
         for name in [
@@ -136,7 +141,6 @@ mod tests {
             writer.join().expect("substitution worker panicked")?;
             Ok(())
         })?;
-        fs::remove_dir_all(path)?;
         Ok(())
     }
 }

@@ -94,7 +94,7 @@ fn classify_payload(profile: &CheckProfile, o: &AttemptObservation) -> &'static 
     let role_matches = match profile.kind {
         CheckKind::CargoTest => o.role == EvidenceRole::Test && o.executed_tests > 0,
         // A Nix check is a build obligation, not a test-coverage claim.
-        CheckKind::NixCheck => o.role == EvidenceRole::Build,
+        CheckKind::NixCheck => o.role == EvidenceRole::Build && o.executed_tests == 0,
     };
     if role_matches {
         "passed"

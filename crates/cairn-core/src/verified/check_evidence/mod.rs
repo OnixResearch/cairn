@@ -23,12 +23,14 @@ mod kiln;
 pub use kiln::{admit_kiln_json, KilnAdmission, KILN_REVISION};
 mod lattice;
 mod manifest;
+mod nix_output;
 mod normalization;
 pub use lattice::{admit_lattice_json, LatticeAdmission, LATTICE_REVISION};
 pub use manifest::{
     admit_manifest, recovery_decision, RecoveryDecision, MAX_BUNDLE_ARTIFACTS,
     MAX_BUNDLE_ARTIFACT_BYTES, MAX_BUNDLE_BYTES,
 };
+pub use nix_output::nix_build_payload_passed;
 mod octet;
 mod types;
 mod valence;
