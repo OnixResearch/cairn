@@ -380,7 +380,12 @@ fn release_readiness_accepts_required_stack_provenance_fixture() -> Result<(), B
         "--stack-provenance-graph".into(),
         stack_fixture("positive/graph-summary.json"),
     ])?;
-    assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(
+        consumer_release_check(&receipt, "mcp_agent_smoke")?["passed"],
+        false,
+        "a changed policy must not reuse default-policy completion"
+    );
     assert_eq!(receipt["stack_provenance"]["passed"], true);
     assert_eq!(receipt["stack_provenance"]["disposition"], "present");
     assert_hash_field(&receipt, "stack_provenance_hash")?;
@@ -432,10 +437,11 @@ fn release_readiness_accepts_required_function_address_fixture() -> Result<(), B
         "--function-address-graph".into(),
         fixture.join("graph.json").display().to_string(),
     ])?;
+    assert_eq!(receipt["valid"], false);
     assert_eq!(
-        receipt["valid"], true,
-        "{:?}",
-        receipt["function_address"]["issues"]
+        consumer_release_check(&receipt, "mcp_agent_smoke")?["passed"],
+        false,
+        "a changed policy must not reuse default-policy completion"
     );
     assert_eq!(
         receipt["function_address"]["passed"], true,
@@ -500,10 +506,11 @@ fn release_readiness_accepts_function_address_b3_digest_spellings() -> Result<()
         fixture.join("graph.json").display().to_string(),
     ])?;
 
+    assert_eq!(receipt["valid"], false);
     assert_eq!(
-        receipt["valid"], true,
-        "{:?}",
-        receipt["function_address"]["issues"]
+        consumer_release_check(&receipt, "mcp_agent_smoke")?["passed"],
+        false,
+        "a changed policy must not reuse default-policy completion"
     );
     assert_eq!(
         receipt["function_address"]["passed"], true,

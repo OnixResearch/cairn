@@ -207,6 +207,12 @@ Historical receipts retain their original command text.
 
 Cairn keeps maintained gates in Rust and Nickel. It does not use checked-in Python or shell helpers for these checks.
 
+## Consumer release inputs
+
+Consumers may declare the optional typed `release_readiness_policy` record in their selected Nickel policy. Its required fields are `id`, repository-relative `mcp_completion_contract`, `mcp_completion_results`, `preserves_corpus`, and the nonempty `required_external_commands` list. Consumers own genuine inputs and their complete maintained command obligations; Cairn's self-host fixtures and command list are not downstream evidence. Missing selection preserves self-host locations. A present null, malformed record, unknown field, unsafe path or unavailable selected input fails without fallback.
+
+`cairn agent-receipt smoke-mcp --root ROOT --policy POLICY` and `cairn release-readiness --root ROOT --policy POLICY` propagate that exact selected policy into the original completion validator. Every policy change invalidates old policy-bound completion, even when no consumer selection is declared. Passing provenance or function-address components do not override failed MCP completion. Produce fresh matching execution evidence; do not rebind retained result hashes or suppress the failed check. Require the JSON verdict, not process exit zero. These read-only commands execute no required checks and establish no KVM or universal release-readiness claim.
+
 ## Requirements and traceability
 
 Cairn uses an EARS-style requirement form. Each requirement has a stable `r[...]` ID and a normative word.
