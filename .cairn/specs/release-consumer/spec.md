@@ -8,7 +8,8 @@ Defines the `release-consumer` capability.
 
 ### Requirement: Consumer-owned release readiness selection
 
-The system SHALL support a typed consumer-owned release-readiness selection of repository-relative MCP completion contract/results, Preserves corpus, and maintained external command obligations without disabling any required check. r[cairn.release_consumer.selection]
+r[cairn.release_consumer.selection]
+The system SHALL support a typed consumer-owned release-readiness selection of repository-relative MCP completion contract/results, Preserves corpus, and maintained external command obligations without disabling any required check.
 
 #### Scenario: Selected consumer evidence
 

@@ -1,0 +1,73 @@
+{
+  "source_revision": "cd5f4a59bd10e42d7b859d410dcae3554fd40667",
+  "imports": [
+    {
+      "source": "contracts.ncl",
+      "destination": "contracts.ncl",
+      "upstream_blake3": "3feb97e04051b1f4cb87c62bc17f35eacd1f11883f5a16dd90d92a9a210d9ad0",
+      "adapted_blake3": "a41361eb8a423e33ec7ce8a2e3456eef5964c85450379594f128850170486693",
+      "removed_upstream_only_annotation": "# r[impl cairn.lifecycle_directory.hidden_default]",
+      "semantics_changed": false
+    },
+    {
+      "source": "default.ncl",
+      "destination": "upstream-default.ncl",
+      "upstream_blake3": "c3b5981d71789b04ff3a7567a84a7b1df29b5703dcb3a65e664143713e77a97e",
+      "adapted_blake3": "37471bfa3b9458cb428f3c312b8ae297e56a71e15baf5e337aa04018910110ba",
+      "removed_upstream_only_annotation": "# r[impl cairn.outcome_machine_profile.selection]",
+      "semantics_changed": false
+    },
+    {
+      "source": "lifecycle-store-contracts.ncl",
+      "destination": "lifecycle-store-contracts.ncl",
+      "upstream_blake3": "cfa0842a93d34d87db473c5f3a26b2e6b8285bf4d0fffc6bc9ffc54c77f32b99",
+      "adapted_blake3": "cfa0842a93d34d87db473c5f3a26b2e6b8285bf4d0fffc6bc9ffc54c77f32b99",
+      "removed_upstream_only_annotation": null,
+      "semantics_changed": false
+    },
+    {
+      "source": "nominal-evidence-identities.ncl",
+      "destination": "nominal-evidence-identities.ncl",
+      "upstream_blake3": "6e4798683072695e0c06feb2ceac31d9aa9fa74f6821c048c875dfe5b4c92b6c",
+      "adapted_blake3": "6e4798683072695e0c06feb2ceac31d9aa9fa74f6821c048c875dfe5b4c92b6c",
+      "removed_upstream_only_annotation": null,
+      "semantics_changed": false
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/nix/store/qy74dp0bb66rmdh4pd888xz36hzvghb7-cairn-0.1.0/bin/cairn",
+        "policy",
+        "export",
+        "--source",
+        "cairn-policy/default.ncl",
+        "--output",
+        "cairn-policy/generated/cairn-policy.json"
+      ],
+      "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/policy-export-probe",
+      "exit_code": 0,
+      "stdout": "wrote cairn-policy/generated/cairn-policy.json\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/nix/store/qy74dp0bb66rmdh4pd888xz36hzvghb7-cairn-0.1.0/bin/cairn",
+        "policy",
+        "export",
+        "--source",
+        "cairn-policy/default.ncl",
+        "--output",
+        "cairn-policy/generated/cairn-policy.json",
+        "--check"
+      ],
+      "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/policy-export-probe",
+      "exit_code": 0,
+      "stdout": "policy fresh: cairn-policy/generated/cairn-policy.json\n",
+      "stderr": ""
+    }
+  ],
+  "consumer_policy_installed": false,
+  "cohort_gate_pass_claimed": false,
+  "non_claim": "Isolated four-file compatibility probe only; the real consumer overlay, import pin and projection remain unmodified."
+}

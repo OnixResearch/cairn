@@ -1,0 +1,577 @@
+{
+  "schema": "chaoscontrol.mcp53-mechanism-observations.v1",
+  "source_boundary": "Focused integrated-source verification and isolated actual negative consumers; not a full clean-source cohort or ChaosControl completion verdict.",
+  "focused_commands": {
+    "integrated-format": {
+      "schema": "chaoscontrol.local-command-observation.v1",
+      "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+      "command": [
+        "env",
+        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+        "RUSTC_WRAPPER=",
+        "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+        "CARGO_BUILD_JOBS=2",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+        "/run/current-system/sw/bin/nix",
+        "develop",
+        "--no-update-lock-file",
+        "-c",
+        "cargo",
+        "fmt",
+        "--all"
+      ],
+      "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo fmt --all",
+      "timeout_seconds": 300,
+      "operational_timeout": false,
+      "exit_code": 0,
+      "started": "2026-10-21T01:39:27.594199+00:00",
+      "finished": "2026-10-21T01:39:34.221673+00:00",
+      "elapsed_seconds": 6.6274820159887895,
+      "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+      "artifacts": [
+        {
+          "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/integrated-format/stdout.log",
+          "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "bytes": 0
+        },
+        {
+          "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/integrated-format/stderr.log",
+          "digest": "blake3:fd862fac42c923d9010022c807616eedc4f3fd9fc28eb4fa0690f8b6e5c9ca05",
+          "bytes": 128
+        }
+      ]
+    },
+    "integrated-core": {
+      "schema": "chaoscontrol.local-command-observation.v1",
+      "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+      "command": [
+        "env",
+        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+        "RUSTC_WRAPPER=",
+        "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+        "CARGO_BUILD_JOBS=2",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+        "/run/current-system/sw/bin/nix",
+        "develop",
+        "--no-update-lock-file",
+        "-c",
+        "cargo",
+        "test",
+        "-p",
+        "cairn-core",
+        "check_evidence"
+      ],
+      "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test -p cairn-core check_evidence",
+      "timeout_seconds": 1800,
+      "operational_timeout": false,
+      "exit_code": 0,
+      "started": "2026-10-21T01:39:34.533325+00:00",
+      "finished": "2026-10-21T01:40:27.560964+00:00",
+      "elapsed_seconds": 53.02764478797326,
+      "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+      "artifacts": [
+        {
+          "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/integrated-core/stdout.log",
+          "digest": "blake3:5c279de6cc13379e9c0371f60dc57b661b7d197c7739cf70e659c4ecc08ed148",
+          "bytes": 5592
+        },
+        {
+          "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/integrated-core/stderr.log",
+          "digest": "blake3:e24495631ae278f7a5240c3df2d9cc789e41542386e43129a837b5afcc4e0f91",
+          "bytes": 3102
+        }
+      ]
+    },
+    "integrated-producer": {
+      "schema": "chaoscontrol.local-command-observation.v1",
+      "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+      "command": [
+        "env",
+        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+        "RUSTC_WRAPPER=",
+        "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+        "CARGO_BUILD_JOBS=2",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+        "/run/current-system/sw/bin/nix",
+        "develop",
+        "--no-update-lock-file",
+        "-c",
+        "cargo",
+        "test",
+        "-p",
+        "cairn-cli",
+        "--test",
+        "check_evidence_local",
+        "--test",
+        "check_evidence_nix"
+      ],
+      "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test -p cairn-cli --test check_evidence_local --test check_evidence_nix",
+      "timeout_seconds": 1800,
+      "operational_timeout": false,
+      "exit_code": 0,
+      "started": "2026-10-21T01:40:27.846249+00:00",
+      "finished": "2026-10-21T01:43:10.245693+00:00",
+      "elapsed_seconds": 162.39944900100818,
+      "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+      "artifacts": [
+        {
+          "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/integrated-producer/stdout.log",
+          "digest": "blake3:1da1cb76b96ea4eee0f7b7a34875073ee843e7fced92399420930953c2227642",
+          "bytes": 1342
+        },
+        {
+          "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/integrated-producer/stderr.log",
+          "digest": "blake3:eebe587b277db1887f09e0ededdc21b5ebe9a0026afdd0ab755f31d50c08d828",
+          "bytes": 10589
+        }
+      ]
+    },
+    "integrated-selection": {
+      "schema": "chaoscontrol.local-command-observation.v1",
+      "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+      "command": [
+        "env",
+        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+        "RUSTC_WRAPPER=",
+        "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+        "CARGO_BUILD_JOBS=2",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+        "/run/current-system/sw/bin/nix",
+        "develop",
+        "--no-update-lock-file",
+        "-c",
+        "cargo",
+        "test",
+        "-p",
+        "cairn-cli",
+        "--test",
+        "release_receipts",
+        "consumer_release"
+      ],
+      "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test -p cairn-cli --test release_receipts consumer_release",
+      "timeout_seconds": 1800,
+      "operational_timeout": false,
+      "exit_code": 0,
+      "started": "2026-10-21T01:43:10.608307+00:00",
+      "finished": "2026-10-21T01:43:13.628185+00:00",
+      "elapsed_seconds": 3.0198701840126887,
+      "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+      "artifacts": [
+        {
+          "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/integrated-selection/stdout.log",
+          "digest": "blake3:572ff63f8685d3985ece79b73981f75f55c607e3f126efed4f211c2611c8ad81",
+          "bytes": 326
+        },
+        {
+          "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/integrated-selection/stderr.log",
+          "digest": "blake3:d5704615fee182a24330c28837ef0adc30a16eb8e1ca06c53a5a604eafbef6df",
+          "bytes": 395
+        }
+      ]
+    }
+  },
+  "actual_failed_command": {
+    "command": [
+      "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target/debug/cairn",
+      "check-evidence",
+      "run",
+      "--execute",
+      "--root",
+      "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative",
+      "--policy",
+      "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/policy.json",
+      "--contract",
+      "target/contract.json",
+      "--profiles",
+      "target/profiles.json",
+      "--applicability",
+      "target/applicability.json",
+      "--projection",
+      "target/source.json",
+      "--dependencies",
+      "target/dependencies.json",
+      "--plan-hash",
+      "d9fedab20efa0e251841f02fe7b19d101b61a4419021208281151e8b815c9b80",
+      "--attempt",
+      "3d72e29ec2f1fe2507147fcc02313711b61d6fda4232ed50ec40138c4cc2cedf",
+      "--cancel-file",
+      "target/cancel",
+      "--out",
+      "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/out"
+    ],
+    "exit_code": 0,
+    "report": {
+      "artifacts": {
+        "attempt.json": "4cc417a27cd120678d7fa518983be25a45d1a7227880573890262e67b8b049a2",
+        "format-negative.facts.json": "cb8f659739af54c06e1b11511d46b96f3a073516f8c83d0e602e65c9cd948d2d",
+        "observations.json": "d17d5bae850719cfa9ce83f71e750e34138a2ae4a442007a424b565aff302c92",
+        "results.json": "3ba24a5394349fd9e98f055cf20bb4d804b8ad25a9d401640d4c5937f224e16b"
+      },
+      "attempt_hash": "3d72e29ec2f1fe2507147fcc02313711b61d6fda4232ed50ec40138c4cc2cedf",
+      "blockers": [],
+      "complete": false,
+      "non_claims": [
+        "a plan does not prove execution or grant authority",
+        "supplied observations do not prove check-oracle soundness",
+        "process observations do not prove sandboxing or source correctness",
+        "producer normalization does not prove release eligibility"
+      ],
+      "plan_hash": "d9fedab20efa0e251841f02fe7b19d101b61a4419021208281151e8b815c9b80",
+      "results": [
+        {
+          "artifacts": [],
+          "check_id": "format-negative",
+          "command": [
+            "/nix/store/m3xm05j6i5p9h9qngrvswydjad22rnml-cargo-exact-revisions-1.98.0/bin/cargo",
+            "fmt",
+            "--all",
+            "--",
+            "--check"
+          ],
+          "command_hash": "34ad78907e199f9d42aedcd38e9a07d827baafa929326c16bfa5c3cdb9a84426",
+          "diagnostic": null,
+          "evidence_hash": "cb8f659739af54c06e1b11511d46b96f3a073516f8c83d0e602e65c9cd948d2d",
+          "execution_receipt_hash": "b2c06b305dd8cd440e6d01ebcbc890e1504561ad7c8e02584e308900ed0b8ae0",
+          "policy_hash": "fecb09c9c78cfbf38b4ed5bceb87faf3c1f6a6bd293b0b93adf4273c03ed0f84",
+          "registry_hash": "a784ebea856031baefe7e0f089e66a28f2f13e9528bbb81fce0d02b9118f62ea",
+          "selection_hash": "476c5a5e5299b8ea29693df9aa32ef9d29cdcb7fe939218d6a8f2c0267bd196e",
+          "status": "failed",
+          "subject_hash": "9962caad0560cf583ef989443cd46d422013b16900d74cfa5c87bcc719c637c7"
+        }
+      ],
+      "schema": "cairn.check-evidence-run.v1",
+      "source_scope": "explicit_file_projection",
+      "valid": false
+    },
+    "stderr": ""
+  },
+  "failed_command_consumers": {
+    "completion": {
+      "command": [
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target/debug/cairn",
+        "agent-receipt",
+        "complete",
+        "--policy",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/policy.json",
+        "--contract",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/contract.json",
+        "--results",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/out/results.json",
+        "--subject-hash",
+        "9962caad0560cf583ef989443cd46d422013b16900d74cfa5c87bcc719c637c7"
+      ],
+      "exit_code": 0,
+      "report": {
+        "checks_executed": false,
+        "classification": "authoritative",
+        "command": "agent-receipt complete",
+        "completion": {
+          "classification": "authoritative",
+          "diagnostics": [
+            {
+              "actual": "failed",
+              "artifacts": [],
+              "check_id": "format-negative",
+              "code": "verification_result.non_passing",
+              "diagnostic_id": "ba5778820790b7d62260ca8fac60c98deaeeee61a40c6985309a21530c467f6c",
+              "evidence_hash": "cb8f659739af54c06e1b11511d46b96f3a073516f8c83d0e602e65c9cd948d2d",
+              "execution_receipt_hash": "b2c06b305dd8cd440e6d01ebcbc890e1504561ad7c8e02584e308900ed0b8ae0",
+              "expected": "passed",
+              "non_claims": [
+                "completion validation does not prove check-oracle soundness",
+                "completion validation does not prove honest command execution beyond supplied evidence",
+                "completion validation does not prove model correctness",
+                "completion validation does not prove whole-product correctness",
+                "completion validation does not prove release eligibility outside the selected contract"
+              ],
+              "registry_hash": "a784ebea856031baefe7e0f089e66a28f2f13e9528bbb81fce0d02b9118f62ea",
+              "remediation_label": "refresh-and-rerun-required-check",
+              "reproduction_argv": [
+                "/nix/store/m3xm05j6i5p9h9qngrvswydjad22rnml-cargo-exact-revisions-1.98.0/bin/cargo",
+                "fmt",
+                "--all",
+                "--",
+                "--check"
+              ],
+              "result_status": "failed",
+              "selection_hash": "476c5a5e5299b8ea29693df9aa32ef9d29cdcb7fe939218d6a8f2c0267bd196e",
+              "severity": "error",
+              "source": null,
+              "subject_hash": "9962caad0560cf583ef989443cd46d422013b16900d74cfa5c87bcc719c637c7",
+              "summary": "required check status is not completion eligible",
+              "working_root": "<repository-root>"
+            }
+          ],
+          "final_subject_hash": "9962caad0560cf583ef989443cd46d422013b16900d74cfa5c87bcc719c637c7",
+          "input_hash": "cce680d92f91f85d89b0557dc7f2b88a43e43d68db0fdb722a455b8190953665",
+          "non_claims": [
+            "completion validation does not prove check-oracle soundness",
+            "completion validation does not prove honest command execution beyond supplied evidence",
+            "completion validation does not prove model correctness",
+            "completion validation does not prove whole-product correctness",
+            "completion validation does not prove release eligibility outside the selected contract"
+          ],
+          "non_passing_checks": [
+            {
+              "check_id": "format-negative",
+              "status": "failed"
+            }
+          ],
+          "passed_checks": [],
+          "policy_hash": "fecb09c9c78cfbf38b4ed5bceb87faf3c1f6a6bd293b0b93adf4273c03ed0f84",
+          "receipt_hash": "f3a04f002ea4e1a8d872ec949755b23efa7f87bf5e05a4c0de34f40e51967cfc",
+          "registry_hash": "a784ebea856031baefe7e0f089e66a28f2f13e9528bbb81fce0d02b9118f62ea",
+          "registry_id": "format-failure-only-control",
+          "repository_id": "mcp53-negative-control",
+          "required_checks": [
+            "format-negative"
+          ],
+          "schema": "cairn.agent-completion.v2",
+          "selection_hash": "476c5a5e5299b8ea29693df9aa32ef9d29cdcb7fe939218d6a8f2c0267bd196e",
+          "valid": false,
+          "verdict": "FAIL"
+        },
+        "completion_receipt_hash": "f3a04f002ea4e1a8d872ec949755b23efa7f87bf5e05a4c0de34f40e51967cfc",
+        "contract_path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/contract.json",
+        "current_policy_hash": "fecb09c9c78cfbf38b4ed5bceb87faf3c1f6a6bd293b0b93adf4273c03ed0f84",
+        "current_subject_hash": "9962caad0560cf583ef989443cd46d422013b16900d74cfa5c87bcc719c637c7",
+        "input_kind": "path",
+        "max_content_bytes": 65536,
+        "receipt_hash": "4a7bc268263095175bdedc713363ea9371ddd288cc062d77d7a0af8f819093c5",
+        "results_path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/out/results.json",
+        "valid": false,
+        "verdict": "FAIL"
+      },
+      "stderr": ""
+    },
+    "mcp": {
+      "command": [
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target/debug/cairn",
+        "agent-receipt",
+        "smoke-mcp",
+        "--root",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative",
+        "--policy",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/policy.json"
+      ],
+      "exit_code": 0,
+      "report": {
+        "agent_receipt_hash": "f3a04f002ea4e1a8d872ec949755b23efa7f87bf5e05a4c0de34f40e51967cfc",
+        "agent_receipt_validation_hash": "8da064088c64d4efea15422a3416e8c50b5849dd967bcb08e27630712eaa5cfa",
+        "catalog_tool_count": 21,
+        "checks": [
+          {
+            "name": "catalog_lists_receipt_tool",
+            "passed": true
+          },
+          {
+            "name": "receipt_tool_schema_is_strict",
+            "passed": true
+          },
+          {
+            "name": "receipt_validation_is_structured",
+            "passed": false
+          },
+          {
+            "name": "invalid_arguments_rejected_before_dispatch",
+            "passed": true
+          },
+          {
+            "name": "default_mutation_denied_without_mutation",
+            "passed": true
+          }
+        ],
+        "command": "agent-receipt smoke-mcp",
+        "contract_path": "target/contract.json",
+        "fixture": "mcp53-format-negative-v1",
+        "invalid_argument_error": "invalid arguments for cairn_gate: argument stage must be one of proposal, design, tasks",
+        "mcp": {
+          "destructive": false,
+          "read_only": true
+        },
+        "mutation_denial": {
+          "allowed": false,
+          "error": "mutation capability required",
+          "mutated": false
+        },
+        "policy_hash": "fecb09c9c78cfbf38b4ed5bceb87faf3c1f6a6bd293b0b93adf4273c03ed0f84",
+        "receipt_hash": "5adb9134e16e9b8a065738aa2763f353cc5bfd7f1ade1cd83ad73ef840d70de5",
+        "receipt_tool_schema_hash": "a61aa21b95800020ed72de5c6e7671affcc1eac8a4646497d13cfb0b75a3e635",
+        "results_path": "target/out/results.json",
+        "root": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative",
+        "valid": false,
+        "verdict": "fail"
+      },
+      "stderr": ""
+    }
+  },
+  "invalid_present_selection_controls": [
+    {
+      "case": "null",
+      "command": [
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target/debug/cairn",
+        "agent-receipt",
+        "smoke-mcp",
+        "--root",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative",
+        "--policy",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/invalid-selection-null.json"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "error: invalid type: null, expected struct ReleaseReadinessSelection\n"
+    },
+    {
+      "case": "unknown-field",
+      "command": [
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target/debug/cairn",
+        "agent-receipt",
+        "smoke-mcp",
+        "--root",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative",
+        "--policy",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/invalid-selection-unknown-field.json"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "error: unknown field `unexpected`, expected one of `id`, `mcp_completion_contract`, `mcp_completion_results`, `preserves_corpus`, `required_external_commands`\n"
+    },
+    {
+      "case": "unsafe-path",
+      "command": [
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target/debug/cairn",
+        "agent-receipt",
+        "smoke-mcp",
+        "--root",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative",
+        "--policy",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/invalid-selection-unsafe-path.json"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "error: release_readiness_policy paths must be component-safe repository-relative paths\n"
+    }
+  ],
+  "consumer_corpus_controls": [
+    {
+      "phase": "fresh",
+      "command": [
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target/debug/cairn",
+        "preserves-corpus",
+        "update",
+        "--path",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/corpus-control.json"
+      ],
+      "exit_code": 0,
+      "report": {
+        "case_count": 4,
+        "cases": [
+          {
+            "computed_hash": "1272c72c1b2c76e5ce1fc255b40d455a953031d382c73139e1d7d9ea55e431f8",
+            "expected_hash": "1272c72c1b2c76e5ce1fc255b40d455a953031d382c73139e1d7d9ea55e431f8",
+            "id": "raft-parent-reference",
+            "index": 0,
+            "stale": false
+          },
+          {
+            "computed_hash": "694826271c5eeb1a0cdd4bd880baa23c23f4de3cb028e51e9d631ff717f407e6",
+            "expected_hash": "694826271c5eeb1a0cdd4bd880baa23c23f4de3cb028e51e9d631ff717f407e6",
+            "id": "raft-clock-jump-schedule",
+            "index": 1,
+            "stale": false
+          },
+          {
+            "computed_hash": "6ded9612cf97427e25cf5a6ee750f6af328303162cf339b5bb239e59cae1a06e",
+            "expected_hash": "6ded9612cf97427e25cf5a6ee750f6af328303162cf339b5bb239e59cae1a06e",
+            "id": "operational-watchdog-classification",
+            "index": 2,
+            "stale": false
+          },
+          {
+            "computed_hash": "c04f0af824dec697b151c386590139309697f0f1c296df553247fdeac4ad50cf",
+            "expected_hash": "c04f0af824dec697b151c386590139309697f0f1c296df553247fdeac4ad50cf",
+            "id": "bounded-raft-campaign-input",
+            "index": 3,
+            "stale": false
+          }
+        ],
+        "command": "preserves-corpus update",
+        "execute": false,
+        "issues": [],
+        "mutated": false,
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/corpus-control.json",
+        "receipt_hash": "7ac76b6371479f2a9f8f0efbac9fb99e58c1bb10fb2368568fd6122147d9bf93",
+        "stale_count": 0,
+        "valid": true
+      },
+      "input_blake3": "d2fb86beb0091b1bbfbf701c4ffbe5149987ac2537d3b6eda3258935e2ae5672"
+    },
+    {
+      "phase": "stale",
+      "command": [
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target/debug/cairn",
+        "preserves-corpus",
+        "update",
+        "--path",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/corpus-control.json"
+      ],
+      "exit_code": 1,
+      "report": {
+        "case_count": 4,
+        "cases": [
+          {
+            "computed_hash": "08c251d8e12db1f28f0ff1f00809456bb0df69ead44aa0c9a18c3cad30f1b3fa",
+            "expected_hash": "1272c72c1b2c76e5ce1fc255b40d455a953031d382c73139e1d7d9ea55e431f8",
+            "id": "raft-parent-reference",
+            "index": 0,
+            "stale": true
+          },
+          {
+            "computed_hash": "694826271c5eeb1a0cdd4bd880baa23c23f4de3cb028e51e9d631ff717f407e6",
+            "expected_hash": "694826271c5eeb1a0cdd4bd880baa23c23f4de3cb028e51e9d631ff717f407e6",
+            "id": "raft-clock-jump-schedule",
+            "index": 1,
+            "stale": false
+          },
+          {
+            "computed_hash": "6ded9612cf97427e25cf5a6ee750f6af328303162cf339b5bb239e59cae1a06e",
+            "expected_hash": "6ded9612cf97427e25cf5a6ee750f6af328303162cf339b5bb239e59cae1a06e",
+            "id": "operational-watchdog-classification",
+            "index": 2,
+            "stale": false
+          },
+          {
+            "computed_hash": "c04f0af824dec697b151c386590139309697f0f1c296df553247fdeac4ad50cf",
+            "expected_hash": "c04f0af824dec697b151c386590139309697f0f1c296df553247fdeac4ad50cf",
+            "id": "bounded-raft-campaign-input",
+            "index": 3,
+            "stale": false
+          }
+        ],
+        "command": "preserves-corpus update",
+        "execute": false,
+        "issues": [],
+        "mutated": false,
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/format-negative/target/corpus-control.json",
+        "receipt_hash": "0e449f641b060f3c0af6825267c6a48ba9131e3585f7bae4b77ddb626692df86",
+        "stale_count": 1,
+        "valid": false
+      },
+      "input_blake3": "9bd338f6630244eb44582c406b6bed67e453d9efd3a915fcc31177f66b1a8809"
+    }
+  ],
+  "full_consumer_contract_exercised": false,
+  "production_ready": false
+}

@@ -186,7 +186,7 @@ nix run path:$PWD#cairn -- policy export --check
 cargo fmt --check
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
-nix develop -c cargo octet check --output-format json --artifact-dir artifacts/octet-run
+nix develop -c env RUSTFLAGS="--remap-path-prefix=$PWD/=" cargo octet check --output-format json --artifact-dir artifacts/octet-run
 nix build path:$PWD#checks.x86_64-linux.octet --no-link -L
 nix run path:$PWD#cairn -- validate --root .
 nix flake check path:$PWD -L
@@ -195,6 +195,8 @@ nix run path:$PWD#cairn -- status --root fixtures/basic
 ```
 
 `nix flake check` covers policy freshness, formatting, tests, lifecycle checks, traceability, Clippy, Octet, and self-dogfood.
+
+The direct JSON artifact command remaps the exact workspace prefix, including its trailing separator, to an empty prefix. Canonical compile-time includes otherwise expose absolute source-map filenames that Octet's repository-relative locator contract rejects. This compiler metadata mapping retains every finding and the same lint configuration and check scope; it does not filter diagnostics or change warning/error policy.
 
 The Octet input uses an immutable revision from `OnixResearch/octet`.
 `checks.<system>.octet-integration` verifies its source identity, canonical config, command, and consumer scope with positive and negative controls.

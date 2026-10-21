@@ -20,7 +20,7 @@ The validation task remains unchecked. The unchanged full workspace command reac
 
 ## Maintained consumer cohort integration
 
-- [ ] [serial] [task:consumer-grammars] Add exact closed maintained Cargo workspace-test, Clippy, formatting and Nix flake-check grammars with process-only non-test evidence and independent manifest admission. r[cairn.check_evidence_producer.maintained_consumer_commands]
+- [x] [serial] [task:consumer-grammars] Add exact closed maintained Cargo workspace-test, Clippy, formatting and Nix flake-check grammars with process-only non-test evidence and independent manifest admission. r[cairn.check_evidence_producer.maintained_consumer_commands]
 - [ ] [serial] [task:consumer-verification] [after:consumer-grammars] Verify the new command paths and negative controls together with unchanged required producer/cohort gates; retain observed blockers before sync or archive. r[cairn.check_evidence_producer.maintained_consumer_commands]
 
 Integration work does not mark the historical validation task complete. Builds, tests, lint and formatters are deferred to the integration owner; no new passing gate, sync, archive, readiness or publication claim exists.
@@ -42,7 +42,7 @@ nix run path:$PWD#cairn -- gate tasks support-local-producer-applicability --roo
 cargo fmt --all -- --check
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
-nix develop --no-update-lock-file -c cargo octet check --output-format json --artifact-dir target/producer53-octet
+nix develop --no-update-lock-file -c env RUSTFLAGS="--remap-path-prefix=$PWD/=" cargo octet check --output-format json --artifact-dir target/producer53-octet
 nix build path:$PWD#checks.x86_64-linux.octet --no-link -L
 nix flake check path:$PWD -L
 ```
@@ -51,3 +51,5 @@ The integration owner must additionally exercise all four maintained consumer pr
 
 No commands in this section ran in the producer integration worktree. The historical receipts remain byte-for-byte reused evidence for their recorded source and cohort only. Environmental timeouts remain unresolved until fresh commands finish. The two current license links are already present in baseline source; their fresh gate verdict remains unobserved. The six recorded Octet source-map inputs now use canonical compile-time filename bindings; exact original paths and observed before/after BLAKE3 byte identities are retained in `evidence/canonical-input-boundaries.json`. Five embedded data inputs are byte-identical; the shared Rust helper changes only its opening documentation-comment syntax for its preserved module scope. Only parent-owned execution can establish compilation, Octet success or completed validation. New-kind-only stream maxima reflect the integration owner's retained real-output observations; all legacy caps remain unchanged.
 
+
+The integrated direct Octet JSON command initially rejected the absolute canonical include filename. The exact workspace-prefix-to-empty Rustc metadata remap now produces a valid `warning-only` status artifact with zero error findings and successful Cargo disposition; no findings or lint scope are suppressed. The required packaged full-scope Octet check also passed. Separately, the consumer requirement declaration needed its identifier on the established standalone marker line: native coverage now has no missing or dangling IDs, and the actual portable evidence-export chain passes. The fresh complete cohort still needs its own final gate record before either validation task can close.
