@@ -1,0 +1,264 @@
+{
+  "schema": "cairn.consumer-nix-role-correction.v1",
+  "scope": "Direct MCP correction; no new corrective attempt or unrelated runtime repair",
+  "previous_verified_cohort": "4d98c4b564569a62541e2968bc0998a744e8ee20",
+  "consumer_source_revision": "9ad22fb88ee39c3284660362ec4c12d5bd2ff9ee",
+  "initial_consumer_verdict": {
+    "valid": false,
+    "complete": false,
+    "rows": [
+      {
+        "check_id": "clean-clippy",
+        "status": "failed"
+      },
+      {
+        "check_id": "clean-formatting",
+        "status": "passed"
+      },
+      {
+        "check_id": "clean-nix-flake-check",
+        "status": "failed"
+      },
+      {
+        "check_id": "clean-workspace-tests",
+        "status": "failed"
+      }
+    ]
+  },
+  "link_failure_diagnostic": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53",
+    "command": [
+      "env",
+      "-i",
+      "HOME=/home/brittonr",
+      "PATH=/home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53/scripts:/nix/store/rvp7qlpf5jqvdckjy1afjb6aha6j8dxg-pkg-config-wrapper-0.29.2/bin:/nix/store/c2p7haf4zzkbrir9zs662r68c5dmylbq-patchelf-0.15.2/bin:/nix/store/a245z3cvf9x9sn0xlk6k8j9xhxbhda1z-gcc-wrapper-15.2.0/bin:/nix/store/mjf8jlq9grydcdvyw6hb063x5c34g5gf-gcc-15.2.0/bin:/nix/store/0bdqq2z98kg2hfn3k60if6pb5fd5p10h-glibc-2.42-47-bin/bin:/nix/store/i2vmgx46q9hd3z6rigaiman3wl3i2gc4-coreutils-9.9/bin:/nix/store/i6ppbrlpp6yki8qvka7nyv091xa8dchx-binutils-wrapper-2.44/bin:/nix/store/47mn80zqpygykqailwzw8zlag4cgl75q-binutils-2.44/bin:/nix/store/m3xm05j6i5p9h9qngrvswydjad22rnml-cargo-exact-revisions-1.98.0/bin:/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/bin:/nix/store/zrx7kmcgzax4s6fldam9hf6nmwcw5nks-cargo-watch-8.5.3/bin:/nix/store/7va1z8il76ycxvyvgsbpr4bjk89lzj5a-cargo-edit-0.13.8/bin:/nix/store/ck3a4k9az87z5rjwgy8nmpcs34xp9cc5-nickel-lang-rev-fixup-1.17.0/bin:/nix/store/6n5r46icm0bl55s9p5z2zgcv93m39r5l-clang-wrapper-21.1.8/bin:/nix/store/rm8isfm4fd14is3fv3h4m459rbiy91bx-clang-21.1.8/bin:/nix/store/m0rbbdfsbkdqpr6bs621jwi21ra1br4g-binutils-wrapper-2.44/bin:/nix/store/rcy0axk6gaw5q6r3r631bnp6ap351jrg-bpftools-6.18/bin:/nix/store/nqdwms8r6kqnz9ds0qczn7af58k9ylvj-elfutils-0.194-bin/bin:/nix/store/yg2h4l9j1izbnlhxx8vcpxgc18izyad9-x86_64-unknown-linux-musl-gcc-wrapper-15.2.0/bin:/nix/store/7kkip2bbrg6cpwdq269wzvjcvw4pwlqh-x86_64-unknown-linux-musl-gcc-15.2.0/bin:/nix/store/vdisgkb1vn3wl2cn5xhgbhal794vdbhp-musl-x86_64-unknown-linux-musl-1.2.5-bin/bin:/nix/store/g1ar420lv3hh389bfp7jznchmgjz2vqf-x86_64-unknown-linux-musl-binutils-wrapper-2.44/bin:/nix/store/dajfkvsps80pmw2b8hdgvq0860a9mx2c-x86_64-unknown-linux-musl-binutils-2.44/bin:/nix/store/njphskr4mfna7gjsks3l33xna9wzrsya-cargo-octet-0.1.0/bin:/nix/store/am0d0cdbzzj8krwxswix2qddzxrfj4mz-octet-standards-0.1.0/bin:/nix/store/0drjksxdb8v81inx4r1n2nxxcmwm82nr-verified-logic-0.2.0/bin:/nix/store/b5m1h822ln0s493r30sgns77618ws59n-nixfmt-1.2.0/bin:/nix/store/idl8schy78hxa05jyndj4nmb4wzgcln2-compiler-rt-libc-21.1.8/bin:/nix/store/16wfacfgap3chf7mcjnd8dwi85dj4qqi-findutils-4.10.0/bin:/nix/store/3p87h6dn5i87i3iq9364imzbqgwvkg2p-diffutils-3.12/bin:/nix/store/ryz8kcrm2bxpccllfqlb7qldsfnqp5c2-gnused-4.9/bin:/nix/store/02vv0r262agf9j5n2y1gmbjvdf12zkl0-gnugrep-3.12/bin:/nix/store/2xq9rayckw8zq26k274xxlikn77jn60j-gawk-5.3.2/bin:/nix/store/qyg62bc2xnpwz0fa9prqxvvk00zj4g9q-gnutar-1.35/bin:/nix/store/84yyzmxs7mb8nhkvcfv9n1l9irpb6mnq-gzip-1.14/bin:/nix/store/90yw24gqmwph4xjp4mqhpx1y1gcrvqla-bzip2-1.0.8-bin/bin:/nix/store/vbah5c4rzy1q1hbqhginyxjhj8d4dj8j-gnumake-4.4.1/bin:/nix/store/f15k3dpilmiyv6zgpib289rnjykgr1r4-bash-5.3p9/bin:/nix/store/wwij6563c6wbg4kzgjhng7vlhf7api19-patch-2.8/bin:/nix/store/zys6d102zp171wpwcs08g632886w2qxs-xz-5.8.2-bin/bin:/nix/store/nyy0bvgjwd98x7ih8pl6pr79qjljgsf7-file-5.45/bin:/home/brittonr/git/OnixResearch/chaoscontrol/scripts:/nix/store/igr59k7fiwvxhdnpx5jf2d6gb9mbnvlv-nickel-1.15.1/bin:/home/brittonr/git/OnixResearch/chaoscontrol/.direnv/bin:/home/brittonr/.local/bin:/home/brittonr/.nix-profile/bin:/nix/store/7a60q5dgnv6z96c279rc1nalyiw4mgqn-bash-interactive-5.3p15/bin:/nix/store/gzh2rx2sjwra135my0jw3va49hm7z4vf-bun-1.3.13/bin:/nix/store/jnsflr3i2c90hrlly1cgwvxr9s74kgab-docker-29.8.0/bin:/nix/store/f51vybn5cd5v88pk7hnrdr6db1q0rzw7-ghzinga-0.5.0/bin:/nix/store/8yjpgadavqdwphcd2kw4dfvxmgdp5sb3-git-2.55.0/bin:/nix/store/xvd6920kffyyshg7mbw5wvfk6lg9wfkl-jq-1.8.2-bin/bin:/nix/store/hwifmhfi50y1595lhwiqsn7acppa7zdm-jujutsu-0.45.1/bin:/nix/store/ggcm0s524bsly3qc7kww945qs7003psf-openssh-10.5p1/bin:/nix/store/mcdxl3mmx2s8zy6gxy4ss5paiaz79qkc-pueue-4.0.4/bin:/nix/store/a8hj1bz1gd378sxz4fabmgrl61ad202p-socat-1.8.1.3/bin:/home/brittonr/.optmem:/run/wrappers/bin:/etc/profiles/per-user/brittonr/bin:/run/current-system/sw/bin",
+      "CC=gcc",
+      "CXX=g++",
+      "AR=ar",
+      "PKG_CONFIG_PATH=/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib/pkgconfig:/nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/lib/pkgconfig:/nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/lib/pkgconfig",
+      "LD_LIBRARY_PATH=/etc/sane-libs",
+      "NIX_CFLAGS_COMPILE= -frandom-seed=ylb8c1cng7 -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include",
+      "NIX_LDFLAGS=-rpath /home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53/outputs/out/lib  -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib",
+      "NIX_CC=/nix/store/a245z3cvf9x9sn0xlk6k8j9xhxbhda1z-gcc-wrapper-15.2.0",
+      "NIX_BINTOOLS=/nix/store/i6ppbrlpp6yki8qvka7nyv091xa8dchx-binutils-wrapper-2.44",
+      "NIX_STORE=/nix/store",
+      "SSH_AUTH_SOCK=/run/user/1555/yubikey-agent/yubikey-agent.sock",
+      "TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/consumer-tmp",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/pr46/build",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "RUSTC_WRAPPER=",
+      "/nix/store/m3xm05j6i5p9h9qngrvswydjad22rnml-cargo-exact-revisions-1.98.0/bin/cargo",
+      "clippy",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "display_command": "env -i HOME=/home/brittonr PATH=/home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53/scripts:/nix/store/rvp7qlpf5jqvdckjy1afjb6aha6j8dxg-pkg-config-wrapper-0.29.2/bin:/nix/store/c2p7haf4zzkbrir9zs662r68c5dmylbq-patchelf-0.15.2/bin:/nix/store/a245z3cvf9x9sn0xlk6k8j9xhxbhda1z-gcc-wrapper-15.2.0/bin:/nix/store/mjf8jlq9grydcdvyw6hb063x5c34g5gf-gcc-15.2.0/bin:/nix/store/0bdqq2z98kg2hfn3k60if6pb5fd5p10h-glibc-2.42-47-bin/bin:/nix/store/i2vmgx46q9hd3z6rigaiman3wl3i2gc4-coreutils-9.9/bin:/nix/store/i6ppbrlpp6yki8qvka7nyv091xa8dchx-binutils-wrapper-2.44/bin:/nix/store/47mn80zqpygykqailwzw8zlag4cgl75q-binutils-2.44/bin:/nix/store/m3xm05j6i5p9h9qngrvswydjad22rnml-cargo-exact-revisions-1.98.0/bin:/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/bin:/nix/store/zrx7kmcgzax4s6fldam9hf6nmwcw5nks-cargo-watch-8.5.3/bin:/nix/store/7va1z8il76ycxvyvgsbpr4bjk89lzj5a-cargo-edit-0.13.8/bin:/nix/store/ck3a4k9az87z5rjwgy8nmpcs34xp9cc5-nickel-lang-rev-fixup-1.17.0/bin:/nix/store/6n5r46icm0bl55s9p5z2zgcv93m39r5l-clang-wrapper-21.1.8/bin:/nix/store/rm8isfm4fd14is3fv3h4m459rbiy91bx-clang-21.1.8/bin:/nix/store/m0rbbdfsbkdqpr6bs621jwi21ra1br4g-binutils-wrapper-2.44/bin:/nix/store/rcy0axk6gaw5q6r3r631bnp6ap351jrg-bpftools-6.18/bin:/nix/store/nqdwms8r6kqnz9ds0qczn7af58k9ylvj-elfutils-0.194-bin/bin:/nix/store/yg2h4l9j1izbnlhxx8vcpxgc18izyad9-x86_64-unknown-linux-musl-gcc-wrapper-15.2.0/bin:/nix/store/7kkip2bbrg6cpwdq269wzvjcvw4pwlqh-x86_64-unknown-linux-musl-gcc-15.2.0/bin:/nix/store/vdisgkb1vn3wl2cn5xhgbhal794vdbhp-musl-x86_64-unknown-linux-musl-1.2.5-bin/bin:/nix/store/g1ar420lv3hh389bfp7jznchmgjz2vqf-x86_64-unknown-linux-musl-binutils-wrapper-2.44/bin:/nix/store/dajfkvsps80pmw2b8hdgvq0860a9mx2c-x86_64-unknown-linux-musl-binutils-2.44/bin:/nix/store/njphskr4mfna7gjsks3l33xna9wzrsya-cargo-octet-0.1.0/bin:/nix/store/am0d0cdbzzj8krwxswix2qddzxrfj4mz-octet-standards-0.1.0/bin:/nix/store/0drjksxdb8v81inx4r1n2nxxcmwm82nr-verified-logic-0.2.0/bin:/nix/store/b5m1h822ln0s493r30sgns77618ws59n-nixfmt-1.2.0/bin:/nix/store/idl8schy78hxa05jyndj4nmb4wzgcln2-compiler-rt-libc-21.1.8/bin:/nix/store/16wfacfgap3chf7mcjnd8dwi85dj4qqi-findutils-4.10.0/bin:/nix/store/3p87h6dn5i87i3iq9364imzbqgwvkg2p-diffutils-3.12/bin:/nix/store/ryz8kcrm2bxpccllfqlb7qldsfnqp5c2-gnused-4.9/bin:/nix/store/02vv0r262agf9j5n2y1gmbjvdf12zkl0-gnugrep-3.12/bin:/nix/store/2xq9rayckw8zq26k274xxlikn77jn60j-gawk-5.3.2/bin:/nix/store/qyg62bc2xnpwz0fa9prqxvvk00zj4g9q-gnutar-1.35/bin:/nix/store/84yyzmxs7mb8nhkvcfv9n1l9irpb6mnq-gzip-1.14/bin:/nix/store/90yw24gqmwph4xjp4mqhpx1y1gcrvqla-bzip2-1.0.8-bin/bin:/nix/store/vbah5c4rzy1q1hbqhginyxjhj8d4dj8j-gnumake-4.4.1/bin:/nix/store/f15k3dpilmiyv6zgpib289rnjykgr1r4-bash-5.3p9/bin:/nix/store/wwij6563c6wbg4kzgjhng7vlhf7api19-patch-2.8/bin:/nix/store/zys6d102zp171wpwcs08g632886w2qxs-xz-5.8.2-bin/bin:/nix/store/nyy0bvgjwd98x7ih8pl6pr79qjljgsf7-file-5.45/bin:/home/brittonr/git/OnixResearch/chaoscontrol/scripts:/nix/store/igr59k7fiwvxhdnpx5jf2d6gb9mbnvlv-nickel-1.15.1/bin:/home/brittonr/git/OnixResearch/chaoscontrol/.direnv/bin:/home/brittonr/.local/bin:/home/brittonr/.nix-profile/bin:/nix/store/7a60q5dgnv6z96c279rc1nalyiw4mgqn-bash-interactive-5.3p15/bin:/nix/store/gzh2rx2sjwra135my0jw3va49hm7z4vf-bun-1.3.13/bin:/nix/store/jnsflr3i2c90hrlly1cgwvxr9s74kgab-docker-29.8.0/bin:/nix/store/f51vybn5cd5v88pk7hnrdr6db1q0rzw7-ghzinga-0.5.0/bin:/nix/store/8yjpgadavqdwphcd2kw4dfvxmgdp5sb3-git-2.55.0/bin:/nix/store/xvd6920kffyyshg7mbw5wvfk6lg9wfkl-jq-1.8.2-bin/bin:/nix/store/hwifmhfi50y1595lhwiqsn7acppa7zdm-jujutsu-0.45.1/bin:/nix/store/ggcm0s524bsly3qc7kww945qs7003psf-openssh-10.5p1/bin:/nix/store/mcdxl3mmx2s8zy6gxy4ss5paiaz79qkc-pueue-4.0.4/bin:/nix/store/a8hj1bz1gd378sxz4fabmgrl61ad202p-socat-1.8.1.3/bin:/home/brittonr/.optmem:/run/wrappers/bin:/etc/profiles/per-user/brittonr/bin:/run/current-system/sw/bin CC=gcc CXX=g++ AR=ar PKG_CONFIG_PATH=/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib/pkgconfig:/nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/lib/pkgconfig:/nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/lib/pkgconfig LD_LIBRARY_PATH=/etc/sane-libs 'NIX_CFLAGS_COMPILE= -frandom-seed=ylb8c1cng7 -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include' 'NIX_LDFLAGS=-rpath /home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53/outputs/out/lib  -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib' NIX_CC=/nix/store/a245z3cvf9x9sn0xlk6k8j9xhxbhda1z-gcc-wrapper-15.2.0 NIX_BINTOOLS=/nix/store/i6ppbrlpp6yki8qvka7nyv091xa8dchx-binutils-wrapper-2.44 NIX_STORE=/nix/store SSH_AUTH_SOCK=/run/user/1555/yubikey-agent/yubikey-agent.sock TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/consumer-tmp CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/pr46/build CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 RUSTC_WRAPPER= /nix/store/m3xm05j6i5p9h9qngrvswydjad22rnml-cargo-exact-revisions-1.98.0/bin/cargo clippy --workspace --all-targets --locked -- -D warnings",
+    "timeout_seconds": 3600,
+    "operational_timeout": false,
+    "exit_code": 101,
+    "started": "2026-10-21T03:43:23.425966+00:00",
+    "finished": "2026-10-21T03:43:25.142251+00:00",
+    "elapsed_seconds": 1.716289272007998,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/consumer-clippy-raw-diagnostic/stdout.log",
+        "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+        "bytes": 0
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/consumer-clippy-raw-diagnostic/stderr.log",
+        "digest": "blake3:191706d374ab9820fed0f314b994a80b82a30cda66bb560da3e7a2022ce44ce0",
+        "bytes": 3564
+      }
+    ]
+  },
+  "measured_host_roles": {
+    "NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu": "1",
+    "NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu": "1",
+    "NIX_PKG_CONFIG_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu": "1"
+  },
+  "link_smoke": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53",
+    "command": [
+      "env",
+      "-i",
+      "HOME=/home/brittonr",
+      "PATH=/home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53/scripts:/nix/store/rvp7qlpf5jqvdckjy1afjb6aha6j8dxg-pkg-config-wrapper-0.29.2/bin:/nix/store/c2p7haf4zzkbrir9zs662r68c5dmylbq-patchelf-0.15.2/bin:/nix/store/a245z3cvf9x9sn0xlk6k8j9xhxbhda1z-gcc-wrapper-15.2.0/bin:/nix/store/mjf8jlq9grydcdvyw6hb063x5c34g5gf-gcc-15.2.0/bin:/nix/store/0bdqq2z98kg2hfn3k60if6pb5fd5p10h-glibc-2.42-47-bin/bin:/nix/store/i2vmgx46q9hd3z6rigaiman3wl3i2gc4-coreutils-9.9/bin:/nix/store/i6ppbrlpp6yki8qvka7nyv091xa8dchx-binutils-wrapper-2.44/bin:/nix/store/47mn80zqpygykqailwzw8zlag4cgl75q-binutils-2.44/bin:/nix/store/m3xm05j6i5p9h9qngrvswydjad22rnml-cargo-exact-revisions-1.98.0/bin:/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/bin:/nix/store/zrx7kmcgzax4s6fldam9hf6nmwcw5nks-cargo-watch-8.5.3/bin:/nix/store/7va1z8il76ycxvyvgsbpr4bjk89lzj5a-cargo-edit-0.13.8/bin:/nix/store/ck3a4k9az87z5rjwgy8nmpcs34xp9cc5-nickel-lang-rev-fixup-1.17.0/bin:/nix/store/6n5r46icm0bl55s9p5z2zgcv93m39r5l-clang-wrapper-21.1.8/bin:/nix/store/rm8isfm4fd14is3fv3h4m459rbiy91bx-clang-21.1.8/bin:/nix/store/m0rbbdfsbkdqpr6bs621jwi21ra1br4g-binutils-wrapper-2.44/bin:/nix/store/rcy0axk6gaw5q6r3r631bnp6ap351jrg-bpftools-6.18/bin:/nix/store/nqdwms8r6kqnz9ds0qczn7af58k9ylvj-elfutils-0.194-bin/bin:/nix/store/yg2h4l9j1izbnlhxx8vcpxgc18izyad9-x86_64-unknown-linux-musl-gcc-wrapper-15.2.0/bin:/nix/store/7kkip2bbrg6cpwdq269wzvjcvw4pwlqh-x86_64-unknown-linux-musl-gcc-15.2.0/bin:/nix/store/vdisgkb1vn3wl2cn5xhgbhal794vdbhp-musl-x86_64-unknown-linux-musl-1.2.5-bin/bin:/nix/store/g1ar420lv3hh389bfp7jznchmgjz2vqf-x86_64-unknown-linux-musl-binutils-wrapper-2.44/bin:/nix/store/dajfkvsps80pmw2b8hdgvq0860a9mx2c-x86_64-unknown-linux-musl-binutils-2.44/bin:/nix/store/njphskr4mfna7gjsks3l33xna9wzrsya-cargo-octet-0.1.0/bin:/nix/store/am0d0cdbzzj8krwxswix2qddzxrfj4mz-octet-standards-0.1.0/bin:/nix/store/0drjksxdb8v81inx4r1n2nxxcmwm82nr-verified-logic-0.2.0/bin:/nix/store/b5m1h822ln0s493r30sgns77618ws59n-nixfmt-1.2.0/bin:/nix/store/idl8schy78hxa05jyndj4nmb4wzgcln2-compiler-rt-libc-21.1.8/bin:/nix/store/16wfacfgap3chf7mcjnd8dwi85dj4qqi-findutils-4.10.0/bin:/nix/store/3p87h6dn5i87i3iq9364imzbqgwvkg2p-diffutils-3.12/bin:/nix/store/ryz8kcrm2bxpccllfqlb7qldsfnqp5c2-gnused-4.9/bin:/nix/store/02vv0r262agf9j5n2y1gmbjvdf12zkl0-gnugrep-3.12/bin:/nix/store/2xq9rayckw8zq26k274xxlikn77jn60j-gawk-5.3.2/bin:/nix/store/qyg62bc2xnpwz0fa9prqxvvk00zj4g9q-gnutar-1.35/bin:/nix/store/84yyzmxs7mb8nhkvcfv9n1l9irpb6mnq-gzip-1.14/bin:/nix/store/90yw24gqmwph4xjp4mqhpx1y1gcrvqla-bzip2-1.0.8-bin/bin:/nix/store/vbah5c4rzy1q1hbqhginyxjhj8d4dj8j-gnumake-4.4.1/bin:/nix/store/f15k3dpilmiyv6zgpib289rnjykgr1r4-bash-5.3p9/bin:/nix/store/wwij6563c6wbg4kzgjhng7vlhf7api19-patch-2.8/bin:/nix/store/zys6d102zp171wpwcs08g632886w2qxs-xz-5.8.2-bin/bin:/nix/store/nyy0bvgjwd98x7ih8pl6pr79qjljgsf7-file-5.45/bin:/home/brittonr/git/OnixResearch/chaoscontrol/scripts:/nix/store/igr59k7fiwvxhdnpx5jf2d6gb9mbnvlv-nickel-1.15.1/bin:/home/brittonr/git/OnixResearch/chaoscontrol/.direnv/bin:/home/brittonr/.local/bin:/home/brittonr/.nix-profile/bin:/nix/store/7a60q5dgnv6z96c279rc1nalyiw4mgqn-bash-interactive-5.3p15/bin:/nix/store/gzh2rx2sjwra135my0jw3va49hm7z4vf-bun-1.3.13/bin:/nix/store/jnsflr3i2c90hrlly1cgwvxr9s74kgab-docker-29.8.0/bin:/nix/store/f51vybn5cd5v88pk7hnrdr6db1q0rzw7-ghzinga-0.5.0/bin:/nix/store/8yjpgadavqdwphcd2kw4dfvxmgdp5sb3-git-2.55.0/bin:/nix/store/xvd6920kffyyshg7mbw5wvfk6lg9wfkl-jq-1.8.2-bin/bin:/nix/store/hwifmhfi50y1595lhwiqsn7acppa7zdm-jujutsu-0.45.1/bin:/nix/store/ggcm0s524bsly3qc7kww945qs7003psf-openssh-10.5p1/bin:/nix/store/mcdxl3mmx2s8zy6gxy4ss5paiaz79qkc-pueue-4.0.4/bin:/nix/store/a8hj1bz1gd378sxz4fabmgrl61ad202p-socat-1.8.1.3/bin:/home/brittonr/.optmem:/run/wrappers/bin:/etc/profiles/per-user/brittonr/bin:/run/current-system/sw/bin",
+      "CC=gcc",
+      "CXX=g++",
+      "AR=ar",
+      "PKG_CONFIG_PATH=/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib/pkgconfig:/nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/lib/pkgconfig:/nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/lib/pkgconfig",
+      "LD_LIBRARY_PATH=/etc/sane-libs",
+      "NIX_CFLAGS_COMPILE= -frandom-seed=ylb8c1cng7 -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include",
+      "NIX_LDFLAGS=-rpath /home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53/outputs/out/lib  -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib",
+      "NIX_CC=/nix/store/a245z3cvf9x9sn0xlk6k8j9xhxbhda1z-gcc-wrapper-15.2.0",
+      "NIX_BINTOOLS=/nix/store/i6ppbrlpp6yki8qvka7nyv091xa8dchx-binutils-wrapper-2.44",
+      "NIX_STORE=/nix/store",
+      "SSH_AUTH_SOCK=/run/user/1555/yubikey-agent/yubikey-agent.sock",
+      "TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/consumer-tmp",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/pr46/build",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "RUSTC_WRAPPER=",
+      "NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu=1",
+      "NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu=1",
+      "NIX_PKG_CONFIG_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu=1",
+      "cc",
+      "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-smoke.c",
+      "-lz",
+      "-o",
+      "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-smoke"
+    ],
+    "display_command": "env -i HOME=/home/brittonr PATH=/home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53/scripts:/nix/store/rvp7qlpf5jqvdckjy1afjb6aha6j8dxg-pkg-config-wrapper-0.29.2/bin:/nix/store/c2p7haf4zzkbrir9zs662r68c5dmylbq-patchelf-0.15.2/bin:/nix/store/a245z3cvf9x9sn0xlk6k8j9xhxbhda1z-gcc-wrapper-15.2.0/bin:/nix/store/mjf8jlq9grydcdvyw6hb063x5c34g5gf-gcc-15.2.0/bin:/nix/store/0bdqq2z98kg2hfn3k60if6pb5fd5p10h-glibc-2.42-47-bin/bin:/nix/store/i2vmgx46q9hd3z6rigaiman3wl3i2gc4-coreutils-9.9/bin:/nix/store/i6ppbrlpp6yki8qvka7nyv091xa8dchx-binutils-wrapper-2.44/bin:/nix/store/47mn80zqpygykqailwzw8zlag4cgl75q-binutils-2.44/bin:/nix/store/m3xm05j6i5p9h9qngrvswydjad22rnml-cargo-exact-revisions-1.98.0/bin:/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/bin:/nix/store/zrx7kmcgzax4s6fldam9hf6nmwcw5nks-cargo-watch-8.5.3/bin:/nix/store/7va1z8il76ycxvyvgsbpr4bjk89lzj5a-cargo-edit-0.13.8/bin:/nix/store/ck3a4k9az87z5rjwgy8nmpcs34xp9cc5-nickel-lang-rev-fixup-1.17.0/bin:/nix/store/6n5r46icm0bl55s9p5z2zgcv93m39r5l-clang-wrapper-21.1.8/bin:/nix/store/rm8isfm4fd14is3fv3h4m459rbiy91bx-clang-21.1.8/bin:/nix/store/m0rbbdfsbkdqpr6bs621jwi21ra1br4g-binutils-wrapper-2.44/bin:/nix/store/rcy0axk6gaw5q6r3r631bnp6ap351jrg-bpftools-6.18/bin:/nix/store/nqdwms8r6kqnz9ds0qczn7af58k9ylvj-elfutils-0.194-bin/bin:/nix/store/yg2h4l9j1izbnlhxx8vcpxgc18izyad9-x86_64-unknown-linux-musl-gcc-wrapper-15.2.0/bin:/nix/store/7kkip2bbrg6cpwdq269wzvjcvw4pwlqh-x86_64-unknown-linux-musl-gcc-15.2.0/bin:/nix/store/vdisgkb1vn3wl2cn5xhgbhal794vdbhp-musl-x86_64-unknown-linux-musl-1.2.5-bin/bin:/nix/store/g1ar420lv3hh389bfp7jznchmgjz2vqf-x86_64-unknown-linux-musl-binutils-wrapper-2.44/bin:/nix/store/dajfkvsps80pmw2b8hdgvq0860a9mx2c-x86_64-unknown-linux-musl-binutils-2.44/bin:/nix/store/njphskr4mfna7gjsks3l33xna9wzrsya-cargo-octet-0.1.0/bin:/nix/store/am0d0cdbzzj8krwxswix2qddzxrfj4mz-octet-standards-0.1.0/bin:/nix/store/0drjksxdb8v81inx4r1n2nxxcmwm82nr-verified-logic-0.2.0/bin:/nix/store/b5m1h822ln0s493r30sgns77618ws59n-nixfmt-1.2.0/bin:/nix/store/idl8schy78hxa05jyndj4nmb4wzgcln2-compiler-rt-libc-21.1.8/bin:/nix/store/16wfacfgap3chf7mcjnd8dwi85dj4qqi-findutils-4.10.0/bin:/nix/store/3p87h6dn5i87i3iq9364imzbqgwvkg2p-diffutils-3.12/bin:/nix/store/ryz8kcrm2bxpccllfqlb7qldsfnqp5c2-gnused-4.9/bin:/nix/store/02vv0r262agf9j5n2y1gmbjvdf12zkl0-gnugrep-3.12/bin:/nix/store/2xq9rayckw8zq26k274xxlikn77jn60j-gawk-5.3.2/bin:/nix/store/qyg62bc2xnpwz0fa9prqxvvk00zj4g9q-gnutar-1.35/bin:/nix/store/84yyzmxs7mb8nhkvcfv9n1l9irpb6mnq-gzip-1.14/bin:/nix/store/90yw24gqmwph4xjp4mqhpx1y1gcrvqla-bzip2-1.0.8-bin/bin:/nix/store/vbah5c4rzy1q1hbqhginyxjhj8d4dj8j-gnumake-4.4.1/bin:/nix/store/f15k3dpilmiyv6zgpib289rnjykgr1r4-bash-5.3p9/bin:/nix/store/wwij6563c6wbg4kzgjhng7vlhf7api19-patch-2.8/bin:/nix/store/zys6d102zp171wpwcs08g632886w2qxs-xz-5.8.2-bin/bin:/nix/store/nyy0bvgjwd98x7ih8pl6pr79qjljgsf7-file-5.45/bin:/home/brittonr/git/OnixResearch/chaoscontrol/scripts:/nix/store/igr59k7fiwvxhdnpx5jf2d6gb9mbnvlv-nickel-1.15.1/bin:/home/brittonr/git/OnixResearch/chaoscontrol/.direnv/bin:/home/brittonr/.local/bin:/home/brittonr/.nix-profile/bin:/nix/store/7a60q5dgnv6z96c279rc1nalyiw4mgqn-bash-interactive-5.3p15/bin:/nix/store/gzh2rx2sjwra135my0jw3va49hm7z4vf-bun-1.3.13/bin:/nix/store/jnsflr3i2c90hrlly1cgwvxr9s74kgab-docker-29.8.0/bin:/nix/store/f51vybn5cd5v88pk7hnrdr6db1q0rzw7-ghzinga-0.5.0/bin:/nix/store/8yjpgadavqdwphcd2kw4dfvxmgdp5sb3-git-2.55.0/bin:/nix/store/xvd6920kffyyshg7mbw5wvfk6lg9wfkl-jq-1.8.2-bin/bin:/nix/store/hwifmhfi50y1595lhwiqsn7acppa7zdm-jujutsu-0.45.1/bin:/nix/store/ggcm0s524bsly3qc7kww945qs7003psf-openssh-10.5p1/bin:/nix/store/mcdxl3mmx2s8zy6gxy4ss5paiaz79qkc-pueue-4.0.4/bin:/nix/store/a8hj1bz1gd378sxz4fabmgrl61ad202p-socat-1.8.1.3/bin:/home/brittonr/.optmem:/run/wrappers/bin:/etc/profiles/per-user/brittonr/bin:/run/current-system/sw/bin CC=gcc CXX=g++ AR=ar PKG_CONFIG_PATH=/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib/pkgconfig:/nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/lib/pkgconfig:/nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/lib/pkgconfig LD_LIBRARY_PATH=/etc/sane-libs 'NIX_CFLAGS_COMPILE= -frandom-seed=ylb8c1cng7 -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/n7q0hmz543bml3zhar1b30w72q8cabsm-elfutils-0.194-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/wlafyp4d5mjdfvkj88m4l2a84fzcxjfv-zlib-1.3.1-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include -isystem /nix/store/i5vppnbl2qnrvm4h5azwq83rr9gm7sdy-compiler-rt-libc-21.1.8-dev/include' 'NIX_LDFLAGS=-rpath /home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53/outputs/out/lib  -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/y2vglckrmfxynvnm9bkfap7m31rfk99s-rust-default-1.98.0/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/0sqzgrx46b70cdcivn4n9axhmbiq1whi-libbpf-1.6.2/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/wf2yfa70lv7n5mg839h7i84ci73v9n37-elfutils-0.194/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib -L/nix/store/ri9paa3mri4kqakljak8ldvbcp7lpmif-zlib-1.3.1/lib' NIX_CC=/nix/store/a245z3cvf9x9sn0xlk6k8j9xhxbhda1z-gcc-wrapper-15.2.0 NIX_BINTOOLS=/nix/store/i6ppbrlpp6yki8qvka7nyv091xa8dchx-binutils-wrapper-2.44 NIX_STORE=/nix/store SSH_AUTH_SOCK=/run/user/1555/yubikey-agent/yubikey-agent.sock TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/consumer-tmp CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/pr46/build CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 RUSTC_WRAPPER= NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu=1 NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu=1 NIX_PKG_CONFIG_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu=1 cc /home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-smoke.c -lz -o /home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-smoke",
+    "timeout_seconds": 120,
+    "operational_timeout": false,
+    "exit_code": 0,
+    "started": "2026-10-21T03:46:03.195711+00:00",
+    "finished": "2026-10-21T03:46:03.310016+00:00",
+    "elapsed_seconds": 0.11431675596395507,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-zlib-link-smoke/stdout.log",
+        "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+        "bytes": 0
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-zlib-link-smoke/stderr.log",
+        "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+        "bytes": 0
+      }
+    ]
+  },
+  "execution_smoke": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/chaoscontrol-mcp53",
+    "command": [
+      "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-smoke"
+    ],
+    "display_command": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-smoke",
+    "timeout_seconds": 120,
+    "operational_timeout": false,
+    "exit_code": 0,
+    "started": "2026-10-21T03:46:03.372896+00:00",
+    "finished": "2026-10-21T03:46:03.374538+00:00",
+    "elapsed_seconds": 0.0016447780071757734,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-zlib-execution-smoke/stdout.log",
+        "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+        "bytes": 0
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/compiler-role-zlib-execution-smoke/stderr.log",
+        "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+        "bytes": 0
+      }
+    ]
+  },
+  "regression_before": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+    "command": [
+      "env",
+      "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+      "RUSTC_WRAPPER=",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+      "/run/current-system/sw/bin/nix",
+      "develop",
+      "--no-update-lock-file",
+      "-c",
+      "cargo",
+      "test",
+      "-p",
+      "cairn-core",
+      "consumer_profiles_preserve_case_sensitive_nix_role_environment"
+    ],
+    "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test -p cairn-core consumer_profiles_preserve_case_sensitive_nix_role_environment",
+    "timeout_seconds": 1200,
+    "operational_timeout": false,
+    "exit_code": 101,
+    "started": "2026-10-21T03:48:40.451141+00:00",
+    "finished": "2026-10-21T03:49:10.722975+00:00",
+    "elapsed_seconds": 30.271839697961695,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-regression-before/stdout.log",
+        "digest": "blake3:e505f83fc2d9a2b4cbacd95c3b9d659128cedc47ad5902cf3553e3ff89bcb338",
+        "bytes": 843
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-regression-before/stderr.log",
+        "digest": "blake3:10ec39ceda7df760bee79c37eea231c25f7cbb18ddad847a68b2578048effbb2",
+        "bytes": 443
+      }
+    ]
+  },
+  "regression_after": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+    "command": [
+      "env",
+      "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+      "RUSTC_WRAPPER=",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+      "/run/current-system/sw/bin/nix",
+      "develop",
+      "--no-update-lock-file",
+      "-c",
+      "cargo",
+      "test",
+      "-p",
+      "cairn-core",
+      "consumer_profiles_preserve_case_sensitive_nix_role_environment"
+    ],
+    "display_command": "env PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test -p cairn-core consumer_profiles_preserve_case_sensitive_nix_role_environment",
+    "timeout_seconds": 1200,
+    "operational_timeout": false,
+    "exit_code": 0,
+    "started": "2026-10-21T03:49:48.195094+00:00",
+    "finished": "2026-10-21T03:50:19.468790+00:00",
+    "elapsed_seconds": 31.27370395202888,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-regression-after/stdout.log",
+        "digest": "blake3:61b85a1026d93832cdb03958ebbe2d4a3187eea666d88ed6810a0532a369f219",
+        "bytes": 686
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-regression-after/stderr.log",
+        "digest": "blake3:6f4487e7638f627c982baec40da43471380e2c696949ef3e6bfa183c68b40951",
+        "bytes": 805
+      }
+    ]
+  },
+  "legacy_key_grammar_unchanged": true,
+  "bounds_commands_dependency_requirements_unchanged": true,
+  "full_new_cohort_verified": false,
+  "full_consumer_completion_verified": false
+}

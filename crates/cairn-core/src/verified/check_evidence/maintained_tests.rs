@@ -54,6 +54,49 @@ fn maintained_profiles_reject_changed_commands_features_and_executables() {
 }
 
 #[test]
+// r[verify cairn.check_evidence_producer.maintained_consumer_commands]
+fn consumer_profiles_preserve_case_sensitive_nix_role_environment() {
+    for kind in [
+        CheckKind::CargoTest,
+        CheckKind::NixCheck,
+        CheckKind::CargoWorkspaceTest,
+        CheckKind::CargoClippy,
+        CheckKind::CargoFmt,
+        CheckKind::NixFlakeCheck,
+    ] {
+        let (contract, mut profiles, applicability) = if kind == CheckKind::NixCheck {
+            super::tests::nix_fixture()
+        } else {
+            fixture(kind)
+        };
+        for key in [
+            "NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu",
+            "NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu",
+            "NIX_PKG_CONFIG_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu",
+        ] {
+            profiles[0].environment.insert(key.into(), "1".into());
+        }
+        let result = admit_plan(&contract, &profiles, &applicability);
+        if matches!(kind, CheckKind::CargoTest | CheckKind::NixCheck) {
+            assert_eq!(result, Err(ProducerIssue::Profile));
+        } else {
+            assert!(
+                result.is_ok(),
+                "case-sensitive Nix roles rejected: {kind:?}"
+            );
+        }
+        for key in ["NIX-role", "NIX_role_é", "NIX_role=host", "NIX_role\0"] {
+            profiles[0].environment.clear();
+            profiles[0].environment.insert(key.into(), "1".into());
+            assert_eq!(
+                admit_plan(&contract, &profiles, &applicability),
+                Err(ProducerIssue::Profile)
+            );
+        }
+    }
+}
+
+#[test]
 fn only_new_flake_kind_admits_maintained_three_hour_deadline() {
     for kind in [
         CheckKind::CargoTest,

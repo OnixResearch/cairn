@@ -176,12 +176,22 @@ fn validate_profile(p: &CheckProfile) -> Result<(), ProducerIssue> {
     }
     // Explicit values only. Environment identity is included in the plan.
     // This admission does not claim that an environment is safe or sandboxed.
+    let consumer_environment = matches!(
+        p.kind,
+        CheckKind::CargoWorkspaceTest
+            | CheckKind::CargoClippy
+            | CheckKind::CargoFmt
+            | CheckKind::NixFlakeCheck
+    );
     if p.environment.iter().any(|(k, v)| {
         k.is_empty()
             || k.len() > 128
-            || !k
-                .bytes()
-                .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
+            || !k.bytes().all(|b| {
+                b.is_ascii_uppercase()
+                    || b.is_ascii_digit()
+                    || b == b'_'
+                    || (consumer_environment && b.is_ascii_lowercase())
+            })
             || v.len() > MAX_TEXT_BYTES
             || v.bytes().any(|b| {
                 (b < 32 || b == 127)

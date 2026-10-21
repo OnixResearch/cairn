@@ -213,6 +213,8 @@ Consumers may declare the optional typed `release_readiness_policy` record in th
 
 `cairn agent-receipt smoke-mcp --root ROOT --policy POLICY` and `cairn release-readiness --root ROOT --policy POLICY` propagate that exact selected policy into the original completion validator. Every policy change invalidates old policy-bound completion, even when no consumer selection is declared. Passing provenance or function-address components do not override failed MCP completion. Produce fresh matching execution evidence; do not rebind retained result hashes or suppress the failed check. Require the JSON verdict, not process exit zero. These read-only commands execute no required checks and establish no KVM or universal release-readiness claim.
 
+The maintained-consumer producer kinds admit case-sensitive ASCII environment names (letters, digits and underscore), including Nix's `NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu` and companion binutils/pkg-config role selectors. Measure and bind these development-shell values explicitly: dropping them can discard declared library flags even when `NIX_LDFLAGS` is present. Legacy producer kinds retain their uppercase-only grammar. Environment entry/value limits, control-byte rejection, exact commands and per-kind bounds remain unchanged; this is explicit input admission, not ambient inheritance or a sandbox guarantee.
+
 ## Requirements and traceability
 
 Cairn uses an EARS-style requirement form. Each requirement has a stable `r[...]` ID and a normative word.
