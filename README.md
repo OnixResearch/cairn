@@ -215,6 +215,8 @@ Consumers may declare the optional typed `release_readiness_policy` record in th
 
 The maintained-consumer producer kinds admit case-sensitive ASCII environment names (letters, digits and underscore), including Nix's `NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu` and companion binutils/pkg-config role selectors. Measure and bind these development-shell values explicitly: dropping them can discard declared library flags even when `NIX_LDFLAGS` is present. Legacy producer kinds retain their uppercase-only grammar. Environment entry/value limits, control-byte rejection, exact commands and per-kind bounds remain unchanged; this is explicit input admission, not ambient inheritance or a sandbox guarantee.
 
+The producer clears unlisted child environment values; an outer `TMPDIR` is not implicitly forwarded. Bind an owned temporary directory in the profile when global scratch storage is unavailable. Keep the outer development-shell temporary prefix short enough for native Unix-socket tests. Producer integration fixtures bind their own nested Cargo scratch directories without weakening timeout, cancellation, drift or publication controls.
+
 ## Requirements and traceability
 
 Cairn uses an EARS-style requirement form. Each requirement has a stable `r[...]` ID and a normative word.

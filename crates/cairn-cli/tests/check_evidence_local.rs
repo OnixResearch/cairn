@@ -82,6 +82,9 @@ impl Fixture {
                 environment.insert(key.into(), value);
             }
         }
+        let scratch = root.join("tmp");
+        fs::create_dir(&scratch)?;
+        environment.insert("TMPDIR".into(), scratch.to_str().ok_or("path")?.into());
         // The cleared environment already drops the ambient sccache wrapper;
         // inserting an empty RUSTC_WRAPPER breaks rustc's linker discovery.
         environment.insert(

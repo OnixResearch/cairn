@@ -1,0 +1,173 @@
+{
+  "schema": "cairn.producer-fixture-scratch-isolation.v1",
+  "previous_immutable_source": "03c513c79125bd58162aacbce26578ea29090c69",
+  "global_storage_observation": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol",
+    "command": [
+      "df",
+      "-h",
+      "/tmp",
+      "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof"
+    ],
+    "display_command": "df -h /tmp /home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof",
+    "timeout_seconds": 30,
+    "operational_timeout": false,
+    "exit_code": 0,
+    "started": "2026-10-21T04:15:41.902820+00:00",
+    "finished": "2026-10-21T04:15:41.904468+00:00",
+    "elapsed_seconds": 0.0016349300276488066,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-cohort-storage-capacity/stdout.log",
+        "digest": "blake3:0f1f1784e94ec6713fbfd91ba02555c4514415224c913e577c70baaa38ed02d7",
+        "bytes": 149
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-cohort-storage-capacity/stderr.log",
+        "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+        "bytes": 0
+      }
+    ]
+  },
+  "short_socket_smoke": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+    "command": [
+      "env",
+      "TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53",
+      "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+      "RUSTC_WRAPPER=",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+      "/run/current-system/sw/bin/nix",
+      "develop",
+      "--no-update-lock-file",
+      "-c",
+      "/run/current-system/sw/bin/python3",
+      "-c",
+      "import tempfile,socket,pathlib,json; t=tempfile.TemporaryDirectory(); p=pathlib.Path(t.name)/\"source\"; p.mkdir(); name=str(p/\"socket\"); s=socket.socket(socket.AF_UNIX); s.bind(name); print(json.dumps({\"socket_path_bytes\":len(name.encode()),\"bound\":True})); s.close(); t.cleanup()"
+    ],
+    "display_command": "env TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53 PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c /run/current-system/sw/bin/python3 -c 'import tempfile,socket,pathlib,json; t=tempfile.TemporaryDirectory(); p=pathlib.Path(t.name)/\"source\"; p.mkdir(); name=str(p/\"socket\"); s=socket.socket(socket.AF_UNIX); s.bind(name); print(json.dumps({\"socket_path_bytes\":len(name.encode()),\"bound\":True})); s.close(); t.cleanup()'",
+    "timeout_seconds": 300,
+    "operational_timeout": false,
+    "exit_code": 0,
+    "started": "2026-10-21T04:45:04.991245+00:00",
+    "finished": "2026-10-21T04:45:06.162766+00:00",
+    "elapsed_seconds": 1.1715183180058375,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/short-local-tmp-socket-smoke/stdout.log",
+        "digest": "blake3:32f5c757fbb2bc334e70a5ac0990e04417af0bb47079b9bd88c743f1d2aedcd2",
+        "bytes": 41
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/short-local-tmp-socket-smoke/stderr.log",
+        "digest": "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+        "bytes": 0
+      }
+    ]
+  },
+  "original_unisolated_full_workspace": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+    "command": [
+      "env",
+      "TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53",
+      "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+      "RUSTC_WRAPPER=",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+      "/run/current-system/sw/bin/nix",
+      "develop",
+      "--no-update-lock-file",
+      "-c",
+      "cargo",
+      "test",
+      "--workspace"
+    ],
+    "display_command": "env TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53 PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test --workspace",
+    "timeout_seconds": 600,
+    "operational_timeout": false,
+    "exit_code": 101,
+    "started": "2026-10-21T04:45:06.408014+00:00",
+    "finished": "2026-10-21T04:46:25.362316+00:00",
+    "elapsed_seconds": 78.95430144999409,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-short-tmp-workspace-tests/stdout.log",
+        "digest": "blake3:1f6f4e5162416e5990742795855cf2ed9354bb8f04a56259fe62babf0f831e4d",
+        "bytes": 38659
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-short-tmp-workspace-tests/stderr.log",
+        "digest": "blake3:42b980785d9f538466c2a2f7ff45df4645db4dd951b7cd33dd5cf98ae2fb76de",
+        "bytes": 2935
+      }
+    ]
+  },
+  "original_failure_inventory": [
+    "check_evidence_local: 3 passed, 9 failed; nested Cargo cleared the outer TMPDIR"
+  ],
+  "unchanged_full_producer_cases_after_explicit_isolation": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+    "command": [
+      "env",
+      "TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53",
+      "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+      "RUSTC_WRAPPER=",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+      "/run/current-system/sw/bin/nix",
+      "develop",
+      "--no-update-lock-file",
+      "-c",
+      "cargo",
+      "test",
+      "-p",
+      "cairn-cli",
+      "--test",
+      "check_evidence_local"
+    ],
+    "display_command": "env TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53 PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test -p cairn-cli --test check_evidence_local",
+    "timeout_seconds": 1200,
+    "operational_timeout": false,
+    "exit_code": 0,
+    "started": "2026-10-21T04:48:35.338223+00:00",
+    "finished": "2026-10-21T04:49:01.608547+00:00",
+    "elapsed_seconds": 26.27032461197814,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-isolated-producer-fixture-tests/stdout.log",
+        "digest": "blake3:160d88b31ee1868f480fe53adaf22da275e4d0444e2514f076763af663a2a095",
+        "bytes": 1033
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-isolated-producer-fixture-tests/stderr.log",
+        "digest": "blake3:3c7a51eb39ec4c8811ad4e2f3f643bca86c66a4b6dcc30a98b875eaf536498b7",
+        "bytes": 1630
+      }
+    ]
+  },
+  "fixture_blake3": "89163634b42638c92710aa4cccdbf046223199a69dfa1610c94dcc0c4de432b1",
+  "source_bounds_commands_assertions_unchanged": true,
+  "vendored_socket_fixture_unmodified": true,
+  "full_new_cohort_verified": false
+}
