@@ -106,6 +106,16 @@ let SafeRelativePath = std.contract.from_predicate (fun value =>
   )
 ) in
 
+let ReleaseInputPath = std.contract.from_predicate (fun value =>
+  std.is_string value
+  && std.string.length value > 0
+  && !std.string.contains "\\" value
+  && !std.string.contains ":" value
+  && std.array.all
+    (fun component => component != "" && component != "." && component != "..")
+    (std.string.split "/" value)
+) in
+
 let WorkflowState = std.contract.from_predicate (fun value =>
   std.is_string value && (value == "done" || value == "ready" || value == "blocked" || value == "skipped")
 ) in
@@ -882,6 +892,14 @@ let DeveloperLoopStatusClass = std.contract.from_predicate (fun value =>
     required_non_claims | NonEmptyArray | Array NonEmptyString,
   },
 
+  ReleaseReadinessPolicy = {
+    id | NonEmptyString,
+    mcp_completion_contract | ReleaseInputPath,
+    mcp_completion_results | ReleaseInputPath,
+    preserves_corpus | ReleaseInputPath,
+    required_external_commands | NonEmptyArray | Array NonEmptyString,
+  },
+
   Policy = {
     name | NonEmptyString,
     version | SupportedPolicyVersion,
@@ -922,6 +940,7 @@ let DeveloperLoopStatusClass = std.contract.from_predicate (fun value =>
     receipt_contracts | Array ReceiptContract | default = [],
     determinism_replay_policy | DeterminismReplayPolicy,
     determinism_surface_inventory | NonEmptyArray | Array DeterminismSurface,
+    release_readiness_policy | ReleaseReadinessPolicy | optional,
     sync_archive_policy | SyncArchivePolicy,
     mutation_policy | MutationPolicy,
     receipt_hash_policy | ReceiptHashPolicy,

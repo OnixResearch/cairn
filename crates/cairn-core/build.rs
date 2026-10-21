@@ -7,7 +7,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // This fixture is compiled only by tests, not by packaged production builds.
     if source.try_exists()? {
         let canonical = source.canonicalize()?;
-        let canonical = canonical.to_str().ok_or("non-UTF8 compile-time input path")?;
+        let canonical = canonical
+            .to_str()
+            .ok_or("non-UTF8 compile-time input path")?;
         println!("cargo:rustc-env=CAIRN_LATTICE_COHORT={canonical}");
     }
     Ok(())

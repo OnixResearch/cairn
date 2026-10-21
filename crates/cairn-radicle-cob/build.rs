@@ -16,7 +16,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             continue;
         }
         let canonical = source.canonicalize()?;
-        let canonical = canonical.to_str().ok_or("non-UTF8 compile-time input path")?;
+        let canonical = canonical
+            .to_str()
+            .ok_or("non-UTF8 compile-time input path")?;
         println!("cargo:rustc-env={name}={canonical}");
     }
     Ok(())

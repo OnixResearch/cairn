@@ -164,7 +164,10 @@ fn process_checks_never_admit_test_coverage_or_native_build_claims() {
         observation.executed_tests = 0;
         observation.payload_passed = false;
         assert_eq!(
-            normalize_attempt(&plan, &observation).unwrap().result().status,
+            normalize_attempt(&plan, &observation)
+                .unwrap()
+                .result()
+                .status,
             "passed"
         );
         let mut changed = observation.clone();
@@ -208,7 +211,10 @@ fn maintained_workspace_tests_still_require_executed_passing_summaries() {
     let plan = admit_plan(&contract, &profiles, &applicability).unwrap();
     let observation = super::tests::observation(&plan);
     assert_eq!(
-        normalize_attempt(&plan, &observation).unwrap().result().status,
+        normalize_attempt(&plan, &observation)
+            .unwrap()
+            .result()
+            .status,
         "passed"
     );
     let mut changed = observation.clone();

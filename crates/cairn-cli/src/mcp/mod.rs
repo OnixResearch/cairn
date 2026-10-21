@@ -95,17 +95,30 @@ pub(crate) fn mcp_tool_catalog(is_allow_mutations: bool) -> Value {
     json!({"protocol_version": MCP_PROTOCOL_VERSION, "allow_mutations": is_allow_mutations, "tools": mcp_tools(is_allow_mutations)})
 }
 
-pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
+pub(crate) fn mcp_agent_smoke_receipt(
+    root: PathBuf,
+    policy_path: PathBuf,
+) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.mcp_agent_smoke_receipts]
     // r[impl cairn.supersede.mcp_agent_smoke_receipts.flow]
     // r[impl cairn.supersede.mcp_agent_smoke_receipts.evidence]
     // r[impl cairn.supersede.mcp_agent_smoke_receipts.read_only]
     // r[verify cairn.determinism.preserves_content_hash_binding_readiness.mcp_smoke]
-    let fixture = "fixtures/agent-completion";
-    let contract: Value =
-        serde_json::from_slice(&fs::read(root.join(fixture).join("contract.json"))?)?;
-    let results: Value =
-        serde_json::from_slice(&fs::read(root.join(fixture).join("results.json"))?)?;
+    let policy = load_policy_file(policy_path.clone())?;
+    let selection = crate::release_readiness::release_readiness_selection(&policy.raw)?;
+    let contract_selector = selection
+        .as_ref()
+        .map(|selected| selected.mcp_completion_contract.as_str())
+        .unwrap_or("fixtures/agent-completion/contract.json");
+    let results_selector = selection
+        .as_ref()
+        .map(|selected| selected.mcp_completion_results.as_str())
+        .unwrap_or("fixtures/agent-completion/results.json");
+    let contract_path = crate::release_readiness::release_input_path(&root, contract_selector)?;
+    let results_path = crate::release_readiness::release_input_path(&root, results_selector)?;
+    let contract =
+        crate::agent_receipt::read_json_artifact(&contract_path, AGENT_RECEIPT_MAX_BYTES)?;
+    let results = crate::agent_receipt::read_json_artifact(&results_path, AGENT_RECEIPT_MAX_BYTES)?;
     let subject_hash = contract["final_subject_hash"]
         .as_str()
         .ok_or("agent completion fixture missing final_subject_hash")?
@@ -124,6 +137,7 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
         "cairn_agent_completion_validate",
         &json!({
             "root": root_string,
+            "policy": path_string(policy_path),
             "contract": contract,
             "results": results,
             "subject_hash": subject_hash,
@@ -158,7 +172,10 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
     Ok(with_receipt_hash(json!({
         "command": "agent-receipt smoke-mcp",
         "root": path_string(root),
-        "fixture": fixture,
+        "fixture": selection.as_ref().map(|selected| selected.id.as_str()).unwrap_or("fixtures/agent-completion"),
+        "contract_path": contract_selector,
+        "results_path": results_selector,
+        "policy_hash": canonical_json_hash(&policy.raw),
         "valid": is_valid,
         "verdict": if is_valid { "pass" } else { "fail" },
         "checks": checks,

@@ -89,8 +89,9 @@ pub(crate) fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>>
         "verify-bundle" => bundle::run_agent_receipt_verify_bundle(iter.collect()),
         "smoke-mcp" => {
             let rest = iter.collect::<Vec<_>>();
-            let root = read_option(rest, "--root", ".");
-            print_json(crate::mcp::mcp_agent_smoke_receipt(root)?)
+            let root = read_option(rest.clone(), "--root", ".");
+            let policy = read_option(rest, "--policy", default_policy_path());
+            print_json(crate::mcp::mcp_agent_smoke_receipt(root, policy)?)
         }
         unknown => Err(format!("unknown agent-receipt subcommand: {unknown}").into()),
     }

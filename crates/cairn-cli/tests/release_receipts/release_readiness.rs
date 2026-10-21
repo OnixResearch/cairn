@@ -757,3 +757,186 @@ fn release_readiness_bundle_reports_missing_evidence() -> Result<(), Box<dyn Err
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
+
+fn consumer_release_project(name: &str) -> Result<(PathBuf, Value), Box<dyn Error>> {
+    let root = temp_fixture(name, "fixtures/basic")?;
+    fs::create_dir_all(root.join("consumer"))?;
+    let mut policy = policy_json()?;
+    policy["name"] = json!("consumer-release-tests");
+    policy["release_readiness_policy"] = json!({
+        "id": "consumer-release-v1",
+        "mcp_completion_contract": "consumer/contract.json",
+        "mcp_completion_results": "consumer/results.json",
+        "preserves_corpus": "consumer/corpus.json",
+        "required_external_commands": ["scripts/check.rs", "nix flake check"]
+    });
+    let policy_hash = cairn_core::canonical_json_hash(&policy);
+    let command = vec!["consumer-check".to_string()];
+    let command_hash = cairn_core::authoritative_command_hash(&command);
+    let checks = vec![cairn_core::AgentRequiredCheck {
+        check_id: "consumer-check".to_string(),
+        command: command.clone(),
+        command_hash: command_hash.clone(),
+        prerequisites: Vec::new(),
+    }];
+    let selection_hash = cairn_core::authoritative_selection_hash(&checks);
+    let subject_hash = cairn_core::canonical_json_hash(&json!("test-subject"));
+    let registry_hash = cairn_core::canonical_json_hash(&json!(checks));
+    let contract = json!({
+        "schema": "cairn.agent-completion.v2", "repository_id": "consumer-tests",
+        "registry_id": "consumer-checks", "registry_hash": registry_hash,
+        "selection_hash": selection_hash, "policy_hash": policy_hash,
+        "final_subject_hash": subject_hash, "required_checks": checks,
+    });
+    let results = json!([{
+        "check_id": "consumer-check", "status": "passed", "command": command,
+        "command_hash": command_hash, "subject_hash": subject_hash,
+        "registry_hash": registry_hash, "selection_hash": selection_hash,
+        "policy_hash": policy_hash,
+        "evidence_hash": cairn_core::canonical_json_hash(&json!("test-evidence")),
+        "execution_receipt_hash": cairn_core::canonical_json_hash(&json!("test-execution")),
+    }]);
+    let value = json!({"workflow": "consumer", "steps": ["first", "second"]});
+    let expected = cairn_core::canonical_preserves_hash(&value)?;
+    fs::write(
+        root.join("consumer/corpus.json"),
+        serde_json::to_vec(&json!([
+            {"id": "consumer-workflow", "value": value, "expected_hash": expected}
+        ]))?,
+    )?;
+    fs::write(
+        root.join("consumer/contract.json"),
+        serde_json::to_vec(&contract)?,
+    )?;
+    fs::write(
+        root.join("consumer/results.json"),
+        serde_json::to_vec(&results)?,
+    )?;
+    fs::write(root.join("policy.json"), serde_json::to_vec(&policy)?)?;
+    Ok((root, policy))
+}
+
+fn consumer_release_check<'a>(receipt: &'a Value, name: &str) -> Result<&'a Value, Box<dyn Error>> {
+    receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .find(|check| check["name"] == name)
+        .ok_or_else(|| format!("missing {name}").into())
+}
+
+#[test]
+fn consumer_release_uses_declared_inputs_and_exact_policy() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.release_consumer.selection]
+    let (root, policy) = consumer_release_project("consumer-release-inputs")?;
+    let root_text = root.to_str().ok_or("root utf8")?;
+    let policy_path = root.join("policy.json");
+    let policy_text = policy_path.to_str().ok_or("policy utf8")?;
+    let smoke = run_json(&[
+        "agent-receipt",
+        "smoke-mcp",
+        "--root",
+        root_text,
+        "--policy",
+        policy_text,
+    ])?;
+    assert_eq!(smoke["valid"], true);
+    assert_eq!(
+        smoke["policy_hash"],
+        cairn_core::canonical_json_hash(&policy)
+    );
+    let receipt = run_json(&[
+        "release-readiness",
+        "--root",
+        root_text,
+        "--policy",
+        policy_text,
+    ])?;
+    assert_eq!(
+        consumer_release_check(&receipt, "mcp_agent_smoke")?["passed"],
+        true
+    );
+    assert_eq!(
+        consumer_release_check(&receipt, "preserves_corpus_freshness")?["passed"],
+        true
+    );
+    assert_eq!(
+        receipt["repository_gate_summary"]["required_commands"],
+        json!(["scripts/check.rs", "nix flake check"])
+    );
+    let mut stale = policy;
+    stale["name"] = json!("different-selected-policy");
+    fs::write(&policy_path, serde_json::to_vec(&stale)?)?;
+    let smoke = run_json(&[
+        "agent-receipt",
+        "smoke-mcp",
+        "--root",
+        root_text,
+        "--policy",
+        policy_text,
+    ])?;
+    assert_eq!(
+        smoke["valid"], false,
+        "stale completion policy identity must not pass"
+    );
+    fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+#[test]
+fn consumer_release_rejects_stale_corpus_and_unsafe_selection() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.release_consumer.selection]
+    let (root, mut policy) = consumer_release_project("consumer-release-rejections")?;
+    let root_text = root.to_str().ok_or("root utf8")?;
+    let policy_path = root.join("policy.json");
+    let policy_text = policy_path.to_str().ok_or("policy utf8")?;
+    let corpus_path = root.join("consumer/corpus.json");
+    let mut corpus: Value = serde_json::from_slice(&fs::read(&corpus_path)?)?;
+    corpus[0]["value"]["steps"] = json!(["second", "first"]);
+    let stale_bytes = serde_json::to_vec(&corpus)?;
+    fs::write(&corpus_path, &stale_bytes)?;
+    let receipt = run_json(&[
+        "release-readiness",
+        "--root",
+        root_text,
+        "--policy",
+        policy_text,
+    ])?;
+    assert_eq!(
+        consumer_release_check(&receipt, "preserves_corpus_freshness")?["passed"],
+        false
+    );
+    assert_eq!(
+        fs::read(&corpus_path)?,
+        stale_bytes,
+        "assessment must not refresh stale vectors"
+    );
+    for selector in [
+        "../outside.json",
+        "/absolute.json",
+        "consumer//corpus.json",
+        "consumer/./corpus.json",
+        "C:\\outside.json",
+    ] {
+        policy["release_readiness_policy"]["preserves_corpus"] = json!(selector);
+        fs::write(&policy_path, serde_json::to_vec(&policy)?)?;
+        let receipt = run_json(&[
+            "release-readiness",
+            "--root",
+            root_text,
+            "--policy",
+            policy_text,
+        ])?;
+        assert_eq!(receipt["valid"], false, "unsafe selector: {selector}");
+        assert_eq!(
+            consumer_release_check(&receipt, "repository_gate_selection")?["passed"],
+            false
+        );
+        assert_eq!(
+            consumer_release_check(&receipt, "preserves_corpus_freshness")?["passed"],
+            false
+        );
+    }
+    fs::remove_dir_all(root)?;
+    Ok(())
+}

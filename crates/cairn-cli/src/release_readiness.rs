@@ -21,6 +21,68 @@ use cairn_core::{
 };
 use serde_json::{json, Value};
 
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct ReleaseReadinessSelection {
+    pub id: String,
+    pub mcp_completion_contract: String,
+    pub mcp_completion_results: String,
+    pub preserves_corpus: String,
+    pub required_external_commands: Vec<String>,
+}
+
+// r[impl cairn.release_consumer.selection]
+pub(crate) fn release_readiness_selection(
+    policy: &Value,
+) -> Result<Option<ReleaseReadinessSelection>, Box<dyn Error>> {
+    let Some(value) = policy.get("release_readiness_policy") else {
+        return Ok(None);
+    };
+    let selected = <ReleaseReadinessSelection as serde::Deserialize>::deserialize(value)?;
+    if selected.id.trim().is_empty()
+        || selected.required_external_commands.is_empty()
+        || selected
+            .required_external_commands
+            .iter()
+            .any(|command| command.trim().is_empty())
+    {
+        return Err("release_readiness_policy requires a nonempty id and external commands".into());
+    }
+    for path in [
+        &selected.mcp_completion_contract,
+        &selected.mcp_completion_results,
+        &selected.preserves_corpus,
+    ] {
+        if path.is_empty()
+            || path.contains('\\')
+            || path.contains(':')
+            || path
+                .split('/')
+                .any(|component| component.is_empty() || component == "." || component == "..")
+            || std::path::Path::new(path)
+                .components()
+                .any(|component| !matches!(component, std::path::Component::Normal(_)))
+        {
+            return Err(
+                "release_readiness_policy paths must be component-safe repository-relative paths"
+                    .into(),
+            );
+        }
+    }
+    Ok(Some(selected))
+}
+
+pub(crate) fn release_input_path(
+    root: &std::path::Path,
+    selector: &str,
+) -> Result<PathBuf, Box<dyn Error>> {
+    let path = root.join(selector);
+    if path.exists() && !path.canonicalize()?.starts_with(root.canonicalize()?) {
+        return Err("release readiness input escapes repository root".into());
+    }
+    Ok(path)
+}
+
 use crate::authenticated_inputs::{
     authentication_component, AuthenticationArtifact, AuthenticationComponent,
 };
@@ -154,14 +216,15 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     let traceability = readiness_component("traceability_coverage", || {
         traceability_coverage_receipt(root.clone(), policy_path.clone())
     });
-    let mcp_smoke =
-        readiness_component("mcp_agent_smoke", || mcp_agent_smoke_receipt(root.clone()));
+    let mcp_smoke = readiness_component("mcp_agent_smoke", || {
+        mcp_agent_smoke_receipt(root.clone(), policy_path.clone())
+    });
     let coverage_audit = readiness_component("determinism_coverage_audit", || {
         let policy = load_policy_file(policy_path.clone())?;
         Ok(determinism_coverage_audit_receipt(&root, &policy))
     });
     let release_evidence_index = conventional_release_evidence_index_component(root.clone());
-    let preserves_corpus = preserves_corpus_component(root.clone());
+    let preserves_corpus = preserves_corpus_component(root.clone(), policy_path.clone());
     let semantic_review_ledger = semantic_review_ledger_component(root.clone(), review_ledger);
     let policy = load_policy_file(policy_path.clone()).ok();
     let stack_provenance_component_value = stack_provenance_component(
@@ -234,7 +297,17 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         policy.as_ref().map(|value| &value.raw),
         workspace_contract_matrix_receipt,
     );
-    let repository_gate_summary = repository_gate_summary();
+    let gate_selection = readiness_component("repository_gate_selection", || {
+        let loaded = policy.as_ref().ok_or("policy could not be loaded")?;
+        let mut summary = repository_gate_summary();
+        if let Some(selected) = release_readiness_selection(&loaded.raw)? {
+            summary["policy"] = json!(selected.id);
+            summary["required_commands"] = json!(selected.required_external_commands);
+        }
+        summary["valid"] = json!(true);
+        Ok(summary)
+    });
+    let repository_gate_summary = gate_selection.value;
     let replay_preflight = json!({
         "command": "determinism replay --root <root>",
         "included": false,
@@ -258,10 +331,11 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         function_address_authentication.check,
         authenticated_release.check,
         workspace_contract_matrix.check,
+        gate_selection.check,
     ];
     checks.push(json!({
         "name": "repository_gate_policy_listed",
-        "passed": true,
+        "passed": repository_gate_summary["valid"] == true,
         "source": "maintained local policy",
         "required_external_commands": repository_gate_summary["required_commands"].clone(),
         "evidence_hash": canonical_json_hash(&repository_gate_summary)
@@ -469,13 +543,23 @@ fn function_address_component(
     }
 }
 
-fn preserves_corpus_component(root: PathBuf) -> ReadinessComponent {
+fn preserves_corpus_component(root: PathBuf, policy_path: PathBuf) -> ReadinessComponent {
     // r[impl release_evidence.preserves_readiness_summary.output]
     // r[impl release_evidence.preserves_readiness_summary.fail_closed]
-    let path = root.join("fixtures/preserves-canonicalization/corpus.json");
-    readiness_component("preserves_corpus_freshness", || {
+    let mut component = readiness_component("preserves_corpus_freshness", || {
+        let policy = load_policy_file(policy_path)?;
+        let selection = release_readiness_selection(&policy.raw)?;
+        let selector = selection
+            .as_ref()
+            .map(|selected| selected.preserves_corpus.as_str())
+            .unwrap_or("fixtures/preserves-canonicalization/corpus.json");
+        let path = release_input_path(&root, selector)?;
         Ok(preserves_corpus_freshness_receipt(path))
-    })
+    });
+    if let Some(path) = component.value["path"].as_str() {
+        component.check["source"] = json!(format!("cairn preserves-corpus update --path {path}"));
+    }
+    component
 }
 
 fn semantic_review_ledger_component(

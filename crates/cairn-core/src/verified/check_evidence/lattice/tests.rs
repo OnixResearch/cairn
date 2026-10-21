@@ -19,7 +19,8 @@ fn unchanged_published_producer_fixture_and_its_controls_are_admitted() {
     }
 }
 fn cohort() -> Value {
-    serde_json::from_str(include_str!(env!("CAIRN_LATTICE_COHORT"))).expect("native generated cohort")
+    serde_json::from_str(include_str!(env!("CAIRN_LATTICE_COHORT")))
+        .expect("native generated cohort")
 }
 // Rebind with the consumer's protocol implementation so semantic negatives are
 // not merely stale digest controls. The checked-in native cohort independently
