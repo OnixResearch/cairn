@@ -113,6 +113,7 @@ version = "0.1.0"
 source = "git+ssh://git@github.com/OnixResearch/onix-artifact.git?rev=e41340bec587b6d049b5cc518ec7db925dde84be#e41340bec587b6d049b5cc518ec7db925dde84be"
 dependencies = [
  "blake3",
+ "serde",
 ]
 
 [[package]]
@@ -357,7 +358,9 @@ name = "cairn-core"
 version = "0.1.0"
 dependencies = [
  "artifact-auth-core",
+ "artifact-auth-ed25519",
  "blake3",
+ "ed25519-dalek",
  "iddqd",
  "kiln-core",
  "preserves",

@@ -15,6 +15,7 @@
 //! r[impl cairn.supersede.doctor.boundary]
 
 pub mod verified;
+pub use verified::source_review;
 
 mod api;
 pub use api::*;

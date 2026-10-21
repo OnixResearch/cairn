@@ -63,6 +63,7 @@ pub mod repo;
 pub mod requirement_id_registry;
 pub mod runtime_evidence;
 pub mod semantic_review;
+pub mod source_review;
 pub mod stack_provenance;
 pub mod state_machine_receipt;
 pub mod structured_lifecycle;

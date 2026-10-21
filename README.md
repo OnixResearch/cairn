@@ -126,6 +126,59 @@ Read [Policy-exception collaboration](docs/policy-exception.md) before you use t
 <!-- r[impl cairn.developer_loop_profiles.docs] -->
 <!-- r[impl cairn.agent_guidance_context.docs] -->
 
+## Detached source-review evidence
+
+`cairn_core::source_review` is the pure producer and independent verification
+boundary for `cairn.source-review-attachment.v1`. It binds the exact
+`mantle-release-source` v1 source projection, existing claim root and review-policy
+digest in each signed claim. Subject, claim and attachment logical identities use
+BLAKE3 over their schema domain plus NUL plus recursively key-sorted compact JSON.
+Attachment rows normalize by full key digest then Artifact Auth statement identity;
+the digest of an input file's exact bytes is a separate artifact identity.
+
+The read-only shell never generates keys or signs. Supply an explicit reviewed
+claim and verification policy, with operator-owned public keys, currentness
+observations, generations and revocations. All file arguments are relative to
+`--root`; each read is capability-confined and limited to 1 MiB. DTOs reject unknown
+and duplicate fields, unsupported schemas, malformed lowercase hex and incorrect
+non-claims. At most 64 reviews, trusted keys and author-key hashes are admitted.
+
+```bash
+cairn source-review signing-request --root "$EVIDENCE" \
+  --claim claim.json --policy verification-policy.json \
+  --producer "$REVIEWER" --key-id "$KEY_LABEL" --generation "$GENERATION" \
+  --public-key-hex "$PUBLIC_KEY_HEX" > request.json
+cairn source-review signing-request --root "$EVIDENCE" \
+  --claim claim.json --policy verification-policy.json \
+  --producer "$REVIEWER" --key-id "$KEY_LABEL" --generation "$GENERATION" \
+  --public-key-hex "$PUBLIC_KEY_HEX" --raw > unsigned-statement.bin
+# An operator's external signer signs unsigned-statement.bin, not JSON or its digest.
+cairn source-review assemble --root "$EVIDENCE" \
+  --request request.json --policy verification-policy.json \
+  --signature-hex "$DETACHED_SIGNATURE_HEX" > attachment.json
+cairn source-review verify --root "$EVIDENCE" \
+  --attachment attachment.json --policy verification-policy.json
+```
+
+Keep redirected files inside `$EVIDENCE` (or use absolute redirect destinations);
+redirection is performed by your shell, not Cairn. The JSON signing request also
+exports `canonical_statement_hex`, the exact unsigned bytes encoded as hex.
+`assemble` checks the request against policy, verifies the detached signature and
+emits an attachment; optional repeated `--include signed-row.json` adds separately
+signed `SignedSourceReview` rows. It never fabricates approval. An insufficient
+attachment, including an authenticated `needs_revision`, can be assembled;
+`verify` emits `insufficient` and exits nonzero until distinct approved full keys
+meet the nonzero threshold. Invalid evidence also exits nonzero. Display names do
+not count, duplicate full keys are rejected, author keys are excluded when policy
+requires it, and review keys must be authorized exclusively for
+`source-review-approval` with currentness references matching the explicit signed
+verifier context. Source-review evidence never counts as build witnesses or
+release signatures. Every claim, policy and attachment carries the exact sorted
+seven bounded non-claims: review does not prove source correctness, review quality,
+build correctness, reproducibility, witness independence, deployment safety or
+release eligibility. A verifier must load and verify the signatures independently,
+not trust a producer report.
+
 ## Local checks
 
 ```bash
