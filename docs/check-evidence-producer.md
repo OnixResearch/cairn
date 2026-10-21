@@ -99,7 +99,8 @@ A Nix check remains build-only evidence with zero executed-test claims; store re
 Profiles bind a Nix-store executable, byte identity, declared cohort identity, explicit environment, working root, and named bounds.
 The environment is cleared before explicit entries are applied. Profiles must not contain secrets.
 The cohort label is a binding, not independent attestation of a complete tool closure.
-All existing kinds and the additional Cargo kinds retain the 3,600,000 ms deadline maximum. Only `nix_flake_check` admits up to 10,800,000 ms, preserving ChaosControl's already-declared three-hour release bound without increasing any legacy kind's cap. Stream and teardown limits are unchanged. A timeout never passes.
+All existing kinds and the additional Cargo kinds retain the 3,600,000 ms deadline maximum. Only `nix_flake_check` admits up to 10,800,000 ms, preserving ChaosControl's already-declared three-hour release bound without increasing any legacy kind's cap. Teardown limits are unchanged. A timeout never passes.
+Legacy profiles retain 1 MiB per-stream maxima. New-kind-only maxima reflect retained real consumer output: `cargo_workspace_test` 8 MiB stdout/stderr, `cargo_clippy` 1 MiB stdout and 8 MiB stderr, `cargo_fmt` 1 MiB each, and `nix_flake_check` 1 MiB stdout and 64 MiB stderr. Exceeding an explicit selected bound remains non-passing; the larger new-kind buffers do not grant coverage or native payload admission.
 Environment controls remain rejected except for the exact reviewed `NIX_CONFIG` string `min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n` on `nix_flake_check` only. This is explicit child environment, not a host settings edit.
 Execution rechecks executable bytes before each child and after each result.
 The child working directory refers to the held repository directory through a Linux file descriptor.

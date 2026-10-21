@@ -713,7 +713,7 @@ mod tests {
     const INVALID_ROOT_HEX_CHAR: char = 'c';
     const PREVIEW_OPERATION_ID: &str = "preview:update";
     const PREVIEW_LIFECYCLE_OPERATION_ID: &str = "preview:lifecycle";
-    const WORKSPACE_LOCKFILE: &str = include_str!("../../../Cargo.lock");
+    const WORKSPACE_LOCKFILE: &str = include_str!(env!("CAIRN_WORKSPACE_LOCK"));
     const UMBRELLA_RADICLE_PACKAGE: &str = "radicle";
     const RADICLE_NODE_PACKAGE: &str = "radicle-node";
     const RADICLE_COB_PACKAGE: &str = "radicle-cob";

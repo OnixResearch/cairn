@@ -21,7 +21,7 @@ fn committed_octet_lock_preserves_the_reviewed_source() -> Result<(), Box<dyn Er
     // r[verify cairn.octet_integration.canonical.valid]
     // r[verify cairn.octet_integration.evidence]
     // r[verify cairn.octet_integration.evidence.valid]
-    let lock: Value = serde_json::from_str(include_str!("../../../flake.lock"))?;
+    let lock: Value = serde_json::from_str(include_str!(env!("CAIRN_FLAKE_LOCK")))?;
     let inputs = &lock["nodes"]["root"]["inputs"];
     assert!(inputs.get("slotcar").is_none());
     let node_name = inputs["octet"].as_str().ok_or("direct Octet input")?;

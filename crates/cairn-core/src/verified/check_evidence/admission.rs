@@ -136,14 +136,25 @@ fn validate_profile(p: &CheckProfile) -> Result<(), ProducerIssue> {
     } else {
         MAX_DEADLINE_MS
     };
+    let maximum_stdout = if p.kind == CheckKind::CargoWorkspaceTest {
+        MAX_WORKSPACE_TEST_STREAM_BYTES
+    } else {
+        MAX_STREAM_BYTES
+    };
+    let maximum_stderr = match p.kind {
+        CheckKind::CargoWorkspaceTest => MAX_WORKSPACE_TEST_STREAM_BYTES,
+        CheckKind::CargoClippy => MAX_CLIPPY_STDERR_BYTES,
+        CheckKind::NixFlakeCheck => MAX_FLAKE_CHECK_STDERR_BYTES,
+        _ => MAX_STREAM_BYTES,
+    };
     if b.deadline_ms == 0
         || b.deadline_ms > maximum_deadline
         || b.teardown_ms == 0
         || b.teardown_ms > MAX_TEARDOWN_MS
         || b.stdout_bytes == 0
-        || b.stdout_bytes > MAX_STREAM_BYTES
+        || b.stdout_bytes > maximum_stdout
         || b.stderr_bytes == 0
-        || b.stderr_bytes > MAX_STREAM_BYTES
+        || b.stderr_bytes > maximum_stderr
         || p.features.len() > MAX_FEATURES
         || p.environment.len() > MAX_ENVIRONMENT
     {

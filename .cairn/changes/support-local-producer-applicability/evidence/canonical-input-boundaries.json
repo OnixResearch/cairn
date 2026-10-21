@@ -1,0 +1,80 @@
+{
+  "observation": "canonical-compile-time-input-byte-boundaries",
+  "integration_baseline": "1cacafebbff7b2716a953961a1ebf52bafb352e7",
+  "reused_producer_commit": "35e6bd4c4d6e9d5a3639a0e70ca922faf3b94a48",
+  "dirty_during_observation": true,
+  "digest_algorithm": "blake3",
+  "command_run_before_and_after": [
+    "b3sum",
+    "cairn-policy/lifecycle-store-contracts.ncl",
+    "crates/cairn-cli/tests/bootstrap_preview/material.rs",
+    "flake.lock",
+    "fixtures/check-evidence/lattice-cohort.json",
+    "Cargo.lock",
+    "fixtures/radicle-cob-interoperability/producer/Cargo.lock"
+  ],
+  "inputs": [
+    {
+      "reported_source_map_path": "crates/cairn-cli/src/../../../cairn-policy/lifecycle-store-contracts.ncl",
+      "call_site": "crates/cairn-cli/src/config_export.rs:CONTRACTS_SOURCE",
+      "canonical_repository_path": "cairn-policy/lifecycle-store-contracts.ncl",
+      "compiler_environment_binding": "CAIRN_LIFECYCLE_STORE_CONTRACTS",
+      "before_blake3": "cfa0842a93d34d87db473c5f3a26b2e6b8285bf4d0fffc6bc9ffc54c77f32b99",
+      "after_blake3": "cfa0842a93d34d87db473c5f3a26b2e6b8285bf4d0fffc6bc9ffc54c77f32b99",
+      "input_bytes_unchanged": true
+    },
+    {
+      "reported_source_map_path": "crates/cairn-cli/src/../tests/bootstrap_preview/material.rs",
+      "call_site": "crates/cairn-cli/src/bootstrap_tests.rs:material",
+      "canonical_repository_path": "crates/cairn-cli/tests/bootstrap_preview/material.rs",
+      "compiler_environment_binding": "CAIRN_BOOTSTRAP_TEST_MATERIAL",
+      "before_blake3": "bccb9a2469db2b4564db64cc79b199e3f4ede9a2c651f3f885a525daa03ca985",
+      "after_blake3": "db8fd0adc706f62168aa72dc0adc8e2e2c7a3a6705bae72ffec5608477cd2ca0",
+      "input_bytes_unchanged": false,
+      "bounded_change": "Only the opening inner documentation comment becomes an ordinary comment so the existing single-source helper can be included inside its existing module scope. Executable helper statements are unchanged."
+    },
+    {
+      "reported_source_map_path": "crates/cairn-cli/tests/../../../flake.lock",
+      "call_site": "crates/cairn-cli/tests/octet_integration.rs:committed_octet_lock_preserves_the_reviewed_source",
+      "canonical_repository_path": "flake.lock",
+      "compiler_environment_binding": "CAIRN_FLAKE_LOCK",
+      "before_blake3": "481f8c8c359f4977fdf457e7605f0b92b450419d64f699ec39b616abfe69ca8f",
+      "after_blake3": "481f8c8c359f4977fdf457e7605f0b92b450419d64f699ec39b616abfe69ca8f",
+      "input_bytes_unchanged": true
+    },
+    {
+      "reported_source_map_path": "crates/cairn-core/src/verified/check_evidence/lattice/../../../../../../fixtures/check-evidence/lattice-cohort.json",
+      "call_site": "crates/cairn-core/src/verified/check_evidence/lattice/tests.rs:cohort",
+      "canonical_repository_path": "fixtures/check-evidence/lattice-cohort.json",
+      "compiler_environment_binding": "CAIRN_LATTICE_COHORT",
+      "before_blake3": "0eb5ba6e8b43b786ed5d93f0c2fbba14914e9f89edefb22f9988b234fd2a1502",
+      "after_blake3": "0eb5ba6e8b43b786ed5d93f0c2fbba14914e9f89edefb22f9988b234fd2a1502",
+      "input_bytes_unchanged": true
+    },
+    {
+      "reported_source_map_path": "crates/cairn-radicle-cob/src/../../../Cargo.lock",
+      "call_site": "crates/cairn-radicle-cob/src/lib.rs:WORKSPACE_LOCKFILE",
+      "canonical_repository_path": "Cargo.lock",
+      "compiler_environment_binding": "CAIRN_WORKSPACE_LOCK",
+      "before_blake3": "c15a58e1c56b1505f74449be3a9277e72e6ecaac8fc7396733d5f6a25833b348",
+      "after_blake3": "c15a58e1c56b1505f74449be3a9277e72e6ecaac8fc7396733d5f6a25833b348",
+      "input_bytes_unchanged": true
+    },
+    {
+      "reported_source_map_path": "crates/cairn-radicle-cob/tests/interop_support/../../../../fixtures/radicle-cob-interoperability/producer/Cargo.lock",
+      "call_site": "crates/cairn-radicle-cob/tests/interop_support/mod.rs:PRODUCER_LOCK_BYTES",
+      "canonical_repository_path": "fixtures/radicle-cob-interoperability/producer/Cargo.lock",
+      "compiler_environment_binding": "CAIRN_INTEROP_PRODUCER_LOCK",
+      "before_blake3": "e77035dd3e1fa6c13f6d1a198f7f9a75068353636cd60b8e3eccf133c49fca5c",
+      "after_blake3": "e77035dd3e1fa6c13f6d1a198f7f9a75068353636cd60b8e3eccf133c49fca5c",
+      "input_bytes_unchanged": true
+    }
+  ],
+  "runtime_validation_performed": false,
+  "octet_after_verdict": "unobserved",
+  "non_claims": [
+    "BLAKE3 observations prove the recorded source byte boundaries only, not compilation, execution or Octet success.",
+    "The integration owner must exercise all changed paths and unchanged required gates after integration.",
+    "No validation, sync, archive, readiness, publication or KVM release claim is established."
+  ]
+}

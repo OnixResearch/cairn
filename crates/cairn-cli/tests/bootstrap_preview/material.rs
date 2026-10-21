@@ -1,4 +1,4 @@
-//! Saved producer observations, shared by CLI and controlled shell replays.
+// Saved producer observations, shared by CLI and controlled shell replays.
 use cairn_core::verified::consumer_bootstrap::{
     BootstrapBounds, BootstrapCohort, BootstrapIdentity, BootstrapSourceArtifact,
     BootstrapSourceBundle, BOOTSTRAP_SCHEMA, MAX_ARTIFACT_BYTES, MAX_TOTAL_BYTES,

@@ -197,3 +197,48 @@ fn maintained_workspace_tests_still_require_executed_passing_summaries() {
         "passed"
     );
 }
+
+#[test]
+fn measured_new_kind_stream_limits_do_not_expand_legacy_profiles() {
+    for (kind, stdout, stderr) in [
+        (CheckKind::CargoTest, MAX_STREAM_BYTES, MAX_STREAM_BYTES),
+        (CheckKind::NixCheck, MAX_STREAM_BYTES, MAX_STREAM_BYTES),
+        (
+            CheckKind::CargoWorkspaceTest,
+            MAX_WORKSPACE_TEST_STREAM_BYTES,
+            MAX_WORKSPACE_TEST_STREAM_BYTES,
+        ),
+        (
+            CheckKind::CargoClippy,
+            MAX_STREAM_BYTES,
+            MAX_CLIPPY_STDERR_BYTES,
+        ),
+        (CheckKind::CargoFmt, MAX_STREAM_BYTES, MAX_STREAM_BYTES),
+        (
+            CheckKind::NixFlakeCheck,
+            MAX_STREAM_BYTES,
+            MAX_FLAKE_CHECK_STDERR_BYTES,
+        ),
+    ] {
+        let (contract, mut profiles, applicability) = if kind == CheckKind::NixCheck {
+            super::tests::nix_fixture()
+        } else {
+            fixture(kind)
+        };
+        profiles[0].bounds.stdout_bytes = stdout;
+        profiles[0].bounds.stderr_bytes = stderr;
+        assert!(admit_plan(&contract, &profiles, &applicability).is_ok());
+        for overflow_stdout in [true, false] {
+            let mut changed = profiles.clone();
+            if overflow_stdout {
+                changed[0].bounds.stdout_bytes = stdout.checked_add(1).unwrap();
+            } else {
+                changed[0].bounds.stderr_bytes = stderr.checked_add(1).unwrap();
+            }
+            assert_eq!(
+                admit_plan(&contract, &changed, &applicability),
+                Err(ProducerIssue::Bounds)
+            );
+        }
+    }
+}

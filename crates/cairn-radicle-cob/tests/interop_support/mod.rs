@@ -20,8 +20,7 @@ pub(crate) const PRODUCER_SOURCE_BYTES: &[u8] =
     include_bytes!("../../../../fixtures/radicle-cob-interoperability/producer/src/main.rs");
 pub(crate) const PRODUCER_MANIFEST_BYTES: &[u8] =
     include_bytes!("../../../../fixtures/radicle-cob-interoperability/producer/Cargo.toml");
-pub(crate) const PRODUCER_LOCK_BYTES: &[u8] =
-    include_bytes!("../../../../fixtures/radicle-cob-interoperability/producer/Cargo.lock");
+pub(crate) const PRODUCER_LOCK_BYTES: &[u8] = include_bytes!(env!("CAIRN_INTEROP_PRODUCER_LOCK"));
 pub(crate) const REFERENCE_STORAGE_SOURCE: &str = include_str!("reference.rs");
 pub(crate) const REFERENCE_EVALUATOR_SOURCE: &str = include_str!("evaluator.rs");
 const PROVENANCE_JSON: &str =

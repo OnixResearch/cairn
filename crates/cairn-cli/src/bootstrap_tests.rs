@@ -1,7 +1,8 @@
 use super::*;
 use std::fs;
-#[path = "../tests/bootstrap_preview/material.rs"]
-mod material;
+mod material {
+    include!(env!("CAIRN_BOOTSTRAP_TEST_MATERIAL"));
+}
 
 // r[verify cairn.consumer_bootstrap.publication]
 // r[verify cairn.consumer_bootstrap.boundary]

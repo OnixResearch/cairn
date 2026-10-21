@@ -3,6 +3,9 @@ let MaximumDeadlineMs = 3600000 in
 let MaximumFlakeCheckDeadlineMs = 10800000 in
 let MaximumTeardownMs = 60000 in
 let MaximumStreamBytes = 1048576 in
+let MaximumWorkspaceTestStreamBytes = 8388608 in
+let MaximumClippyStderrBytes = 8388608 in
+let MaximumFlakeCheckStderrBytes = 67108864 in
 let MaximumDependencyFiles = 64 in
 let MaximumDependencyFileBytes = 16777216 in
 let MaximumDependencyTotalBytes = 67108864 in
@@ -33,12 +36,12 @@ let Label = std.contract.from_predicate (fun value =>
 let PositiveBound = fun maximum => std.contract.from_predicate (fun value =>
   std.is_number value && value == std.number.floor value && value > 0 && value <= maximum
 ) in
-let BoundsFor = fun maximum_deadline => {
+let BoundsFor = fun maximum_deadline maximum_stdout maximum_stderr => {
   id | Label,
   deadline_ms | PositiveBound maximum_deadline,
   teardown_ms | PositiveBound MaximumTeardownMs,
-  stdout_bytes | PositiveBound MaximumStreamBytes,
-  stderr_bytes | PositiveBound MaximumStreamBytes,
+  stdout_bytes | PositiveBound maximum_stdout,
+  stderr_bytes | PositiveBound maximum_stderr,
 } in
 let Profile = {
   schema | std.contract.from_predicate (fun value => value == "cairn.check-profile.v1"),
@@ -55,11 +58,16 @@ let Profile = {
   environment | { _ : String },
   working_root | std.contract.from_predicate (fun value => value == "."),
   bounds | BoundsFor
-    (if kind == "nix_flake_check" then MaximumFlakeCheckDeadlineMs else MaximumDeadlineMs),
+    (if kind == "nix_flake_check" then MaximumFlakeCheckDeadlineMs else MaximumDeadlineMs)
+    (if kind == "cargo_workspace_test" then MaximumWorkspaceTestStreamBytes else MaximumStreamBytes)
+    (if kind == "cargo_workspace_test" then MaximumWorkspaceTestStreamBytes
+      else if kind == "cargo_clippy" then MaximumClippyStderrBytes
+      else if kind == "nix_flake_check" then MaximumFlakeCheckStderrBytes
+      else MaximumStreamBytes),
 } in
 {
   profile = Profile,
-  bounds = BoundsFor MaximumDeadlineMs,
+  bounds = BoundsFor MaximumDeadlineMs MaximumStreamBytes MaximumStreamBytes,
   dependency_projection = DependencyProjection,
   dependency_bounds = {
     maximum_files = MaximumDependencyFiles,

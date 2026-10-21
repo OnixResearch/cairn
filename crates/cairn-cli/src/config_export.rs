@@ -35,7 +35,7 @@ const STAGED_SOURCE: &str = "source.ncl";
 const STAGED_CONTRACTS: &str = "lifecycle-store-contracts.ncl";
 const STAGED_CONTRACT: &str = "selected-contract.ncl";
 const STAGED_OUTPUT: &str = "output.json";
-const CONTRACTS_SOURCE: &str = include_str!("../../../cairn-policy/lifecycle-store-contracts.ncl");
+const CONTRACTS_SOURCE: &str = include_str!(env!("CAIRN_LIFECYCLE_STORE_CONTRACTS"));
 const GENERATED_POLICY_JSON: &str =
     include_str!("../../../cairn-policy/generated/cairn-policy.json");
 const STORE_CONTRACT_FIELD: &str = "StoreIdentitySource";
