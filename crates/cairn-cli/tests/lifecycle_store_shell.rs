@@ -17,6 +17,9 @@ use serde_json::{json, Value};
 const PROJECT_SCHEMA: &str = "cairn.lifecycle-store-project.v1";
 const STORE_SOURCE: &[u8] = b"{ schema = \"cairn.lifecycle-store-source.v1\" }\n";
 const PROJECT_SOURCE: &[u8] = b"{ schema = \"cairn.lifecycle-store-project-source.v1\" }\n";
+// Keep the unknown-boundary fixture outside the CLI's 256-ancestor observation
+// window even when TMPDIR is nested inside another native checkout.
+const UNKNOWN_BOUNDARY_ISOLATION_LEVELS: usize = 512;
 const PROJECT_NON_CLAIMS: &[&str] = &[
     "a project pointer selects one declared store but does not grant lifecycle authority",
     "a direct reference provides read-only discovery and does not satisfy dependencies, gates, evidence, or requirements",
@@ -316,7 +319,10 @@ fn native_root_precedes_pointer_and_unknown_boundary_stays_local() -> Result<(),
             .iter()
             .any(|finding| { finding["code"] == "lifecycle_store.root.project_pointer_stale" })));
 
-    let unrelated = base.join("unrelated");
+    let mut unrelated = base.join("unrelated");
+    for _ in 0..UNKNOWN_BOUNDARY_ISOLATION_LEVELS {
+        unrelated.push("x");
+    }
     let child = unrelated.join("child");
     create_native_root(&unrelated)?;
     fs::create_dir_all(&child)?;

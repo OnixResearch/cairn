@@ -1,0 +1,99 @@
+{
+  "schema": "cairn.unknown-boundary-fixture-isolation.v1",
+  "previous_source": "a538630025b4fa317dd514930f32cdc89e54998c",
+  "original_full_workspace": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+    "command": [
+      "env",
+      "TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53",
+      "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+      "RUSTC_WRAPPER=",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+      "/run/current-system/sw/bin/nix",
+      "develop",
+      "--no-update-lock-file",
+      "-c",
+      "cargo",
+      "test",
+      "--workspace"
+    ],
+    "display_command": "env TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53 PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test --workspace",
+    "timeout_seconds": 600,
+    "operational_timeout": false,
+    "exit_code": 101,
+    "started": "2026-10-21T04:50:17.826745+00:00",
+    "finished": "2026-10-21T04:53:23.453976+00:00",
+    "elapsed_seconds": 185.62724420899758,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/scratch-isolated-cohort/cohort-workspace-tests/stdout.log",
+        "digest": "blake3:762c81e0baa2ec72aa245c5b5cc582daa3550ea9bd07893e5698ec3aaca6c974",
+        "bytes": 42710
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/scratch-isolated-cohort/cohort-workspace-tests/stderr.log",
+        "digest": "blake3:986eca5cbd1c481e6b55b916ad8dbdb325435db3d018da37e5da511e7d9d3c02",
+        "bytes": 4856
+      }
+    ]
+  },
+  "original_failure": "native_root_precedes_pointer_and_unknown_boundary_stays_local: ambient enclosing checkout produced native_root instead of classic_fallback",
+  "accepted_criterion": "cairn.lifecycle_stores.root_resolution.boundary",
+  "unchanged_all_boundary_assertions_after_isolation": {
+    "schema": "chaoscontrol.local-command-observation.v1",
+    "cwd": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+    "command": [
+      "env",
+      "TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53",
+      "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin",
+      "RUSTC_WRAPPER=",
+      "CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target",
+      "CARGO_BUILD_JOBS=2",
+      "CARGO_PROFILE_DEV_DEBUG=0",
+      "CARGO_PROFILE_TEST_DEBUG=0",
+      "CARGO_INCREMENTAL=0",
+      "NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+      "/run/current-system/sw/bin/nix",
+      "develop",
+      "--no-update-lock-file",
+      "-c",
+      "cargo",
+      "test",
+      "-p",
+      "cairn-cli",
+      "--test",
+      "lifecycle_store_shell"
+    ],
+    "display_command": "env TMPDIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/t53 PATH=/run/current-system/sw/bin:/etc/profiles/per-user/brittonr/bin RUSTC_WRAPPER= CARGO_TARGET_DIR=/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/target CARGO_BUILD_JOBS=2 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 'NIX_CONFIG=min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n' /run/current-system/sw/bin/nix develop --no-update-lock-file -c cargo test -p cairn-cli --test lifecycle_store_shell",
+    "timeout_seconds": 1200,
+    "operational_timeout": false,
+    "exit_code": 0,
+    "started": "2026-10-21T05:29:05.310377+00:00",
+    "finished": "2026-10-21T05:29:23.791947+00:00",
+    "elapsed_seconds": 18.481582393986173,
+    "non_claim": "Exit status is not a guest-bug verdict or a report-verdict decision.",
+    "artifacts": [
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-isolated-boundary-fixture-tests/stdout.log",
+        "digest": "blake3:7d79e7d1ad9b3599cdc578583215337fbaabc220db4a581db33af4833cb51114",
+        "bytes": 684
+      },
+      {
+        "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53-proof/role-isolated-boundary-fixture-tests/stderr.log",
+        "digest": "blake3:9328d6f48e6b7086c0d3b410964c7a8aa4a669fb11a87e8c8b4812fcd12fb60e",
+        "bytes": 405
+      }
+    ]
+  },
+  "fixture_blake3": "c7b1c8bc59a32eace787e85fc2f8f4f602e006f2618a98dc48f98bdf09c8a958",
+  "production_discovery_unchanged": true,
+  "host_configuration_unchanged": true,
+  "full_new_cohort_verified": false
+}
