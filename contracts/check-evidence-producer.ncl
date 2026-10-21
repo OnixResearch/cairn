@@ -55,7 +55,15 @@ let Profile = {
   features | Array Label
     | std.contract.from_predicate (fun value =>
       kind == "cargo_test" || std.array.length value == 0),
-  environment | { _ : String },
+  environment | { _ : String }
+    | std.contract.from_predicate (fun values =>
+      std.array.all (fun key =>
+        !std.string.is_match
+          (if kind == "nix_flake_check" && key == "NIX_CONFIG"
+            then "[\\x00-\\x09\\x0b-\\x1f\\x7f]"
+            else "[\\x00-\\x1f\\x7f]")
+          (std.record.get key values)
+      ) (std.record.fields values)),
   working_root | std.contract.from_predicate (fun value => value == "."),
   bounds | BoundsFor
     (if kind == "nix_flake_check" then MaximumFlakeCheckDeadlineMs else MaximumDeadlineMs)

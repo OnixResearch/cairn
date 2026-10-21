@@ -183,10 +183,10 @@ fn validate_profile(p: &CheckProfile) -> Result<(), ProducerIssue> {
                 .bytes()
                 .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
             || v.len() > MAX_TEXT_BYTES
-            || (v.bytes().any(|b| b < 32 || b == 127)
-                && !(p.kind == CheckKind::NixFlakeCheck
-                    && k == "NIX_CONFIG"
-                    && v == FLAKE_CHECK_NIX_CONFIG))
+            || v.bytes().any(|b| {
+                (b < 32 || b == 127)
+                    && !(b == b'\n' && p.kind == CheckKind::NixFlakeCheck && k == "NIX_CONFIG")
+            })
     }) {
         return Err(ProducerIssue::Profile);
     }

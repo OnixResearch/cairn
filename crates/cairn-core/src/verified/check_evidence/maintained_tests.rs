@@ -83,17 +83,23 @@ fn only_new_flake_kind_admits_maintained_three_hour_deadline() {
 }
 
 #[test]
-fn only_exact_reviewed_flake_configuration_admits_newlines() {
+fn only_flake_nix_configuration_admits_lf_without_other_controls() {
     let (contract, mut profiles, applicability) = fixture(CheckKind::NixFlakeCheck);
-    profiles[0]
-        .environment
-        .insert("NIX_CONFIG".into(), FLAKE_CHECK_NIX_CONFIG.into());
-    assert!(admit_plan(&contract, &profiles, &applicability).is_ok());
+    for config in [
+        "min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n",
+        "max-jobs = 2\nkeep-going = true\n",
+    ] {
+        profiles[0]
+            .environment
+            .insert("NIX_CONFIG".into(), config.into());
+        assert!(admit_plan(&contract, &profiles, &applicability).is_ok());
+    }
     for (key, value) in [
-        ("NIX_CONFIG", "min-free = 0\n"),
-        ("NIX_CONFIG", "builders = remote\n"),
-        ("OTHER", FLAKE_CHECK_NIX_CONFIG),
-        ("NIX_CONFIG", "min-free = 0\r\n"),
+        ("OTHER", "max-jobs = 2\n"),
+        ("NIX_CONFIG", "max-jobs = 2\n\0"),
+        ("NIX_CONFIG", "max-jobs = 2\r\n"),
+        ("NIX_CONFIG", "max-jobs = 2\n\x7f"),
+        ("NIX_CONFIG", "max-jobs =\t2\n"),
     ] {
         let mut changed = profiles.clone();
         changed[0].environment.clear();
@@ -105,8 +111,10 @@ fn only_exact_reviewed_flake_configuration_admits_newlines() {
     }
     for kind in [
         CheckKind::CargoTest,
-        CheckKind::CargoClippy,
         CheckKind::NixCheck,
+        CheckKind::CargoWorkspaceTest,
+        CheckKind::CargoClippy,
+        CheckKind::CargoFmt,
     ] {
         let (contract, mut profiles, applicability) = if kind == CheckKind::NixCheck {
             super::tests::nix_fixture()
@@ -115,12 +123,31 @@ fn only_exact_reviewed_flake_configuration_admits_newlines() {
         };
         profiles[0]
             .environment
-            .insert("NIX_CONFIG".into(), FLAKE_CHECK_NIX_CONFIG.into());
+            .insert("NIX_CONFIG".into(), "max-jobs = 2\n".into());
         assert_eq!(
             admit_plan(&contract, &profiles, &applicability),
             Err(ProducerIssue::Profile)
         );
     }
+}
+
+#[test]
+fn multiline_nix_configuration_retains_exact_byte_bound() {
+    let (contract, mut profiles, applicability) = fixture(CheckKind::NixFlakeCheck);
+    let at_bound = format!("{}\n", "x".repeat(MAX_TEXT_BYTES.checked_sub(1).unwrap()));
+    profiles[0]
+        .environment
+        .insert("NIX_CONFIG".into(), at_bound);
+    assert!(admit_plan(&contract, &profiles, &applicability).is_ok());
+    // This has fewer than 4,096 characters but exceeds the unchanged byte limit.
+    let over_bound = format!("{}\n", "é".repeat(MAX_TEXT_BYTES / 2));
+    profiles[0]
+        .environment
+        .insert("NIX_CONFIG".into(), over_bound);
+    assert_eq!(
+        admit_plan(&contract, &profiles, &applicability),
+        Err(ProducerIssue::Profile)
+    );
 }
 
 #[test]

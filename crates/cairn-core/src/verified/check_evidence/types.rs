@@ -17,8 +17,6 @@ pub const MAX_CLIPPY_STDERR_BYTES: u64 = 8 * 1024 * 1024;
 pub const MAX_FLAKE_CHECK_STDERR_BYTES: u64 = 64 * 1024 * 1024;
 pub const MAX_DEADLINE_MS: u64 = 3_600_000;
 pub const MAX_FLAKE_CHECK_DEADLINE_MS: u64 = 10_800_000;
-pub const FLAKE_CHECK_NIX_CONFIG: &str =
-    "min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n";
 pub const MAX_TEARDOWN_MS: u64 = 60_000;
 pub const NON_CLAIMS: [&str; 4] = [
     "a plan does not prove execution or grant authority",
