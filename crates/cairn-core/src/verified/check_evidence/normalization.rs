@@ -83,7 +83,11 @@ fn classify_payload(profile: &CheckProfile, o: &AttemptObservation) -> &'static 
     if !o.execution_observed || o.cache_claimed {
         return "unknown";
     }
-    if !o.payload_passed {
+    let process_check = matches!(
+        profile.kind,
+        CheckKind::CargoFmt | CheckKind::CargoClippy | CheckKind::NixFlakeCheck
+    );
+    if o.payload_passed == process_check {
         return "failed";
     }
     // This vocabulary belongs to the local observation port, not an upstream decoder.
@@ -92,9 +96,14 @@ fn classify_payload(profile: &CheckProfile, o: &AttemptObservation) -> &'static 
         return "blocked";
     }
     let role_matches = match profile.kind {
-        CheckKind::CargoTest => o.role == EvidenceRole::Test && o.executed_tests > 0,
+        CheckKind::CargoTest | CheckKind::CargoWorkspaceTest => {
+            o.role == EvidenceRole::Test && o.executed_tests > 0
+        }
         // A Nix check is a build obligation, not a test-coverage claim.
         CheckKind::NixCheck => o.role == EvidenceRole::Build && o.executed_tests == 0,
+        CheckKind::CargoFmt | CheckKind::CargoClippy | CheckKind::NixFlakeCheck => {
+            o.role == EvidenceRole::ProcessCheck && o.executed_tests == 0
+        }
     };
     if role_matches {
         "passed"

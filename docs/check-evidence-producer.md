@@ -77,9 +77,20 @@ A failed or uncertain attempt has no automatic retry.
 
 ## Profile and observation contracts
 
-The fixed grammars are `cargo_test` and `nix_check`. Neither accepts shell text or arbitrary trailing arguments.
-Cargo selects workspace tests, all targets, an explicit target and feature set, locked offline dependencies, and no default features.
-Nix runs `nix build --offline --no-link --json --file ./check.nix` for the explicit working root.
+The fixed grammars accept no shell text or arbitrary trailing arguments:
+
+| Kind | Exact arguments after the admitted executable | Admitted meaning |
+|---|---|---|
+| `cargo_test` | `test --workspace --all-targets --locked --offline --target TARGET --no-default-features` plus the explicit canonical feature set | Strict test-summary evidence |
+| `nix_check` | `build --offline --no-link --json --file ./check.nix` | Native derivation/output build evidence |
+| `cargo_workspace_test` | `test --workspace --all-targets --locked --no-fail-fast` | Strict test-summary evidence |
+| `cargo_clippy` | `clippy --workspace --all-targets --locked -- -D warnings` | Bounded process check only |
+| `cargo_fmt` | `fmt --all -- --check` | Bounded process check only |
+| `nix_flake_check` | `flake check -L` | Bounded process check only |
+
+All additional kinds require empty features. Their target is an applicability label, not an injected `--target` argument. The workspace-test kind does not add offline or no-default-features options.
+The three process-only kinds retain `process_check` role, false `payload_passed`, null `nix_build`, and zero executed tests. Passing requires an observed successful natural exit, complete streams and teardown, unchanged applicability, and durable publication; independent manifest admission rechecks those facts. They do not claim native build evidence, test coverage, KVM matrix eligibility, oracle truth or release readiness.
+Existing `nix_check` payload admission is unchanged:
 The consumer-owned expression and its inputs belong in the reviewed source projection.
 The native Nix 2.31 derivation/output JSON is admitted independently of process success and retained in the facts artifact.
 Empty, malformed, truncated, duplicate, unsupported or incomplete build payloads cannot produce passing completion rows, even after exit zero.
@@ -88,6 +99,8 @@ A Nix check remains build-only evidence with zero executed-test claims; store re
 Profiles bind a Nix-store executable, byte identity, declared cohort identity, explicit environment, working root, and named bounds.
 The environment is cleared before explicit entries are applied. Profiles must not contain secrets.
 The cohort label is a binding, not independent attestation of a complete tool closure.
+All existing kinds and the additional Cargo kinds retain the 3,600,000 ms deadline maximum. Only `nix_flake_check` admits up to 10,800,000 ms, preserving ChaosControl's already-declared three-hour release bound without increasing any legacy kind's cap. Stream and teardown limits are unchanged. A timeout never passes.
+Environment controls remain rejected except for the exact reviewed `NIX_CONFIG` string `min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n` on `nix_flake_check` only. This is explicit child environment, not a host settings edit.
 Execution rechecks executable bytes before each child and after each result.
 The child working directory refers to the held repository directory through a Linux file descriptor.
 

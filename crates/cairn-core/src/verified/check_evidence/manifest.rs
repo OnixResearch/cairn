@@ -110,7 +110,6 @@ pub fn admit_manifest(
             || observation["execution_observed"] != true
             || observation["teardown_complete"] != true
             || observation["cache_claimed"] != false
-            || observation["payload_passed"] != true
             || observation["producer_identity"]
                 != blake3::hash(LOCAL_EXECUTOR_REVISION.as_bytes())
                     .to_hex()
@@ -147,22 +146,34 @@ pub fn admit_manifest(
 
 fn local_payload_matches(profile: &CheckProfile, observation: &Value, facts: &Value) -> bool {
     let role_matches = match profile.kind {
-        CheckKind::CargoTest => {
+        CheckKind::CargoTest | CheckKind::CargoWorkspaceTest => {
             observation["role"] == "test"
                 && observation["executed_tests"]
                     .as_u64()
                     .is_some_and(|count| count > 0)
+                && observation["payload_passed"] == true
         }
         // r[impl cairn.check_evidence_producer.native_nix_build]
         CheckKind::NixCheck => {
             observation["role"] == "build"
                 && observation["executed_tests"].as_u64() == Some(0)
                 && nix_build_payload_passed(&facts["facts"]["nix_build"])
+                && observation["payload_passed"] == true
+        }
+        CheckKind::CargoFmt | CheckKind::CargoClippy | CheckKind::NixFlakeCheck => {
+            observation["role"] == "process_check"
+                && observation["executed_tests"].as_u64() == Some(0)
+                && observation["payload_passed"] == false
+                && facts["facts"]["nix_build"] == Value::Null
+                && facts["facts"]["natural_exit"] == true
+                && facts["facts"]["exit_code"].as_i64() == Some(0)
+                && facts["facts"]["signal"] == Value::Null
+                && facts["facts"]["process_check_passed"] == true
         }
     };
     role_matches
         && facts["executed_tests"] == observation["executed_tests"]
-        && facts["payload_passed"] == true
+        && facts["payload_passed"] == observation["payload_passed"]
         && facts["facts"]["outcome"] == "exited_zero"
         && facts["facts"]["stdout_truncated"] == false
         && facts["facts"]["stderr_truncated"] == false

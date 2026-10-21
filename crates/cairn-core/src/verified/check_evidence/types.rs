@@ -13,6 +13,9 @@ pub const MAX_FEATURES: usize = 64;
 pub const MAX_ENVIRONMENT: usize = 32;
 pub const MAX_STREAM_BYTES: u64 = 1_048_576;
 pub const MAX_DEADLINE_MS: u64 = 3_600_000;
+pub const MAX_FLAKE_CHECK_DEADLINE_MS: u64 = 10_800_000;
+pub const FLAKE_CHECK_NIX_CONFIG: &str =
+    "min-free = 0\nbuilders =\nsecret-key-files =\nmax-jobs = 1\n";
 pub const MAX_TEARDOWN_MS: u64 = 60_000;
 pub const NON_CLAIMS: [&str; 4] = [
     "a plan does not prove execution or grant authority",
@@ -26,6 +29,10 @@ pub const NON_CLAIMS: [&str; 4] = [
 pub enum CheckKind {
     CargoTest,
     NixCheck,
+    CargoWorkspaceTest,
+    CargoClippy,
+    CargoFmt,
+    NixFlakeCheck,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -132,6 +139,7 @@ pub enum EvidenceRole {
     Test,
     Build,
     StrictLint,
+    ProcessCheck,
 }
 
 /// Normalized facts from an application-owned execution/admission adapter.

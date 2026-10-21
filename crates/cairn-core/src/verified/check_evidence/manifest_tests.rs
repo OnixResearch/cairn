@@ -11,6 +11,7 @@ fn fixture_for(kind: CheckKind) -> (CheckEvidencePlan, String, Value, BTreeMap<S
     let (contract, profiles, applicability) = match kind {
         CheckKind::CargoTest => super::tests::fixture(),
         CheckKind::NixCheck => super::tests::nix_fixture(),
+        _ => super::maintained_tests::fixture(kind),
     };
     let plan = admit_plan(&contract, &profiles, &applicability).unwrap();
     let mut observation = super::tests::observation(&plan);
@@ -18,15 +19,31 @@ fn fixture_for(kind: CheckKind) -> (CheckEvidencePlan, String, Value, BTreeMap<S
         observation.role = EvidenceRole::Build;
         observation.executed_tests = 0;
     }
+    let process_check = matches!(
+        kind,
+        CheckKind::CargoFmt | CheckKind::CargoClippy | CheckKind::NixFlakeCheck
+    );
+    if process_check {
+        observation.role = EvidenceRole::ProcessCheck;
+        observation.executed_tests = 0;
+        observation.payload_passed = false;
+    }
     observation.producer_identity = blake3::hash(LOCAL_EXECUTOR_REVISION.as_bytes())
         .to_hex()
         .to_string();
     let attempt = observation.attempt_hash.clone();
     let mut facts = json!({"schema":"cairn.local-check-facts.v1", "producer_revision":LOCAL_EXECUTOR_REVISION, "attempt_hash":attempt,
-        "plan_hash":plan.identity(), "check_id":"tests", "executed_tests":observation.executed_tests, "payload_passed":true,
+        "plan_hash":plan.identity(), "check_id":"tests", "executed_tests":observation.executed_tests, "payload_passed":observation.payload_passed,
         "facts":{"outcome":"exited_zero","stdout_truncated":false,"stderr_truncated":false}});
     if kind == CheckKind::NixCheck {
         facts["facts"]["nix_build"] = super::tests::native_nix_payload();
+    }
+    if process_check {
+        facts["facts"]["natural_exit"] = json!(true);
+        facts["facts"]["exit_code"] = json!(0);
+        facts["facts"]["signal"] = Value::Null;
+        facts["facts"]["nix_build"] = Value::Null;
+        facts["facts"]["process_check_passed"] = json!(true);
     }
     observation.evidence_hash = canonical_json_hash(&facts);
     let normalized = normalize_attempt(&plan, &observation).unwrap();
@@ -255,5 +272,46 @@ fn rehashed_native_nix_payload_cannot_override_failure_truncation_or_test_claims
             admit_manifest(&plan, &attempt, &changed_manifest, &changed_artifacts).is_err(),
             "admitted {field}"
         );
+    }
+}
+
+#[test]
+fn process_manifests_reject_rehashed_incomplete_exit_and_fabricated_payloads() {
+    for kind in [
+        CheckKind::CargoFmt,
+        CheckKind::CargoClippy,
+        CheckKind::NixFlakeCheck,
+    ] {
+        let (plan, attempt, manifest, artifacts) = fixture_for(kind);
+        assert!(admit_manifest(&plan, &attempt, &manifest, &artifacts).is_ok());
+        let facts: Value = serde_json::from_slice(&artifacts["tests.facts.json"]).unwrap();
+        let observations: Value = serde_json::from_slice(&artifacts["observations.json"]).unwrap();
+        for (pointer, value) in [
+            ("/payload_passed", json!(true)),
+            ("/executed_tests", json!(1)),
+            ("/facts/nix_build", super::tests::native_nix_payload()),
+            ("/facts/natural_exit", json!(false)),
+            ("/facts/exit_code", json!(1)),
+            ("/facts/signal", json!(9)),
+            ("/facts/process_check_passed", json!(false)),
+            ("/facts/stdout_truncated", json!(true)),
+            ("/facts/stderr_truncated", json!(true)),
+        ] {
+            let mut changed_facts = facts.clone();
+            *changed_facts.pointer_mut(pointer).unwrap() = value;
+            let mut changed_observations = observations.clone();
+            let mut changed_manifest = manifest.clone();
+            let mut changed_artifacts = artifacts.clone();
+            rebind(
+                &mut changed_manifest,
+                &mut changed_artifacts,
+                &mut changed_observations,
+                &changed_facts,
+            );
+            assert!(
+                admit_manifest(&plan, &attempt, &changed_manifest, &changed_artifacts).is_err(),
+                "admitted {pointer}"
+            );
+        }
     }
 }

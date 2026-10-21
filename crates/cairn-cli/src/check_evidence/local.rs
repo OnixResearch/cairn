@@ -188,7 +188,7 @@ pub(super) fn observation(
                 Disposition::OutputLimitExceeded(_) => ProcessOutcome::OutputOverflow,
             };
             let (payload, tests, nix_build) = match profile.kind {
-                CheckKind::CargoTest => {
+                CheckKind::CargoTest | CheckKind::CargoWorkspaceTest => {
                     let coverage = cargo_coverage(&output.stdout.bytes);
                     (coverage.passed, coverage.executed, Value::Null)
                 }
@@ -200,6 +200,9 @@ pub(super) fn observation(
                         native.is_some() && !output.stdout.truncated && !output.stderr.truncated;
                     (passed, 0, native.unwrap_or(Value::Null))
                 }
+                CheckKind::CargoFmt | CheckKind::CargoClippy | CheckKind::NixFlakeCheck => {
+                    (false, 0, Value::Null)
+                }
             };
             let facts = json!({"outcome": outcome, "exit_code": output.exit_code, "signal": output.signal,
                 "stdout_hash": blake3::hash(&output.stdout.bytes).to_hex().to_string(),
@@ -207,6 +210,9 @@ pub(super) fn observation(
                 "stdout_observed_bytes": output.stdout.observed_bytes, "stderr_observed_bytes": output.stderr.observed_bytes,
                 "stdout_truncated": output.stdout.truncated, "stderr_truncated": output.stderr.truncated,
                 "natural_exit": output.completion == Completion::Exited,
+                "process_check_passed": output.completion == Completion::Exited
+                    && outcome == ProcessOutcome::ExitedZero
+                    && !output.stdout.truncated && !output.stderr.truncated,
                 "nix_build": nix_build});
             (outcome, payload, tests, true, facts)
         }
@@ -217,6 +223,15 @@ pub(super) fn observation(
             false,
             json!({"outcome":"infrastructure_or_teardown_unknown"}),
         ),
+    };
+    let process_check = matches!(
+        profile.kind,
+        CheckKind::CargoFmt | CheckKind::CargoClippy | CheckKind::NixFlakeCheck
+    );
+    let passed = if process_check {
+        facts["process_check_passed"] == true
+    } else {
+        payload
     };
     let evidence = json!({"schema":"cairn.local-check-facts.v1", "producer_revision": PRODUCER,
         "attempt_hash": attempt, "plan_hash": plan.identity(), "check_id": profile.check_id, "facts": facts,
@@ -231,7 +246,7 @@ pub(super) fn observation(
         tool_cohort_hash: profile.tool_cohort_hash.clone(),
         command_hash: authoritative_command_hash(&profile_command(profile)),
         producer_identity: blake3::hash(PRODUCER.as_bytes()).to_hex().to_string(),
-        native_status: if outcome == ProcessOutcome::ExitedZero && payload {
+        native_status: if outcome == ProcessOutcome::ExitedZero && passed {
             "passed"
         } else {
             "non_passing"
@@ -241,8 +256,11 @@ pub(super) fn observation(
             "local summaries do not prove test-oracle truth or sandboxing".into(),
         ],
         role: match profile.kind {
-            CheckKind::CargoTest => EvidenceRole::Test,
+            CheckKind::CargoTest | CheckKind::CargoWorkspaceTest => EvidenceRole::Test,
             CheckKind::NixCheck => EvidenceRole::Build,
+            CheckKind::CargoFmt | CheckKind::CargoClippy | CheckKind::NixFlakeCheck => {
+                EvidenceRole::ProcessCheck
+            }
         },
         outcome,
         payload_passed: payload,

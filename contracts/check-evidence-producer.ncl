@@ -1,5 +1,6 @@
 # Cairn-owned profile authoring. This contract does not authorize execution.
 let MaximumDeadlineMs = 3600000 in
+let MaximumFlakeCheckDeadlineMs = 10800000 in
 let MaximumTeardownMs = 60000 in
 let MaximumStreamBytes = 1048576 in
 let MaximumDependencyFiles = 64 in
@@ -32,9 +33,9 @@ let Label = std.contract.from_predicate (fun value =>
 let PositiveBound = fun maximum => std.contract.from_predicate (fun value =>
   std.is_number value && value == std.number.floor value && value > 0 && value <= maximum
 ) in
-let Bounds = {
+let BoundsFor = fun maximum_deadline => {
   id | Label,
-  deadline_ms | PositiveBound MaximumDeadlineMs,
+  deadline_ms | PositiveBound maximum_deadline,
   teardown_ms | PositiveBound MaximumTeardownMs,
   stdout_bytes | PositiveBound MaximumStreamBytes,
   stderr_bytes | PositiveBound MaximumStreamBytes,
@@ -42,19 +43,23 @@ let Bounds = {
 let Profile = {
   schema | std.contract.from_predicate (fun value => value == "cairn.check-profile.v1"),
   check_id | Label,
-  kind | std.contract.from_predicate (fun value => value == "cargo_test" || value == "nix_check"),
+  kind | std.contract.from_predicate (fun value =>
+    std.array.any (fun kind => value == kind) ["cargo_test", "nix_check", "cargo_workspace_test", "cargo_clippy", "cargo_fmt", "nix_flake_check"]),
   executable | String,
   executable_hash | Digest,
   tool_cohort_hash | Digest,
   target | Label,
-  features | Array Label,
+  features | Array Label
+    | std.contract.from_predicate (fun value =>
+      kind == "cargo_test" || std.array.length value == 0),
   environment | { _ : String },
   working_root | std.contract.from_predicate (fun value => value == "."),
-  bounds | Bounds,
+  bounds | BoundsFor
+    (if kind == "nix_flake_check" then MaximumFlakeCheckDeadlineMs else MaximumDeadlineMs),
 } in
 {
   profile = Profile,
-  bounds = Bounds,
+  bounds = BoundsFor MaximumDeadlineMs,
   dependency_projection = DependencyProjection,
   dependency_bounds = {
     maximum_files = MaximumDependencyFiles,

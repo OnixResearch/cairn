@@ -68,6 +68,8 @@ pub use types::*;
 #[cfg(test)]
 mod kiln_tests;
 #[cfg(test)]
+mod maintained_tests;
+#[cfg(test)]
 mod manifest_tests;
 #[cfg(test)]
 mod tests;

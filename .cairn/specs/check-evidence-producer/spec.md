@@ -116,3 +116,20 @@ The producer MUST NOT promote an evaluated value, failing payload, process exit 
 - GIVEN zero exit with an empty, unsupported, incomplete, or non-build value, or a failed, timed-out, cancelled, or overflowing build
 - WHEN the producer evaluates and publishes the attempt
 - THEN the affected completion row is non-passing and no complete manifest is admitted
+
+### Requirement: Exact maintained consumer command profiles
+r[cairn.check_evidence_producer.maintained_consumer_commands] The producer MUST support only the closed additional vectors `cargo test --workspace --all-targets --locked --no-fail-fast`, `cargo clippy --workspace --all-targets --locked -- -D warnings`, `cargo fmt --all -- --check`, and `nix flake check -L`, with immutable explicit executable identities, explicit environment, empty features and unchanged applicability, dependency, prerequisite and publication bindings.
+Formatting, Clippy and flake checks MUST retain process-check-only evidence, false native payload admission and zero executed tests. Workspace tests MUST retain strict test-summary admission. Existing native Nix build admission MUST remain unchanged.
+Only the new flake-check kind MAY admit the maintained 10,800,000 ms deadline; every other kind MUST retain the 3,600,000 ms maximum, and all stream and teardown limits MUST remain unchanged. Only the exact reviewed four-line NIX_CONFIG value MAY carry newlines, only on the flake-check kind; no host configuration is modified.
+
+#### Scenario: Maintained checks reach completion without invented evidence
+- GIVEN exact reviewed profiles and a fully observed, unchanged source and dependency set
+- WHEN each bounded command succeeds with complete natural-exit and teardown observations
+- THEN completion and independent manifest admission preserve command identities and role distinctions
+- AND process checks supply no native build payload or test-coverage claims
+
+#### Scenario: Unsupported commands, observations and limits fail closed
+- GIVEN altered arguments, nonempty features, forged payload or coverage, incomplete process observations, a failed process, or exceeded kind-specific bounds
+- WHEN planning, normalization or manifest verification admits the attempt
+- THEN the affected command cannot satisfy completion
+

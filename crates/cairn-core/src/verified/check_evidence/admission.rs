@@ -131,8 +131,13 @@ pub fn valid_applicability(a: &Applicability) -> bool {
 
 fn validate_profile(p: &CheckProfile) -> Result<(), ProducerIssue> {
     let b = &p.bounds;
+    let maximum_deadline = if p.kind == CheckKind::NixFlakeCheck {
+        MAX_FLAKE_CHECK_DEADLINE_MS
+    } else {
+        MAX_DEADLINE_MS
+    };
     if b.deadline_ms == 0
-        || b.deadline_ms > MAX_DEADLINE_MS
+        || b.deadline_ms > maximum_deadline
         || b.teardown_ms == 0
         || b.teardown_ms > MAX_TEARDOWN_MS
         || b.stdout_bytes == 0
@@ -154,7 +159,7 @@ fn validate_profile(p: &CheckProfile) -> Result<(), ProducerIssue> {
         || !canonical(&p.features)
         || !p.features.iter().all(|s| label(s))
         || !valid_executable(&p.executable, p.kind)
-        || (p.kind == CheckKind::NixCheck && !p.features.is_empty())
+        || (p.kind != CheckKind::CargoTest && !p.features.is_empty())
     {
         return Err(ProducerIssue::Profile);
     }
@@ -167,7 +172,10 @@ fn validate_profile(p: &CheckProfile) -> Result<(), ProducerIssue> {
                 .bytes()
                 .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
             || v.len() > MAX_TEXT_BYTES
-            || v.bytes().any(|b| b < 32 || b == 127)
+            || (v.bytes().any(|b| b < 32 || b == 127)
+                && !(p.kind == CheckKind::NixFlakeCheck
+                    && k == "NIX_CONFIG"
+                    && v == FLAKE_CHECK_NIX_CONFIG))
     }) {
         return Err(ProducerIssue::Profile);
     }
@@ -176,8 +184,11 @@ fn validate_profile(p: &CheckProfile) -> Result<(), ProducerIssue> {
 
 fn valid_executable(value: &str, kind: CheckKind) -> bool {
     let suffix = match kind {
-        CheckKind::CargoTest => "/bin/cargo",
-        CheckKind::NixCheck => "/bin/nix",
+        CheckKind::CargoTest
+        | CheckKind::CargoWorkspaceTest
+        | CheckKind::CargoClippy
+        | CheckKind::CargoFmt => "/bin/cargo",
+        CheckKind::NixCheck | CheckKind::NixFlakeCheck => "/bin/nix",
     };
     value.len() <= MAX_TEXT_BYTES
         && value.starts_with("/nix/store/")
@@ -220,6 +231,38 @@ pub fn profile_command(p: &CheckProfile) -> Vec<String> {
             "--json".into(),
             "--file".into(),
             "./check.nix".into(),
+        ],
+        // r[impl cairn.check_evidence_producer.maintained_consumer_commands]
+        CheckKind::CargoWorkspaceTest => vec![
+            p.executable.clone(),
+            "test".into(),
+            "--workspace".into(),
+            "--all-targets".into(),
+            "--locked".into(),
+            "--no-fail-fast".into(),
+        ],
+        CheckKind::CargoClippy => vec![
+            p.executable.clone(),
+            "clippy".into(),
+            "--workspace".into(),
+            "--all-targets".into(),
+            "--locked".into(),
+            "--".into(),
+            "-D".into(),
+            "warnings".into(),
+        ],
+        CheckKind::CargoFmt => vec![
+            p.executable.clone(),
+            "fmt".into(),
+            "--all".into(),
+            "--".into(),
+            "--check".into(),
+        ],
+        CheckKind::NixFlakeCheck => vec![
+            p.executable.clone(),
+            "flake".into(),
+            "check".into(),
+            "-L".into(),
         ],
     }
 }
