@@ -1,0 +1,384 @@
+{
+  "bootstrap_cli": {
+    "path": "/home/brittonr/.cargo-target/debug/cairn",
+    "digest": "blake3:00aba5813a5c52bcf7409a22d390cb71f06d1f86dc87686bf5dbac8adfb59dbd",
+    "non_claim": "Bootstrap compatibility tool for foundation gates, not the verified new production cohort."
+  },
+  "gates": {
+    "proposal": {
+      "argv": [
+        "/home/brittonr/.cargo-target/debug/cairn",
+        "gate",
+        "proposal",
+        "fix-downstream-mcp-readiness",
+        "--root",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+        "--policy",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/cairn-policy/generated/cairn-policy.json"
+      ],
+      "exit_code": 0,
+      "report": {
+        "acceptance_ids": [],
+        "change": "fix-downstream-mcp-readiness",
+        "evidence_summary": {
+          "docs_only": 0,
+          "fixture": 0,
+          "formal": 0,
+          "mode": "advisory",
+          "model": 0,
+          "probe": 0,
+          "property": 0
+        },
+        "input_hash": "4f23c8a24bf3d2af734db7f11d51d67b073393aea11b382c85283c9ec743cdbd",
+        "issues": [],
+        "layout": "cairn",
+        "non_claims": [
+          "workflow state proves only the selected policy graph and observed structural artifact facts",
+          "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+          "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+          "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+        ],
+        "policy": "cairn-default",
+        "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+        "policy_selection": {
+          "blake3": "7a67802377005c18ebded42899e7f564f5d87087b6c14ca70464b35886f340a9",
+          "installation_receipt": false,
+          "locator": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/cairn-policy/generated/cairn-policy.json",
+          "source": "explicit"
+        },
+        "probe_evidence": null,
+        "profile_identity_hash": "320e10f205fb8ece1f422fce74ac52bc6bbfed68a956f8d6ecc39cc8eb81196e",
+        "receipt_hash": "d6bb0b0fb6552b33a56b8ff768c4612a4fb95813f11419f4a950b38f16646094",
+        "review_receipt_hashes": [],
+        "spec_effect": "delta",
+        "stage": "proposal",
+        "substance": [
+          {
+            "checkbox_tasks": 0,
+            "kind": "proposal",
+            "malformed_dependency_markers": 0,
+            "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/.cairn/changes/fix-downstream-mcp-readiness/proposal.md",
+            "requirement_blocks": 0,
+            "scenario_blocks": 0,
+            "substantive_lines": 6,
+            "substantive_requirement_blocks": 0,
+            "substantive_tasks": 0,
+            "task_done": 0,
+            "task_in_progress": 0,
+            "task_todo": 0
+          }
+        ],
+        "task_ordering": null,
+        "valid": true,
+        "verdict": "PASS",
+        "workflow_profile": "spec-driven",
+        "workflow_profile_compatibility_fallback": false,
+        "workflow_profile_source": "change_create",
+        "workflow_profile_version": 1
+      }
+    },
+    "design": {
+      "argv": [
+        "/home/brittonr/.cargo-target/debug/cairn",
+        "gate",
+        "design",
+        "fix-downstream-mcp-readiness",
+        "--root",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+        "--policy",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/cairn-policy/generated/cairn-policy.json"
+      ],
+      "exit_code": 0,
+      "report": {
+        "acceptance_ids": [],
+        "change": "fix-downstream-mcp-readiness",
+        "evidence_summary": {
+          "docs_only": 0,
+          "fixture": 0,
+          "formal": 0,
+          "mode": "advisory",
+          "model": 0,
+          "probe": 0,
+          "property": 0
+        },
+        "input_hash": "d35b68b49c38eb764c8634a384708ad9a872cd28ad31d66112c8f31211f3a38d",
+        "issues": [],
+        "layout": "cairn",
+        "non_claims": [
+          "workflow state proves only the selected policy graph and observed structural artifact facts",
+          "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+          "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+          "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+        ],
+        "policy": "cairn-default",
+        "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+        "policy_selection": {
+          "blake3": "7a67802377005c18ebded42899e7f564f5d87087b6c14ca70464b35886f340a9",
+          "installation_receipt": false,
+          "locator": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/cairn-policy/generated/cairn-policy.json",
+          "source": "explicit"
+        },
+        "probe_evidence": null,
+        "profile_identity_hash": "320e10f205fb8ece1f422fce74ac52bc6bbfed68a956f8d6ecc39cc8eb81196e",
+        "receipt_hash": "7b55084c2afd08ee1a8e4b69ab555f38113b08ce8ea5b1d5e04f6988bebbbc28",
+        "review_receipt_hashes": [],
+        "spec_effect": "delta",
+        "stage": "design",
+        "substance": [
+          {
+            "checkbox_tasks": 0,
+            "kind": "design",
+            "malformed_dependency_markers": 0,
+            "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/.cairn/changes/fix-downstream-mcp-readiness/design.md",
+            "requirement_blocks": 0,
+            "scenario_blocks": 0,
+            "substantive_lines": 6,
+            "substantive_requirement_blocks": 0,
+            "substantive_tasks": 0,
+            "task_done": 0,
+            "task_in_progress": 0,
+            "task_todo": 0
+          },
+          {
+            "checkbox_tasks": 0,
+            "kind": "proposal",
+            "malformed_dependency_markers": 0,
+            "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/.cairn/changes/fix-downstream-mcp-readiness/proposal.md",
+            "requirement_blocks": 0,
+            "scenario_blocks": 0,
+            "substantive_lines": 6,
+            "substantive_requirement_blocks": 0,
+            "substantive_tasks": 0,
+            "task_done": 0,
+            "task_in_progress": 0,
+            "task_todo": 0
+          },
+          {
+            "checkbox_tasks": 0,
+            "kind": "delta_spec",
+            "malformed_dependency_markers": 0,
+            "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/.cairn/changes/fix-downstream-mcp-readiness/specs/release-consumer/spec.md",
+            "requirement_blocks": 1,
+            "scenario_blocks": 3,
+            "substantive_lines": 10,
+            "substantive_requirement_blocks": 1,
+            "substantive_tasks": 0,
+            "task_done": 0,
+            "task_in_progress": 0,
+            "task_todo": 0
+          }
+        ],
+        "task_ordering": null,
+        "valid": true,
+        "verdict": "PASS",
+        "workflow_profile": "spec-driven",
+        "workflow_profile_compatibility_fallback": false,
+        "workflow_profile_source": "change_create",
+        "workflow_profile_version": 1
+      }
+    },
+    "tasks": {
+      "argv": [
+        "/home/brittonr/.cargo-target/debug/cairn",
+        "gate",
+        "tasks",
+        "fix-downstream-mcp-readiness",
+        "--root",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53",
+        "--policy",
+        "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/cairn-policy/generated/cairn-policy.json"
+      ],
+      "exit_code": 0,
+      "report": {
+        "acceptance_ids": [],
+        "change": "fix-downstream-mcp-readiness",
+        "evidence_summary": {
+          "docs_only": 0,
+          "fixture": 0,
+          "formal": 0,
+          "mode": "advisory",
+          "model": 0,
+          "probe": 0,
+          "property": 0
+        },
+        "input_hash": "d23abd544b945c17bcf62ce9104e85b85d48a1f7d40ac0fb889e510dc8336d00",
+        "issues": [],
+        "layout": "cairn",
+        "non_claims": [
+          "workflow state proves only the selected policy graph and observed structural artifact facts",
+          "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+          "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+          "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+        ],
+        "policy": "cairn-default",
+        "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+        "policy_selection": {
+          "blake3": "7a67802377005c18ebded42899e7f564f5d87087b6c14ca70464b35886f340a9",
+          "installation_receipt": false,
+          "locator": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/cairn-policy/generated/cairn-policy.json",
+          "source": "explicit"
+        },
+        "probe_evidence": {
+          "declarations_present": false,
+          "probes": []
+        },
+        "profile_identity_hash": "320e10f205fb8ece1f422fce74ac52bc6bbfed68a956f8d6ecc39cc8eb81196e",
+        "receipt_hash": "6930d57f133e78a68a34869cf78d3364d350e2ec6060928b52780ffd9c08231a",
+        "review_receipt_hashes": [],
+        "spec_effect": "delta",
+        "stage": "tasks",
+        "substance": [
+          {
+            "checkbox_tasks": 0,
+            "kind": "design",
+            "malformed_dependency_markers": 0,
+            "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/.cairn/changes/fix-downstream-mcp-readiness/design.md",
+            "requirement_blocks": 0,
+            "scenario_blocks": 0,
+            "substantive_lines": 6,
+            "substantive_requirement_blocks": 0,
+            "substantive_tasks": 0,
+            "task_done": 0,
+            "task_in_progress": 0,
+            "task_todo": 0
+          },
+          {
+            "checkbox_tasks": 0,
+            "kind": "proposal",
+            "malformed_dependency_markers": 0,
+            "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/.cairn/changes/fix-downstream-mcp-readiness/proposal.md",
+            "requirement_blocks": 0,
+            "scenario_blocks": 0,
+            "substantive_lines": 6,
+            "substantive_requirement_blocks": 0,
+            "substantive_tasks": 0,
+            "task_done": 0,
+            "task_in_progress": 0,
+            "task_todo": 0
+          },
+          {
+            "checkbox_tasks": 0,
+            "kind": "delta_spec",
+            "malformed_dependency_markers": 0,
+            "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/.cairn/changes/fix-downstream-mcp-readiness/specs/release-consumer/spec.md",
+            "requirement_blocks": 1,
+            "scenario_blocks": 3,
+            "substantive_lines": 10,
+            "substantive_requirement_blocks": 1,
+            "substantive_tasks": 0,
+            "task_done": 0,
+            "task_in_progress": 0,
+            "task_todo": 0
+          },
+          {
+            "checkbox_tasks": 4,
+            "kind": "tasks",
+            "malformed_dependency_markers": 0,
+            "path": "/home/brittonr/git/OnixResearch/chaoscontrol/target/cairn-mcp53/.cairn/changes/fix-downstream-mcp-readiness/tasks.md",
+            "requirement_blocks": 0,
+            "scenario_blocks": 0,
+            "substantive_lines": 4,
+            "substantive_requirement_blocks": 0,
+            "substantive_tasks": 4,
+            "task_done": 0,
+            "task_in_progress": 0,
+            "task_todo": 4
+          }
+        ],
+        "task_ordering": {
+          "active": true,
+          "edges": [
+            {
+              "predecessor": "selection",
+              "task": "producer"
+            },
+            {
+              "predecessor": "foundation",
+              "task": "selection"
+            },
+            {
+              "predecessor": "producer",
+              "task": "verification"
+            }
+          ],
+          "issues": [],
+          "nodes": [
+            {
+              "blocked_by": [],
+              "blocks": [
+                "selection"
+              ],
+              "id": "foundation",
+              "line": 3,
+              "predecessors": [],
+              "ready": true,
+              "state": "todo"
+            },
+            {
+              "blocked_by": [
+                "selection"
+              ],
+              "blocks": [
+                "verification"
+              ],
+              "id": "producer",
+              "line": 8,
+              "predecessors": [
+                "selection"
+              ],
+              "ready": false,
+              "state": "todo"
+            },
+            {
+              "blocked_by": [
+                "foundation"
+              ],
+              "blocks": [
+                "producer"
+              ],
+              "id": "selection",
+              "line": 7,
+              "predecessors": [
+                "foundation"
+              ],
+              "ready": false,
+              "state": "todo"
+            },
+            {
+              "blocked_by": [
+                "producer"
+              ],
+              "blocks": [],
+              "id": "verification",
+              "line": 9,
+              "predecessors": [
+                "producer"
+              ],
+              "ready": false,
+              "state": "todo"
+            }
+          ],
+          "order": [
+            "foundation",
+            "selection",
+            "producer",
+            "verification"
+          ],
+          "ready_tasks": [
+            "foundation"
+          ],
+          "valid": true
+        },
+        "valid": true,
+        "verdict": "PASS",
+        "workflow_profile": "spec-driven",
+        "workflow_profile_compatibility_fallback": false,
+        "workflow_profile_source": "change_create",
+        "workflow_profile_version": 1
+      }
+    }
+  },
+  "reused_consumer_implementation": "Existing change/consumer-release-selection-20261016 uncommitted scoped selection implementation; source transport and unrelated replay edits not imported.",
+  "new_request": "fix cairn mcp",
+  "scope": "One MCP-specific correction; preserve all acceptance criteria and unrelated replay/host restrictions."
+}
