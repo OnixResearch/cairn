@@ -1,0 +1,7 @@
+{
+  "TMPDIR": "/home/brittonr/mantle-cairn-finish/tmp/csr",
+  "prior_failed_check": "traceability coverage: two unreferenced policy licensing requirements and not-yet-synced source-review delta",
+  "implementation_changed": false,
+  "license_inventory_and_traceability_changed": true,
+  "release_authority": false
+}

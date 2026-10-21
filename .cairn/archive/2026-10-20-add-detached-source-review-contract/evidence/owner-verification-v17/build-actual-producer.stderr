@@ -1,0 +1,15 @@
+warning: not writing modified lock file of flake 'path:/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020':
+• Updated input 'octet':
+    'github:OnixResearch/octet/2f8213a88781d9d38bb81319d06a50805d48ccd3?narHash=sha256-OvqB00mDIsGDOcuK5jvPJUModVz9WbIBuM/l06TABHc%3D' (2026-07-07)
+  → 'git+ssh://git@github.com/OnixResearch/octet.git?ref=refs/mantle-source/pinned-2f8213&rev=2f8213a88781d9d38bb81319d06a50805d48ccd3' (2026-07-07)
+   Compiling rand v0.8.7
+   Compiling num-bigint-dig v0.8.6
+   Compiling rsa v0.9.10
+   Compiling ssh-key v0.6.7
+   Compiling ssh-agent-lib v0.5.2
+   Compiling radicle-crypto v0.17.0
+   Compiling radicle-cob v0.20.0
+   Compiling onix-radicle-cob-git-store v0.1.0 (/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020/vendor/radicle-cob-git-store)
+   Compiling onix-cairn-radicle-cob v0.1.0 (/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020/crates/cairn-radicle-cob)
+   Compiling cairn-cli v0.1.0 (/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020/crates/cairn-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 35.85s

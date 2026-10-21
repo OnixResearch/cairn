@@ -1,0 +1,438 @@
+{
+  "records": [
+    {
+      "label": "format-packages",
+      "command": [
+        "nix",
+        "develop",
+        "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+        "--override-input",
+        "octet",
+        "git+ssh://git@github.com/OnixResearch/octet.git?rev=2f8213a88781d9d38bb81319d06a50805d48ccd3",
+        "--no-write-lock-file",
+        "--command",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 13.479921080172062
+    },
+    {
+      "label": "compile-license-boundary",
+      "command": [
+        "nix",
+        "develop",
+        "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+        "--override-input",
+        "octet",
+        "git+ssh://git@github.com/OnixResearch/octet.git?rev=2f8213a88781d9d38bb81319d06a50805d48ccd3",
+        "--no-write-lock-file",
+        "--command",
+        "rustc",
+        "--edition=2024",
+        "tools/check-license-boundary.rs",
+        "-o",
+        "/home/brittonr/mantle-cairn-finish/logs/finish-integrated-20261018/cairn-source-review-main-acceptance-v17/license-boundary"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 11.891106272116303
+    },
+    {
+      "label": "license-boundary",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/logs/finish-integrated-20261018/cairn-source-review-main-acceptance-v17/license-boundary",
+        "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.0023074420168995857
+    },
+    {
+      "label": "license-missing-pinned-blob",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/logs/finish-integrated-20261018/cairn-source-review-main-acceptance-v17/license-boundary",
+        "/home/brittonr/mantle-cairn-finish/logs/finish-integrated-20261018/cairn-source-review-main-acceptance-v17/license-negative"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 1,
+      "expected": 1,
+      "elapsed_s": 0.0019920673221349716
+    },
+    {
+      "label": "native-validate-before-sync",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "validate",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.4250643327832222
+    },
+    {
+      "label": "native-gate-proposal",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "gate",
+        "proposal",
+        "add-detached-source-review-contract",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.11623264569789171
+    },
+    {
+      "label": "native-gate-design",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "gate",
+        "design",
+        "add-detached-source-review-contract",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.11735391151160002
+    },
+    {
+      "label": "native-gate-tasks",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "gate",
+        "tasks",
+        "add-detached-source-review-contract",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.11801812332123518
+    },
+    {
+      "label": "native-sync-preview",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "sync",
+        "add-detached-source-review-contract",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.3094923123717308
+    },
+    {
+      "label": "native-sync-execute",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "sync",
+        "add-detached-source-review-contract",
+        "--root",
+        ".",
+        "--execute"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.3361279694363475
+    },
+    {
+      "label": "native-validate-after-sync",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "validate",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.4241342982277274
+    },
+    {
+      "label": "traceability-coverage",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "traceability",
+        "coverage",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.9641737937927246
+    },
+    {
+      "label": "workspace-behavior",
+      "command": [
+        "nix",
+        "develop",
+        "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+        "--override-input",
+        "octet",
+        "git+ssh://git@github.com/OnixResearch/octet.git?rev=2f8213a88781d9d38bb81319d06a50805d48ccd3",
+        "--no-write-lock-file",
+        "--command",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--workspace",
+        "--lib",
+        "--tests"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 889.481796358712
+    },
+    {
+      "label": "strict-clippy",
+      "command": [
+        "nix",
+        "develop",
+        "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+        "--override-input",
+        "octet",
+        "git+ssh://git@github.com/OnixResearch/octet.git?rev=2f8213a88781d9d38bb81319d06a50805d48ccd3",
+        "--no-write-lock-file",
+        "--command",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 75.16668129526079
+    },
+    {
+      "label": "build-actual-producer",
+      "command": [
+        "nix",
+        "develop",
+        "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+        "--override-input",
+        "octet",
+        "git+ssh://git@github.com/OnixResearch/octet.git?rev=2f8213a88781d9d38bb81319d06a50805d48ccd3",
+        "--no-write-lock-file",
+        "--command",
+        "cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "-p",
+        "cairn-cli"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 47.23748656734824
+    },
+    {
+      "label": "policy-freshness",
+      "command": [
+        "nix",
+        "develop",
+        "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+        "--override-input",
+        "octet",
+        "git+ssh://git@github.com/OnixResearch/octet.git?rev=2f8213a88781d9d38bb81319d06a50805d48ccd3",
+        "--no-write-lock-file",
+        "--command",
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "policy",
+        "export",
+        "--check"
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 3.740798555314541
+    },
+    {
+      "label": "basalt-native-validate",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "validate",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/basalt-mantle-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.10210796073079109
+    },
+    {
+      "label": "basalt-native-gate-proposal",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "gate",
+        "proposal",
+        "add-mantle-authority-sdk",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/basalt-mantle-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.11086569353938103
+    },
+    {
+      "label": "basalt-native-gate-design",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "gate",
+        "design",
+        "add-mantle-authority-sdk",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/basalt-mantle-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.11122130416333675
+    },
+    {
+      "label": "basalt-native-gate-tasks",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "gate",
+        "tasks",
+        "add-mantle-authority-sdk",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/basalt-mantle-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.11147619318217039
+    },
+    {
+      "label": "basalt-native-sync-preview",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "sync",
+        "add-mantle-authority-sdk",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/basalt-mantle-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.16760634630918503
+    },
+    {
+      "label": "basalt-native-archive-preview",
+      "command": [
+        "/home/brittonr/mantle-cairn-finish/targets/cairn-source-review-v1/debug/cairn",
+        "archive",
+        "add-mantle-authority-sdk",
+        "--root",
+        "."
+      ],
+      "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/basalt-mantle-main-20261020",
+      "exit": 0,
+      "expected": 0,
+      "elapsed_s": 0.1666567651554942
+    }
+  ],
+  "source": [
+    {
+      "path": "Cargo.lock",
+      "blake3": "cb12d2bf1ebf140fd5ddb0bd933d0ffa611f77eb34060dc486c515584d46f2a1"
+    },
+    {
+      "path": "Cargo.toml",
+      "blake3": "61d87a00ef40b95ade9d158e28af8fd0ff7fc02c71aa952df1505030097adaa2"
+    },
+    {
+      "path": "README.md",
+      "blake3": "859c03d2a4fd45a4445eb6672383d2624077290a665b579020cab48a96af286d"
+    },
+    {
+      "path": "crates/cairn-cli/src/main.rs",
+      "blake3": "2a05a5a7c94133cf626b5255ad1fb46e45360ed25b619281ebee6c07989282e8"
+    },
+    {
+      "path": "crates/cairn-cli/src/source_review.rs",
+      "blake3": "7fc2f9b56dc47b8262e74fd0f68e15516938c2bbb9430db5d0806547ccce96a1"
+    },
+    {
+      "path": "crates/cairn-cli/tests/source_review.rs",
+      "blake3": "eb142ca2275d84327a83867c5eb5036596132ee55f851a57192836b490ce0923"
+    },
+    {
+      "path": "crates/cairn-core/Cargo.toml",
+      "blake3": "c4a24dc34de2b75fff6e4ed79fee5c981ee77027c2b6f0ed49d8e2c9268517f9"
+    },
+    {
+      "path": "crates/cairn-core/src/lib.rs",
+      "blake3": "d005eb7dcd42f22f19e2997f8a661839846d42e0a3595c3238022b0b729aa10b"
+    },
+    {
+      "path": "crates/cairn-core/src/verified/mod.rs",
+      "blake3": "37d2673cf40059bcd4a614877d87ceb082c506b721a67a674bfdf370c94c9887"
+    },
+    {
+      "path": "crates/cairn-core/src/verified/source_review.rs",
+      "blake3": "631d7e0542aeb414bd0062066e304ba15fb62c749b175eada3c898a12776a8b4"
+    },
+    {
+      "path": "crates/cairn-core/src/verified/source_review/tests.rs",
+      "blake3": "0004b804d65f02b658982eb36212fc4cdf54853528b4ff90efea1aaf4677dbe1"
+    },
+    {
+      "path": "docs/licensing.md",
+      "blake3": "824a9c492d98e855a6836109715a24289291dc4eaab189a46d7d7f871126a8fa"
+    },
+    {
+      "path": "flake.lock",
+      "blake3": "481f8c8c359f4977fdf457e7605f0b92b450419d64f699ec39b616abfe69ca8f"
+    },
+    {
+      "path": "flake.nix",
+      "blake3": "1dc3f176fffaf276d6dd428de054d7635d3058da34f589103566697a39eb97fe"
+    },
+    {
+      "path": "license-policy.tsv",
+      "blake3": "ef17bf22e561dc92c5a258a14ba733d03cf16aea51cf7ac7eebd216d1ea1fc77"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "blake3": "c59c7622aba9c0e3ded746db347e1abb4e8d69bc058205be28f81b33865837cc"
+    },
+    {
+      "path": "tools/check-license-boundary.rs",
+      "blake3": "319ee1b1c6ca2a7299b480ed4916f01dd1b36cb6b79c6a09d8582664abc65bd8"
+    }
+  ],
+  "source_review_spec_synced": true,
+  "archive_performed": false,
+  "real_review_approval": false,
+  "release_authority": false
+}

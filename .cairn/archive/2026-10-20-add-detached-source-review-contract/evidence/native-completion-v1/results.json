@@ -1,0 +1,116 @@
+[
+  {
+    "label": "native-validate-completed-tasks",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-native-complete-20261020-v1/cairn",
+      "validate",
+      "--root",
+      "."
+    ],
+    "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+    "exit": 0,
+    "archive_date": "2026-10-20",
+    "elapsed_s": 0.4652238851413131
+  },
+  {
+    "label": "native-completed-gate-proposal",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-native-complete-20261020-v1/cairn",
+      "gate",
+      "proposal",
+      "add-detached-source-review-contract",
+      "--root",
+      "."
+    ],
+    "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+    "exit": 0,
+    "archive_date": "2026-10-20",
+    "elapsed_s": 0.16435779631137848
+  },
+  {
+    "label": "native-completed-gate-design",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-native-complete-20261020-v1/cairn",
+      "gate",
+      "design",
+      "add-detached-source-review-contract",
+      "--root",
+      "."
+    ],
+    "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+    "exit": 0,
+    "archive_date": "2026-10-20",
+    "elapsed_s": 0.16437737364321947
+  },
+  {
+    "label": "native-completed-gate-tasks",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-native-complete-20261020-v1/cairn",
+      "gate",
+      "tasks",
+      "add-detached-source-review-contract",
+      "--root",
+      "."
+    ],
+    "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+    "exit": 0,
+    "archive_date": "2026-10-20",
+    "elapsed_s": 0.16477806866168976
+  },
+  {
+    "label": "native-archive-preview",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-native-complete-20261020-v1/cairn",
+      "archive",
+      "add-detached-source-review-contract",
+      "--root",
+      "."
+    ],
+    "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+    "exit": 0,
+    "archive_date": "2026-10-20",
+    "elapsed_s": 0.36541294027119875
+  },
+  {
+    "label": "native-archive-execute",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-native-complete-20261020-v1/cairn",
+      "archive",
+      "add-detached-source-review-contract",
+      "--root",
+      ".",
+      "--execute"
+    ],
+    "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+    "exit": 0,
+    "archive_date": "2026-10-20",
+    "elapsed_s": 0.4654040466994047
+  },
+  {
+    "label": "native-validate-post-archive",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-native-complete-20261020-v1/cairn",
+      "validate",
+      "--root",
+      "."
+    ],
+    "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+    "exit": 0,
+    "archive_date": "2026-10-20",
+    "elapsed_s": 0.4157063150778413
+  },
+  {
+    "label": "native-traceability-post-archive",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-native-complete-20261020-v1/cairn",
+      "traceability",
+      "coverage",
+      "--root",
+      "."
+    ],
+    "cwd": "/home/brittonr/mantle-cairn-finish/xrepo/cairn-source-review-main-20261020",
+    "exit": 0,
+    "archive_date": "2026-10-20",
+    "elapsed_s": 0.9669897127896547
+  }
+]

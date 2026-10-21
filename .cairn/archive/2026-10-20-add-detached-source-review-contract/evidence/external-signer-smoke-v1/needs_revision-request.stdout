@@ -1,0 +1,72 @@
+{
+  "canonical_statement_hex": "0000002361727469666163742d617574682e73746174656d656e742d707265696d6167652e76310000001a61727469666163742d617574682e73746174656d656e742e763100000016636169726e2e736f757263652d7265766965772e763100000016736f757263652d7265766965772d617070726f76616c00000016636169726e2e736f757263652d7265766965772e763100000012746573742d6f6e6c792d72657669657765720000000d746573742d6f6e6c792d6b657900000015656432353531392d7075626c69632d6b65792e763100000006626c616b653300000040363338346335383963356439363563336332373835373161633262643237643637323939396561313331653861356637386233376135613963636533633762360000001c636169726e2e736f757263652d7265766965772d636c61696d2e763100000006626c616b65330000004061653937376631633765653963333233336564363538663861326632383662346362336461633962623162393463316138326135303961643964396462613032000000020000001d636169726e2e736f757263652d7265766965772d706f6c6963792e763100000006626c616b65330000004062623137653736373066306130386237623937646539653164623661333433613666336538663664653537383166666638303164373262313632313736303938000000186d616e746c652d72656c656173652d736f757263652e763100000006626c616b6533000000406466303466393435313164616232363135653631613332316564313864636337346434396437356462333031666266343138343630643937323866613766663900000018746573742d6f6e6c792d63757272656e746e6573732e763100000006626c616b65330000004035656238343037646639336166323536323263313564303364313435336433656664616530316132663661306230653538353833346563323561613732323633",
+  "claim": {
+    "claim_root": {
+      "claim_identity": "ddeecbaa0ca7d50a1b3a6a063bf9bfe09b448014cdf85984e2b44c3685344985",
+      "revision": 5,
+      "subject_root": "564753938c248934d87b6b6f8df4635fec32d9d01e9db1c0fda7f51bfa2b14f6"
+    },
+    "disposition": "needs_revision",
+    "non_claims": [
+      "source-review-does-not-prove-build-correctness",
+      "source-review-does-not-prove-deployment-safety",
+      "source-review-does-not-prove-release-eligibility",
+      "source-review-does-not-prove-reproducibility",
+      "source-review-does-not-prove-review-quality",
+      "source-review-does-not-prove-source-correctness",
+      "source-review-does-not-prove-witness-independence"
+    ],
+    "review_policy_blake3": "bb17e7670f0a08b7b97de9e1db6a343a6f3e8f6de5781fff801d72b162176098",
+    "schema": "cairn.source-review-claim.v1",
+    "subject": {
+      "projection": "source",
+      "schema": "cairn.source-review-subject.v1",
+      "snapshot_profile": "mantle-release-source",
+      "snapshot_profile_version": 1,
+      "source_archive_blake3": "df04f94511dab2615e61a321ed18dcc74d49d75db301fbf418460d9728fa7ff9",
+      "source_revision": "test-only-operator-smoke",
+      "source_tree_blake3": null
+    }
+  },
+  "generation": 1,
+  "public_key_hex": "a6d2455ea3a5771aba9fcb037924114c92f9f325049f6b4269e739d9048bb869",
+  "schema": "cairn.source-review-signing-request.v1",
+  "statement": {
+    "key_id": "test-only-key",
+    "key_identity": {
+      "algorithm": "blake3",
+      "digest_hex": "6384c589c5d965c3c278571ac2bd27d672999ea131e8a5f78b37a5a9cce3c7b6",
+      "profile": "ed25519-public-key.v1"
+    },
+    "producer_id": "test-only-reviewer",
+    "schema": "artifact-auth.statement.v1",
+    "scope": {
+      "domain": "cairn.source-review.v1",
+      "parents": [
+        {
+          "algorithm": "blake3",
+          "digest_hex": "bb17e7670f0a08b7b97de9e1db6a343a6f3e8f6de5781fff801d72b162176098",
+          "profile": "cairn.source-review-policy.v1"
+        },
+        {
+          "algorithm": "blake3",
+          "digest_hex": "df04f94511dab2615e61a321ed18dcc74d49d75db301fbf418460d9728fa7ff9",
+          "profile": "mantle-release-source.v1"
+        }
+      ],
+      "profile_id": "cairn.source-review.v1",
+      "purpose": "source-review-approval",
+      "subject": {
+        "algorithm": "blake3",
+        "digest_hex": "ae977f1c7ee9c3233ed658f8a2f286b4cb3dac9bb1b94c1a82a509ad9d9dba02",
+        "profile": "cairn.source-review-claim.v1"
+      },
+      "verifier_context": {
+        "algorithm": "blake3",
+        "digest_hex": "5eb8407df93af25622c15d03d1453d3efdae01a2f6a0b0e585834ec25aa72263",
+        "profile": "test-only-currentness.v1"
+      }
+    }
+  },
+  "statement_blake3": "02d3492a65e1decb528784cc5fe340d649f93e4ccba05c97ec433089a5d811d7"
+}

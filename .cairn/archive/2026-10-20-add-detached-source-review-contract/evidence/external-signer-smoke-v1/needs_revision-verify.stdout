@@ -1,0 +1,25 @@
+{
+  "attachment_artifact_blake3": "6362c60ed2a3d0396c00b1c84d37e43577fc8427d8632b2e278c231a36ca20dc",
+  "report": {
+    "approved_key_blake3": [],
+    "attachment_identity": "1318edaa48056d210f2de62f1d24b792156416c437a763581df42358a0b52314",
+    "canonical_statement_blake3": [
+      "02d3492a65e1decb528784cc5fe340d649f93e4ccba05c97ec433089a5d811d7"
+    ],
+    "needs_revision_key_blake3": [
+      "6384c589c5d965c3c278571ac2bd27d672999ea131e8a5f78b37a5a9cce3c7b6"
+    ],
+    "non_claims": [
+      "source-review-does-not-prove-build-correctness",
+      "source-review-does-not-prove-deployment-safety",
+      "source-review-does-not-prove-release-eligibility",
+      "source-review-does-not-prove-reproducibility",
+      "source-review-does-not-prove-review-quality",
+      "source-review-does-not-prove-source-correctness",
+      "source-review-does-not-prove-witness-independence"
+    ],
+    "outcome": "insufficient",
+    "schema": "cairn.source-review-verification.v1",
+    "verification_role": "manual_review"
+  }
+}

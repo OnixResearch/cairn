@@ -1,0 +1,921 @@
+{
+  "acceptance_ids": [],
+  "actions": [
+    {
+      "description": "move active change to archive: add-detached-source-review-contract",
+      "kind": "archive_change",
+      "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract"
+    }
+  ],
+  "blocked": false,
+  "change": "add-detached-source-review-contract",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "db590aa05b790925fdf986f022250368d1d39b2a83586461571de4946c808d37",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+    "receipt_hash": "a904c2e684f22844da630261b04dcd4f165f82816b2d7612b88f0099fedec311",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "dry_run": false,
+  "input_hash": "21ed54befb7ad8b1030c9cea86bf2aad521ccb4bc3e08cd6d67d35d8e52c2a2d",
+  "layout": "cairn",
+  "mutated": true,
+  "mutation_manifest": {
+    "after": {
+      "entries": [
+        {
+          "content_hash": "be6485d27b09bd4e4cab61c57fbf7e4f1db3a2c7f265e8d453a9b8ef1e4f4e58",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/design.md"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-assemble.stderr"
+        },
+        {
+          "content_hash": "dcaf3a288e853500d7f32c892071d4d0fb433bce8627db99c2230e09edd8fc09",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-assemble.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-external-sign.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-external-sign.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-request.stderr"
+        },
+        {
+          "content_hash": "8e133ba6241158fbf80b7ac031e82d43e3b0d776aefb7ee2b98f233d55d617a1",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-request.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-unsigned.stderr"
+        },
+        {
+          "content_hash": "dca657c060efca111b0c83ad905f1831ddab45ebb1457c054334b4c526b41172",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-unsigned.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-verify.stderr"
+        },
+        {
+          "content_hash": "0a9944871823222f1c7e5e3b0a232d70b0ba91310b2d4e569caf2ba37a639de5",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-verify.stdout"
+        },
+        {
+          "content_hash": "a4ce5157b69bb46c9b57f33cf9028a3576beef2bca3e42a48648ba9aad195ce8",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/complete.json"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-assemble.stderr"
+        },
+        {
+          "content_hash": "6362c60ed2a3d0396c00b1c84d37e43577fc8427d8632b2e278c231a36ca20dc",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-assemble.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-external-sign.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-external-sign.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-request.stderr"
+        },
+        {
+          "content_hash": "e00a852adf8b991f60b71b54a03da2c4a4455cbb1b9af25566b448778be6d56e",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-request.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-unsigned.stderr"
+        },
+        {
+          "content_hash": "02d3492a65e1decb528784cc5fe340d649f93e4ccba05c97ec433089a5d811d7",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-unsigned.stdout"
+        },
+        {
+          "content_hash": "7198b096d49ff1709180ca045d9ed09064ebbfbda0b1bda1f8c55b755d831eb3",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-verify.stderr"
+        },
+        {
+          "content_hash": "0141b9e0fc86d09fe71e6450d5fe43f49ce5d1c33be6df6151f6bd1fdc49364a",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-verify.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/openssl-version.stderr"
+        },
+        {
+          "content_hash": "9e67f20bedb0b45eb775a0d1474e591386c7e2ee425fbbb48ce40eac855e7ce4",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/openssl-version.stdout"
+        },
+        {
+          "content_hash": "cdaf2e382fee4af93fb1b063e85935b907e359881b22d39de768b7f1a2efb6e0",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-excluded-author.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-excluded-author.stdout"
+        },
+        {
+          "content_hash": "939731e17f8d0b6304b920ed771aa32029a259c5d86c374c0d97b6c2ba457f36",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-revoked-key.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-revoked-key.stdout"
+        },
+        {
+          "content_hash": "a72395109a416aa3253e5bbf63f4182b5b82b5820f3d824bfa1a206b38f26f31",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-substituted-source.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-substituted-source.stdout"
+        },
+        {
+          "content_hash": "71c0cdc40407c8a980e83573166156bff39d697c756d7213dbd59b8695c8ee73",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/results.json"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/test-only-public-key.stderr"
+        },
+        {
+          "content_hash": "0cd17ef355a5942e07306b1c2e38ea6f803a66b8f071152eddc75c1f102b6fdb",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/external-signer-smoke-v1/test-only-public-key.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-archive-preview.stderr"
+        },
+        {
+          "content_hash": "5123f2d0c4bcd4b3af879f72c2a1975eaef3c7ccbd49f2c86ea994372eb45d2a",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-archive-preview.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-design.stderr"
+        },
+        {
+          "content_hash": "b7ea4cbefa0c1fdabc7f310fb5d9352ba8c0a906f4ed9f44595d4b640a9c447f",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-design.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-proposal.stderr"
+        },
+        {
+          "content_hash": "b827fb4dd91ee1a59c1d4e3c1b6c60004ea47622bc48a31fcdc572ff68c95587",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-proposal.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-tasks.stderr"
+        },
+        {
+          "content_hash": "355d08282ecf6d9aff5e2545edcc350ba00b3732a212a301ea3293e482416d0d",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-tasks.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-sync-preview.stderr"
+        },
+        {
+          "content_hash": "202e892eeb3fbf3a01d27851f003e9ac5462926e0fd574cd5cdb0e691f5b0c24",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-sync-preview.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-validate.stderr"
+        },
+        {
+          "content_hash": "2662861d302adcca27df99ba2122d2e13701a282ab4b6a26abda1ed1ea815f7a",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-validate.stdout"
+        },
+        {
+          "content_hash": "8061cee5a37d7d6f2f242b2814e29b61725eb6cf089e88c1d3967d8888536db0",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/build-actual-producer.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/build-actual-producer.stdout"
+        },
+        {
+          "content_hash": "0e35d32777bbc43129eafd125597af66330abfb9c39a134699669a9ae38449a6",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/compile-license-boundary.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/compile-license-boundary.stdout"
+        },
+        {
+          "content_hash": "c94470929c7bb63bc58e61a2013641801b8bd7a1ec4e91ac75572e7b3b1d6f0c",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/complete.json"
+        },
+        {
+          "content_hash": "20a7ed9f8eb24606724037b5c105f3990e1b0ee62df42dfda8a53786eccf096f",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/environment.json"
+        },
+        {
+          "content_hash": "0e35d32777bbc43129eafd125597af66330abfb9c39a134699669a9ae38449a6",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/format-packages.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/format-packages.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/license-boundary.stderr"
+        },
+        {
+          "content_hash": "483d6f4d0ea5b9bc97c8a127a2e5f863402be9949d19e3fdd7980cacdbb0ab39",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/license-boundary.stdout"
+        },
+        {
+          "content_hash": "b4736a4dd9594821753d466b31ebb7bd9ea70e82bd32e346b459ff7c628a7ddd",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/license-missing-pinned-blob.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/license-missing-pinned-blob.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-design.stderr"
+        },
+        {
+          "content_hash": "1b72c3cd1d0def5c5acd1e563f20fa438da523e1ccffb97ffcc728ab67ae1080",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-design.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-proposal.stderr"
+        },
+        {
+          "content_hash": "5edc30b3c54dbb1e2ef4118bf19ab1fd12eca9cb8e76f55f6258de5ef4edc1e5",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-proposal.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-tasks.stderr"
+        },
+        {
+          "content_hash": "69c67a6306ec5426bdcf455d1aaf727737e00e4d4f4cdf17ab8d864d44a076dd",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-tasks.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-sync-execute.stderr"
+        },
+        {
+          "content_hash": "2f6a70fbb1e819cbcc7b97f081e49db5db1e9dcd6072eb5c54b6ec44118e49b5",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-sync-execute.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-sync-preview.stderr"
+        },
+        {
+          "content_hash": "9fd6be68738f6c38b8e029510398b1e5b54ccd8eefab777751db671f25fa83a5",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-sync-preview.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-validate-after-sync.stderr"
+        },
+        {
+          "content_hash": "883dc01b1e84e48d5428d477db954db67175d57a8903bbb552b5ae1f0ca8f89d",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-validate-after-sync.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-validate-before-sync.stderr"
+        },
+        {
+          "content_hash": "f6c638a12c2f163b9f8d4209adaa2447b3e8cd5784b17704a346e183933656b5",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/native-validate-before-sync.stdout"
+        },
+        {
+          "content_hash": "0e35d32777bbc43129eafd125597af66330abfb9c39a134699669a9ae38449a6",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/policy-freshness.stderr"
+        },
+        {
+          "content_hash": "626bb5e31eed06caa9eff49fd1d1a339f21e19bb3347e93255daa23e716b1f47",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/policy-freshness.stdout"
+        },
+        {
+          "content_hash": "58b5d04ece527fa388db9bef859f11bfe0f580837bd4d68e2820b2a35ae982be",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/results.json"
+        },
+        {
+          "content_hash": "49e87f18502d0b2bcca62c25442f3d00cf0cbf3b6b609248509937e412ab557b",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/source.json"
+        },
+        {
+          "content_hash": "7137e2886ed4918c61b98eec3fe3fa0656b10fcb3004acda33528b95044de0c9",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/strict-clippy.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/strict-clippy.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/traceability-coverage.stderr"
+        },
+        {
+          "content_hash": "36197bc8d2db56618a7adbc819abfdb8a790b2112b0505e288d483e13763a47e",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/traceability-coverage.stdout"
+        },
+        {
+          "content_hash": "c0ec54a4b9a7b035c90c0ce0144878aed314b78008b1f8075838a51039ce331e",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/workspace-behavior.stderr"
+        },
+        {
+          "content_hash": "ef3988829f385d37908921e66918548210c88952a9bfed123442f5837e799b5c",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/evidence/owner-verification-v17/workspace-behavior.stdout"
+        },
+        {
+          "content_hash": "df8b71bae570eb5accd702e7370a816b8ea9f2e4521254c5d75ea82a9cfcf4db",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/metadata.json"
+        },
+        {
+          "content_hash": "57bf1eef5512bf81da80becb6a4f26623d3ecfb089a031eb4489bd31db1fbf57",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/proposal.md"
+        },
+        {
+          "content_hash": "522ed675b30e248b8daa32e9d5d21b82c3e03e9d8e0224ed67da2126f1a24add",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/specs/source-review/spec.md"
+        },
+        {
+          "content_hash": "a5049983c7ec9a2696c801854ab4436c7d7dd86d20ef89dfae24e813b6a1cc98",
+          "exists": true,
+          "path": "./.cairn/archive/2026-10-20-add-detached-source-review-contract/tasks.md"
+        },
+        {
+          "content_hash": null,
+          "exists": false,
+          "path": "./.cairn/changes/add-detached-source-review-contract"
+        }
+      ],
+      "manifest_hash": "7030e1b601e95d719bfc45103315fe459009948f4d6f14a57deb62955657085c"
+    },
+    "before": {
+      "entries": [
+        {
+          "content_hash": "be6485d27b09bd4e4cab61c57fbf7e4f1db3a2c7f265e8d453a9b8ef1e4f4e58",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/design.md"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-assemble.stderr"
+        },
+        {
+          "content_hash": "dcaf3a288e853500d7f32c892071d4d0fb433bce8627db99c2230e09edd8fc09",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-assemble.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-external-sign.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-external-sign.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-request.stderr"
+        },
+        {
+          "content_hash": "8e133ba6241158fbf80b7ac031e82d43e3b0d776aefb7ee2b98f233d55d617a1",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-request.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-unsigned.stderr"
+        },
+        {
+          "content_hash": "dca657c060efca111b0c83ad905f1831ddab45ebb1457c054334b4c526b41172",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-unsigned.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-verify.stderr"
+        },
+        {
+          "content_hash": "0a9944871823222f1c7e5e3b0a232d70b0ba91310b2d4e569caf2ba37a639de5",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/approved-verify.stdout"
+        },
+        {
+          "content_hash": "a4ce5157b69bb46c9b57f33cf9028a3576beef2bca3e42a48648ba9aad195ce8",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/complete.json"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-assemble.stderr"
+        },
+        {
+          "content_hash": "6362c60ed2a3d0396c00b1c84d37e43577fc8427d8632b2e278c231a36ca20dc",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-assemble.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-external-sign.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-external-sign.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-request.stderr"
+        },
+        {
+          "content_hash": "e00a852adf8b991f60b71b54a03da2c4a4455cbb1b9af25566b448778be6d56e",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-request.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-unsigned.stderr"
+        },
+        {
+          "content_hash": "02d3492a65e1decb528784cc5fe340d649f93e4ccba05c97ec433089a5d811d7",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-unsigned.stdout"
+        },
+        {
+          "content_hash": "7198b096d49ff1709180ca045d9ed09064ebbfbda0b1bda1f8c55b755d831eb3",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-verify.stderr"
+        },
+        {
+          "content_hash": "0141b9e0fc86d09fe71e6450d5fe43f49ce5d1c33be6df6151f6bd1fdc49364a",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/needs_revision-verify.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/openssl-version.stderr"
+        },
+        {
+          "content_hash": "9e67f20bedb0b45eb775a0d1474e591386c7e2ee425fbbb48ce40eac855e7ce4",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/openssl-version.stdout"
+        },
+        {
+          "content_hash": "cdaf2e382fee4af93fb1b063e85935b907e359881b22d39de768b7f1a2efb6e0",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-excluded-author.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-excluded-author.stdout"
+        },
+        {
+          "content_hash": "939731e17f8d0b6304b920ed771aa32029a259c5d86c374c0d97b6c2ba457f36",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-revoked-key.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-revoked-key.stdout"
+        },
+        {
+          "content_hash": "a72395109a416aa3253e5bbf63f4182b5b82b5820f3d824bfa1a206b38f26f31",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-substituted-source.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/reject-substituted-source.stdout"
+        },
+        {
+          "content_hash": "71c0cdc40407c8a980e83573166156bff39d697c756d7213dbd59b8695c8ee73",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/results.json"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/test-only-public-key.stderr"
+        },
+        {
+          "content_hash": "0cd17ef355a5942e07306b1c2e38ea6f803a66b8f071152eddc75c1f102b6fdb",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/external-signer-smoke-v1/test-only-public-key.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-archive-preview.stderr"
+        },
+        {
+          "content_hash": "5123f2d0c4bcd4b3af879f72c2a1975eaef3c7ccbd49f2c86ea994372eb45d2a",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-archive-preview.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-design.stderr"
+        },
+        {
+          "content_hash": "b7ea4cbefa0c1fdabc7f310fb5d9352ba8c0a906f4ed9f44595d4b640a9c447f",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-design.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-proposal.stderr"
+        },
+        {
+          "content_hash": "b827fb4dd91ee1a59c1d4e3c1b6c60004ea47622bc48a31fcdc572ff68c95587",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-proposal.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-tasks.stderr"
+        },
+        {
+          "content_hash": "355d08282ecf6d9aff5e2545edcc350ba00b3732a212a301ea3293e482416d0d",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-gate-tasks.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-sync-preview.stderr"
+        },
+        {
+          "content_hash": "202e892eeb3fbf3a01d27851f003e9ac5462926e0fd574cd5cdb0e691f5b0c24",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-sync-preview.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-validate.stderr"
+        },
+        {
+          "content_hash": "2662861d302adcca27df99ba2122d2e13701a282ab4b6a26abda1ed1ea815f7a",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/basalt-native-validate.stdout"
+        },
+        {
+          "content_hash": "8061cee5a37d7d6f2f242b2814e29b61725eb6cf089e88c1d3967d8888536db0",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/build-actual-producer.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/build-actual-producer.stdout"
+        },
+        {
+          "content_hash": "0e35d32777bbc43129eafd125597af66330abfb9c39a134699669a9ae38449a6",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/compile-license-boundary.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/compile-license-boundary.stdout"
+        },
+        {
+          "content_hash": "c94470929c7bb63bc58e61a2013641801b8bd7a1ec4e91ac75572e7b3b1d6f0c",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/complete.json"
+        },
+        {
+          "content_hash": "20a7ed9f8eb24606724037b5c105f3990e1b0ee62df42dfda8a53786eccf096f",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/environment.json"
+        },
+        {
+          "content_hash": "0e35d32777bbc43129eafd125597af66330abfb9c39a134699669a9ae38449a6",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/format-packages.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/format-packages.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/license-boundary.stderr"
+        },
+        {
+          "content_hash": "483d6f4d0ea5b9bc97c8a127a2e5f863402be9949d19e3fdd7980cacdbb0ab39",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/license-boundary.stdout"
+        },
+        {
+          "content_hash": "b4736a4dd9594821753d466b31ebb7bd9ea70e82bd32e346b459ff7c628a7ddd",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/license-missing-pinned-blob.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/license-missing-pinned-blob.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-design.stderr"
+        },
+        {
+          "content_hash": "1b72c3cd1d0def5c5acd1e563f20fa438da523e1ccffb97ffcc728ab67ae1080",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-design.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-proposal.stderr"
+        },
+        {
+          "content_hash": "5edc30b3c54dbb1e2ef4118bf19ab1fd12eca9cb8e76f55f6258de5ef4edc1e5",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-proposal.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-tasks.stderr"
+        },
+        {
+          "content_hash": "69c67a6306ec5426bdcf455d1aaf727737e00e4d4f4cdf17ab8d864d44a076dd",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-gate-tasks.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-sync-execute.stderr"
+        },
+        {
+          "content_hash": "2f6a70fbb1e819cbcc7b97f081e49db5db1e9dcd6072eb5c54b6ec44118e49b5",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-sync-execute.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-sync-preview.stderr"
+        },
+        {
+          "content_hash": "9fd6be68738f6c38b8e029510398b1e5b54ccd8eefab777751db671f25fa83a5",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-sync-preview.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-validate-after-sync.stderr"
+        },
+        {
+          "content_hash": "883dc01b1e84e48d5428d477db954db67175d57a8903bbb552b5ae1f0ca8f89d",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-validate-after-sync.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-validate-before-sync.stderr"
+        },
+        {
+          "content_hash": "f6c638a12c2f163b9f8d4209adaa2447b3e8cd5784b17704a346e183933656b5",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/native-validate-before-sync.stdout"
+        },
+        {
+          "content_hash": "0e35d32777bbc43129eafd125597af66330abfb9c39a134699669a9ae38449a6",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/policy-freshness.stderr"
+        },
+        {
+          "content_hash": "626bb5e31eed06caa9eff49fd1d1a339f21e19bb3347e93255daa23e716b1f47",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/policy-freshness.stdout"
+        },
+        {
+          "content_hash": "58b5d04ece527fa388db9bef859f11bfe0f580837bd4d68e2820b2a35ae982be",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/results.json"
+        },
+        {
+          "content_hash": "49e87f18502d0b2bcca62c25442f3d00cf0cbf3b6b609248509937e412ab557b",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/source.json"
+        },
+        {
+          "content_hash": "7137e2886ed4918c61b98eec3fe3fa0656b10fcb3004acda33528b95044de0c9",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/strict-clippy.stderr"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/strict-clippy.stdout"
+        },
+        {
+          "content_hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/traceability-coverage.stderr"
+        },
+        {
+          "content_hash": "36197bc8d2db56618a7adbc819abfdb8a790b2112b0505e288d483e13763a47e",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/traceability-coverage.stdout"
+        },
+        {
+          "content_hash": "c0ec54a4b9a7b035c90c0ce0144878aed314b78008b1f8075838a51039ce331e",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/workspace-behavior.stderr"
+        },
+        {
+          "content_hash": "ef3988829f385d37908921e66918548210c88952a9bfed123442f5837e799b5c",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/evidence/owner-verification-v17/workspace-behavior.stdout"
+        },
+        {
+          "content_hash": "df8b71bae570eb5accd702e7370a816b8ea9f2e4521254c5d75ea82a9cfcf4db",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/metadata.json"
+        },
+        {
+          "content_hash": "57bf1eef5512bf81da80becb6a4f26623d3ecfb089a031eb4489bd31db1fbf57",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/proposal.md"
+        },
+        {
+          "content_hash": "522ed675b30e248b8daa32e9d5d21b82c3e03e9d8e0224ed67da2126f1a24add",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/specs/source-review/spec.md"
+        },
+        {
+          "content_hash": "a5049983c7ec9a2696c801854ab4436c7d7dd86d20ef89dfae24e813b6a1cc98",
+          "exists": true,
+          "path": "./.cairn/changes/add-detached-source-review-contract/tasks.md"
+        }
+      ],
+      "manifest_hash": "0708ed0d253789824c9ccd395134b8a74c30eb097a0b5e01b0b44150641f93ca"
+    },
+    "kind": "archive",
+    "manifest_hash": "e83602b1d60c5515ba66600cafe7d5fe7ce402db4b52b6b484611cb25a1683c0"
+  },
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "063e4be8452201262e5866d72d5cdddf77fec3836f48dab69801270c31ce1f11",
+  "policy": "cairn-default",
+  "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "profile_identity_hash": "10fe2dc46943a67f6a99804f0243e275a199dbeab53d2cdc205e0c0e9821dd1a",
+  "reasons": [],
+  "receipt_hash": "09320d8cf7eca8ec4c5bb1cf70de5e776a71fbeb28ccca0647282e4156578ca7",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

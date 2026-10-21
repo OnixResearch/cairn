@@ -1,0 +1,294 @@
+[
+  {
+    "label": "openssl-version",
+    "command": [
+      "openssl",
+      "version"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.008082650601863861
+  },
+  {
+    "label": "test-only-public-key",
+    "command": [
+      "openssl",
+      "pkey",
+      "-inform",
+      "DER",
+      "-in",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW/PUBLIC-TEST-ONLY-PRIVATE-KEY.der",
+      "-pubout",
+      "-outform",
+      "DER"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.007786964066326618
+  },
+  {
+    "label": "approved-request",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "signing-request",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--claim",
+      "approved-claim.json",
+      "--policy",
+      "policy.json",
+      "--producer",
+      "test-only-reviewer",
+      "--key-id",
+      "test-only-key",
+      "--generation",
+      "1",
+      "--public-key-hex",
+      "a6d2455ea3a5771aba9fcb037924114c92f9f325049f6b4269e739d9048bb869"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.016007786616683006
+  },
+  {
+    "label": "approved-unsigned",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "signing-request",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--claim",
+      "approved-claim.json",
+      "--policy",
+      "policy.json",
+      "--producer",
+      "test-only-reviewer",
+      "--key-id",
+      "test-only-key",
+      "--generation",
+      "1",
+      "--public-key-hex",
+      "a6d2455ea3a5771aba9fcb037924114c92f9f325049f6b4269e739d9048bb869",
+      "--raw"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.01585382502526045
+  },
+  {
+    "label": "approved-external-sign",
+    "command": [
+      "openssl",
+      "pkeyutl",
+      "-sign",
+      "-inkey",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW/PUBLIC-TEST-ONLY-PRIVATE-KEY.der",
+      "-keyform",
+      "DER",
+      "-rawin",
+      "-in",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW/approved-unsigned.bin",
+      "-out",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW/approved-signature.bin"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.007953457534313202
+  },
+  {
+    "label": "approved-assemble",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "assemble",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--request",
+      "approved-request.json",
+      "--signature-hex",
+      "f2a5dee849288f843db29f9002e2599af27bb35eaf0d34711e50dc1b16962143290d9de3752bf6e341e28f03d9ccd38db9ff301f6e0bf370e236f6b78d128607",
+      "--policy",
+      "policy.json"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.06402413826435804
+  },
+  {
+    "label": "approved-verify",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "verify",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--attachment",
+      "approved-attachment.json",
+      "--policy",
+      "policy.json"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.03195219114422798
+  },
+  {
+    "label": "needs_revision-request",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "signing-request",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--claim",
+      "needs_revision-claim.json",
+      "--policy",
+      "policy.json",
+      "--producer",
+      "test-only-reviewer",
+      "--key-id",
+      "test-only-key",
+      "--generation",
+      "1",
+      "--public-key-hex",
+      "a6d2455ea3a5771aba9fcb037924114c92f9f325049f6b4269e739d9048bb869"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.016042319126427174
+  },
+  {
+    "label": "needs_revision-unsigned",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "signing-request",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--claim",
+      "needs_revision-claim.json",
+      "--policy",
+      "policy.json",
+      "--producer",
+      "test-only-reviewer",
+      "--key-id",
+      "test-only-key",
+      "--generation",
+      "1",
+      "--public-key-hex",
+      "a6d2455ea3a5771aba9fcb037924114c92f9f325049f6b4269e739d9048bb869",
+      "--raw"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.015823769383132458
+  },
+  {
+    "label": "needs_revision-external-sign",
+    "command": [
+      "openssl",
+      "pkeyutl",
+      "-sign",
+      "-inkey",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW/PUBLIC-TEST-ONLY-PRIVATE-KEY.der",
+      "-keyform",
+      "DER",
+      "-rawin",
+      "-in",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW/needs_revision-unsigned.bin",
+      "-out",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW/needs_revision-signature.bin"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.007994594983756542
+  },
+  {
+    "label": "needs_revision-assemble",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "assemble",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--request",
+      "needs_revision-request.json",
+      "--signature-hex",
+      "a2b075287b3a2cfda20078ef6811de975542f812f8b0f2fb97ca0a7cfea81d1e3da419144059cd053157e929a26c4912969962de1ca9df40399cf1b2de32db08",
+      "--policy",
+      "policy.json"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "elapsed_s": 0.06397164799273014
+  },
+  {
+    "label": "needs_revision-verify",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "verify",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--attachment",
+      "needs_revision-attachment.json",
+      "--policy",
+      "policy.json"
+    ],
+    "exit": 1,
+    "expected": 1,
+    "elapsed_s": 0.03200903907418251
+  },
+  {
+    "label": "reject-substituted-source",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "verify",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--attachment",
+      "tampered-source.json",
+      "--policy",
+      "policy.json"
+    ],
+    "exit": 1,
+    "expected": 1,
+    "elapsed_s": 0.01604320202022791
+  },
+  {
+    "label": "reject-revoked-key",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "verify",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--attachment",
+      "approved-attachment.json",
+      "--policy",
+      "revoked-policy.json"
+    ],
+    "exit": 1,
+    "expected": 1,
+    "elapsed_s": 0.01589298900216818
+  },
+  {
+    "label": "reject-excluded-author",
+    "command": [
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/cairn",
+      "source-review",
+      "verify",
+      "--root",
+      "/home/brittonr/mantle-cairn-finish/runs/cairn-source-review-operator-smoke-20261020-v1/TEST-ONLY-NOT-REAL-REVIEW",
+      "--attachment",
+      "approved-attachment.json",
+      "--policy",
+      "author-policy.json"
+    ],
+    "exit": 1,
+    "expected": 1,
+    "elapsed_s": 0.007809275761246681
+  }
+]

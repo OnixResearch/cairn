@@ -1,0 +1,142 @@
+{
+  "acceptance_ids": [],
+  "actions": [
+    {
+      "description": "merge delta spec into main specs: ./.cairn/changes/add-detached-source-review-contract/specs/source-review/spec.md",
+      "kind": "sync_delta_spec",
+      "path": "./.cairn/changes/add-detached-source-review-contract/specs/source-review/spec.md"
+    }
+  ],
+  "blocked": false,
+  "change": "add-detached-source-review-contract",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "db590aa05b790925fdf986f022250368d1d39b2a83586461571de4946c808d37",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+    "receipt_hash": "a904c2e684f22844da630261b04dcd4f165f82816b2d7612b88f0099fedec311",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "delta_specs": [
+    "./.cairn/changes/add-detached-source-review-contract/specs/source-review/spec.md"
+  ],
+  "dry_run": false,
+  "input_hash": "a78dd233e70ff5f3befa58cd8c237204cf0282187eed73c0f5343d106e0e351c",
+  "layout": "cairn",
+  "merge_preflight": {
+    "documents": [
+      {
+        "accepted_before_exists": false,
+        "accepted_before_hash": "f181ea342843208ed42864663aad0b38d1ee7b1ed877ded8d70976c8c762b0f2",
+        "blocked": false,
+        "changed": true,
+        "delta_hash": "522ed675b30e248b8daa32e9d5d21b82c3e03e9d8e0224ed67da2126f1a24add",
+        "destination": ".cairn/specs/source-review/spec.md",
+        "diagnostics": [],
+        "expected_after_hash": "34e4e92033275ba9a35831c353e3f7d62c5d6d1836caf63d5b0cfcc8777cebc5",
+        "operations": [
+          {
+            "block_hash": "c9cfe9102dfa67a5c8444c1886df352fd1b42068ef6c065eb4bd4b00f4f6cf08",
+            "heading": "### Requirement: Exact bounded source-review contract",
+            "kind": "added",
+            "requirement_id": "cairn.source_review.contract"
+          },
+          {
+            "block_hash": "de949032c7c0cfd0d520077f98a5bca961e7a97236c54d865824bd4c700e1fb6",
+            "heading": "### Requirement: Independently authenticated role-separated attribution",
+            "kind": "added",
+            "requirement_id": "cairn.source_review.authentication"
+          },
+          {
+            "block_hash": "68fb9f02150553efafff3c536ba89cc1f30120a07f7b713eaea3e91292f0df89",
+            "heading": "### Requirement: Bounded read-only operator CLI",
+            "kind": "added",
+            "requirement_id": "cairn.source_review.shell"
+          },
+          {
+            "block_hash": "f2a6474b22366f19ca0e86117478d9b159705f8532af3e0fddfafb6acd203f2f",
+            "heading": "### Requirement: Preserve producer and consumer non-claims",
+            "kind": "added",
+            "requirement_id": "cairn.source_review.boundary"
+          }
+        ],
+        "outcomes": [
+          {
+            "kind": "added",
+            "requirement_id": "cairn.source_review.contract",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.source_review.authentication",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.source_review.shell",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.source_review.boundary",
+            "state": "applied"
+          }
+        ],
+        "source": ".cairn/changes/add-detached-source-review-contract/specs/source-review/spec.md"
+      }
+    ]
+  },
+  "mutated": true,
+  "mutation_manifest": {
+    "after": {
+      "entries": [
+        {
+          "content_hash": "34e4e92033275ba9a35831c353e3f7d62c5d6d1836caf63d5b0cfcc8777cebc5",
+          "exists": true,
+          "path": "./.cairn/specs/source-review/spec.md"
+        }
+      ],
+      "manifest_hash": "5666ff0a26faa14031ce234303470ab6582b817a8e638bc98016f51f1b27a886"
+    },
+    "before": {
+      "entries": [
+        {
+          "content_hash": null,
+          "exists": false,
+          "path": "./.cairn/specs/source-review/spec.md"
+        }
+      ],
+      "manifest_hash": "61cd580bfab4a507b1cfdf2b5ef537e9dfb190c948bc44486c67158033a28ec5"
+    },
+    "kind": "sync",
+    "manifest_hash": "6c5cc84bb2f7cb4d50842510f8e56f14ea67aaebc6f7609c80842c8c9652992a"
+  },
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "d663ae80fb0bd517c8d11ecc63620a616a54e3f56e5600790758a1aef3838aaf",
+  "policy": "cairn-default",
+  "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "profile_identity_hash": "863c8be1ab681d00b2b8214a6e97744aa333d22f291556129933b80b45d601dd",
+  "reasons": [],
+  "receipt_hash": "dd032a83a41887afa1c697fac761339b943a98d9f642849b9a982553ef115c1e",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}
