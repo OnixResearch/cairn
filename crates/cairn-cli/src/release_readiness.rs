@@ -122,6 +122,30 @@ struct ReleaseReadinessInputs {
     cross_repo_evidence: Vec<PathBuf>,
 }
 
+fn selected_repository_gate_summary(
+    policy: Option<&cairn_core::verified::policy::Policy>,
+) -> Value {
+    let Some(commands) = policy
+        .and_then(|policy| policy.raw.get("release_readiness_policy"))
+        .and_then(|policy| policy.get("required_external_commands"))
+        .and_then(Value::as_array)
+    else {
+        return repository_gate_summary();
+    };
+    if commands.is_empty()
+        || commands
+            .iter()
+            .any(|command| !command.as_str().is_some_and(|command| !command.is_empty()))
+    {
+        return repository_gate_summary();
+    }
+    json!({
+        "policy": "consumer-selected-gates",
+        "required_commands": commands,
+        "note": "Selected by the consuming repository's release policy; listing is not execution evidence."
+    })
+}
+
 fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Value {
     let ReleaseReadinessInputs {
         root,
@@ -234,7 +258,7 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         policy.as_ref().map(|value| &value.raw),
         workspace_contract_matrix_receipt,
     );
-    let repository_gate_summary = repository_gate_summary();
+    let repository_gate_summary = selected_repository_gate_summary(policy.as_ref());
     let replay_preflight = json!({
         "command": "determinism replay --root <root>",
         "included": false,

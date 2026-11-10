@@ -21,6 +21,41 @@ fn release_readiness_lists_replay_oracle_preflight() -> Result<(), Box<dyn Error
 }
 
 #[test]
+fn release_readiness_uses_consumer_selected_gates() -> Result<(), Box<dyn Error>> {
+    let mut policy = policy_json()?;
+    policy["release_readiness_policy"] = json!({
+        "required_external_commands": [
+            "scripts/check.rs",
+            "octet-precommit-check",
+            "nix flake check -L --option secret-key-files ''"
+        ],
+        "mcp_completion_contract": "target/release-readiness/mcp-contract.json",
+        "mcp_completion_results": "target/release-readiness/mcp-results.json"
+    });
+    let policy_path = std::env::temp_dir().join(format!(
+        "cairn-release-selection-{}.json",
+        std::process::id()
+    ));
+    fs::write(&policy_path, serde_json::to_vec_pretty(&policy)?)?;
+    let policy_arg = policy_path.to_str().ok_or("policy path is not UTF-8")?;
+    let receipt = run_json(&["release-readiness", "--root", ".", "--policy", policy_arg])?;
+    let _ = fs::remove_file(&policy_path);
+    assert_eq!(
+        receipt["repository_gate_summary"]["policy"],
+        "consumer-selected-gates"
+    );
+    assert_eq!(
+        receipt["repository_gate_summary"]["required_commands"],
+        json!([
+            "scripts/check.rs",
+            "octet-precommit-check",
+            "nix flake check -L --option secret-key-files ''"
+        ])
+    );
+    Ok(())
+}
+
+#[test]
 fn release_readiness_bundle_emits_operator_evidence() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.traceability_ownership.validation.gates]
     // r[verify cairn.supersede.release_readiness_bundle.schema]
