@@ -2446,3 +2446,13 @@ fn mcp_rejects_empty_tool_name() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("requires a tool name"));
     Ok(())
 }
+
+#[test]
+fn view_rejects_duplicate_options() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["view", "graph", "--format", "json", "--format", "json"])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("duplicate option"));
+    Ok(())
+}
