@@ -1,4 +1,4 @@
-use crate::support::{read_option, read_string_option};
+use crate::support::{read_option, read_string_option, reject_unknown_options};
 use std::{error::Error, path::PathBuf};
 
 pub(crate) struct EvidenceRepublishOptions {
@@ -10,6 +10,7 @@ pub(crate) struct EvidenceRepublishOptions {
 pub(super) fn evidence_republish_options(
     args: &[String],
 ) -> Result<EvidenceRepublishOptions, Box<dyn Error>> {
+    reject_unknown_options(args, &["--root", "--imported", "--out"])?;
     let root = read_option(args.to_vec(), "--root", ".");
     let imported = read_string_option(args, "--imported").map(PathBuf::from);
     let out = read_string_option(args, "--out").map(PathBuf::from);

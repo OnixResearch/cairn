@@ -1,4 +1,4 @@
-use crate::support::{read_option, read_string_option};
+use crate::support::{read_option, read_string_option, reject_unknown_options};
 use std::{error::Error, path::PathBuf};
 
 pub(crate) struct EvidenceIndexOptions {
@@ -16,6 +16,7 @@ pub(crate) struct EvidenceIndexVerifyOptions {
 pub(super) fn evidence_index_options(
     args: &[String],
 ) -> Result<EvidenceIndexOptions, Box<dyn Error>> {
+    reject_unknown_options(args, &["--root", "--bundle", "--out"])?;
     let root = read_option(args.to_vec(), "--root", ".");
     let bundle = read_string_option(args, "--bundle").map(PathBuf::from);
     let out = read_string_option(args, "--out").map(PathBuf::from);
@@ -31,6 +32,7 @@ pub(super) fn evidence_index_options(
 pub(super) fn evidence_index_verify_options(
     args: &[String],
 ) -> Result<EvidenceIndexVerifyOptions, Box<dyn Error>> {
+    reject_unknown_options(args, &["--root", "--index"])?;
     let root = read_option(args.to_vec(), "--root", ".");
     let index = read_string_option(args, "--index").map(PathBuf::from);
     if index.is_none() {

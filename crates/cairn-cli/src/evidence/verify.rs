@@ -38,6 +38,16 @@ pub(super) fn run_evidence_verify(args: Vec<String>) -> Result<(), Box<dyn Error
 }
 
 fn evidence_verify_options(args: &[String]) -> Result<EvidenceVerifyOptions, Box<dyn Error>> {
+    crate::support::reject_unknown_options(
+        args,
+        &[
+            "--root",
+            "--policy",
+            "--bundle",
+            "--stack-provenance",
+            "--stack-provenance-graph",
+        ],
+    )?;
     let root = read_option(args.to_vec(), "--root", ".");
     let policy = read_option(args.to_vec(), "--policy", default_policy_path());
     let bundle = read_string_option(args, "--bundle").map(PathBuf::from);
