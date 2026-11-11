@@ -234,7 +234,7 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         policy.as_ref().map(|value| &value.raw),
         workspace_contract_matrix_receipt,
     );
-    let repository_gate_summary = repository_gate_summary();
+    let repository_gate_summary = repository_gate_summary(policy.as_ref().map(|value| &value.raw));
     let replay_preflight = json!({
         "command": "determinism replay --root <root>",
         "included": false,
