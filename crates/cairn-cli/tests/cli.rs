@@ -2501,3 +2501,21 @@ fn review_validate_rejects_empty_receipt_path() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("requires a receipt path"));
     Ok(())
 }
+
+#[test]
+fn manifest_and_bundle_verify_reject_empty_paths() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["agent-receipt", "verify-bundle", ""][..],
+        &["evidence-manifest", "verify", ""][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("requires <bundle.json>")
+                || stderr.contains("requires <manifest.json>"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

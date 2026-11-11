@@ -19,6 +19,9 @@ pub(super) fn agent_evidence_bundle_options(
             index += 2;
             continue;
         }
+        if args[index].is_empty() {
+            return Err("agent-receipt verify-bundle requires <bundle.json>".into());
+        }
         if path.replace(PathBuf::from(&args[index])).is_some() {
             return Err("agent-receipt verify-bundle accepts exactly one bundle path".into());
         }

@@ -59,6 +59,9 @@ fn evidence_manifest_options(args: &[String]) -> Result<EvidenceManifestOptions,
             index += 2;
             continue;
         }
+        if args[index].is_empty() {
+            return Err("evidence-manifest verify requires <manifest.json>".into());
+        }
         if path.replace(PathBuf::from(&args[index])).is_some() {
             return Err("evidence-manifest verify accepts exactly one manifest path".into());
         }
