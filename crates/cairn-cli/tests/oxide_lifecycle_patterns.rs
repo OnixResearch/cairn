@@ -20,9 +20,15 @@ fn lifecycle_patterns_cli_accepts_reviewed_bundle() -> Result<(), Box<dyn Error>
         &input,
         serde_json::to_vec_pretty(&positive_oxide_lifecycle_patterns_fixture())?,
     )?;
-    let input_text = input.display().to_string();
     let mut command = cairn();
-    command.args(["lifecycle-patterns", "validate", "--input", &input_text]);
+    command.args([
+        "lifecycle-patterns",
+        "validate",
+        "--root",
+        &temp.display().to_string(),
+        "--input",
+        "patterns.json",
+    ]);
     let receipt = run_json_command(&mut command)?;
     assert_eq!(receipt["valid"], true);
     assert_eq!(receipt["verdict"], "pass");
