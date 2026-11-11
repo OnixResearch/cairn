@@ -2705,6 +2705,23 @@ fn receipt_preserves_diff_honors_explicit_policy_path() -> Result<(), Box<dyn Er
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
+    let drifted = dir.join("drifted.json");
+    fs::write(&drifted, br#"{"a":2}"#)?;
+    let output = cairn()
+        .args([
+            "receipt-preserves-diff",
+            "--baseline",
+            &baseline.to_string_lossy(),
+            "--candidate",
+            &drifted.to_string_lossy(),
+            "--policy",
+            &policy.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["drift_count"], 1);
     fs::remove_dir_all(dir)?;
     Ok(())
 }
