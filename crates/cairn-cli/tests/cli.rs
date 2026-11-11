@@ -2456,3 +2456,20 @@ fn view_rejects_duplicate_options() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("duplicate option"));
     Ok(())
 }
+
+#[test]
+fn readiness_rejects_duplicate_format() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args([
+            "readiness",
+            "ready",
+            "--format",
+            "json",
+            "--format",
+            "summary",
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("duplicate readiness option"));
+    Ok(())
+}

@@ -22,6 +22,7 @@ pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let change = args.first().ok_or("readiness requires a change")?;
     let mut input = json!({"change": change});
     let mut format = "json";
+    let mut format_seen = false;
     let mut pairs = args[1..].chunks_exact(2);
     for pair in &mut pairs {
         if pair[1].is_empty() || pair[1].starts_with("--") {
@@ -44,6 +45,10 @@ pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 continue;
             }
             "--format" => {
+                if format_seen {
+                    return Err("duplicate readiness option".into());
+                }
+                format_seen = true;
                 format = &pair[1];
                 continue;
             }
