@@ -126,6 +126,7 @@ fn run_create(args: &[String]) -> Result<(), Box<dyn Error>> {
             "--approvers",
             "--withdrawers",
             "--invalidators",
+            "--workspace",
             "--policy",
         ],
         &["--execute"],
@@ -133,11 +134,12 @@ fn run_create(args: &[String]) -> Result<(), Box<dyn Error>> {
     let policy_identity = policy_hash(args)?;
     let store = store_path(args)?;
     let decision_id = decision_id(args)?;
-    let workspace = read_string_option(args, "--base-revision")
+    let base = read_string_option(args, "--base-revision")
         .ok_or("requires --base-revision git_oid:OID")?;
-    if !workspace.starts_with("git_oid:") {
+    if !base.starts_with("git_oid:") {
         return Err("release-decision COB requires a git_oid base revision".into());
     }
+    let workspace = read_string_option(args, "--workspace").unwrap_or(base);
     let candidate = ReleaseCandidate {
         source_revision: read_string_option(args, "--source-revision")
             .ok_or("requires --source-revision")?,

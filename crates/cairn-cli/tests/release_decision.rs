@@ -85,11 +85,17 @@ fn release_decision_create_status_and_approve() -> Result<(), Box<dyn Error>> {
         "withdrawer",
         "--invalidators",
         "invalidator",
+        "--workspace",
+        "workspace:custom",
         "--policy",
         policy.as_str(),
         "--execute",
     ]);
     run_json(&mut create)?;
+
+    let portable = fs::read_to_string(store.join("rd-1.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert_eq!(value["state"]["workspace_id"], "workspace:custom");
 
     let mut status = cairn();
     status.args([
