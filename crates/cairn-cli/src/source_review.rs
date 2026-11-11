@@ -57,7 +57,8 @@ pub(crate) fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             .filter(|value| !value.starts_with("--"))
             .ok_or("source-review option value missing")?;
         if name == "--include" {
-            if includes.len() >= source_review::MAX_ROWS {
+            // The attached row occupies one of the bounded review slots.
+            if includes.len() >= source_review::MAX_ROWS - 1 {
                 return Err("include count exceeded".into());
             }
             includes.push(value.as_str());

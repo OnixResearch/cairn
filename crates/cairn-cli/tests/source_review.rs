@@ -205,5 +205,27 @@ fn operator_detached_signature_round_trip_and_fail_closed_cli() -> Result<(), Bo
         ])?
         .status
         .success());
+
+    let mut includes = Vec::new();
+    for _ in 0..source_review::MAX_ROWS {
+        includes.extend(["--include", "missing.json"]);
+    }
+    let mut over_bound = vec![
+        "assemble",
+        "--request",
+        "request.json",
+        "--signature-hex",
+        &detached,
+        "--policy",
+        "policy.json",
+    ];
+    over_bound.extend(includes);
+    let rejected = fixture.run(&over_bound)?;
+    assert!(!rejected.status.success());
+    assert!(
+        String::from_utf8_lossy(&rejected.stderr).contains("include count exceeded"),
+        "unexpected include-bound failure: {}",
+        String::from_utf8_lossy(&rejected.stderr)
+    );
     Ok(())
 }
