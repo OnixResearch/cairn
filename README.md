@@ -109,7 +109,7 @@ nix run path:$PWD#cairn -- context --root . --profile assurance --artifact tasks
 
 Read [Workflow profiles](docs/workflow-profiles.md) for selection, obligations, review evidence, sync, archive, compatibility, and non-claims.
 Read [Artifact workflow inspection](docs/artifact-workflow.md) for states, fields, MCP parity, and claim boundaries.
-Read [Change readiness](docs/change-readiness.md) for the additive report, explicit completion inputs, and current observation limits. Read [Workspace contract matrix](docs/workspace-contract-matrix.md) for cross-repository edge validation and its non-claims. Read [Oxide lifecycle patterns](docs/oxide-lifecycle-patterns.md) for bounded saga, document-plan, golden, and bundle inspection.
+Read [Change readiness](docs/change-readiness.md) for the additive report, explicit completion inputs, and current observation limits. Read [Workspace contract matrix](docs/workspace-contract-matrix.md) for cross-repository edge validation and its non-claims. Read [Oxide lifecycle patterns](docs/oxide-lifecycle-patterns.md) for bounded saga, document-plan, golden, and bundle inspection. Read [State-machine receipts](docs/state-machine-receipts.md) for bounded checker-witness validation.
 Read [Implementation-ready projection](docs/implementation-ready.md) for selectable task units, bounded enumeration, and non-claims.
 Read [Agent guidance context](docs/agent-guidance-context.md) before you declare local context or advisory text.
 Read [Generated agent workflows](docs/generated-agent-workflows.md) before you install project-local agent guidance.
