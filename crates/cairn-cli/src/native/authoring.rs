@@ -18,10 +18,12 @@ use serde_json::{json, Value};
 use crate::support::{
     collect_archived_change_ids, default_policy_path, detect_layout, file_content_manifest,
     has_flag, load_policy_file, path_string, portable_json_hash, print_json, read_option,
-    read_string_option, safe_relative_path, scan_repo, with_portable_receipt_hash,
+    read_string_option, reject_unknown_options, safe_relative_path, scan_repo,
+    with_portable_receipt_hash,
 };
 
 pub(crate) fn run_init(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root"])?;
     let root = read_option(args, "--root", ".");
     let artifacts = init_artifacts();
     let mut created = Vec::with_capacity(artifacts.len());
@@ -49,6 +51,7 @@ pub(crate) fn run_init(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 pub(super) fn run_change_create(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root", "--profile", "--policy"])?;
     let root = read_option(args.clone(), "--root", ".");
     let profile = read_string_option(&args, "--profile");
     let policy_path = read_option(args, "--policy", default_policy_path());

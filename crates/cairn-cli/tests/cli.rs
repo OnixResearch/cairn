@@ -610,3 +610,49 @@ fn developer_and_archive_commands_reject_bad_options() -> Result<(), Box<dyn Err
     }
     Ok(())
 }
+
+#[test]
+fn lifecycle_mutation_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["init", "--root", "fixtures/basic", "--bogus"][..],
+        &[
+            "change",
+            "create",
+            "demo-next",
+            "--root",
+            "fixtures/basic",
+            "--bogus",
+        ][..],
+        &[
+            "gate",
+            "proposal",
+            "demo",
+            "--root",
+            "fixtures/basic",
+            "--bogus",
+        ][..],
+        &[
+            "gate-context",
+            "demo",
+            "--root",
+            "fixtures/basic",
+            "--bogus",
+        ][..],
+        &["sync", "demo", "--root", "fixtures/basic", "--bogus"][..],
+        &["archive", "demo", "--root", "fixtures/basic", "--bogus"][..],
+        &["gate", "proposal", "demo", "--root"][..],
+        &["sync", "demo", "--root"][..],
+        &["archive", "demo", "--root"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("duplicate option"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
