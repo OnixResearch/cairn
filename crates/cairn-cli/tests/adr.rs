@@ -168,3 +168,47 @@ fn adr_import_accept_and_immutability() -> Result<(), Box<dyn Error>> {
     );
     Ok(())
 }
+
+#[test]
+fn adr_import_defaults_workspace() -> Result<(), Box<dyn Error>> {
+    let dir = test_dir("workspace-default")?;
+    let store = dir.join("store");
+    fs::create_dir_all(&store)?;
+    let decision = dir.join("decision.md");
+    fs::write(&decision, "# Decision\n")?;
+    let decision_s = decision.to_string_lossy().to_string();
+    let store_s = store.to_string_lossy().to_string();
+    let policy = worktree_root().join("cairn-policy/generated/cairn-policy.json");
+    let policy = policy.to_string_lossy().to_string();
+
+    run_json(&[
+        "adr",
+        "import",
+        "--store",
+        &store_s,
+        "--document-id",
+        "adr-default",
+        "--base-revision",
+        &base_arg(),
+        "--authors",
+        "author",
+        "--reviewers",
+        "reviewer",
+        "--approvers",
+        "approver",
+        "--publishers",
+        "publisher",
+        "--decision",
+        &decision_s,
+        "--policy",
+        &policy,
+        "--execute",
+    ])?;
+
+    let portable = fs::read_to_string(store.join("adr-default.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert_eq!(value["state"]["workspace_id"], "workspace:adr");
+
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
