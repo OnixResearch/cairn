@@ -71,6 +71,8 @@ fn adr_import_accept_and_immutability() -> Result<(), Box<dyn Error>> {
         "approver".to_string(),
         "--publishers".to_string(),
         "publisher".to_string(),
+        "--workspace".to_string(),
+        "workspace:custom".to_string(),
         "--decision".to_string(),
         decision_s,
         "--policy".to_string(),
@@ -82,6 +84,9 @@ fn adr_import_accept_and_immutability() -> Result<(), Box<dyn Error>> {
     import.push("--execute".to_string());
     let refs = import.iter().map(String::as_str).collect::<Vec<_>>();
     run_json(&refs)?;
+    let portable = fs::read_to_string(store.join("adr-1.portable.json"))?;
+    let portable: Value = serde_json::from_str(&portable)?;
+    assert_eq!(portable["state"]["workspace_id"], "workspace:custom");
 
     let status = run_json(&[
         "adr",
