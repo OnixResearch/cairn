@@ -1716,3 +1716,108 @@ fn vo_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn release_decision_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "release-decision",
+            "status",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "conflict",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "export",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "evidence",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "finding",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "vote",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "withdraw",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "invalidate",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "supersede",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "release-decision",
+            "create",
+            "--store",
+            "x",
+            "--decision-id",
+            "y",
+            "--bogus",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unknown option"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

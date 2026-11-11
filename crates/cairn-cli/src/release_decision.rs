@@ -14,7 +14,8 @@ use cairn_core::{
 use serde_json::json;
 
 use crate::support::{
-    default_policy_path, load_policy_file, print_json, read_string_option, with_receipt_hash,
+    default_policy_path, load_policy_file, print_json, read_string_option,
+    reject_positional_arguments, reject_unknown_options_with_flags, with_receipt_hash,
     CapabilityRoot, CapabilityRootKind,
 };
 
@@ -52,9 +53,18 @@ pub(crate) fn run_release(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn policy_hash() -> Result<String, Box<dyn Error>> {
-    let policy = load_policy_file(PathBuf::from(default_policy_path()))?;
+fn policy_hash(args: &[String]) -> Result<String, Box<dyn Error>> {
+    let path = PathBuf::from(
+        read_string_option(args, "--policy").unwrap_or_else(|| default_policy_path().to_string()),
+    );
+    let policy = load_policy_file(path)?;
     Ok(canonical_json_hash(&policy.raw))
+}
+
+fn admit(args: &[String], values: &[&str], flags: &[&str]) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_flags(args, values, flags)?;
+    reject_positional_arguments(args)?;
+    Ok(())
 }
 
 fn store_path(args: &[String]) -> Result<PathBuf, Box<dyn Error>> {
@@ -107,7 +117,27 @@ fn has_flag(args: &[String], flag: &str) -> bool {
 
 // r[impl cairn.release_decision_cob.cli.preview]
 fn run_create(args: &[String]) -> Result<(), Box<dyn Error>> {
-    let policy_identity = policy_hash()?;
+    admit(
+        args,
+        &[
+            "--store",
+            "--decision-id",
+            "--base-revision",
+            "--source-revision",
+            "--artifact-manifest",
+            "--artifact-identity",
+            "--target-label",
+            "--release-label",
+            "--proposers",
+            "--reviewers",
+            "--approvers",
+            "--withdrawers",
+            "--invalidators",
+            "--policy",
+        ],
+        &["--execute"],
+    )?;
+    let policy_identity = policy_hash(args)?;
     let store = store_path(args)?;
     let decision_id = decision_id(args)?;
     let workspace = read_string_option(args, "--base-revision")
@@ -171,6 +201,7 @@ fn initialize(init: ReleaseDecisionInit) -> Result<ReleaseDecisionState, Box<dyn
 }
 
 fn run_status(args: &[String]) -> Result<(), Box<dyn Error>> {
+    admit(args, &["--store", "--decision-id"], &[])?;
     let store = store_path(args)?;
     let id = decision_id(args)?;
     let state = read_portable(&store, &id)?;
@@ -226,6 +257,25 @@ fn mutate(
 }
 
 fn run_evidence(args: &[String]) -> Result<(), Box<dyn Error>> {
+    admit(
+        args,
+        &[
+            "--store",
+            "--decision-id",
+            "--actor",
+            "--evidence-id",
+            "--schema",
+            "--verification-role",
+            "--verdict",
+            "--external-identity",
+            "--claim-scope",
+            "--validator-identity",
+            "--receipt-identity",
+            "--operation-id",
+            "--policy",
+        ],
+        &["--execute"],
+    )?;
     let actor = read_string_option(args, "--actor").ok_or("requires --actor")?;
     let id = read_string_option(args, "--evidence-id").ok_or("requires --evidence-id")?;
     let schema = read_string_option(args, "--schema").ok_or("requires --schema")?;
@@ -245,7 +295,7 @@ fn run_evidence(args: &[String]) -> Result<(), Box<dyn Error>> {
             validator_identity: read_string_option(args, "--validator-identity")
                 .unwrap_or_else(|| "cairn".to_string()),
             verdict,
-            policy_identity: policy_hash()?,
+            policy_identity: policy_hash(args)?,
             receipt_identity: read_string_option(args, "--receipt-identity").unwrap_or_default(),
         },
     }];
@@ -258,6 +308,22 @@ fn run_evidence(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_finding(args: &[String]) -> Result<(), Box<dyn Error>> {
+    admit(
+        args,
+        &[
+            "--store",
+            "--decision-id",
+            "--actor",
+            "--finding-id",
+            "--blocker-class",
+            "--category",
+            "--severity",
+            "--description",
+            "--source-span",
+            "--operation-id",
+        ],
+        &["--execute"],
+    )?;
     let actor = read_string_option(args, "--actor").ok_or("requires --actor")?;
     let finding_id = read_string_option(args, "--finding-id").ok_or("requires --finding-id")?;
     let blocker =
@@ -285,6 +351,18 @@ fn run_finding(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_vote(args: &[String]) -> Result<(), Box<dyn Error>> {
+    admit(
+        args,
+        &[
+            "--store",
+            "--decision-id",
+            "--actor",
+            "--kind",
+            "--vote-id",
+            "--operation-id",
+        ],
+        &["--execute"],
+    )?;
     let actor = read_string_option(args, "--actor").ok_or("requires --actor")?;
     let kind = read_string_option(args, "--kind").ok_or("requires --kind approve|reject")?;
     let store = store_path(args)?;
@@ -333,6 +411,19 @@ fn run_vote(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_decision(args: &[String], decision: &str) -> Result<(), Box<dyn Error>> {
+    admit(
+        args,
+        &[
+            "--store",
+            "--decision-id",
+            "--actor",
+            "--reason",
+            "--evidence-id",
+            "--successor",
+            "--operation-id",
+        ],
+        &["--execute"],
+    )?;
     let actor = read_string_option(args, "--actor").ok_or("requires --actor")?;
     let reason =
         read_string_option(args, "--reason").unwrap_or_else(|| "bounded reason".to_string());
@@ -357,6 +448,7 @@ fn run_decision(args: &[String], decision: &str) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_conflict(args: &[String]) -> Result<(), Box<dyn Error>> {
+    admit(args, &["--store", "--decision-id"], &[])?;
     let store = store_path(args)?;
     let id = decision_id(args)?;
     let state = read_portable(&store, &id)?;
@@ -370,6 +462,7 @@ fn run_conflict(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_export(args: &[String]) -> Result<(), Box<dyn Error>> {
+    admit(args, &["--store", "--decision-id"], &[])?;
     let store = store_path(args)?;
     let id = decision_id(args)?;
     let state = read_portable(&store, &id)?;
