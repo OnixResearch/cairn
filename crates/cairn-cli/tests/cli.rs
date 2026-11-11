@@ -2833,6 +2833,8 @@ fn receipt_commands_require_input_paths() -> Result<(), Box<dyn Error>> {
     for args in [
         &["receipt-preserves-diff", "--baseline", "a"][..],
         &["receipt-verify-content-hash"][..],
+        &["release-run", "status"][..],
+        &["state-machine-receipt", "validate"][..],
     ] {
         let output = cairn().args(args).output()?;
         assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
