@@ -1,6 +1,6 @@
 use std::{env, error::Error, fs, path::Path};
 
-use super::common::{assert_hash_field, copy_dir_recursive, repo_root, run_json};
+use super::common::{assert_hash_field, cairn, copy_dir_recursive, repo_root, run_json};
 
 fn request(root: &Path) -> String {
     format!(r#"{{"root":"{}"}}"#, root.display())
@@ -201,5 +201,21 @@ fn implementation_ready_reports_invalid_task_definitions_as_blockers() -> Result
         .ok_or("blockers")?
         .iter()
         .any(|blocker| blocker["class"] == "task_definition"));
+    Ok(())
+}
+
+#[test]
+fn implementation_ready_rejects_empty_string_arguments() -> Result<(), Box<dyn Error>> {
+    for request in [r#"{"root":""}"#, r#"{"policy":""}"#] {
+        let output = cairn()
+            .args(["mcp", "--call", "cairn_implementation_ready", request])
+            .output()?;
+        assert!(!output.status.success(), "{request} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("must not be empty"),
+            "{request}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
     Ok(())
 }

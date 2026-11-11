@@ -541,8 +541,15 @@ fn validate_mcp_implementation_args(
         }
     }
     for key in ["root", "policy"] {
-        if object.get(key).is_some_and(|value| !value.is_string()) {
-            return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+        if let Some(value) = object.get(key) {
+            let Some(text) = value.as_str() else {
+                return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+            };
+            if text.is_empty() {
+                return Err(
+                    format!("invalid arguments for {tool}: {key} must not be empty").into(),
+                );
+            }
         }
     }
     if let Some(limit) = object.get("limit") {
