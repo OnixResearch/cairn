@@ -120,6 +120,14 @@ fn implementation_ready_bounds_enumeration_explicitly() -> Result<(), Box<dyn Er
     assert_eq!(receipt["complete"], false);
     assert_eq!(receipt["outcome"], "incomplete_limit");
     assert_eq!(receipt["changes"].as_array().ok_or("changes")?.len(), 1);
+    let cli = run_json(&[
+        "implementation-ready",
+        "--root",
+        &root.display().to_string(),
+        "--limit",
+        "1",
+    ])?;
+    assert_eq!(cli, receipt.clone());
     Ok(())
 }
 
