@@ -12,7 +12,7 @@ pub(crate) fn run_receipt_verify_content_hash(args: Vec<String>) -> Result<(), B
 
     let path = read_option(args, "--path", "");
     if path.as_os_str().is_empty() {
-        return Err("receipt verify-content-hash requires --path <receipt.json>".into());
+        return Err("receipt-verify-content-hash requires --path <receipt.json>".into());
     }
 
     let text = fs::read_to_string(&path).map_err(|e| format!("failed to read receipt: {e}"))?;
@@ -74,6 +74,17 @@ fn json_type_name(value: &Value) -> &'static str {
 mod tests {
     use cairn_core::preserves_content_hash;
     use serde_json::json;
+
+    #[test]
+    fn missing_path_names_the_dispatched_command() {
+        let error = super::run_receipt_verify_content_hash(Vec::new())
+            .expect_err("missing path must fail")
+            .to_string();
+        assert_eq!(
+            error,
+            "receipt-verify-content-hash requires --path <receipt.json>"
+        );
+    }
 
     #[test]
     fn verify_content_hash_positive() {

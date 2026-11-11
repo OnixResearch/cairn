@@ -529,7 +529,7 @@ mod tests {
         let destination = test_directory("excluded-target-destination");
         remove_test_directory(&source)?;
         remove_test_directory(&destination)?;
-        for directory in ["target/debug", ".git/refs", ".pi"] {
+        for directory in ["target/debug", ".git/refs/heads", ".pi"] {
             fs::create_dir_all(source.join(directory))?;
         }
         fs::create_dir_all(source.join("nested"))?;
