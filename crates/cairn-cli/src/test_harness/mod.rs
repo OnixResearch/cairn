@@ -54,8 +54,12 @@ pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> 
         ],
     )?;
     let root = crate::support::read_option(args.clone(), "--root", ".");
+    let out = read_string_option(&args, "--out");
+    if let Some(out) = &out {
+        validate_output_path(out)?;
+    }
     if let Some(rail) = read_string_option(&args, "--rail") {
-        return run_real_rail(&root, &rail, read_string_option(&args, "--out"));
+        return run_real_rail(&root, &rail, out);
     }
     let case = read_string_option(&args, "--case").unwrap_or_else(|| "pass".into());
     let seed = read_string_option(&args, "--seed").unwrap_or_else(|| "0".into());
@@ -67,7 +71,6 @@ pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> 
         })?,
         None => 2,
     };
-    let out = read_string_option(&args, "--out");
     let artifact = root
         .join("target/cairn-test-harness")
         .join(format!("{case}-{seed}.json"));
@@ -87,6 +90,23 @@ pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> 
     } else {
         Err(format!("test harness case failed: {}", report.code).into())
     }
+}
+
+fn validate_output_path(value: &str) -> Result<(), Box<dyn Error>> {
+    let path = std::path::Path::new(value);
+    if path.is_absolute()
+        || path.components().any(|component| {
+            matches!(
+                component,
+                std::path::Component::ParentDir
+                    | std::path::Component::RootDir
+                    | std::path::Component::Prefix(_)
+            )
+        })
+    {
+        return Err("test-harness --out must be repository-relative without traversal".into());
+    }
+    Ok(())
 }
 
 fn validate_path_component(name: &str, value: &str) -> Result<(), Box<dyn Error>> {

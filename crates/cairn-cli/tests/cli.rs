@@ -843,7 +843,9 @@ fn test_harness_rejects_escaping_case_seed_and_out_paths() -> Result<(), Box<dyn
         assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
         let stderr = String::from_utf8_lossy(&output.stderr);
         assert!(
-            stderr.contains("safe path component") || stderr.contains("capability"),
+            stderr.contains("safe path component")
+                || stderr.contains("repository-relative")
+                || stderr.contains("capability"),
             "{args:?}: {stderr}"
         );
     }

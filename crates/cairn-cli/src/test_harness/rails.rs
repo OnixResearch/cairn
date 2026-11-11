@@ -1,6 +1,8 @@
 use cairn_core::blake3_hex;
 use serde_json::json;
-use std::{error::Error, fs, path::Path, process::Command};
+use std::{error::Error, path::Path, process::Command};
+
+use crate::support::{CapabilityRoot, CapabilityRootKind};
 
 use super::model::{Class, Outcome, Report};
 
@@ -27,17 +29,12 @@ pub(super) fn run_real_rail(
     );
     let rendered = serde_json::to_string_pretty(&receipt)?;
     if let Some(out) = out {
-        let p = root.join(out);
-        if let Some(parent) = p.parent() {
-            fs::create_dir_all(parent)?;
+        let capability = CapabilityRoot::open(CapabilityRootKind::Repository, root)?;
+        let out = Path::new(&out);
+        if let Some(parent) = out.parent() {
+            capability.create_dir_all_path(parent)?;
         }
-        fs::write(
-            p,
-            format!(
-                "{rendered}
-"
-            ),
-        )?;
+        capability.write_path(out, format!("{rendered}\n").as_bytes())?;
     }
     println!("{rendered}");
     if report.outcome == Outcome::Passed {
