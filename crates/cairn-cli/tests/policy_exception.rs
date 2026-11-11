@@ -142,3 +142,54 @@ fn policy_exception_request_status_and_validate() -> Result<(), Box<dyn Error>> 
     assert_eq!(status2["applicability"], "not-approved");
     Ok(())
 }
+
+#[test]
+fn policy_exception_default_workspace_is_base_revision() -> Result<(), Box<dyn Error>> {
+    let dir = test_dir("workspace-default")?;
+    let store = dir.join("store");
+    fs::create_dir_all(&store)?;
+    let store_s = store.to_string_lossy().to_string();
+    let base = base_arg();
+    let policy = policy_arg();
+
+    let mut request = cairn();
+    request.args([
+        "policy-exception",
+        "request",
+        "--store",
+        &store_s,
+        "--exception-id",
+        "pe-default",
+        "--base-revision",
+        &base,
+        "--rules",
+        "allow-network-egress",
+        "--targets",
+        "svc:bar",
+        "--rationale",
+        "temporary migration",
+        "--controls",
+        "audit-log",
+        "--requesters",
+        "requester",
+        "--reviewers",
+        "reviewer",
+        "--approvers",
+        "approver",
+        "--revokers",
+        "revoker",
+        "--observers",
+        "observer",
+        "--policy",
+        &policy,
+        "--execute",
+    ]);
+    run_json(&mut request)?;
+
+    let portable = fs::read_to_string(store.join("pe-default.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert_eq!(value["state"]["workspace_id"], base);
+
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
