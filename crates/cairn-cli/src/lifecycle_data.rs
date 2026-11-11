@@ -34,7 +34,8 @@ use serde_json::{json, Value};
 use crate::nickel_export_boundary::export_json_dual_run;
 use crate::support::{
     collect_validation_spec_sources, detect_layout, has_flag, print_json, read_option,
-    read_string_option, with_receipt_hash,
+    read_string_option, reject_positional_arguments, reject_unknown_options,
+    reject_unknown_options_with_flags, with_receipt_hash,
 };
 
 const STRUCTURED_LIFECYCLE_EXPORT_SCHEMA: &str = "cairn.structured-lifecycle.export-receipt.v1";
@@ -62,6 +63,8 @@ pub(crate) fn run_lifecycle_data(args: Vec<String>) -> Result<(), Box<dyn Error>
 }
 
 fn run_lifecycle_check(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--source"])?;
+    reject_positional_arguments(&args)?;
     let source =
         read_string_option(&args, "--source").ok_or("lifecycle check requires --source")?;
     let bundle = load_lifecycle_bundle(Path::new(&source))?;
@@ -74,6 +77,8 @@ fn run_lifecycle_check(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_lifecycle_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_flags(&args, &["--source", "--output"], &["--check"])?;
+    reject_positional_arguments(&args)?;
     // r[impl cairn.structured_lifecycle.typed_authoring]
     // r[impl cairn.structured_lifecycle.typed_authoring.nickel_contracts]
     // r[impl cairn.structured_lifecycle.typed_authoring.rust_revalidation]
@@ -117,6 +122,8 @@ fn run_lifecycle_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_lifecycle_render_markdown(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--source", "--out-dir"])?;
+    reject_positional_arguments(&args)?;
     // r[impl cairn.structured_lifecycle.markdown_projection]
     // r[impl cairn.structured_lifecycle.markdown_projection.render_view]
     let source = read_string_option(&args, "--source")
@@ -153,6 +160,8 @@ fn run_lifecycle_render_markdown(args: Vec<String>) -> Result<(), Box<dyn Error>
 }
 
 fn run_lifecycle_import_markdown(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_flags(&args, &["--root", "--out"], &["--execute"])?;
+    reject_positional_arguments(&args)?;
     // r[impl cairn.structured_lifecycle.markdown_projection.lossy_import]
     // r[impl cairn.structured_lifecycle.markdown_projection.compatibility]
     // r[impl cairn.structured_lifecycle.migration]

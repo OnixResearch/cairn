@@ -1198,3 +1198,41 @@ fn review_receipt_commands_reject_multiple_paths() -> Result<(), Box<dyn Error>>
     }
     Ok(())
 }
+
+#[test]
+fn lifecycle_data_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["lifecycle", "check", "--source", "x", "--bogus"][..],
+        &[
+            "lifecycle",
+            "export",
+            "--source",
+            "x",
+            "--output",
+            "y",
+            "--bogus",
+        ][..],
+        &["lifecycle", "render-markdown", "--source", "x", "--bogus"][..],
+        &[
+            "lifecycle",
+            "import-markdown",
+            "--root",
+            ".",
+            "--out",
+            "y",
+            "--bogus",
+        ][..],
+        &["lifecycle-patterns", "validate", "--input", "x", "--bogus"][..],
+        &["lifecycle", "check", "--source"][..],
+        &["lifecycle", "import-markdown", "--out"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("requires a value"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

@@ -3,7 +3,10 @@ use std::{error::Error, fs, path::Path};
 use cairn_core::validate_oxide_lifecycle_patterns_value;
 use serde_json::{json, Value};
 
-use crate::support::{print_json, read_option, safe_relative_path, with_receipt_hash};
+use crate::support::{
+    print_json, read_option, reject_positional_arguments, reject_unknown_options,
+    safe_relative_path, with_receipt_hash,
+};
 
 const OXIDE_PATTERN_INPUT_MAX_BYTES: usize = 2_097_152;
 
@@ -18,6 +21,8 @@ pub(crate) fn run_oxide_lifecycle_patterns(args: Vec<String>) -> Result<(), Box<
 }
 
 fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root", "--input"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let input = read_option(args, "--input", "");
     if input.as_os_str().is_empty() {
