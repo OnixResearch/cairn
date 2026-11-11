@@ -30,7 +30,7 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         return Err("gate requires a stage: proposal, design, or tasks".into());
     };
     let stage = parse_gate_stage(&stage_text)?;
-    let Some(change) = iter.next() else {
+    let Some(change) = iter.next().filter(|change| !change.is_empty()) else {
         return Err("gate requires a change name".into());
     };
     let rest = iter.collect::<Vec<_>>();

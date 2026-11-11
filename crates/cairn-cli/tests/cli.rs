@@ -2600,3 +2600,22 @@ fn change_and_spec_reject_empty_positionals() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn lifecycle_dispatch_rejects_empty_change_names() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["gate", "tasks", ""][..],
+        &["gate-context", ""][..],
+        &["sync", ""][..],
+        &["archive", ""][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("requires a change name"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

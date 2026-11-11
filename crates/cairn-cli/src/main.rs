@@ -279,19 +279,19 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "mcp" => run_mcp(args.collect())?,
         "gate" => lifecycle::run_gate(args.collect())?,
         "gate-context" => {
-            let Some(change) = args.next() else {
+            let Some(change) = args.next().filter(|change| !change.is_empty()) else {
                 return Err("gate-context requires a change name".into());
             };
             lifecycle::run_change_context(args.collect(), &change)?;
         }
         "sync" => {
-            let Some(change) = args.next() else {
+            let Some(change) = args.next().filter(|change| !change.is_empty()) else {
                 return Err("sync requires a change name".into());
             };
             lifecycle::run_sync(args.collect(), &change)?;
         }
         "archive" => {
-            let Some(change) = args.next() else {
+            let Some(change) = args.next().filter(|change| !change.is_empty()) else {
                 return Err("archive requires a change name".into());
             };
             lifecycle::run_archive(args.collect(), &change)?;
