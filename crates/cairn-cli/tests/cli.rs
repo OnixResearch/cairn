@@ -1975,3 +1975,23 @@ fn release_run_rejects_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn migrate_rejects_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["migrate", "cairn", "--bogus"][..],
+        &["migrate", "cairn", "--plan-hash"][..],
+        &["migrate", "cairn", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("unexpected argument"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

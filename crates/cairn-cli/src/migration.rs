@@ -16,7 +16,7 @@ use crate::plan_receipts::{migration_plan_hash, migration_plan_json};
 use crate::support::{
     collect_files, default_policy_path, file_content_manifest, has_flag, load_policy_file,
     path_string, portable_json_hash, print_json, read_option, read_string_option,
-    with_portable_receipt_hash,
+    reject_positional_arguments, reject_unknown_options_with_flags, with_portable_receipt_hash,
 };
 
 // r[impl cairn.lifecycle_directory.legacy_diagnostic.migrate]
@@ -27,6 +27,12 @@ pub(crate) fn run_migrate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         return Err("migrate requires a source: cairn, openspec, or ironspec".into());
     };
     let rest = iter.collect::<Vec<_>>();
+    reject_unknown_options_with_flags(
+        &rest,
+        &["--root", "--policy", "--plan-hash"],
+        &["--execute"],
+    )?;
+    reject_positional_arguments(&rest)?;
     let root = read_option(rest.clone(), "--root", ".");
     let is_execute = has_flag(&rest, "--execute");
     let expected_plan_hash = read_string_option(&rest, "--plan-hash");
