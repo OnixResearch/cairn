@@ -68,7 +68,7 @@ fn required_positional<'a>(
     message: &'static str,
 ) -> Result<String, Box<dyn Error>> {
     let value = values.next().ok_or(message)?;
-    if value.starts_with('-') {
+    if value.is_empty() || value.starts_with('-') {
         return Err(message.into());
     }
     Ok(value.clone())

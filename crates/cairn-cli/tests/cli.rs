@@ -2483,3 +2483,13 @@ fn workset_rejects_empty_id() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("requires an ID"));
     Ok(())
 }
+
+#[test]
+fn workflow_rejects_empty_positionals() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["workflow", "status", "", "--policy", "p"])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires a change name"));
+    Ok(())
+}
