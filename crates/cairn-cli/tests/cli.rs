@@ -1955,3 +1955,23 @@ fn release_readiness_rejects_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn release_run_rejects_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["release-run", "status", "--bogus"][..],
+        &["release-run", "status", "--input"][..],
+        &["release-run", "explain", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("unexpected argument"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

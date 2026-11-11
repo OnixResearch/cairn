@@ -6,8 +6,8 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 use crate::support::{
-    default_policy_path, load_policy_file, print_json, read_option, safe_relative_path,
-    with_receipt_hash,
+    default_policy_path, load_policy_file, print_json, read_option, reject_positional_arguments,
+    reject_unknown_options, safe_relative_path, with_receipt_hash,
 };
 
 const RELEASE_RUN_LEDGER_MAX_BYTES: usize = 2_097_152;
@@ -44,6 +44,8 @@ impl Projection {
 
 fn run_projection(args: Vec<String>, projection: Projection) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.release_evidence.durable_run_ledger.shell]
+    reject_unknown_options(&args, &["--root", "--policy", "--input"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let input = read_option(args, "--input", "");
