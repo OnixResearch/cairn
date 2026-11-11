@@ -15,9 +15,8 @@ use cairn_core::{
 use serde_json::json;
 
 use crate::support::{
-    default_policy_path, load_policy_file, print_json, read_string_option,
-    reject_positional_arguments, reject_unknown_options_with_flags, with_receipt_hash,
-    CapabilityRoot, CapabilityRootKind,
+    admit_arguments, default_policy_path, load_policy_file, print_json, read_string_option,
+    with_receipt_hash, CapabilityRoot, CapabilityRootKind,
 };
 
 const PORTABLE_MAX_BYTES: u64 = 4 * 1024 * 1024;
@@ -62,12 +61,6 @@ fn policy_hash(args: &[String]) -> Result<String, Box<dyn Error>> {
     );
     let policy = load_policy_file(path)?;
     Ok(canonical_json_hash(&policy.raw))
-}
-
-fn admit(args: &[String], values: &[&str], flags: &[&str]) -> Result<(), Box<dyn Error>> {
-    reject_unknown_options_with_flags(args, values, flags)?;
-    reject_positional_arguments(args)?;
-    Ok(())
 }
 
 fn store_path(args: &[String]) -> Result<PathBuf, Box<dyn Error>> {
@@ -121,7 +114,7 @@ fn has_flag(args: &[String], flag: &str) -> bool {
 
 // r[impl cairn.verification_obligation_cob.cli.preview]
 fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -195,7 +188,7 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_status(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(args, &["--store", "--obligation-id"], &[])?;
+    admit_arguments(args, &["--store", "--obligation-id"], &[])?;
     let store = store_path(args)?;
     let id = obs_id(args)?;
     let state = read_portable(&store, &id)?;
@@ -217,7 +210,7 @@ fn run_status(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_conflict(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(args, &["--store", "--obligation-id"], &[])?;
+    admit_arguments(args, &["--store", "--obligation-id"], &[])?;
     let store = store_path(args)?;
     let id = obs_id(args)?;
     let state = read_portable(&store, &id)?;
@@ -268,7 +261,7 @@ fn mutate(
 }
 
 fn run_update(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -294,7 +287,7 @@ fn run_update(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_evidence(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -330,7 +323,7 @@ fn run_evidence(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_finding(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -363,7 +356,7 @@ fn run_finding(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_response(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -386,7 +379,7 @@ fn run_response(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_decision(args: &[String], decision: &str) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -425,7 +418,7 @@ fn run_decision(args: &[String], decision: &str) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_resolve(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -451,7 +444,7 @@ fn run_resolve(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_export(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(args, &["--store", "--obligation-id"], &[])?;
+    admit_arguments(args, &["--store", "--obligation-id"], &[])?;
     let store = store_path(args)?;
     let id = obs_id(args)?;
     let state = read_portable(&store, &id)?;

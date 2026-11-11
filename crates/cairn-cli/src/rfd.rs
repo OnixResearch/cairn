@@ -14,9 +14,8 @@ use cairn_core::{
 use serde_json::json;
 
 use crate::support::{
-    default_policy_path, load_policy_file, print_json, read_string_option,
-    reject_positional_arguments, reject_unknown_options_with_flags, with_receipt_hash,
-    CapabilityRoot, CapabilityRootKind,
+    admit_arguments, default_policy_path, load_policy_file, print_json, read_string_option,
+    with_receipt_hash, CapabilityRoot, CapabilityRootKind,
 };
 
 const PORTABLE_MAX_BYTES: u64 = 4 * 1024 * 1024;
@@ -36,12 +35,6 @@ pub(crate) fn run_rfd(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         Some(unknown) => Err(format!("unknown rfd command: {unknown}").into()),
         None => Err("rfd requires a command: import, status, checkout, update, conflict, resolve, number, or publish".into()),
     }
-}
-
-fn admit(args: &[String], values: &[&str], flags: &[&str]) -> Result<(), Box<dyn Error>> {
-    reject_unknown_options_with_flags(args, values, flags)?;
-    reject_positional_arguments(args)?;
-    Ok(())
 }
 
 fn policy(args: &[String]) -> Result<(cairn_core::Policy, String), Box<dyn Error>> {
@@ -78,7 +71,7 @@ fn read_portable(store: &Path, id: &str) -> Result<DocumentState, Box<dyn Error>
 // r[impl cairn.rfd_cob.cli.preview]
 // r[impl cairn.rfd_cob.cli.execute]
 fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -164,7 +157,7 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_status(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(args, &["--store", "--document-id"], &[])?;
+    admit_arguments(args, &["--store", "--document-id"], &[])?;
     let store = store_path(args)?;
     let id = doc_id(args)?;
     let state = read_portable(&store, &id)?;
@@ -187,7 +180,7 @@ fn run_status(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_conflict(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(args, &["--store", "--document-id"], &[])?;
+    admit_arguments(args, &["--store", "--document-id"], &[])?;
     let store = store_path(args)?;
     let id = doc_id(args)?;
     let state = read_portable(&store, &id)?;
@@ -202,7 +195,7 @@ fn run_conflict(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_checkout(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(args, &["--store", "--document-id", "--out"], &["--execute"])?;
+    admit_arguments(args, &["--store", "--document-id", "--out"], &["--execute"])?;
     let store = store_path(args)?;
     let id = doc_id(args)?;
     let state = read_portable(&store, &id)?;
@@ -239,7 +232,7 @@ fn run_checkout(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_update(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -313,7 +306,7 @@ fn run_update(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_resolve(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -366,7 +359,7 @@ fn run_resolve(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_number(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(
+    admit_arguments(
         args,
         &[
             "--store",
@@ -397,7 +390,7 @@ fn run_number(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_publish(args: &[String]) -> Result<(), Box<dyn Error>> {
-    admit(args, &["--store", "--document-id", "--out"], &[])?;
+    admit_arguments(args, &["--store", "--document-id", "--out"], &[])?;
     let store = store_path(args)?;
     let id = doc_id(args)?;
     let state = read_portable(&store, &id)?;

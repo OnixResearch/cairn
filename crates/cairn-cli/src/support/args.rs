@@ -94,6 +94,16 @@ const BOOLEAN_OPTIONS: &[&str] = &[
     "--strict",
 ];
 
+pub(crate) fn admit_arguments(
+    args: &[String],
+    values: &[&str],
+    flags: &[&str],
+) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_flags(args, values, flags)?;
+    reject_positional_arguments(args)?;
+    Ok(())
+}
+
 pub(crate) fn reject_positional_arguments(args: &[String]) -> Result<(), Box<dyn Error>> {
     let mut index = 0;
     while index < args.len() {

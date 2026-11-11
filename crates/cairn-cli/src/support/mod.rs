@@ -78,7 +78,7 @@ pub(crate) fn substance_inventory_json(inventories: &[ArtifactSubstanceInventory
 }
 
 pub(crate) use args::{
-    has_flag, read_option, read_repeated_path_options, read_string_option,
+    admit_arguments, has_flag, read_option, read_repeated_path_options, read_string_option,
     reject_positional_arguments, reject_unknown_options, reject_unknown_options_with_flags,
     reject_unknown_options_with_repeats,
 };
