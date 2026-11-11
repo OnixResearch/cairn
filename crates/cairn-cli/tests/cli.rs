@@ -2219,3 +2219,25 @@ fn adoption_report_rejects_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn content_addressed_evidence_rejects_extra_arguments() -> Result<(), Box<dyn Error>> {
+    for command in [
+        "circuit-primitive",
+        "downstream-pilot",
+        "export-bundle",
+        "name-pointer",
+        "function-object",
+    ] {
+        let output = cairn()
+            .args(["evidence", command, "validate", "receipt.json", "stray"])
+            .output()?;
+        assert!(!output.status.success(), "{command} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected evidence argument"),
+            "{command}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
