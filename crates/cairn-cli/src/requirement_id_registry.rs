@@ -162,7 +162,7 @@ fn run_legacy_requirement_registry_verify(args: Vec<String>) -> Result<(), Box<d
     if input.as_os_str().is_empty() {
         return Err("requirement-registry verify requires --input <registry-input.json>".into());
     }
-    let value = read_unbounded_legacy_registry_input(&input)?;
+    let value = read_legacy_registry_input(&input)?;
     let report = validate_requirement_id_registry_value(&value);
     let receipt = json!({
         "command": "requirement-registry verify",
@@ -421,7 +421,18 @@ fn legacy_policy_hash(value: &Value) -> String {
         .unwrap_or_else(|| canonical_json_hash(&Value::Null))
 }
 
-fn read_unbounded_legacy_registry_input(path: &Path) -> Result<Value, Box<dyn Error>> {
+fn read_legacy_registry_input(path: &Path) -> Result<Value, Box<dyn Error>> {
+    let metadata = std::fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() {
+        return Err(format!(
+            "requirement registry input {} must not be a symlink",
+            path.display()
+        )
+        .into());
+    }
+    if metadata.len() > MAX_REGISTRY_BYTES {
+        return Err("requirement registry input exceeds the reviewed byte bound".into());
+    }
     let text = std::fs::read_to_string(path).map_err(|source| {
         format!(
             "failed to read requirement registry input {}: {source}",

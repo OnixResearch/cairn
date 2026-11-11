@@ -3100,6 +3100,12 @@ fn artifact_readers_reject_symlinks() -> Result<(), Box<dyn Error>> {
     for args in [
         vec!["agent-receipt", "validate", link_text.as_str()],
         vec!["evidence-manifest", "verify", link_text.as_str()],
+        vec![
+            "requirement-registry",
+            "verify",
+            "--input",
+            link_text.as_str(),
+        ],
     ] {
         let output = cairn().args(&args).output()?;
         assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
