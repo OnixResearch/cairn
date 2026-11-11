@@ -1484,3 +1484,117 @@ fn rfd_mutations_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn adr_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "adr",
+            "status",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "adr",
+            "conflict",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "adr",
+            "update",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--actor",
+            "a",
+            "--text",
+            "t",
+            "--bogus",
+        ][..],
+        &[
+            "adr",
+            "accept",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--actor",
+            "a",
+            "--bogus",
+        ][..],
+        &[
+            "adr",
+            "deprecate",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--actor",
+            "a",
+            "--bogus",
+        ][..],
+        &[
+            "adr",
+            "supersede",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--actor",
+            "a",
+            "--replaces",
+            "z",
+            "--bogus",
+        ][..],
+        &[
+            "adr",
+            "resolve",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--actor",
+            "a",
+            "--text",
+            "t",
+            "--bogus",
+        ][..],
+        &[
+            "adr",
+            "number",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--number",
+            "1",
+            "--bogus",
+        ][..],
+        &[
+            "adr",
+            "publish",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--bogus",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unknown option"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
