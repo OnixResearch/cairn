@@ -1821,3 +1821,117 @@ fn release_decision_commands_reject_bad_options() -> Result<(), Box<dyn Error>> 
     }
     Ok(())
 }
+
+#[test]
+fn policy_exception_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "policy-exception",
+            "status",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "conflict",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "export",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "approve",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "reject",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "revoke",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "expire",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "close",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "supersede",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "observe-validity",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "policy-exception",
+            "request",
+            "--store",
+            "x",
+            "--exception-id",
+            "y",
+            "--bogus",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unknown option"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
