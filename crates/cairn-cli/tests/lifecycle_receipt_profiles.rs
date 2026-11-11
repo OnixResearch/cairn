@@ -28,8 +28,10 @@ fn state_machine_receipt_cli_accepts_bounded_witness() -> Result<(), Box<dyn Err
     command.args([
         "state-machine-receipt",
         "validate",
+        "--root",
+        &temp.display().to_string(),
         "--input",
-        &input.display().to_string(),
+        "receipt.json",
     ]);
     let receipt = run_json_command(&mut command)?;
     assert_eq!(receipt["valid"], true);
@@ -78,8 +80,10 @@ fn release_run_status_reports_complete_local_ledger() -> Result<(), Box<dyn Erro
     command.args([
         "release-run",
         "status",
+        "--root",
+        &temp.display().to_string(),
         "--input",
-        &input.display().to_string(),
+        "ledger.json",
     ]);
     let receipt = run_json_command(&mut command)?;
     assert_eq!(receipt["valid"], true);

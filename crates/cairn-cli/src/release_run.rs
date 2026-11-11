@@ -52,9 +52,14 @@ fn run_projection(args: Vec<String>, projection: Projection) -> Result<(), Box<d
     if input.as_os_str().is_empty() {
         return Err(format!("{} requires --input <ledger.json>", projection.command()).into());
     }
+    let input_path = if input.is_absolute() {
+        input
+    } else {
+        root.join(&input)
+    };
     let policy = load_policy_file(policy_path)?;
     let expected_policy_hash = canonical_json_hash(&policy.raw);
-    let value = read_bounded_json(&input)?;
+    let value = read_bounded_json(&input_path)?;
     let report = validate_release_run_ledger_value(&value, &expected_policy_hash);
     let projection_value = match projection {
         Projection::Validate => serde_json::to_value(&report)?,
@@ -64,7 +69,7 @@ fn run_projection(args: Vec<String>, projection: Projection) -> Result<(), Box<d
     let receipt = with_receipt_hash(json!({
         "command": projection.command(),
         "root": ".",
-        "input": safe_relative_path(&root, &input),
+        "input": safe_relative_path(&root, &input_path),
         "policy_hash": expected_policy_hash,
         "valid": report.valid,
         "verdict": if report.valid { "pass" } else { "fail" },
