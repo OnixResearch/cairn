@@ -94,7 +94,7 @@ pub(crate) use mutation::{
 };
 pub(crate) use paths::{
     collect_files, file_content_manifest, path_string, portable_json_hash, portable_text,
-    resolve_under_root, safe_relative_path, tree_content_paths,
+    read_bounded_json_no_symlink, resolve_under_root, safe_relative_path, tree_content_paths,
 };
 pub(crate) use receipts::{
     print_json, with_portable_content_hash_receipt, with_portable_receipt_hash, with_receipt_hash,

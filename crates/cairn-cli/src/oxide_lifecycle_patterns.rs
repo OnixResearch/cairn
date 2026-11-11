@@ -1,4 +1,4 @@
-use std::{error::Error, fs, path::Path};
+use std::error::Error;
 
 use cairn_core::validate_oxide_lifecycle_patterns_value;
 use serde_json::{json, Value};
@@ -29,7 +29,12 @@ fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         return Err("lifecycle-patterns validate requires --input <bundle.json>".into());
     }
     let input_path = resolve_under_root(&root, input);
-    let value = read_bounded_json(&input_path).map_err(|error| {
+    let value = crate::support::read_bounded_json_no_symlink(
+        &input_path,
+        OXIDE_PATTERN_INPUT_MAX_BYTES as u64,
+        "lifecycle pattern bundle",
+    )
+    .map_err(|error| {
         format!(
             "failed to read lifecycle-patterns input {}: {error}",
             input_path.display()
@@ -57,15 +62,4 @@ fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         std::process::exit(1);
     }
     Ok(())
-}
-
-fn read_bounded_json(path: &Path) -> Result<Value, Box<dyn Error>> {
-    let metadata = fs::symlink_metadata(path)?;
-    if metadata.file_type().is_symlink() {
-        return Err("lifecycle pattern bundle must not be a symlink".into());
-    }
-    if metadata.len() > OXIDE_PATTERN_INPUT_MAX_BYTES as u64 {
-        return Err("lifecycle pattern bundle exceeds the reviewed byte bound".into());
-    }
-    Ok(serde_json::from_slice(&fs::read(path)?)?)
 }

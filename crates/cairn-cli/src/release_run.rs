@@ -1,4 +1,4 @@
-use std::{error::Error, fs, path::Path};
+use std::error::Error;
 
 use cairn_core::{
     canonical_json_hash, release_run_explain, release_run_status, validate_release_run_ledger_value,
@@ -55,7 +55,12 @@ fn run_projection(args: Vec<String>, projection: Projection) -> Result<(), Box<d
     let input_path = crate::support::resolve_under_root(&root, input);
     let policy = load_policy_file(policy_path)?;
     let expected_policy_hash = canonical_json_hash(&policy.raw);
-    let value = read_bounded_json(&input_path).map_err(|error| {
+    let value = crate::support::read_bounded_json_no_symlink(
+        &input_path,
+        RELEASE_RUN_LEDGER_MAX_BYTES as u64,
+        "release-run ledger",
+    )
+    .map_err(|error| {
         format!(
             "failed to read release-run input {}: {error}",
             input_path.display()
@@ -85,15 +90,4 @@ fn run_projection(args: Vec<String>, projection: Projection) -> Result<(), Box<d
         std::process::exit(1);
     }
     Ok(())
-}
-
-fn read_bounded_json(path: &Path) -> Result<Value, Box<dyn Error>> {
-    let metadata = fs::symlink_metadata(path)?;
-    if metadata.file_type().is_symlink() {
-        return Err("release-run ledger must not be a symlink".into());
-    }
-    if metadata.len() > RELEASE_RUN_LEDGER_MAX_BYTES as u64 {
-        return Err("release-run ledger exceeds the reviewed byte bound".into());
-    }
-    Ok(serde_json::from_slice(&fs::read(path)?)?)
 }
