@@ -12,7 +12,8 @@ use serde_json::json;
 
 use crate::support::{
     default_policy_path, load_policy_file, print_json, read_option, read_string_option,
-    CapabilityRoot, CapabilityRootKind,
+    reject_positional_arguments, reject_unknown_options_with_flags, CapabilityRoot,
+    CapabilityRootKind,
 };
 
 use super::{
@@ -25,6 +26,8 @@ const UNPACK_PREPARED_DIRECTORY: &str = ".cairn/compaction/v1/unpack-prepared";
 const PACK_ROOT_DISPLAY_PREFIX_LENGTH: usize = 12;
 
 pub(super) fn run_compact_unpack(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_flags(&args, &["--root", "--policy", "--archive"], &["--execute"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;

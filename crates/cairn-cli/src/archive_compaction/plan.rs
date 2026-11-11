@@ -10,7 +10,8 @@ use cairn_core::{
 
 use crate::support::{
     default_policy_path, load_policy_file, print_json, read_option, read_string_option,
-    CapabilityRoot, CapabilityRootKind,
+    reject_positional_arguments, reject_unknown_options_with_flags, CapabilityRoot,
+    CapabilityRootKind,
 };
 
 use super::{
@@ -21,6 +22,12 @@ use super::{
 
 pub(super) fn run_compact_archive(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.sync_archive.compaction.plan.read_only]
+    reject_unknown_options_with_flags(
+        &args,
+        &["--root", "--policy", "--profile", "--out", "--plan"],
+        &["--execute"],
+    )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;

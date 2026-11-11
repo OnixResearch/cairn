@@ -1266,3 +1266,36 @@ fn review_option_only_subcommands_reject_stray_positionals() -> Result<(), Box<d
     }
     Ok(())
 }
+
+#[test]
+fn compact_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "compact",
+            "archive",
+            "--root",
+            "fixtures/archive-ready",
+            "--bogus",
+        ][..],
+        &[
+            "compact",
+            "unpack",
+            "--root",
+            "fixtures/archive-ready",
+            "--archive",
+            "x",
+            "--bogus",
+        ][..],
+        &["compact", "archive", "--plan"][..],
+        &["compact", "unpack", "--archive"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("requires a value"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
