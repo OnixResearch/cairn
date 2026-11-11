@@ -30,7 +30,12 @@ fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         return Err("state-machine-receipt validate requires --input <receipt.json>".into());
     }
     let input_path = crate::support::resolve_under_root(&root, input);
-    let value = read_bounded_json(&input_path)?;
+    let value = read_bounded_json(&input_path).map_err(|error| {
+        format!(
+            "failed to read state-machine receipt {}: {error}",
+            input_path.display()
+        )
+    })?;
     let report = validate_state_machine_receipt_value(&value);
     let receipt = with_receipt_hash(json!({
         "command": "state-machine-receipt validate",

@@ -55,7 +55,12 @@ fn run_projection(args: Vec<String>, projection: Projection) -> Result<(), Box<d
     let input_path = crate::support::resolve_under_root(&root, input);
     let policy = load_policy_file(policy_path)?;
     let expected_policy_hash = canonical_json_hash(&policy.raw);
-    let value = read_bounded_json(&input_path)?;
+    let value = read_bounded_json(&input_path).map_err(|error| {
+        format!(
+            "failed to read release-run input {}: {error}",
+            input_path.display()
+        )
+    })?;
     let report = validate_release_run_ledger_value(&value, &expected_policy_hash);
     let projection_value = match projection {
         Projection::Validate => serde_json::to_value(&report)?,
