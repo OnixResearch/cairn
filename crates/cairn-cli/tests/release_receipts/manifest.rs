@@ -132,9 +132,9 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     let bundle_verify = run_json_strings(&[
         "agent-receipt".into(),
         "verify-bundle".into(),
-        bundle_path.display().to_string(),
+        "bundle.json".into(),
         "--root".into(),
-        ".".into(),
+        dir.display().to_string(),
     ])?;
     assert_eq!(bundle_verify["valid"], true);
     assert_eq!(
@@ -167,9 +167,9 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     let verified = run_json_strings(&[
         "evidence-manifest".into(),
         "verify".into(),
-        manifest_path.display().to_string(),
+        "manifest.json".into(),
         "--root".into(),
-        ".".into(),
+        dir.display().to_string(),
     ])?;
     assert_eq!(verified["valid"], true);
     assert_eq!(verified["verdict"], "pass");

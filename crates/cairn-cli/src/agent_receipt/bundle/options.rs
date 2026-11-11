@@ -1,6 +1,6 @@
 use std::{error::Error, path::PathBuf};
 
-use crate::support::{read_option, reject_unknown_options};
+use crate::support::{read_option, reject_unknown_options, resolve_under_root};
 
 pub(super) struct AgentEvidenceBundleOptions {
     pub(super) root: PathBuf,
@@ -28,5 +28,8 @@ pub(super) fn agent_evidence_bundle_options(
         index += 1;
     }
     let path = path.ok_or("agent-receipt verify-bundle requires <bundle.json>")?;
-    Ok(AgentEvidenceBundleOptions { root, path })
+    Ok(AgentEvidenceBundleOptions {
+        root: root.clone(),
+        path: resolve_under_root(&root, path),
+    })
 }

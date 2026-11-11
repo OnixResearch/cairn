@@ -261,6 +261,8 @@ values. Wrappers that persist a full evidence chain should then verify a bundle:
 nix run .#cairn -- agent-receipt verify-bundle target/bundle.json --root .
 ```
 
+Relative bundle paths resolve under `--root`; absolute paths are used as given.
+
 The bundle JSON names `agent_receipt_path`, `replay_receipt_path`,
 `replay_verification_path`, optional `release_readiness_path`, and optional
 `coverage_audit_path`; it may also
@@ -291,6 +293,8 @@ nix run .#cairn -- evidence-manifest generate \
   --root .
 nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
 ```
+
+Relative manifest paths resolve under `--root`; absolute paths are used as given.
 
 A manifest contains an `artifacts` array of objects with `role`, `path`, `hash`,
 and optional `schema` fields. Supported roles include `agent_evidence_bundle`,

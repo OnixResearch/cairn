@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
 use crate::support::{
     path_string, portable_json_hash, print_json, read_option, reject_unknown_options,
-    with_portable_receipt_hash,
+    resolve_under_root, with_portable_receipt_hash,
 };
 
 use super::artifact::{
@@ -68,7 +68,10 @@ fn evidence_manifest_options(args: &[String]) -> Result<EvidenceManifestOptions,
         index += 1;
     }
     let path = path.ok_or("evidence-manifest verify requires <manifest.json>")?;
-    Ok(EvidenceManifestOptions { root, path })
+    Ok(EvidenceManifestOptions {
+        root: root.clone(),
+        path: resolve_under_root(&root, path),
+    })
 }
 
 pub(crate) fn evidence_manifest_verification_receipt(root: &Path, manifest_path: &Path) -> Value {
