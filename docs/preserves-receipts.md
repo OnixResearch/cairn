@@ -58,6 +58,16 @@ nix run .#cairn -- preserves-corpus update --path fixtures/preserves-canonicaliz
 
 `--execute` rewrites only stale `expected_hash` strings in case order, preserving case ids, descriptions, values, ordering, and formatting where practical. Commit the corpus diff together with the reviewed change that caused the drift.
 
+## Compare receipt field drift
+
+Run:
+
+```sh
+nix run .#cairn -- receipt-preserves-diff --baseline old.json --candidate new.json [--policy FILE]
+```
+
+The default policy is the checked-in generated policy. The command is read-only: it reports field drift, source IDs from the policy-owned receipt source map, and the policy identity used for the comparison. Any drift exits nonzero without mutating either input.
+
 ## CI guard expectations
 
 Nix checks make accidental Preserves drift fail closed:
