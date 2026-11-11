@@ -186,7 +186,7 @@ nix run path:$PWD#cairn -- policy export --check
 cargo fmt --check
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
-nix develop -c cargo octet check --output-format json --artifact-dir artifacts/octet-run
+nix develop -c cargo octet check -- --all-targets --features redb-registry
 nix build path:$PWD#checks.x86_64-linux.octet --no-link -L
 nix run path:$PWD#cairn -- validate --root .
 nix flake check path:$PWD -L
