@@ -1079,3 +1079,25 @@ fn evidence_registry_commands_reject_bad_options() -> Result<(), Box<dyn Error>>
     }
     Ok(())
 }
+
+#[test]
+fn implementation_ready_rejects_invalid_limits() -> Result<(), Box<dyn Error>> {
+    for limit in ["0", "1001", "not-a-number"] {
+        let output = cairn()
+            .args([
+                "implementation-ready",
+                "--root",
+                "fixtures/basic",
+                "--limit",
+                limit,
+            ])
+            .output()?;
+        assert!(!output.status.success(), "{limit} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("limit"),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

@@ -545,8 +545,6 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
 
 pub(super) fn mcp_implementation_ready(input: &Value) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.implementation_ready.projection]
-    let drain = mcp_drain_plan(input)?;
-    let root = mcp_root(input);
     let limit = match input.get("limit") {
         None => 100usize,
         Some(value) => {
@@ -558,6 +556,8 @@ pub(super) fn mcp_implementation_ready(input: &Value) -> Result<Value, Box<dyn E
             limit
         }
     };
+    let drain = mcp_drain_plan(input)?;
+    let root = mcp_root(input);
     let changes = drain["changes"]
         .as_array()
         .ok_or("drain plan omitted changes")?;
