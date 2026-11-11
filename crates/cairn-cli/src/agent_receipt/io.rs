@@ -7,7 +7,7 @@ use super::AGENT_RECEIPT_MAX_BYTES;
 pub(crate) fn read_json_artifact(path: &Path, max_bytes: u64) -> Result<Value, Box<dyn Error>> {
     let metadata = fs::symlink_metadata(path)?;
     if metadata.file_type().is_symlink() {
-        return Err("artifact must not be a symlink".into());
+        return Err(format!("artifact {} must not be a symlink", path.display()).into());
     }
     if metadata.len() > max_bytes {
         return Err("artifact exceeds bounded read limit".into());
@@ -19,7 +19,7 @@ pub(crate) fn read_agent_receipt_file(path: &Path) -> Result<Value, Box<dyn Erro
     // r[impl cairn.supersede.agent_receipt_validation_surface.cli]
     let metadata = fs::symlink_metadata(path)?;
     if metadata.file_type().is_symlink() {
-        return Err("agent receipt must not be a symlink".into());
+        return Err(format!("agent receipt {} must not be a symlink", path.display()).into());
     }
     if metadata.len() > AGENT_RECEIPT_MAX_BYTES {
         return Err(format!(
