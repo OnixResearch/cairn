@@ -192,6 +192,11 @@ fn mcp_rejects_empty_string_arguments() -> Result<(), Box<dyn Error>> {
         ("cairn_validate", r#"{"root":""}"#),
         ("cairn_validate", r#"{"cross_repo_evidence":[""]}"#),
         ("cairn_change_show", r#"{"change":""}"#),
+        ("cairn_agent_receipt_validate", r#"{"path":""}"#),
+        (
+            "cairn_agent_completion_validate",
+            r#"{"contract":{},"results":[],"subject_hash":""}"#,
+        ),
     ] {
         let output = cairn().args(["mcp", "--call", tool, request]).output()?;
         assert!(!output.status.success(), "{tool} unexpectedly succeeded");

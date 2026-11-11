@@ -641,18 +641,10 @@ fn validate_agent_receipt_args(
         .into());
     }
     if let Some(root) = object.get("root") {
-        if !root.is_string() {
-            return Err(
-                format!("invalid arguments for {tool}: argument root must be a string").into(),
-            );
-        }
+        validate_non_empty_string(tool, "argument root", root)?;
     }
     if let Some(path) = object.get("path") {
-        if !path.is_string() {
-            return Err(
-                format!("invalid arguments for {tool}: argument path must be a string").into(),
-            );
-        }
+        validate_non_empty_string(tool, "argument path", path)?;
     }
     if let Some(receipt) = object.get("receipt") {
         if !receipt.is_object() {
@@ -678,10 +670,8 @@ fn validate_agent_completion_args(
         }
     }
     for key in ["root", "policy", "subject_hash"] {
-        if object.get(key).is_some_and(|value| !value.is_string()) {
-            return Err(
-                format!("invalid arguments for {tool}: argument {key} must be a string").into(),
-            );
+        if let Some(value) = object.get(key) {
+            validate_non_empty_string(tool, &format!("argument {key}"), value)?;
         }
     }
     if !object.get("contract").is_some_and(Value::is_object)
