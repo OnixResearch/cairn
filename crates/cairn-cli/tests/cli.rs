@@ -2773,3 +2773,30 @@ fn receipt_verify_content_hash_accepts_checked_fixtures() -> Result<(), Box<dyn 
     }
     Ok(())
 }
+
+#[test]
+fn receipt_preserves_diff_reports_checked_fixture_drift() -> Result<(), Box<dyn Error>> {
+    let baseline = repo_root().join("fixtures/receipt-preserves-diff/baseline.json");
+    let candidate = repo_root().join("fixtures/receipt-preserves-diff/candidate.json");
+    let output = cairn()
+        .args([
+            "receipt-preserves-diff",
+            "--baseline",
+            &baseline.to_string_lossy(),
+            "--candidate",
+            &candidate.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["drift_count"], 4);
+    let drift = receipt["drift"].as_array().ok_or("drift")?;
+    assert!(drift
+        .iter()
+        .any(|entry| entry["field_path"] == "/extra_field" && entry["class"] == "added"));
+    assert!(drift
+        .iter()
+        .any(|entry| entry["field_path"] == "/valid" && entry["class"] == "changed"));
+    Ok(())
+}
