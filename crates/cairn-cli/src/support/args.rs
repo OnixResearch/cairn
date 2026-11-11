@@ -82,14 +82,58 @@ pub(crate) fn has_flag(args: &[String], name: &str) -> bool {
 
 /// Reject stray positional tokens for commands whose arguments are all
 /// documented options. Call after option-name and value admission.
+const BOOLEAN_OPTIONS: &[&str] = &[
+    "--allow-mutations",
+    "--check",
+    "--execute",
+    "--format",
+    "--help",
+    "--interactive",
+    "--json",
+    "--raw",
+    "--run-probes",
+    "--short",
+    "--strict",
+];
+
 pub(crate) fn reject_positional_arguments(args: &[String]) -> Result<(), Box<dyn Error>> {
     let mut index = 0;
     while index < args.len() {
-        if args[index].starts_with("--") {
+        let argument = &args[index];
+        if BOOLEAN_OPTIONS.contains(&argument.as_str()) {
+            index += 1;
+        } else if argument.starts_with("--") {
             index += 2;
         } else {
-            return Err(format!("unexpected argument: {}", args[index]).into());
+            return Err(format!("unexpected argument: {argument}").into());
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::reject_positional_arguments;
+
+    fn args(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| (*value).to_string()).collect()
+    }
+
+    #[test]
+    fn flags_do_not_consume_following_options() {
+        reject_positional_arguments(&args(&[
+            "--root",
+            ".",
+            "--json",
+            "--profile",
+            "trellis-rust",
+        ]))
+        .unwrap();
+    }
+
+    #[test]
+    fn stray_positionals_are_rejected_after_flags() {
+        let error = reject_positional_arguments(&args(&["--json", "stray"])).unwrap_err();
+        assert_eq!(error.to_string(), "unexpected argument: stray");
+    }
 }
