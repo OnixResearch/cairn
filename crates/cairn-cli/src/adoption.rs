@@ -3,7 +3,10 @@ use std::{error::Error, fs, path::PathBuf};
 use cairn_core::{derive_adoption_report, AdoptionSnapshot};
 use serde_json::{json, Value};
 
-use crate::support::{path_string, print_json, read_string_option};
+use crate::support::{
+    path_string, print_json, read_string_option, reject_positional_arguments,
+    reject_unknown_options,
+};
 
 const KIBIBYTE_BYTES: u64 = 1024;
 const MAX_ADOPTION_SNAPSHOT_KIBIBYTES: u64 = 256;
@@ -54,21 +57,11 @@ pub(crate) fn adoption_report_value(input: &Value) -> Result<Value, Box<dyn Erro
 }
 
 fn adoption_input_from_args(args: &[String]) -> Result<Value, Box<dyn Error>> {
+    reject_unknown_options(args, &["--snapshot", "--root"])?;
+    reject_positional_arguments(args)?;
     let snapshot =
         read_string_option(args, "--snapshot").ok_or("adoption report requires --snapshot")?;
     let root = read_string_option(args, "--root").unwrap_or_else(|| ".".to_string());
-    for index in (0..args.len()).step_by(2) {
-        let Some(flag) = args.get(index) else { break };
-        if !matches!(flag.as_str(), "--snapshot" | "--root") {
-            return Err(format!("unsupported adoption report option: {flag}").into());
-        }
-        if args.get(index + 1).is_none() {
-            return Err("adoption report options require values".into());
-        }
-    }
-    if !args.len().is_multiple_of(2) {
-        return Err("adoption report options require values".into());
-    }
     Ok(json!({"root": root, "snapshot": snapshot}))
 }
 

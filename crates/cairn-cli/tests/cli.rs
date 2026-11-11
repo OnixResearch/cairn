@@ -2197,3 +2197,25 @@ fn validate_rejects_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn adoption_report_rejects_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["adoption", "report", "--snapshot", "--root", "."][..],
+        &["adoption", "report", "--snapshot", "a", "--snapshot", "b"][..],
+        &["adoption", "report", "--snapshot", "a", "stray"][..],
+        &["adoption", "report", "--bogus"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("duplicate option")
+                || stderr.contains("unexpected argument"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
