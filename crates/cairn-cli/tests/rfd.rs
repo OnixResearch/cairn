@@ -92,6 +92,19 @@ fn rfd_import_status_update_publish_are_preview_first() -> Result<(), Box<dyn Er
     import_args.extend(import_identity());
     import_args.push("--workspace".to_string());
     import_args.push("workspace:custom".to_string());
+    let mut invalid_policy_args = import_args.clone();
+    let policy_index = invalid_policy_args
+        .iter()
+        .position(|argument| argument == "--policy")
+        .map(|index| index + 1)
+        .ok_or("policy option")?;
+    invalid_policy_args[policy_index] = dir
+        .join("missing-policy.json")
+        .to_string_lossy()
+        .to_string();
+    let output = cairn().args(&invalid_policy_args).output()?;
+    assert!(!output.status.success());
+
     let arg_refs = import_args.iter().map(String::as_str).collect::<Vec<_>>();
     let imported = run_json(&arg_refs)?;
     assert_eq!(imported["dry_run"], true);
