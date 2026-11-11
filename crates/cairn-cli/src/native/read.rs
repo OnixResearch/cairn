@@ -33,6 +33,7 @@ pub(crate) fn run_status(
     invocation: &RootLocalInvocation,
 ) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(&args, &["--root"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let status = scan_repo(root, selected.layout)?;
@@ -76,6 +77,7 @@ pub(crate) fn run_doctor(
     invocation: &RootLocalInvocation,
 ) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(&args, &["--root", "--policy"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;

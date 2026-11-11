@@ -2241,3 +2241,17 @@ fn content_addressed_evidence_rejects_extra_arguments() -> Result<(), Box<dyn Er
     }
     Ok(())
 }
+
+#[test]
+fn status_and_doctor_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [&["status", "stray"][..], &["doctor", "stray"][..]] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected argument"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
