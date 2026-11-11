@@ -78,6 +78,19 @@ fn adr_import_accept_and_immutability() -> Result<(), Box<dyn Error>> {
         "--policy".to_string(),
         policy,
     ];
+    let mut invalid_policy = import.clone();
+    let policy_index = invalid_policy
+        .iter()
+        .position(|argument| argument == "--policy")
+        .map(|index| index + 1)
+        .ok_or("policy option")?;
+    invalid_policy[policy_index] = dir
+        .join("missing-policy.json")
+        .to_string_lossy()
+        .to_string();
+    let output = cairn().args(&invalid_policy).output()?;
+    assert!(!output.status.success());
+
     let refs = import.iter().map(String::as_str).collect::<Vec<_>>();
     run_json(&refs)?;
     // execute import
