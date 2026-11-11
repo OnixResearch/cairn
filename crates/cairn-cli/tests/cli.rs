@@ -2813,3 +2813,20 @@ fn receipt_preserves_diff_reports_checked_fixture_drift() -> Result<(), Box<dyn 
         .any(|entry| entry["field_path"] == "/valid" && entry["class"] == "changed"));
     Ok(())
 }
+
+#[test]
+fn receipt_commands_require_input_paths() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["receipt-preserves-diff", "--baseline", "a"][..],
+        &["receipt-verify-content-hash"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("requires"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
