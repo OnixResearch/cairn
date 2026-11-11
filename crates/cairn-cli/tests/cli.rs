@@ -2672,6 +2672,25 @@ fn receipt_preserves_diff_honors_explicit_policy_path() -> Result<(), Box<dyn Er
         .output()?;
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("missing-policy"));
+    let policy = repo_root().join("cairn-policy/generated/cairn-policy.json");
+    let output = cairn()
+        .args([
+            "receipt-preserves-diff",
+            "--baseline",
+            &baseline.to_string_lossy(),
+            "--candidate",
+            &candidate.to_string_lossy(),
+            "--policy",
+            &policy.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["valid"], true);
     fs::remove_dir_all(dir)?;
     Ok(())
 }
