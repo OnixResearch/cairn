@@ -16,7 +16,7 @@ policy-exception conflict      --store DIR --exception-id ID
 policy-exception export        --store DIR --exception-id ID
 ```
 
-Every mutation is preview-first. Preview writes nothing.
+Every mutation is preview-first. Preview writes nothing. Decision and validity-observation commands accept an optional `--operation-id ID` to name the recorded operation.
 
 ## Scope and request binding
 

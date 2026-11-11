@@ -20,7 +20,7 @@ verification-obligation resolve   --store DIR --obligation-id ID --actor ACTOR -
 verification-obligation export    --store DIR --obligation-id ID
 ```
 
-Every mutation is preview-first. Preview writes nothing.
+Every mutation is preview-first. Preview writes nothing. Mutation commands accept an optional `--operation-id ID` to name the recorded operation.
 
 ## Roles and claim binding
 

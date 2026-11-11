@@ -19,7 +19,7 @@ release-decision conflict   --store DIR --decision-id ID
 release-decision export     --store DIR --decision-id ID
 ```
 
-Every mutation is preview-first. Preview writes nothing.
+Every mutation is preview-first. Preview writes nothing. Evidence, finding, vote, and lifecycle commands accept an optional `--operation-id ID` to name the recorded operation.
 
 ## Candidate binding
 
