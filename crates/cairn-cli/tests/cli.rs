@@ -1019,3 +1019,63 @@ fn review_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn evidence_registry_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "evidence", "registry", "build", "--index", "i", "--out", "o", "--bogus",
+        ][..],
+        &[
+            "evidence",
+            "registry",
+            "verify",
+            "--registry",
+            "r",
+            "--bogus",
+        ][..],
+        &[
+            "evidence",
+            "registry",
+            "select",
+            "--registry",
+            "r",
+            "--out",
+            "o",
+            "--bogus",
+        ][..],
+        &[
+            "evidence",
+            "registry",
+            "fetch-plan",
+            "--registry",
+            "r",
+            "--out",
+            "o",
+            "--bogus",
+        ][..],
+        &[
+            "evidence",
+            "registry",
+            "fetch-execute",
+            "--plan",
+            "p",
+            "--source",
+            "s",
+            "--out",
+            "o",
+            "--bogus",
+        ][..],
+        &["evidence", "registry", "build", "--index"][..],
+        &["evidence", "registry", "verify", "--registry"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("requires a value"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
