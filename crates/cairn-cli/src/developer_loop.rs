@@ -7,7 +7,10 @@ use cairn_core::{
 };
 use serde_json::{json, Value};
 
-use crate::support::{load_policy_file, print_json, CapabilityRoot, CapabilityRootKind};
+use crate::support::{
+    load_policy_file, print_json, reject_positional_arguments, reject_unknown_options,
+    reject_unknown_options_with_repeats, CapabilityRoot, CapabilityRootKind,
+};
 
 const RECEIPT_MAX_BYTES: u64 = 65_536;
 
@@ -38,6 +41,35 @@ fn load_catalog(
     Ok((policy, admitted, policy_hash))
 }
 
+fn split_profile_options(
+    args: &[String],
+    command: &str,
+) -> Result<(Option<String>, Vec<String>), Box<dyn Error>> {
+    let mut profile = None;
+    let mut options = Vec::new();
+    let mut index = 0;
+    while index < args.len() {
+        let argument = &args[index];
+        if argument.starts_with("--") {
+            let value = args
+                .get(index + 1)
+                .ok_or_else(|| format!("{argument} requires a value"))?;
+            if value.starts_with("--") {
+                return Err(format!("{argument} requires a value").into());
+            }
+            options.push(argument.clone());
+            options.push(value.clone());
+            index += 2;
+            continue;
+        }
+        if profile.replace(argument.clone()).is_some() {
+            return Err(format!("{command} accepts exactly one profile ID").into());
+        }
+        index += 1;
+    }
+    Ok((profile, options))
+}
+
 fn policy_option(args: &[String]) -> PathBuf {
     crate::support::read_option(
         args.to_vec(),
@@ -47,7 +79,12 @@ fn policy_option(args: &[String]) -> PathBuf {
 }
 
 fn run_list(args: &[String]) -> Result<(), Box<dyn Error>> {
-    let policy_path = policy_option(args);
+    reject_unknown_options(args, &["--policy"])?;
+    let (profile, options) = split_profile_options(args, "developer-loop list")?;
+    if profile.is_some() {
+        return Err("developer-loop list does not accept a profile ID".into());
+    }
+    let policy_path = policy_option(&options);
     let (policy, admitted, policy_hash) = load_catalog(&policy_path)?;
     let profiles = admitted
         .policy
@@ -79,13 +116,11 @@ fn run_list(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_plan(args: &[String]) -> Result<(), Box<dyn Error>> {
-    let policy_path = policy_option(args);
+    reject_unknown_options(args, &["--policy"])?;
+    let (profile_id, options) = split_profile_options(args, "developer-loop plan")?;
+    let profile_id = profile_id.ok_or("developer-loop plan requires a profile ID")?;
+    let policy_path = policy_option(&options);
     let (policy, admitted, policy_hash) = load_catalog(&policy_path)?;
-    let profile_id = args
-        .iter()
-        .find(|value| !value.starts_with("--"))
-        .cloned()
-        .ok_or("developer-loop plan requires a profile ID")?;
     let profile = find_developer_loop_profile(&admitted, &profile_id)?;
     let plan = build_developer_loop_plan(&admitted, &profile_id)
         .map_err(|issues| format!("developer-loop plan failed: {issues:?}"))?;
@@ -107,22 +142,32 @@ fn run_plan(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_verify(args: &[String]) -> Result<(), Box<dyn Error>> {
-    let policy_path = policy_option(args);
+    reject_unknown_options_with_repeats(
+        args,
+        &[
+            "--policy",
+            "--receipt",
+            "--subject-hash",
+            "--root",
+            "--dependency-hash",
+        ],
+        &[],
+        &["--dependency-hash"],
+    )?;
+    let (profile_id, options) = split_profile_options(args, "developer-loop verify")?;
+    let profile_id = profile_id.ok_or("developer-loop verify requires a profile ID")?;
+    reject_positional_arguments(&options)?;
+    let policy_path = policy_option(&options);
     let (_, admitted, policy_hash) = load_catalog(&policy_path)?;
-    let profile_id = args
-        .iter()
-        .find(|value| !value.starts_with("--"))
-        .cloned()
-        .ok_or("developer-loop verify requires a profile ID")?;
     find_developer_loop_profile(&admitted, &profile_id)?;
-    let receipt_path = crate::support::read_string_option(args, "--receipt")
+    let receipt_path = crate::support::read_string_option(&options, "--receipt")
         .ok_or("developer-loop verify requires --receipt FILE")?;
-    let subject_hash = crate::support::read_string_option(args, "--subject-hash")
+    let subject_hash = crate::support::read_string_option(&options, "--subject-hash")
         .ok_or("developer-loop verify requires --subject-hash HASH")?;
     if !is_blake3_hex(&subject_hash) {
         return Err("developer-loop verify requires a BLAKE3 hex --subject-hash".into());
     }
-    let dependencies = collect_repeated(args, "--dependency-hash")?;
+    let dependencies = collect_repeated(&options, "--dependency-hash")?;
     for dependency in &dependencies {
         if !is_blake3_hex(dependency) {
             return Err(
@@ -130,7 +175,7 @@ fn run_verify(args: &[String]) -> Result<(), Box<dyn Error>> {
             );
         }
     }
-    let root = crate::support::read_option(args.to_vec(), "--root", ".");
+    let root = crate::support::read_option(options.clone(), "--root", ".");
     let capability = CapabilityRoot::open(CapabilityRootKind::Repository, &root)?;
     let bytes = capability.read_bounded_path(&PathBuf::from(&receipt_path), RECEIPT_MAX_BYTES)?;
     let receipt: Value = serde_json::from_slice(&bytes)

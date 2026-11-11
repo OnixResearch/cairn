@@ -2015,3 +2015,46 @@ fn determinism_verify_receipt_rejects_bad_arguments() -> Result<(), Box<dyn Erro
     }
     Ok(())
 }
+
+#[test]
+fn developer_loop_plan_accepts_policy_before_profile() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args([
+            "developer-loop",
+            "plan",
+            "--policy",
+            "cairn-policy/generated/cairn-policy.json",
+            "cairn-local",
+        ])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(value["profile"], "cairn-local");
+    Ok(())
+}
+
+#[test]
+fn developer_loop_rejects_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["developer-loop", "list", "--bogus"][..],
+        &["developer-loop", "list", "stray"][..],
+        &["developer-loop", "plan", "cairn-local", "extra"][..],
+        &["developer-loop", "verify", "cairn-local", "--bogus"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("unexpected argument")
+                || stderr.contains("exactly one")
+                || stderr.contains("does not accept a profile ID"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
