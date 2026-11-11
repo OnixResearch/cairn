@@ -23,6 +23,9 @@ pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dy
         return Err("receipt-preserves-diff requires --baseline <path> --candidate <path>".into());
     }
 
+    let policy_path = read_option(args, "--policy", default_policy_path());
+    let policy = load_policy_file(policy_path)?;
+
     let baseline_text =
         fs::read_to_string(&baseline_path).map_err(|e| format!("failed to read baseline: {e}"))?;
     let candidate_text = fs::read_to_string(&candidate_path)
@@ -33,8 +36,6 @@ pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dy
     let candidate: Value =
         serde_json::from_str(&candidate_text).map_err(|e| format!("candidate parse error: {e}"))?;
 
-    let policy_path = read_option(args, "--policy", default_policy_path());
-    let policy = load_policy_file(policy_path)?;
     let source_map = parse_source_id_map(&policy);
 
     let report = receipt_field_drift(&baseline, &candidate, &source_map);
