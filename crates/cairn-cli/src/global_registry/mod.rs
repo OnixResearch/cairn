@@ -9,6 +9,7 @@ use serde_json::{json, Value};
 
 use crate::support::{
     default_policy_path, has_flag, load_policy_file, path_string, print_json, read_string_option,
+    reject_unknown_options, reject_unknown_options_with_flags, reject_unknown_options_with_repeats,
     with_receipt_hash,
 };
 
@@ -29,6 +30,53 @@ pub(crate) fn run_global_registry(args: Vec<String>) -> Result<(), Box<dyn Error
         return Err("registry requires import, query, graph, export, or verify".into());
     };
     let rest = args[1..].to_vec();
+    match command {
+        "import" => reject_unknown_options_with_flags(
+            &rest,
+            &[
+                "--policy",
+                "--scope",
+                "--adapter",
+                "--store",
+                "--ingest",
+                "--input",
+                "--expected-snapshot",
+            ],
+            &["--execute"],
+        )?,
+        "query" => reject_unknown_options_with_repeats(
+            &rest,
+            &[
+                "--policy",
+                "--scope",
+                "--adapter",
+                "--registry",
+                "--id",
+                "--tag",
+            ],
+            &[],
+            &["--tag"],
+        )?,
+        "graph" => reject_unknown_options(
+            &rest,
+            &[
+                "--policy",
+                "--scope",
+                "--adapter",
+                "--registry",
+                "--profile",
+                "--start",
+                "--direction",
+            ],
+        )?,
+        "export" => reject_unknown_options_with_flags(
+            &rest,
+            &["--policy", "--scope", "--adapter", "--registry", "--output"],
+            &["--execute"],
+        )?,
+        "verify" => reject_unknown_options(&rest, &["--policy", "--registry"])?,
+        unknown => return Err(format!("unknown registry command: {unknown}").into()),
+    }
     let policy_path = read_string_option(&rest, "--policy")
         .map(PathBuf::from)
         .unwrap_or_else(|| default_policy_path().into());

@@ -874,3 +874,65 @@ fn implementation_ready_rejects_legacy_lifecycle_roots() -> Result<(), Box<dyn E
     fs::remove_dir_all(root)?;
     Ok(())
 }
+
+#[test]
+fn registry_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "registry",
+            "verify",
+            "--registry",
+            "registry.json",
+            "--bogus",
+        ][..],
+        &[
+            "registry",
+            "query",
+            "--scope",
+            "s",
+            "--adapter",
+            "a",
+            "--registry",
+            "r",
+            "--tag",
+            "k=v",
+            "--bogus",
+        ][..],
+        &[
+            "registry",
+            "import",
+            "--scope",
+            "s",
+            "--adapter",
+            "a",
+            "--store",
+            "b",
+            "--ingest",
+            "c",
+            "--input",
+            "d",
+            "--bogus",
+        ][..],
+        &["registry", "verify", "--registry"][..],
+        &[
+            "registry",
+            "graph",
+            "--scope",
+            "s",
+            "--adapter",
+            "a",
+            "--registry",
+            "r",
+            "--profile",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("requires a value"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
