@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use super::common::run_json;
+use super::common::{cairn, run_json};
 
 #[test]
 fn mcp_describes_read_only_tools_without_mutations() -> Result<(), Box<dyn Error>> {
@@ -89,5 +89,27 @@ fn mcp_calls_return_structured_receipts() -> Result<(), Box<dyn Error>> {
     assert_eq!(receipt["layout"], "cairn");
     assert_eq!(receipt["mcp"]["read_only"], true);
     super::common::assert_hash_field(receipt, "receipt_hash")?;
+    Ok(())
+}
+
+#[test]
+fn mcp_rejects_unknown_duplicate_and_conflicting_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["mcp", "--describe", "--bogus"][..],
+        &["mcp", "--call"][..],
+        &["mcp", "--describe", "--describe"][..],
+        &["mcp", "--describe", "--call", "cairn_status"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a tool name")
+                || stderr.contains("duplicate option")
+                || stderr.contains("cannot be combined"),
+            "{args:?}: {stderr}"
+        );
+    }
     Ok(())
 }

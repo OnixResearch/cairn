@@ -45,7 +45,7 @@ use crate::plan_receipts::{
 use crate::support::{
     collect_archived_change_ids, collect_validation_spec_sources, default_policy_path,
     detect_layout, execute_archive_plan, execute_sync_snapshots, file_content_manifest,
-    find_change, find_spec_source, has_flag, load_policy_file, load_sync_merge_snapshots,
+    find_change, find_spec_source, load_policy_file, load_sync_merge_snapshots,
     mutation_gate_blockers, path_string, portable_json_hash, print_json,
     read_change_dependency_graph, read_gate_snapshot, reject_legacy_only_lifecycle_root, scan_repo,
     spec_substance_inventory_json, substance_inventory_json, sync_changed_paths,
@@ -73,20 +73,53 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.mcp_server.plan_tools]
     // r[impl cairn.supersede.mcp_server.mutation_guard]
     // r[impl cairn.supersede.mcp_server.boundary]
-    let is_mutation_allowed = has_flag(&args, "--allow-mutations");
-    if has_flag(&args, "--describe") {
+    let mut is_mutation_allowed = false;
+    let mut describe = false;
+    let mut call = None;
+    let mut index = 0;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--allow-mutations" => {
+                if is_mutation_allowed {
+                    return Err("duplicate option: --allow-mutations".into());
+                }
+                is_mutation_allowed = true;
+                index += 1;
+            }
+            "--describe" => {
+                if describe {
+                    return Err("duplicate option: --describe".into());
+                }
+                describe = true;
+                index += 1;
+            }
+            "--call" => {
+                if call.is_some() {
+                    return Err("duplicate option: --call".into());
+                }
+                let name = args
+                    .get(index + 1)
+                    .filter(|value| !value.starts_with("--"))
+                    .ok_or("mcp --call requires a tool name")?;
+                let input = args.get(index + 2).filter(|value| !value.starts_with("--"));
+                call = Some((name.clone(), input.cloned()));
+                index += 2 + usize::from(input.is_some());
+            }
+            unknown => return Err(format!("unknown option: {unknown}").into()),
+        }
+    }
+    if describe && call.is_some() {
+        return Err("mcp --describe and --call cannot be combined".into());
+    }
+    if describe {
         return print_json(mcp_tool_catalog(is_mutation_allowed));
     }
-    if let Some(index) = args.iter().position(|arg| arg == "--call") {
-        let name = args
-            .get(index + 1)
-            .ok_or("mcp --call requires a tool name")?;
-        let input = args
-            .get(index + 2)
-            .map(|text| serde_json::from_str(text))
+    if let Some((name, input)) = call {
+        let input = input
+            .map(|text| serde_json::from_str(&text))
             .transpose()?
             .unwrap_or_else(|| json!({}));
-        return print_json(mcp_call_tool(name, &input, is_mutation_allowed)?);
+        return print_json(mcp_call_tool(&name, &input, is_mutation_allowed)?);
     }
     run_mcp_json_rpc(is_mutation_allowed)
 }
