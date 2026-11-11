@@ -2896,3 +2896,27 @@ fn workspace_contract_validates_root_relative_fixture() -> Result<(), Box<dyn Er
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[test]
+fn workspace_contract_accepts_absolute_input() -> Result<(), Box<dyn Error>> {
+    let input =
+        repo_root().join("fixtures/workspace-contract-matrix/positive/representative-edges.json");
+    let output = cairn()
+        .args([
+            "workspace-contract",
+            "verify",
+            "--root",
+            ".",
+            "--input",
+            &input.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["valid"], true);
+    Ok(())
+}
