@@ -38,6 +38,33 @@ fn release_readiness_lists_canonical_octet_gate() -> Result<(), Box<dyn Error>> 
 }
 
 #[test]
+fn release_readiness_honors_consumer_selected_gates() -> Result<(), Box<dyn Error>> {
+    let fixture = temp_project("consumer-gates")?;
+    let mut policy = policy_json()?;
+    policy["release_readiness_policy"] = json!({
+        "required_external_commands": ["custom fmt --check", "custom test --workspace"]
+    });
+    let policy_path = fixture.join("policy.json");
+    fs::write(&policy_path, serde_json::to_vec(&policy)?)?;
+    let mut command = cairn();
+    command
+        .args(["release-readiness", "--root", "."])
+        .arg("--policy")
+        .arg(&policy_path);
+    let receipt = run_json_command(&mut command)?;
+    assert_eq!(
+        receipt["repository_gate_summary"]["policy"],
+        "consumer-selected-gates"
+    );
+    assert_eq!(
+        receipt["repository_gate_summary"]["required_commands"],
+        json!(["custom fmt --check", "custom test --workspace"])
+    );
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
 fn release_readiness_does_not_list_legacy_lint_gates() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.octet_integration.guidance.legacy]
     let receipt = run_json(&["release-readiness", "--root", "."])?;
