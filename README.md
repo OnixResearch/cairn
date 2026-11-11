@@ -615,7 +615,7 @@ nix run path:$PWD#cairn -- compact unpack --root . --archive 2026-05-18-example-
 
 The lossless pack stores raw objects under BLAKE3 identities and retains canonical manifests and pointers.
 
-A hash-chained ledger detects changed, inserted, removed, or reordered operations inside the observed ledger.
+A hash-chained ledger detects changed, inserted, removed, or reordered operations inside the observed ledger. Read [Release-run ledgers](docs/release-run-ledgers.md) for bounded durable-run validation and projections.
 
 Only `lossless-pack` can execute. Cairn rejects `lossy-summary` unless a later policy adds explicit irreversible behavior and non-claims.
 
