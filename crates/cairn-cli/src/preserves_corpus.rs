@@ -4,8 +4,8 @@ use cairn_core::canonical_preserves_hash;
 use serde_json::{json, Value};
 
 use crate::support::{
-    has_flag, print_json, read_option, reject_unknown_options, reject_unknown_options_with_flags,
-    with_receipt_hash,
+    has_flag, print_json, read_option, reject_positional_arguments, reject_unknown_options,
+    reject_unknown_options_with_flags, with_receipt_hash,
 };
 
 pub(crate) fn run_preserves_corpus(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -16,10 +16,12 @@ pub(crate) fn run_preserves_corpus(args: Vec<String>) -> Result<(), Box<dyn Erro
     match subcommand.as_str() {
         "update" => {
             reject_unknown_options_with_flags(&args[1..], &["--path"], &["--execute"])?;
+            reject_positional_arguments(&args[1..])?;
             run_preserves_corpus_update(args)
         }
         "explain" => {
             reject_unknown_options(&args[1..], &["--path"])?;
+            reject_positional_arguments(&args[1..])?;
             run_preserves_corpus_explain(args)
         }
         unknown => Err(format!("unknown preserves-corpus subcommand: {unknown}").into()),

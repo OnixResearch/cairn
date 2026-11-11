@@ -2058,3 +2058,16 @@ fn developer_loop_rejects_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn preserves_corpus_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["preserves-corpus", "update", "--path", "x", "stray"][..],
+        &["preserves-corpus", "explain", "--path", "x", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
+    }
+    Ok(())
+}
