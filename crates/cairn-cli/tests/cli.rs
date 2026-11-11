@@ -1299,3 +1299,11 @@ fn compact_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn compact_verify_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
+    let output = cairn().args(["compact", "verify", "stray"]).output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
+    Ok(())
+}
