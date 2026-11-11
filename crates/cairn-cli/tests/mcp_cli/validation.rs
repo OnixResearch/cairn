@@ -192,6 +192,7 @@ fn mcp_rejects_empty_string_arguments() -> Result<(), Box<dyn Error>> {
         ("cairn_validate", r#"{"root":""}"#),
         ("cairn_validate", r#"{"cross_repo_evidence":[""]}"#),
         ("cairn_change_show", r#"{"change":""}"#),
+        ("cairn_gate", r#"{"change":"","stage":"tasks"}"#),
         ("cairn_agent_receipt_validate", r#"{"path":""}"#),
         (
             "cairn_agent_completion_validate",
