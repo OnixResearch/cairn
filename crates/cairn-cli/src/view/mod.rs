@@ -90,7 +90,7 @@ fn validate_view_args(args: &[String]) -> Result<(), Box<dyn Error>> {
                 let Some(value) = args.get(value_index) else {
                     return Err(format!("{option} requires a value").into());
                 };
-                if value.starts_with("--") {
+                if value.is_empty() || value.starts_with("--") {
                     return Err(format!("{option} requires a value").into());
                 }
                 index = value_index.saturating_add(1);
