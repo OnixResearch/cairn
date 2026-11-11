@@ -11,8 +11,8 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 use crate::support::{
-    path_string, print_json, read_option, reject_unknown_options, safe_relative_path,
-    with_receipt_hash,
+    path_string, print_json, read_option, reject_positional_arguments, reject_unknown_options,
+    safe_relative_path, with_receipt_hash,
 };
 
 pub(crate) fn run_workspace_contract(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -30,6 +30,7 @@ fn run_workspace_contract_verify(args: Vec<String>) -> Result<(), Box<dyn Error>
     // r[impl cairn.workspace_contract_matrix.validation.receipt]
     // r[impl cairn.workspace_contract_matrix.validation.privacy]
     reject_unknown_options(&args, &["--root", "--input"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let input = read_option(args, "--input", "");
     if input.as_os_str().is_empty() {

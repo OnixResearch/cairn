@@ -9,7 +9,8 @@ use serde_json::{json, Value};
 use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
-    read_string_option, reject_unknown_options, with_portable_content_hash_receipt,
+    read_string_option, reject_positional_arguments, reject_unknown_options,
+    with_portable_content_hash_receipt,
 };
 
 pub(crate) struct RuntimeEvidenceVerifyOptions {
@@ -49,6 +50,7 @@ pub(crate) fn runtime_evidence_verify_options(
     args: &[String],
 ) -> Result<RuntimeEvidenceVerifyOptions, Box<dyn Error>> {
     reject_unknown_options(args, &["--root", "--policy", "--chain", "--checkpoint"])?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let policy = read_option(args.to_vec(), "--policy", default_policy_path());
     let chain = read_string_option(args, "--chain").map(PathBuf::from);

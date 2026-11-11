@@ -1344,3 +1344,23 @@ fn probe_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn validator_commands_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["hash-policy", "verify", "--input", "x", "stray"][..],
+        &["toolchain-profile", "verify", "--input", "x", "stray"][..],
+        &["workspace-contract", "verify", "--input", "x", "stray"][..],
+        &["requirement-registry", "verify", "--input", "x", "stray"][..],
+        &["runtime-evidence", "verify", "--chain", "x", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected argument"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

@@ -5,7 +5,9 @@ use cairn_core::{
 };
 use serde_json::{json, Value};
 
-use crate::support::{print_json, read_option, reject_unknown_options, with_receipt_hash};
+use crate::support::{
+    print_json, read_option, reject_positional_arguments, reject_unknown_options, with_receipt_hash,
+};
 
 pub(crate) fn run_hash_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(subcommand) = args.first().map(String::as_str) else {
@@ -20,6 +22,7 @@ pub(crate) fn run_hash_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 fn run_hash_policy_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.hash_algorithm_policy.validation]
     reject_unknown_options(&args, &["--input"])?;
+    reject_positional_arguments(&args)?;
     let input = read_option(args, "--input", "");
     if input.as_os_str().is_empty() {
         return Err("hash-policy verify requires --input <manifest.json>".into());
