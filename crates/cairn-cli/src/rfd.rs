@@ -44,8 +44,10 @@ fn admit(args: &[String], values: &[&str], flags: &[&str]) -> Result<(), Box<dyn
     Ok(())
 }
 
-fn policy() -> Result<(cairn_core::Policy, String), Box<dyn Error>> {
-    let path = PathBuf::from(default_policy_path());
+fn policy(args: &[String]) -> Result<(cairn_core::Policy, String), Box<dyn Error>> {
+    let path = PathBuf::from(
+        read_string_option(args, "--policy").unwrap_or_else(|| default_policy_path().to_string()),
+    );
     let policy = load_policy_file(path)?;
     let policy_hash = canonical_json_hash(&policy.raw);
     Ok((policy, policy_hash))
@@ -76,7 +78,25 @@ fn read_portable(store: &Path, id: &str) -> Result<DocumentState, Box<dyn Error>
 // r[impl cairn.rfd_cob.cli.preview]
 // r[impl cairn.rfd_cob.cli.execute]
 fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
-    let (_policy, policy_hash) = policy()?;
+    admit(
+        args,
+        &[
+            "--store",
+            "--document-id",
+            "--workspace",
+            "--base-revision",
+            "--authors",
+            "--participants",
+            "--reviewers",
+            "--approvers",
+            "--publishers",
+            "--spec",
+            "--actor",
+            "--policy",
+        ],
+        &["--execute"],
+    )?;
+    let (_policy, policy_hash) = policy(args)?;
     let store = store_path(args)?;
     let id = doc_id(args)?;
     if id.is_empty() || id.len() > 256 {
@@ -219,6 +239,19 @@ fn run_checkout(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_update(args: &[String]) -> Result<(), Box<dyn Error>> {
+    admit(
+        args,
+        &[
+            "--store",
+            "--document-id",
+            "--actor",
+            "--kind",
+            "--text",
+            "--reply-to",
+            "--operation-id",
+        ],
+        &["--execute"],
+    )?;
     let store = store_path(args)?;
     let id = doc_id(args)?;
     let mut state = read_portable(&store, &id)?;
@@ -280,6 +313,17 @@ fn run_update(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_resolve(args: &[String]) -> Result<(), Box<dyn Error>> {
+    admit(
+        args,
+        &[
+            "--store",
+            "--document-id",
+            "--actor",
+            "--text",
+            "--operation-id",
+        ],
+        &["--execute"],
+    )?;
     let store = store_path(args)?;
     let id = doc_id(args)?;
     let mut state = read_portable(&store, &id)?;

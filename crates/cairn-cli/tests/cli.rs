@@ -1428,3 +1428,59 @@ fn rfd_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn rfd_mutations_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "rfd",
+            "import",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--base-revision",
+            "a:b",
+            "--spec",
+            "s",
+            "--bogus",
+        ][..],
+        &[
+            "rfd",
+            "update",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--actor",
+            "a",
+            "--kind",
+            "discussion",
+            "--text",
+            "t",
+            "--bogus",
+        ][..],
+        &[
+            "rfd",
+            "resolve",
+            "--store",
+            "x",
+            "--document-id",
+            "y",
+            "--actor",
+            "a",
+            "--text",
+            "t",
+            "--bogus",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unknown option"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
