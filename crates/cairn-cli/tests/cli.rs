@@ -2558,3 +2558,11 @@ fn store_rejects_empty_positional_ids() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn readiness_rejects_empty_change() -> Result<(), Box<dyn Error>> {
+    let output = cairn().args(["readiness", ""]).output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires a change"));
+    Ok(())
+}

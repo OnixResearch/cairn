@@ -19,7 +19,10 @@ use std::{
 };
 
 pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-    let change = args.first().ok_or("readiness requires a change")?;
+    let change = args
+        .first()
+        .filter(|change| !change.is_empty())
+        .ok_or("readiness requires a change")?;
     let mut input = json!({"change": change});
     let mut format = "json";
     let mut format_seen = false;
