@@ -183,6 +183,7 @@ fn documented_json_commands_are_admitted() -> Result<(), Box<dyn Error>> {
         "adoption",
         "check-evidence",
         "verification-impact",
+        "implementation-ready",
         "setup",
     ] {
         let output = run(&["--machine", command])?;
