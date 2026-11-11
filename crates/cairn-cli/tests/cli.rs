@@ -852,3 +852,25 @@ fn test_harness_rejects_escaping_case_seed_and_out_paths() -> Result<(), Box<dyn
     }
     Ok(())
 }
+
+#[test]
+fn implementation_ready_rejects_legacy_lifecycle_roots() -> Result<(), Box<dyn Error>> {
+    let root = std::env::temp_dir().join(format!(
+        "cairn-implementation-ready-legacy-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(root.join("cairn/specs"))?;
+    let output = cairn()
+        .args(["implementation-ready", "--root"])
+        .arg(&root)
+        .output()?;
+    assert!(!output.status.success());
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("migration_required"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    fs::remove_dir_all(root)?;
+    Ok(())
+}

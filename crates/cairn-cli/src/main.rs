@@ -157,6 +157,7 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "view"
             | "workflow"
             | "readiness"
+            | "implementation-ready"
             | "adoption"
             | "release-readiness"
             | "lifecycle"
