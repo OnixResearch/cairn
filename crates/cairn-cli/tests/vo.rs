@@ -181,6 +181,7 @@ fn vo_import_export_roundtrip_preserves_state() -> Result<(), Box<dyn Error>> {
     let portable: Value = serde_json::from_slice(&exported.stdout)?;
     assert_eq!(portable["backend"], "portable");
     assert_eq!(portable["state"]["obligation_id"], "vo-2");
+    assert_eq!(portable["state"]["workspace_id"], "workspace:vo");
     Ok(())
 }
 
