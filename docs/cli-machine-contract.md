@@ -86,7 +86,10 @@ The machine shell runs the same Cairn command through a bounded child-process bo
 
 It parses one default JSON result and nests that value without modification. Cairn does not recalculate nested receipt hashes.
 
-Human help, MCP, interactive output, and alternate formats are incompatible with machine mode. Every command that defaults to one JSON result is admissible, including `source-review`, `adoption`, `check-evidence`, `verification-impact`, and `setup`.
+Human help, MCP, interactive output, and alternate formats are incompatible with
+machine mode. Otherwise, commands that default to one JSON result are admissible,
+including `source-review`, `adoption`, `check-evidence`, `verification-impact`,
+and `setup`.
 
 For traceability coverage, include `--json` in a machine invocation.
 
