@@ -59,6 +59,10 @@ The generated Nickel policy owns these transport exit classes:
 
 The checked policy projection owns the numeric status for each class.
 
+## Argument admission
+
+Cairn admits only each command's documented options and positional grammar. Unknown options, missing or empty option values, duplicate single-use options, and unexpected positional arguments fail before command planning or mutation.
+
 ## Controlled failures
 
 Machine mode covers these controlled stages:
