@@ -7,7 +7,7 @@ Cairn represents a verification obligation with the `xyz.onixresearch.verificati
 ```bash
 verification-obligation import    --store DIR --obligation-id ID --base-revision git_oid:OID \
                                   --submitters A --contributors C --verifiers V --invalidators I \
-                                  --claim CLAIM_ID --decision claim.md [--policy FILE] [--execute]
+                                  --claim CLAIM_ID --decision claim.md [--workspace ID] [--policy FILE] [--execute]
 verification-obligation status    --store DIR --obligation-id ID
 verification-obligation update    --store DIR --obligation-id ID --actor CONTRIBUTOR --text T [--execute]
 verification-obligation evidence  --store DIR --obligation-id ID --actor ACTOR --evidence-id E --evidence-kind K \

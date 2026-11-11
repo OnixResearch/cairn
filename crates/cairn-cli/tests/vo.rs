@@ -183,3 +183,52 @@ fn vo_import_export_roundtrip_preserves_state() -> Result<(), Box<dyn Error>> {
     assert_eq!(portable["state"]["obligation_id"], "vo-2");
     Ok(())
 }
+
+#[test]
+fn vo_import_honors_explicit_workspace() -> Result<(), Box<dyn Error>> {
+    let dir = test_dir("workspace")?;
+    let store = dir.join("store");
+    fs::create_dir_all(&store)?;
+    let claim = dir.join("claim.md");
+    fs::write(&claim, "# Claim\n")?;
+    let claim_s = claim.to_string_lossy().to_string();
+    let store_s = store.to_string_lossy().to_string();
+    let policy = worktree_root().join("cairn-policy/generated/cairn-policy.json");
+    let policy = policy.to_string_lossy().to_string();
+    let base = format!("git_oid:{}{}", "b".repeat(40), "c".repeat(24));
+
+    run_json(&[
+        "verification-obligation",
+        "import",
+        "--store",
+        &store_s,
+        "--obligation-id",
+        "vo-workspace",
+        "--base-revision",
+        &base,
+        "--submitters",
+        "submitter",
+        "--contributors",
+        "contributor",
+        "--verifiers",
+        "verifier",
+        "--invalidators",
+        "invalidator",
+        "--claim",
+        "claim-1",
+        "--decision",
+        &claim_s,
+        "--workspace",
+        "workspace:custom",
+        "--policy",
+        &policy,
+        "--execute",
+    ])?;
+
+    let portable = fs::read_to_string(store.join("vo-workspace.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert_eq!(value["state"]["workspace_id"], "workspace:custom");
+
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}

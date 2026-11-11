@@ -127,6 +127,7 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
             "--claim",
             "--subject-root",
             "--decision",
+            "--workspace",
             "--policy",
         ],
         &["--execute"],
@@ -136,6 +137,8 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
     let obligation_id = obs_id(args)?;
     let claim = read_string_option(args, "--claim").ok_or("requires --claim CLAIM_ID")?;
     let subject = read_string_option(args, "--subject-root").unwrap_or_else(|| ".".to_string());
+    let workspace =
+        read_string_option(args, "--workspace").unwrap_or_else(|| "workspace:vo".to_string());
     let base =
         read_string_option(args, "--base-revision").ok_or("requires --base-revision KIND:VALUE")?;
     let decoded = decode_base_revision(&base).map_err(|e| e.to_string())?;
@@ -149,7 +152,7 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
         schema: VERIFICATION_OBLIGATION_SCHEMA_V1.to_string(),
         kind: "verification-obligation".to_string(),
         obligation_id,
-        workspace_id: "workspace:vo".to_string(),
+        workspace_id: workspace,
         base_revision: base,
         policy_hash,
         claim_root: cairn_core::ClaimRoot {
