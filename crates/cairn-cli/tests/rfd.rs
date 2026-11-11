@@ -134,9 +134,16 @@ fn rfd_import_status_update_publish_are_preview_first() -> Result<(), Box<dyn Er
         "artifact",
         "--text",
         "# Updated RFD\n",
+        "--operation-id",
+        "custom-op",
         "--execute",
     ])?;
     assert_eq!(update["executed"], true);
+    let portable = fs::read_to_string(store.join("rfd-1.portable.json"))?;
+    let portable: Value = serde_json::from_str(&portable)?;
+    assert!(portable["state"]["operations"]
+        .as_array()
+        .is_some_and(|operations| operations.iter().any(|operation| operation == "custom-op")));
 
     // publish plan succeeds conflict-free
     let out_dir = dir.join("publish");
