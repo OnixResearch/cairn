@@ -1236,3 +1236,33 @@ fn lifecycle_data_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn review_option_only_subcommands_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["review", "ledger", "--include", "x", "stray"][..],
+        &["review", "completeness", "stray"][..],
+        &[
+            "review",
+            "metrics-regression",
+            "--registry",
+            "r",
+            "--fixtures",
+            "f",
+            "--guidance",
+            "g",
+            "--evidence",
+            "e",
+            "stray",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected argument"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

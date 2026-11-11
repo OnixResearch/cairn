@@ -13,8 +13,9 @@ use cairn_core::{
 use serde_json::{json, Value};
 
 use crate::support::{
-    path_string, print_json, read_string_option, reject_unknown_options,
-    reject_unknown_options_with_repeats, safe_relative_path, with_receipt_hash,
+    path_string, print_json, read_string_option, reject_positional_arguments,
+    reject_unknown_options, reject_unknown_options_with_repeats, safe_relative_path,
+    with_receipt_hash,
 };
 
 pub(crate) fn run_review(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -70,6 +71,7 @@ fn run_review_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
 fn run_review_ledger(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     reject_unknown_options_with_repeats(&args, &["--root", "--include"], &[], &["--include"])?;
+    reject_positional_arguments(&args)?;
     // r[impl cairn.semantic_review.review_ledger_analytics.aggregate]
     // r[impl cairn.semantic_review.review_ledger_analytics.input_validation]
     // r[impl cairn.semantic_review.review_ledger_analytics.input_validation.input_validation.invalid_receipt]
@@ -139,6 +141,7 @@ fn run_review_revision(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
 fn run_review_completeness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(&args, &["--root", "--change"])?;
+    reject_positional_arguments(&args)?;
     let root = read_root(&args);
     let change = read_string_option(&args, "--change");
     let scope = if let Some(change) = change {
@@ -203,6 +206,7 @@ fn run_review_metrics_regression(args: Vec<String>) -> Result<(), Box<dyn Error>
             "--evidence",
         ],
     )?;
+    reject_positional_arguments(&args)?;
     // r[impl cairn.semantic_review.review_metrics_regression_rail.downstream_category_ownership]
     // r[impl cairn.semantic_review.review_metrics_regression_rail.registry_binds_surfaces]
     // r[impl cairn.semantic_review.review_metrics_regression_rail.fixture_pair_enforcement]
