@@ -2,7 +2,7 @@
 
 `cairn state-machine-receipt validate --input <receipt.json>` validates an already-produced lifecycle state-machine receipt. The command reads bounded JSON in the CLI shell and passes the parsed value to the pure deterministic validator; it does not parse TLA+, run a model checker, simulate a model, generate code, or mutate lifecycle state. r[impl cairn.lifecycle_orchestration.state_machine_receipts.cli]
 
-Relative `--input` paths resolve under `--root` (default `.`); absolute paths are used as given.
+Relative `--input` paths resolve under `--root` (default `.`); absolute paths are used as given. Receipt inputs are bounded to 1 MiB and must not be symlinks.
 
 A receipt identifies the model artifact and observed bytes, transition profile, state/event vocabulary, named checked properties, checker and version, result status, diagnostics, input/output hashes, and verification role. Only an explicit `passed` result from a supported checker with the `bounded-witness` role is accepted. Stale hashes, unknown checkers, missing properties or diagnostics, unchecked results, promoted roles, malformed paths or hashes, and weakened non-claims fail closed. r[impl cairn.lifecycle_orchestration.state_machine_receipts.model] r[impl cairn.lifecycle_orchestration.state_machine_receipts.validation]
 

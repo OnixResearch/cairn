@@ -66,7 +66,7 @@ Run:
 nix run .#cairn -- receipt-preserves-diff --baseline old.json --candidate new.json [--policy FILE]
 ```
 
-The default policy is the checked-in generated policy. The command is read-only: it reports field drift, source IDs from the policy-owned receipt source map, and the policy identity used for the comparison. Any drift exits nonzero without mutating either input.
+Receipt comparison inputs are bounded to 16 MiB and must not be symlinks. The default policy is the checked-in generated policy. The command is read-only: it reports field drift, source IDs from the policy-owned receipt source map, and the policy identity used for the comparison. Any drift exits nonzero without mutating either input.
 
 ## CI guard expectations
 
