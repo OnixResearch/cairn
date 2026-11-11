@@ -1,5 +1,13 @@
 use super::*;
 
+pub(crate) fn resolve_under_root(root: &Path, path: std::path::PathBuf) -> std::path::PathBuf {
+    if path.is_absolute() {
+        path
+    } else {
+        root.join(path)
+    }
+}
+
 pub(crate) fn safe_relative_path(root: &Path, path: &Path) -> String {
     path.strip_prefix(root)
         .unwrap_or(path)

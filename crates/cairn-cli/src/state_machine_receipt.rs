@@ -29,11 +29,7 @@ fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if input.as_os_str().is_empty() {
         return Err("state-machine-receipt validate requires --input <receipt.json>".into());
     }
-    let input_path = if input.is_absolute() {
-        input
-    } else {
-        root.join(&input)
-    };
+    let input_path = crate::support::resolve_under_root(&root, input);
     let value = read_bounded_json(&input_path)?;
     let report = validate_state_machine_receipt_value(&value);
     let receipt = with_receipt_hash(json!({

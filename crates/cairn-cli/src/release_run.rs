@@ -52,11 +52,7 @@ fn run_projection(args: Vec<String>, projection: Projection) -> Result<(), Box<d
     if input.as_os_str().is_empty() {
         return Err(format!("{} requires --input <ledger.json>", projection.command()).into());
     }
-    let input_path = if input.is_absolute() {
-        input
-    } else {
-        root.join(&input)
-    };
+    let input_path = crate::support::resolve_under_root(&root, input);
     let policy = load_policy_file(policy_path)?;
     let expected_policy_hash = canonical_json_hash(&policy.raw);
     let value = read_bounded_json(&input_path)?;
