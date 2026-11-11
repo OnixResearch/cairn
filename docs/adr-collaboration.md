@@ -19,7 +19,7 @@ adr number   --store DIR --document-id ID --number N --registry SNAPSHOT_ID --pu
 adr publish  --store DIR --document-id ID --out DIR
 ```
 
-Every mutation is preview-first. Preview writes nothing. Mutation commands accept an optional `--operation-id ID` to name the recorded operation.
+Every mutation is preview-first. Preview writes nothing. Mutation commands accept an optional `--operation-id ID` to name the recorded operation. Import defaults `--workspace` to `workspace:adr`.
 
 ## Roles and immutability
 

@@ -19,7 +19,7 @@ rfd checkout --store DIR --document-id ID --out DIR [--execute]
 rfd publish  --store DIR --document-id ID --out DIR
 ```
 
-Every mutation is preview-first. Preview writes nothing. Execution rechecks state and roles before mutation. Mutation commands accept an optional `--operation-id ID` to name the recorded operation.
+Every mutation is preview-first. Preview writes nothing. Execution rechecks state and roles before mutation. Mutation commands accept an optional `--operation-id ID` to name the recorded operation. Import defaults `--workspace` to `workspace:rfd`.
 
 ## Role authority
 
