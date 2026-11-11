@@ -3,8 +3,8 @@ use std::{error::Error, path::PathBuf};
 use serde_json::Value;
 
 use crate::support::{
-    print_json, read_option, read_string_option, reject_unknown_options,
-    reject_unknown_options_with_repeats,
+    print_json, read_option, read_string_option, reject_positional_arguments,
+    reject_unknown_options, reject_unknown_options_with_repeats,
 };
 
 mod build_verify;
@@ -146,6 +146,7 @@ fn evidence_registry_options(args: &[String]) -> Result<EvidenceRegistryOptions,
         &[],
         &["--index"],
     )?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let indexes = read_repeated_path_options(args, "--index");
     let out = read_string_option(args, "--out").map(PathBuf::from);
@@ -168,6 +169,7 @@ fn evidence_registry_verify_options(
     args: &[String],
 ) -> Result<EvidenceRegistryVerifyOptions, Box<dyn Error>> {
     reject_unknown_options(args, &["--root", "--registry"])?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let registry = read_string_option(args, "--registry").map(PathBuf::from);
     if registry.is_none() {
@@ -180,6 +182,7 @@ fn evidence_registry_mirror_verify_options(
     args: &[String],
 ) -> Result<EvidenceRegistryMirrorVerifyOptions, Box<dyn Error>> {
     reject_unknown_options(args, &["--root", "--registry", "--mirror"])?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let registry = read_string_option(args, "--registry").map(PathBuf::from);
     let mirror = read_string_option(args, "--mirror").map(PathBuf::from);
@@ -200,6 +203,7 @@ fn evidence_registry_select_options(
     args: &[String],
 ) -> Result<EvidenceRegistrySelectOptions, Box<dyn Error>> {
     reject_unknown_options(args, &SELECT_OPTIONS)?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let registry = read_string_option(args, "--registry").map(PathBuf::from);
     let out = read_string_option(args, "--out").map(PathBuf::from);
@@ -221,6 +225,7 @@ fn evidence_registry_fetch_plan_options(
     args: &[String],
 ) -> Result<EvidenceRegistryFetchPlanOptions, Box<dyn Error>> {
     reject_unknown_options(args, &SELECT_OPTIONS)?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let registry = read_string_option(args, "--registry").map(PathBuf::from);
     let out = read_string_option(args, "--out").map(PathBuf::from);
@@ -242,6 +247,7 @@ fn evidence_registry_fetch_execute_options(
     args: &[String],
 ) -> Result<EvidenceRegistryFetchExecuteOptions, Box<dyn Error>> {
     reject_unknown_options(args, &["--root", "--plan", "--source", "--out"])?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let plan = read_string_option(args, "--plan").map(PathBuf::from);
     let source = read_string_option(args, "--source").map(PathBuf::from);

@@ -27,6 +27,7 @@ pub(super) fn run_evidence_import(args: Vec<String>) -> Result<(), Box<dyn Error
 
 fn evidence_import_options(args: &[String]) -> Result<EvidenceImportOptions, Box<dyn Error>> {
     crate::support::reject_unknown_options(args, &["--root", "--bundle", "--into"])?;
+    crate::support::reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let bundle = read_string_option(args, "--bundle").map(PathBuf::from);
     let into = read_string_option(args, "--into").map(PathBuf::from);

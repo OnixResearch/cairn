@@ -9,8 +9,8 @@ use serde_json::{json, Value};
 
 use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
 use crate::support::{
-    path_string, print_json, read_option, read_string_option, reject_unknown_options,
-    with_portable_content_hash_receipt, CapabilityRoot, CapabilityRootKind,
+    path_string, print_json, read_option, read_string_option, reject_positional_arguments,
+    reject_unknown_options, with_portable_content_hash_receipt, CapabilityRoot, CapabilityRootKind,
 };
 
 use super::common::{
@@ -57,6 +57,7 @@ fn release_evidence_retention_options(
             "--retain",
         ],
     )?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let Some(publish_root) = read_string_option(args, "--publish-root").map(PathBuf::from) else {
         return Err("release-evidence retention-plan requires --publish-root <dir>".into());

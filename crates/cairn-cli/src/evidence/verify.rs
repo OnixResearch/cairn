@@ -48,6 +48,7 @@ fn evidence_verify_options(args: &[String]) -> Result<EvidenceVerifyOptions, Box
             "--stack-provenance-graph",
         ],
     )?;
+    crate::support::reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let policy = read_option(args.to_vec(), "--policy", default_policy_path());
     let bundle = read_string_option(args, "--bundle").map(PathBuf::from);

@@ -1151,3 +1151,23 @@ fn option_only_commands_reject_stray_positionals() -> Result<(), Box<dyn Error>>
     }
     Ok(())
 }
+
+#[test]
+fn evidence_registry_and_release_commands_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["evidence", "export", "--out", "x", "stray"][..],
+        &["evidence", "registry", "verify", "--registry", "r", "stray"][..],
+        &["registry", "verify", "--registry", "r", "stray"][..],
+        &["release-evidence", "index", "--out", "x", "stray"][..],
+        &["release-evidence", "rotate", "--plan", "p", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected argument"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
