@@ -6,8 +6,8 @@ use serde_json::{json, Value};
 
 use crate::agent_receipt::AGENT_RECEIPT_MAX_BYTES;
 use crate::support::{
-    path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
-    CapabilityRoot, CapabilityRootKind,
+    path_string, print_json, read_option, read_string_option, reject_unknown_options_with_flags,
+    with_portable_content_hash_receipt, CapabilityRoot, CapabilityRootKind,
 };
 
 use super::common::{
@@ -37,6 +37,7 @@ pub(super) struct ReleaseEvidenceRotateOptions {
 fn release_evidence_rotate_options(
     args: &[String],
 ) -> Result<ReleaseEvidenceRotateOptions, Box<dyn Error>> {
+    reject_unknown_options_with_flags(args, &["--root", "--plan"], &["--execute"])?;
     let root = read_option(args.to_vec(), "--root", ".");
     let Some(plan) = read_string_option(args, "--plan").map(PathBuf::from) else {
         return Err("release-evidence rotate requires --plan <file>".into());

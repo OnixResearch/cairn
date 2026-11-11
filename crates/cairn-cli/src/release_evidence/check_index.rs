@@ -10,8 +10,8 @@ use std::{error::Error, path::PathBuf, process::Command};
 use serde_json::{json, Value};
 
 use crate::support::{
-    path_string, print_json, read_option, read_string_option, with_portable_content_hash_receipt,
-    CapabilityRoot, CapabilityRootKind,
+    path_string, print_json, read_option, read_string_option, reject_unknown_options,
+    with_portable_content_hash_receipt, CapabilityRoot, CapabilityRootKind,
 };
 
 use super::common::release_evidence_issue;
@@ -54,6 +54,7 @@ pub(super) struct ReleaseEvidenceCheckIndexOptions {
 fn release_evidence_check_index_options(
     args: &[String],
 ) -> Result<ReleaseEvidenceCheckIndexOptions, Box<dyn Error>> {
+    reject_unknown_options(args, &["--root", "--index", "--mode"])?;
     let root = read_option(args.to_vec(), "--root", ".");
     let Some(index) = read_string_option(args, "--index").map(PathBuf::from) else {
         return Err("release-evidence check-index requires --index <file>".into());

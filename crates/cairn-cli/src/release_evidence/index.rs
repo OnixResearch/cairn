@@ -19,7 +19,7 @@ use crate::evidence::{
 };
 use crate::support::{
     default_policy_path, path_string, print_json, read_option, read_string_option,
-    with_portable_content_hash_receipt, CapabilityRoot, CapabilityRootKind,
+    reject_unknown_options, with_portable_content_hash_receipt, CapabilityRoot, CapabilityRootKind,
 };
 
 use super::common::{
@@ -50,6 +50,7 @@ struct ReleaseEvidenceIndexOptions {
 fn release_evidence_index_options(
     args: &[String],
 ) -> Result<ReleaseEvidenceIndexOptions, Box<dyn Error>> {
+    reject_unknown_options(args, &["--root", "--out", "--artifact-dir", "--work-dir"])?;
     let root = read_option(args.to_vec(), "--root", ".");
     let Some(out) = read_string_option(args, "--out").map(PathBuf::from) else {
         return Err("release-evidence index requires --out <file>".into());

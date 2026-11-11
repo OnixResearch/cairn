@@ -656,3 +656,63 @@ fn lifecycle_mutation_commands_reject_bad_options() -> Result<(), Box<dyn Error>
     }
     Ok(())
 }
+
+#[test]
+fn release_evidence_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "release-evidence",
+            "index",
+            "--root",
+            ".",
+            "--out",
+            "target/i.md",
+            "--bogus",
+        ][..],
+        &[
+            "release-evidence",
+            "check-index",
+            "--index",
+            "index.md",
+            "--bogus",
+        ][..],
+        &[
+            "release-evidence",
+            "publish",
+            "--index",
+            "index.md",
+            "--artifact-dir",
+            "artifacts",
+            "--publish-dir",
+            "published",
+            "--bogus",
+        ][..],
+        &[
+            "release-evidence",
+            "retention-plan",
+            "--publish-root",
+            "published",
+            "--out",
+            "plan.json",
+            "--bogus",
+        ][..],
+        &[
+            "release-evidence",
+            "rotate",
+            "--plan",
+            "plan.json",
+            "--bogus",
+        ][..],
+        &["release-evidence", "index", "--out"][..],
+        &["release-evidence", "check-index", "--mode"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("requires a value"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
