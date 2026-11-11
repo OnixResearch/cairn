@@ -59,6 +59,15 @@ pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> 
         validate_output_path(out)?;
     }
     if let Some(rail) = read_string_option(&args, "--rail") {
+        if read_string_option(&args, "--case").is_some()
+            || read_string_option(&args, "--seed").is_some()
+            || read_string_option(&args, "--max-reruns").is_some()
+        {
+            return Err(
+                "test-harness --rail cannot be combined with --case, --seed, or --max-reruns"
+                    .into(),
+            );
+        }
         return run_real_rail(&root, &rail, out);
     }
     let case = read_string_option(&args, "--case").unwrap_or_else(|| "pass".into());

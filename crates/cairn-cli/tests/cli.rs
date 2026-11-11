@@ -845,6 +845,7 @@ fn test_harness_rejects_escaping_case_seed_and_out_paths() -> Result<(), Box<dyn
         assert!(
             stderr.contains("safe path component")
                 || stderr.contains("repository-relative")
+                || stderr.contains("cannot be combined")
                 || stderr.contains("capability"),
             "{args:?}: {stderr}"
         );
