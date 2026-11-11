@@ -499,15 +499,23 @@ fn validate_lifecycle_mutation_args(
             format!("invalid arguments for {tool}: missing required argument change").into(),
         );
     };
-    if !change.is_string() {
-        return Err(format!("invalid arguments for {tool}: change must be a string").into());
-    }
+    validate_non_empty_string(tool, "change", change)?;
     for key in ["root", "policy"] {
-        if object.get(key).is_some_and(|value| !value.is_string()) {
-            return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+        if let Some(value) = object.get(key) {
+            validate_non_empty_string(tool, key, value)?;
         }
     }
     validate_evidence_array(tool, object)
+}
+
+fn validate_non_empty_string(tool: &str, key: &str, value: &Value) -> Result<(), Box<dyn Error>> {
+    let Some(text) = value.as_str() else {
+        return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+    };
+    if text.is_empty() {
+        return Err(format!("invalid arguments for {tool}: {key} must not be empty").into());
+    }
+    Ok(())
 }
 
 fn validate_evidence_array(
@@ -521,11 +529,8 @@ fn validate_evidence_array(
             )
             .into());
         };
-        if items.iter().any(|item| !item.is_string()) {
-            return Err(format!(
-                "invalid arguments for {tool}: cross_repo_evidence entries must be strings"
-            )
-            .into());
+        for item in items {
+            validate_non_empty_string(tool, "cross_repo_evidence entry", item)?;
         }
     }
     Ok(())
@@ -542,14 +547,7 @@ fn validate_mcp_implementation_args(
     }
     for key in ["root", "policy"] {
         if let Some(value) = object.get(key) {
-            let Some(text) = value.as_str() else {
-                return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
-            };
-            if text.is_empty() {
-                return Err(
-                    format!("invalid arguments for {tool}: {key} must not be empty").into(),
-                );
-            }
+            validate_non_empty_string(tool, key, value)?;
         }
     }
     if let Some(limit) = object.get("limit") {
@@ -575,8 +573,8 @@ fn validate_mcp_validate_args(
         }
     }
     for key in ["root", "policy"] {
-        if object.get(key).is_some_and(|value| !value.is_string()) {
-            return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+        if let Some(value) = object.get(key) {
+            validate_non_empty_string(tool, key, value)?;
         }
     }
     validate_evidence_array(tool, object)
@@ -602,12 +600,7 @@ fn validate_string_args(
     }
     for key in required.iter().chain(optional.iter()) {
         if let Some(value) = object.get(*key) {
-            if !value.is_string() {
-                return Err(format!(
-                    "invalid arguments for {tool}: argument {key} must be a string"
-                )
-                .into());
-            }
+            validate_non_empty_string(tool, &format!("argument {key}"), value)?;
         }
     }
     Ok(())

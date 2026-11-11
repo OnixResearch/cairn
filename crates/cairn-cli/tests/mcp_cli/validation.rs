@@ -185,3 +185,20 @@ fn mcp_rejects_traversal_and_default_mutation() -> Result<(), Box<dyn Error>> {
     assert_eq!(receipt["mutated"], false);
     Ok(())
 }
+
+#[test]
+fn mcp_rejects_empty_string_arguments() -> Result<(), Box<dyn Error>> {
+    for (tool, request) in [
+        ("cairn_validate", r#"{"root":""}"#),
+        ("cairn_change_show", r#"{"change":""}"#),
+    ] {
+        let output = cairn().args(["mcp", "--call", tool, request]).output()?;
+        assert!(!output.status.success(), "{tool} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("must not be empty"),
+            "{tool}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
