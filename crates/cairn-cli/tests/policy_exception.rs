@@ -125,9 +125,18 @@ fn policy_exception_request_status_and_validate() -> Result<(), Box<dyn Error>> 
         "100",
         "--finite-valid-until",
         "1000",
+        "--operation-id",
+        "custom-observe",
         "--execute",
     ]);
     run_json(&mut observe)?;
+    let portable = fs::read_to_string(store.join("pe-1.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert!(value["state"]["operations"]
+        .as_array()
+        .is_some_and(|operations| operations
+            .iter()
+            .any(|operation| operation == "custom-observe")));
 
     let mut status2 = cairn();
     status2.args([

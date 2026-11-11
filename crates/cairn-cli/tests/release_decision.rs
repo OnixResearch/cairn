@@ -122,10 +122,19 @@ fn release_decision_create_status_and_approve() -> Result<(), Box<dyn Error>> {
         "approver",
         "--kind",
         "approve",
+        "--operation-id",
+        "custom-vote",
         "--execute",
     ]);
     let vote = run_json(&mut vote)?;
     assert_eq!(vote["verdict"], "approved");
+    let portable = fs::read_to_string(store.join("rd-1.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert!(value["state"]["operations"]
+        .as_array()
+        .is_some_and(|operations| operations
+            .iter()
+            .any(|operation| operation == "custom-vote")));
 
     let mut reject = cairn();
     reject.args([
