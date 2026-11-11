@@ -537,7 +537,8 @@ fn read_commands_reject_unknown_and_malformed_options() -> Result<(), Box<dyn Er
             stderr.contains("unknown option")
                 || stderr.contains("requires a value")
                 || stderr.contains("duplicate option")
-                || stderr.contains("before options"),
+                || stderr.contains("before options")
+                || stderr.contains("non-negative integer"),
             "{args:?}: {stderr}"
         );
     }
@@ -557,6 +558,7 @@ fn remaining_commands_reject_unknown_and_value_less_options() -> Result<(), Box<
         &["rename-classification", "--bogus"][..],
         &["test-harness", "--bogus"][..],
         &["test-harness", "--case"][..],
+        &["test-harness", "--max-reruns", "not-a-number"][..],
         &["policy", "export", "--source"][..],
         &["preserves-corpus", "update", "--path"][..],
         &[
@@ -575,7 +577,8 @@ fn remaining_commands_reject_unknown_and_value_less_options() -> Result<(), Box<
             stderr.contains("unknown option")
                 || stderr.contains("requires a value")
                 || stderr.contains("duplicate option")
-                || stderr.contains("before options"),
+                || stderr.contains("before options")
+                || stderr.contains("non-negative integer"),
             "{args:?}: {stderr}"
         );
     }

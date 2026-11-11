@@ -59,9 +59,12 @@ pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> 
     }
     let case = read_string_option(&args, "--case").unwrap_or_else(|| "pass".into());
     let seed = read_string_option(&args, "--seed").unwrap_or_else(|| "0".into());
-    let max = read_string_option(&args, "--max-reruns")
-        .and_then(|x| x.parse::<usize>().ok())
-        .unwrap_or(2);
+    let max = match read_string_option(&args, "--max-reruns") {
+        Some(value) => value.parse::<usize>().map_err(|_| {
+            format!("test-harness --max-reruns must be a non-negative integer, got {value}")
+        })?,
+        None => 2,
+    };
     let out = read_string_option(&args, "--out");
     let artifact = root
         .join("target/cairn-test-harness")
