@@ -17,7 +17,8 @@ use crate::{
     support::{
         collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
         default_policy_path, detect_layout, find_change, find_spec_source, path_string, print_json,
-        read_gate_snapshot, read_option, read_string_option, scan_repo, with_portable_receipt_hash,
+        read_gate_snapshot, read_option, read_string_option, reject_unknown_options, scan_repo,
+        with_portable_receipt_hash,
     },
 };
 
@@ -30,6 +31,7 @@ pub(crate) fn run_status(
     args: Vec<String>,
     invocation: &RootLocalInvocation,
 ) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root"])?;
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let status = scan_repo(root, selected.layout)?;
@@ -43,6 +45,7 @@ pub(crate) fn run_doctor(
     args: Vec<String>,
     invocation: &RootLocalInvocation,
 ) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root", "--policy"])?;
     let root = read_option(args.clone(), "--root", ".");
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
@@ -137,6 +140,10 @@ pub(crate) fn run_doctor(
 }
 
 pub(super) fn run_change_list(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(
+        &args,
+        &["--root", "--group", "--target-after", "--target-before"],
+    )?;
     let root = read_option(args.clone(), "--root", ".");
     let group = read_string_option(&args, "--group");
     let target_after = read_string_option(&args, "--target-after");
@@ -154,6 +161,7 @@ pub(super) fn run_change_list(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 pub(super) fn run_change_show(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root"])?;
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
@@ -168,6 +176,7 @@ pub(super) fn run_change_show(args: Vec<String>, change: &str) -> Result<(), Box
 pub(super) fn run_change_graph(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.change_dependency_graph.drain_order]
     // r[impl cairn.change_dependency_graph.render_formats]
+    reject_unknown_options(&args, &["--root", "--format"])?;
     let root = read_option(args.clone(), "--root", ".");
     let format = read_string_option(&args, "--format").unwrap_or_else(|| "json".to_string());
     let selected = detect_layout(&root);
@@ -195,6 +204,7 @@ pub(super) fn run_change_graph(args: Vec<String>) -> Result<(), Box<dyn Error>> 
 
 pub(super) fn run_change_next(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.change_dependency_graph.next_ready]
+    reject_unknown_options(&args, &["--root"])?;
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
@@ -232,6 +242,7 @@ pub(super) fn run_spec_list(
     args: Vec<String>,
     invocation: &RootLocalInvocation,
 ) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root"])?;
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let specs = collect_spec_sources(&root.join(specs_dir(selected.layout)))?;
@@ -247,6 +258,7 @@ pub(super) fn run_spec_show(
     spec: &str,
     invocation: &RootLocalInvocation,
 ) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root"])?;
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let source = find_spec_source(&root, selected.layout, spec)?;

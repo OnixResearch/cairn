@@ -495,3 +495,42 @@ fn steel_orchestration_default_gate_accepts_complete_promotion_evidence(
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[test]
+fn read_commands_reject_unknown_and_malformed_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["status", "--root", "fixtures/basic", "--bogus"][..],
+        &["change", "list", "--root", "fixtures/basic", "--group"][..],
+        &[
+            "change",
+            "list",
+            "--root",
+            "fixtures/basic",
+            "--group",
+            "a",
+            "--group",
+            "b",
+        ][..],
+        &["change", "graph", "--root", "fixtures/basic", "--format"][..],
+        &[
+            "change",
+            "show",
+            "demo",
+            "--root",
+            "fixtures/basic",
+            "--bogus",
+        ][..],
+        &["spec", "list", "--root", "fixtures/basic", "--bogus"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("duplicate option"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

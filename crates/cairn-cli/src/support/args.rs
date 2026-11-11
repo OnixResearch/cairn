@@ -1,4 +1,35 @@
+use std::collections::BTreeSet;
+use std::error::Error;
+
 use super::*;
+
+/// Reject options outside the command's documented set and options without a
+/// following value. Positional arguments are ignored.
+pub(crate) fn reject_unknown_options(
+    args: &[String],
+    allowed: &[&str],
+) -> Result<(), Box<dyn Error>> {
+    let mut seen = BTreeSet::new();
+    let mut index = 0;
+    while index < args.len() {
+        let argument = &args[index];
+        if argument.starts_with("--") {
+            if !allowed.contains(&argument.as_str()) {
+                return Err(format!("unknown option: {argument}").into());
+            }
+            if args.get(index + 1).is_none() {
+                return Err(format!("{argument} requires a value").into());
+            }
+            if !seen.insert(argument.as_str()) {
+                return Err(format!("duplicate option: {argument}").into());
+            }
+            index += 2;
+        } else {
+            index += 1;
+        }
+    }
+    Ok(())
+}
 
 pub(crate) fn read_string_option(args: &[String], name: &str) -> Option<String> {
     args.windows(2)
