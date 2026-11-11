@@ -2311,3 +2311,23 @@ fn change_create_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
     Ok(())
 }
+
+#[test]
+fn determinism_replay_rejects_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["determinism", "replay", "--bogus"][..],
+        &["determinism", "replay", "--format"][..],
+        &["determinism", "replay", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("unexpected argument"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

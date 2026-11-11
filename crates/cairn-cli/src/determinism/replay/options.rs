@@ -1,5 +1,7 @@
 use super::support::*;
 
+use crate::support::{reject_positional_arguments, reject_unknown_options_with_flags};
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum ReplayOutputFormat {
     Json,
@@ -16,6 +18,12 @@ pub(super) struct ReplayOptions {
 }
 
 pub(super) fn replay_options(args: &[String]) -> Result<ReplayOptions, Box<dyn Error>> {
+    reject_unknown_options_with_flags(
+        args,
+        &["--root", "--case", "--group", "--format", "--out"],
+        &["--execute", "--allow-mutations"],
+    )?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", "fixtures/basic");
     let selected_case = read_string_option(args, "--case");
     let selected_group = read_string_option(args, "--group");
