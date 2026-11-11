@@ -654,6 +654,11 @@ pub(super) fn mcp_implementation_ready(input: &Value) -> Result<Value, Box<dyn E
             }
         }
 
+        let task_markdown = if blockers.is_empty() {
+            task_markdown(&root, path)
+        } else {
+            None
+        };
         let mut units: Vec<(String, Vec<String>)> = Vec::new();
         if blockers.is_empty() {
             if active_order {
@@ -665,13 +670,16 @@ pub(super) fn mcp_implementation_ready(input: &Value) -> Result<Value, Box<dyn E
                     let Some(task) = task.as_str() else { continue };
                     units.push((
                         format!("task:{task}"),
-                        requirement_references(&root, path, Some((task_ordering, task))),
+                        requirement_references(
+                            task_markdown.as_deref(),
+                            Some((task_ordering, task)),
+                        ),
                     ));
                 }
             } else if !complete {
                 units.push((
                     format!("change:{name}"),
-                    requirement_references(&root, path, None),
+                    requirement_references(task_markdown.as_deref(), None),
                 ));
             }
         }
@@ -753,21 +761,17 @@ pub(super) fn mcp_implementation_ready(input: &Value) -> Result<Value, Box<dyn E
     Ok(with_portable_receipt_hash(&root, value))
 }
 
-fn requirement_references(
-    root: &std::path::Path,
-    change_path: &str,
-    task: Option<(&Value, &str)>,
-) -> Vec<String> {
-    let Some(relative) = task_change_relative(root, change_path) else {
-        return Vec::new();
-    };
-    let Ok(capability) = CapabilityRoot::open(CapabilityRootKind::Repository, root) else {
-        return Vec::new();
-    };
-    let Ok(bytes) = capability.read_bounded(&relative.join("tasks.md"), MCP_MAX_TASKS_BYTES) else {
-        return Vec::new();
-    };
-    let Ok(markdown) = String::from_utf8(bytes) else {
+fn task_markdown(root: &std::path::Path, change_path: &str) -> Option<String> {
+    let relative = task_change_relative(root, change_path)?;
+    let capability = CapabilityRoot::open(CapabilityRootKind::Repository, root).ok()?;
+    let bytes = capability
+        .read_bounded(&relative.join("tasks.md"), MCP_MAX_TASKS_BYTES)
+        .ok()?;
+    String::from_utf8(bytes).ok()
+}
+
+fn requirement_references(markdown: Option<&str>, task: Option<(&Value, &str)>) -> Vec<String> {
+    let Some(markdown) = markdown else {
         return Vec::new();
     };
     let lines: Vec<&str> = markdown.lines().collect();
