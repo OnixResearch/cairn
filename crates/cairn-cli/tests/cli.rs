@@ -2331,3 +2331,13 @@ fn determinism_replay_rejects_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn readiness_rejects_option_like_values() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["readiness", "ready", "--results", "--root", "."])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("require values"));
+    Ok(())
+}

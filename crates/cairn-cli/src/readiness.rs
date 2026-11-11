@@ -24,6 +24,9 @@ pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut format = "json";
     let mut pairs = args[1..].chunks_exact(2);
     for pair in &mut pairs {
+        if pair[1].is_empty() || pair[1].starts_with("--") {
+            return Err("readiness options require values".into());
+        }
         let key = match pair[0].as_str() {
             "--root" => "root",
             "--policy" => "policy",
