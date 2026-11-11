@@ -14,7 +14,7 @@ pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dy
     // r[verify cairn.determinism.preserves_receipt_field_drift.command]
     // r[verify cairn.determinism.preserves_receipt_field_drift.read_only]
 
-    reject_unknown_options(&args, &["--baseline", "--candidate"])?;
+    reject_unknown_options(&args, &["--baseline", "--candidate", "--policy"])?;
     reject_positional_arguments(&args)?;
     let baseline_path = read_option(args.clone(), "--baseline", "");
     let candidate_path = read_option(args.clone(), "--candidate", "");
@@ -33,7 +33,8 @@ pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dy
     let candidate: Value =
         serde_json::from_str(&candidate_text).map_err(|e| format!("candidate parse error: {e}"))?;
 
-    let policy = load_policy_file(default_policy_path().into())?;
+    let policy_path = read_option(args, "--policy", default_policy_path());
+    let policy = load_policy_file(policy_path)?;
     let source_map = parse_source_id_map(&policy);
 
     let report = receipt_field_drift(&baseline, &candidate, &source_map);

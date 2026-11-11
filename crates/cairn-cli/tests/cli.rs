@@ -2650,3 +2650,28 @@ fn release_and_policy_honor_explicit_policy_paths() -> Result<(), Box<dyn Error>
     }
     Ok(())
 }
+
+#[test]
+fn receipt_preserves_diff_honors_explicit_policy_path() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("receipt-policy")?;
+    let baseline = dir.join("baseline.json");
+    let candidate = dir.join("candidate.json");
+    fs::write(&baseline, br#"{"a":1}"#)?;
+    fs::write(&candidate, br#"{"a":1}"#)?;
+    let missing = dir.join("missing-policy.json");
+    let output = cairn()
+        .args([
+            "receipt-preserves-diff",
+            "--baseline",
+            &baseline.to_string_lossy(),
+            "--candidate",
+            &candidate.to_string_lossy(),
+            "--policy",
+            &missing.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("missing-policy"));
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
