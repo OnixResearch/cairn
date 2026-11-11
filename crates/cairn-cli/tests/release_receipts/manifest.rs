@@ -232,9 +232,9 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
         "--anchor-metadata".into(),
         anchor_path.display().to_string(),
         "--out".into(),
-        generated_manifest_path.display().to_string(),
+        "generated-manifest.json".into(),
         "--root".into(),
-        ".".into(),
+        dir.display().to_string(),
     ])?;
     assert_eq!(generated["valid"], true);
     assert_hash_field(&generated, "manifest_hash")?;
@@ -282,7 +282,7 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
         "verify".into(),
         generated_manifest_path.display().to_string(),
         "--root".into(),
-        ".".into(),
+        dir.display().to_string(),
     ])?;
     assert_eq!(generated_verified["valid"], true);
     assert_eq!(

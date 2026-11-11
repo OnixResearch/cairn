@@ -294,6 +294,9 @@ nix run .#cairn -- evidence-manifest generate \
 nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
 ```
 
+Relative generate inputs and file outputs resolve under `--root`; `--out -` writes stdout.
+```
+
 Relative manifest paths resolve under `--root`; absolute paths are used as given.
 
 A manifest contains an `artifacts` array of objects with `role`, `path`, `hash`,
