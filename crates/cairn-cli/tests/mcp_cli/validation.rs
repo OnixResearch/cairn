@@ -208,5 +208,16 @@ fn mcp_rejects_empty_string_arguments() -> Result<(), Box<dyn Error>> {
             String::from_utf8_lossy(&output.stderr)
         );
     }
+    let output = cairn()
+        .args([
+            "mcp",
+            "--allow-mutations",
+            "--call",
+            "cairn_change_create",
+            r#"{"change":""}"#,
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("must not be empty"));
     Ok(())
 }
