@@ -2541,3 +2541,20 @@ fn evidence_validators_reject_empty_receipt_paths() -> Result<(), Box<dyn Error>
     }
     Ok(())
 }
+
+#[test]
+fn store_rejects_empty_positional_ids() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["store", "show", ""][..],
+        &["store", "setup", "", "--path", "."][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("requires"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

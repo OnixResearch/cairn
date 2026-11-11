@@ -657,7 +657,7 @@ fn required_leading_value(args: &[String], command: &str) -> Result<String, Box<
     let Some(value) = args.first() else {
         return Err(format!("{command} requires one positional value").into());
     };
-    if value.starts_with('-') {
+    if value.is_empty() || value.starts_with('-') {
         return Err(format!("{command} requires one positional value before options").into());
     }
     Ok(value.clone())
@@ -731,7 +731,7 @@ fn require_no_arguments(args: &[String], command: &str) -> Result<(), Box<dyn Er
 }
 
 fn require_one_positional(args: &[String], command: &str) -> Result<String, Box<dyn Error>> {
-    if args.len() == 1 && !args[0].starts_with('-') {
+    if args.len() == 1 && !args[0].is_empty() && !args[0].starts_with('-') {
         Ok(args[0].clone())
     } else {
         Err(format!("{command} requires exactly one ID").into())
@@ -744,7 +744,7 @@ fn optional_one_positional(
 ) -> Result<Option<String>, Box<dyn Error>> {
     match args {
         [] => Ok(None),
-        [value] if !value.starts_with('-') => Ok(Some(value.clone())),
+        [value] if !value.is_empty() && !value.starts_with('-') => Ok(Some(value.clone())),
         _ => Err(format!("{command} accepts at most one ID").into()),
     }
 }
