@@ -2619,3 +2619,13 @@ fn lifecycle_dispatch_rejects_empty_change_names() -> Result<(), Box<dyn Error>>
     }
     Ok(())
 }
+
+#[test]
+fn cob_rejects_empty_option_values() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["cob", "import", "demo", "--git-repository", ""])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("--git-repository requires a value"));
+    Ok(())
+}
