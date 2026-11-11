@@ -3180,3 +3180,26 @@ fn receipt_verify_content_hash_rejects_oversized_input() -> Result<(), Box<dyn E
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[test]
+fn receipt_preserves_diff_rejects_oversized_input() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("receipt-diff-oversized")?;
+    let baseline = dir.join("baseline.json");
+    let candidate = dir.join("candidate.json");
+    let file = fs::File::create(&baseline)?;
+    file.set_len(16 * 1024 * 1024 + 1)?;
+    fs::write(&candidate, br#"{}"#)?;
+    let output = cairn()
+        .args([
+            "receipt-preserves-diff",
+            "--baseline",
+            &baseline.to_string_lossy(),
+            "--candidate",
+            &candidate.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("exceeds the reviewed byte bound"));
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
