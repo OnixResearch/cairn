@@ -2830,3 +2830,26 @@ fn receipt_commands_require_input_paths() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn workspace_contract_resolves_relative_input_under_root() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("workspace-contract-root")?;
+    let input = dir.join("matrix.json");
+    fs::write(&input, br#"{"matrix":{"edges":[]}}"#)?;
+    let output = cairn()
+        .args([
+            "workspace-contract",
+            "verify",
+            "--root",
+            &dir.to_string_lossy(),
+            "--input",
+            "matrix.json",
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["command"], "workspace-contract verify");
+    assert_eq!(receipt["valid"], false);
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}

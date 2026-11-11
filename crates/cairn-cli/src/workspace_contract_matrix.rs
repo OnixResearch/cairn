@@ -36,13 +36,14 @@ fn run_workspace_contract_verify(args: Vec<String>) -> Result<(), Box<dyn Error>
     if input.as_os_str().is_empty() {
         return Err("workspace-contract verify requires --input <matrix.json>".into());
     }
-    let value = read_workspace_contract_input(&input)?;
+    let input_path = crate::support::resolve_under_root(&root, input);
+    let value = read_workspace_contract_input(&input_path)?;
     let enriched = enrich_observed_artifacts(&root, value)?;
     let report = validate_workspace_contract_matrix_value(&enriched);
     let receipt = json!({
         "command": "workspace-contract verify",
         "schema": WORKSPACE_CONTRACT_MATRIX_RECEIPT_SCHEMA_V1,
-        "input": safe_relative_path(&root, &input),
+        "input": safe_relative_path(&root, &input_path),
         "root": path_string(&root),
         "input_hash": canonical_json_hash(&enriched),
         "matrix_hash": report.matrix_hash,
