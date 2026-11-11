@@ -55,6 +55,12 @@ fn rename_classification_occurrences(root: &Path) -> Result<Vec<Value>, Box<dyn 
         {
             continue;
         }
+        let Ok(metadata) = fs::symlink_metadata(&path) else {
+            continue;
+        };
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            continue;
+        }
         let Ok(text) = fs::read_to_string(&path) else {
             continue;
         };
@@ -193,5 +199,36 @@ mod tests {
         assert!(!rename_classification_is_skipped(
             ".cairn/specs/demo/spec.md"
         ));
+    }
+}
+
+#[cfg(all(test, unix))]
+mod symlink_tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn symlinked_text_files_are_not_scanned() -> Result<(), Box<dyn Error>> {
+        let root =
+            std::env::temp_dir().join(format!("cairn-rename-symlink-{}", std::process::id()));
+        let outside = std::env::temp_dir().join(format!(
+            "cairn-rename-symlink-outside-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        let _ = fs::remove_dir_all(&outside);
+        fs::create_dir_all(&root)?;
+        fs::create_dir_all(&outside)?;
+        fs::write(root.join("real.md"), "ironspec\n")?;
+        let outside_file = outside.join("outside.md");
+        fs::write(&outside_file, "ironspec outside\n")?;
+        std::os::unix::fs::symlink(&outside_file, root.join("linked.md"))?;
+        let occurrences = rename_classification_occurrences(&root)?;
+        assert!(occurrences
+            .iter()
+            .all(|occurrence| occurrence["path"] != "linked.md"));
+        fs::remove_dir_all(&root)?;
+        fs::remove_dir_all(&outside)?;
+        Ok(())
     }
 }
