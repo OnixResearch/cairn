@@ -12,6 +12,20 @@ fn cairn() -> Command {
     command
 }
 
+fn copy_dir_recursive(source: &PathBuf, dest: &PathBuf) -> Result<(), Box<dyn Error>> {
+    fs::create_dir_all(dest)?;
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let target = dest.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir_recursive(&entry.path(), &target)?;
+        } else {
+            fs::copy(entry.path(), target)?;
+        }
+    }
+    Ok(())
+}
+
 fn temp_test_dir(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     let nanos = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)?
@@ -2850,6 +2864,35 @@ fn workspace_contract_resolves_relative_input_under_root() -> Result<(), Box<dyn
     let receipt: Value = serde_json::from_slice(&output.stdout)?;
     assert_eq!(receipt["command"], "workspace-contract verify");
     assert_eq!(receipt["valid"], false);
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[test]
+fn workspace_contract_validates_root_relative_fixture() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("workspace-contract-root-positive")?;
+    let fixture_root = repo_root().join("fixtures/workspace-contract-matrix");
+    copy_dir_recursive(
+        &fixture_root,
+        &dir.join("fixtures/workspace-contract-matrix"),
+    )?;
+    let output = cairn()
+        .args([
+            "workspace-contract",
+            "verify",
+            "--root",
+            &dir.to_string_lossy(),
+            "--input",
+            "fixtures/workspace-contract-matrix/positive/representative-edges.json",
+        ])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["valid"], true);
     fs::remove_dir_all(dir)?;
     Ok(())
 }
