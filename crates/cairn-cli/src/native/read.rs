@@ -18,8 +18,8 @@ use crate::{
         collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
         default_policy_path, detect_layout, find_change, find_spec_source, path_string, print_json,
         read_gate_snapshot, read_option, read_repeated_path_options, read_string_option,
-        reject_unknown_options, reject_unknown_options_with_repeats, scan_repo,
-        with_portable_receipt_hash,
+        reject_positional_arguments, reject_unknown_options, reject_unknown_options_with_repeats,
+        scan_repo, with_portable_receipt_hash,
     },
 };
 
@@ -49,6 +49,7 @@ pub(crate) fn run_implementation_ready(args: Vec<String>) -> Result<(), Box<dyn 
         &[],
         &["--cross-repo-evidence"],
     )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let mut input = json!({"root": path_string(&root)});
     if let Some(policy) = read_string_option(&args, "--policy") {

@@ -1171,3 +1171,13 @@ fn evidence_registry_and_release_commands_reject_stray_positionals() -> Result<(
     }
     Ok(())
 }
+
+#[test]
+fn implementation_ready_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["implementation-ready", "--root", "fixtures/basic", "stray"])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
+    Ok(())
+}
