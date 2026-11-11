@@ -202,6 +202,9 @@ fn has_incompatible_presentation(command: &str, args: &[String]) -> bool {
     {
         return true;
     }
+    if command == "source-review" && args.iter().any(|arg| arg == "--raw") {
+        return true;
+    }
     if command == "policy" && args.first().map(String::as_str) == Some("export") {
         return true;
     }
@@ -555,6 +558,17 @@ mod tests {
                 "graph".to_string(),
                 "--format".to_string(),
                 "mermaid".to_string(),
+            ]),
+            InvocationAdmission::Failure {
+                kind: MachineFailureKind::IncompatibleOption,
+                ..
+            }
+        ));
+        assert!(matches!(
+            admit_invocation(&[
+                "source-review".to_string(),
+                "signing-request".to_string(),
+                "--raw".to_string(),
             ]),
             InvocationAdmission::Failure {
                 kind: MachineFailureKind::IncompatibleOption,

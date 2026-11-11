@@ -268,6 +268,20 @@ fn incompatible_presentation_fails_without_mixed_output() -> Result<(), Box<dyn 
 }
 
 #[test]
+fn raw_source_review_output_is_rejected_before_execution() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.cli_machine_contract.mode.incompatible]
+    let output = run(&["--machine", "source-review", "signing-request", "--raw"])?;
+    assert_eq!(output.status.code(), Some(STATUS_INVALID_ARGUMENTS));
+    let wrapped = envelope(&output)?;
+    assert_eq!(wrapped["command"], "source-review");
+    assert_eq!(
+        wrapped["diagnostics"][0]["code"],
+        "cairn.cli.incompatible_option"
+    );
+    Ok(())
+}
+
+#[test]
 fn oversized_command_output_becomes_a_bounded_failure() -> Result<(), Box<dyn Error>> {
     let dir = temp_test_dir("bounded-output")?;
     let source = fs::read_to_string(repo_root().join("cairn-policy/generated/cairn-policy.json"))?;
