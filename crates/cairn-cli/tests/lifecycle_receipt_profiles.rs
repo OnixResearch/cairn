@@ -127,3 +127,35 @@ fn release_run_validate_rejects_stale_policy() -> Result<(), Box<dyn Error>> {
             .any(|issue| issue["code"] == "release_run_ledger.policy_stale")));
     Ok(())
 }
+
+#[test]
+fn receipt_commands_report_root_relative_missing_inputs() -> Result<(), Box<dyn Error>> {
+    let temp = temp_project("receipt-missing-root")?;
+    for args in [
+        vec![
+            "release-run",
+            "status",
+            "--root",
+            &temp.display().to_string(),
+            "--input",
+            "missing-ledger.json",
+        ],
+        vec![
+            "state-machine-receipt",
+            "validate",
+            "--root",
+            &temp.display().to_string(),
+            "--input",
+            "missing-receipt.json",
+        ],
+    ] {
+        let output = cairn().args(&args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("missing-"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
