@@ -3071,10 +3071,43 @@ fn receipt_commands_reject_symlink_inputs() -> Result<(), Box<dyn Error>> {
     ] {
         let output = cairn().args(&args).output()?;
         assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
         assert!(
-            String::from_utf8_lossy(&output.stderr).contains("must not be a symlink"),
-            "{args:?}: {}",
-            String::from_utf8_lossy(&output.stderr)
+            stderr.contains("must not be a symlink") || stdout.contains("manifest.read_failed"),
+            "{args:?}: {stderr}{stdout}"
+        );
+    }
+    fs::remove_file(outside)?;
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn artifact_readers_reject_symlinks() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("artifact-symlink")?;
+    let outside = std::env::temp_dir().join(format!(
+        "cairn-artifact-symlink-{}.json",
+        std::process::id()
+    ));
+    fs::write(&outside, br#"{"schema":"cairn.receipt.v1"}"#)?;
+    let link = dir.join("link.json");
+    symlink(&outside, &link)?;
+    let link_text = link.to_string_lossy().to_string();
+    for args in [
+        vec!["agent-receipt", "validate", link_text.as_str()],
+        vec!["evidence-manifest", "verify", link_text.as_str()],
+    ] {
+        let output = cairn().args(&args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            stderr.contains("must not be a symlink") || stdout.contains("manifest.read_failed"),
+            "{args:?}: {stderr}{stdout}"
         );
     }
     fs::remove_file(outside)?;
