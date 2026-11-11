@@ -1101,3 +1101,22 @@ fn implementation_ready_rejects_invalid_limits() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn evidence_manifest_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["evidence-manifest", "generate", "--bundle", "b", "--bogus"][..],
+        &["evidence-manifest", "generate", "--bundle"][..],
+        &["evidence-manifest", "verify", "manifest.json", "--bogus"][..],
+        &["evidence-manifest", "verify", "--root"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("requires a value"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

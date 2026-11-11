@@ -8,7 +8,8 @@ use serde_json::{json, Value};
 
 use crate::agent_receipt::{read_json_artifact, AGENT_RECEIPT_MAX_BYTES};
 use crate::support::{
-    path_string, portable_json_hash, print_json, read_option, with_portable_receipt_hash,
+    path_string, portable_json_hash, print_json, read_option, reject_unknown_options,
+    with_portable_receipt_hash,
 };
 
 use super::artifact::{
@@ -49,6 +50,7 @@ pub(super) fn run_evidence_manifest_verify(args: Vec<String>) -> Result<(), Box<
 }
 
 fn evidence_manifest_options(args: &[String]) -> Result<EvidenceManifestOptions, Box<dyn Error>> {
+    reject_unknown_options(args, &["--root"])?;
     let root = read_option(args.to_vec(), "--root", ".");
     let path = args
         .iter()
