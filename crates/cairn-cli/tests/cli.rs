@@ -2691,6 +2691,20 @@ fn receipt_preserves_diff_honors_explicit_policy_path() -> Result<(), Box<dyn Er
     );
     let receipt: Value = serde_json::from_slice(&output.stdout)?;
     assert_eq!(receipt["valid"], true);
+    let output = cairn()
+        .args([
+            "receipt-preserves-diff",
+            "--baseline",
+            &baseline.to_string_lossy(),
+            "--candidate",
+            &candidate.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     fs::remove_dir_all(dir)?;
     Ok(())
 }
