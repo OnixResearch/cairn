@@ -2071,3 +2071,29 @@ fn preserves_corpus_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn authoring_and_steel_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["init", "stray"][..],
+        &["change", "depend", "list", "demo", "stray"][..],
+        &["change", "depend", "add", "demo", "dep", "stray"][..],
+        &["steel-orchestration", "receipt", "stray"][..],
+        &[
+            "steel-orchestration",
+            "default-gate",
+            "--root",
+            ".",
+            "stray",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected argument"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

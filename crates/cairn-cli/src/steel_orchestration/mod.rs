@@ -6,7 +6,7 @@ mod receipts;
 
 use crate::support::{
     default_policy_path, load_policy_file, print_json, read_option, read_string_option,
-    reject_unknown_options,
+    reject_positional_arguments, reject_unknown_options,
 };
 use receipts::{default_gate_receipt, orchestration_receipt};
 
@@ -34,6 +34,7 @@ pub(crate) fn run_steel_orchestration(args: Vec<String>) -> Result<(), Box<dyn E
 
 fn run_default_gate(args: &[String]) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(args, &STEEL_OPTIONS)?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let policy_path = read_option(
         args.to_vec(),
@@ -53,6 +54,7 @@ fn run_default_gate(args: &[String]) -> Result<(), Box<dyn Error>> {
 
 fn run_receipt(args: &[String]) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(args, &STEEL_OPTIONS)?;
+    reject_positional_arguments(args)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let policy_path = read_option(
         args.to_vec(),

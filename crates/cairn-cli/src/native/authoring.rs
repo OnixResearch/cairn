@@ -18,12 +18,13 @@ use serde_json::{json, Value};
 use crate::support::{
     collect_archived_change_ids, default_policy_path, detect_layout, file_content_manifest,
     has_flag, load_policy_file, path_string, portable_json_hash, print_json, read_option,
-    read_string_option, reject_unknown_options, safe_relative_path, scan_repo,
-    with_portable_receipt_hash,
+    read_string_option, reject_positional_arguments, reject_unknown_options,
+    reject_unknown_options_with_flags, safe_relative_path, scan_repo, with_portable_receipt_hash,
 };
 
 pub(crate) fn run_init(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(&args, &["--root"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args, "--root", ".");
     let artifacts = init_artifacts();
     let mut created = Vec::with_capacity(artifacts.len());
@@ -425,6 +426,8 @@ pub(super) fn run_change_depend(args: Vec<String>) -> Result<(), Box<dyn Error>>
 
 fn run_change_depend_list(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.change_dependency_graph.authoring_cli]
+    reject_unknown_options(&args, &["--root"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let status = scan_repo(root.clone(), selected.layout)?;
@@ -466,6 +469,8 @@ fn run_change_depend_edit(
 ) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.change_dependency_graph.authoring_cli.preview]
     // r[impl cairn.change_dependency_graph.authoring_cli.invalid]
+    reject_unknown_options_with_flags(&args, &["--root"], &["--execute"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let execute = has_flag(&args, "--execute");
     let selected = detect_layout(&root);
