@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 
 use crate::support::{
     path_string, portable_json_hash, print_json, read_option, reject_positional_arguments,
-    reject_unknown_options, resolve_under_root, with_portable_receipt_hash,
+    reject_unknown_options, with_portable_receipt_hash,
 };
 
 use super::artifact::{manifest_artifact_entry, read_manifest_artifact};
@@ -74,8 +74,7 @@ pub(super) fn run_evidence_manifest_generate(args: Vec<String>) -> Result<(), Bo
         ],
     )?;
     reject_positional_arguments(&args)?;
-    let mut options = evidence_manifest_generate_options(&args);
-    resolve_generate_paths(&mut options);
+    let options = evidence_manifest_generate_options(&args);
     let (manifest, issues) = evidence_manifest_generate_manifest(&options);
     let valid = issues.is_empty();
     if !valid {
@@ -111,43 +110,6 @@ pub(super) fn run_evidence_manifest_generate(args: Vec<String>) -> Result<(), Bo
         }
     }
     Ok(())
-}
-
-fn resolve_generate_paths(options: &mut EvidenceManifestGenerateOptions) {
-    let root = options.root.clone();
-    for path in [
-        &mut options.bundle,
-        &mut options.agent_receipt,
-        &mut options.replay,
-        &mut options.replay_verification,
-        &mut options.release_readiness,
-        &mut options.coverage_audit,
-        &mut options.requirement_registry,
-        &mut options.trace_index,
-        &mut options.trace_index_verification,
-        &mut options.registry,
-        &mut options.registry_verification,
-        &mut options.registry_selection,
-        &mut options.registry_fetch_plan,
-        &mut options.runtime_evidence,
-        &mut options.runtime_chain,
-        &mut options.witness_checkpoint,
-        &mut options.signer_metadata,
-        &mut options.anchor_metadata,
-    ] {
-        if let Some(value) = path.take() {
-            *path = Some(resolve_under_root(&root, value));
-        }
-    }
-    if let Some(out) = options.out.as_deref() {
-        if out != "-" {
-            options.out = Some(
-                resolve_under_root(&root, PathBuf::from(out))
-                    .to_string_lossy()
-                    .to_string(),
-            );
-        }
-    }
 }
 
 fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenerateOptions {
