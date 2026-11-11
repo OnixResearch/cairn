@@ -53,7 +53,12 @@ pub(crate) fn repository_gate_summary(policy: Option<&Value>) -> Value {
         .and_then(|value| value.get("required_external_commands"))
         .and_then(Value::as_array)
         .filter(|commands| !commands.is_empty())
-        .and_then(|commands| commands.iter().map(Value::as_str).collect::<Option<Vec<_>>>())
+        .and_then(|commands| {
+            commands
+                .iter()
+                .map(Value::as_str)
+                .collect::<Option<Vec<_>>>()
+        })
     {
         return json!({
             "policy": "consumer-selected-gates",
