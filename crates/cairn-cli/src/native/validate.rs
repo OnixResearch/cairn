@@ -11,7 +11,8 @@ use crate::lifecycle_store_shell::{attach_resolution, RootLocalInvocation};
 use crate::support::{
     collect_archived_change_ids, collect_validation_spec_sources, detect_layout, has_flag,
     load_policy_file, print_json, read_gate_snapshot, read_option, read_repeated_path_options,
-    scan_repo, spec_substance_inventory_json, substance_inventory_json, validation_findings_json,
+    reject_positional_arguments, reject_unknown_options_with_repeats, scan_repo,
+    spec_substance_inventory_json, substance_inventory_json, validation_findings_json,
 };
 
 pub(crate) fn run_validate(
@@ -19,6 +20,13 @@ pub(crate) fn run_validate(
     invocation: &RootLocalInvocation,
 ) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.supersede.rust_nickel_only_gates.gates]
+    reject_unknown_options_with_repeats(
+        &args,
+        &["--root", "--policy", "--cross-repo-evidence"],
+        &["--strict"],
+        &["--cross-repo-evidence"],
+    )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let selected_policy = crate::project_policy::load(&root, &args)?;
     let is_strict = has_flag(&args, "--strict");
