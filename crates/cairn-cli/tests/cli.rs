@@ -1598,3 +1598,121 @@ fn adr_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn vo_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "verification-obligation",
+            "status",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "conflict",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "export",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "update",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--actor",
+            "a",
+            "--text",
+            "t",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "evidence",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "finding",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "response",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "discharge",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "reject",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "invalidate",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+        &[
+            "verification-obligation",
+            "resolve",
+            "--store",
+            "x",
+            "--obligation-id",
+            "y",
+            "--bogus",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unknown option"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
