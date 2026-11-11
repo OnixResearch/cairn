@@ -8,7 +8,7 @@ use std::{error::Error, path::PathBuf};
 
 use crate::support::{
     default_policy_path, load_policy_file, print_json, read_option, read_string_option,
-    reject_unknown_options,
+    reject_positional_arguments, reject_unknown_options,
 };
 
 mod bundle;
@@ -59,6 +59,7 @@ pub(crate) fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>>
                 &rest,
                 &["--contract", "--results", "--subject-hash", "--policy"],
             )?;
+            reject_positional_arguments(&rest)?;
             let contract_path = read_string_option(&rest, "--contract")
                 .map(PathBuf::from)
                 .ok_or("agent-receipt complete requires --contract FILE")?;
@@ -103,6 +104,7 @@ pub(crate) fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>>
         "smoke-mcp" => {
             let rest = iter.collect::<Vec<_>>();
             reject_unknown_options(&rest, &["--root"])?;
+            reject_positional_arguments(&rest)?;
             let root = read_option(rest, "--root", ".");
             print_json(crate::mcp::mcp_agent_smoke_receipt(root)?)
         }
