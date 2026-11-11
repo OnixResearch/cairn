@@ -36,6 +36,7 @@ fn state_machine_receipt_cli_accepts_bounded_witness() -> Result<(), Box<dyn Err
     let receipt = run_json_command(&mut command)?;
     assert_eq!(receipt["valid"], true);
     assert_eq!(receipt["verdict"], "pass");
+    assert_eq!(receipt["input"], "receipt.json");
     assert!(receipt["boundary"]
         .as_str()
         .is_some_and(|text| text.contains("bounded witnesses")));
@@ -87,6 +88,7 @@ fn release_run_status_reports_complete_local_ledger() -> Result<(), Box<dyn Erro
     ]);
     let receipt = run_json_command(&mut command)?;
     assert_eq!(receipt["valid"], true);
+    assert_eq!(receipt["input"], "ledger.json");
     assert_eq!(receipt["projection"]["terminal_verdict"], "complete");
     assert_eq!(receipt["projection"]["disposition"], "complete");
     Ok(())
