@@ -1120,3 +1120,13 @@ fn evidence_manifest_commands_reject_bad_options() -> Result<(), Box<dyn Error>>
     }
     Ok(())
 }
+
+#[test]
+fn evidence_manifest_verify_rejects_multiple_paths() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["evidence-manifest", "verify", "one.json", "two.json"])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("exactly one manifest path"));
+    Ok(())
+}

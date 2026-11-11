@@ -52,14 +52,20 @@ pub(super) fn run_evidence_manifest_verify(args: Vec<String>) -> Result<(), Box<
 fn evidence_manifest_options(args: &[String]) -> Result<EvidenceManifestOptions, Box<dyn Error>> {
     reject_unknown_options(args, &["--root"])?;
     let root = read_option(args.to_vec(), "--root", ".");
-    let path = args
-        .iter()
-        .find(|arg| !arg.starts_with("--") && *arg != &root)
-        .ok_or("evidence-manifest verify requires <manifest.json>")?;
-    Ok(EvidenceManifestOptions {
-        root,
-        path: PathBuf::from(path),
-    })
+    let mut path = None;
+    let mut index = 0;
+    while index < args.len() {
+        if args[index] == "--root" {
+            index += 2;
+            continue;
+        }
+        if path.replace(PathBuf::from(&args[index])).is_some() {
+            return Err("evidence-manifest verify accepts exactly one manifest path".into());
+        }
+        index += 1;
+    }
+    let path = path.ok_or("evidence-manifest verify requires <manifest.json>")?;
+    Ok(EvidenceManifestOptions { root, path })
 }
 
 pub(crate) fn evidence_manifest_verification_receipt(root: &Path, manifest_path: &Path) -> Value {
