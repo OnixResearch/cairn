@@ -1181,3 +1181,20 @@ fn implementation_ready_rejects_stray_positionals() -> Result<(), Box<dyn Error>
     assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
     Ok(())
 }
+
+#[test]
+fn review_receipt_commands_reject_multiple_paths() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["review", "validate", "one.json", "two.json"][..],
+        &["review", "revision", "validate", "one.json", "two.json"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("exactly one receipt path"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

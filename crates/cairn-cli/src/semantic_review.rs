@@ -43,9 +43,7 @@ fn run_review_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.semantic_review.semantic_review_receipts.cli.cli.valid]
     // r[impl cairn.semantic_review.semantic_review_receipts.cli.cli.invalid]
     // r[impl cairn.semantic_review.semantic_review_boundary.fcis.fcis.cli_shell]
-    let Some(path) = args.first() else {
-        return Err("review validate requires a receipt path".into());
-    };
+    let path = review_receipt_path(&args, "review validate")?;
     let root = read_root(&args);
     let receipt_path = PathBuf::from(path);
     let value = read_json_file(&receipt_path)?;
@@ -118,9 +116,7 @@ fn run_review_revision(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     }
     let rest = iter.collect::<Vec<_>>();
     reject_unknown_options(&rest, &["--root"])?;
-    let Some(path) = rest.first() else {
-        return Err("review revision validate requires a receipt path".into());
-    };
+    let path = review_receipt_path(&rest, "review revision validate")?;
     let root = read_root(&rest);
     let receipt_path = PathBuf::from(path);
     let value = read_json_file(&receipt_path)?;
@@ -282,6 +278,22 @@ fn validation_receipt(
         }
     }
     with_receipt_hash(receipt)
+}
+
+fn review_receipt_path<'a>(args: &'a [String], command: &str) -> Result<&'a str, Box<dyn Error>> {
+    let mut path = None;
+    let mut index = 0;
+    while index < args.len() {
+        if args[index] == "--root" {
+            index += 2;
+            continue;
+        }
+        if path.replace(args[index].as_str()).is_some() {
+            return Err(format!("{command} accepts exactly one receipt path").into());
+        }
+        index += 1;
+    }
+    path.ok_or_else(|| format!("{command} requires a receipt path").into())
 }
 
 fn read_root(args: &[String]) -> PathBuf {
