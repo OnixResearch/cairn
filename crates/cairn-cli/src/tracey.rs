@@ -29,6 +29,7 @@ pub(crate) fn load_traceability_coverage_model(
     policy_path: &Path,
 ) -> Result<TraceabilityCoverageReport, Box<dyn Error>> {
     // r[impl cairn.lifecycle_views.knowledge_graph]
+    admit_traceability_root(root)?;
     let policy = load_policy_file(policy_path.to_path_buf())?;
     let selected_profile = selected_traceability_profile(&policy, None)?;
     let requirement_files =
@@ -113,6 +114,7 @@ fn traceability_coverage_report(
     policy_path: &Path,
     profile_id: Option<&str>,
 ) -> Result<Value, Box<dyn Error>> {
+    admit_traceability_root(root)?;
     let policy = load_policy_file(policy_path.to_path_buf())?;
     let selected_profile = selected_traceability_profile(&policy, profile_id)?;
     let requirement_files =
@@ -128,6 +130,19 @@ fn traceability_coverage_report(
         evidence_files: &evidence_files,
         report: &report,
     }))
+}
+
+fn admit_traceability_root(root: &Path) -> Result<(), Box<dyn Error>> {
+    let metadata = fs::metadata(root).map_err(|error| {
+        format!(
+            "traceability root is unavailable: {}: {error}",
+            root.display()
+        )
+    })?;
+    if !metadata.is_dir() {
+        return Err("traceability root must be a directory".into());
+    }
+    Ok(())
 }
 
 pub(crate) fn selected_traceability_profile(

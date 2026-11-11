@@ -129,6 +129,24 @@ fn traceability_coverage_passes_with_receipt_fields() -> Result<(), Box<dyn Erro
 }
 
 #[test]
+fn traceability_coverage_rejects_missing_root() -> Result<(), Box<dyn Error>> {
+    let missing =
+        env::temp_dir().join(format!("cairn-traceability-missing-{}", std::process::id()));
+    if missing.exists() {
+        fs::remove_dir_all(&missing)?;
+    }
+    let mut command = cairn();
+    command
+        .args(["traceability", "coverage", "--root"])
+        .arg(&missing)
+        .arg("--json");
+    let output = command.output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("traceability root is unavailable"));
+    Ok(())
+}
+
+#[test]
 fn traceability_coverage_reports_missing_requirement_refs() -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.traceability_ownership.validation]
     // r[verify cairn.supersede.traceability_ownership.validation.fixtures]
