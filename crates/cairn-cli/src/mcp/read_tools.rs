@@ -1,7 +1,11 @@
 use std::collections::BTreeSet;
 
+use crate::support::{CapabilityRoot, CapabilityRootKind};
+
 use super::common::*;
 use super::*;
+
+const MCP_MAX_TASKS_BYTES: u64 = 1_048_576;
 
 pub(super) fn mcp_status(input: &Value) -> Result<Value, Box<dyn Error>> {
     let root = mcp_root(input);
@@ -754,13 +758,16 @@ fn requirement_references(
     change_path: &str,
     task: Option<(&Value, &str)>,
 ) -> Vec<String> {
-    let candidate = std::path::PathBuf::from(change_path);
-    let path = if candidate.is_absolute() || candidate.exists() {
-        candidate
-    } else {
-        root.join(candidate)
+    let Some(relative) = task_change_relative(root, change_path) else {
+        return Vec::new();
     };
-    let Ok(markdown) = fs::read_to_string(path.join("tasks.md")) else {
+    let Ok(capability) = CapabilityRoot::open(CapabilityRootKind::Repository, root) else {
+        return Vec::new();
+    };
+    let Ok(bytes) = capability.read_bounded(&relative.join("tasks.md"), MCP_MAX_TASKS_BYTES) else {
+        return Vec::new();
+    };
+    let Ok(markdown) = String::from_utf8(bytes) else {
         return Vec::new();
     };
     let lines: Vec<&str> = markdown.lines().collect();
@@ -804,6 +811,21 @@ fn requirement_references(
         }
     }
     references.into_iter().collect()
+}
+
+fn task_change_relative(root: &std::path::Path, change_path: &str) -> Option<std::path::PathBuf> {
+    let change = std::path::Path::new(change_path);
+    if let Ok(relative) = change.strip_prefix(root) {
+        return Some(relative.to_path_buf());
+    }
+    if change.is_absolute() {
+        let root_absolute = fs::canonicalize(root).ok()?;
+        return change
+            .strip_prefix(root_absolute)
+            .ok()
+            .map(std::path::Path::to_path_buf);
+    }
+    Some(change.to_path_buf())
 }
 
 fn reference_tokens(line: &str) -> Vec<String> {
