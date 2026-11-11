@@ -87,6 +87,7 @@ During a Preserves dependency bump, CI should either remain green with a clean n
 - Preserves is not a replacement for JSON public/stored receipt schemas.
 - CI never runs `--execute` automatically.
 - Preserves inspection receipts do not grant additional trust beyond the checked input receipt and the current Cairn policy/evidence chain.
+- Receipt field drift reports structural differences and source IDs only; it does not prove semantic equivalence, source correctness, or release eligibility.
 - Secret-bearing values should never be placed in fixtures or inspection receipts; use bounded metadata and hashes instead.
 
 r[impl cairn.determinism.preserves_operator_docs.workflow]
