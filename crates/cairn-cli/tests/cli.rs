@@ -2363,3 +2363,16 @@ fn config_export_rejects_bad_values() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn worksets_reject_option_like_values() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["workset", "create", "demo", "--member", "--opener", "x"][..],
+        &["workset", "list", "--policy"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(String::from_utf8_lossy(&output.stderr).contains("requires a value"));
+    }
+    Ok(())
+}

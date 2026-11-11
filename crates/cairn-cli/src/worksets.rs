@@ -343,6 +343,7 @@ fn option_value<'a>(
 ) -> Result<&'a str, Box<dyn Error>> {
     args.get(index + 1)
         .map(String::as_str)
+        .filter(|value| !value.is_empty() && !value.starts_with("--"))
         .ok_or_else(|| format!("{option} requires a value").into())
 }
 
