@@ -321,3 +321,24 @@ fn evidence_manifest_generate_receipt(
         }),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::evidence_manifest_generate_options;
+    use std::path::PathBuf;
+
+    #[test]
+    fn keeps_generate_paths_explicit() {
+        let options = evidence_manifest_generate_options(&[
+            "--root".to_string(),
+            "repo".to_string(),
+            "--bundle".to_string(),
+            "target/bundle.json".to_string(),
+            "--out".to_string(),
+            "target/manifest.json".to_string(),
+        ]);
+        assert_eq!(options.root, PathBuf::from("repo"));
+        assert_eq!(options.bundle, Some(PathBuf::from("target/bundle.json")));
+        assert_eq!(options.out.as_deref(), Some("target/manifest.json"));
+    }
+}
