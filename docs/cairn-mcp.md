@@ -33,7 +33,7 @@ nix run .#cairn -- mcp --allow-mutations
 
 ## Default read-only and planning tools
 
-All default tools include MCP annotations equivalent to `readOnlyHint=true` and `destructiveHint=false`. Each tool advertises a strict object `inputSchema` with explicit properties, required arguments, and `additionalProperties=false` unless noted. Invalid arguments are rejected before lifecycle files are read or lifecycle plans are built. r[verify cairn.supersede.mcp_server.strict_schemas.docs]
+All default tools include MCP annotations equivalent to `readOnlyHint=true` and `destructiveHint=false`. Each tool advertises a strict object `inputSchema` with explicit properties, required arguments, and `additionalProperties=false` unless noted. Invalid arguments are rejected before lifecycle files are read or lifecycle plans are built. String arguments must be non-empty. r[verify cairn.supersede.mcp_server.strict_schemas.docs]
 
 - `cairn_status`: optional `root`; list selected lifecycle state for a root.
 - `cairn_list_content`: optional `root`; list accepted specs, active changes, and archived changes.
