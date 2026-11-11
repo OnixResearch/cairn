@@ -19,9 +19,9 @@ use crate::support::{
     execute_sync_snapshots, file_content_manifest, find_change, has_flag, load_policy_file,
     load_sync_merge_snapshots, mutation_gate_blockers, path_string, portable_json_hash, print_json,
     read_change_dependency_graph, read_gate_snapshot, read_option, read_repeated_path_options,
-    reject_unknown_options, reject_unknown_options_with_flags, reject_unknown_options_with_repeats,
-    sync_changed_paths, sync_merge_bindings, sync_merge_blockers, sync_mutation_manifest,
-    tree_content_paths, with_portable_receipt_hash,
+    reject_positional_arguments, reject_unknown_options, reject_unknown_options_with_flags,
+    reject_unknown_options_with_repeats, sync_changed_paths, sync_merge_bindings,
+    sync_merge_blockers, sync_mutation_manifest, tree_content_paths, with_portable_receipt_hash,
 };
 
 pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -35,6 +35,7 @@ pub(crate) fn run_gate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     };
     let rest = iter.collect::<Vec<_>>();
     reject_unknown_options_with_flags(&rest, &["--root", "--policy"], &["--run-probes"])?;
+    reject_positional_arguments(&rest)?;
     let run_probes_requested = has_flag(&rest, "--run-probes");
     let root = read_option(rest.clone(), "--root", ".");
     let selected_policy = crate::project_policy::load(&root, &rest)?;
@@ -96,6 +97,7 @@ pub(crate) fn parse_gate_stage(stage: &str) -> Result<GateStage, Box<dyn Error>>
 
 pub(crate) fn run_change_context(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(&args, &["--root"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args, "--root", ".");
     let selected = detect_layout(&root);
     let change_status = find_change(root, selected.layout, change)?;
@@ -109,6 +111,7 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
         &["--execute"],
         &["--cross-repo-evidence"],
     )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let is_execute = has_flag(&args, "--execute");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
@@ -277,6 +280,7 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
         &["--execute"],
         &["--cross-repo-evidence"],
     )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let is_execute = has_flag(&args, "--execute");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());

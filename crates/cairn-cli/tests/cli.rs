@@ -2097,3 +2097,22 @@ fn authoring_and_steel_reject_stray_positionals() -> Result<(), Box<dyn Error>> 
     }
     Ok(())
 }
+
+#[test]
+fn lifecycle_commands_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["gate", "tasks", "demo", "stray"][..],
+        &["gate-context", "demo", "stray"][..],
+        &["sync", "demo", "stray"][..],
+        &["archive", "demo", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected argument"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
