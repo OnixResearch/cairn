@@ -3008,8 +3008,7 @@ fn workspace_contract_rejects_symlink_inputs() -> Result<(), Box<dyn Error>> {
         ])
         .output()?;
     assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr)
-        .contains("workspace contract input must not be a symlink"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("must not be a symlink"));
     fs::remove_file(outside)?;
     fs::remove_dir_all(dir)?;
     Ok(())

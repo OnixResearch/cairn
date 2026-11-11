@@ -1,8 +1,4 @@
-use std::{
-    error::Error,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{error::Error, path::Path};
 
 use cairn_core::{
     blake3_hex, canonical_json_hash, validate_workspace_contract_matrix_value,
@@ -123,25 +119,10 @@ fn policy_hash(value: &Value) -> String {
         .unwrap_or_else(|| canonical_json_hash(&Value::Null))
 }
 
-fn read_workspace_contract_input(path: &PathBuf) -> Result<Value, Box<dyn Error>> {
-    let metadata = fs::symlink_metadata(path)?;
-    if metadata.file_type().is_symlink() {
-        return Err("workspace contract input must not be a symlink".into());
-    }
-    if metadata.len() > MAX_WORKSPACE_CONTRACT_INPUT_BYTES {
-        return Err("workspace contract input exceeds the reviewed byte bound".into());
-    }
-    let text = fs::read_to_string(path).map_err(|source| {
-        format!(
-            "failed to read workspace contract matrix input {}: {source}",
-            path.display()
-        )
-    })?;
-    serde_json::from_str(&text).map_err(|source| {
-        format!(
-            "failed to parse workspace contract matrix input {}: {source}",
-            path.display()
-        )
-        .into()
-    })
+fn read_workspace_contract_input(path: &Path) -> Result<Value, Box<dyn Error>> {
+    crate::support::read_bounded_json_no_symlink(
+        path,
+        MAX_WORKSPACE_CONTRACT_INPUT_BYTES,
+        "workspace contract input",
+    )
 }
