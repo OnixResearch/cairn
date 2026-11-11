@@ -2725,3 +2725,26 @@ fn receipt_preserves_diff_honors_explicit_policy_path() -> Result<(), Box<dyn Er
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[test]
+fn receipt_verify_content_hash_reports_mismatch() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("receipt-hash")?;
+    let path = dir.join("receipt.json");
+    fs::write(
+        &path,
+        br#"{"schema":"cairn.receipt.v1","valid":true,"preserves_content_hash":"0000000000000000000000000000000000000000000000000000000000000000"}"#,
+    )?;
+    let output = cairn()
+        .args([
+            "receipt-verify-content-hash",
+            "--path",
+            &path.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["content_hash_matches"], false);
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
