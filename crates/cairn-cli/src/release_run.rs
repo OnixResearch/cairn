@@ -88,7 +88,10 @@ fn run_projection(args: Vec<String>, projection: Projection) -> Result<(), Box<d
 }
 
 fn read_bounded_json(path: &Path) -> Result<Value, Box<dyn Error>> {
-    let metadata = fs::metadata(path)?;
+    let metadata = fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() {
+        return Err("release-run ledger must not be a symlink".into());
+    }
     if metadata.len() > RELEASE_RUN_LEDGER_MAX_BYTES as u64 {
         return Err("release-run ledger exceeds the reviewed byte bound".into());
     }

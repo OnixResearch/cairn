@@ -3014,3 +3014,35 @@ fn workspace_contract_rejects_symlink_inputs() -> Result<(), Box<dyn Error>> {
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn receipt_inputs_reject_symlinks() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("receipt-input-symlink")?;
+    let outside =
+        std::env::temp_dir().join(format!("cairn-receipt-input-{}.json", std::process::id()));
+    fs::write(&outside, br#"{}"#)?;
+    symlink(&outside, dir.join("input.json"))?;
+    for args in [
+        &["release-run", "status"][..],
+        &["state-machine-receipt", "validate"][..],
+        &["lifecycle-patterns", "validate"][..],
+    ] {
+        let mut command = cairn();
+        command
+            .args(args)
+            .args(["--root", &dir.to_string_lossy(), "--input", "input.json"]);
+        let output = command.output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("must not be a symlink"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    fs::remove_file(outside)?;
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}

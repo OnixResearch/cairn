@@ -60,7 +60,10 @@ fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn read_bounded_json(path: &Path) -> Result<Value, Box<dyn Error>> {
-    let metadata = fs::metadata(path)?;
+    let metadata = fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() {
+        return Err("lifecycle pattern bundle must not be a symlink".into());
+    }
     if metadata.len() > OXIDE_PATTERN_INPUT_MAX_BYTES as u64 {
         return Err("lifecycle pattern bundle exceeds the reviewed byte bound".into());
     }
