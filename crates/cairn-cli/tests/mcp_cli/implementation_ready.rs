@@ -122,3 +122,76 @@ fn implementation_ready_bounds_enumeration_explicitly() -> Result<(), Box<dyn Er
     assert_eq!(receipt["changes"].as_array().ok_or("changes")?.len(), 1);
     Ok(())
 }
+
+#[test]
+fn implementation_ready_replay_is_deterministic_and_edits_change_the_digest(
+) -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.implementation_ready.projection]
+    let root = env::temp_dir().join(format!("cairn-impl-ready-digest-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&root);
+    copy_dir_recursive(&repo_root().join("fixtures/basic"), &root)?;
+    let first = run_json(&[
+        "mcp",
+        "--call",
+        "cairn_implementation_ready",
+        &request(&root),
+    ])?;
+    let second = run_json(&[
+        "mcp",
+        "--call",
+        "cairn_implementation_ready",
+        &request(&root),
+    ])?;
+    assert_eq!(first, second);
+    let digest = first["structuredContent"]["changes"][0]["snapshot_digest"]
+        .as_str()
+        .ok_or("digest")?
+        .to_string();
+    let tasks_path = root.join(".cairn/changes/demo/tasks.md");
+    let tasks = fs::read_to_string(&tasks_path)?;
+    fs::write(&tasks_path, format!("{tasks}\n<!-- reviewed edit -->\n"))?;
+    let edited = run_json(&[
+        "mcp",
+        "--call",
+        "cairn_implementation_ready",
+        &request(&root),
+    ])?;
+    assert_ne!(
+        edited["structuredContent"]["changes"][0]["snapshot_digest"]
+            .as_str()
+            .ok_or("edited digest")?,
+        digest
+    );
+    Ok(())
+}
+
+#[test]
+fn implementation_ready_reports_invalid_task_definitions_as_blockers() -> Result<(), Box<dyn Error>>
+{
+    // r[verify cairn.implementation_ready.projection]
+    let root = env::temp_dir().join(format!("cairn-impl-ready-cycle-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&root);
+    copy_dir_recursive(&repo_root().join("fixtures/basic"), &root)?;
+    let tasks_path = root.join(".cairn/changes/demo/tasks.md");
+    fs::write(
+        &tasks_path,
+        "## Phase 1\n\n- [ ] [serial] [task:a] [after:b] A r[demo.behavior]\n- [ ] [serial] [task:b] [after:a] B r[demo.behavior.scenario]\n",
+    )?;
+    let value = run_json(&[
+        "mcp",
+        "--call",
+        "cairn_implementation_ready",
+        &request(&root),
+    ])?;
+    let receipt = &value["structuredContent"];
+    assert_eq!(receipt["outcome"], "blocked");
+    assert_eq!(receipt["selection"], serde_json::json!([]));
+    let change = &receipt["changes"][0];
+    assert_eq!(change["implementation_ready"], false);
+    assert!(change["blockers"]
+        .as_array()
+        .ok_or("blockers")?
+        .iter()
+        .any(|blocker| blocker["class"] == "task_definition"));
+    Ok(())
+}
