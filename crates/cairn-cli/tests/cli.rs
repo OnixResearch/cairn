@@ -2428,3 +2428,13 @@ fn view_rejects_empty_option_values() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("requires a value"));
     Ok(())
 }
+
+#[test]
+fn collaboration_rejects_empty_backend() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["collaboration", "status", "demo", "--backend", ""])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("--backend requires a value"));
+    Ok(())
+}

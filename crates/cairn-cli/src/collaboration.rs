@@ -177,7 +177,7 @@ fn extract_backend(args: &[String]) -> Result<(String, Vec<String>), Box<dyn Err
             let Some(value) = args.get(value_index) else {
                 return Err("--backend requires a value".into());
             };
-            if value.starts_with("--") {
+            if value.is_empty() || value.starts_with("--") {
                 return Err("--backend requires a value".into());
             }
             backend = Some(value.clone());
