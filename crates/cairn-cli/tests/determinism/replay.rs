@@ -299,3 +299,38 @@ fn determinism_replay_supports_ci_case_selection_and_output_modes() -> Result<()
     assert_eq!(group["summary"]["total_cases"], 2);
     Ok(())
 }
+
+#[test]
+fn replay_removes_temporary_fixture_copies() -> Result<(), Box<dyn Error>> {
+    let temp = temp_project("replay-temp-root")?;
+    let mut command = cairn();
+    command.env("TMPDIR", &temp);
+    command.args([
+        "determinism",
+        "replay",
+        "--root",
+        ".",
+        "--case",
+        "status",
+        "--format",
+        "summary",
+    ]);
+    let output = command.output()?;
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let remaining = fs::read_dir(&temp)?
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    fs::remove_dir_all(&temp)?;
+    assert!(
+        remaining.is_empty(),
+        "replay left temporary fixture copies: {remaining:?}"
+    );
+    Ok(())
+}
