@@ -124,6 +124,7 @@ fn run_request(args: &[String]) -> Result<(), Box<dyn Error>> {
             "--approvers",
             "--revokers",
             "--observers",
+            "--workspace",
             "--policy",
         ],
         &["--execute"],
@@ -131,11 +132,12 @@ fn run_request(args: &[String]) -> Result<(), Box<dyn Error>> {
     let policy_identity = policy_hash(args)?;
     let store = store_path(args)?;
     let exception_id = exc_id(args)?;
-    let workspace = read_string_option(args, "--base-revision")
+    let base = read_string_option(args, "--base-revision")
         .ok_or("requires --base-revision git_oid:OID")?;
-    if !workspace.starts_with("git_oid:") {
+    if !base.starts_with("git_oid:") {
         return Err("policy-exception COB requires a git_oid base revision".into());
     }
+    let workspace = read_string_option(args, "--workspace").unwrap_or(base);
     let rules = read_string_option(args, "--rules")
         .ok_or("requires --rules rule1,rule2")?
         .split(',')

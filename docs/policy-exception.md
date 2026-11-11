@@ -7,7 +7,7 @@ Cairn represents a policy exception with the `xyz.onixresearch.policy-exception`
 ```bash
 policy-exception request       --store DIR --exception-id ID --base-revision git_oid:OID \
                                --rules r1 --targets t1 --rationale X --controls c \
-                               --requesters R --reviewers Q --approvers A --revokers W --observers O [--policy FILE] [--execute]
+                               --requesters R --reviewers Q --approvers A --revokers W --observers O [--workspace ID] [--policy FILE] [--execute]
 policy-exception status        --store DIR --exception-id ID
 policy-exception approve|reject|revoke|expire|close --store DIR --exception-id ID --actor ACTOR [--reason R] [--execute]
 policy-exception supersede     --store DIR --exception-id ID --actor ACTOR --successor ID [--execute]

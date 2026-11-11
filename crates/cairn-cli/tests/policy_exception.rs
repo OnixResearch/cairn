@@ -83,11 +83,16 @@ fn policy_exception_request_status_and_validate() -> Result<(), Box<dyn Error>> 
         "revoker",
         "--observers",
         "observer",
+        "--workspace",
+        "workspace:custom",
         "--policy",
         &policy,
         "--execute",
     ]);
     let requested = run_json(&mut request)?;
+    let portable = fs::read_to_string(store.join("pe-1.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert_eq!(value["state"]["workspace_id"], "workspace:custom");
     assert_eq!(
         requested["request_root"].as_str().map(|s| s.len()),
         Some(64)
