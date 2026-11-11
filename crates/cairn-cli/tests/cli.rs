@@ -2255,3 +2255,22 @@ fn status_and_doctor_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn developer_experience_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["template", "list", "stray"][..],
+        &["template", "apply", "demo", "stray"][..],
+        &["scaffold", "change", "demo", "stray"][..],
+        &["discover-specs", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected argument"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

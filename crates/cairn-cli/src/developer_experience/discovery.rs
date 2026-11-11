@@ -12,8 +12,8 @@ use serde_json::{json, Value};
 
 use crate::developer_experience::common::write_output_file;
 use crate::support::{
-    path_string, print_json, read_option, read_string_option, reject_unknown_options_with_repeats,
-    safe_relative_path, with_portable_receipt_hash,
+    path_string, print_json, read_option, read_string_option, reject_positional_arguments,
+    reject_unknown_options_with_repeats, safe_relative_path, with_portable_receipt_hash,
 };
 
 pub(super) fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -24,6 +24,7 @@ pub(super) fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         &[],
         &["--include"],
     )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let out = read_string_option(&args, "--out").map(PathBuf::from);
     let include_paths = include_values(&args);
