@@ -120,9 +120,18 @@ fn adr_import_accept_and_immutability() -> Result<(), Box<dyn Error>> {
         "adr-1",
         "--actor",
         "approver",
+        "--operation-id",
+        "custom-accept",
         "--execute",
     ])?;
     assert_eq!(accept["executed"], true);
+    let portable = fs::read_to_string(store.join("adr-1.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert!(value["state"]["operations"]
+        .as_array()
+        .is_some_and(|operations| operations
+            .iter()
+            .any(|operation| operation == "custom-accept")));
 
     // status shows accepted
     let status = run_json(&[

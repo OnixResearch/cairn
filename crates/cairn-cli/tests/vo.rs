@@ -100,8 +100,17 @@ fn vo_import_status_discharge_and_unresolved_blocker() -> Result<(), Box<dyn Err
         "contributor",
         "--finding-id",
         "f1",
+        "--operation-id",
+        "custom-finding",
         "--execute",
     ])?;
+    let portable = fs::read_to_string(store.join("vo-1.portable.json"))?;
+    let value: Value = serde_json::from_str(&portable)?;
+    assert!(value["state"]["operations"]
+        .as_array()
+        .is_some_and(|operations| operations
+            .iter()
+            .any(|operation| operation == "custom-finding")));
     // discharge fails because f1 is an unresolved blocker
     let discharge = cairn()
         .args([
