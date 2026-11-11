@@ -2438,3 +2438,11 @@ fn collaboration_rejects_empty_backend() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("--backend requires a value"));
     Ok(())
 }
+
+#[test]
+fn mcp_rejects_empty_tool_name() -> Result<(), Box<dyn Error>> {
+    let output = cairn().args(["mcp", "--call", ""]).output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires a tool name"));
+    Ok(())
+}

@@ -99,7 +99,7 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 }
                 let name = args
                     .get(index + 1)
-                    .filter(|value| !value.starts_with("--"))
+                    .filter(|value| !value.is_empty() && !value.starts_with("--"))
                     .ok_or("mcp --call requires a tool name")?;
                 let input = args.get(index + 2).filter(|value| !value.starts_with("--"));
                 call = Some((name.clone(), input.cloned()));
