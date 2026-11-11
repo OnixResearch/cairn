@@ -7,7 +7,7 @@ Cairn represents an Architecture Decision Record (ADR) with the `xyz.onixresearc
 ```bash
 adr import   --store DIR --document-id ID --base-revision git_oid:OID \
              --authors A --reviewers R --approvers Q --publishers P \
-             --decision decision.md [--execute]
+             --decision decision.md [--policy FILE] [--execute]
 adr status   --store DIR --document-id ID
 adr update   --store DIR --document-id ID --actor ACTOR --text T [--execute]
 adr accept   --store DIR --document-id ID --actor APPROVER [--execute]

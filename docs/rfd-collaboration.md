@@ -9,7 +9,7 @@ The pure document-collaboration core keeps a stable document ID (separate from a
 ```bash
 rfd import   --store DIR --document-id ID --base-revision git_oid:OID \
              --authors A --participants P --reviewers R --publishers Q \
-             --spec spec.md [--execute]
+             --spec spec.md [--policy FILE] [--execute]
 rfd status   --store DIR --document-id ID
 rfd update   --store DIR --document-id ID --actor ACTOR --kind discussion|artifact --text T [--execute]
 rfd conflict --store DIR --document-id ID

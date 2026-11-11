@@ -8,10 +8,10 @@ Cairn represents a release decision with the `xyz.onixresearch.release-decision`
 release-decision create     --store DIR --decision-id ID --base-revision git_oid:OID \
                             --source-revision S --artifact-manifest M --artifact-identity A \
                             --target-label T --release-label R \
-                            --proposers P --reviewers Q --approvers A --withdrawers W --invalidators I [--execute]
+                            --proposers P --reviewers Q --approvers A --withdrawers W --invalidators I [--policy FILE] [--execute]
 release-decision status     --store DIR --decision-id ID
 release-decision evidence   --store DIR --decision-id ID --actor ACTOR --evidence-id E --schema S \
-                            --verification-role R --verdict V --external-identity X [--execute]
+                            --verification-role R --verdict V --external-identity X [--policy FILE] [--execute]
 release-decision finding    --store DIR --decision-id ID --actor ACTOR --finding-id F [--blocker-class B] [--execute]
 release-decision vote       --store DIR --decision-id ID --actor ACTOR --kind approve|reject [--execute]
 release-decision withdraw|invalidate|supersede --store DIR --decision-id ID --actor ACTOR [--reason R] [--execute]
