@@ -94,7 +94,7 @@ fn rename_classification_occurrences(root: &Path) -> Result<Vec<Value>, Box<dyn 
 fn rename_classification_is_skipped(relative: &str) -> bool {
     relative
         .split('/')
-        .any(|part| matches!(part, ".git" | "target" | "artifacts" | ".direnv"))
+        .any(|part| matches!(part, ".git" | ".pi" | "target" | "artifacts" | ".direnv"))
         || relative.ends_with("evidence/rename-classification.json")
 }
 
@@ -169,4 +169,26 @@ fn rename_classification_bucket(path: &str, line: &str) -> &'static str {
         return "compatibility-alias";
     }
     "needs-fix"
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn local_state_directories_are_skipped() {
+        for path in [
+            ".pi/worktrees/demo/crates/cairn-cli/src/rename_classification.rs",
+            "target/debug/copy.rs",
+            ".git/hooks/pre-commit",
+            "artifacts/octet-run/findings.json",
+            ".direnv/flake-inputs/copy.md",
+        ] {
+            assert!(rename_classification_is_skipped(path), "{path}");
+        }
+        assert!(!rename_classification_is_skipped("docs/design.md"));
+        assert!(!rename_classification_is_skipped(
+            ".cairn/specs/demo/spec.md"
+        ));
+    }
 }
