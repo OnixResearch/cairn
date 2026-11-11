@@ -189,7 +189,10 @@ pub(crate) fn current_root_trace_index_verification_receipt(
 fn run_show(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.trace_index.query]
     // r[impl cairn.trace_index.cli]
-    let Some(requirement_id) = args.first().filter(|value| !value.starts_with('-')) else {
+    let Some(requirement_id) = args
+        .first()
+        .filter(|value| !value.is_empty() && !value.starts_with('-'))
+    else {
         return Err("traceability show requires <requirement-id>".into());
     };
     reject_unknown_options(&args[1..], &["--root", "--index"])?;

@@ -2566,3 +2566,11 @@ fn readiness_rejects_empty_change() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("requires a change"));
     Ok(())
 }
+
+#[test]
+fn traceability_show_rejects_empty_requirement() -> Result<(), Box<dyn Error>> {
+    let output = cairn().args(["traceability", "show", ""]).output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires <requirement-id>"));
+    Ok(())
+}
