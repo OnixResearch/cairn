@@ -17,7 +17,10 @@ pub(crate) fn reject_unknown_options(
             if !allowed.contains(&argument.as_str()) {
                 return Err(format!("unknown option: {argument}").into());
             }
-            if args.get(index + 1).is_none() {
+            if args
+                .get(index + 1)
+                .is_none_or(|value| value.starts_with("--"))
+            {
                 return Err(format!("{argument} requires a value").into());
             }
             if !seen.insert(argument.as_str()) {
