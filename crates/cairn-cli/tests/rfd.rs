@@ -64,8 +64,6 @@ fn import_identity() -> Vec<String> {
         "approver".to_string(),
         "--publishers".to_string(),
         PUBLISHER.to_string(),
-        "--workspace".to_string(),
-        "workspace:custom".to_string(),
         "--policy".to_string(),
         policy_arg(),
     ]
@@ -92,6 +90,8 @@ fn rfd_import_status_update_publish_are_preview_first() -> Result<(), Box<dyn Er
         spec_s.clone(),
     ];
     import_args.extend(import_identity());
+    import_args.push("--workspace".to_string());
+    import_args.push("workspace:custom".to_string());
     let arg_refs = import_args.iter().map(String::as_str).collect::<Vec<_>>();
     let imported = run_json(&arg_refs)?;
     assert_eq!(imported["dry_run"], true);
@@ -185,6 +185,9 @@ fn rfd_number_plan_binds_registry_and_publisher() -> Result<(), Box<dyn Error>> 
     import_args.extend(import_identity());
     let arg_refs = import_args.iter().map(String::as_str).collect::<Vec<_>>();
     run_json(&arg_refs)?;
+    let portable = fs::read_to_string(store.join("rfd-2.portable.json"))?;
+    let portable: Value = serde_json::from_str(&portable)?;
+    assert_eq!(portable["state"]["workspace_id"], "workspace:rfd");
     let registry = "c".repeat(64);
     let number = run_json(&[
         "rfd",
