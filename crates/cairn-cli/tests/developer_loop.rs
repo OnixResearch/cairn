@@ -1,4 +1,10 @@
-use std::{error::Error, fs, path::PathBuf, process::Command};
+use std::{
+    error::Error,
+    fs,
+    path::PathBuf,
+    process::Command,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use serde_json::json;
 use serde_json::Value;
@@ -41,6 +47,17 @@ fn run_json(args: &[&str]) -> Result<Value, Box<dyn Error>> {
         String::from_utf8_lossy(&output.stderr)
     );
     Ok(serde_json::from_slice(&output.stdout)?)
+}
+
+fn unique_receipt_name(label: &str) -> String {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock")
+        .as_nanos();
+    format!(
+        "cairn-test-developer-loop-receipt-{label}-{}-{nanos}.json",
+        std::process::id()
+    )
 }
 
 fn local_receipt(profile: &str, policy_hash: &str, subject_hash: &str, duration: u64) -> Value {
@@ -92,9 +109,9 @@ fn lists_plans_and_verifies_current_receipt_without_execution() -> Result<(), Bo
     let subject_hash = "c".repeat(64);
     let policy_hash = policy_hash_of(&policy)?;
     let receipt = local_receipt("cairn-local", &policy_hash, &subject_hash, 10);
-    let receipt_path = repo_root().join("cairn-test-developer-loop-receipt.json");
+    let receipt_string = unique_receipt_name("current");
+    let receipt_path = repo_root().join(&receipt_string);
     fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt)?)?;
-    let receipt_string = "cairn-test-developer-loop-receipt.json".to_string();
     let verify = run_json(&[
         "developer-loop",
         "verify",
@@ -117,9 +134,9 @@ fn stale_subject_fails_closed_without_execution() -> Result<(), Box<dyn Error>> 
     let policy = policy_path().to_string_lossy().to_string();
     let policy_hash = policy_hash_of(&policy)?;
     let receipt = local_receipt("cairn-local", &policy_hash, &("d".repeat(64)), 10);
-    let receipt_path = repo_root().join("cairn-test-developer-loop-receipt.json");
+    let receipt_string = unique_receipt_name("stale");
+    let receipt_path = repo_root().join(&receipt_string);
     fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt)?)?;
-    let receipt_string = "cairn-test-developer-loop-receipt.json".to_string();
     let verify = run_json(&[
         "developer-loop",
         "verify",
