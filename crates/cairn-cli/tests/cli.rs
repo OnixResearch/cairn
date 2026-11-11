@@ -822,3 +822,30 @@ fn validator_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn test_harness_rejects_escaping_case_seed_and_out_paths() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["test-harness", "--seed", "../escape"][..],
+        &["test-harness", "--case", "../escape"][..],
+        &[
+            "test-harness",
+            "--out",
+            "/tmp/cairn-test-harness-outside.json",
+        ][..],
+        &[
+            "test-harness",
+            "--out",
+            "../cairn-test-harness-outside.json",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("safe path component") || stderr.contains("capability"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
