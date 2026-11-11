@@ -542,3 +542,40 @@ fn read_commands_reject_unknown_and_malformed_options() -> Result<(), Box<dyn Er
     }
     Ok(())
 }
+
+#[test]
+fn remaining_commands_reject_unknown_and_value_less_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["traceability", "coverage", "--root", ".", "--bogus"][..],
+        &["tracey", "coverage", "--root", ".", "--bogus"][..],
+        &["determinism", "coverage-audit", "--root", ".", "--bogus"][..],
+        &["preserves-corpus", "explain", "--bogus"][..],
+        &["preserves-corpus", "update", "--bogus"][..],
+        &["policy", "--bogus"][..],
+        &["policy", "export", "--bogus"][..],
+        &["rename-classification", "--bogus"][..],
+        &["test-harness", "--bogus"][..],
+        &["test-harness", "--case"][..],
+        &["policy", "export", "--source"][..],
+        &["preserves-corpus", "update", "--path"][..],
+        &[
+            "traceability",
+            "coverage",
+            "--root",
+            ".",
+            "--json",
+            "--json",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("duplicate option"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

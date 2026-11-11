@@ -12,12 +12,18 @@ use crate::determinism::{
     determinism_surfaces_from_policy, replay_cases_from_policy, replay_groups_from_policy,
 };
 use crate::nickel_export_boundary::export_json_dual_run;
-use crate::support::{default_policy_path, has_flag, load_policy_file, print_json, read_option};
+use crate::support::{
+    default_policy_path, has_flag, load_policy_file, print_json, read_option,
+    reject_unknown_options, reject_unknown_options_with_flags,
+};
 
 pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if args.first().map(String::as_str) == Some("export") {
-        return run_policy_export(args.into_iter().skip(1).collect());
+        let rest = args.into_iter().skip(1).collect::<Vec<_>>();
+        reject_unknown_options_with_flags(&rest, &["--source", "--output"], &["--check"])?;
+        return run_policy_export(rest);
     }
+    reject_unknown_options(&args, &["--policy"])?;
     let policy_path = read_option(args, "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;
     print_json(policy.raw)

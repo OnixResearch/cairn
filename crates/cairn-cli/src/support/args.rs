@@ -9,12 +9,27 @@ pub(crate) fn reject_unknown_options(
     args: &[String],
     allowed: &[&str],
 ) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_flags(args, allowed, &[])
+}
+
+pub(crate) fn reject_unknown_options_with_flags(
+    args: &[String],
+    allowed_values: &[&str],
+    allowed_flags: &[&str],
+) -> Result<(), Box<dyn Error>> {
     let mut seen = BTreeSet::new();
     let mut index = 0;
     while index < args.len() {
         let argument = &args[index];
         if argument.starts_with("--") {
-            if !allowed.contains(&argument.as_str()) {
+            if allowed_flags.contains(&argument.as_str()) {
+                if !seen.insert(argument.as_str()) {
+                    return Err(format!("duplicate option: {argument}").into());
+                }
+                index += 1;
+                continue;
+            }
+            if !allowed_values.contains(&argument.as_str()) {
                 return Err(format!("unknown option: {argument}").into());
             }
             if args

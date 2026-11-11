@@ -42,6 +42,17 @@ use rails::run_real_rail;
 use receipts::render_case_receipt;
 
 pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    crate::support::reject_unknown_options(
+        &args,
+        &[
+            "--root",
+            "--rail",
+            "--out",
+            "--case",
+            "--seed",
+            "--max-reruns",
+        ],
+    )?;
     let root = crate::support::read_option(args.clone(), "--root", ".");
     if let Some(rail) = read_string_option(&args, "--rail") {
         return run_real_rail(&root, &rail, read_string_option(&args, "--out"));

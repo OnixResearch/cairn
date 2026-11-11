@@ -13,7 +13,8 @@ use serde_json::{json, Value};
 
 use crate::support::{
     collect_files, default_policy_path, has_flag, load_policy_file, path_string, print_json,
-    read_option, read_string_option, safe_relative_path, with_portable_receipt_hash,
+    read_option, read_string_option, reject_unknown_options_with_flags, safe_relative_path,
+    with_portable_receipt_hash,
 };
 
 pub(crate) fn traceability_coverage_receipt(
@@ -42,11 +43,24 @@ pub(crate) fn load_traceability_coverage_model(
     ))
 }
 
-pub(crate) fn repository_gate_summary() -> Value {
+pub(crate) fn repository_gate_summary(policy: Option<&Value>) -> Value {
     // r[impl cairn.supersede.traceability_ownership.optional_tracey]
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.gates]
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.docs]
     // r[impl cairn.octet_integration.guidance]
+    if let Some(commands) = policy
+        .and_then(|value| value.get("release_readiness_policy"))
+        .and_then(|value| value.get("required_external_commands"))
+        .and_then(Value::as_array)
+        .filter(|commands| !commands.is_empty())
+        .and_then(|commands| commands.iter().map(Value::as_str).collect::<Option<Vec<_>>>())
+    {
+        return json!({
+            "policy": "consumer-selected-gates",
+            "required_commands": commands,
+            "note": "The selected consumer policy supplies the release gate list; this receipt records it without executing heavyweight repository gates."
+        });
+    }
     json!({
         "policy": "maintained-local-gates",
         "required_commands": [
@@ -87,6 +101,7 @@ fn run_coverage_command(args: Vec<String>, namespace: &str) -> Result<(), Box<dy
         return Err(format!("unknown {namespace} command: {command}").into());
     }
     let rest = args.into_iter().skip(1).collect::<Vec<_>>();
+    reject_unknown_options_with_flags(&rest, &["--root", "--policy", "--profile"], &["--json"])?;
     let root = read_option(rest.clone(), "--root", ".");
     let policy_path = read_option(rest.clone(), "--policy", default_policy_path());
     let profile_id = read_string_option(&rest, "--profile");

@@ -79,6 +79,7 @@ pub(crate) fn substance_inventory_json(inventories: &[ArtifactSubstanceInventory
 
 pub(crate) use args::{
     has_flag, read_option, read_repeated_path_options, read_string_option, reject_unknown_options,
+    reject_unknown_options_with_flags,
 };
 pub(crate) use capability::{CapabilityDirEntry, CapabilityRoot, CapabilityRootKind};
 pub(crate) use layout::{

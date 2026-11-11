@@ -5,6 +5,7 @@ pub(super) fn run_determinism_coverage_audit(args: Vec<String>) -> Result<(), Bo
     // r[impl cairn.supersede.determinism_surface_coverage_audit.cli]
     // r[impl cairn.supersede.determinism_surface_coverage_audit.inventory]
     // r[impl cairn.supersede.determinism_surface_coverage_audit.failures]
+    crate::support::reject_unknown_options(&args, &["--root"])?;
     let root = read_option(args, "--root", ".");
     let policy = load_policy_file(default_policy_path().into())?;
     let receipt = determinism_coverage_audit_receipt(&root, &policy);

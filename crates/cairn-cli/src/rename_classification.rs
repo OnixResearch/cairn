@@ -6,11 +6,14 @@ use std::{
 
 use serde_json::{json, Value};
 
-use crate::support::{collect_files, read_string_option, safe_relative_path};
+use crate::support::{
+    collect_files, read_string_option, reject_unknown_options, safe_relative_path,
+};
 
 pub(crate) fn run_rename_classification(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[verify cairn.supersede.rename_cairn.classification]
     // r[impl cairn.supersede.rust_nickel_only_gates.rename_classification]
+    reject_unknown_options(&args, &["--output"])?;
     let output = read_string_option(&args, "--output").map(PathBuf::from);
     let root = PathBuf::from(".");
     let occurrences = rename_classification_occurrences(&root)?;
