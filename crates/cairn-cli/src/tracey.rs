@@ -172,6 +172,17 @@ pub(crate) fn collect_traceability_files(
                 continue;
             }
             let relative = safe_relative_path(root, &path);
+            let metadata = fs::symlink_metadata(&path).map_err(|source_error| {
+                format!("failed to inspect traceability source {relative}: {source_error}")
+            })?;
+            if metadata.file_type().is_symlink() {
+                return Err(
+                    format!("traceability source must not be a symlink: {relative}").into(),
+                );
+            }
+            if !metadata.is_file() {
+                continue;
+            }
             let text = fs::read_to_string(&path).map_err(|source_error| {
                 format!("failed to read traceability source {relative}: {source_error}")
             })?;
@@ -188,11 +199,27 @@ pub(crate) fn collect_traceability_files(
 }
 
 fn traceability_source_paths(source_root: &Path) -> Result<Vec<PathBuf>, Box<dyn Error>> {
-    if !source_root.exists() {
-        return Ok(Vec::new());
+    let metadata = match fs::symlink_metadata(source_root) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(error.into()),
+    };
+    if metadata.file_type().is_symlink() {
+        return Err(format!(
+            "traceability source root must not be a symlink: {}",
+            source_root.display()
+        )
+        .into());
     }
-    if source_root.is_file() {
+    if metadata.is_file() {
         return Ok(vec![source_root.to_path_buf()]);
+    }
+    if !metadata.is_dir() {
+        return Err(format!(
+            "traceability source root must be a file or directory: {}",
+            source_root.display()
+        )
+        .into());
     }
     Ok(collect_files(source_root)?)
 }

@@ -128,10 +128,38 @@ fn traceability_coverage_passes_with_receipt_fields() -> Result<(), Box<dyn Erro
     Ok(())
 }
 
+#[cfg(unix)]
+#[test]
+fn traceability_coverage_rejects_symlinked_sources() -> Result<(), Box<dyn Error>> {
+    let root = temp_project("symlink-source")?;
+    let outside = temp_project("symlink-outside")?;
+    write_complete_cairn_fixture(&root)?;
+    let outside_file = outside.join("outside.rs");
+    write_text(&outside_file, &ref_marker("impl", "cairn.demo.alpha"))?;
+    std::os::unix::fs::symlink(&outside_file, root.join("crates/demo/src/linked.rs"))?;
+    let mut command = cairn();
+    command
+        .args(["traceability", "coverage", "--root"])
+        .arg(&root)
+        .arg("--json");
+    let output = command.output()?;
+    assert!(!output.status.success());
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("symlink"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    fs::remove_dir_all(root)?;
+    fs::remove_dir_all(outside)?;
+    Ok(())
+}
+
 #[test]
 fn traceability_coverage_rejects_missing_root() -> Result<(), Box<dyn Error>> {
-    let missing =
-        env::temp_dir().join(format!("cairn-traceability-missing-{}", std::process::id()));
+    let missing = env::temp_dir().join(format!(
+        "cairn-traceability-absent-root-{}",
+        std::process::id()
+    ));
     if missing.exists() {
         fs::remove_dir_all(&missing)?;
     }
