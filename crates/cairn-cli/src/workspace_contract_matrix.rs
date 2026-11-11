@@ -16,6 +16,7 @@ use crate::support::{
 };
 
 const MAX_OBSERVED_ARTIFACT_BYTES: u64 = 1_048_576;
+const MAX_WORKSPACE_CONTRACT_INPUT_BYTES: u64 = 2_097_152;
 
 pub(crate) fn run_workspace_contract(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(subcommand) = args.first().map(String::as_str) else {
@@ -123,6 +124,13 @@ fn policy_hash(value: &Value) -> String {
 }
 
 fn read_workspace_contract_input(path: &PathBuf) -> Result<Value, Box<dyn Error>> {
+    let metadata = fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() {
+        return Err("workspace contract input must not be a symlink".into());
+    }
+    if metadata.len() > MAX_WORKSPACE_CONTRACT_INPUT_BYTES {
+        return Err("workspace contract input exceeds the reviewed byte bound".into());
+    }
     let text = fs::read_to_string(path).map_err(|source| {
         format!(
             "failed to read workspace contract matrix input {}: {source}",

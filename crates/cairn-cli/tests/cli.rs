@@ -2986,3 +2986,31 @@ fn workspace_contract_rejects_symlink_artifacts() -> Result<(), Box<dyn Error>> 
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn workspace_contract_rejects_symlink_inputs() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("workspace-contract-input-symlink")?;
+    let outside =
+        std::env::temp_dir().join(format!("cairn-workspace-input-{}.json", std::process::id()));
+    fs::write(&outside, br#"{"matrix":{"edges":[]}}"#)?;
+    symlink(&outside, dir.join("matrix.json"))?;
+    let output = cairn()
+        .args([
+            "workspace-contract",
+            "verify",
+            "--root",
+            &dir.to_string_lossy(),
+            "--input",
+            "matrix.json",
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr)
+        .contains("workspace contract input must not be a symlink"));
+    fs::remove_file(outside)?;
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
