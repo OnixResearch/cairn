@@ -53,6 +53,7 @@ pub(crate) fn run_init(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
 pub(super) fn run_change_create(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(&args, &["--root", "--profile", "--policy"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let profile = read_string_option(&args, "--profile");
     let policy_path = read_option(args, "--policy", default_policy_path());

@@ -2301,3 +2301,13 @@ fn agent_receipt_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn change_create_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["change", "create", "demo", "--root", ".", "stray"])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
+    Ok(())
+}
