@@ -3161,3 +3161,22 @@ fn legacy_registry_rejects_oversized_inputs() -> Result<(), Box<dyn Error>> {
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[test]
+fn receipt_verify_content_hash_rejects_oversized_input() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("receipt-hash-oversized")?;
+    let input = dir.join("receipt.json");
+    let file = fs::File::create(&input)?;
+    file.set_len(16 * 1024 * 1024 + 1)?;
+    let output = cairn()
+        .args([
+            "receipt-verify-content-hash",
+            "--path",
+            &input.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("exceeds the reviewed byte bound"));
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}

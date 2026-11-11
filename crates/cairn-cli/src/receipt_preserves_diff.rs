@@ -1,7 +1,9 @@
-use std::{collections::HashMap, error::Error, fs, path::PathBuf};
+use std::{collections::HashMap, error::Error, path::PathBuf};
 
 use cairn_core::{canonical_json_hash, receipt_field_drift, DriftReport};
 use serde_json::{json, Value};
+
+const MAX_RECEIPT_BYTES: u64 = 16 * 1024 * 1024;
 
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
@@ -26,13 +28,16 @@ pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dy
     let policy_path = read_option(args, "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;
 
-    let baseline_text = read_receipt_text(&baseline_path, "baseline")?;
-    let candidate_text = read_receipt_text(&candidate_path, "candidate")?;
-
-    let baseline: Value =
-        serde_json::from_str(&baseline_text).map_err(|e| format!("baseline parse error: {e}"))?;
-    let candidate: Value =
-        serde_json::from_str(&candidate_text).map_err(|e| format!("candidate parse error: {e}"))?;
+    let baseline = crate::support::read_bounded_json_no_symlink(
+        &baseline_path,
+        MAX_RECEIPT_BYTES,
+        "baseline receipt",
+    )?;
+    let candidate = crate::support::read_bounded_json_no_symlink(
+        &candidate_path,
+        MAX_RECEIPT_BYTES,
+        "candidate receipt",
+    )?;
 
     let source_map = parse_source_id_map(&policy);
 
@@ -67,14 +72,6 @@ pub(crate) fn parse_source_id_map(policy: &cairn_core::Policy) -> HashMap<String
         }
     }
     map
-}
-
-fn read_receipt_text(path: &std::path::Path, label: &str) -> Result<String, Box<dyn Error>> {
-    let metadata = fs::symlink_metadata(path)?;
-    if metadata.file_type().is_symlink() {
-        return Err(format!("{label} receipt must not be a symlink").into());
-    }
-    fs::read_to_string(path).map_err(|e| format!("failed to read {label}: {e}").into())
 }
 
 fn drift_entry_json(entry: &cairn_core::DriftEntry) -> Value {
