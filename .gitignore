@@ -1,4 +1,6 @@
 /target/
 /artifacts/
+/result
+/result-*
 
 .pi/
