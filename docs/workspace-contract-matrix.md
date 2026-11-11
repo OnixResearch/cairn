@@ -8,6 +8,8 @@ Run validation with:
 cairn workspace-contract verify --root . --input fixtures/workspace-contract-matrix/positive/representative-edges.json
 ```
 
+Relative `--input` paths resolve under `--root` (default `.`); absolute paths are used as given.
+
 Each row names an edge ID, provider repo, consumer repo, artifact family, schema or contract ID, repo-relative artifact path, BLAKE3 artifact identity, validation command, positive fixture, negative fixture or failure class, owner, and non-claims.
 
 ## Release readiness
