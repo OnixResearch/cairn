@@ -86,13 +86,11 @@ const BOOLEAN_OPTIONS: &[&str] = &[
     "--allow-mutations",
     "--check",
     "--execute",
-    "--format",
     "--help",
     "--interactive",
     "--json",
     "--raw",
     "--run-probes",
-    "--short",
     "--strict",
 ];
 
@@ -129,6 +127,11 @@ mod tests {
             "trellis-rust",
         ]))
         .unwrap();
+    }
+
+    #[test]
+    fn value_options_consume_their_value() {
+        reject_positional_arguments(&args(&["--format", "json", "--root", "."])).unwrap();
     }
 
     #[test]
