@@ -9,6 +9,8 @@ mod render;
 mod support;
 mod types;
 
+use std::fs;
+
 use execution::{
     replay_case_root, replay_case_source_root, replay_manifest_for_case, replay_output_mutated,
     replay_reproduce_command, run_replay_case,
@@ -280,6 +282,14 @@ pub(crate) fn determinism_replay_receipt(
             "runs": runs,
             "portable_evidence_hash": canonical_json_hash(&json!({"case": case.id, "runs": runs})),
         }));
+
+        // A policy-root case runs in place; copied roots are temporary fixture
+        // copies and would otherwise accumulate hundreds of megabytes per case.
+        for path in std::iter::once(&repeated_a).chain(repeated_b.as_ref()) {
+            if path != &source_root {
+                fs::remove_dir_all(path)?;
+            }
+        }
     }
 
     case_receipts.sort_by_key(|value| value["id"].as_str().unwrap_or_default().to_string());

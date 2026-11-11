@@ -1,6 +1,8 @@
 use cairn_core::receipt_field_drift;
 use serde_json::Value;
 
+use crate::support::CapabilityDirEntry;
+
 use super::support::*;
 use super::types::*;
 
@@ -414,7 +416,19 @@ fn replay_temp_root(source: &Path, label: &str) -> Result<PathBuf, Box<dyn Error
     Ok(destination)
 }
 
-const REPLAY_COPY_EXCLUDED_DIRECTORY: &str = "target";
+const REPLAY_COPY_EXCLUDED_DIRECTORIES: &[&str] = &["target", ".git", ".pi"];
+const REPLAY_COPY_EXCLUDED_SYMLINK_PREFIX: &str = "result";
+
+/// Nix writes root-level `result` and `result-*` symlinks to build outputs.
+/// They are local build state, not replay fixture content.
+fn is_excluded_build_symlink(relative_directory: &Path, entry: &CapabilityDirEntry) -> bool {
+    relative_directory == Path::new(".")
+        && entry.file_type().is_symlink()
+        && entry.file_name().to_str().is_some_and(|name| {
+            name.strip_prefix(REPLAY_COPY_EXCLUDED_SYMLINK_PREFIX)
+                .is_some_and(|suffix| suffix.is_empty() || suffix.starts_with('-'))
+        })
+}
 
 fn copy_tree(
     source_root: &CapabilityRoot,
@@ -431,12 +445,19 @@ fn copy_tree(
             } else {
                 relative_directory.join(entry.file_name())
             };
+            if is_excluded_build_symlink(&relative_directory, &entry) {
+                continue;
+            }
             if entry.file_type().is_symlink() {
                 return Err(
                     format!("replay fixture contains a symlink: {}", relative.display()).into(),
                 );
             }
-            if entry.file_type().is_dir() && entry.file_name() == REPLAY_COPY_EXCLUDED_DIRECTORY {
+            if entry.file_type().is_dir()
+                && REPLAY_COPY_EXCLUDED_DIRECTORIES
+                    .iter()
+                    .any(|excluded| entry.file_name() == *excluded)
+            {
                 continue;
             }
             if entry.file_type().is_dir() {
@@ -503,30 +524,100 @@ mod tests {
 
     // r[verify cairn.supersede.determinism_replay.cross_root]
     #[test]
-    fn copy_tree_excludes_cargo_build_outputs() -> Result<(), Box<dyn Error>> {
+    fn copy_tree_excludes_local_state_directories() -> Result<(), Box<dyn Error>> {
         let source = test_directory("excluded-target-source");
         let destination = test_directory("excluded-target-destination");
         remove_test_directory(&source)?;
         remove_test_directory(&destination)?;
-        fs::create_dir_all(source.join("target/debug"))?;
+        for directory in ["target/debug", ".git/refs", ".pi"] {
+            fs::create_dir_all(source.join(directory))?;
+        }
         fs::create_dir_all(source.join("nested"))?;
         fs::create_dir_all(&destination)?;
         fs::write(source.join("target/debug/derived.bin"), TEST_FILE_CONTENT)?;
+        fs::write(source.join(".git/refs/heads/main"), TEST_FILE_CONTENT)?;
+        fs::write(source.join(".pi/state.json"), TEST_FILE_CONTENT)?;
         fs::write(source.join("nested/fixture.json"), TEST_FILE_CONTENT)?;
         let source_root = CapabilityRoot::open(CapabilityRootKind::Replay, &source)?;
         let destination_root = CapabilityRoot::open(CapabilityRootKind::Replay, &destination)?;
 
         copy_tree(&source_root, &destination_root)?;
 
-        assert!(destination_root
-            .read(Path::new("target/debug/derived.bin"))
-            .is_err());
+        for excluded in [
+            "target/debug/derived.bin",
+            ".git/refs/heads/main",
+            ".pi/state.json",
+        ] {
+            assert!(destination_root.read(Path::new(excluded)).is_err());
+        }
         assert_eq!(
             destination_root.read(Path::new("nested/fixture.json"))?,
             TEST_FILE_CONTENT
         );
         fs::remove_dir_all(source)?;
         fs::remove_dir_all(destination)?;
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn copy_tree_excludes_root_nix_result_links() -> Result<(), Box<dyn Error>> {
+        let source = test_directory("result-link-source");
+        let destination = test_directory("result-link-destination");
+        let outside = test_directory("result-link-outside");
+        remove_test_directory(&source)?;
+        remove_test_directory(&destination)?;
+        remove_test_directory(&outside)?;
+        fs::create_dir_all(&source)?;
+        fs::create_dir_all(&destination)?;
+        fs::create_dir_all(&outside)?;
+        fs::write(source.join("fixture.json"), TEST_FILE_CONTENT)?;
+        std::os::unix::fs::symlink(&outside, source.join("result"))?;
+        std::os::unix::fs::symlink(&outside, source.join("result-cairn"))?;
+        let source_root = CapabilityRoot::open(CapabilityRootKind::Replay, &source)?;
+        let destination_root = CapabilityRoot::open(CapabilityRootKind::Replay, &destination)?;
+
+        copy_tree(&source_root, &destination_root)?;
+
+        assert_eq!(
+            destination_root.read(Path::new("fixture.json"))?,
+            TEST_FILE_CONTENT
+        );
+        assert!(destination_root
+            .symlink_metadata(Path::new("result"))
+            .is_err());
+        assert!(destination_root
+            .symlink_metadata(Path::new("result-cairn"))
+            .is_err());
+        fs::remove_dir_all(source)?;
+        fs::remove_dir_all(destination)?;
+        fs::remove_dir_all(outside)?;
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn copy_tree_rejects_nested_result_symlinks() -> Result<(), Box<dyn Error>> {
+        let source = test_directory("nested-result-source");
+        let destination = test_directory("nested-result-destination");
+        let outside = test_directory("nested-result-outside");
+        remove_test_directory(&source)?;
+        remove_test_directory(&destination)?;
+        remove_test_directory(&outside)?;
+        fs::create_dir_all(source.join("nested"))?;
+        fs::create_dir_all(&destination)?;
+        fs::create_dir_all(&outside)?;
+        std::os::unix::fs::symlink(&outside, source.join("nested/result"))?;
+        let source_root = CapabilityRoot::open(CapabilityRootKind::Replay, &source)?;
+        let destination_root = CapabilityRoot::open(CapabilityRootKind::Replay, &destination)?;
+
+        assert!(copy_tree(&source_root, &destination_root).is_err());
+        assert!(destination_root
+            .symlink_metadata(Path::new("nested/result"))
+            .is_err());
+        fs::remove_dir_all(source)?;
+        fs::remove_dir_all(destination)?;
+        fs::remove_dir_all(outside)?;
         Ok(())
     }
 
