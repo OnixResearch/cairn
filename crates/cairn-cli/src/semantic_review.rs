@@ -292,6 +292,9 @@ fn review_receipt_path<'a>(args: &'a [String], command: &str) -> Result<&'a str,
             index += 2;
             continue;
         }
+        if args[index].is_empty() {
+            return Err(format!("{command} requires a receipt path").into());
+        }
         if path.replace(args[index].as_str()).is_some() {
             return Err(format!("{command} accepts exactly one receipt path").into());
         }

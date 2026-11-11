@@ -2493,3 +2493,11 @@ fn workflow_rejects_empty_positionals() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("requires a change name"));
     Ok(())
 }
+
+#[test]
+fn review_validate_rejects_empty_receipt_path() -> Result<(), Box<dyn Error>> {
+    let output = cairn().args(["review", "validate", ""]).output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires a receipt path"));
+    Ok(())
+}
