@@ -1995,3 +1995,23 @@ fn migrate_rejects_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn determinism_verify_receipt_rejects_bad_arguments() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["determinism", "verify-receipt", "--bogus", "receipt.json"][..],
+        &["determinism", "verify-receipt", "--root"][..],
+        &["determinism", "verify-receipt", "one.json", "two.json"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("exactly one"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
