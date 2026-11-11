@@ -6,6 +6,8 @@ mod catalog;
 mod common;
 #[path = "mcp_cli/drain_plan.rs"]
 mod drain_plan;
+#[path = "mcp_cli/implementation_ready.rs"]
+mod implementation_ready;
 #[path = "mcp_cli/json_rpc.rs"]
 mod json_rpc;
 #[path = "mcp_cli/validation.rs"]

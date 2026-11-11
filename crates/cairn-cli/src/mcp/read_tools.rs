@@ -539,6 +539,292 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
     ))
 }
 
+pub(super) fn mcp_implementation_ready(input: &Value) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.implementation_ready.projection]
+    let drain = mcp_drain_plan(input)?;
+    let root = mcp_root(input);
+    let limit = match input.get("limit") {
+        None => 100usize,
+        Some(value) => {
+            let number = value.as_u64().ok_or("limit must be a positive integer")?;
+            let limit = usize::try_from(number).map_err(|_| "limit is too large")?;
+            if limit == 0 || limit > 1_000 {
+                return Err("limit must be between 1 and 1000".into());
+            }
+            limit
+        }
+    };
+    let changes = drain["changes"]
+        .as_array()
+        .ok_or("drain plan omitted changes")?;
+    let total = changes.len();
+    let truncated = total > limit;
+    let mut selection = Vec::new();
+    let mut projected_changes = Vec::new();
+    let mut ready_change_count = 0usize;
+    let mut completion_only_count = 0usize;
+    let mut next_actions = Vec::new();
+
+    for change in changes.iter().take(limit) {
+        let name = change["name"].as_str().ok_or("change name missing")?;
+        let path = change["path"].as_str().ok_or("change path missing")?;
+        let task_ordering = &change["task_ordering"];
+        let task_counts = &change["task_counts"];
+        let total_tasks = task_counts["total"].as_u64().unwrap_or(0);
+        let complete = total_tasks > 0
+            && task_counts["todo"].as_u64().unwrap_or(0) == 0
+            && task_counts["in_progress"].as_u64().unwrap_or(0) == 0
+            && task_counts["unmarked"].as_u64().unwrap_or(0) == 0;
+        let active_order = task_ordering["active"].as_bool().unwrap_or(false);
+        let valid_order = task_ordering["valid"].as_bool().unwrap_or(false);
+
+        let mut blockers: Vec<Value> = change["blockers"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|blocker| {
+                !matches!(
+                    blocker["class"].as_str(),
+                    Some("unfinished_tasks" | "sync_blocked" | "archive_blocked")
+                )
+            })
+            .collect();
+        if change["dependency_ready"].as_bool() != Some(true)
+            || !change["dependency_issues"]
+                .as_array()
+                .is_none_or(|issues| issues.is_empty())
+        {
+            blockers.push(json!({
+                "class": "dependency",
+                "message": "change dependency is not satisfied",
+            }));
+        }
+        for issue in change["cross_repo_evidence_issues"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+        {
+            blockers.push(json!({"class": "cross_repo_evidence", "message": issue}));
+        }
+        if active_order && !valid_order {
+            blockers.push(json!({
+                "class": "task_definition",
+                "message": "task ordering is invalid",
+            }));
+            for issue in task_ordering["issues"]
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+            {
+                blockers.push(json!({
+                    "class": "task_definition",
+                    "message": issue["message"],
+                    "code": issue["code"],
+                    "line": issue["line"],
+                }));
+            }
+        }
+
+        let mut completed_tasks = Vec::new();
+        let mut blocked_tasks = Vec::new();
+        if active_order {
+            for node in task_ordering["nodes"]
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+            {
+                let Some(id) = node["id"].as_str() else {
+                    continue;
+                };
+                match node["state"].as_str() {
+                    Some("done") => completed_tasks.push(id.to_string()),
+                    Some("todo") if node["ready"].as_bool() != Some(true) => {
+                        blocked_tasks.push(json!({
+                            "task": id,
+                            "blocked_by": node["blocked_by"],
+                        }));
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let mut units: Vec<(String, Vec<String>)> = Vec::new();
+        if blockers.is_empty() {
+            if active_order {
+                for task in task_ordering["ready_tasks"]
+                    .as_array()
+                    .cloned()
+                    .unwrap_or_default()
+                {
+                    let Some(task) = task.as_str() else { continue };
+                    units.push((
+                        format!("task:{task}"),
+                        requirement_references(&root, path, Some((task_ordering, task))),
+                    ));
+                }
+            } else if !complete {
+                units.push((
+                    format!("change:{name}"),
+                    requirement_references(&root, path, None),
+                ));
+            }
+        }
+        let implementation_ready = !units.is_empty();
+        if implementation_ready {
+            ready_change_count += 1;
+        }
+        let completion_only = blockers.is_empty() && units.is_empty() && complete;
+        if completion_only {
+            completion_only_count += 1;
+        }
+
+        let mut projected = json!({
+            "name": name,
+            "path": path,
+            "archive_ready": change["drain_ready"],
+            "implementation_ready": implementation_ready,
+            "completion_only": completion_only,
+            "task_counts": task_counts,
+            "task_ordering": task_ordering,
+            "completed_tasks": completed_tasks,
+            "blocked_tasks": blocked_tasks,
+            "blockers": blockers,
+            "units": units.iter().map(|(unit, references)| json!({
+                "unit": unit,
+                "requirement_references": references,
+            })).collect::<Vec<_>>(),
+            "gates": change["gates"],
+            "workflow_profile": change["workflow_profile"],
+            "cross_repo_dependencies": change["cross_repo_dependencies"],
+        });
+        projected["snapshot_digest"] = json!(canonical_json_hash(&projected));
+        let digest = projected["snapshot_digest"].clone();
+        for (unit, references) in &units {
+            selection.push(json!({
+                "change": name,
+                "unit": unit,
+                "requirement_references": references,
+                "snapshot_digest": digest,
+                "archive_ready": change["drain_ready"],
+            }));
+            next_actions.push(json!({
+                "change": name,
+                "unit": unit,
+                "action": "implement the selected unit",
+            }));
+        }
+        projected_changes.push(projected);
+    }
+
+    let outcome = if truncated {
+        "incomplete_limit"
+    } else if !selection.is_empty() {
+        "ready"
+    } else if completion_only_count > 0 {
+        "completion_only"
+    } else if total == 0 {
+        "empty"
+    } else {
+        "blocked"
+    };
+    let value = json!({
+        "command": "cairn implementation-ready",
+        "schema": "cairn.implementation-ready.v1",
+        "root": drain["root"],
+        "layout": drain["layout"],
+        "policy": drain["policy"],
+        "outcome": outcome,
+        "complete": !truncated,
+        "active_change_count": total,
+        "processed_change_count": projected_changes.len(),
+        "ready_change_count": ready_change_count,
+        "completion_only_count": completion_only_count,
+        "selection": selection,
+        "changes": projected_changes,
+        "next_actions": next_actions,
+        "mcp": {"read_only": true, "destructive": false},
+    });
+    Ok(with_portable_receipt_hash(&root, value))
+}
+
+fn requirement_references(
+    root: &std::path::Path,
+    change_path: &str,
+    task: Option<(&Value, &str)>,
+) -> Vec<String> {
+    let candidate = std::path::PathBuf::from(change_path);
+    let path = if candidate.is_absolute() || candidate.exists() {
+        candidate
+    } else {
+        root.join(candidate)
+    };
+    let Ok(markdown) = fs::read_to_string(path.join("tasks.md")) else {
+        return Vec::new();
+    };
+    let lines: Vec<&str> = markdown.lines().collect();
+    let (start, end) = match task {
+        None => (1usize, usize::MAX),
+        Some((ordering, task)) => {
+            let nodes = ordering["nodes"].as_array().cloned().unwrap_or_default();
+            let mut starts: Vec<usize> = nodes
+                .iter()
+                .filter_map(|node| {
+                    node["line"]
+                        .as_u64()
+                        .and_then(|line| usize::try_from(line).ok())
+                })
+                .collect();
+            starts.sort_unstable();
+            let Some(line) = nodes
+                .iter()
+                .find(|node| node["id"].as_str() == Some(task))
+                .and_then(|node| node["line"].as_u64())
+                .and_then(|line| usize::try_from(line).ok())
+            else {
+                return Vec::new();
+            };
+            let next = starts.iter().find(|candidate| **candidate > line).copied();
+            (line, next.map_or(usize::MAX, |next| next.saturating_sub(1)))
+        }
+    };
+    let mut references = std::collections::BTreeSet::new();
+    for line in lines
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| {
+            let number = index + 1;
+            number >= start && number <= end
+        })
+        .map(|(_, line)| *line)
+    {
+        for reference in reference_tokens(line) {
+            references.insert(reference);
+        }
+    }
+    references.into_iter().collect()
+}
+
+fn reference_tokens(line: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut rest = line;
+    while let Some(start) = rest.find("r[") {
+        let after = &rest[start + 2..];
+        let Some(end) = after.find(']') else { break };
+        let candidate = &after[..end];
+        if !candidate.is_empty()
+            && candidate.chars().all(|character| {
+                character.is_ascii_alphanumeric() || matches!(character, '.' | '_' | '-')
+            })
+        {
+            tokens.push(candidate.to_string());
+        }
+        rest = &after[end + 1..];
+    }
+    tokens
+}
+
 fn drain_order_with_remaining(
     changes: &[ChangeStatus],
     dependency_graph: &ChangeDependencyGraph,

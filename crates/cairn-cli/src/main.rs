@@ -86,7 +86,9 @@ use machine::{
     run_machine, MachineRunError, MACHINE_BOOTSTRAP_POLICY_STATUS, MACHINE_HOST_OUTPUT_STATUS,
 };
 use mcp::run_mcp;
-use native::{run_change, run_doctor, run_init, run_spec, run_status, run_validate};
+use native::{
+    run_change, run_doctor, run_implementation_ready, run_init, run_spec, run_status, run_validate,
+};
 use policy::run_policy;
 use policy_exception::run_policy_exception;
 use radicle_change::run_cob;
@@ -198,6 +200,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 .as_ref()
                 .ok_or("spec root resolution is unavailable")?,
         )?,
+        "implementation-ready" => run_implementation_ready(args.collect())?,
         "status" => run_status(
             args.collect(),
             root_local

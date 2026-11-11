@@ -1,0 +1,24 @@
+{
+  "schema": "cairn.implementation-ready.verification.v1",
+  "date": "2026-11-11",
+  "issue": "https://github.com/OnixResearch/cairn/issues/1",
+  "commands": [
+    {
+      "command": "cargo test -p cairn-cli --test mcp_cli --offline",
+      "result": "18 passed; projection fixtures, CLI/MCP parity, completion-only and limit outcomes"
+    },
+    {
+      "command": "cargo clippy -p cairn-cli --all-targets --offline -- -D warnings",
+      "result": "pass"
+    },
+    {
+      "command": "target/debug/cairn implementation-ready --root fixtures/basic",
+      "result": "schema cairn.implementation-ready.v1, outcome ready, change:demo selected with archive_ready false"
+    }
+  ],
+  "non_claims": [
+    "the projection does not claim, execute, verify or mutate work",
+    "archive readiness remains separate from implementation readiness",
+    "enumeration truncation is explicit and never an empty success"
+  ]
+}

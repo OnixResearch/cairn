@@ -17,7 +17,8 @@ use crate::{
     support::{
         collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
         default_policy_path, detect_layout, find_change, find_spec_source, path_string, print_json,
-        read_gate_snapshot, read_option, read_string_option, reject_unknown_options, scan_repo,
+        read_gate_snapshot, read_option, read_repeated_path_options, read_string_option,
+        reject_unknown_options, reject_unknown_options_with_repeats, scan_repo,
         with_portable_receipt_hash,
     },
 };
@@ -39,6 +40,34 @@ pub(crate) fn run_status(
         repo_status_json(&status, selected.layout),
         invocation,
     ))
+}
+
+pub(crate) fn run_implementation_ready(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_repeats(
+        &args,
+        &["--root", "--policy", "--cross-repo-evidence", "--limit"],
+        &[],
+        &["--cross-repo-evidence"],
+    )?;
+    let root = read_option(args.clone(), "--root", ".");
+    let mut input = json!({"root": path_string(&root)});
+    if let Some(policy) = read_string_option(&args, "--policy") {
+        input["policy"] = json!(policy);
+    }
+    let evidence = read_repeated_path_options(&args, "--cross-repo-evidence");
+    if !evidence.is_empty() {
+        input["cross_repo_evidence"] = json!(evidence
+            .iter()
+            .map(|path| path.to_string_lossy().to_string())
+            .collect::<Vec<_>>());
+    }
+    if let Some(limit) = read_string_option(&args, "--limit") {
+        let limit: u64 = limit
+            .parse()
+            .map_err(|_| "limit must be a positive integer")?;
+        input["limit"] = json!(limit);
+    }
+    print_json(crate::mcp::implementation_ready(&input)?)
 }
 
 pub(crate) fn run_doctor(

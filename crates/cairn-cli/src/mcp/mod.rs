@@ -224,6 +224,7 @@ fn mcp_tool_requires_native_lifecycle(name: &str) -> bool {
             | "cairn_gate_context"
             | "cairn_change_graph"
             | "cairn_drain_plan"
+            | "cairn_implementation_ready"
             | "cairn_verification_impact"
             | "cairn_adoption_report"
             | "cairn_sync_plan"
@@ -233,6 +234,10 @@ fn mcp_tool_requires_native_lifecycle(name: &str) -> bool {
             | "cairn_init"
             | "cairn_change_create"
     )
+}
+
+pub(crate) fn implementation_ready(input: &Value) -> Result<Value, Box<dyn Error>> {
+    read_tools::mcp_implementation_ready(input)
 }
 
 pub(crate) fn mcp_call_tool(
@@ -266,6 +271,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_agent_receipt_validate" => mcp_agent_receipt_validate(input)?,
             "cairn_agent_completion_validate" => mcp_agent_completion_validate(input)?,
             "cairn_drain_plan" => mcp_drain_plan(input)?,
+            "cairn_implementation_ready" => mcp_implementation_ready(input)?,
             "cairn_readiness" => crate::readiness::readiness_value(input)?,
             "cairn_verification_impact" => {
                 crate::verification_impact::guidance_value_from_mcp(input)?

@@ -124,6 +124,12 @@ fn mcp_read_tools() -> Vec<Value> {
             false,
             "Plan a repository-wide active-change drain without mutation",
         ),
+        mcp_tool(
+            "cairn_implementation_ready",
+            true,
+            false,
+            "Select implementation-ready change/task units without mutation",
+        ),
     ]
 }
 
@@ -203,6 +209,20 @@ fn mcp_input_schema(name: &str) -> Value {
     match name {
         "cairn_status" | "cairn_list_content" => mcp_object_schema(&[], &["root"]),
         "cairn_doctor" | "cairn_init" => mcp_object_schema(&[], &["root", "policy"]),
+        "cairn_implementation_ready" => json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "root": {"type": "string", "description": mcp_argument_description("root")},
+                "policy": {"type": "string", "description": mcp_argument_description("policy")},
+                "cross_repo_evidence": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Explicit receipt files or evidence bundle directories"
+                },
+                "limit": {"type": "integer", "minimum": 1, "maximum": 1000}
+            }
+        }),
         "cairn_validate" | "cairn_drain_plan" => json!({
             "type": "object",
             "additionalProperties": false,
@@ -358,6 +378,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
             validate_string_args(name, object, &[], &["root", "policy"])
         }
         "cairn_validate" | "cairn_drain_plan" => validate_mcp_validate_args(name, object),
+        "cairn_implementation_ready" => validate_mcp_implementation_args(name, object),
         "cairn_change_graph" => validate_string_args(name, object, &[], &["root"]),
         "cairn_adoption_report" => validate_string_args(name, object, &["snapshot"], &["root"]),
         "cairn_read_spec" => validate_string_args(name, object, &["spec"], &["root"]),
@@ -508,6 +529,33 @@ fn validate_evidence_array(
         }
     }
     Ok(())
+}
+
+fn validate_mcp_implementation_args(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    for key in object.keys() {
+        if !["root", "policy", "cross_repo_evidence", "limit"].contains(&key.as_str()) {
+            return Err(format!("invalid arguments for {tool}: unknown argument {key}").into());
+        }
+    }
+    for key in ["root", "policy"] {
+        if object.get(key).is_some_and(|value| !value.is_string()) {
+            return Err(format!("invalid arguments for {tool}: {key} must be a string").into());
+        }
+    }
+    if let Some(limit) = object.get("limit") {
+        let Some(limit) = limit.as_u64() else {
+            return Err(format!("invalid arguments for {tool}: limit must be an integer").into());
+        };
+        if !(1..=1000).contains(&limit) {
+            return Err(
+                format!("invalid arguments for {tool}: limit must be between 1 and 1000").into(),
+            );
+        }
+    }
+    validate_evidence_array(tool, object)
 }
 
 fn validate_mcp_validate_args(

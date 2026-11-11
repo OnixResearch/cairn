@@ -30,6 +30,10 @@ pub(crate) fn run_status(
     read::run_status(args, invocation)
 }
 
+pub(crate) fn run_implementation_ready(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    read::run_implementation_ready(args)
+}
+
 pub(crate) fn run_doctor(
     args: Vec<String>,
     invocation: &crate::lifecycle_store_shell::RootLocalInvocation,
