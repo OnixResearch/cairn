@@ -3,7 +3,10 @@ use std::{error::Error, fs, path::Path};
 use cairn_core::validate_state_machine_receipt_value;
 use serde_json::{json, Value};
 
-use crate::support::{print_json, read_option, safe_relative_path, with_receipt_hash};
+use crate::support::{
+    print_json, read_option, reject_positional_arguments, reject_unknown_options,
+    safe_relative_path, with_receipt_hash,
+};
 
 const STATE_MACHINE_RECEIPT_MAX_BYTES: usize = 1_048_576;
 
@@ -19,6 +22,8 @@ pub(crate) fn run_state_machine_receipt(args: Vec<String>) -> Result<(), Box<dyn
 
 fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.lifecycle_orchestration.state_machine_receipts.cli]
+    reject_unknown_options(&args, &["--root", "--input"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let input = read_option(args, "--input", "");
     if input.as_os_str().is_empty() {

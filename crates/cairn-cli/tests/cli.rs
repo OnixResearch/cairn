@@ -2142,3 +2142,38 @@ fn receipt_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn state_machine_and_trace_index_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "state-machine-receipt",
+            "validate",
+            "--input",
+            "x",
+            "--bogus",
+        ][..],
+        &["state-machine-receipt", "validate", "--input", "x", "stray"][..],
+        &["traceability", "export", "--root", ".", "--bogus"][..],
+        &[
+            "traceability",
+            "export",
+            "--registry",
+            "r",
+            "--out",
+            "o",
+            "stray",
+        ][..],
+        &["traceability", "verify", "--root", ".", "--bogus"][..],
+        &["traceability", "show", "req", "--index", "i", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("unexpected argument"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

@@ -18,7 +18,8 @@ use crate::{
     requirement_id_registry::read_accepted_specifications,
     support::{
         default_policy_path, path_string, print_json, read_option, read_string_option,
-        with_portable_receipt_hash, CapabilityRoot, CapabilityRootKind,
+        reject_positional_arguments, reject_unknown_options, with_portable_receipt_hash,
+        CapabilityRoot, CapabilityRootKind,
     },
     tracey::{collect_traceability_files, selected_traceability_profile},
 };
@@ -48,6 +49,11 @@ pub(crate) fn run_trace_index(subcommand: &str, args: Vec<String>) -> Result<(),
 
 fn run_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.trace_index.cli]
+    reject_unknown_options(
+        &args,
+        &["--root", "--policy", "--profile", "--registry", "--out"],
+    )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let profile_id = read_string_option(&args, "--profile");
@@ -104,6 +110,11 @@ fn run_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 fn run_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.trace_index.cli]
     // r[impl cairn.trace_index.freshness]
+    reject_unknown_options(
+        &args,
+        &["--root", "--policy", "--profile", "--registry", "--index"],
+    )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let profile_id = read_string_option(&args, "--profile");
@@ -181,6 +192,8 @@ fn run_show(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(requirement_id) = args.first().filter(|value| !value.starts_with('-')) else {
         return Err("traceability show requires <requirement-id>".into());
     };
+    reject_unknown_options(&args[1..], &["--root", "--index"])?;
+    reject_positional_arguments(&args[1..])?;
     let root = read_option(args.clone(), "--root", ".");
     let index_path = required_path_option(&args, "--index", "show")?;
     let index = read_index(&index_path)?;
