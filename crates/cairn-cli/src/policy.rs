@@ -14,7 +14,7 @@ use crate::determinism::{
 use crate::nickel_export_boundary::export_json_dual_run;
 use crate::support::{
     default_policy_path, has_flag, load_policy_file, print_json, read_option,
-    reject_unknown_options, reject_unknown_options_with_flags,
+    reject_positional_arguments, reject_unknown_options, reject_unknown_options_with_flags,
 };
 
 pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -24,6 +24,7 @@ pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         return run_policy_export(rest);
     }
     reject_unknown_options(&args, &["--policy"])?;
+    reject_positional_arguments(&args)?;
     let policy_path = read_option(args, "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;
     print_json(policy.raw)

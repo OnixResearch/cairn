@@ -1130,3 +1130,24 @@ fn evidence_manifest_verify_rejects_multiple_paths() -> Result<(), Box<dyn Error
     assert!(String::from_utf8_lossy(&output.stderr).contains("exactly one manifest path"));
     Ok(())
 }
+
+#[test]
+fn option_only_commands_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["policy", "stray"][..],
+        &["rename-classification", "stray"][..],
+        &["test-harness", "stray"][..],
+        &["determinism", "coverage-audit", "--root", ".", "stray"][..],
+        &["traceability", "coverage", "--root", ".", "stray"][..],
+        &["evidence-manifest", "generate", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("unexpected argument"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}

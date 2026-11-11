@@ -79,3 +79,17 @@ pub(crate) fn read_option(args: Vec<String>, name: &str, default: &str) -> PathB
 pub(crate) fn has_flag(args: &[String], name: &str) -> bool {
     args.iter().any(|arg| arg == name)
 }
+
+/// Reject stray positional tokens for commands whose arguments are all
+/// documented options. Call after option-name and value admission.
+pub(crate) fn reject_positional_arguments(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let mut index = 0;
+    while index < args.len() {
+        if args[index].starts_with("--") {
+            index += 2;
+        } else {
+            return Err(format!("unexpected argument: {}", args[index]).into());
+        }
+    }
+    Ok(())
+}

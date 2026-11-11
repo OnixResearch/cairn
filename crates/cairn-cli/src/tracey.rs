@@ -13,8 +13,8 @@ use serde_json::{json, Value};
 
 use crate::support::{
     collect_files, default_policy_path, has_flag, load_policy_file, path_string, print_json,
-    read_option, read_string_option, reject_unknown_options_with_flags, safe_relative_path,
-    with_portable_receipt_hash,
+    read_option, read_string_option, reject_positional_arguments,
+    reject_unknown_options_with_flags, safe_relative_path, with_portable_receipt_hash,
 };
 
 pub(crate) fn traceability_coverage_receipt(
@@ -107,6 +107,7 @@ fn run_coverage_command(args: Vec<String>, namespace: &str) -> Result<(), Box<dy
     }
     let rest = args.into_iter().skip(1).collect::<Vec<_>>();
     reject_unknown_options_with_flags(&rest, &["--root", "--policy", "--profile"], &["--json"])?;
+    reject_positional_arguments(&rest)?;
     let root = read_option(rest.clone(), "--root", ".");
     let policy_path = read_option(rest.clone(), "--policy", default_policy_path());
     let profile_id = read_string_option(&rest, "--profile");

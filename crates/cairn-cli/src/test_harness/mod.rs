@@ -53,6 +53,7 @@ pub(crate) fn run_test_harness(args: Vec<String>) -> Result<(), Box<dyn Error>> 
             "--max-reruns",
         ],
     )?;
+    crate::support::reject_positional_arguments(&args)?;
     let root = crate::support::read_option(args.clone(), "--root", ".");
     let out = read_string_option(&args, "--out");
     if let Some(out) = &out {

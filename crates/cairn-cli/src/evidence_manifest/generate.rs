@@ -8,8 +8,8 @@ use cairn_core::canonical_json_hash;
 use serde_json::{json, Value};
 
 use crate::support::{
-    path_string, portable_json_hash, print_json, read_option, reject_unknown_options,
-    with_portable_receipt_hash,
+    path_string, portable_json_hash, print_json, read_option, reject_positional_arguments,
+    reject_unknown_options, with_portable_receipt_hash,
 };
 
 use super::artifact::{manifest_artifact_entry, read_manifest_artifact};
@@ -73,6 +73,7 @@ pub(super) fn run_evidence_manifest_generate(args: Vec<String>) -> Result<(), Bo
             "--out",
         ],
     )?;
+    reject_positional_arguments(&args)?;
     let options = evidence_manifest_generate_options(&args);
     let (manifest, issues) = evidence_manifest_generate_manifest(&options);
     let valid = issues.is_empty();
