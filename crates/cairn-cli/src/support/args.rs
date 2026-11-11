@@ -43,7 +43,7 @@ pub(crate) fn reject_unknown_options_with_repeats(
             }
             if args
                 .get(index + 1)
-                .is_none_or(|value| value.starts_with("--"))
+                .is_none_or(|value| value.is_empty() || value.starts_with("--"))
             {
                 return Err(format!("{argument} requires a value").into());
             }
@@ -121,7 +121,7 @@ pub(crate) fn reject_positional_arguments(args: &[String]) -> Result<(), Box<dyn
 
 #[cfg(test)]
 mod tests {
-    use super::reject_positional_arguments;
+    use super::{reject_positional_arguments, reject_unknown_options_with_flags};
 
     fn args(values: &[&str]) -> Vec<String> {
         values.iter().map(|value| (*value).to_string()).collect()
@@ -137,6 +137,13 @@ mod tests {
             "trellis-rust",
         ]))
         .unwrap();
+    }
+
+    #[test]
+    fn empty_values_are_rejected() {
+        let error = reject_unknown_options_with_flags(&args(&["--root", ""]), &["--root"], &[])
+            .unwrap_err();
+        assert_eq!(error.to_string(), "--root requires a value");
     }
 
     #[test]
