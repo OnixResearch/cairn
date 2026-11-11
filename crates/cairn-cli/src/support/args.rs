@@ -111,10 +111,12 @@ pub(crate) fn reject_positional_arguments(args: &[String]) -> Result<(), Box<dyn
         if BOOLEAN_OPTIONS.contains(&argument.as_str()) {
             index += 1;
         } else if argument.starts_with("--") {
-            if args.get(index + 1).is_none() {
-                return Err(format!("{argument} requires a value").into());
+            match args.get(index + 1) {
+                Some(value) if !value.is_empty() && !value.starts_with("--") => {
+                    index += 2;
+                }
+                _ => return Err(format!("{argument} requires a value").into()),
             }
-            index += 2;
         } else {
             return Err(format!("unexpected argument: {argument}").into());
         }
@@ -140,6 +142,14 @@ mod tests {
             "trellis-rust",
         ]))
         .unwrap();
+    }
+
+    #[test]
+    fn option_like_value_is_rejected() {
+        let error = reject_positional_arguments(&args(&["--root", "--json"])).unwrap_err();
+        assert_eq!(error.to_string(), "--root requires a value");
+        let error = reject_positional_arguments(&args(&["--root", ""])).unwrap_err();
+        assert_eq!(error.to_string(), "--root requires a value");
     }
 
     #[test]
