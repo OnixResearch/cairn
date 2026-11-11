@@ -19,6 +19,10 @@ pub(crate) fn run_receipt_verify_content_hash(args: Vec<String>) -> Result<(), B
         return Err("receipt-verify-content-hash requires --path <receipt.json>".into());
     }
 
+    let metadata = fs::symlink_metadata(&path)?;
+    if metadata.file_type().is_symlink() {
+        return Err("receipt must not be a symlink".into());
+    }
     let text = fs::read_to_string(&path).map_err(|e| format!("failed to read receipt: {e}"))?;
     let receipt: Value =
         serde_json::from_str(&text).map_err(|e| format!("receipt parse error: {e}"))?;

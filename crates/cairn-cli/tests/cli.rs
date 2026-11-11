@@ -3046,3 +3046,38 @@ fn receipt_inputs_reject_symlinks() -> Result<(), Box<dyn Error>> {
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn receipt_commands_reject_symlink_inputs() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("receipt-symlink")?;
+    let outside =
+        std::env::temp_dir().join(format!("cairn-receipt-symlink-{}.json", std::process::id()));
+    fs::write(&outside, br#"{"schema":"cairn.receipt.v1"}"#)?;
+    let link = dir.join("link.json");
+    symlink(&outside, &link)?;
+    let link_text = link.to_string_lossy().to_string();
+    for args in [
+        vec![
+            "receipt-preserves-diff",
+            "--baseline",
+            link_text.as_str(),
+            "--candidate",
+            link_text.as_str(),
+        ],
+        vec!["receipt-verify-content-hash", "--path", link_text.as_str()],
+    ] {
+        let output = cairn().args(&args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("must not be a symlink"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    fs::remove_file(outside)?;
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
