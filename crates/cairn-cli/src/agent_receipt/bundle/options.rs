@@ -1,6 +1,6 @@
 use std::{error::Error, path::PathBuf};
 
-use crate::support::read_option;
+use crate::support::{read_option, reject_unknown_options};
 
 pub(super) struct AgentEvidenceBundleOptions {
     pub(super) root: PathBuf,
@@ -10,13 +10,20 @@ pub(super) struct AgentEvidenceBundleOptions {
 pub(super) fn agent_evidence_bundle_options(
     args: &[String],
 ) -> Result<AgentEvidenceBundleOptions, Box<dyn Error>> {
+    reject_unknown_options(args, &["--root"])?;
     let root = read_option(args.to_vec(), "--root", ".");
-    let path = args
-        .iter()
-        .find(|arg| !arg.starts_with("--") && *arg != &root)
-        .ok_or("agent-receipt verify-bundle requires <bundle.json>")?;
-    Ok(AgentEvidenceBundleOptions {
-        root,
-        path: PathBuf::from(path),
-    })
+    let mut path = None;
+    let mut index = 0;
+    while index < args.len() {
+        if args[index] == "--root" {
+            index += 2;
+            continue;
+        }
+        if path.replace(PathBuf::from(&args[index])).is_some() {
+            return Err("agent-receipt verify-bundle accepts exactly one bundle path".into());
+        }
+        index += 1;
+    }
+    let path = path.ok_or("agent-receipt verify-bundle requires <bundle.json>")?;
+    Ok(AgentEvidenceBundleOptions { root, path })
 }

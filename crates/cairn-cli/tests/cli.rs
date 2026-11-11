@@ -716,3 +716,40 @@ fn release_evidence_commands_reject_bad_options() -> Result<(), Box<dyn Error>> 
     }
     Ok(())
 }
+
+#[test]
+fn agent_receipt_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    let receipt = "fixtures/agent-receipts/positive.json";
+    for args in [
+        &["agent-receipt", "validate", receipt, "--bogus"][..],
+        &["agent-receipt", "validate", receipt, "extra.json"][..],
+        &["agent-receipt", "preserves-hash", receipt, "--bogus"][..],
+        &[
+            "agent-receipt",
+            "complete",
+            "--contract",
+            "c.json",
+            "--results",
+            "r.json",
+            "--subject-hash",
+            &"c".repeat(64),
+            "--bogus",
+        ][..],
+        &["agent-receipt", "verify-bundle", receipt, "--bogus"][..],
+        &["agent-receipt", "verify-bundle", receipt, "extra.json"][..],
+        &["agent-receipt", "smoke-mcp", "--bogus"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("duplicate option")
+                || stderr.contains("unexpected")
+                || stderr.contains("exactly one"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
