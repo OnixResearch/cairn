@@ -2376,3 +2376,13 @@ fn worksets_reject_option_like_values() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn store_rejects_empty_option_values() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["store", "setup", "demo", "--path", ""])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("option requires a value"));
+    Ok(())
+}

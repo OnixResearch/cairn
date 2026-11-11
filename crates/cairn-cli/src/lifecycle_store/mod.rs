@@ -709,7 +709,7 @@ fn validate_argument_tokens(
             let Some(value) = args.get(value_index) else {
                 return Err(format!("option requires a value: {token}").into());
             };
-            if value.starts_with("--") {
+            if value.is_empty() || value.starts_with("--") {
                 return Err(format!("option requires a value: {token}").into());
             }
             index = value_index.saturating_add(1);
