@@ -3,13 +3,17 @@ use std::{error::Error, fs};
 use cairn_core::{canonical_json_hash, preserves_content_hash};
 use serde_json::{json, Value};
 
-use crate::support::{print_json, read_option, with_receipt_hash};
+use crate::support::{
+    print_json, read_option, reject_positional_arguments, reject_unknown_options, with_receipt_hash,
+};
 
 pub(crate) fn run_receipt_verify_content_hash(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.determinism.preserves_authoritative_content_hash.verification]
     // r[verify cairn.determinism.preserves_authoritative_content_hash.verification]
     // r[verify cairn.determinism.preserves_authoritative_content_hash.validation]
 
+    reject_unknown_options(&args, &["--path"])?;
+    reject_positional_arguments(&args)?;
     let path = read_option(args, "--path", "");
     if path.as_os_str().is_empty() {
         return Err("receipt-verify-content-hash requires --path <receipt.json>".into());

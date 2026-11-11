@@ -2116,3 +2116,29 @@ fn lifecycle_commands_reject_stray_positionals() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn receipt_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["receipt-preserves-diff", "--baseline", "a", "--bogus"][..],
+        &[
+            "receipt-preserves-diff",
+            "--baseline",
+            "a",
+            "--candidate",
+            "b",
+            "stray",
+        ][..],
+        &["receipt-verify-content-hash", "--bogus"][..],
+        &["receipt-verify-content-hash", "--path", "a", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("unexpected argument"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

@@ -4,7 +4,8 @@ use cairn_core::{canonical_json_hash, receipt_field_drift, DriftReport};
 use serde_json::{json, Value};
 
 use crate::support::{
-    default_policy_path, load_policy_file, path_string, print_json, read_option, with_receipt_hash,
+    default_policy_path, load_policy_file, path_string, print_json, read_option,
+    reject_positional_arguments, reject_unknown_options, with_receipt_hash,
 };
 
 pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -13,6 +14,8 @@ pub(crate) fn run_receipt_preserves_diff(args: Vec<String>) -> Result<(), Box<dy
     // r[verify cairn.determinism.preserves_receipt_field_drift.command]
     // r[verify cairn.determinism.preserves_receipt_field_drift.read_only]
 
+    reject_unknown_options(&args, &["--baseline", "--candidate"])?;
+    reject_positional_arguments(&args)?;
     let baseline_path = read_option(args.clone(), "--baseline", "");
     let candidate_path = read_option(args.clone(), "--candidate", "");
 
