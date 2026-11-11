@@ -176,6 +176,39 @@ fn unknown_command_uses_stable_private_failure() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn documented_json_commands_are_admitted() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.cli_machine_contract.mode.select]
+    for command in [
+        "source-review",
+        "adoption",
+        "check-evidence",
+        "verification-impact",
+        "setup",
+    ] {
+        let output = run(&["--machine", command])?;
+        let wrapped = envelope(&output)?;
+        assert_eq!(wrapped["command"], command);
+        assert_ne!(wrapped["command"], "unknown");
+    }
+    Ok(())
+}
+
+#[test]
+fn mcp_is_rejected_as_incompatible_not_unknown() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.cli_machine_contract.mode.incompatible]
+    let output = run(&["--machine", "mcp"])?;
+    assert_eq!(output.status.code(), Some(STATUS_INVALID_ARGUMENTS));
+    let wrapped = envelope(&output)?;
+    assert_eq!(wrapped["command"], "mcp");
+    assert_eq!(wrapped["exit_class"], "invalid_arguments");
+    assert_eq!(
+        wrapped["diagnostics"][0]["code"],
+        "cairn.cli.incompatible_option"
+    );
+    Ok(())
+}
+
+#[test]
 fn missing_command_is_a_controlled_parser_failure() -> Result<(), Box<dyn Error>> {
     let output = run(&["--machine"])?;
     assert_eq!(output.status.code(), Some(STATUS_INVALID_ARGUMENTS));

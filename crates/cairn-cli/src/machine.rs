@@ -22,7 +22,10 @@ const JSON_FORMAT: &str = "json";
 
 const KNOWN_COMMANDS: &[&str] = &[
     "init",
+    "setup",
     "change",
+    "check-evidence",
+    "source-review",
     "compact",
     "template",
     "scaffold",
@@ -37,6 +40,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "view",
     "workflow",
     "readiness",
+    "adoption",
     "workset",
     "release-readiness",
     "release-decision",
@@ -67,6 +71,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "state-machine-receipt",
     "traceability",
     "tracey",
+    "verification-impact",
     "review",
     "steel-orchestration",
     "test-harness",
@@ -81,6 +86,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "archive",
     "receipt-preserves-diff",
     "receipt-verify-content-hash",
+    "mcp",
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -445,6 +451,17 @@ mod tests {
     use super::*;
 
     const TEST_CAPTURE_BOUND: usize = 4;
+
+    #[test]
+    fn every_admitted_command_is_documented_in_usage() {
+        let usage = crate::support::usage_text();
+        for command in KNOWN_COMMANDS {
+            assert!(
+                usage.contains(&format!("  {command}")),
+                "machine-admitted command is missing from usage text: {command}"
+            );
+        }
+    }
 
     #[test]
     fn admits_known_json_command() {
