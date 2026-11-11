@@ -132,7 +132,7 @@ pub(crate) fn path_string(path: impl Into<PathBuf>) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::resolve_under_root;
+    use super::{read_bounded_json_no_symlink, resolve_under_root};
     use std::path::{Path, PathBuf};
 
     #[test]
@@ -149,5 +149,48 @@ mod tests {
             resolve_under_root(Path::new("/repo"), PathBuf::from("/tmp/ledger.json")),
             PathBuf::from("/tmp/ledger.json")
         );
+    }
+
+    fn test_path(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "cairn-json-reader-{}-{name}.json",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn parses_bounded_json() {
+        let path = test_path("valid");
+        std::fs::write(&path, br#"{"a":1}"#).unwrap();
+        let value = read_bounded_json_no_symlink(&path, 1024, "test input").unwrap();
+        assert_eq!(value["a"], 1);
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn rejects_oversized_json() {
+        let path = test_path("oversized");
+        let file = std::fs::File::create(&path).unwrap();
+        file.set_len(11).unwrap();
+        let error = read_bounded_json_no_symlink(&path, 10, "test input").unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("exceeds the reviewed byte bound"));
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rejects_symlinked_json() {
+        use std::os::unix::fs::symlink;
+
+        let outside = test_path("outside");
+        let link = test_path("symlink");
+        std::fs::write(&outside, br#"{"a":1}"#).unwrap();
+        symlink(&outside, &link).unwrap();
+        let error = read_bounded_json_no_symlink(&link, 1024, "test input").unwrap_err();
+        assert!(error.to_string().contains("must not be a symlink"));
+        std::fs::remove_file(link).unwrap();
+        std::fs::remove_file(outside).unwrap();
     }
 }
