@@ -2473,3 +2473,13 @@ fn readiness_rejects_duplicate_format() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("duplicate readiness option"));
     Ok(())
 }
+
+#[test]
+fn workset_rejects_empty_id() -> Result<(), Box<dyn Error>> {
+    let output = cairn()
+        .args(["workset", "create", "", "--member", ".", "--opener", "x"])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires an ID"));
+    Ok(())
+}
