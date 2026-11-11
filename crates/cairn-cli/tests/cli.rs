@@ -2629,3 +2629,24 @@ fn cob_rejects_empty_option_values() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("--git-repository requires a value"));
     Ok(())
 }
+
+#[test]
+fn release_and_policy_honor_explicit_policy_paths() -> Result<(), Box<dyn Error>> {
+    let missing =
+        std::env::temp_dir().join(format!("cairn-missing-policy-{}.json", std::process::id()));
+    let _ = std::fs::remove_file(&missing);
+    let missing = missing.to_string_lossy().to_string();
+    for args in [
+        &["release-decision", "create", "--policy", &missing][..],
+        &["policy-exception", "request", "--policy", &missing][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("missing-policy"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
