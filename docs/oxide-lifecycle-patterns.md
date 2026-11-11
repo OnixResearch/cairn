@@ -15,4 +15,6 @@ The following systems are study-only sources for operator diagnostics, observabi
 
 `cairn lifecycle-patterns validate --input <bundle.json>` validates in-memory saga rows, document plans, golden approvals, bundle member hashes, and reference boundaries through the pure core. The CLI only reads bounded JSON and renders a receipt; it does not refresh snapshots, process webhooks, run scans, compensate operations, or mutate evidence bundles. r[impl cairn.lifecycle_orchestration.oxide_patterns.saga_logs] r[impl cairn.lifecycle_orchestration.oxide_patterns.rfd_processing] r[impl cairn.lifecycle_orchestration.oxide_patterns.golden_snapshots] r[impl cairn.lifecycle_orchestration.oxide_patterns.bundle_inspector]
 
+Relative `--input` paths resolve under `--root` (default `.`); absolute paths are used as given.
+
 Passing validation proves only deterministic shape, declared hash linkage, reviewed refresh intent, and bounded reference/non-claim conformance. It does not prove lifecycle correctness, evidence truth, domain correctness, or release eligibility.

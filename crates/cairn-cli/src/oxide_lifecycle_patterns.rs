@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 
 use crate::support::{
     print_json, read_option, reject_positional_arguments, reject_unknown_options,
-    safe_relative_path, with_receipt_hash,
+    resolve_under_root, safe_relative_path, with_receipt_hash,
 };
 
 const OXIDE_PATTERN_INPUT_MAX_BYTES: usize = 2_097_152;
@@ -28,12 +28,18 @@ fn run_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if input.as_os_str().is_empty() {
         return Err("lifecycle-patterns validate requires --input <bundle.json>".into());
     }
-    let value = read_bounded_json(&input)?;
+    let input_path = resolve_under_root(&root, input);
+    let value = read_bounded_json(&input_path).map_err(|error| {
+        format!(
+            "failed to read lifecycle-patterns input {}: {error}",
+            input_path.display()
+        )
+    })?;
     let report = validate_oxide_lifecycle_patterns_value(&value);
     let receipt = with_receipt_hash(json!({
         "command": "lifecycle-patterns validate",
         "root": ".",
-        "input": safe_relative_path(&root, &input),
+        "input": safe_relative_path(&root, &input_path),
         "valid": report.valid,
         "verdict": if report.valid { "pass" } else { "fail" },
         "input_hash": report.input_hash,

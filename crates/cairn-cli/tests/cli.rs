@@ -2926,3 +2926,25 @@ fn workspace_contract_accepts_absolute_input() -> Result<(), Box<dyn Error>> {
     assert_eq!(receipt["valid"], true);
     Ok(())
 }
+
+#[test]
+fn lifecycle_patterns_resolve_relative_input_under_root() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("lifecycle-patterns-root")?;
+    fs::write(dir.join("bundle.json"), br#"{}"#)?;
+    let output = cairn()
+        .args([
+            "lifecycle-patterns",
+            "validate",
+            "--root",
+            &dir.to_string_lossy(),
+            "--input",
+            "bundle.json",
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["command"], "lifecycle-patterns validate");
+    assert_eq!(receipt["input"], "bundle.json");
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
