@@ -37,7 +37,7 @@ use serde_json::{json, Value};
 
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
-    read_string_option, safe_relative_path,
+    read_string_option, reject_positional_arguments, reject_unknown_options, safe_relative_path,
 };
 
 const PROBE_DECLARATIONS_PATH: &str = "probes/probes.json";
@@ -74,6 +74,8 @@ fn run_probe_run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.probe_execution_boundary.explicit_probe_run]
     // r[impl cairn.probe_execution_boundary.explicit_probe_run.authorized_local_command]
     // r[impl cairn.probe_execution_boundary.explicit_probe_run.denied_command]
+    reject_unknown_options(&args, &["--root", "--policy", "--probe-file", "--out"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let policy = load_policy_file(policy_path.clone())?;
@@ -164,6 +166,8 @@ fn run_probe_run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_probe_validate(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root", "--policy", "--probe-file", "--receipt"])?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;

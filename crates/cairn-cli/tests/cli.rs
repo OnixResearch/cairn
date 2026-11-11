@@ -1307,3 +1307,40 @@ fn compact_verify_rejects_stray_positionals() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
     Ok(())
 }
+
+#[test]
+fn probe_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "probe",
+            "run",
+            "--root",
+            ".",
+            "--probe-file",
+            "p",
+            "--bogus",
+        ][..],
+        &[
+            "probe",
+            "validate",
+            "--root",
+            ".",
+            "--probe-file",
+            "p",
+            "--receipt",
+            "r",
+            "--bogus",
+        ][..],
+        &["probe", "run", "--probe-file"][..],
+        &["probe", "validate", "--receipt"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option") || stderr.contains("requires a value"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
