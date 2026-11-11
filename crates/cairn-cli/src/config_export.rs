@@ -203,9 +203,7 @@ fn parse_options(args: &[String]) -> Result<ConfigExportOptions, Box<dyn Error>>
                 if kind.is_some() {
                     return Err("config export received --kind more than once".into());
                 }
-                let value = args
-                    .get(index + 1)
-                    .ok_or("config export --kind requires a value")?;
+                let value = option_value(args, index, "--kind", "a value")?;
                 kind = Some(ConfigKind::parse(value)?);
                 index += 2;
             }
@@ -213,17 +211,21 @@ fn parse_options(args: &[String]) -> Result<ConfigExportOptions, Box<dyn Error>>
                 if root.is_some() {
                     return Err("config export received --root more than once".into());
                 }
-                let value = args
-                    .get(index + 1)
-                    .ok_or("config export --root requires a path")?;
+                let value = option_value(args, index, "--root", "a path")?;
                 root = Some(PathBuf::from(value));
                 index += 2;
             }
             "--check" => {
+                if check {
+                    return Err("config export received --check more than once".into());
+                }
                 check = true;
                 index += 1;
             }
             "--execute" => {
+                if execute {
+                    return Err("config export received --execute more than once".into());
+                }
                 execute = true;
                 index += 1;
             }
@@ -239,6 +241,21 @@ fn parse_options(args: &[String]) -> Result<ConfigExportOptions, Box<dyn Error>>
         check,
         execute,
     })
+}
+
+fn option_value<'a>(
+    args: &'a [String],
+    index: usize,
+    flag: &str,
+    expectation: &str,
+) -> Result<&'a str, Box<dyn Error>> {
+    match args
+        .get(index + 1)
+        .filter(|value| !value.is_empty() && !value.starts_with("--"))
+    {
+        Some(value) => Ok(value),
+        None => Err(format!("config export {flag} requires {expectation}").into()),
+    }
 }
 
 fn build_export_plan(options: &ConfigExportOptions) -> Result<ExportPlan, Box<dyn Error>> {

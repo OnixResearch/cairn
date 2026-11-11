@@ -2341,3 +2341,25 @@ fn readiness_rejects_option_like_values() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("require values"));
     Ok(())
 }
+
+#[test]
+fn config_export_rejects_bad_values() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["config", "export", "--kind", "--root", "."][..],
+        &["config", "export", "--kind", "store", "--root"][..],
+        &[
+            "config", "export", "--kind", "store", "--root", ".", "--check", "--check",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("requires a value")
+                || stderr.contains("requires a path")
+                || stderr.contains("more than once"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
