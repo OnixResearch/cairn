@@ -12,8 +12,10 @@ use serde_json::{json, Value};
 
 use crate::support::{
     path_string, print_json, read_option, reject_positional_arguments, reject_unknown_options,
-    safe_relative_path, with_receipt_hash,
+    safe_relative_path, with_receipt_hash, CapabilityRoot, CapabilityRootKind,
 };
+
+const MAX_OBSERVED_ARTIFACT_BYTES: u64 = 1_048_576;
 
 pub(crate) fn run_workspace_contract(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(subcommand) = args.first().map(String::as_str) else {
@@ -72,6 +74,7 @@ fn enrich_observed_artifacts(root: &Path, mut value: Value) -> Result<Value, Box
         .get("edges")
         .and_then(Value::as_array)
         .ok_or("workspace contract input matrix.edges must be an array")?;
+    let capability = CapabilityRoot::open_nofollow(CapabilityRootKind::Repository, root)?;
     let mut observations = Vec::new();
     for edge in edges {
         let edge_id = edge
@@ -83,13 +86,11 @@ fn enrich_observed_artifacts(root: &Path, mut value: Value) -> Result<Value, Box
             .and_then(Value::as_str)
             .unwrap_or_default();
         let artifact_identity = if is_cli_safe_relative_path(artifact_path) {
-            let full_path = root.join(artifact_path);
-            let bytes = fs::read(&full_path).map_err(|source| {
-                format!(
-                    "failed to read workspace contract artifact {}: {source}",
-                    full_path.display()
-                )
-            })?;
+            let bytes = capability
+                .read_bounded(Path::new(artifact_path), MAX_OBSERVED_ARTIFACT_BYTES)
+                .map_err(|source| {
+                    format!("failed to read workspace contract artifact {artifact_path}: {source}")
+                })?;
             blake3_hex(&bytes)
         } else {
             String::new()

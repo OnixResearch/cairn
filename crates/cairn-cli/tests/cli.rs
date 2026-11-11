@@ -2948,3 +2948,41 @@ fn lifecycle_patterns_resolve_relative_input_under_root() -> Result<(), Box<dyn 
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn workspace_contract_rejects_symlink_artifacts() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("workspace-contract-symlink")?;
+    let outside = std::env::temp_dir().join(format!(
+        "cairn-workspace-artifact-{}.json",
+        std::process::id()
+    ));
+    fs::write(&outside, br#"{"outside":true}"#)?;
+    symlink(&outside, dir.join("link.json"))?;
+    let input = dir.join("matrix.json");
+    fs::write(
+        &input,
+        br#"{"matrix":{"edges":[{"edge_id":"e","artifact_path":"link.json"}]}}"#,
+    )?;
+    let output = cairn()
+        .args([
+            "workspace-contract",
+            "verify",
+            "--root",
+            &dir.to_string_lossy(),
+            "--input",
+            "matrix.json",
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("workspace contract artifact link.json"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    fs::remove_file(outside)?;
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
