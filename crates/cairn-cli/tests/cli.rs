@@ -2748,3 +2748,28 @@ fn receipt_verify_content_hash_reports_mismatch() -> Result<(), Box<dyn Error>> 
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[test]
+fn receipt_verify_content_hash_accepts_checked_fixtures() -> Result<(), Box<dyn Error>> {
+    for (fixture, present) in [("with-hash.json", true), ("no-hash.json", false)] {
+        let path = repo_root()
+            .join("fixtures/receipt-verify-content-hash")
+            .join(fixture);
+        let output = cairn()
+            .args([
+                "receipt-verify-content-hash",
+                "--path",
+                &path.to_string_lossy(),
+            ])
+            .output()?;
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let receipt: Value = serde_json::from_slice(&output.stdout)?;
+        assert_eq!(receipt["valid"], true);
+        assert_eq!(receipt["preserves_content_hash_present"], present);
+    }
+    Ok(())
+}
