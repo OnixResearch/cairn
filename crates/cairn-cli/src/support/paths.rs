@@ -114,3 +114,25 @@ pub(crate) fn tree_content_paths(root: &Path, dir: &Path) -> std::io::Result<Vec
 pub(crate) fn path_string(path: impl Into<PathBuf>) -> String {
     path.into().display().to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::resolve_under_root;
+    use std::path::{Path, PathBuf};
+
+    #[test]
+    fn resolves_relative_paths_under_root() {
+        assert_eq!(
+            resolve_under_root(Path::new("/repo"), PathBuf::from("ledger.json")),
+            PathBuf::from("/repo/ledger.json")
+        );
+    }
+
+    #[test]
+    fn keeps_absolute_paths() {
+        assert_eq!(
+            resolve_under_root(Path::new("/repo"), PathBuf::from("/tmp/ledger.json")),
+            PathBuf::from("/tmp/ledger.json")
+        );
+    }
+}
