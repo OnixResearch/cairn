@@ -5,7 +5,7 @@ use cairn_core::{
 };
 use serde_json::{json, Value};
 
-use crate::support::{print_json, read_option, with_receipt_hash};
+use crate::support::{print_json, read_option, reject_unknown_options, with_receipt_hash};
 
 pub(crate) fn run_toolchain_profile(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(subcommand) = args.first().map(String::as_str) else {
@@ -20,6 +20,7 @@ pub(crate) fn run_toolchain_profile(args: Vec<String>) -> Result<(), Box<dyn Err
 fn run_toolchain_profile_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.toolchain_profile_matrix.validation]
     // r[impl cairn.toolchain_profile_matrix.validation.receipt]
+    reject_unknown_options(&args, &["--input"])?;
     let input = read_option(args, "--input", "");
     if input.as_os_str().is_empty() {
         return Err("toolchain-profile verify requires --input <matrix.json>".into());

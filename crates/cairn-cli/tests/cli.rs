@@ -753,3 +753,69 @@ fn agent_receipt_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn validator_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "hash-policy",
+            "verify",
+            "--input",
+            "fixtures/hash-algorithm-policy/positive/blake3-default.json",
+            "--bogus",
+        ][..],
+        &[
+            "toolchain-profile",
+            "verify",
+            "--input",
+            "fixtures/toolchain-profile-matrix/positive/profile-classes.json",
+            "--bogus",
+        ][..],
+        &[
+            "workspace-contract",
+            "verify",
+            "--input",
+            "fixtures/workspace-contract-matrix/positive/representative-edges.json",
+            "--bogus",
+        ][..],
+        &[
+            "requirement-registry",
+            "verify",
+            "--input",
+            "fixtures/requirement-id-registry/positive/owned-id.json",
+            "--bogus",
+        ][..],
+        &[
+            "requirement-registry",
+            "verify",
+            "--root",
+            ".",
+            "--repository-id",
+            "demo",
+            "--registry",
+            "fixtures/requirement-id-registry/positive/owned-id.json",
+            "--bogus",
+        ][..],
+        &[
+            "runtime-evidence",
+            "verify",
+            "--chain",
+            "fixtures/runtime-evidence/positive/chain.json",
+            "--bogus",
+        ][..],
+        &["hash-policy", "verify", "--input"][..],
+        &["runtime-evidence", "verify", "--chain"][..],
+        &["requirement-registry", "export", "--root", "."][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires")
+                || stderr.contains("requires a value"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
