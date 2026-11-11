@@ -536,7 +536,8 @@ fn read_commands_reject_unknown_and_malformed_options() -> Result<(), Box<dyn Er
         assert!(
             stderr.contains("unknown option")
                 || stderr.contains("requires a value")
-                || stderr.contains("duplicate option"),
+                || stderr.contains("duplicate option")
+                || stderr.contains("before options"),
             "{args:?}: {stderr}"
         );
     }
@@ -573,7 +574,37 @@ fn remaining_commands_reject_unknown_and_value_less_options() -> Result<(), Box<
         assert!(
             stderr.contains("unknown option")
                 || stderr.contains("requires a value")
-                || stderr.contains("duplicate option"),
+                || stderr.contains("duplicate option")
+                || stderr.contains("before options"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn developer_and_archive_commands_reject_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["template", "list", "--bogus"][..],
+        &["template", "apply", "generic-cli", "--bogus"][..],
+        &["template", "apply", "--bogus"][..],
+        &["scaffold", "change", "demo", "--bogus"][..],
+        &["scaffold", "change", "--bogus"][..],
+        &["discover-specs", "--bogus"][..],
+        &["steel-orchestration", "receipt", "--bogus"][..],
+        &["compact", "verify", "--bogus"][..],
+        &["discover-specs", "--include"][..],
+        &["steel-orchestration", "receipt", "--profile"][..],
+        &["compact", "verify", "--policy"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("duplicate option")
+                || stderr.contains("before options"),
             "{args:?}: {stderr}"
         );
     }

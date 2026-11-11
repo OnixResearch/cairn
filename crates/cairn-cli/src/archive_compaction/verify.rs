@@ -9,8 +9,8 @@ use cairn_core::{
 use serde_json::Value;
 
 use crate::support::{
-    default_policy_path, load_policy_file, print_json, read_option, CapabilityRoot,
-    CapabilityRootKind,
+    default_policy_path, load_policy_file, print_json, read_option, reject_unknown_options,
+    CapabilityRoot, CapabilityRootKind,
 };
 
 use super::{
@@ -19,6 +19,7 @@ use super::{
 };
 
 pub(super) fn run_compact_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(&args, &["--root", "--policy"])?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args, "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;

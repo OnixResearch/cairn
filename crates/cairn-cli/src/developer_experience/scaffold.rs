@@ -6,11 +6,16 @@ use serde_json::{json, Value};
 use crate::developer_experience::common::write_planned_files;
 use crate::support::{
     file_content_manifest, has_flag, path_string, portable_json_hash, print_json, read_option,
-    read_string_option, with_portable_receipt_hash,
+    read_string_option, reject_unknown_options_with_flags, with_portable_receipt_hash,
 };
 
 pub(super) fn run_change(args: Vec<String>, change: &str) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.developer_experience.prompt_to_change_scaffold.cli]
+    reject_unknown_options_with_flags(
+        &args,
+        &["--root", "--domain", "--request", "--request-file"],
+        &["--execute"],
+    )?;
     let root = read_option(args.clone(), "--root", ".");
     let execute = has_flag(&args, "--execute");
     let domain =

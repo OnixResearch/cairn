@@ -6,11 +6,12 @@ use serde_json::{json, Value};
 use crate::developer_experience::common::{existing_paths, write_planned_files};
 use crate::support::{
     file_content_manifest, has_flag, path_string, portable_json_hash, print_json, read_option,
-    with_portable_receipt_hash,
+    reject_unknown_options, reject_unknown_options_with_flags, with_portable_receipt_hash,
 };
 
 pub(super) fn run_list(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.developer_experience.onboarding_templates.catalog]
+    reject_unknown_options(&args, &["--root"])?;
     let root = read_option(args, "--root", ".");
     let templates = onboarding_templates()
         .into_iter()
@@ -37,6 +38,7 @@ pub(super) fn run_list(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 pub(super) fn run_apply(args: Vec<String>, template: &str) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.developer_experience.onboarding_templates.apply]
     // r[impl cairn.developer_experience.onboarding_template_catalog_expansion.apply]
+    reject_unknown_options_with_flags(&args, &["--root"], &["--execute"])?;
     let root = read_option(args.clone(), "--root", ".");
     let execute = has_flag(&args, "--execute");
     let existing = existing_template_paths(&root, template);

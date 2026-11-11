@@ -17,13 +17,22 @@ pub(crate) fn reject_unknown_options_with_flags(
     allowed_values: &[&str],
     allowed_flags: &[&str],
 ) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_repeats(args, allowed_values, allowed_flags, &[])
+}
+
+pub(crate) fn reject_unknown_options_with_repeats(
+    args: &[String],
+    allowed_values: &[&str],
+    allowed_flags: &[&str],
+    repeatable: &[&str],
+) -> Result<(), Box<dyn Error>> {
     let mut seen = BTreeSet::new();
     let mut index = 0;
     while index < args.len() {
         let argument = &args[index];
         if argument.starts_with("--") {
             if allowed_flags.contains(&argument.as_str()) {
-                if !seen.insert(argument.as_str()) {
+                if !repeatable.contains(&argument.as_str()) && !seen.insert(argument.as_str()) {
                     return Err(format!("duplicate option: {argument}").into());
                 }
                 index += 1;
@@ -38,7 +47,7 @@ pub(crate) fn reject_unknown_options_with_flags(
             {
                 return Err(format!("{argument} requires a value").into());
             }
-            if !seen.insert(argument.as_str()) {
+            if !repeatable.contains(&argument.as_str()) && !seen.insert(argument.as_str()) {
                 return Err(format!("duplicate option: {argument}").into());
             }
             index += 2;

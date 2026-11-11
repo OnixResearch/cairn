@@ -24,6 +24,9 @@ pub(crate) fn run_template(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             let Some(template) = rest.first() else {
                 return Err("template apply requires a template id".into());
             };
+            if template.starts_with('-') {
+                return Err("template apply requires a template id before options".into());
+            }
             template::run_apply(rest[1..].to_vec(), template)
         }
         unknown => Err(format!("unknown template subcommand: {unknown}").into()),
@@ -40,6 +43,9 @@ pub(crate) fn run_scaffold(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             let Some(change) = iter.next() else {
                 return Err("scaffold change requires a change name".into());
             };
+            if change.starts_with('-') {
+                return Err("scaffold change requires a change name before options".into());
+            }
             scaffold::run_change(iter.collect(), &change)
         }
         unknown => Err(format!("unknown scaffold subcommand: {unknown}").into()),

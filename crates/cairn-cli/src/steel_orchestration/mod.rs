@@ -6,6 +6,7 @@ mod receipts;
 
 use crate::support::{
     default_policy_path, load_policy_file, print_json, read_option, read_string_option,
+    reject_unknown_options,
 };
 use receipts::{default_gate_receipt, orchestration_receipt};
 
@@ -32,6 +33,7 @@ pub(crate) fn run_steel_orchestration(args: Vec<String>) -> Result<(), Box<dyn E
 }
 
 fn run_default_gate(args: &[String]) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(args, &STEEL_OPTIONS)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let policy_path = read_option(
         args.to_vec(),
@@ -50,6 +52,7 @@ fn run_default_gate(args: &[String]) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_receipt(args: &[String]) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options(args, &STEEL_OPTIONS)?;
     let root = read_option(args.to_vec(), "--root", ".");
     let policy_path = read_option(
         args.to_vec(),
@@ -69,6 +72,18 @@ fn run_receipt(args: &[String]) -> Result<(), Box<dyn Error>> {
     );
     print_json(receipt)
 }
+
+const STEEL_OPTIONS: [&str; 9] = [
+    "--root",
+    "--policy",
+    "--profile",
+    "--script",
+    "--script-hash",
+    "--equivalence-receipt-hash",
+    "--fallback-receipt-hash",
+    "--ci-reproducibility-receipt-hash",
+    "--diagnostics-receipt-hash",
+];
 
 fn steel_usage() -> &'static str {
     "usage: cairn steel-orchestration <receipt|default-gate> [--root PATH] [--policy PATH] [--profile ID] [--script PATH] [--script-hash HASH] [--equivalence-receipt-hash HASH] [--fallback-receipt-hash HASH] [--ci-reproducibility-receipt-hash HASH] [--diagnostics-receipt-hash HASH]"
