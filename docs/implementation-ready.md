@@ -10,6 +10,8 @@ cairn mcp --call cairn_implementation_ready '{"root":".","limit":20}'
 
 The CLI and MCP tool return the same `cairn.implementation-ready.v1` receipt. The machine envelope uses `cairn --machine implementation-ready ...`.
 
+`--policy PATH` selects the policy projection. Repeat `--cross-repo-evidence FILE|DIR` to supply explicit downstream evidence; these are declared inputs, not inferred facts.
+
 ## Selection units
 
 - With explicit task ordering, each selectable unit is `task:<id>`. Completed tasks remain visible in `completed_tasks` but are not selected.
