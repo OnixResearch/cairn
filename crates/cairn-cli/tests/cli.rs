@@ -2582,3 +2582,21 @@ fn agent_workflow_rejects_empty_show_id() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("requires a workflow ID"));
     Ok(())
 }
+
+#[test]
+fn change_and_spec_reject_empty_positionals() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["change", "create", ""][..],
+        &["change", "show", ""][..],
+        &["spec", "show", ""][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("requires a"),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
