@@ -25,6 +25,9 @@ pub(crate) fn run_evidence_circuit_primitive(args: Vec<String>) -> Result<(), Bo
                     "evidence circuit-primitive validate requires a JSON receipt path".into(),
                 );
             };
+            if path.is_empty() {
+                return Err("evidence validate requires a JSON receipt path".into());
+            }
             if let Some(extra) = iter.next() {
                 return Err(format!("unexpected evidence argument: {extra}").into());
             }
@@ -74,6 +77,9 @@ pub(crate) fn run_evidence_downstream_pilot(args: Vec<String>) -> Result<(), Box
                     "evidence downstream-pilot validate requires a JSON receipt path".into(),
                 );
             };
+            if path.is_empty() {
+                return Err("evidence validate requires a JSON receipt path".into());
+            }
             if let Some(extra) = iter.next() {
                 return Err(format!("unexpected evidence argument: {extra}").into());
             }
@@ -121,6 +127,9 @@ pub(crate) fn run_evidence_export_bundle_receipt(args: Vec<String>) -> Result<()
             let Some(path) = iter.next() else {
                 return Err("evidence export-bundle validate requires a JSON receipt path".into());
             };
+            if path.is_empty() {
+                return Err("evidence validate requires a JSON receipt path".into());
+            }
             if let Some(extra) = iter.next() {
                 return Err(format!("unexpected evidence argument: {extra}").into());
             }
@@ -168,6 +177,9 @@ pub(crate) fn run_evidence_name_pointer(args: Vec<String>) -> Result<(), Box<dyn
             let Some(path) = iter.next() else {
                 return Err("evidence name-pointer validate requires a JSON receipt path".into());
             };
+            if path.is_empty() {
+                return Err("evidence validate requires a JSON receipt path".into());
+            }
             if let Some(extra) = iter.next() {
                 return Err(format!("unexpected evidence argument: {extra}").into());
             }
@@ -217,6 +229,9 @@ pub(crate) fn run_evidence_function_object(args: Vec<String>) -> Result<(), Box<
                     "evidence function-object validate requires a JSON receipt path".into(),
                 );
             };
+            if path.is_empty() {
+                return Err("evidence validate requires a JSON receipt path".into());
+            }
             if let Some(extra) = iter.next() {
                 return Err(format!("unexpected evidence argument: {extra}").into());
             }

@@ -39,6 +39,9 @@ pub(crate) fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>>
             let Some(path) = iter.next() else {
                 return Err("agent-receipt validate requires a JSON receipt path".into());
             };
+            if path.is_empty() {
+                return Err("agent-receipt validate requires a JSON receipt path".into());
+            }
             if let Some(extra) = iter.next() {
                 return Err(format!("unexpected agent-receipt validate argument: {extra}").into());
             }
@@ -91,6 +94,9 @@ pub(crate) fn run_agent_receipt(args: Vec<String>) -> Result<(), Box<dyn Error>>
             let Some(path) = iter.next() else {
                 return Err("agent-receipt preserves-hash requires a JSON receipt path".into());
             };
+            if path.is_empty() {
+                return Err("agent-receipt preserves-hash requires a JSON receipt path".into());
+            }
             if let Some(extra) = iter.next() {
                 return Err(
                     format!("unexpected agent-receipt preserves-hash argument: {extra}").into(),

@@ -2519,3 +2519,25 @@ fn manifest_and_bundle_verify_reject_empty_paths() -> Result<(), Box<dyn Error>>
     }
     Ok(())
 }
+
+#[test]
+fn evidence_validators_reject_empty_receipt_paths() -> Result<(), Box<dyn Error>> {
+    let mut cases = vec![
+        vec!["agent-receipt", "validate", ""],
+        vec!["agent-receipt", "preserves-hash", ""],
+    ];
+    for command in [
+        "circuit-primitive",
+        "downstream-pilot",
+        "export-bundle",
+        "name-pointer",
+        "function-object",
+    ] {
+        cases.push(vec!["evidence", command, "validate", ""]);
+    }
+    for args in cases {
+        let output = cairn().args(&args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+    }
+    Ok(())
+}
