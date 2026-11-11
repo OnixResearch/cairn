@@ -308,7 +308,7 @@ fn read_option(
     let Some(value) = args.get(value_index) else {
         return Err(format!("{name} requires a value").into());
     };
-    if value.starts_with("--") {
+    if value.is_empty() || value.starts_with("--") {
         return Err(format!("{name} requires a value").into());
     }
     Ok(value.clone())

@@ -2386,3 +2386,37 @@ fn store_rejects_empty_option_values() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("option requires a value"));
     Ok(())
 }
+
+#[test]
+fn collaboration_and_source_review_reject_empty_values() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &[
+            "collaboration",
+            "status",
+            "demo",
+            "--backend",
+            "portable-json.v1",
+            "--root",
+            "",
+        ][..],
+        &[
+            "source-review",
+            "verify",
+            "--root",
+            ".",
+            "--attachment",
+            "",
+            "--policy",
+            "p",
+        ][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("requires a value") || stderr.contains("value missing"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}

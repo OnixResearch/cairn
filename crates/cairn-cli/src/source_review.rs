@@ -54,7 +54,7 @@ pub(crate) fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         }
         let value = args
             .get(index + 1)
-            .filter(|value| !value.starts_with("--"))
+            .filter(|value| !value.is_empty() && !value.starts_with("--"))
             .ok_or("source-review option value missing")?;
         if name == "--include" {
             // The attached row occupies one of the bounded review slots.
