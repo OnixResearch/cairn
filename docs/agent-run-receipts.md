@@ -237,6 +237,11 @@ nix run .#cairn -- determinism replay --root . --group agent --format summary --
 nix run .#cairn -- determinism verify-receipt target/replay.json --root .
 ```
 
+Replay copies each fixture root to a temporary directory. Copies exclude local
+build and agent state (`target`, `.git`, `.pi`, and root-level Nix `result*`
+symlinks); any other symlink fails closed. Successful cases remove their
+temporary copies.
+
 `determinism coverage-audit` checks the policy-owned `determinism_surface_inventory`
 against replay cases and groups before operators trust replay evidence. Each
 surface names the public command, receipt command, required replay cases, required
