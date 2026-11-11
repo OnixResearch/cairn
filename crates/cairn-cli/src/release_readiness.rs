@@ -33,12 +33,33 @@ use crate::release_evidence::release_evidence_check_index_receipt_for_path;
 use crate::stack_provenance::{stack_provenance_hash, stack_provenance_receipt_value};
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
-    read_repeated_path_options, read_string_option, safe_relative_path,
-    with_portable_content_hash_receipt,
+    read_repeated_path_options, read_string_option, reject_positional_arguments,
+    reject_unknown_options_with_repeats, safe_relative_path, with_portable_content_hash_receipt,
 };
 use crate::tracey::{repository_gate_summary, traceability_coverage_receipt};
 
 pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+    reject_unknown_options_with_repeats(
+        &args,
+        &[
+            "--root",
+            "--policy",
+            "--review-ledger",
+            "--stack-provenance",
+            "--stack-provenance-graph",
+            "--stack-provenance-authentication",
+            "--function-address-valence",
+            "--function-address-mantle",
+            "--function-address-kamacite",
+            "--function-address-graph",
+            "--function-address-authentication",
+            "--workspace-contract-matrix-receipt",
+            "--cross-repo-evidence",
+        ],
+        &[],
+        &["--cross-repo-evidence"],
+    )?;
+    reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let review_ledger = read_string_option(&args, "--review-ledger").map(PathBuf::from);

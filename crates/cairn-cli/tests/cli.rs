@@ -1935,3 +1935,23 @@ fn policy_exception_commands_reject_bad_options() -> Result<(), Box<dyn Error>> 
     }
     Ok(())
 }
+
+#[test]
+fn release_readiness_rejects_bad_options() -> Result<(), Box<dyn Error>> {
+    for args in [
+        &["release-readiness", "--bogus"][..],
+        &["release-readiness", "--review-ledger"][..],
+        &["release-readiness", "stray"][..],
+    ] {
+        let output = cairn().args(args).output()?;
+        assert!(!output.status.success(), "{args:?} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("unknown option")
+                || stderr.contains("requires a value")
+                || stderr.contains("unexpected argument"),
+            "{args:?}: {stderr}"
+        );
+    }
+    Ok(())
+}
