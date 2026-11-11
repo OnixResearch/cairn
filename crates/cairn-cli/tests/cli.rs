@@ -2574,3 +2574,11 @@ fn traceability_show_rejects_empty_requirement() -> Result<(), Box<dyn Error>> {
     assert!(String::from_utf8_lossy(&output.stderr).contains("requires <requirement-id>"));
     Ok(())
 }
+
+#[test]
+fn agent_workflow_rejects_empty_show_id() -> Result<(), Box<dyn Error>> {
+    let output = cairn().args(["agent", "workflow", "show", ""]).output()?;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires a workflow ID"));
+    Ok(())
+}

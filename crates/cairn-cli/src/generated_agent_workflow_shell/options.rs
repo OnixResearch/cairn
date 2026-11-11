@@ -116,7 +116,7 @@ fn validate_options(
     execute: bool,
     plan_hash: Option<&str>,
 ) -> Result<(), Box<dyn Error>> {
-    if command == AgentWorkflowCommand::Show && workflow.is_none() {
+    if command == AgentWorkflowCommand::Show && workflow.is_none_or(str::is_empty) {
         return Err("agent workflow show requires a workflow ID".into());
     }
     if command.requires_destination()
