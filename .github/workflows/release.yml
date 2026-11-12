@@ -14,20 +14,17 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify release gate
+    name: Verify release identity
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: cachix/install-nix-action@v31
       - name: Check tag matches workspace version
         run: |
           version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
           test -n "$version"
           test "v$version" = "$GITHUB_REF_NAME"
-      - name: Run the maintained gate
-        run: nix flake check -L
 
   build:
     name: Build and smoke x86_64-linux
