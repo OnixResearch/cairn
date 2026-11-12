@@ -1,6 +1,6 @@
 use std::{error::Error, fs};
 
-use super::support::{assert_hash_field, run_json, run_json_strings, temp_project};
+use super::support::{assert_hash_field, cairn, run_json, run_json_strings, temp_project};
 
 #[test]
 fn lifecycle_check_accepts_nickel_source_and_rejects_invalid_json() -> Result<(), Box<dyn Error>> {
@@ -140,4 +140,35 @@ fn lifecycle_markdown_render_and_import_are_receipted() -> Result<(), Box<dyn Er
     assert_eq!(import["dry_run"], true);
     assert_eq!(import["mutated"], false);
     assert_hash_field(&import, "bundle_hash")
+}
+
+#[cfg(unix)]
+#[test]
+fn lifecycle_export_check_rejects_symlinked_output() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_project("structured-lifecycle-symlink-output")?;
+    let outside = dir.join("outside.json");
+    fs::write(&outside, b"{}\n")?;
+    let link = dir.join("bundle.json");
+    symlink(&outside, &link)?;
+    let mut command = cairn();
+    command.args([
+        "lifecycle",
+        "export",
+        "--source",
+        "fixtures/structured-lifecycle/positive-bundle.ncl",
+        "--output",
+        &link.to_string_lossy(),
+        "--check",
+    ]);
+    let output = command.output()?;
+    assert!(!output.status.success());
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("must not be a symlink"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    fs::remove_dir_all(dir)?;
+    Ok(())
 }
