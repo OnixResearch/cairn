@@ -3316,3 +3316,47 @@ fn readiness_rejects_oversized_address_input() -> Result<(), Box<dyn Error>> {
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn lifecycle_check_rejects_symlinked_bundle() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("lifecycle-bundle-symlink")?;
+    let outside = dir.join("outside.json");
+    fs::write(&outside, br#"{}"#)?;
+    let link = dir.join("link.json");
+    symlink(&outside, &link)?;
+    let output = cairn()
+        .args(["lifecycle", "check", "--source", &link.to_string_lossy()])
+        .output()?;
+    assert!(!output.status.success());
+    let text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(text.contains("must not be a symlink"), "{text}");
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[test]
+fn lifecycle_check_rejects_oversized_bundle() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("lifecycle-bundle-oversized")?;
+    let input = dir.join("bundle.json");
+    let file = fs::File::create(&input)?;
+    file.set_len(16 * 1024 * 1024 + 1)?;
+    let output = cairn()
+        .args(["lifecycle", "check", "--source", &input.to_string_lossy()])
+        .output()?;
+    assert!(!output.status.success());
+    let text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(text.contains("exceeds the reviewed byte bound"), "{text}");
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
