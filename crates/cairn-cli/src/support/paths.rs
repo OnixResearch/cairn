@@ -126,6 +126,18 @@ pub(crate) fn read_bounded_text_no_symlink(
     Ok(std::fs::read_to_string(path)?)
 }
 
+pub(crate) fn read_existing_bounded_text_no_symlink(
+    path: &Path,
+    max_bytes: u64,
+    label: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    match std::fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+        Err(error) => Err(error.into()),
+        Ok(_) => read_bounded_text_no_symlink(path, max_bytes, label),
+    }
+}
+
 pub(crate) fn read_bounded_json_no_symlink(
     path: &Path,
     max_bytes: u64,

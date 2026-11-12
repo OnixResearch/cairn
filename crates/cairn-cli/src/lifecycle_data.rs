@@ -96,7 +96,11 @@ fn run_lifecycle_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let rendered = serde_json::to_string_pretty(&bundle)? + "\n";
     let mut export_issues = Vec::new();
     if is_check {
-        let existing = fs::read_to_string(&output).unwrap_or_default();
+        let existing = crate::support::read_existing_bounded_text_no_symlink(
+            Path::new(&output),
+            MAX_LIFECYCLE_BUNDLE_BYTES,
+            "generated lifecycle bundle",
+        )?;
         if existing != rendered {
             export_issues.push(json!({
                 "code": "structured_lifecycle.generated.stale",

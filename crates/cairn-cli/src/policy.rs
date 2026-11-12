@@ -33,15 +33,11 @@ pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 fn read_existing_policy_output(path: &Path) -> Result<String, Box<dyn Error>> {
-    match fs::symlink_metadata(path) {
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
-        Err(error) => Err(error.into()),
-        Ok(_) => crate::support::read_bounded_text_no_symlink(
-            path,
-            MAX_POLICY_OUTPUT_BYTES,
-            "generated policy",
-        ),
-    }
+    crate::support::read_existing_bounded_text_no_symlink(
+        path,
+        MAX_POLICY_OUTPUT_BYTES,
+        "generated policy",
+    )
 }
 
 fn run_policy_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
