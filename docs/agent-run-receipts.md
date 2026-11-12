@@ -274,6 +274,8 @@ checks the policy-owned `agent` replay group, links the environment attestation
 hash through agent replay evidence, and emits a single deterministic pass/fail
 receipt.
 
+Manifest and bundle inputs are read with bounded, non-symlink reads.
+
 The outer publication artifact should be an evidence manifest. Generate it from
 saved artifacts and then verify the generated manifest before publication:
 
