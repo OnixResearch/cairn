@@ -15,6 +15,8 @@ The evaluator descriptor records identity `github:nickel-lang/nickel@1320a983e6c
 
 The wrapper rejects parent traversal, absolute paths, undeclared or unreadable imports, mutable source identities, evaluator-cohort drift, output drift, and diagnostic drift. Generated destinations are still written only by Cairn after semantic validation and freshness checks.
 
+JSON lifecycle bundle inputs are bounded to 16 MiB and must not be symlinks.
+
 ## Validation
 
 ```console
