@@ -1,36 +1,16 @@
-use std::{error::Error, fs, path::Path};
+use std::{error::Error, path::Path};
 
 use serde_json::Value;
 
 use super::AGENT_RECEIPT_MAX_BYTES;
 
 pub(crate) fn read_json_artifact(path: &Path, max_bytes: u64) -> Result<Value, Box<dyn Error>> {
-    let metadata = fs::symlink_metadata(path)?;
-    if metadata.file_type().is_symlink() {
-        return Err(format!("artifact {} must not be a symlink", path.display()).into());
-    }
-    if metadata.len() > max_bytes {
-        return Err("artifact exceeds bounded read limit".into());
-    }
-    Ok(serde_json::from_slice(&fs::read(path)?)?)
+    crate::support::read_bounded_json_no_symlink(path, max_bytes, "artifact")
 }
 
 pub(crate) fn read_agent_receipt_file(path: &Path) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.agent_receipt_validation_surface.cli]
-    let metadata = fs::symlink_metadata(path)?;
-    if metadata.file_type().is_symlink() {
-        return Err(format!("agent receipt {} must not be a symlink", path.display()).into());
-    }
-    if metadata.len() > AGENT_RECEIPT_MAX_BYTES {
-        return Err(format!(
-            "agent receipt exceeds bounded read limit: {} bytes > {}",
-            metadata.len(),
-            AGENT_RECEIPT_MAX_BYTES
-        )
-        .into());
-    }
-    let bytes = fs::read(path)?;
-    Ok(serde_json::from_slice(&bytes)?)
+    crate::support::read_bounded_json_no_symlink(path, AGENT_RECEIPT_MAX_BYTES, "agent receipt")
 }
 
 pub(crate) fn ensure_inline_receipt_is_bounded(receipt: &Value) -> Result<(), Box<dyn Error>> {
