@@ -18,6 +18,7 @@ use crate::support::{
 };
 
 const MAX_POLICY_OUTPUT_BYTES: u64 = 16 * 1024 * 1024;
+const GENERATED_POLICY_RELATIVE_PATH: &str = "cairn-policy/generated/cairn-policy.json";
 
 pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if args.first().map(String::as_str) == Some("export") {
@@ -52,7 +53,9 @@ fn run_policy_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             .to_str()
             .unwrap_or("cairn-policy/default.ncl"),
     );
-    let output = read_option(args, "--output", default_policy_path());
+    // The packaged read default (`CAIRN_POLICY`) must not redirect generated
+    // policy output outside the repository.
+    let output = read_option(args, "--output", GENERATED_POLICY_RELATIVE_PATH);
     let rendered = export_policy_from_nickel(&source, &output)?;
     check_invalid_policy_fixtures(source.parent().unwrap_or(Path::new(".")).join("fixtures"))?;
     if is_check {

@@ -1,15 +1,25 @@
-name: Authenticated evidence flake check
+name: CI
 
 on:
   pull_request:
   push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   flake-check:
-    runs-on: ubuntu-latest
+    name: Nix flake check
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
       # r[impl cairn.stack_provenance_gates.authenticated_inputs.flake_check_ci]
-      - name: Verify authenticated evidence remediation
+      - name: Verify authenticated evidence remediation and the maintained gate
         run: nix flake check

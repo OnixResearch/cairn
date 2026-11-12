@@ -3,7 +3,7 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.artifact = {
-    url = "git+ssh://git@github.com/OnixResearch/onix-artifact.git?rev=e41340bec587b6d049b5cc518ec7db925dde84be";
+    url = "git+https://github.com/OnixResearch/onix-artifact.git?rev=e41340bec587b6d049b5cc518ec7db925dde84be";
     flake = false;
   };
   inputs.nickel-export = {
@@ -21,11 +21,11 @@
     flake = false;
   };
   inputs.mantle-build-contract = {
-    url = "git+ssh://git@github.com/OnixResearch/mantle.git?rev=0bbab77e23ab95caa4e4184b9945cfaa5c8040e2";
+    url = "git+https://github.com/OnixResearch/mantle.git?rev=0bbab77e23ab95caa4e4184b9945cfaa5c8040e2";
     flake = false;
   };
   inputs.bounded-exec = {
-    url = "git+https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525";
+    url = "git+https://github.com/OnixResearch/bounded-exec.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525";
     flake = false;
   };
   inputs.cap-root = {
@@ -97,7 +97,7 @@
         nickel-1-17-0 = nickelCohort pkgs.stdenv.hostPlatform.system;
         cairn = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn";
-          version = "0.1.0";
+          version = "0.2.0";
           src = self;
           cargoLock = rustCargoLock;
           cargoBuildFlags = [
@@ -115,8 +115,10 @@
             install -Dm644 ${durable-file-publication}/provenance/SOURCE.md $out/share/licenses/cairn/durable-file-publication/provenance/SOURCE.md
             install -Dm644 ${durable-file-publication}/provenance/source.ncl $out/share/licenses/cairn/durable-file-publication/provenance/source.ncl
             install -Dm644 ${durable-file-publication}/provenance/source.json $out/share/licenses/cairn/durable-file-publication/provenance/source.json
+            install -Dm644 ${self}/cairn-policy/generated/cairn-policy.json $out/share/cairn/cairn-policy.json
             # r[impl cairn.supersede.policy_export_packaged_runtime.wrapper]
             wrapProgram $out/bin/cairn \
+              --set-default CAIRN_POLICY $out/share/cairn/cairn-policy.json \
               --prefix PATH : ${
                 pkgs.lib.makeBinPath [
                   (nickelCohort pkgs.stdenv.hostPlatform.system)
@@ -124,6 +126,7 @@
                 ]
               }
             wrapProgram $out/bin/ironspec \
+              --set-default CAIRN_POLICY $out/share/cairn/cairn-policy.json \
               --prefix PATH : ${
                 pkgs.lib.makeBinPath [
                   (nickelCohort pkgs.stdenv.hostPlatform.system)
@@ -132,6 +135,12 @@
               }
           '';
           doCheck = false;
+          meta = {
+            description = "Deterministic lifecycle gates for repository work";
+            homepage = "https://github.com/OnixResearch/cairn";
+            license = pkgs.lib.licenses.agpl3Plus;
+            mainProgram = "cairn";
+          };
         };
         ironspec = self.packages.${pkgs.stdenv.hostPlatform.system}.cairn;
         default = self.packages.${pkgs.stdenv.hostPlatform.system}.cairn;
@@ -364,6 +373,26 @@
               test ! -e "$sentinel"
               touch $out
             '';
+
+        # r[verify cairn.supersede.packaged_default_policy.foreign]
+        # r[verify cairn.supersede.packaged_default_policy.explicit]
+        packaged-foreign-working-directory =
+          pkgs.runCommand "cairn-packaged-foreign-working-directory" { } ''
+            pkg=${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}
+            mkdir -p "$TMPDIR/work"
+            cd "$TMPDIR/work"
+            "$pkg/bin/cairn" --version | grep -q '^cairn '
+            "$pkg/bin/cairn" init --root repo > init.json
+            "$pkg/bin/cairn" validate --root repo > validate.json
+            grep -q '"valid": true' validate.json
+            "$pkg/bin/cairn" status --root repo > status.json
+            grep -q '"layout": "cairn"' status.json
+            ${pkgs.coreutils}/bin/env CAIRN_POLICY=/nonexistent \
+              "$pkg/bin/cairn" validate --root repo \
+              --policy "$pkg/share/cairn/cairn-policy.json" > override.json
+            grep -q '"source": "explicit"' override.json
+            touch $out
+          '';
 
         # r[verify cairn.supersede.rust_nickel_only_gates.no_python_scripts]
         policy-fresh =

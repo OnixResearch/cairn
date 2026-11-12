@@ -68,8 +68,23 @@ pub(crate) fn load_policy_file_with_budget(
     })
 }
 
+const DEFAULT_POLICY_RELATIVE_PATH: &str = "cairn-policy/generated/cairn-policy.json";
+
+static DEFAULT_POLICY_PATH: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+    std::env::var("CAIRN_POLICY")
+        .ok()
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| DEFAULT_POLICY_RELATIVE_PATH.to_string())
+});
+
+/// Default generated policy locator.
+///
+/// A packaged binary sets `CAIRN_POLICY` to its own installed copy so commands
+/// work from any working directory. An explicit `--policy` argument always
+/// wins because callers read it before falling back here.
+// r[impl cairn.supersede.packaged_default_policy]
 pub(crate) fn default_policy_path() -> &'static str {
-    "cairn-policy/generated/cairn-policy.json"
+    DEFAULT_POLICY_PATH.as_str()
 }
 
 #[cfg(test)]

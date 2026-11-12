@@ -10,7 +10,7 @@
 }:
 let
   revision = "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2";
-  source = "git+ssh://git@github.com/OnixResearch/mantle.git?rev=${revision}#${revision}";
+  source = "git+https://github.com/OnixResearch/mantle.git?rev=${revision}#${revision}";
   craneLib = crane.mkLib pkgs;
   checker = import ./check-producer-source-pins.nix { lib = pkgs.lib; };
   kilnWorkspace = builtins.fromTOML (builtins.readFile "${kilnSource}/Cargo.toml");

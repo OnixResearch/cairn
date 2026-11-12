@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify release gate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: cachix/install-nix-action@v31
+      - name: Check tag matches workspace version
+        run: |
+          version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
+          test -n "$version"
+          test "v$version" = "$GITHUB_REF_NAME"
+      - name: Run the maintained gate
+        run: nix flake check -L
+
+  build:
+    name: Build and smoke x86_64-linux
+    needs: verify
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Build package
+        run: nix build .#cairn -L -o result
+      - name: Smoke test from a foreign working directory
+        run: |
+          work=$(mktemp -d)
+          cd "$work"
+          "$GITHUB_WORKSPACE/result/bin/cairn" --version
+          "$GITHUB_WORKSPACE/result/bin/cairn" init --root repo
+          "$GITHUB_WORKSPACE/result/bin/cairn" validate --root repo > validate.json
+          "$GITHUB_WORKSPACE/result/bin/cairn" status --root repo > status.json
+          grep -q '"valid": true' validate.json
+          grep -q '"layout": "cairn"' status.json
+      - name: Record runtime closure
+        run: |
+          version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
+          nix path-info -r ./result | sort > "cairn-${version}-x86_64-linux.closure.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence
+          path: cairn-*.closure.txt
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-evidence
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "Cairn $GITHUB_REF_NAME" \
+            --generate-notes \
+            cairn-*.closure.txt

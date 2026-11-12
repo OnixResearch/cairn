@@ -186,6 +186,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
     match command.as_str() {
         "--help" | "-h" | "help" => print_usage(),
+        "--version" | "-V" => println!("cairn {}", env!("CARGO_PKG_VERSION")),
         "init" => run_init(args.collect())?,
         "setup" => bootstrap::run(args.collect())?,
         "change" => run_change(args.collect())?,

@@ -9,12 +9,12 @@
         "rev": "e41340bec587b6d049b5cc518ec7db925dde84be",
         "revCount": 13,
         "type": "git",
-        "url": "ssh://git@github.com/OnixResearch/onix-artifact.git"
+        "url": "https://github.com/OnixResearch/onix-artifact.git"
       },
       "original": {
         "rev": "e41340bec587b6d049b5cc518ec7db925dde84be",
         "type": "git",
-        "url": "ssh://git@github.com/OnixResearch/onix-artifact.git"
+        "url": "https://github.com/OnixResearch/onix-artifact.git"
       }
     },
     "bounded-exec": {
@@ -26,12 +26,12 @@
         "rev": "29dac88ecded94457572db3fdfaaaab95fa91525",
         "revCount": 3,
         "type": "git",
-        "url": "https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git"
+        "url": "https://github.com/OnixResearch/bounded-exec.git"
       },
       "original": {
         "rev": "29dac88ecded94457572db3fdfaaaab95fa91525",
         "type": "git",
-        "url": "https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git"
+        "url": "https://github.com/OnixResearch/bounded-exec.git"
       }
     },
     "cairn": {
@@ -434,12 +434,12 @@
         "rev": "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2",
         "revCount": 2607,
         "type": "git",
-        "url": "ssh://git@github.com/OnixResearch/mantle.git"
+        "url": "https://github.com/OnixResearch/mantle.git"
       },
       "original": {
         "rev": "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2",
         "type": "git",
-        "url": "ssh://git@github.com/OnixResearch/mantle.git"
+        "url": "https://github.com/OnixResearch/mantle.git"
       }
     },
     "nickel-1-17-0": {

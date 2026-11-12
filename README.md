@@ -2,9 +2,126 @@
 
 <img width="400" height="400" alt="Cairn project logo" src="https://github.com/user-attachments/assets/5f3ecfb2-0abb-42c8-b03c-8cd35afa7b77" />
 
-Cairn is a Rust lifecycle engine for repository work. It uses a native `.cairn/` layout and a Nickel-authored policy layer.
+**Deterministic lifecycle gates for repositories that humans and coding agents change together.**
 
-Old `cairn/`, `ironspec/`, and `openspec/` trees are migration inputs only. Normal commands do not use them as a fallback.
+Coding agents can produce changes faster than review can verify them. Cairn makes
+each change explicit — proposal, design, tasks, and specs — then evaluates
+policy-owned gates and emits deterministic receipts that a person, a CI job, or
+another agent can inspect.
+
+Cairn is a Rust lifecycle engine with a native `.cairn/` layout and a
+Nickel-authored policy layer. It runs locally, does not call a model, and does
+not publish anything on its own.
+
+## What you get
+
+- **A bounded change package.** `cairn scaffold change` creates the same
+  reviewable shape every time instead of a free-form prompt result.
+- **Policy-owned gates.** Stages, required artifacts, exemptions, and profiles
+  live in Nickel and compile to checked-in generated JSON.
+- **Deterministic receipts.** Validation, gates, readiness, evidence, and release
+  checks return stable JSON with policy and input identities.
+- **One machine outcome.** `cairn --machine <command>` gives a direct CLI agent
+  one versioned result instead of command-specific prose and exit rules.
+- **Agent and CI adapters.** MCP tools, generated project guidance, check
+  evidence, gate interchange, and release-run ledgers share the same contracts.
+- **A pure core.** `cairn-core` holds deterministic transforms;
+  `cairn-cli` owns arguments, files, policy loading, output, exits, and mutation.
+
+## Who it is for
+
+- Maintainers using coding agents in repositories where “the tests pass” is not
+  enough evidence for a release.
+- Multi-repository Rust and Nix teams that need the same lifecycle rules across
+  projects without copying prose.
+- Tool and platform teams that want a machine-readable gate boundary rather than
+  another dashboard.
+
+Cairn is deliberately narrower than a project manager: it does not schedule
+work, assign people, or claim that a passing gate proves code correctness.
+
+## Install
+
+The supported install is the Nix flake. It includes the pinned Nickel cohort and
+`nickel-export` needed for policy commands.
+
+```bash
+nix profile install github:OnixResearch/cairn#cairn
+cairn --version
+```
+
+Pin a release for repeatable automation:
+
+```bash
+nix profile install github:OnixResearch/cairn/v0.2.0#cairn
+```
+
+Run it once without installing:
+
+```bash
+nix run github:OnixResearch/cairn#cairn -- --help
+```
+
+Install from source with Cargo:
+
+```bash
+cargo install --git https://github.com/OnixResearch/cairn cairn-cli --locked
+```
+
+A Cargo install provides the CLI; `policy export` and policy regeneration also
+need the pinned Nickel cohort and `nickel-export` on `PATH`. The Nix package
+installs both, enables the `redb-registry` feature, and points `CAIRN_POLICY` at
+its bundled generated policy, so it works from any working directory. Add
+`--features redb-registry` to a Cargo install if you need the redb registry
+adapter. Pass `--policy PATH` to override the packaged default.
+
+<!-- r[impl cairn.supersede.packaged_default_policy.docs] -->
+
+## 60-second demo
+
+```bash
+export REPO=$(mktemp -d)
+
+cairn init --root "$REPO"
+
+cairn scaffold change add-friendly-start \
+  --root "$REPO" \
+  --request "Add a friendly start path for first-time users." \
+  --execute
+
+cairn validate --root "$REPO"
+cairn gate proposal add-friendly-start --root "$REPO"
+cairn readiness add-friendly-start --root "$REPO" --format summary
+```
+
+`init` creates `.cairn/specs`, `.cairn/changes`, and `.cairn/archive`.
+`scaffold` writes a preview unless `--execute` is present. Each gate prints a
+JSON receipt with validity, issues, policy hash, input hash, and receipt hash.
+
+Ask for the versioned machine outcome instead:
+
+```bash
+cairn --machine validate --root "$REPO"
+```
+
+## Project status
+
+Cairn `0.2.x` is the current release line. Documented stable receipt fields are compatibility
+surfaces. Other commands, schemas, and policy can change in a minor release with
+release notes.
+
+The release gate is verified on x86_64 Linux. aarch64 Linux is packaged but not
+claimed until a builder-backed validation receipt exists. See
+[`docs/aarch64-release-support.md`](docs/aarch64-release-support.md).
+
+A passing Cairn gate proves conformance to selected policy and declared inputs.
+It does not prove code correctness, evidence truth, build reproducibility,
+deployment safety, or release eligibility.
+
+Legacy `cairn/`, `ironspec/`, and `openspec/` trees are migration inputs only.
+Normal commands do not use them as a fallback.
+
+## Architecture
 
 Cairn separates a pure core from an imperative shell:
 
@@ -15,12 +132,6 @@ Cairn separates a pure core from an imperative shell:
 - Runtime commands use checked-in generated policy JSON.
 
 The strict core is in `crates/cairn-core/src/verified/`. Octet checks its purity boundary.
-
-## Project status
-
-Cairn is under active development. Documented stable receipt fields are compatibility surfaces. Other commands, schemas, and policy can change.
-
-A passing Cairn gate proves conformance to selected policy and inputs. It does not prove code correctness, evidence truth, or release eligibility.
 
 ## Repository layout
 

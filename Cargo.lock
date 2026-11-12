@@ -110,7 +110,7 @@ checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 [[package]]
 name = "artifact-auth-core"
 version = "0.1.0"
-source = "git+ssh://git@github.com/OnixResearch/onix-artifact.git?rev=e41340bec587b6d049b5cc518ec7db925dde84be#e41340bec587b6d049b5cc518ec7db925dde84be"
+source = "git+https://github.com/OnixResearch/onix-artifact.git?rev=e41340bec587b6d049b5cc518ec7db925dde84be#e41340bec587b6d049b5cc518ec7db925dde84be"
 dependencies = [
  "blake3",
  "serde",
@@ -119,7 +119,7 @@ dependencies = [
 [[package]]
 name = "artifact-auth-ed25519"
 version = "0.1.0"
-source = "git+ssh://git@github.com/OnixResearch/onix-artifact.git?rev=e41340bec587b6d049b5cc518ec7db925dde84be#e41340bec587b6d049b5cc518ec7db925dde84be"
+source = "git+https://github.com/OnixResearch/onix-artifact.git?rev=e41340bec587b6d049b5cc518ec7db925dde84be#e41340bec587b6d049b5cc518ec7db925dde84be"
 dependencies = [
  "artifact-auth-core",
  "blake3",
@@ -275,7 +275,7 @@ dependencies = [
 [[package]]
 name = "bounded-exec"
 version = "0.1.0"
-source = "git+https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525#29dac88ecded94457572db3fdfaaaab95fa91525"
+source = "git+https://github.com/OnixResearch/bounded-exec.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525#29dac88ecded94457572db3fdfaaaab95fa91525"
 dependencies = [
  "bounded-exec-core",
  "nix 0.30.1",
@@ -284,7 +284,7 @@ dependencies = [
 [[package]]
 name = "bounded-exec-core"
 version = "0.1.0"
-source = "git+https://git.onix.computer/z2CpqLFpdP36fZXYUK5ZNWxMibpCo.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525#29dac88ecded94457572db3fdfaaaab95fa91525"
+source = "git+https://github.com/OnixResearch/bounded-exec.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525#29dac88ecded94457572db3fdfaaaab95fa91525"
 
 [[package]]
 name = "bounded-tree-cap"
@@ -327,7 +327,7 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "cairn-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "artifact-auth-core",
  "artifact-auth-ed25519",
@@ -355,7 +355,7 @@ dependencies = [
 
 [[package]]
 name = "cairn-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "artifact-auth-core",
  "artifact-auth-ed25519",
@@ -371,7 +371,7 @@ dependencies = [
 
 [[package]]
 name = "cairn-gate-contract"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "serde",
@@ -1531,7 +1531,7 @@ dependencies = [
 [[package]]
 name = "mantle-build-contract"
 version = "0.1.0"
-source = "git+ssh://git@github.com/OnixResearch/mantle.git?rev=0bbab77e23ab95caa4e4184b9945cfaa5c8040e2#0bbab77e23ab95caa4e4184b9945cfaa5c8040e2"
+source = "git+https://github.com/OnixResearch/mantle.git?rev=0bbab77e23ab95caa4e4184b9945cfaa5c8040e2#0bbab77e23ab95caa4e4184b9945cfaa5c8040e2"
 dependencies = [
  "blake3",
  "serde",
@@ -1784,7 +1784,7 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "onix-cairn-radicle-cob"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "cairn-core",

@@ -2536,6 +2536,33 @@ r[cairn.supersede.policy_export_packaged_runtime.validation]
 - WHEN focused package checks, Cairn validation, Tracey coverage, and flake checks run
 - THEN the package runtime, lifecycle specs, traceability, and existing repository gates SHALL pass.
 
+### Requirement: Packaged default policy resolution
+r[cairn.supersede.packaged_default_policy] The packaged CLI MUST resolve its bundled generated policy when no explicit policy is supplied, and MUST prefer an explicit `--policy` value.
+
+#### Scenario: Packaged CLI works outside a source checkout
+r[cairn.supersede.packaged_default_policy.foreign]
+- GIVEN a packaged Cairn binary executed outside a Cairn source checkout
+- WHEN the operator runs `cairn validate --root REPO` without `--policy`
+- THEN the command SHALL use the bundled generated policy and complete validation.
+
+#### Scenario: Explicit policy wins
+r[cairn.supersede.packaged_default_policy.explicit]
+- GIVEN `CAIRN_POLICY` names an unavailable path
+- WHEN the operator passes `--policy PATH`
+- THEN the command SHALL use the explicit path instead of the environment default.
+
+#### Scenario: Operator docs state the override
+r[cairn.supersede.packaged_default_policy.docs]
+- GIVEN the packaged default-policy behavior
+- WHEN a reader opens the install guidance
+- THEN the guidance SHALL state that the package points `CAIRN_POLICY` at its bundled policy and that `--policy` overrides it.
+
+#### Scenario: Packaged default policy is verified
+r[cairn.supersede.packaged_default_policy.validation]
+- GIVEN the packaged default-policy implementation
+- WHEN focused package checks, Cairn validation, traceability coverage, and flake checks run
+- THEN the foreign-directory, explicit-override, documentation, and existing repository gates SHALL pass.
+
 ### Requirement: Authoritative repo-owned traceability checker
 r[cairn.supersede.traceability_ownership.authoritative_checker]
 Cairn MUST evaluate accepted requirement coverage with a repo-owned deterministic checker that does not invoke the external Tracey binary, Tracey daemon, network, clock, or ambient process state.
