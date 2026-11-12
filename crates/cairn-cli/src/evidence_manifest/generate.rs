@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 
 use crate::support::{
     path_string, portable_json_hash, print_json, read_option, reject_positional_arguments,
-    reject_unknown_options, safe_relative_path, with_portable_receipt_hash,
+    reject_unknown_options, with_portable_receipt_hash,
 };
 
 use super::artifact::{manifest_artifact_entry, read_manifest_artifact};
@@ -110,6 +110,13 @@ pub(super) fn run_evidence_manifest_generate(args: Vec<String>) -> Result<(), Bo
         }
     }
     Ok(())
+}
+
+fn manifest_artifact_display_path(base: &Path, path: &Path) -> PathBuf {
+    match path.strip_prefix(base) {
+        Ok(relative) => relative.to_path_buf(),
+        Err(_) => std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf()),
+    }
 }
 
 fn evidence_manifest_generate_options(args: &[String]) -> EvidenceManifestGenerateOptions {
@@ -248,7 +255,7 @@ pub(crate) fn evidence_manifest_generate_manifest(
                 .map(Path::new)
                 .and_then(Path::parent)
                 .unwrap_or_else(|| Path::new("."));
-            let display_path = PathBuf::from(safe_relative_path(display_base, path));
+            let display_path = manifest_artifact_display_path(display_base, path);
             match read_manifest_artifact(&options.root, role, path) {
                 Ok((value, hash)) => {
                     match manifest_artifact_entry(role, &display_path, &value, hash) {
@@ -336,6 +343,32 @@ fn evidence_manifest_generate_receipt(
 mod tests {
     use super::evidence_manifest_generate_options;
     use std::path::PathBuf;
+
+    #[test]
+    fn artifact_paths_are_manifest_relative_or_absolute() {
+        use super::manifest_artifact_display_path;
+        use std::path::Path;
+
+        assert_eq!(
+            manifest_artifact_display_path(
+                Path::new("/repo/target"),
+                Path::new("/repo/target/bundle.json")
+            ),
+            Path::new("bundle.json")
+        );
+        assert_eq!(
+            manifest_artifact_display_path(
+                Path::new("/repo/generated"),
+                Path::new("/repo/target/bundle.json")
+            ),
+            Path::new("/repo/target/bundle.json")
+        );
+        assert!(manifest_artifact_display_path(
+            Path::new("/repo/generated"),
+            Path::new("target/bundle.json")
+        )
+        .is_absolute());
+    }
 
     #[test]
     fn keeps_generate_paths_explicit() {
