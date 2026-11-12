@@ -3,6 +3,8 @@ use std::{collections::BTreeSet, error::Error, fs, path::PathBuf};
 use cairn_core::canonical_preserves_hash;
 use serde_json::{json, Value};
 
+const MAX_PRESERVES_CORPUS_BYTES: u64 = 16 * 1024 * 1024;
+
 use crate::support::{
     has_flag, print_json, read_option, reject_positional_arguments, reject_unknown_options,
     reject_unknown_options_with_flags, with_receipt_hash,
@@ -48,7 +50,11 @@ fn run_preserves_corpus_explain(args: Vec<String>) -> Result<(), Box<dyn Error>>
 fn preserves_corpus_explain_receipt(path: PathBuf) -> Value {
     let path_text = path.to_string_lossy().to_string();
     let mut issues = Vec::new();
-    let input = match fs::read_to_string(&path) {
+    let input = match crate::support::read_bounded_text_no_symlink(
+        &path,
+        MAX_PRESERVES_CORPUS_BYTES,
+        "preserves canonicalization corpus",
+    ) {
         Ok(text) => text,
         Err(error) => {
             issues.push(json!({
@@ -200,7 +206,11 @@ pub(crate) fn preserves_corpus_freshness_receipt(path: PathBuf) -> Value {
 fn preserves_corpus_update_receipt(path: PathBuf, execute: bool) -> (Value, Option<String>) {
     let path_text = path.to_string_lossy().to_string();
     let mut issues = Vec::new();
-    let input = match fs::read_to_string(&path) {
+    let input = match crate::support::read_bounded_text_no_symlink(
+        &path,
+        MAX_PRESERVES_CORPUS_BYTES,
+        "preserves canonicalization corpus",
+    ) {
         Ok(text) => text,
         Err(error) => {
             issues.push(json!({
