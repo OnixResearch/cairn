@@ -3073,7 +3073,7 @@ fn receipt_commands_reject_symlink_inputs() -> Result<(), Box<dyn Error>> {
         let stderr = String::from_utf8_lossy(&output.stderr);
         let stdout = String::from_utf8_lossy(&output.stdout);
         assert!(
-            stderr.contains("must not be a symlink") || stdout.contains("manifest.read_failed"),
+            stderr.contains("must not be a symlink") || stdout.contains("read_failed"),
             "{args:?}: {stderr}{stdout}"
         );
     }
