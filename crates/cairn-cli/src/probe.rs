@@ -44,6 +44,7 @@ const PROBE_DECLARATIONS_PATH: &str = "probes/probes.json";
 const SUCCESS_STATUS_CLASS: &str = "success";
 const FAILURE_STATUS_CLASS: &str = "failure";
 const MAX_SAVED_PROBE_BYTES: usize = 64 * 1024;
+const MAX_PROBE_INPUT_BYTES: u64 = 1024 * 1024;
 const MAX_SAVED_PROBES: usize = 64;
 const DEFAULT_EXPECTED_STATUS_CLASS: &str = SUCCESS_STATUS_CLASS;
 const CAIRN_LOCAL_PROFILE: &str = "cairn-local";
@@ -712,7 +713,7 @@ fn with_probe_receipt_hash(mut value: Value) -> Value {
 }
 
 fn read_json_file(path: &Path) -> Result<Value, Box<dyn Error>> {
-    Ok(serde_json::from_slice(&fs::read(path)?)?)
+    crate::support::read_bounded_json_no_symlink(path, MAX_PROBE_INPUT_BYTES, "probe input")
 }
 
 fn probes_array(value: &Value) -> Vec<Value> {
