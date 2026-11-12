@@ -136,8 +136,11 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
     let publishers = actor_set(read_string_option(args, "--publishers"));
     let decision =
         read_string_option(args, "--decision").ok_or("adr import requires --decision FILE")?;
-    let content = std::fs::read_to_string(&decision)
-        .map_err(|e| format!("failed to read {decision}: {e}"))?;
+    let content = crate::support::read_bounded_text_no_symlink(
+        &PathBuf::from(&decision),
+        PORTABLE_MAX_BYTES,
+        "ADR decision",
+    )?;
     let init = DocumentInit {
         schema: ADR_SCHEMA_V1.to_string(),
         kind: "adr".to_string(),

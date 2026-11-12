@@ -146,8 +146,11 @@ fn run_import(args: &[String]) -> Result<(), Box<dyn Error>> {
         return Err("COB requires a git_oid base revision".into());
     }
     let claim_body = read_string_option(args, "--decision").ok_or("requires --decision FILE")?;
-    let content = std::fs::read_to_string(&claim_body)
-        .map_err(|e| format!("failed to read {claim_body}: {e}"))?;
+    let content = crate::support::read_bounded_text_no_symlink(
+        &PathBuf::from(&claim_body),
+        PORTABLE_MAX_BYTES,
+        "verification obligation claim",
+    )?;
     let init = WorkflowInit {
         schema: VERIFICATION_OBLIGATION_SCHEMA_V1.to_string(),
         kind: "verification-obligation".to_string(),

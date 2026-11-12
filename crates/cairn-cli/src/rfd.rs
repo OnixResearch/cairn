@@ -459,8 +459,11 @@ fn read_number(args: &[String], flag: &str) -> Result<u64, Box<dyn Error>> {
 }
 
 fn read_option_path(path: &str) -> Result<String, Box<dyn Error>> {
-    let path = PathBuf::from(path);
-    std::fs::read_to_string(&path).map_err(|e| format!("failed to read {path:?}: {e}").into())
+    crate::support::read_bounded_text_no_symlink(
+        &PathBuf::from(path),
+        PORTABLE_MAX_BYTES,
+        "RFD specification",
+    )
 }
 
 fn has_flag(args: &[String], flag: &str) -> bool {
