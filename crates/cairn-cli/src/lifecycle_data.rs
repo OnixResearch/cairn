@@ -38,6 +38,7 @@ use crate::support::{
     reject_unknown_options_with_flags, with_receipt_hash,
 };
 
+const MAX_LIFECYCLE_BUNDLE_BYTES: u64 = 16 * 1024 * 1024;
 const STRUCTURED_LIFECYCLE_EXPORT_SCHEMA: &str = "cairn.structured-lifecycle.export-receipt.v1";
 const STRUCTURED_LIFECYCLE_RENDER_SCHEMA: &str = "cairn.structured-lifecycle.render-receipt.v1";
 const STRUCTURED_LIFECYCLE_IMPORT_SCHEMA: &str = "cairn.structured-lifecycle.import-receipt.v1";
@@ -241,20 +242,23 @@ fn lifecycle_check_receipt(
 }
 
 fn load_lifecycle_bundle(source: &Path) -> Result<Value, Box<dyn Error>> {
-    let output = if source.extension().and_then(|value| value.to_str()) == Some("ncl") {
+    if source.extension().and_then(|value| value.to_str()) == Some("ncl") {
         // r[impl cairn.nickel_export_cutover.boundary]
         // r[impl cairn.nickel_export_cutover.dual_run]
-        export_json_dual_run(
+        let output = export_json_dual_run(
             "cairn.structured-lifecycle",
             source,
             Path::new("target/cairn-lifecycle-export.json"),
             false,
         )?
-        .bytes
-    } else {
-        fs::read(source)?
-    };
-    Ok(serde_json::from_slice(&output)?)
+        .bytes;
+        return Ok(serde_json::from_slice(&output)?);
+    }
+    crate::support::read_bounded_json_no_symlink(
+        source,
+        MAX_LIFECYCLE_BUNDLE_BYTES,
+        "lifecycle bundle",
+    )
 }
 
 fn source_format(source: &Path) -> &'static str {
