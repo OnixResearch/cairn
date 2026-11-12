@@ -298,6 +298,8 @@ nix run .#cairn -- evidence-manifest verify target/manifest.json --root .
 
 Relative manifest paths resolve under `--root`; absolute paths are used as given. Generate inputs and `--out` remain explicit paths resolved from the process working directory.
 
+Generated artifact paths are written relative to the manifest's parent directory; artifacts outside that directory remain absolute.
+
 A manifest contains an `artifacts` array of objects with `role`, `path`, `hash`,
 and optional `schema` fields. Supported roles include `agent_evidence_bundle`,
 `agent_receipt`, `replay_receipt`, `replay_verification`, `release_readiness`,
