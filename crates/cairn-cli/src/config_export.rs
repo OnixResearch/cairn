@@ -603,6 +603,11 @@ fn read_optional_regular_file(path: &Path) -> Result<Option<Vec<u8>>, Box<dyn Er
             path.display()
         )
         .into()),
+        Ok(metadata) if metadata.len() > SOURCE_FILE_MAX_BYTES => Err(format!(
+            "configuration projection exceeds the reviewed byte bound: {}",
+            path.display()
+        )
+        .into()),
         Ok(_) => Ok(Some(fs::read(path)?)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error.into()),
