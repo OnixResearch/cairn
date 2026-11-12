@@ -1,0 +1,32 @@
+name: aarch64 validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to validate
+        required: true
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and smoke aarch64-linux
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: cachix/install-nix-action@v31
+      - name: Build package
+        run: nix build .#cairn -L -o result
+      - name: Smoke test from a foreign working directory
+        run: |
+          work=$(mktemp -d)
+          cd "$work"
+          "$GITHUB_WORKSPACE/result/bin/cairn" --version
+          "$GITHUB_WORKSPACE/result/bin/cairn" init --root repo
+          "$GITHUB_WORKSPACE/result/bin/cairn" validate --root repo > validate.json
+          grep -q '"valid": true' validate.json
