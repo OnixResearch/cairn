@@ -3386,3 +3386,33 @@ fn readiness_rejects_symlinked_authentication_manifest() -> Result<(), Box<dyn E
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[test]
+fn receipt_commands_reject_oversized_inputs() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("receipt-input-oversized")?;
+    for (name, size, args) in [
+        (
+            "ledger.json",
+            2 * 1024 * 1024 + 1,
+            vec!["release-run", "status"],
+        ),
+        (
+            "receipt.json",
+            1024 * 1024 + 1,
+            vec!["state-machine-receipt", "validate"],
+        ),
+    ] {
+        let input = dir.join(name);
+        let file = fs::File::create(&input)?;
+        file.set_len(size)?;
+        let mut command = cairn();
+        command
+            .args(args)
+            .args(["--input", &input.to_string_lossy()]);
+        let output = command.output()?;
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("exceeds the reviewed byte bound"));
+    }
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
