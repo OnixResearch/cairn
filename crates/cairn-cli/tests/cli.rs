@@ -3259,3 +3259,38 @@ fn preserves_corpus_rejects_oversized_input() -> Result<(), Box<dyn Error>> {
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn readiness_rejects_symlinked_address_and_provenance_inputs() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("readiness-input-symlink")?;
+    let outside = dir.join("outside.json");
+    fs::write(&outside, br#"{}"#)?;
+    let link = dir.join("link.json");
+    symlink(&outside, &link)?;
+    let link_text = link.to_string_lossy().to_string();
+    for (flag, code) in [
+        (
+            "--function-address-valence",
+            "function_address.input_unreadable",
+        ),
+        ("--stack-provenance", "stack_provenance.input_unreadable"),
+    ] {
+        let output = cairn()
+            .args([
+                "release-readiness",
+                "--root",
+                "fixtures/basic",
+                flag,
+                &link_text,
+            ])
+            .output()?;
+        let text = String::from_utf8_lossy(&output.stdout);
+        assert!(text.contains(code), "{flag}: {text}");
+        assert!(text.contains("must not be a symlink"), "{flag}: {text}");
+    }
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
