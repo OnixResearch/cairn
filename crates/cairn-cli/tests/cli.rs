@@ -3203,3 +3203,59 @@ fn receipt_preserves_diff_rejects_oversized_input() -> Result<(), Box<dyn Error>
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn preserves_corpus_rejects_symlink_input() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("preserves-corpus-symlink")?;
+    let outside = std::env::temp_dir().join(format!(
+        "cairn-preserves-corpus-{}.json",
+        std::process::id()
+    ));
+    fs::write(&outside, br#"[]"#)?;
+    let link = dir.join("corpus.json");
+    symlink(&outside, &link)?;
+    let output = cairn()
+        .args([
+            "preserves-corpus",
+            "explain",
+            "--path",
+            &link.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["valid"], false);
+    assert!(receipt["issues"].as_array().is_some_and(|issues| issues
+        .iter()
+        .any(|issue| issue["code"] == "preserves_corpus.read_failed")));
+    fs::remove_file(outside)?;
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[test]
+fn preserves_corpus_rejects_oversized_input() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("preserves-corpus-oversized")?;
+    let input = dir.join("corpus.json");
+    let file = fs::File::create(&input)?;
+    file.set_len(16 * 1024 * 1024 + 1)?;
+    let output = cairn()
+        .args([
+            "preserves-corpus",
+            "explain",
+            "--path",
+            &input.to_string_lossy(),
+        ])
+        .output()?;
+    assert!(!output.status.success());
+    let receipt: Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(receipt["valid"], false);
+    assert!(receipt["issues"].as_array().is_some_and(|issues| issues
+        .iter()
+        .any(|issue| issue["code"] == "preserves_corpus.read_failed")));
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
