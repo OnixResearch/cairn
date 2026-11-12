@@ -172,3 +172,30 @@ fn agent_evidence_bundle_verification_links_agent_replay_and_release_evidence(
     assert!(!failure_text.contains("SECRET"), "{failure_text}");
     Ok(())
 }
+
+#[test]
+fn agent_bundle_rejects_unsafe_relative_paths() -> Result<(), Box<dyn Error>> {
+    let dir = temp_project("agent-bundle-unsafe-path")?;
+    let bundle_path = dir.join("bundle.json");
+    let outside = dir.join("..").join("agent-bundle-outside.json");
+    fs::write(&outside, b"{}")?;
+    let bundle = json!({
+        "agent_receipt_path": "../agent-bundle-outside.json",
+        "replay_receipt_path": "../agent-bundle-outside.json",
+        "replay_verification_path": "../agent-bundle-outside.json",
+    });
+    fs::write(&bundle_path, serde_json::to_string_pretty(&bundle)? + "\n")?;
+    let failure = run_json_failure_strings(&[
+        "agent-receipt".into(),
+        "verify-bundle".into(),
+        bundle_path.display().to_string(),
+        "--root".into(),
+        dir.display().to_string(),
+    ])?;
+    assert_eq!(failure["valid"], false);
+    assert!(failure["issues"].as_array().is_some_and(|issues| issues
+        .iter()
+        .any(|issue| issue["code"] == "bundle.path_unsafe")));
+    let _ = fs::remove_file(outside);
+    Ok(())
+}
