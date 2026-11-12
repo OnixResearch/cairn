@@ -107,8 +107,17 @@ pub(crate) fn authentication_component(
     }
 }
 
+fn read_authenticated_bytes(path: &Path, label: &str) -> Result<Vec<u8>, String> {
+    let metadata =
+        fs::symlink_metadata(path).map_err(|error| format!("read {}: {error}", path.display()))?;
+    if metadata.file_type().is_symlink() {
+        return Err(format!("{label} {} must not be a symlink", path.display()));
+    }
+    fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))
+}
+
 fn read_manifest(path: &Path) -> Result<AuthenticationManifest, String> {
-    let bytes = fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
+    let bytes = read_authenticated_bytes(path, "authentication manifest")?;
     serde_json::from_slice(&bytes).map_err(|error| format!("parse {}: {error}", path.display()))
 }
 
@@ -129,7 +138,7 @@ fn measure_artifacts(
             .path
             .as_ref()
             .ok_or_else(|| format!("missing evidence path for role {}", artifact.role))?;
-        let bytes = fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
+        let bytes = read_authenticated_bytes(path, "authentication artifact")?;
         let actual_path = path.display().to_string();
         let declaration = declared
             .iter()
@@ -147,7 +156,7 @@ fn measure_artifacts(
 }
 
 fn recompute_receipt_identity(path: &Path) -> Result<(String, String, String), String> {
-    let bytes = fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
+    let bytes = read_authenticated_bytes(path, "authentication receipt")?;
     let mut value: Value = serde_json::from_slice(&bytes)
         .map_err(|error| format!("parse receipt {}: {error}", path.display()))?;
     let object = value
@@ -181,8 +190,7 @@ fn measure_policy_export(
     } else {
         root.join(configured_path)
     };
-    let bytes = fs::read(&path)
-        .map_err(|error| format!("read policy export {}: {error}", path.display()))?;
+    let bytes = read_authenticated_bytes(&path, "policy export")?;
     Ok(PolicyExportObservation {
         path: export.path.clone(),
         declared_blake3: manifest.declared_policy_export_blake3.clone(),
@@ -217,8 +225,7 @@ fn measure_valence_integrity_receipt(
     } else {
         root.join(configured_path)
     };
-    let bytes = fs::read(&path)
-        .map_err(|error| format!("read Valence integrity receipt {}: {error}", path.display()))?;
+    let bytes = read_authenticated_bytes(&path, "Valence integrity receipt")?;
     Ok(MeasuredEvidenceInput {
         role: "valence_integrity_receipt".to_string(),
         path: policy.accepted_valence_integrity_receipt_path.clone(),
