@@ -1,6 +1,6 @@
 # Authoritative saved-probe gates
 
-Cairn task gates observe saved probe declarations and receipts without executing probe commands. The shell bounds reads, rejects malformed or unsafe evidence, computes BLAKE3 declaration and receipt identities, and passes normalized issues to the pure gate finalizer. The finalizer derives `valid` and `verdict` once from the complete ordered issue set. r[verify cairn.probe_execution_boundary.authoritative_gate_composition]
+Cairn task gates observe saved probe declarations and receipts without executing probe commands. The shell bounds reads, rejects malformed or unsafe evidence, computes BLAKE3 declaration and receipt identities, and passes normalized issues to the pure gate finalizer. Probe declarations and receipts are bounded to 1 MiB and must not be symlinks. The finalizer derives `valid` and `verdict` once from the complete ordered issue set. r[verify cairn.probe_execution_boundary.authoritative_gate_composition]
 
 Only a current receipt with `status_class="success"`, `status_matches=true`, `valid=true`, `verdict="PASS"`, passing assertions, matching declaration/policy/requirement identities, and a valid receipt hash satisfies a declaration. Missing, malformed, stale, tampered, skipped, blocked, deferred, timed-out, dry-run, cancelled, cleanup-failed, infrastructure-failed, and unsupported statuses block. r[verify cairn.probe_execution_boundary.authoritative_status]
 
