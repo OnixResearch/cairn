@@ -669,9 +669,11 @@ fn fixture_hashes(root: &Path, declaration: &Value) -> Value {
 }
 
 fn file_hash(root: &Path, path: &str) -> Option<String> {
-    fs::read(repo_relative_path(root, path)?)
-        .ok()
-        .map(|bytes| blake3_hex(&bytes))
+    let path = repo_relative_path(root, path)?;
+    if fs::symlink_metadata(&path).ok()?.file_type().is_symlink() {
+        return None;
+    }
+    fs::read(path).ok().map(|bytes| blake3_hex(&bytes))
 }
 
 fn repo_relative_path(root: &Path, path: &str) -> Option<PathBuf> {
@@ -827,5 +829,25 @@ mod tests {
         assert!(repo_relative_path(Path::new("repo"), "../secret").is_none());
         assert!(repo_relative_path(Path::new("repo"), "/tmp/secret").is_none());
         assert!(repo_relative_path(Path::new("repo"), "").is_none());
+    }
+    #[cfg(unix)]
+    #[test]
+    fn fixture_hashes_reject_symlinks() {
+        use std::os::unix::fs::symlink;
+
+        let root = std::env::temp_dir().join(format!("cairn-probe-fixture-{}", std::process::id()));
+        let outside = std::env::temp_dir().join(format!(
+            "cairn-probe-fixture-outside-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(&outside, b"fixture").unwrap();
+        symlink(&outside, root.join("fixture")).unwrap();
+        assert!(super::file_hash(&root, "fixture").is_none());
+        std::fs::remove_file(root.join("fixture")).unwrap();
+        std::fs::write(root.join("fixture"), b"fixture").unwrap();
+        assert!(super::file_hash(&root, "fixture").is_some());
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_file(outside).unwrap();
     }
 }
