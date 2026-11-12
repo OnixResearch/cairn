@@ -240,6 +240,13 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     assert_hash_field(&generated, "manifest_hash")?;
     let generated_manifest: Value =
         serde_json::from_str(&fs::read_to_string(&generated_manifest_path)?)?;
+    assert!(generated_manifest["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|entry| entry["path"]
+            .as_str()
+            .is_some_and(|path| !std::path::Path::new(path).is_absolute())));
     let generated_roles = generated_manifest["artifacts"]
         .as_array()
         .unwrap()

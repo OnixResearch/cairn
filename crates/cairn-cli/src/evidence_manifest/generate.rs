@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 
 use crate::support::{
     path_string, portable_json_hash, print_json, read_option, reject_positional_arguments,
-    reject_unknown_options, with_portable_receipt_hash,
+    reject_unknown_options, safe_relative_path, with_portable_receipt_hash,
 };
 
 use super::artifact::{manifest_artifact_entry, read_manifest_artifact};
@@ -241,16 +241,26 @@ pub(crate) fn evidence_manifest_generate_manifest(
         ("witness_checkpoint", options.witness_checkpoint.as_deref()),
     ] {
         if let Some(path) = path {
+            let display_base = options
+                .out
+                .as_deref()
+                .filter(|out| *out != "-")
+                .map(Path::new)
+                .and_then(Path::parent)
+                .unwrap_or_else(|| Path::new("."));
+            let display_path = PathBuf::from(safe_relative_path(display_base, path));
             match read_manifest_artifact(&options.root, role, path) {
-                Ok((value, hash)) => match manifest_artifact_entry(role, path, &value, hash) {
-                    Ok(entry) => artifacts.push(entry),
-                    Err(_) => issues.push(evidence_manifest_issue(
-                        "generate.artifact_identity_failed",
-                        role,
-                        "hash-bound JSON artifact with required receipt identity",
-                        "invalid",
-                    )),
-                },
+                Ok((value, hash)) => {
+                    match manifest_artifact_entry(role, &display_path, &value, hash) {
+                        Ok(entry) => artifacts.push(entry),
+                        Err(_) => issues.push(evidence_manifest_issue(
+                            "generate.artifact_identity_failed",
+                            role,
+                            "hash-bound JSON artifact with required receipt identity",
+                            "invalid",
+                        )),
+                    }
+                }
                 Err(_) => issues.push(evidence_manifest_issue(
                     "generate.artifact_read_failed",
                     role,
