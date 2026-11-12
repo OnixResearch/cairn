@@ -1,23 +1,37 @@
 # aarch64 release support boundary
 
-The v0.1.0 release gate that was run for Cairn passed on the current x86_64 Linux system. Nix reported that incompatible `aarch64-linux` checks were omitted. That means v0.1.0 local release evidence must not be cited as a completed aarch64 release validation.
+The v0.2.0 release gate that was run for Cairn passed on the current x86_64 Linux
+system. A package build and lifecycle smoke also passed on a native
+`aarch64-linux` GitHub runner.
 
 ## Current claim
 
-- x86_64 local `nix flake check -L` passed before the v0.1.0 tag.
-- aarch64 release support remains unclaimed until builder-backed validation is run.
-- The unreachable remote-builder warning seen during local work was infrastructure noise, not product-local proof or product-local failure.
+- The v0.2.0 release workflow built `.#cairn` and passed the lifecycle smoke on
+  x86_64 Linux.
+- The `aarch64 validation` workflow (`ubuntu-24.04-arm`) built `.#cairn` and ran
+  `cairn --version`, `cairn init`, and `cairn validate` from a foreign working
+  directory. Run `43262828123` passed.
+- Full `nix flake check --all-systems` remains unclaimed. The arm64 job does not
+  run the complete check cohort.
+
+## Validation history
+
+| Release | Platform | Scope | Result |
+|---|---|---|---|
+| v0.1.0 | x86_64-linux | Local `nix flake check -L` | pass |
+| v0.2.0 | x86_64-linux | Release package build and lifecycle smoke | pass |
+| v0.2.0 | aarch64-linux | Native package build and lifecycle smoke | pass |
 
 ## Future validation path
 
-When a suitable aarch64 builder/evaluator is available, run one of:
+When a suitable aarch64 builder/evaluator is available, run:
 
 ```bash
 nix flake check --all-systems -L
-nix build .#packages.aarch64-linux.cairn -L
 ```
 
-Record the resulting receipt/log before claiming aarch64 release support.
+Record the resulting receipt/log before claiming full aarch64 check coverage.
+The package-build and smoke result above is not a full flake-check claim.
 
 r[verify release_evidence.aarch64_support_boundary.docs]
 r[verify release_evidence.aarch64_support_boundary.non_claims]

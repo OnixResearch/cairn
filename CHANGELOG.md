@@ -92,8 +92,9 @@ and release workflows documented in `README.md`.
   `cairn migrate` explicitly when importing old trees.
 - The documented stable receipt fields remain compatibility surfaces. Other
   commands, schemas, and policy may change in a minor release with release notes.
-- x86_64 Linux is covered by the release gate. aarch64 Linux is packaged but
-  remains unclaimed until a builder-backed gate is recorded.
+- x86_64 Linux is covered by the release gate. aarch64 Linux builds the package
+  and passes the lifecycle smoke on a native runner; full `nix flake check
+  --all-systems` coverage remains unclaimed.
 
 ### Non-claims
 
