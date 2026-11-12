@@ -99,6 +99,10 @@ fn read_large_content_bound_artifact(
     path: &Path,
     max_bytes: u64,
 ) -> Result<(Value, Value), Box<dyn Error>> {
+    let metadata = std::fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err("content-bound artifact must be a regular non-symlink file".into());
+    }
     let read_limit = max_bytes.saturating_add(1);
     let mut reader = File::open(path)?.take(read_limit);
     let mut bytes = Vec::new();
