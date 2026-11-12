@@ -10,7 +10,7 @@
 // r[verify release_evidence.current_head_evidence_index.behavior_preserved]
 // r[verify release_evidence.current_head_evidence_index.behavior_preserved.focused_checks]
 // r[verify release_evidence.current_head_evidence_index.behavior_preserved.repository_checks]
-use std::{error::Error, fs, path::PathBuf};
+use std::{error::Error, path::PathBuf};
 
 use cairn_core::verified::verification_role::VERIFICATION_ROLE_BOUNDARY;
 use cairn_core::{
@@ -39,6 +39,7 @@ use crate::support::{
 use crate::tracey::{repository_gate_summary, traceability_coverage_receipt};
 
 const MAX_SEMANTIC_REVIEW_LEDGER_BYTES: u64 = 2_097_152;
+const MAX_WORKSPACE_CONTRACT_MATRIX_RECEIPT_BYTES: u64 = 2_097_152;
 
 pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     reject_unknown_options_with_repeats(
@@ -396,10 +397,14 @@ fn workspace_contract_matrix_component(
     // r[impl cairn.workspace_contract_matrix.release_readiness.required]
     let policy_value = policy.unwrap_or(&Value::Null);
     let readiness_policy = workspace_contract_readiness_policy_from_value(policy_value);
-    let receipt_value = receipt_path
-        .as_ref()
-        .and_then(|path| fs::read_to_string(path).ok())
-        .and_then(|text| serde_json::from_str::<Value>(&text).ok());
+    let receipt_value = receipt_path.as_ref().and_then(|path| {
+        crate::support::read_bounded_json_no_symlink(
+            path,
+            MAX_WORKSPACE_CONTRACT_MATRIX_RECEIPT_BYTES,
+            "workspace contract matrix receipt",
+        )
+        .ok()
+    });
     let readiness =
         evaluate_workspace_contract_matrix_readiness(&readiness_policy, receipt_value.as_ref());
     let value = json!({
