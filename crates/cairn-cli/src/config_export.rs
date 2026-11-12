@@ -743,4 +743,25 @@ mod tests {
         fs::remove_file(path)?;
         Ok(())
     }
+    #[cfg(unix)]
+    #[test]
+    fn projection_reads_reject_symlinks() -> Result<(), Box<dyn Error>> {
+        use std::os::unix::fs::symlink;
+
+        let outside = std::env::temp_dir().join(format!(
+            "cairn-config-export-outside-{}",
+            std::process::id()
+        ));
+        let link = std::env::temp_dir().join(format!(
+            "cairn-config-export-symlink-{}",
+            std::process::id()
+        ));
+        fs::write(&outside, b"{}\n")?;
+        symlink(&outside, &link)?;
+        let error = read_optional_regular_file(&link).expect_err("symlinked projection must fail");
+        assert!(error.to_string().contains("regular non-symlink file"));
+        fs::remove_file(link)?;
+        fs::remove_file(outside)?;
+        Ok(())
+    }
 }
