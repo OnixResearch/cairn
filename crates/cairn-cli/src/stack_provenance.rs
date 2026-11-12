@@ -1,4 +1,6 @@
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
+
+const MAX_STACK_PROVENANCE_INPUT_BYTES: u64 = 4 * 1024 * 1024;
 
 use cairn_core::{
     canonical_json_hash,
@@ -52,9 +54,12 @@ fn read_optional_json(
     let Some(path) = path else {
         return (None, None);
     };
-    match fs::read_to_string(&path)
-        .map_err(|error| error.to_string())
-        .and_then(|text| serde_json::from_str::<Value>(&text).map_err(|error| error.to_string()))
+    match crate::support::read_bounded_json_no_symlink(
+        &path,
+        MAX_STACK_PROVENANCE_INPUT_BYTES,
+        "stack-provenance input",
+    )
+    .map_err(|error| error.to_string())
     {
         Ok(value) => (Some(value), None),
         Err(error) => (
