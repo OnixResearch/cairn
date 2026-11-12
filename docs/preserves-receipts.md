@@ -48,6 +48,8 @@ Run the corpus update rail in dry-run mode:
 nix run .#cairn -- preserves-corpus update --path fixtures/preserves-canonicalization/corpus.json
 ```
 
+Corpus reads are bounded to 16 MiB and must not be symlinks.
+
 Dry-run is the default. A clean corpus exits 0 with `valid: true`, `stale_count: 0`, and `mutated: false`. If Preserves, serde conversion, or fixture content changes make any `expected_hash` stale, the dry-run exits nonzero and reports the stale cases without writing the file.
 
 For intentional drift, review the dependency/content change first, then run the explicit mutation rail:
