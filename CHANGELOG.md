@@ -8,6 +8,20 @@ Cairn receipts are evidence about declared inputs and policy, not proof of code
 correctness or release eligibility. See `docs/` for the boundary of each
 surface.
 
+## [Unreleased]
+
+### Added
+
+- Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
+  pinned englishc library, with JSON and machine-envelope output, UTF-8 source
+  spans, and review-only suggestions. Findings never rewrite documents or change
+  lifecycle gate outcomes; invalid inputs still fail.
+
+### Removed
+
+- Post-release wording and source-text assertion tests. Historical documentation
+  relationships remain declared links, not claims of executable verification.
+
 ## [0.2.1] - 2026-11-12
 
 ### Changed
@@ -132,6 +146,7 @@ Pre-public local tag. Native lifecycle commands, generated policy checks, and a
 local release-evidence smoke were verified on x86_64 Linux. No public support,
 registry publication, or aarch64 claim was made.
 
+[Unreleased]: https://github.com/OnixResearch/cairn/compare/v0.2.1...HEAD
 [0.2.1]: https://github.com/OnixResearch/cairn/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/OnixResearch/cairn/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/OnixResearch/cairn/releases/tag/v0.1.0

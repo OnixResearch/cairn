@@ -20,4 +20,20 @@ its pinned revision, and each of the five covered policy paths and historical
 blob identities through `license-policy.tsv`. These inventory checks do not
 relicense other policy inputs, the exporter/toolchain or the CLI.
 
+## Advisory prose dependency
+
+The CLI links the `englishc` library and its `english` dependency from
+[`Aaryan-Kapoor/english-rs`](https://github.com/Aaryan-Kapoor/english-rs), pinned
+to revision `336ed696eec73e5b9858c5d7952b54c8e93b9df9`. Both packages are
+MIT-licensed, copyright (c) 2026 Aaryan Kapoor. Their upstream
+[`LICENSE`](https://github.com/Aaryan-Kapoor/english-rs/blob/336ed696eec73e5b9858c5d7952b54c8e93b9df9/LICENSE)
+contains the applicable grant and notice; distributions containing copies or
+substantial portions of that software must retain its copyright and permission
+notice. This dependency is fetched from its immutable Git source, not vendored
+or invoked as a runtime child process. The opt-in advisory prose check does not
+change Cairn's licensing boundary or lifecycle acceptance.
+The unchanged upstream notice is retained in
+[`LICENSES/english-rs-LICENSE`](../LICENSES/english-rs-LICENSE) and installed by the
+Nix package under `share/licenses/cairn/english-rs-LICENSE`.
+
 Prior grants remain valid. This map is distribution metadata; it does not establish contributor authority, legal compliance, source correctness, lifecycle acceptance, or release eligibility.

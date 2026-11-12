@@ -1,0 +1,60 @@
+{
+  "advisory": true,
+  "engine": {
+    "name": "englishc",
+    "revision": "336ed696eec73e5b9858c5d7952b54c8e93b9df9"
+  },
+  "files": [
+    {
+      "diagnostics": [
+        {
+          "code": "E0001",
+          "helps": [
+            {
+              "message": "use `is`",
+              "suggestion": {
+                "end": 6,
+                "replacement": "is",
+                "review_required": true,
+                "start": 3
+              }
+            }
+          ],
+          "labels": [
+            {
+              "column": 4,
+              "end": 6,
+              "line": 1,
+              "message": "expected `is`, found `are`",
+              "primary": true,
+              "start": 3
+            },
+            {
+              "column": 1,
+              "end": 2,
+              "line": 1,
+              "message": "`He` is third-person singular",
+              "primary": false,
+              "start": 0
+            }
+          ],
+          "level": "error",
+          "lint": "subject_verb_agreement",
+          "message": "mismatched verb form",
+          "notes": [
+            "in English (Rust edition) this is a compile error: the trait bound `He: TakesAre` is not satisfied"
+          ]
+        }
+      ],
+      "path": "notes.md"
+    }
+  ],
+  "mutated": false,
+  "non_claims": [
+    "prose diagnostics are advisory and do not determine lifecycle gate outcomes",
+    "grammar observations do not prove requirement validity, consistency, completeness, or satisfaction",
+    "prose diagnostics are not implementation, verification, readiness, or release evidence",
+    "all suggestions require author review and are never applied by this command"
+  ],
+  "schema_version": "cairn.prose-check.v1"
+}

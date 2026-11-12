@@ -36,6 +36,7 @@ mod policy_exception;
 mod preserves_corpus;
 mod probe;
 mod project_policy;
+mod prose;
 mod radicle_change;
 mod readiness;
 mod receipt_preserves_diff;
@@ -192,6 +193,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "change" => run_change(args.collect())?,
         "check-evidence" => check_evidence::run_check_evidence(args.collect())?,
         "source-review" => source_review::run(args.collect())?,
+        "prose" => prose::run(args.collect())?,
         "compact" => archive_compaction::run_compact(args.collect())?,
         "template" => developer_experience::run_template(args.collect())?,
         "scaffold" => developer_experience::run_scaffold(args.collect())?,

@@ -342,6 +342,7 @@ dependencies = [
  "crossterm 0.28.1",
  "durable-file-publication",
  "ed25519-dalek",
+ "englishc",
  "mantle-build-contract",
  "nickel-export-core",
  "onix-cairn-radicle-cob",
@@ -888,6 +889,19 @@ dependencies = [
  "sec1",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "english"
+version = "0.1.0"
+source = "git+https://github.com/Aaryan-Kapoor/english-rs?rev=336ed696eec73e5b9858c5d7952b54c8e93b9df9#336ed696eec73e5b9858c5d7952b54c8e93b9df9"
+
+[[package]]
+name = "englishc"
+version = "0.1.0"
+source = "git+https://github.com/Aaryan-Kapoor/english-rs?rev=336ed696eec73e5b9858c5d7952b54c8e93b9df9#336ed696eec73e5b9858c5d7952b54c8e93b9df9"
+dependencies = [
+ "english",
 ]
 
 [[package]]

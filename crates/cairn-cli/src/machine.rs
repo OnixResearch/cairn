@@ -26,6 +26,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "change",
     "check-evidence",
     "source-review",
+    "prose",
     "compact",
     "template",
     "scaffold",

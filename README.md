@@ -238,6 +238,19 @@ Read [Policy-exception collaboration](docs/policy-exception.md) before you use t
 <!-- r[impl cairn.developer_loop_profiles.docs] -->
 <!-- r[impl cairn.agent_guidance_context.docs] -->
 
+## Advisory prose checks
+
+Run optional grammar feedback on explicit files without rewriting them:
+
+```bash
+cairn prose check --root . README.md docs/prose-check.md
+```
+
+Findings are advisory, including upstream grammar errors. They do not block
+lifecycle gates or establish requirement validity or satisfaction. Read
+[Advisory prose checks](docs/prose-check.md) for machine output, input bounds,
+source positions, and review-only suggestions.
+
 ## Detached source-review evidence
 
 `cairn_core::source_review` is the pure producer and independent verification

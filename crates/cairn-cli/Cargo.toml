@@ -30,6 +30,7 @@ cap-std.workspace = true
 crossterm.workspace = true
 durable-file-publication.workspace = true
 ed25519-dalek.workspace = true
+englishc.workspace = true
 mantle-build-contract.workspace = true
 nickel-export-core.workspace = true
 onix-cairn-radicle-cob = { path = "../cairn-radicle-cob" }

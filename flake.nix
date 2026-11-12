@@ -62,6 +62,9 @@
         outputHashes = {
           "cap-root-core-0.1.0" = "sha256-2eiyxmhW8/qj30ALccgkt5hatRMk2OcazmU3SCI/Opo=";
           "durable-file-publication-0.1.0" = "sha256-fKxZ+3rzWzVuawILnmpiYCCe8PT/z6usopFMbr2KFbI=";
+          # Both packages share this immutable Git checkout.
+          "english-0.1.0" = "sha256-lXxYc0tnfhnrowgxWIiPosC3E5Qrq07onDu9G4See1A=";
+          "englishc-0.1.0" = "sha256-lXxYc0tnfhnrowgxWIiPosC3E5Qrq07onDu9G4See1A=";
           "nickel-export-core-0.1.0" = "sha256-dV4+/jghpJ89F5DHprdjxyru8kllMAurS2DsBGn/ibA=";
           "rat-canvas-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
           "rat-nodegraph-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
@@ -115,6 +118,7 @@
             install -Dm644 ${durable-file-publication}/provenance/SOURCE.md $out/share/licenses/cairn/durable-file-publication/provenance/SOURCE.md
             install -Dm644 ${durable-file-publication}/provenance/source.ncl $out/share/licenses/cairn/durable-file-publication/provenance/source.ncl
             install -Dm644 ${durable-file-publication}/provenance/source.json $out/share/licenses/cairn/durable-file-publication/provenance/source.json
+            install -Dm644 ${self}/LICENSES/english-rs-LICENSE $out/share/licenses/cairn/english-rs-LICENSE
             install -Dm644 ${self}/cairn-policy/generated/cairn-policy.json $out/share/cairn/cairn-policy.json
             # r[impl cairn.supersede.policy_export_packaged_runtime.wrapper]
             wrapProgram $out/bin/cairn \
