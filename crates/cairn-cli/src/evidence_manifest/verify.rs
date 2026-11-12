@@ -324,13 +324,20 @@ fn validate_trace_artifact_bindings(
         ));
         return;
     };
-    let Some(registry_path) = manifest_entry_path(base, registry_entry) else {
+    let Some(registry_path) =
+        manifest_entry_path(base, registry_entry, REQUIREMENT_REGISTRY_ROLE, issues)
+    else {
         return;
     };
-    let Some(index_path) = manifest_entry_path(base, index_entry) else {
+    let Some(index_path) = manifest_entry_path(base, index_entry, TRACE_INDEX_ROLE, issues) else {
         return;
     };
-    let Some(verification_path) = manifest_entry_path(base, verification_entry) else {
+    let Some(verification_path) = manifest_entry_path(
+        base,
+        verification_entry,
+        TRACE_INDEX_VERIFICATION_ROLE,
+        issues,
+    ) else {
         return;
     };
     let Ok((registry_value, _)) =
@@ -389,13 +396,27 @@ fn validate_trace_artifact_bindings(
     }
 }
 
-fn manifest_entry_path(base: &Path, entry: &Value) -> Option<PathBuf> {
-    let path = PathBuf::from(entry.get("path")?.as_str()?);
-    Some(if path.is_absolute() {
-        path
-    } else {
-        base.join(path)
-    })
+fn manifest_entry_path(
+    base: &Path,
+    entry: &Value,
+    role: &str,
+    issues: &mut Vec<Value>,
+) -> Option<PathBuf> {
+    let text = entry.get("path")?.as_str()?;
+    let path = PathBuf::from(text);
+    if path.is_absolute() {
+        return Some(path);
+    }
+    if crate::support::is_safe_relative_reference(text) {
+        return Some(base.join(path));
+    }
+    issues.push(evidence_manifest_issue(
+        "artifact.path_unsafe",
+        role,
+        "safe relative path or absolute path",
+        "unsafe",
+    ));
+    None
 }
 
 fn requirement_registry_receipt_matches(
