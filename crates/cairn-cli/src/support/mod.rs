@@ -93,8 +93,8 @@ pub(crate) use mutation::{
     sync_merge_bindings, sync_merge_blockers, sync_mutation_manifest,
 };
 pub(crate) use paths::{
-    collect_files, file_content_manifest, path_string, portable_json_hash, portable_text,
-    read_bounded_json_no_symlink, read_bounded_text_no_symlink,
+    collect_files, file_content_manifest, is_safe_relative_reference, path_string,
+    portable_json_hash, portable_text, read_bounded_json_no_symlink, read_bounded_text_no_symlink,
     read_existing_bounded_text_no_symlink, resolve_under_root, safe_relative_path,
     tree_content_paths,
 };

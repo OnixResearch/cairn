@@ -8,6 +8,15 @@ pub(crate) fn resolve_under_root(root: &Path, path: std::path::PathBuf) -> std::
     }
 }
 
+pub(crate) fn is_safe_relative_reference(path: &str) -> bool {
+    let path = Path::new(path);
+    !path.as_os_str().is_empty()
+        && !path.is_absolute()
+        && path
+            .components()
+            .all(|component| matches!(component, std::path::Component::Normal(_)))
+}
+
 pub(crate) fn safe_relative_path(root: &Path, path: &Path) -> String {
     path.strip_prefix(root)
         .unwrap_or(path)

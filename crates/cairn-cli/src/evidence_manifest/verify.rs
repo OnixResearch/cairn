@@ -195,11 +195,20 @@ fn verify_evidence_manifest_artifact(
     let path = match entry.get("path").and_then(Value::as_str) {
         Some(text) if !text.is_empty() => {
             let path = PathBuf::from(text);
-            Some(if path.is_absolute() {
-                path
+            if path.is_absolute() {
+                Some(path)
+            } else if crate::support::is_safe_relative_reference(text) {
+                Some(base.join(path))
             } else {
-                base.join(path)
-            })
+                artifact_valid = false;
+                issues.push(evidence_manifest_issue(
+                    "artifact.path_unsafe",
+                    role,
+                    "safe relative path or absolute path",
+                    "unsafe",
+                ));
+                None
+            }
         }
         _ => {
             artifact_valid = false;

@@ -412,3 +412,36 @@ fn signed_evidence_manifest_verifies_indexed_evidence_artifacts() -> Result<(), 
     assert!(!failure_text.contains("SECRET"), "{failure_text}");
     Ok(())
 }
+
+#[test]
+fn evidence_manifest_rejects_unsafe_relative_artifact_paths() -> Result<(), Box<dyn Error>> {
+    let dir = temp_project("manifest-unsafe-path")?;
+    let manifest_path = dir.join("manifest.json");
+    let outside = dir.join("..").join("outside.json");
+    fs::write(&outside, b"{}")?;
+    let manifest = json!({
+        "artifacts": [{
+            "role": "agent_receipt",
+            "path": "../outside.json",
+            "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "schema": "agent-receipt-v1"
+        }]
+    });
+    fs::write(
+        &manifest_path,
+        serde_json::to_string_pretty(&manifest)? + "\n",
+    )?;
+    let failure = run_json_failure_strings(&[
+        "evidence-manifest".into(),
+        "verify".into(),
+        manifest_path.display().to_string(),
+        "--root".into(),
+        dir.display().to_string(),
+    ])?;
+    assert_eq!(failure["valid"], false);
+    assert!(failure["issues"].as_array().is_some_and(|issues| issues
+        .iter()
+        .any(|issue| issue["code"] == "artifact.path_unsafe")));
+    let _ = fs::remove_file(outside);
+    Ok(())
+}
