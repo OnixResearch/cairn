@@ -4,6 +4,8 @@ use super::replay::{
 };
 use super::*;
 
+const MAX_REPLAY_RECEIPT_BYTES: u64 = 16 * 1024 * 1024;
+
 struct ReplayVerifyOptions {
     root: PathBuf,
     path: PathBuf,
@@ -88,7 +90,11 @@ pub(crate) fn determinism_verify_replay_receipt(root: &Path, path: &Path) -> Val
     let expected_entropy_policy_hash = replay_entropy_policy_hash(&entropy_inventory);
     let expected_attestation_policy_hash = replay_attestation_policy_hash(&environment_facts);
 
-    let text = match fs::read_to_string(path) {
+    let text = match crate::support::read_bounded_text_no_symlink(
+        path,
+        MAX_REPLAY_RECEIPT_BYTES,
+        "replay receipt",
+    ) {
         Ok(text) => text,
         Err(error) => {
             return replay_verification_receipt(

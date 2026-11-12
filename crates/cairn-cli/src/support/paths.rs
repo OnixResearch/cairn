@@ -111,11 +111,11 @@ pub(crate) fn tree_content_paths(root: &Path, dir: &Path) -> std::io::Result<Vec
         .collect())
 }
 
-pub(crate) fn read_bounded_json_no_symlink(
+pub(crate) fn read_bounded_text_no_symlink(
     path: &Path,
     max_bytes: u64,
     label: &str,
-) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+) -> Result<String, Box<dyn std::error::Error>> {
     let metadata = std::fs::symlink_metadata(path)?;
     if metadata.file_type().is_symlink() {
         return Err(format!("{label} {} must not be a symlink", path.display()).into());
@@ -123,7 +123,16 @@ pub(crate) fn read_bounded_json_no_symlink(
     if metadata.len() > max_bytes {
         return Err(format!("{label} exceeds the reviewed byte bound").into());
     }
-    Ok(serde_json::from_slice(&std::fs::read(path)?)?)
+    Ok(std::fs::read_to_string(path)?)
+}
+
+pub(crate) fn read_bounded_json_no_symlink(
+    path: &Path,
+    max_bytes: u64,
+    label: &str,
+) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    let text = read_bounded_text_no_symlink(path, max_bytes, label)?;
+    Ok(serde_json::from_str(&text)?)
 }
 
 pub(crate) fn path_string(path: impl Into<PathBuf>) -> String {
