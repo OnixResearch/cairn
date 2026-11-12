@@ -2,6 +2,7 @@
 let
   expected = {
     bounded-exec = "29dac88ecded94457572db3fdfaaaab95fa91525";
+    durable-file-publication = "6d5510ddb33860bf47a49b63085105c7ff88f4d5";
     mantle-build-contract = "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2";
     kiln-core = "5d99f4e9bb954743443e340baece31256b4c53f1";
   };

@@ -9,14 +9,13 @@ The shell must retain installation policy, locks, transactions, recovery, and re
 
 | Package | Consumed source | Reviewed revision | Notices |
 |---|---|---|---|
-| `cap-root-core` | Vendored at `vendor/cap-root-core` from `https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git` | `8991e2572578c16e590c2f1c0915db6c46c5d9cb` | `LICENSE`, AGPL-3.0-or-later |
-| `durable-file-publication` | Vendored at `vendor/durable-file-publication` from `https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git` | `951c27f59003cea9bfdb40ed4d89653d50fada1f` | `LICENSE-MIT`, `LICENSE-APACHE`, `NOTICE`, and referenced provenance |
+| `cap-root-core` | `https://github.com/OnixResearch/cap-root` | `b1911e42295887c399e17cad29ce298c2847f59d` | `LICENSE`, AGPL-3.0-or-later |
+| `durable-file-publication` | `https://github.com/OnixResearch/durable-file-publication` | `6d5510ddb33860bf47a49b63085105c7ff88f4d5` | `LICENSE-MIT`, `LICENSE-APACHE`, `NOTICE`, and referenced provenance |
 | `nickel-export-core` | `https://github.com/OnixResearch/nickel-export` | `257fafc1c746f1faf156207043a4c826bfb16d49` | Existing unchanged dependency and notices |
 
-The Radicle RIDs remain the upstream repository identities recorded in the vendored provenance.
-The seed URLs are historical source locators and are not build-time dependencies.
-Both snapshots were acquired from the published endpoints at their exact reviewed revisions and are now vendored under `vendor/`.
-No producer implementation was copied or changed beyond the standalone package manifests required outside the producer workspace. No ambient sibling path enters the dependency graph.
+The Radicle RIDs remain the canonical upstream repository identities recorded in each source provenance.
+Both GitHub repositories are historyless source snapshots of the reviewed revisions; private development history is not included.
+The Cargo and Nix pins use those snapshot commits. No ambient sibling path enters the dependency graph.
 Cargo and Nix retain the complete source notices. The packaged CLI also installs the licenses, publication notice, and referenced provenance under `share/licenses/cairn/`.
 
 The owner authorized these exact component dependencies for this change.

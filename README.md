@@ -53,7 +53,7 @@ cairn --version
 Pin a release for repeatable automation:
 
 ```bash
-nix profile install github:OnixResearch/cairn/v0.2.0#cairn
+nix profile install github:OnixResearch/cairn/v0.2.1#cairn
 ```
 
 Run it once without installing:

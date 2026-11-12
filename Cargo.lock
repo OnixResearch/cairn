@@ -327,7 +327,7 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "cairn-cli"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "artifact-auth-core",
  "artifact-auth-ed25519",
@@ -355,7 +355,7 @@ dependencies = [
 
 [[package]]
 name = "cairn-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "artifact-auth-core",
  "artifact-auth-ed25519",
@@ -371,7 +371,7 @@ dependencies = [
 
 [[package]]
 name = "cairn-gate-contract"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "blake3",
  "serde",
@@ -411,6 +411,7 @@ dependencies = [
 [[package]]
 name = "cap-root-core"
 version = "0.1.0"
+source = "git+https://github.com/OnixResearch/cap-root.git?rev=b1911e42295887c399e17cad29ce298c2847f59d#b1911e42295887c399e17cad29ce298c2847f59d"
 
 [[package]]
 name = "cap-std"
@@ -811,6 +812,7 @@ checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 [[package]]
 name = "durable-file-publication"
 version = "0.1.0"
+source = "git+https://github.com/OnixResearch/durable-file-publication.git?rev=6d5510ddb33860bf47a49b63085105c7ff88f4d5#6d5510ddb33860bf47a49b63085105c7ff88f4d5"
 dependencies = [
  "rustix 1.1.4",
 ]
@@ -1782,7 +1784,7 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "onix-cairn-radicle-cob"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "blake3",
  "cairn-core",

@@ -8,6 +8,27 @@ Cairn receipts are evidence about declared inputs and policy, not proof of code
 correctness or release eligibility. See `docs/` for the boundary of each
 surface.
 
+## [0.2.1] - 2026-11-12
+
+### Changed
+
+- Publish the reviewed `cap-root-core` and `durable-file-publication` sources as
+  public GitHub repositories and resolve Cargo and Nix from those snapshot
+  commits. The vendored copies are removed.
+- `cap-root-core` pins `OnixResearch/cap-root` at
+  `b1911e42295887c399e17cad29ce298c2847f59d`.
+- `durable-file-publication` pins the `reviewed-951c27f` snapshot of
+  `OnixResearch/durable-file-publication` at
+  `6d5510ddb33860bf47a49b63085105c7ff88f4d5`.
+- The bootstrap source pin admits the exact GitHub repositories, revisions,
+  content hashes, consumer scope, and licenses.
+
+### Non-claims
+
+- The GitHub repositories are source snapshots, not mirrors of private
+  development history. Canonical Radicle repository identities remain recorded
+  in provenance.
+
 ## [0.2.0] - 2026-11-12
 
 First public release. `v0.1.0` was a local, pre-public tag; this release adds
@@ -111,5 +132,6 @@ Pre-public local tag. Native lifecycle commands, generated policy checks, and a
 local release-evidence smoke were verified on x86_64 Linux. No public support,
 registry publication, or aarch64 claim was made.
 
+[0.2.1]: https://github.com/OnixResearch/cairn/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/OnixResearch/cairn/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/OnixResearch/cairn/releases/tag/v0.1.0

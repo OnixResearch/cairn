@@ -28,6 +28,14 @@
     url = "git+https://github.com/OnixResearch/bounded-exec.git?rev=29dac88ecded94457572db3fdfaaaab95fa91525";
     flake = false;
   };
+  inputs.cap-root = {
+    url = "git+https://github.com/OnixResearch/cap-root.git?rev=b1911e42295887c399e17cad29ce298c2847f59d";
+    flake = false;
+  };
+  inputs.durable-file-publication = {
+    url = "git+https://github.com/OnixResearch/durable-file-publication.git?rev=6d5510ddb33860bf47a49b63085105c7ff88f4d5";
+    flake = false;
+  };
 
   outputs =
     inputs@{
@@ -37,6 +45,8 @@
       nickel-export,
       nickel-1-17-0,
       octet,
+      cap-root,
+      durable-file-publication,
       ...
     }:
     let
@@ -50,6 +60,8 @@
         lockFile = ./Cargo.lock;
         allowBuiltinFetchGit = true;
         outputHashes = {
+          "cap-root-core-0.1.0" = "sha256-2eiyxmhW8/qj30ALccgkt5hatRMk2OcazmU3SCI/Opo=";
+          "durable-file-publication-0.1.0" = "sha256-fKxZ+3rzWzVuawILnmpiYCCe8PT/z6usopFMbr2KFbI=";
           "nickel-export-core-0.1.0" = "sha256-dV4+/jghpJ89F5DHprdjxyru8kllMAurS2DsBGn/ibA=";
           "rat-canvas-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
           "rat-nodegraph-0.1.0" = "sha256-WHMtm38pQirmjZ/5Ua0unGhj4pIDaEixXG1pBUYWmTQ=";
@@ -85,7 +97,7 @@
         nickel-1-17-0 = nickelCohort pkgs.stdenv.hostPlatform.system;
         cairn = pkgs.rustPlatform.buildRustPackage {
           pname = "cairn";
-          version = "0.2.0";
+          version = "0.2.1";
           src = self;
           cargoLock = rustCargoLock;
           cargoBuildFlags = [
@@ -96,13 +108,13 @@
           ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           postInstall = ''
-            install -Dm644 ${self}/vendor/cap-root-core/LICENSE $out/share/licenses/cairn/cap-root-LICENSE
-            install -Dm644 ${self}/vendor/durable-file-publication/LICENSE-MIT $out/share/licenses/cairn/durable-file-publication-MIT
-            install -Dm644 ${self}/vendor/durable-file-publication/LICENSE-APACHE $out/share/licenses/cairn/durable-file-publication-APACHE
-            install -Dm644 ${self}/vendor/durable-file-publication/NOTICE $out/share/licenses/cairn/durable-file-publication/NOTICE
-            install -Dm644 ${self}/vendor/durable-file-publication/provenance/SOURCE.md $out/share/licenses/cairn/durable-file-publication/provenance/SOURCE.md
-            install -Dm644 ${self}/vendor/durable-file-publication/provenance/source.ncl $out/share/licenses/cairn/durable-file-publication/provenance/source.ncl
-            install -Dm644 ${self}/vendor/durable-file-publication/provenance/source.json $out/share/licenses/cairn/durable-file-publication/provenance/source.json
+            install -Dm644 ${cap-root}/LICENSE $out/share/licenses/cairn/cap-root-LICENSE
+            install -Dm644 ${durable-file-publication}/LICENSE-MIT $out/share/licenses/cairn/durable-file-publication-MIT
+            install -Dm644 ${durable-file-publication}/LICENSE-APACHE $out/share/licenses/cairn/durable-file-publication-APACHE
+            install -Dm644 ${durable-file-publication}/NOTICE $out/share/licenses/cairn/durable-file-publication/NOTICE
+            install -Dm644 ${durable-file-publication}/provenance/SOURCE.md $out/share/licenses/cairn/durable-file-publication/provenance/SOURCE.md
+            install -Dm644 ${durable-file-publication}/provenance/source.ncl $out/share/licenses/cairn/durable-file-publication/provenance/source.ncl
+            install -Dm644 ${durable-file-publication}/provenance/source.json $out/share/licenses/cairn/durable-file-publication/provenance/source.json
             install -Dm644 ${self}/cairn-policy/generated/cairn-policy.json $out/share/cairn/cairn-policy.json
             # r[impl cairn.supersede.policy_export_packaged_runtime.wrapper]
             wrapProgram $out/bin/cairn \
@@ -225,10 +237,12 @@
           let
             contract = import ./nix/bootstrap-source-pin.nix { lib = nixpkgs.lib; };
             input = {
-              root = self;
               workspace = builtins.fromTOML (builtins.readFile ./Cargo.toml);
               cli = builtins.fromTOML (builtins.readFile ./crates/cairn-cli/Cargo.toml);
               cargoLock = builtins.fromTOML (builtins.readFile ./Cargo.lock);
+              flakeLock = builtins.fromJSON (builtins.readFile ./flake.lock);
+              resolved = { inherit cap-root durable-file-publication; };
+              outputHashes = rustCargoLock.outputHashes;
             };
             issues = contract.validate input ++ contract.selfTest input;
           in
@@ -236,11 +250,11 @@
             throw "bootstrap source admission failed: ${nixpkgs.lib.concatStringsSep ", " issues}"
           else
             pkgs.runCommand "cairn-bootstrap-source-pin" { } ''
-              test -s ${self}/vendor/cap-root-core/LICENSE
-              test -s ${self}/vendor/durable-file-publication/LICENSE-MIT
-              test -s ${self}/vendor/durable-file-publication/LICENSE-APACHE
-              test -s ${self}/vendor/durable-file-publication/NOTICE
-              test -s ${self}/vendor/durable-file-publication/provenance/SOURCE.md
+              test -s ${cap-root}/LICENSE
+              test -s ${durable-file-publication}/LICENSE-MIT
+              test -s ${durable-file-publication}/LICENSE-APACHE
+              test -s ${durable-file-publication}/NOTICE
+              test -s ${durable-file-publication}/provenance/SOURCE.md
               touch $out
             '';
 
