@@ -678,6 +678,8 @@ Each normal evidence export includes `requirement-registry.json`, `trace-index.j
 
 Cairn preserves these artifacts through import, republish, indexing, registry selection, mirror verification, and local fetch workflows.
 
+Read [`docs/requirement-id-registry.md`](docs/requirement-id-registry.md) and [`docs/global-registry.md`](docs/global-registry.md) for registry identity, selection, and mirror verification rules.
+
 These commands do not perform network transport or credential handling. They do not establish remote trust. Trace artifacts record declared linkage and freshness only. They do not prove requirement satisfaction or implementation correctness.
 
 <!-- r[impl cairn.trace_index.evidence_bundle.docs] -->
