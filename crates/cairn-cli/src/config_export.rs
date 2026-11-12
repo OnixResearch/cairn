@@ -728,4 +728,19 @@ mod tests {
         fs::remove_dir_all(root)?;
         Ok(())
     }
+    #[test]
+    fn projection_reads_are_bounded() -> Result<(), Box<dyn Error>> {
+        let path = std::env::temp_dir().join(format!(
+            "cairn-config-export-oversized-{}",
+            std::process::id()
+        ));
+        let file = fs::File::create(&path)?;
+        file.set_len(SOURCE_FILE_MAX_BYTES + 1)?;
+        let error = read_optional_regular_file(&path).expect_err("oversized projection must fail");
+        assert!(error
+            .to_string()
+            .contains("configuration projection exceeds the reviewed byte bound"));
+        fs::remove_file(path)?;
+        Ok(())
+    }
 }
