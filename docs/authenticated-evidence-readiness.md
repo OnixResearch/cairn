@@ -1,6 +1,6 @@
 # Authenticated evidence readiness
 
-Cairn can authenticate stack-provenance and function-address inputs before they contribute to release readiness. The CLI shell reads the explicitly supplied evidence paths, measures every artifact with BLAKE3, recomputes the primary receipt identity, measures the reviewed Nickel policy export and pinned Valence integrity receipt, and verifies an Ed25519 signature. The pure core receives only typed observations and evaluates policy, role, identity, linkage, signature-purpose, and release-profile rules.
+Cairn can authenticate stack-provenance and function-address inputs before they contribute to release readiness. Ordinary function-address and stack-provenance evidence inputs are bounded to 4 MiB and must not be symlinks. The CLI shell reads the explicitly supplied evidence paths, measures every artifact with BLAKE3, recomputes the primary receipt identity, measures the reviewed Nickel policy export and pinned Valence integrity receipt, and verifies an Ed25519 signature. The pure core receives only typed observations and evaluates policy, role, identity, linkage, signature-purpose, and release-profile rules.
 
 r[cairn.stack_provenance_gates.authenticated_inputs.docs] **Claim boundary:** a passing result proves measured-byte linkage, configured producer authorization, and lifecycle-policy conformance only. It does not prove source correctness, verifier soundness, build correctness, semantic equivalence, runtime authority, or universal release fitness.
 
