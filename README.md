@@ -261,6 +261,8 @@ Nickel policy source is in `cairn-policy/`. Runtime commands do not run Nickel.
 
 During development, `cairn policy export` checks the contracts and writes `cairn-policy/generated/cairn-policy.json`.
 
+Read [Standalone Nickel export boundary](docs/standalone-nickel-export.md) for pinned evaluator/export identities and parity checks.
+
 Run this command before you trust a policy change:
 
 ```bash
