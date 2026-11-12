@@ -1,5 +1,32 @@
 # Post-tag remote install smoke
 
+## v0.2.1
+
+### Payload
+
+- Tag: `v0.2.1`
+- Peeled commit: `df3651f`
+- Remote flake reference: `github:OnixResearch/cairn/v0.2.1#cairn`
+- Release workflow run: `43287066501`
+- aarch64 validation run: `43287088552`
+- Published asset: `cairn-0.2.1-x86_64-linux.closure.txt`
+
+### Result
+
+- The release workflow built `.#cairn` from the tag, then ran
+  `cairn --version`, `cairn init`, `cairn validate`, and `cairn status` from a
+  temporary foreign working directory. All steps passed.
+- The aarch64 workflow built the same tag on a native `ubuntu-24.04-arm` runner
+  and passed the same lifecycle smoke.
+- Cargo and Nix resolve `cap-root-core` and `durable-file-publication` from
+  pinned public GitHub snapshot commits.
+
+### Non-claims
+
+- The workflow builds and smoke tests the package. They do not prove
+  reproducibility, deployment safety, or release eligibility.
+- No tag was created or moved by the smoke itself.
+
 ## v0.2.0
 
 ### Payload

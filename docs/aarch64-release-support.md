@@ -6,11 +6,11 @@ system. A package build and lifecycle smoke also passed on a native
 
 ## Current claim
 
-- The v0.2.0 release workflow built `.#cairn` and passed the lifecycle smoke on
+- The v0.2.1 release workflow built `.#cairn` and passed the lifecycle smoke on
   x86_64 Linux.
 - The `aarch64 validation` workflow (`ubuntu-24.04-arm`) built `.#cairn` and ran
   `cairn --version`, `cairn init`, and `cairn validate` from a foreign working
-  directory. Run `43262828123` passed.
+  directory. Run `43287088552` passed for v0.2.1; run `43262828123` passed for v0.2.0.
 - Full `nix flake check --all-systems` remains unclaimed. The arm64 job does not
   run the complete check cohort.
 
@@ -21,6 +21,8 @@ system. A package build and lifecycle smoke also passed on a native
 | v0.1.0 | x86_64-linux | Local `nix flake check -L` | pass |
 | v0.2.0 | x86_64-linux | Release package build and lifecycle smoke | pass |
 | v0.2.0 | aarch64-linux | Native package build and lifecycle smoke | pass |
+| v0.2.1 | x86_64-linux | Release package build and lifecycle smoke | pass |
+| v0.2.1 | aarch64-linux | Native package build and lifecycle smoke | pass |
 
 ## Future validation path
 
