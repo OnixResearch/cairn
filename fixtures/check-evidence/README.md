@@ -17,7 +17,7 @@ No producer pin or producer implementation changes.
 
 Lattice and Valence are published at `https://github.com/OnixResearch/lattice` and `https://github.com/OnixResearch/valence`.
 Mantle is published at `https://github.com/OnixResearch/mantle`.
-Kiln is published as `rad:z2wsvXm5S2sJGvuV1k5JHiwi1PbKE` through `https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git`.
+Kiln is published at `https://github.com/OnixResearch/kiln` (upstream RID `rad:z2wsvXm5S2sJGvuV1k5JHiwi1PbKE`).
 The runtime dependencies retain their original source notices. Valence's original license text is retained in `LICENSES/valence-producer-fixtures-LICENSE`.
 Octet's original license text is retained in `LICENSES/octet-producer-fixtures-LICENSE`.
 The Lattice source snapshot supplies MIT package metadata but no separate root license file.

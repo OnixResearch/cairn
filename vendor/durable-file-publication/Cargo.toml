@@ -1,0 +1,30 @@
+[package]
+name = "durable-file-publication"
+description = "Bounded capability-relative publication of one regular file"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+repository = "rad://z3tAR4For7qw8ZirkJzoDw1VNDDLM"
+publish = false
+
+[features]
+default = ["std"]
+std = ["dep:rustix"]
+
+[dependencies]
+rustix = { version = "1.1", optional = true, features = ["fs"] }
+
+[dev-dependencies]
+blake3 = "1.8"
+tempfile = "3.20"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"

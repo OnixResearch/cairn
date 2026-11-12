@@ -218,7 +218,7 @@ The existing Octet/Slotcar compiler and check pin remains unchanged.
 
 The Lattice native fixture helper has a separate locked Cargo graph. Its producer requires BLAKE3 1.8.3 or later; Mantle requires exactly 1.8.2.
 The product JSON translator preserves the pinned Lattice framing without joining those dependency graphs.
-Kiln's published source is `https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git`.
+Kiln's published source is `https://github.com/OnixResearch/kiln`.
 
 The Nix consumer packaging adapter limits Mantle package discovery to `crates/mantle-build-contract`.
 It retains the complete pinned checkout for workspace inheritance and uses Cargo's original package admission and Crane's inheritance resolver.

@@ -5,6 +5,10 @@ members = [
   "crates/cairn-gate-contract",
   "crates/cairn-radicle-cob",
 ]
+exclude = [
+  "vendor/cap-root-core",
+  "vendor/durable-file-publication",
+]
 resolver = "2"
 
 [workspace.package]
@@ -20,15 +24,15 @@ blake3 = "1.5"
 bounded-exec = { git = "https://github.com/OnixResearch/bounded-exec.git", rev = "29dac88ecded94457572db3fdfaaaab95fa91525" }
 bounded-tree-core = { path = "vendor/bounded-tree-core" }
 bounded-tree-cap = { path = "vendor/bounded-tree-cap" }
-cap-root-core = { git = "https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git", rev = "8991e2572578c16e590c2f1c0915db6c46c5d9cb" }
+cap-root-core = { path = "vendor/cap-root-core" }
 cap-fs-ext = "=4.0.2"
 cap-std = "4.0.2"
 crossterm = "0.28"
-durable-file-publication = { git = "https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git", rev = "951c27f59003cea9bfdb40ed4d89653d50fada1f" }
+durable-file-publication = { path = "vendor/durable-file-publication" }
 ed25519-dalek = "2.2"
 git2 = { version = "0.20.4", features = ["vendored-libgit2"], default-features = false }
 iddqd = "0.4.5"
-kiln-core = { git = "https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git", rev = "5d99f4e9bb954743443e340baece31256b4c53f1" }
+kiln-core = { git = "https://github.com/OnixResearch/kiln.git", rev = "5d99f4e9bb954743443e340baece31256b4c53f1" }
 mantle-build-contract = { git = "https://github.com/OnixResearch/mantle.git", rev = "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2" }
 nickel-export-core = { git = "https://github.com/OnixResearch/nickel-export", rev = "257fafc1c746f1faf156207043a4c826bfb16d49" }
 nonempty = "0.9"

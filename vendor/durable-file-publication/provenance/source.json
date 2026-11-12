@@ -1,0 +1,70 @@
+{
+  "extraction_decision": "docs/publication/DECISION.md",
+  "import_disposition": "owner-licensed clean-room fixture promotion",
+  "license": "MIT OR Apache-2.0",
+  "modifications": [
+    "renamed the disposable package to the independent release identity",
+    "moved consumer-specific pilot mappings out of the public crate",
+    "added ordered shell and capability integration tests",
+    "added repository-owned lifecycle, release, provenance, and platform contracts",
+    "replaced incubation requirement markers with repository-owned requirement identities"
+  ],
+  "non_claims": [
+    "source linkage does not prove imported behavior correctness",
+    "pilot passage does not prove permanent consumer adoption",
+    "license recording does not import product-owned implementation expression"
+  ],
+  "promoted_files": [
+    {
+      "blake3": "4bcb234a0d2ffb1c202a19ae41ef5a6b9529124abb9bbe002c2263049391d129",
+      "path": "src/lib.rs",
+      "role": "independent public crate boundary"
+    },
+    {
+      "blake3": "4d040eb172f0fc518f5fa662c1ffa0e4457319921e39fb7a6c1f76d994665469",
+      "path": "src/core.rs",
+      "role": "promoted pure request and observation classifier"
+    },
+    {
+      "blake3": "d02379677341b7408b636906c4bee4910ef3835cc81261373194ef84678b27da",
+      "path": "src/corpus.rs",
+      "role": "promoted shared conformance corpus"
+    },
+    {
+      "blake3": "3fcf209f905c47aac62c30d97e7ae0dfb276949d2eebe68b1298c76d5b0bc05e",
+      "path": "src/shell.rs",
+      "role": "promoted shell with synchronizable-parent preflight"
+    }
+  ],
+  "reviewed_candidate_revision": "67f14770a82e24eb39d3a751285b908232566e6b",
+  "reviewed_product_revisions": {
+    "mantle": "688781f370e8f477d900e7b96efa1ad3266a392e",
+    "onixos": "628f0b8a7036ed344aa51c74612495e28299c75a"
+  },
+  "schema": "durable-file-publication.source-provenance.v1",
+  "source_files": [
+    {
+      "blake3": "ae4a3ee7940b6b782082e9370587f219913e545a3cdbfaeaa9d7eca856b95fec",
+      "path": "src/core.rs",
+      "role": "pure request and observation classifier"
+    },
+    {
+      "blake3": "d02379677341b7408b636906c4bee4910ef3835cc81261373194ef84678b27da",
+      "path": "src/corpus.rs",
+      "role": "shared positive and negative conformance corpus"
+    },
+    {
+      "blake3": "a9a4fcf75f555d2b2dd9bdac0f2363a359c86d1b496cd556d5dd1edd2ed97ea7",
+      "path": "src/shell.rs",
+      "role": "capability-relative filesystem shell"
+    },
+    {
+      "blake3": "4e8fbd66b02e0d3306aa9483e383c579a4287e87a9537e49e32c62d6ed576193",
+      "path": "src/pilot.rs",
+      "role": "consumer-shaped extraction evidence retained under tests only"
+    }
+  ],
+  "source_path": "fixtures/publication-candidate",
+  "source_repository": "https://github.com/OnixResearch/onix-artifact",
+  "source_revision": "c932138d880ddf4c2967f4c024b489b5c0022bf1"
+}

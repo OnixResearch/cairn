@@ -2,7 +2,6 @@
 let
   expected = {
     bounded-exec = "29dac88ecded94457572db3fdfaaaab95fa91525";
-    durable-file-publication = "951c27f59003cea9bfdb40ed4d89653d50fada1f";
     mantle-build-contract = "0bbab77e23ab95caa4e4184b9945cfaa5c8040e2";
     kiln-core = "5d99f4e9bb954743443e340baece31256b4c53f1";
   };
@@ -37,7 +36,7 @@ let
         license = "AGPL-3.0-or-later";
       }
     && lib.all (dependency: !(dependency ? path)) (builtins.attrValues manifest.dependencies);
-  kilnSource = "git+https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git?rev=${expected.kiln-core}#${expected.kiln-core}";
+  kilnSource = "git+https://github.com/OnixResearch/kiln.git?rev=${expected.kiln-core}#${expected.kiln-core}";
   kilnNarHash = "sha256-ULVaEH8tOiR2SoHVkpB5dB7ZKrvu99VxQ8KBLytP+RM=";
   # SHA-256 is the Nix source-admission boundary, not a Cairn receipt identity.
   kilnNotices = {

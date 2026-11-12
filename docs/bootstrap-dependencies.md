@@ -5,18 +5,18 @@ The current consumer is the disposable Cairn bootstrap fixture.
 The target outcome is bounded, ownership-aware project installation.
 The shell must retain installation policy, locks, transactions, recovery, and receipt meaning.
 
-## Published sources
+## Consumed sources
 
-| Package | Published Git endpoint | Reviewed revision | Notices |
+| Package | Consumed source | Reviewed revision | Notices |
 |---|---|---|---|
-| `cap-root-core` | `https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git` | `8991e2572578c16e590c2f1c0915db6c46c5d9cb` | `LICENSE`, AGPL-3.0-or-later |
-| `durable-file-publication` | `https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git` | `951c27f59003cea9bfdb40ed4d89653d50fada1f` | `LICENSE-MIT`, `LICENSE-APACHE`, `NOTICE`, and referenced provenance |
+| `cap-root-core` | Vendored at `vendor/cap-root-core` from `https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git` | `8991e2572578c16e590c2f1c0915db6c46c5d9cb` | `LICENSE`, AGPL-3.0-or-later |
+| `durable-file-publication` | Vendored at `vendor/durable-file-publication` from `https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git` | `951c27f59003cea9bfdb40ed4d89653d50fada1f` | `LICENSE-MIT`, `LICENSE-APACHE`, `NOTICE`, and referenced provenance |
 | `nickel-export-core` | `https://github.com/OnixResearch/nickel-export` | `257fafc1c746f1faf156207043a4c826bfb16d49` | Existing unchanged dependency and notices |
 
-The Radicle RIDs are the repository names in the two seed URLs, without `.git`.
-The seed is a transport endpoint. It does not grant source authority or indefinite availability.
-Both sources were acquired from the published endpoint and checked out at their exact reviewed revisions.
-No producer implementation was copied or changed. No ambient sibling path enters the dependency graph.
+The Radicle RIDs remain the upstream repository identities recorded in the vendored provenance.
+The seed URLs are historical source locators and are not build-time dependencies.
+Both snapshots were acquired from the published endpoints at their exact reviewed revisions and are now vendored under `vendor/`.
+No producer implementation was copied or changed beyond the standalone package manifests required outside the producer workspace. No ambient sibling path enters the dependency graph.
 Cargo and Nix retain the complete source notices. The packaged CLI also installs the licenses, publication notice, and referenced provenance under `share/licenses/cairn/`.
 
 The owner authorized these exact component dependencies for this change.

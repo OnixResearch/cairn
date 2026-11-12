@@ -73,7 +73,11 @@ and release workflows documented in `README.md`.
 ### Packaging and installation
 
 - Dependency sources use anonymous public HTTPS. Nix flake inputs and Cargo git
-  dependencies no longer require SSH credentials.
+  dependencies no longer require SSH credentials. `cap-root-core` and
+  `durable-file-publication` are vendored at their reviewed revisions, and Kiln
+  resolves from GitHub, so builds do not depend on Radicle seed availability.
+- A native arm64 GitHub workflow builds the package and runs the lifecycle smoke
+  for a requested ref.
 - `nix profile install github:OnixResearch/cairn` and
   `nix run github:OnixResearch/cairn#cairn` work from any working directory.
   The packaged wrapper points `CAIRN_POLICY` at the bundled generated policy;

@@ -75,7 +75,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 [[package]]
 name = "kiln-core"
 version = "0.1.0"
-source = "git+https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git?rev=5d99f4e9bb954743443e340baece31256b4c53f1#5d99f4e9bb954743443e340baece31256b4c53f1"
+source = "git+https://github.com/OnixResearch/kiln.git?rev=5d99f4e9bb954743443e340baece31256b4c53f1#5d99f4e9bb954743443e340baece31256b4c53f1"
 dependencies = [
  "blake3",
  "serde",

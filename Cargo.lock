@@ -411,7 +411,6 @@ dependencies = [
 [[package]]
 name = "cap-root-core"
 version = "0.1.0"
-source = "git+https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git?rev=8991e2572578c16e590c2f1c0915db6c46c5d9cb#8991e2572578c16e590c2f1c0915db6c46c5d9cb"
 
 [[package]]
 name = "cap-std"
@@ -812,7 +811,6 @@ checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 [[package]]
 name = "durable-file-publication"
 version = "0.1.0"
-source = "git+https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git?rev=951c27f59003cea9bfdb40ed4d89653d50fada1f#951c27f59003cea9bfdb40ed4d89653d50fada1f"
 dependencies = [
  "rustix 1.1.4",
 ]
@@ -1404,7 +1402,7 @@ dependencies = [
 [[package]]
 name = "kiln-core"
 version = "0.1.0"
-source = "git+https://seed.radicle.garden/z2wsvXm5S2sJGvuV1k5JHiwi1PbKE.git?rev=5d99f4e9bb954743443e340baece31256b4c53f1#5d99f4e9bb954743443e340baece31256b4c53f1"
+source = "git+https://github.com/OnixResearch/kiln.git?rev=5d99f4e9bb954743443e340baece31256b4c53f1#5d99f4e9bb954743443e340baece31256b4c53f1"
 dependencies = [
  "blake3",
  "serde",

@@ -3,20 +3,21 @@ let
   sources = {
     cap-root = {
       package = "cap-root-core";
-      url = "https://seed.radicle.garden/z3cWBCK7VPbEmbL5MAvKJWKjCE745.git";
-      revision = "8991e2572578c16e590c2f1c0915db6c46c5d9cb";
+      path = "vendor/cap-root-core";
       license = "AGPL-3.0-or-later";
-      narHash = "sha256-2eiyxmhW8/qj30ALccgkt5hatRMk2OcazmU3SCI/Opo=";
     };
     durable-file-publication = {
       package = "durable-file-publication";
-      url = "https://seed.radicle.garden/z3tAR4For7qw8ZirkJzoDw1VNDDLM.git";
-      revision = "951c27f59003cea9bfdb40ed4d89653d50fada1f";
+      path = "vendor/durable-file-publication";
       license = "MIT OR Apache-2.0";
-      narHash = "sha256-fKxZ+3rzWzVuawILnmpiYCCe8PT/z6usopFMbr2KFbI=";
     };
   };
   require = condition: code: lib.optional (!condition) code;
+  manifestAt =
+    input: expected:
+    builtins.fromTOML (
+      builtins.readFile "${input.root}/${expected.path}/Cargo.toml"
+    );
   validate =
     input:
     lib.concatLists (
@@ -25,44 +26,20 @@ let
         let
           dependency = input.workspace.workspace.dependencies.${expected.package} or { };
           packages = builtins.filter (p: p.name == expected.package) input.cargoLock.package;
-          nodeName = input.flakeLock.nodes.root.inputs.${name} or "missing";
-          node = input.flakeLock.nodes.${nodeName} or { };
-          locked = node.locked or { };
-          original = node.original or { };
-          resolved = input.resolved.${name};
-          manifest = builtins.fromTOML (builtins.readFile "${resolved}/Cargo.toml");
-          license = manifest.workspace.package.license or (manifest.package.license or null);
+          manifest = (input.manifests or { }).${name} or (manifestAt input expected);
+          license = manifest.package.license or null;
         in
-        require ((dependency.git or null) == expected.url) "${name}.cargo-source"
-        ++ require ((dependency.rev or null) == expected.revision) "${name}.cargo-revision"
+        require ((dependency.path or null) == expected.path) "${name}.cargo-path"
         ++ require (
-          !(dependency ? path || dependency ? branch || dependency ? tag)
-        ) "${name}.cargo-floating-or-path"
+          !(dependency ? git || dependency ? rev || dependency ? branch || dependency ? tag)
+        ) "${name}.cargo-git-source"
         ++ require (input.cli.dependencies.${expected.package}.workspace or false) "${name}.consumer"
+        ++ require (builtins.length packages == 1) "${name}.cargo-lock-unique"
         ++ require (
           builtins.length packages == 1
-          &&
-            ((builtins.head packages).source or null)
-            == "git+${expected.url}?rev=${expected.revision}#${expected.revision}"
-        ) "${name}.cargo-lock"
-        ++ require ((node.flake or true) == false) "${name}.flake-enabled"
-        ++ require (
-          (locked.type or null) == "git" && (locked.url or null) == expected.url
-        ) "${name}.nix-source"
-        ++ require (
-          (locked.rev or null) == expected.revision
-          && (original.rev or null) == expected.revision
-          && (resolved.rev or null) == expected.revision
-        ) "${name}.nix-revision"
-        ++ require (
-          (original.url or null) == expected.url && !(original ? ref || original ? path)
-        ) "${name}.nix-floating-or-path"
-        ++ require (
-          (locked.narHash or null) == expected.narHash && (resolved.narHash or null) == expected.narHash
-        ) "${name}.nix-content"
-        ++ require (
-          (input.outputHashes."${expected.package}-0.1.0" or null) == expected.narHash
-        ) "${name}.cargo-nix-content"
+          && (builtins.head packages).version == "0.1.0"
+          && !((builtins.head packages) ? source)
+        ) "${name}.cargo-lock-path"
         ++ require (license == expected.license) "${name}.notices"
       ) sources
     );
@@ -73,40 +50,45 @@ let
         name: expected:
         let
           reject = code: changed: require (builtins.elem code (validate changed)) "self-test.${code}";
-          node = input.flakeLock.nodes.root.inputs.${name};
         in
-        reject "${name}.cargo-revision" (
+        reject "${name}.cargo-path" (
           lib.recursiveUpdate input {
-            workspace.workspace.dependencies.${expected.package}.rev =
-              "0000000000000000000000000000000000000000";
+            workspace.workspace.dependencies.${expected.package}.path = "vendor/substituted";
           }
         )
-        ++ reject "${name}.cargo-floating-or-path" (
+        ++ reject "${name}.cargo-git-source" (
           lib.recursiveUpdate input {
-            workspace.workspace.dependencies.${expected.package}.path = "../ambient";
+            workspace.workspace.dependencies.${expected.package}.git = "https://example.invalid/source.git";
           }
         )
-        ++ reject "${name}.cargo-floating-or-path" (
+        ++ reject "${name}.consumer" (
           lib.recursiveUpdate input {
-            workspace.workspace.dependencies.${expected.package}.branch = "main";
+            cli.dependencies.${expected.package}.workspace = false;
           }
         )
-        ++ reject "${name}.nix-revision" (
-          lib.recursiveUpdate input {
-            flakeLock.nodes.${node}.locked.rev = "0000000000000000000000000000000000000000";
-          }
-        )
-        ++ reject "${name}.nix-content" (
-          lib.recursiveUpdate input {
-            flakeLock.nodes.${node}.locked.narHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-          }
-        )
-        ++ reject "${name}.cargo-nix-content" (input // { outputHashes = { }; })
-        ++ reject "${name}.cargo-lock" (
+        ++ reject "${name}.cargo-lock-path" (
           input
           // {
             cargoLock = input.cargoLock // {
-              package = [ ];
+              package = map (
+                package:
+                if package.name == expected.package then
+                  package // { source = "git+https://example.invalid/source.git"; }
+                else
+                  package
+              ) input.cargoLock.package;
+            };
+          }
+        )
+        ++ reject "${name}.notices" (
+          input
+          // {
+            manifests = (input.manifests or { }) // {
+              ${name} = (manifestAt input expected) // {
+                package = (manifestAt input expected).package // {
+                  license = "substituted";
+                };
+              };
             };
           }
         )
