@@ -119,3 +119,28 @@ fn read_large_content_bound_artifact(
 pub(super) fn requirement_registry_receipt_hash(value: &Value) -> Option<&str> {
     value.get("receipt")?.get("receipt_blake3")?.as_str()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::read_large_content_bound_artifact;
+
+    #[cfg(unix)]
+    #[test]
+    fn large_artifacts_reject_symlinks() {
+        use std::os::unix::fs::symlink;
+
+        let outside = std::env::temp_dir().join(format!(
+            "cairn-large-artifact-outside-{}",
+            std::process::id()
+        ));
+        let link =
+            std::env::temp_dir().join(format!("cairn-large-artifact-link-{}", std::process::id()));
+        std::fs::write(&outside, b"{}").unwrap();
+        symlink(&outside, &link).unwrap();
+        let error = read_large_content_bound_artifact(&link, 1024)
+            .expect_err("symlinked large artifact must fail");
+        assert!(error.to_string().contains("regular non-symlink file"));
+        std::fs::remove_file(link).unwrap();
+        std::fs::remove_file(outside).unwrap();
+    }
+}
