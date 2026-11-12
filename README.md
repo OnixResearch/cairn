@@ -354,6 +354,8 @@ cairn probe run --out target/probe-receipts
 cairn gate proposal my-change --root .
 ```
 
+Read [`docs/authoritative-probe-gates.md`](docs/authoritative-probe-gates.md) for saved-probe gate composition, status rules, and bounds.
+
 Kani uses the same saved-evidence boundary. Read [`docs/kani-receipt-gates.md`](docs/kani-receipt-gates.md).
 
 Nickel owns authored structure. Generated JSON is the current runtime format.
