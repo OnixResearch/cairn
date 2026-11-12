@@ -17,6 +17,8 @@ use crate::support::{
     reject_positional_arguments, reject_unknown_options, reject_unknown_options_with_flags,
 };
 
+const MAX_POLICY_OUTPUT_BYTES: u64 = 16 * 1024 * 1024;
+
 pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if args.first().map(String::as_str) == Some("export") {
         let rest = args.into_iter().skip(1).collect::<Vec<_>>();
@@ -28,6 +30,18 @@ pub(crate) fn run_policy(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let policy_path = read_option(args, "--policy", default_policy_path());
     let policy = load_policy_file(policy_path)?;
     print_json(policy.raw)
+}
+
+fn read_existing_policy_output(path: &Path) -> Result<String, Box<dyn Error>> {
+    match fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+        Err(error) => Err(error.into()),
+        Ok(_) => crate::support::read_bounded_text_no_symlink(
+            path,
+            MAX_POLICY_OUTPUT_BYTES,
+            "generated policy",
+        ),
+    }
 }
 
 fn run_policy_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -46,7 +60,7 @@ fn run_policy_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let rendered = export_policy_from_nickel(&source, &output)?;
     check_invalid_policy_fixtures(source.parent().unwrap_or(Path::new(".")).join("fixtures"))?;
     if is_check {
-        let existing = fs::read_to_string(&output).unwrap_or_default();
+        let existing = read_existing_policy_output(&output)?;
         if existing != rendered {
             return Err(format!("generated policy is stale: {}", output.display()).into());
         }
@@ -328,4 +342,54 @@ fn validate_determinism_surface_inventory(policy: &Policy) -> Result<(), Box<dyn
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::read_existing_policy_output;
+    use std::{error::Error, fs, path::PathBuf};
+
+    fn test_path(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "cairn-policy-output-{}-{name}.json",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn missing_output_is_empty() -> Result<(), Box<dyn Error>> {
+        let path = test_path("missing");
+        let _ = fs::remove_file(&path);
+        assert_eq!(read_existing_policy_output(&path)?, "");
+        Ok(())
+    }
+
+    #[test]
+    fn oversized_output_is_rejected() -> Result<(), Box<dyn Error>> {
+        let path = test_path("oversized");
+        let file = fs::File::create(&path)?;
+        file.set_len(16 * 1024 * 1024 + 1)?;
+        let error = read_existing_policy_output(&path).expect_err("oversized output must fail");
+        assert!(error
+            .to_string()
+            .contains("exceeds the reviewed byte bound"));
+        fs::remove_file(path)?;
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn symlinked_output_is_rejected() -> Result<(), Box<dyn Error>> {
+        use std::os::unix::fs::symlink;
+
+        let outside = test_path("outside");
+        let link = test_path("symlink");
+        fs::write(&outside, b"{}")?;
+        symlink(&outside, &link)?;
+        let error = read_existing_policy_output(&link).expect_err("symlinked output must fail");
+        assert!(error.to_string().contains("must not be a symlink"));
+        fs::remove_file(link)?;
+        fs::remove_file(outside)?;
+        Ok(())
+    }
 }
