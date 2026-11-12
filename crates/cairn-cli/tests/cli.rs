@@ -3360,3 +3360,29 @@ fn lifecycle_check_rejects_oversized_bundle() -> Result<(), Box<dyn Error>> {
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn readiness_rejects_symlinked_authentication_manifest() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let dir = temp_test_dir("readiness-auth-symlink")?;
+    let outside = dir.join("outside.json");
+    fs::write(&outside, br#"{}"#)?;
+    let link = dir.join("link.json");
+    symlink(&outside, &link)?;
+    let output = cairn()
+        .args([
+            "release-readiness",
+            "--root",
+            "fixtures/basic",
+            "--stack-provenance-authentication",
+            &link.to_string_lossy(),
+        ])
+        .output()?;
+    let text = String::from_utf8_lossy(&output.stdout);
+    assert!(text.contains("authentication"), "{text}");
+    assert!(text.contains("must not be a symlink"), "{text}");
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
