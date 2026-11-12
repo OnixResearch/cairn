@@ -3294,3 +3294,25 @@ fn readiness_rejects_symlinked_address_and_provenance_inputs() -> Result<(), Box
     fs::remove_dir_all(dir)?;
     Ok(())
 }
+
+#[test]
+fn readiness_rejects_oversized_address_input() -> Result<(), Box<dyn Error>> {
+    let dir = temp_test_dir("readiness-input-oversized")?;
+    let input = dir.join("address.json");
+    let file = fs::File::create(&input)?;
+    file.set_len(4 * 1024 * 1024 + 1)?;
+    let output = cairn()
+        .args([
+            "release-readiness",
+            "--root",
+            "fixtures/basic",
+            "--function-address-valence",
+            &input.to_string_lossy(),
+        ])
+        .output()?;
+    let text = String::from_utf8_lossy(&output.stdout);
+    assert!(text.contains("function_address.input_unreadable"), "{text}");
+    assert!(text.contains("exceeds the reviewed byte bound"), "{text}");
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
