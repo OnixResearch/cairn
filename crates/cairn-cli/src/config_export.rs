@@ -764,4 +764,39 @@ mod tests {
         fs::remove_file(outside)?;
         Ok(())
     }
+    #[test]
+    fn source_reads_are_bounded() -> Result<(), Box<dyn Error>> {
+        let path =
+            std::env::temp_dir().join(format!("cairn-config-export-source-{}", std::process::id()));
+        let file = fs::File::create(&path)?;
+        file.set_len(SOURCE_FILE_MAX_BYTES + 1)?;
+        let error =
+            read_bounded(&path, SOURCE_FILE_MAX_BYTES).expect_err("oversized source must fail");
+        assert!(error.to_string().contains("exceeds the byte bound"));
+        fs::remove_file(path)?;
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn source_reads_reject_symlinks() -> Result<(), Box<dyn Error>> {
+        use std::os::unix::fs::symlink;
+
+        let outside = std::env::temp_dir().join(format!(
+            "cairn-config-export-source-outside-{}",
+            std::process::id()
+        ));
+        let link = std::env::temp_dir().join(format!(
+            "cairn-config-export-source-link-{}",
+            std::process::id()
+        ));
+        fs::write(&outside, b"{}\n")?;
+        symlink(&outside, &link)?;
+        let error =
+            read_bounded(&link, SOURCE_FILE_MAX_BYTES).expect_err("symlinked source must fail");
+        assert!(error.to_string().contains("regular non-symlink file"));
+        fs::remove_file(link)?;
+        fs::remove_file(outside)?;
+        Ok(())
+    }
 }
