@@ -1,4 +1,4 @@
-use std::{error::Error, fs, io::Write, path::Path};
+use std::{error::Error, io::Write, path::Path};
 
 use cairn_core::{
     canonical_json_hash, validate_circuit_primitive_receipt, validate_downstream_pilot_receipt,
@@ -270,11 +270,7 @@ pub(crate) fn run_evidence_function_object(args: Vec<String>) -> Result<(), Box<
 }
 
 fn read_json_artifact(path: &Path, max_bytes: u64) -> Result<Value, Box<dyn Error>> {
-    let metadata = fs::metadata(path)?;
-    if metadata.len() > max_bytes {
-        return Err(format!("artifact too large: {} bytes", metadata.len()).into());
-    }
-    Ok(serde_json::from_slice(&fs::read(path)?)?)
+    crate::support::read_bounded_json_no_symlink(path, max_bytes, "evidence artifact")
 }
 
 fn print_json(value: Value) -> Result<(), Box<dyn Error>> {
