@@ -38,6 +38,8 @@ use crate::support::{
 };
 use crate::tracey::{repository_gate_summary, traceability_coverage_receipt};
 
+const MAX_SEMANTIC_REVIEW_LEDGER_BYTES: u64 = 2_097_152;
+
 pub(crate) fn run_release_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     reject_unknown_options_with_repeats(
         &args,
@@ -535,9 +537,12 @@ fn semantic_review_ledger_component(
         };
     };
 
-    match fs::read_to_string(&path)
-        .map_err(|error| error.to_string())
-        .and_then(|text| serde_json::from_str::<Value>(&text).map_err(|error| error.to_string()))
+    match crate::support::read_bounded_json_no_symlink(
+        &path,
+        MAX_SEMANTIC_REVIEW_LEDGER_BYTES,
+        "semantic review ledger",
+    )
+    .map_err(|error| error.to_string())
     {
         Ok(receipt) => {
             let is_passed = receipt["valid"].as_bool().unwrap_or(false)
