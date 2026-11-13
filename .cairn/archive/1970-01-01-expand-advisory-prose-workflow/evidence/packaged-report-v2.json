@@ -1,0 +1,93 @@
+{
+  "advisory": true,
+  "bounds": {
+    "max_diagnostics": 4096,
+    "max_report_bytes": 1048576,
+    "max_total_bytes": 16777216
+  },
+  "engine": {
+    "name": "englishc",
+    "revision": "336ed696eec73e5b9858c5d7952b54c8e93b9df9"
+  },
+  "files": [
+    {
+      "content_blake3": "3df4a584006c00c16ebbd0bc2ec38f4f2194ab59d90e46f62671550833e988bc",
+      "diagnostics": [
+        {
+          "code": "E0001",
+          "helps": [
+            {
+              "message": "use `is`",
+              "suggestion": {
+                "column": 4,
+                "end": 6,
+                "end_column": 7,
+                "end_line": 1,
+                "line": 1,
+                "replacement": "is",
+                "review_required": true,
+                "review_risks": [],
+                "start": 3
+              }
+            }
+          ],
+          "labels": [
+            {
+              "column": 4,
+              "end": 6,
+              "end_column": 7,
+              "end_line": 1,
+              "excerpt": "are",
+              "line": 1,
+              "message": "expected `is`, found `are`",
+              "primary": true,
+              "start": 3
+            },
+            {
+              "column": 1,
+              "end": 2,
+              "end_column": 3,
+              "end_line": 1,
+              "excerpt": "He",
+              "line": 1,
+              "message": "`He` is third-person singular",
+              "primary": false,
+              "start": 0
+            }
+          ],
+          "level": "error",
+          "lint": "subject_verb_agreement",
+          "message": "mismatched verb form",
+          "notes": [
+            "in English (Rust edition) this is a compile error: the trait bound `He: TakesAre` is not satisfied"
+          ],
+          "requirement_id": null,
+          "review_risks": []
+        }
+      ],
+      "path": "notes.md"
+    }
+  ],
+  "mutated": false,
+  "non_claims": [
+    "prose diagnostics are advisory and do not determine lifecycle gate outcomes",
+    "grammar observations do not prove requirement validity, consistency, completeness, or satisfaction",
+    "prose diagnostics are not implementation, verification, readiness, or release evidence",
+    "all suggestions require author review and are never applied by this command"
+  ],
+  "profile": {
+    "blake3": "02554bc074adc462134d046c34704d57c4bc0c94fe131b91b46c9aaf389e3c22",
+    "name": "default",
+    "settings": {
+      "exclude_rules": [],
+      "include_rules": [],
+      "name": "default"
+    },
+    "source": null
+  },
+  "report_blake3": "79bef8477079b323bd5eec9cda6db627760a68e4a05333546cba6a670bce9a66",
+  "schema_version": "cairn.prose-check.v2",
+  "selection": {
+    "kind": "explicit"
+  }
+}

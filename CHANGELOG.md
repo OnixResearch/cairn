@@ -16,6 +16,15 @@ surface.
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change
   lifecycle gate outcomes; invalid inputs still fail.
+- Human text, non-blocking GitHub warning annotations, and SARIF 2.1.0 prose
+  presentation; deterministic active-change selection; Nickel-exported rule
+  profiles and reasoned next-line suppressions. Default JSON v1 and machine
+  semantics remain intact.
+- Opt-in content-bound prose v2 reports and independent freshness rechecking,
+  including complete current diagnostic recomputation. Technical-document
+  projection preserves original source positions; requirement context and
+  meaning-change hints remain advisory. Aggregate bytes, diagnostics, traversal,
+  and rendered reports have explicit hard ceilings.
 
 ### Removed
 

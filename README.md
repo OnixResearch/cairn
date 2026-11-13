@@ -240,16 +240,20 @@ Read [Policy-exception collaboration](docs/policy-exception.md) before you use t
 
 ## Advisory prose checks
 
-Run optional grammar feedback on explicit files without rewriting them:
+Check explicit files or one active change without rewriting source:
 
 ```bash
 cairn prose check --root . README.md docs/prose-check.md
+cairn prose check --root . --change add-friendly-start --format text
 ```
 
-Findings are advisory, including upstream grammar errors. They do not block
-lifecycle gates or establish requirement validity or satisfaction. Read
-[Advisory prose checks](docs/prose-check.md) for machine output, input bounds,
-source positions, and review-only suggestions.
+JSON/machine defaults remain unchanged. Optional text, GitHub warning, and SARIF
+formats support human and CI/editor review; exported rule profiles and scoped
+suppressions keep configuration reviewable. Opt-in v2 reports bind original
+content and effective configuration; `cairn prose verify` rejects stale or altered
+suggestions. Findings remain advisory and never determine lifecycle gates or
+requirement validity. Read [Advisory prose checks](docs/prose-check.md) for the
+complete formats, selection, bounds, freshness, and claim boundaries.
 
 ## Detached source-review evidence
 

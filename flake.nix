@@ -517,6 +517,30 @@
               touch $out
             '';
 
+        prose-profile-export =
+          pkgs.runCommand "cairn-prose-profile-export"
+            { nativeBuildInputs = [ ]; }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              cairn=${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn
+              # r[verify cairn.prose_workflow.configuration]
+              # r[verify cairn.prose_workflow.verification]
+              "$cairn" prose profiles export --check
+              "$cairn" prose profiles export --source cairn-policy/fixtures/prose-valid.ncl --output cairn-policy/generated/prose-probe.json
+              if "$cairn" prose profiles export --source cairn-policy/fixtures/prose-invalid-selector.ncl --output cairn-policy/generated/prose-invalid.json; then
+                echo "unknown prose rule selector was accepted" >&2
+                exit 1
+              fi
+              printf '\n' >> cairn-policy/generated/prose.json
+              if "$cairn" prose profiles export --check; then
+                echo "stale prose profile export was accepted" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         nickel-export-cutover =
           pkgs.runCommand "cairn-nickel-export-cutover"
             {

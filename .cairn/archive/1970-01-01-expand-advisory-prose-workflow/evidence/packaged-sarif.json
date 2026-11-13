@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "artifacts": [
+        {
+          "hashes": {
+            "blake3": "3df4a584006c00c16ebbd0bc2ec38f4f2194ab59d90e46f62671550833e988bc"
+          },
+          "location": {
+            "uri": "notes.md"
+          }
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "advisory": true,
+        "mutated": false,
+        "nonClaims": [
+          "prose diagnostics are advisory and do not determine lifecycle gate outcomes",
+          "grammar observations do not prove requirement validity, consistency, completeness, or satisfaction",
+          "prose diagnostics are not implementation, verification, readiness, or release evidence",
+          "all suggestions require author review and are never applied by this command"
+        ],
+        "profile": {
+          "blake3": "02554bc074adc462134d046c34704d57c4bc0c94fe131b91b46c9aaf389e3c22",
+          "name": "default",
+          "settings": {
+            "exclude_rules": [],
+            "include_rules": [],
+            "name": "default"
+          },
+          "source": null
+        },
+        "reportBlake3": "79bef8477079b323bd5eec9cda6db627760a68e4a05333546cba6a670bce9a66",
+        "reviewRequired": true
+      },
+      "results": [
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "message": {
+                "text": "expected `is`, found `are`"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "index": 0,
+                  "uri": "notes.md"
+                },
+                "region": {
+                  "byteLength": 3,
+                  "byteOffset": 3,
+                  "endColumn": 7,
+                  "endLine": 1,
+                  "startColumn": 4,
+                  "startLine": 1
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "`He` is third-person singular"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "index": 0,
+                  "uri": "notes.md"
+                },
+                "region": {
+                  "byteLength": 2,
+                  "byteOffset": 0,
+                  "endColumn": 3,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "mismatched verb form"
+          },
+          "properties": {
+            "advisory": true,
+            "notes": [
+              "in English (Rust edition) this is a compile error: the trait bound `He: TakesAre` is not satisfied"
+            ],
+            "requirementId": null,
+            "reviewHelps": [
+              {
+                "message": "use `is`",
+                "reviewRequired": true,
+                "reviewRisks": [],
+                "suggestion": {
+                  "region": {
+                    "byteLength": 3,
+                    "byteOffset": 3,
+                    "endColumn": 7,
+                    "endLine": 1,
+                    "startColumn": 4,
+                    "startLine": 1
+                  },
+                  "replacement": "is",
+                  "reviewRequired": true,
+                  "reviewRisks": []
+                }
+              }
+            ],
+            "reviewRequired": true,
+            "reviewRisks": [],
+            "upstreamSeverity": "error"
+          },
+          "ruleId": "E0001",
+          "ruleIndex": 0
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "englishc",
+          "rules": [
+            {
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "id": "E0001",
+              "properties": {
+                "advisory": true,
+                "reviewRequired": true
+              }
+            }
+          ],
+          "version": "336ed696eec73e5b9858c5d7952b54c8e93b9df9"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}
