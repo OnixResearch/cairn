@@ -822,7 +822,7 @@ struct Graph<'a> {
     branches: &'a BTreeMap<&'a str, Vec<&'a SupportBranch>>,
     evidence: &'a BTreeMap<String, &'a EvidenceRecord>,
     evidence_by_claim: &'a BTreeMap<&'a str, Vec<&'a EvidenceRecord>>,
-    premises: &'a BTreeMap<&'a str, Vec<&'a str>>,
+    premises: &'a BTreeMap<&'a str, Vec<String>>,
     context_ids: &'a BTreeMap<String, String>,
     invalidated_evidence: &'a BTreeMap<String, CauseOrigin>,
     withdrawn_assumptions: &'a BTreeMap<String, CauseOrigin>,
@@ -999,7 +999,7 @@ fn eval_claim(
                     })?;
                     for premise in premises {
                         eval_claim(premise, graph, state)?;
-                        let premise_eval = state.cache.get(*premise).ok_or_else(|| {
+                        let premise_eval = state.cache.get(premise).ok_or_else(|| {
                             DerivationError::InvalidInput(format!(
                                 "premise {premise} has no evaluation"
                             ))
@@ -1370,7 +1370,7 @@ pub fn evaluate_support_maintenance(
     }
 
     let mut branch_ids = BTreeSet::new();
-    let mut prerequisites: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+    let mut prerequisites: BTreeMap<&str, Vec<String>> = BTreeMap::new();
     let mut branches: BTreeMap<&str, Vec<&SupportBranch>> = BTreeMap::new();
     let mut assumptions = BTreeSet::new();
     for branch in &case.branches {
