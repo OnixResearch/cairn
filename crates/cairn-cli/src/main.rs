@@ -50,6 +50,7 @@ mod release_evidence;
 mod release_readiness;
 mod release_run;
 mod rename_classification;
+mod requirement_consistency;
 mod requirement_id_registry;
 mod revision_classification;
 mod rfd;
@@ -61,8 +62,8 @@ mod stack_provenance;
 mod state_machine_receipt;
 mod steel_orchestration;
 mod support;
-mod targeted_context;
 mod support_maintenance;
+mod targeted_context;
 mod test_harness;
 mod toolchain_profile_matrix;
 mod trace_index;
@@ -72,6 +73,7 @@ mod verification_impact;
 mod view;
 mod vo;
 mod workflow;
+mod workflow_obligations;
 mod worksets;
 mod workspace_contract_matrix;
 
@@ -219,6 +221,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "requirement-contract" => typed_requirement_contracts::run(args.collect())?,
         "footprints" => concurrent_change_footprints::run(args.collect())?,
         "revision" => revision_classification::run(args.collect())?,
+        "requirement-analysis" => requirement_consistency::run(args.collect())?,
         "prose" => prose::run(args.collect())?,
         "compact" => archive_compaction::run_compact(args.collect())?,
         "template" => developer_experience::run_template(args.collect())?,
@@ -267,6 +270,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         )?,
         "view" => run_view(args.collect())?,
         "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
+        "obligation" => workflow_obligations::run(args.collect())?,
         "readiness" => readiness::run_readiness(args.collect())?,
         "observe" => observations::run(args.collect())?,
         "adoption" => run_adoption(args.collect())?,

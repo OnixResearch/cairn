@@ -660,7 +660,10 @@ fn parse_cli(args: Vec<String>) -> Result<(Value, Option<String>), Box<dyn Error
             });
             continue;
         }
-        if matches!(target, "max_bytes" | "max_entries" | "page_entries" | "page_bytes") {
+        if matches!(
+            target,
+            "max_bytes" | "max_entries" | "page_entries" | "page_bytes"
+        ) {
             let number: u64 = value
                 .parse()
                 .map_err(|_| format!("{argument} requires a non-negative integer"))?;

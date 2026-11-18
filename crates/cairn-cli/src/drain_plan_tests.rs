@@ -5,6 +5,13 @@ fn repository_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
+/// Test binaries run with the package directory as their working directory, so
+/// the relative default policy locator cannot resolve; name the checked-in
+/// policy explicitly instead.
+fn policy_path() -> String {
+    path_string(&repository_root().join("cairn-policy/generated/cairn-policy.json"))
+}
+
 fn lifecycle_root(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     let root = std::env::temp_dir().join(format!(
         "cairn-drain-readiness-{name}-{}",
@@ -45,7 +52,7 @@ fn duplicate_change(root: &Path, source: &str, destination: &str) -> std::io::Re
 fn shared_budget_bounds_the_complete_multi_change_observation() -> Result<(), Box<dyn Error>> {
     let root = lifecycle_root("shared-budget")?;
     duplicate_change(&root, "demo", "second")?;
-    let input = json!({"root": path_string(&root)});
+    let input = json!({"root": path_string(&root), "policy": policy_path()});
     let measured = ObservationBudget::new();
     let baseline = readiness_drain_with_budget(&input, "drain-plan test", &measured)?;
     assert_eq!(baseline["active_change_count"], 2);
@@ -169,6 +176,7 @@ fn manifest_selection_matches_direct_readiness_and_absent_evidence_stays_unavail
     )?;
     let direct_input = json!({
         "root": path_string(&root),
+        "policy": policy_path(),
         "change": "demo",
         "contract": "contract.json",
         "results": "results.json",
@@ -177,7 +185,12 @@ fn manifest_selection_matches_direct_readiness_and_absent_evidence_stays_unavail
     let direct = crate::readiness::readiness_value(&direct_input)?;
     assert_eq!(direct["stages"][4]["state"], "ready");
     let value = readiness_drain_with_budget(
-        &json!({"root": path_string(&root), "view": "readiness", "evidence_manifest": "manifest.json"}),
+        &json!({
+            "root": path_string(&root),
+            "policy": policy_path(),
+            "view": "readiness",
+            "evidence_manifest": "manifest.json"
+        }),
         "drain-plan test",
         &ObservationBudget::new(),
     )?;
@@ -189,7 +202,7 @@ fn manifest_selection_matches_direct_readiness_and_absent_evidence_stays_unavail
     assert_eq!(change["classification"], direct["classification"]);
 
     let no_manifest = readiness_drain_with_budget(
-        &json!({"root": path_string(&root), "view": "readiness"}),
+        &json!({"root": path_string(&root), "policy": policy_path(), "view": "readiness"}),
         "drain-plan test",
         &ObservationBudget::new(),
     )?;

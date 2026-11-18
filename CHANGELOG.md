@@ -59,6 +59,23 @@ surface.
   witness. Assumption, activation and guarantee relations are reported
   separately; old receipts are never current after a revision, and evidence
   transfer stays disabled and explicit.
+- Opt-in bounded requirement consistency analysis: `cairn requirement-analysis
+  inspect` answers shared-assumption satisfiability, per-requirement activation
+  reachability, joint guarantee compatibility and guarantee-withholding
+  redundancy over admitted typed contracts, with total observable tables,
+  pairwise-minimal conflicts and a pure witness replay. Vacuity is reported only
+  relative to a satisfiable shared premise; contradictory sets are inconsistent,
+  and every bound, unsupported form and exhausted search stays explicit.
+- Opt-in workflow obligations: one Nickel definition now drives both agent
+  guidance and an evaluable completion predicate for the `verify` workflow and a
+  bounded `verify.bounded-exception` example. `cairn obligation
+  list|explain|export` publishes the bound predicate, obligation summaries,
+  alternatives and evidence requirements read-only; action preconditions,
+  expected observations, progress facts and completion stay separate, a bounded
+  temporal trace extension keeps missing or untrusted evidence unknown, and an
+  accepted exception requires current applicability plus the compensating
+  control carried by its snapshot. Activity counts, checked boxes and agent
+  success statements are recorded but never treated as evidence.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change

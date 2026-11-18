@@ -23,8 +23,10 @@ fn cairn() -> Command {
 }
 
 fn temp_project(name: &str) -> Result<PathBuf, Box<dyn Error>> {
-    let destination =
-        env::temp_dir().join(format!("cairn-buoy-comparison-{name}-{}", std::process::id()));
+    let destination = env::temp_dir().join(format!(
+        "cairn-buoy-comparison-{name}-{}",
+        std::process::id()
+    ));
     if destination.exists() {
         fs::remove_dir_all(&destination)?;
     }
@@ -124,7 +126,8 @@ fn case<'a>(receipt: &'a Value, id: &str) -> &'a Value {
 }
 
 #[test]
-fn comparison_executes_native_fixtures_and_retains_raw_observations() -> Result<(), Box<dyn Error>> {
+fn comparison_executes_native_fixtures_and_retains_raw_observations() -> Result<(), Box<dyn Error>>
+{
     // r[verify cairn.trace_index.validation]
     let root = temp_project("executed")?;
     let fixtures = repo_root().join(FIXTURES_RELATIVE);
@@ -147,10 +150,7 @@ fn comparison_executes_native_fixtures_and_retains_raw_observations() -> Result<
         receipt["upstream"]["revision"],
         "01096fbdd0b9bf39b2fec468f90e7b1db958f615"
     );
-    assert_eq!(
-        receipt["upstream"]["rust_toolchain"],
-        "nightly-2026-04-16"
-    );
+    assert_eq!(receipt["upstream"]["rust_toolchain"], "nightly-2026-04-16");
     assert_eq!(receipt["upstream"]["digest_feature"], "blake3-256");
     assert_eq!(
         receipt["mutation_qualification"]["planted_drift_detected"],
@@ -166,12 +166,18 @@ fn comparison_executes_native_fixtures_and_retains_raw_observations() -> Result<
     );
 
     assert_eq!(case(&receipt, "clean")["outcome"], "agreement");
-    assert_eq!(case(&receipt, "missing_marker")["native_semantic"], "stale_item");
+    assert_eq!(
+        case(&receipt, "missing_marker")["native_semantic"],
+        "stale_item"
+    );
     assert_eq!(
         case(&receipt, "duplicate_marker")["native_semantic"],
         "stale_item"
     );
-    assert_eq!(case(&receipt, "moved_span")["native_semantic"], "stale_item");
+    assert_eq!(
+        case(&receipt, "moved_span")["native_semantic"],
+        "stale_item"
+    );
     assert_eq!(
         case(&receipt, "changed_requirement_body")["native_semantic"],
         "stale_requirement"
@@ -208,7 +214,10 @@ fn comparison_executes_native_fixtures_and_retains_raw_observations() -> Result<
         "unicode_crlf",
         "cfg_not_any",
     ] {
-        assert!(observations.join(observation).join("identity.json").is_file());
+        assert!(observations
+            .join(observation)
+            .join("identity.json")
+            .is_file());
     }
     let missing: Value =
         serde_json::from_slice(&fs::read(observations.join("missing_marker/stdout.json"))?)?;
@@ -269,7 +278,10 @@ fn comparison_rejects_restated_observations_and_unsupported_pass() -> Result<(),
     let receipt = read_receipt(&out)?;
     let codes = issue_codes(&receipt);
     assert!(codes.contains(&"comparison.mutation_restated".to_string()));
-    assert_eq!(receipt["mutation_qualification"]["restated_observation_rejected"], true);
+    assert_eq!(
+        receipt["mutation_qualification"]["restated_observation_rejected"],
+        true
+    );
 
     let mut unsupported_passed = original;
     for case in unsupported_passed["cases"].as_array_mut().expect("cases") {
@@ -310,10 +322,7 @@ fn comparison_identity_binds_source_mapping_fixture_and_policy() -> Result<(), B
     let mut source_changed = original.clone();
     source_changed["upstream"]["revision"] =
         Value::String("0000000000000000000000000000000000000000".to_string());
-    fs::write(
-        &manifest_path,
-        serde_json::to_vec_pretty(&source_changed)?,
-    )?;
+    fs::write(&manifest_path, serde_json::to_vec_pretty(&source_changed)?)?;
     let out = root.join("target/source.json");
     assert_success(
         &run_compare(&fixtures, &out, None, None)?,
@@ -322,12 +331,8 @@ fn comparison_identity_binds_source_mapping_fixture_and_policy() -> Result<(), B
     assert_ne!(read_receipt(&out)?["comparison_identity"], baseline);
 
     let mut tool_changed = original.clone();
-    tool_changed["upstream"]["rust_toolchain"] =
-        Value::String("nightly-2099-01-01".to_string());
-    fs::write(
-        &manifest_path,
-        serde_json::to_vec_pretty(&tool_changed)?,
-    )?;
+    tool_changed["upstream"]["rust_toolchain"] = Value::String("nightly-2099-01-01".to_string());
+    fs::write(&manifest_path, serde_json::to_vec_pretty(&tool_changed)?)?;
     let out = root.join("target/tool.json");
     assert_success(
         &run_compare(&fixtures, &out, None, None)?,
@@ -338,10 +343,7 @@ fn comparison_identity_binds_source_mapping_fixture_and_policy() -> Result<(), B
     let mut mapping_changed = original.clone();
     mapping_changed["mapping"]["id"] =
         Value::String("cairn.buoy-comparison.mapping.changed.v1".to_string());
-    fs::write(
-        &manifest_path,
-        serde_json::to_vec_pretty(&mapping_changed)?,
-    )?;
+    fs::write(&manifest_path, serde_json::to_vec_pretty(&mapping_changed)?)?;
     let out = root.join("target/mapping.json");
     assert_success(
         &run_compare(&fixtures, &out, None, None)?,
@@ -393,9 +395,7 @@ fn comparison_rejects_unknown_manifest_schema() -> Result<(), Box<dyn Error>> {
     let out = root.join("target/schema.json");
     let output = run_compare(&fixtures, &out, None, None)?;
     assert!(!output.status.success());
-    assert!(
-        String::from_utf8_lossy(&output.stderr).contains("invalid Buoy comparison manifest")
-    );
+    assert!(String::from_utf8_lossy(&output.stderr).contains("invalid Buoy comparison manifest"));
     fs::remove_dir_all(root)?;
     Ok(())
 }

@@ -93,7 +93,10 @@ impl Fixture {
             polarity: BranchPolarity::Support,
             rule: "reviewed_completion_v1".into(),
             version: 1,
-            premises: premises.iter().map(|premise| (*premise).to_string()).collect(),
+            premises: premises
+                .iter()
+                .map(|premise| (*premise).to_string())
+                .collect(),
             assumptions: BTreeSet::new(),
             assurance_scope: "bounded derivation".into(),
             applicability: Self::context(),
@@ -238,7 +241,10 @@ fn cli_explains_surviving_and_withdrawn_alternatives_without_mutation() {
     assert_eq!(d["state"], "supported");
     assert_eq!(d["surviving_branches"][0], "branch.c");
     assert_eq!(d["withdrawn_branches"][0], "branch.ab");
-    assert_eq!(output["report"]["affected_obligations"][0]["status"], "alternative_withdrawn");
+    assert_eq!(
+        output["report"]["affected_obligations"][0]["status"],
+        "alternative_withdrawn"
+    );
 
     assert_eq!(before, fs::read(&path).unwrap());
     assert!(!fixture.root.join(".cairn/changes").exists());
@@ -267,7 +273,11 @@ fn cli_rejects_scope_and_input_errors_without_writing() {
         ("new", claim_identity(&new).unwrap()),
     ]);
     case.claims = vec![old, new];
-    case.branches = vec![Fixture::branch("branch.relation", &ids["new"], &[&ids["old"]])];
+    case.branches = vec![Fixture::branch(
+        "branch.relation",
+        &ids["new"],
+        &[&ids["old"]],
+    )];
     case.evidence.clear();
     case.changes.clear();
     case.obligations.clear();

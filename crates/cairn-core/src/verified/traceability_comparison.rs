@@ -264,11 +264,17 @@ const REQUIRED_MUTATION_KINDS: &[&str] = &[
 const MUTATION_ALLOWED_SEMANTICS: &[(&str, &[&str])] = &[
     (
         "missing_marker",
-        &[BUOY_COMPARISON_SEMANTIC_STALE_ITEM, BUOY_COMPARISON_SEMANTIC_MISSING_OBJECT],
+        &[
+            BUOY_COMPARISON_SEMANTIC_STALE_ITEM,
+            BUOY_COMPARISON_SEMANTIC_MISSING_OBJECT,
+        ],
     ),
     (
         "duplicate_marker",
-        &[BUOY_COMPARISON_SEMANTIC_STALE_ITEM, BUOY_COMPARISON_SEMANTIC_AMBIGUOUS],
+        &[
+            BUOY_COMPARISON_SEMANTIC_STALE_ITEM,
+            BUOY_COMPARISON_SEMANTIC_AMBIGUOUS,
+        ],
     ),
     ("moved_span", &[BUOY_COMPARISON_SEMANTIC_STALE_ITEM]),
     (
@@ -291,13 +297,14 @@ fn issue(code: &str, field_path: &str, message: &str) -> BuoyComparisonIssue {
 pub fn parse_buoy_comparison_manifest_value(
     value: &Value,
 ) -> Result<BuoyComparisonManifest, BuoyComparisonIssue> {
-    let manifest: BuoyComparisonManifest = serde_json::from_value(value.clone()).map_err(|error| {
-        issue(
-            ISSUE_SCHEMA_UNSUPPORTED,
-            "manifest",
-            &format!("comparison manifest does not match the closed schema: {error}"),
-        )
-    })?;
+    let manifest: BuoyComparisonManifest =
+        serde_json::from_value(value.clone()).map_err(|error| {
+            issue(
+                ISSUE_SCHEMA_UNSUPPORTED,
+                "manifest",
+                &format!("comparison manifest does not match the closed schema: {error}"),
+            )
+        })?;
     if manifest.schema != BUOY_COMPARISON_MANIFEST_SCHEMA_V1 {
         return Err(issue(
             ISSUE_SCHEMA_UNSUPPORTED,
@@ -465,9 +472,10 @@ fn validate_upstream(pin: &BuoyUpstreamPin, issues: &mut Vec<BuoyComparisonIssue
         ));
     }
     if pin.commands.is_empty()
-        || pin.commands.iter().any(|command| {
-            !matches!(command.as_str(), "static" | "trace" | "package-identity")
-        })
+        || pin
+            .commands
+            .iter()
+            .any(|command| !matches!(command.as_str(), "static" | "trace" | "package-identity"))
     {
         issues.push(issue(
             ISSUE_UPSTREAM_INVALID,
@@ -499,12 +507,7 @@ fn validate_upstream(pin: &BuoyUpstreamPin, issues: &mut Vec<BuoyComparisonIssue
             "comparison upstream report schemas must be named",
         ));
     }
-    if pin.evidence.is_empty()
-        || pin
-            .evidence
-            .iter()
-            .any(|value| !value_is_nonempty(value))
-    {
+    if pin.evidence.is_empty() || pin.evidence.iter().any(|value| !value_is_nonempty(value)) {
         issues.push(issue(
             ISSUE_UPSTREAM_INVALID,
             "upstream.evidence",
@@ -588,7 +591,11 @@ fn validate_cases(manifest: &BuoyComparisonManifest, issues: &mut Vec<BuoyCompar
 fn validate_cases_only(manifest: &BuoyComparisonManifest) -> Vec<BuoyComparisonIssue> {
     let mut issues = Vec::new();
     if manifest.cases.is_empty() {
-        issues.push(issue(ISSUE_CASE_INVALID, "cases", "comparison case inventory is empty"));
+        issues.push(issue(
+            ISSUE_CASE_INVALID,
+            "cases",
+            "comparison case inventory is empty",
+        ));
         return issues;
     }
     if manifest.cases.len() > MAX_CASE_COUNT {
@@ -662,7 +669,11 @@ fn validate_cases_only(manifest: &BuoyComparisonManifest) -> Vec<BuoyComparisonI
     let kinds = manifest
         .cases
         .iter()
-        .filter_map(|case| case.mutation.as_ref().map(|mutation| mutation.kind.as_str()))
+        .filter_map(|case| {
+            case.mutation
+                .as_ref()
+                .map(|mutation| mutation.kind.as_str())
+        })
         .collect::<BTreeSet<_>>();
     for required in REQUIRED_MUTATION_KINDS {
         if !kinds.contains(required) {
@@ -873,7 +884,11 @@ fn validate_native_expectation(
             "an exit 0 native expectation must be valid",
         ));
     }
-    if expectation.issue_codes.iter().any(|code| !value_is_nonempty(code)) {
+    if expectation
+        .issue_codes
+        .iter()
+        .any(|code| !value_is_nonempty(code))
+    {
         issues.push(issue(
             ISSUE_EXPECTATION_INVALID,
             &format!("{path}.issue_codes"),
@@ -1265,9 +1280,7 @@ pub fn evaluate_buoy_comparison(
 
     let known_disagreements = case_receipts
         .iter()
-        .filter(|case| {
-            case["comparison"] == BUOY_COMPARISON_DISPOSITION_EXPECTED_DIVERGENCE
-        })
+        .filter(|case| case["comparison"] == BUOY_COMPARISON_DISPOSITION_EXPECTED_DIVERGENCE)
         .map(|case| case["id"].clone())
         .collect::<Vec<_>>();
     let unsupported_cases = case_receipts
@@ -1284,10 +1297,12 @@ pub fn evaluate_buoy_comparison(
     // These report whether the comparison *rejected* a restated input. The paired
     // codes record the opposite (an accepted restatement), so their absence is the
     // positive result.
-    let restated_observation_rejected =
-        !issues.iter().any(|issue| issue.code == ISSUE_RESTATED_OBSERVATION);
-    let restated_native_rejected =
-        !issues.iter().any(|issue| issue.code == ISSUE_RESTATED_NATIVE);
+    let restated_observation_rejected = !issues
+        .iter()
+        .any(|issue| issue.code == ISSUE_RESTATED_OBSERVATION);
+    let restated_native_rejected = !issues
+        .iter()
+        .any(|issue| issue.code == ISSUE_RESTATED_NATIVE);
 
     let receipt = json!({
         "schema": BUOY_COMPARISON_RECEIPT_SCHEMA_V1,

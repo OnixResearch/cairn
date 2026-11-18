@@ -57,10 +57,10 @@ pub use crate::verified::content_bound_trace_index::{
     ContentBoundTraceIndexIssue, ContentBoundTraceIndexVerification, ContentBoundTraceLink,
     ContentBoundTraceMarkerSpan, ContentBoundTraceQuery, ContentBoundTraceQueryEvaluation,
     ContentBoundTraceSourceIdentity, RustItemBinding, RustItemConfiguration, RustItemFact,
-    StructuralTraceData, CONTENT_BOUND_TRACE_INDEX_BOUNDARY,
-    CONTENT_BOUND_TRACE_INDEX_NON_CLAIMS, CONTENT_BOUND_TRACE_INDEX_SCHEMA_V1,
-    CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2, TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES,
-    TRACEABILITY_ANCHOR_RUST_ITEM_V1, TRACEABILITY_ASSURANCE_DECLARED,
+    StructuralTraceData, CONTENT_BOUND_TRACE_INDEX_BOUNDARY, CONTENT_BOUND_TRACE_INDEX_NON_CLAIMS,
+    CONTENT_BOUND_TRACE_INDEX_SCHEMA_V1, CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2,
+    TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES, TRACEABILITY_ANCHOR_RUST_ITEM_V1,
+    TRACEABILITY_ASSURANCE_DECLARED,
 };
 pub use crate::verified::cross_repo_dependencies::{
     build_radicle_issue_receipt, cross_repo_dependency_contract, dependency_blocker_messages,

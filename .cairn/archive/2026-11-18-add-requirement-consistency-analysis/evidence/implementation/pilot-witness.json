@@ -1,0 +1,691 @@
+{
+  "model_blake3": "b4ca224e135ea6f734d7905c5177721baf5de4ec26be3031cea76d5644f93c55",
+  "query": "assumptions_satisfiable:cairn.supersede.agent_run_receipts.verification_contract,cairn.supersede.agent_run_receipts.pass_only,cairn.supersede.agent_run_receipts.freshness,cairn.supersede.agent_run_receipts.completion_authority,cairn.verification_obligation_cob.claim_revision",
+  "tables": [
+    {
+      "contract_blake3": "8f6616d8f25e616778c2c493e710a56e500633e901bf966234badf74beb63cc5",
+      "example_blake3": "7e33eaa62f584a25eaeb13f873be8af1e175d895aef23f7921482950bac059c7",
+      "observables": {
+        "decision_identity": [
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "commands"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "policy"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "prerequisites"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "registry_hash"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "registry_id"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "repository"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "required_checks"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "selection"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "subject"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ],
+        "repository_contract_present": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "repository_identity": [
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "commands"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "policy"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "prerequisites"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "registry_hash"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "registry_id"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "repository"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "required_checks"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "selection"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "component",
+                "value": "subject"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ]
+      },
+      "requirement_id": "cairn.supersede.agent_run_receipts.verification_contract"
+    },
+    {
+      "contract_blake3": "f8a0bc4982dd437653a6a68e43875852a300f03ecf8c429011efbac04d59ef59",
+      "example_blake3": "5ecb03d058eea0bea9c130220dbe6e108f3c12e45c72d01aa8848171b5781d7d",
+      "observables": {
+        "eligible": [
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-a"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-b"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "present": [
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-a"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-b"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "row_check": [
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-a"
+              }
+            ],
+            "value": {
+              "domain": "check",
+              "value": "check-a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-b"
+              }
+            ],
+            "value": {
+              "domain": "check",
+              "value": "check-a"
+            }
+          }
+        ],
+        "row_status": [
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-a"
+              }
+            ],
+            "value": {
+              "domain": "status",
+              "value": "blocked"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-b"
+              }
+            ],
+            "value": {
+              "domain": "status",
+              "value": "blocked"
+            }
+          }
+        ],
+        "selected": [
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "check-a"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "check-b"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "unknown"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ]
+      },
+      "requirement_id": "cairn.supersede.agent_run_receipts.pass_only"
+    },
+    {
+      "contract_blake3": "303394b1a46b0fe715c346c50fc05369ffcc85e80bbbc5445d91d666574e4932",
+      "example_blake3": "038920c37f83b85fb8c180110dafd89f9c81ec3a46e64ca06c23d129db99ca9b",
+      "observables": {
+        "contract_subject": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ],
+        "eligible": [
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-a"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-b"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "final_subject": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ],
+        "receipt_subject": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ],
+        "result_subject": [
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-a"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "row",
+                "value": "row-b"
+              }
+            ],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ]
+      },
+      "requirement_id": "cairn.supersede.agent_run_receipts.freshness"
+    },
+    {
+      "contract_blake3": "0da83d7244efc08cc3c03d52ad8510933992b53dcc61f06cef9c4d3381a6eb0b",
+      "example_blake3": "a4e9b89102958f17319175846f5560b81cea46065a819f9e534b6774780eec87",
+      "observables": {
+        "completion_claimed": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "covered": [
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "check-a"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "check-b"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "unknown"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "final_subject": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ],
+        "receipt_passing": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "receipt_present": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "receipt_subject": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ],
+        "selected": [
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "check-a"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "check-b"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "check",
+                "value": "unknown"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ]
+      },
+      "requirement_id": "cairn.supersede.agent_run_receipts.completion_authority"
+    },
+    {
+      "contract_blake3": "1e160a4066a673c0cd600aa1e3ac6e5270b71f1c15791a6903e264dc7d0e3405",
+      "example_blake3": "9f45b6ed6020d97cb525d378dbf0893a8a063860d9426e3918aa5f742e44aff1",
+      "observables": {
+        "lifecycle_after": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "lifecycle",
+              "value": "discharged"
+            }
+          }
+        ],
+        "operation_after": [
+          {
+            "arguments": [
+              {
+                "domain": "operation",
+                "value": "operation-a"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "operation",
+                "value": "operation-b"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "operation_before": [
+          {
+            "arguments": [
+              {
+                "domain": "operation",
+                "value": "operation-a"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          },
+          {
+            "arguments": [
+              {
+                "domain": "operation",
+                "value": "operation-b"
+              }
+            ],
+            "value": {
+              "domain": "bool",
+              "value": "false"
+            }
+          }
+        ],
+        "revision_after": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ],
+        "revision_before": [
+          {
+            "arguments": [],
+            "value": {
+              "domain": "identity",
+              "value": "a"
+            }
+          }
+        ]
+      },
+      "requirement_id": "cairn.verification_obligation_cob.claim_revision"
+    }
+  ]
+}

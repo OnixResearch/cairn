@@ -86,19 +86,17 @@ fn counter(id: &str, claim: &str) -> EvidenceRecord {
     }
 }
 
-fn branch(
-    id: &str,
-    conclusion: &str,
-    premises: &[&str],
-    assumptions: &[&str],
-) -> SupportBranch {
+fn branch(id: &str, conclusion: &str, premises: &[&str], assumptions: &[&str]) -> SupportBranch {
     SupportBranch {
         id: id.into(),
         conclusion: conclusion.into(),
         polarity: BranchPolarity::Support,
         rule: "reviewed_completion_v1".into(),
         version: 1,
-        premises: premises.iter().map(|premise| (*premise).to_string()).collect(),
+        premises: premises
+            .iter()
+            .map(|premise| (*premise).to_string())
+            .collect(),
         assumptions: assumptions
             .iter()
             .map(|assumption| (*assumption).to_string())
@@ -180,21 +178,11 @@ fn withdrawing_a_unique_premise_keeps_the_alternative_support() {
     let b = claim("shared", observation("b"), HASH_B);
     let c = claim("shared", observation("c"), HASH_B);
     let d = claim("shared", Proposition::NativeCompletionEligible, HASH_B);
-    let ids = BTreeMap::from([
-        ("a", id(&a)),
-        ("b", id(&b)),
-        ("c", id(&c)),
-        ("d", id(&d)),
-    ]);
+    let ids = BTreeMap::from([("a", id(&a)), ("b", id(&b)), ("c", id(&c)), ("d", id(&d))]);
     let mut case = empty_case();
     case.claims = vec![a, b, c, d];
     case.branches = vec![
-        branch(
-            "branch.ab",
-            &ids["d"],
-            &[&ids["a"], &ids["b"]],
-            &[],
-        ),
+        branch("branch.ab", &ids["d"], &[&ids["a"], &ids["b"]], &[]),
         branch("branch.c", &ids["d"], &[&ids["c"]], &[]),
     ];
     case.evidence = vec![
@@ -226,7 +214,10 @@ fn withdrawing_a_unique_premise_keeps_the_alternative_support() {
     let withdrawn = find_branch(&report, "branch.ab");
     assert_eq!(withdrawn.status, BranchStatus::Withdrawn);
     assert!(withdrawn.link.is_none());
-    let cause = withdrawn.cause.as_ref().expect("historical reason retained");
+    let cause = withdrawn
+        .cause
+        .as_ref()
+        .expect("historical reason retained");
     assert_eq!(cause.origin.kind, "evidence_stale");
     assert_eq!(cause.origin.subject, "evidence.b");
     assert_eq!(cause.origin.event.as_ref().unwrap().sequence, 1);
@@ -416,7 +407,10 @@ fn a_revision_classification_never_transfers_support_by_itself() {
     let new_view = find_claim(&report, &ids["new"]);
     assert_eq!(new_view.state, ClaimState::Supported);
     assert_eq!(new_view.support[0].source, "branch.relation");
-    assert_eq!(find_branch(&report, "branch.relation").status, BranchStatus::Survived);
+    assert_eq!(
+        find_branch(&report, "branch.relation").status,
+        BranchStatus::Survived
+    );
 
     let mut undeclared = case.clone();
     let mut relation = branch("branch.relation", &ids["new"], &[&ids["old"]], &[]);
@@ -457,8 +451,14 @@ fn policy_and_context_changes_leave_new_scopes_untouched() {
     ];
 
     let report = evaluate_support_maintenance(&policy(), &case).unwrap();
-    assert_eq!(find_claim(&report, &ids["old"]).state, ClaimState::Unresolved);
-    assert_eq!(find_claim(&report, &ids["new"]).state, ClaimState::Supported);
+    assert_eq!(
+        find_claim(&report, &ids["old"]).state,
+        ClaimState::Unresolved
+    );
+    assert_eq!(
+        find_claim(&report, &ids["new"]).state,
+        ClaimState::Supported
+    );
     assert_eq!(report.events.len(), 2);
     assert!(report
         .events
@@ -540,12 +540,7 @@ fn bounds_fail_explicitly_and_cycles_are_reported() {
     let b = claim("shared", observation("b"), HASH_B);
     let c = claim("shared", observation("c"), HASH_B);
     let d = claim("shared", Proposition::NativeCompletionEligible, HASH_B);
-    let ids = BTreeMap::from([
-        ("a", id(&a)),
-        ("b", id(&b)),
-        ("c", id(&c)),
-        ("d", id(&d)),
-    ]);
+    let ids = BTreeMap::from([("a", id(&a)), ("b", id(&b)), ("c", id(&c)), ("d", id(&d))]);
     let mut case = empty_case();
     case.claims = vec![a, b, c, d];
     case.branches = vec![

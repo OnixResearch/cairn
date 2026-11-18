@@ -353,7 +353,7 @@ fn blocks_unmanaged_modified_missing_and_symlink_destinations() {
     let entry_index = installed
         .files
         .iter()
-        .position(|file| file.workflow_id == GENERATED_AGENT_WORKFLOW_ENTRY_ID)
+        .position(|file| file.relative_path == entry_path)
         .expect("entry observation");
     installed.files[entry_index].kind = GeneratedWorkflowObservedKind::Symlink;
     installed.files[1].content_blake3 =
@@ -384,7 +384,7 @@ fn blocks_unmanaged_modified_missing_and_symlink_destinations() {
     let mut missing_entry = installed_snapshot(&fresh);
     missing_entry
         .files
-        .retain(|file| file.workflow_id != GENERATED_AGENT_WORKFLOW_ENTRY_ID);
+        .retain(|file| file.relative_path != entry_path);
     let missing_entry_plan = plan_generated_agent_workflow_install(
         &catalog,
         "claude",
