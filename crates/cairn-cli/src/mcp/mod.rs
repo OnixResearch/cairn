@@ -320,17 +320,6 @@ pub(crate) fn mcp_call_tool(
     mcp_call_tool_in_catalog(name, input, &catalog, None)
 }
 
-pub(crate) fn mcp_call_tool_with_profile(
-    name: &str,
-    input: &Value,
-    is_mutation_allowed: bool,
-    profile: ResponseProfile,
-    policy: &ResponsePolicy,
-) -> Result<Value, Box<dyn Error>> {
-    let catalog = load_catalog("full", is_mutation_allowed)?;
-    mcp_call_tool_in_catalog(name, input, &catalog, Some((profile, policy)))
-}
-
 fn mcp_call_tool_in_catalog(
     name: &str,
     input: &Value,
