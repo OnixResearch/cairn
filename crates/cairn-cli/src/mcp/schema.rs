@@ -251,6 +251,21 @@ fn mcp_input_schema(name: &str) -> Value {
             );
             schema["properties"]["cross_repo_evidence"]["description"] =
                 json!("Explicit repository-relative receipt summary files only");
+            let view_policy = cairn_core::verified::readiness::agent_view_policy();
+            schema["properties"]["view"] = json!({"type": "string", "enum": ["full", "agent"], "description": "Agent view is a bounded JSON projection; full is the default"});
+            schema["properties"]["max_bytes"] =
+                json!({"type": "integer", "minimum": 1, "maximum": view_policy.max_bytes});
+            schema["properties"]["max_entries"] =
+                json!({"type": "integer", "minimum": 0, "maximum": view_policy.max_entries});
+            schema["properties"]["detail"] = json!({
+                "type": "object", "additionalProperties": false,
+                "properties": {
+                    "kind": {"type": "string", "enum": ["blocker", "action", "stage"]},
+                    "id": {"type": "string", "minLength": 1, "maxLength": 64},
+                    "expected_receipt": {"type": "string", "minLength": 64, "maxLength": 64}
+                },
+                "required": ["kind", "id", "expected_receipt"]
+            });
             schema
         }
         "cairn_verification_impact" => json!({
@@ -397,13 +412,62 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_readiness" => {
             validate_evidence_array(name, object)?;
             let mut strings = object.clone();
-            strings.remove("cross_repo_evidence");
+            for key in ["cross_repo_evidence", "max_bytes", "max_entries", "detail"] {
+                let _ = strings.remove(key);
+            }
             validate_string_args(
                 name,
                 &strings,
                 &["change"],
-                &["root", "policy", "contract", "results", "subject_hash"],
-            )
+                &[
+                    "root",
+                    "policy",
+                    "contract",
+                    "results",
+                    "subject_hash",
+                    "view",
+                ],
+            )?;
+            for key in ["max_bytes", "max_entries"] {
+                if let Some(value) = object.get(key) {
+                    if value.as_u64().is_none() {
+                        return Err(format!(
+                            "invalid arguments for {name}: {key} must be a nonnegative integer"
+                        )
+                        .into());
+                    }
+                }
+            }
+            if let Some(detail) = object.get("detail") {
+                let Some(detail) = detail.as_object() else {
+                    return Err(
+                        format!("invalid arguments for {name}: detail must be an object").into(),
+                    );
+                };
+                validate_string_args(name, detail, &["kind", "id", "expected_receipt"], &[])?;
+            }
+            for key in object.keys() {
+                if ![
+                    "change",
+                    "root",
+                    "policy",
+                    "contract",
+                    "results",
+                    "subject_hash",
+                    "view",
+                    "cross_repo_evidence",
+                    "max_bytes",
+                    "max_entries",
+                    "detail",
+                ]
+                .contains(&key.as_str())
+                {
+                    return Err(
+                        format!("invalid arguments for {name}: unknown argument {key}").into(),
+                    );
+                }
+            }
+            Ok(())
         }
         "cairn_verification_impact" => validate_verification_impact_args(name, object),
         "cairn_workflow_status" => {

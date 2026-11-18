@@ -587,3 +587,271 @@ fn unavailable_unsafe_duplicate_and_overbound_observations_fail_closed() {
         vec![readiness_cause("unknown", "demo", "bad"); MAX_READINESS_BLOCKERS + 1];
     assert!(!derive_readiness(&s).valid);
 }
+
+#[test]
+// r[verify cairn.agent_readiness.decisions]
+// r[verify cairn.agent_readiness.actions]
+fn agent_projection_preserves_decisions_complete_actions_and_exact_identity() {
+    let mut s = snapshot();
+    s.observations[0].state = ReadinessState::Blocked;
+    s.observations[0].causes = vec![readiness_cause(
+        "artifact.incomplete",
+        "tasks.md",
+        "missing tasks",
+    )];
+    let report = derive_readiness(&s);
+    let original = serde_json::to_value(&report).unwrap();
+    let view = project_agent_readiness(&report, AgentViewRequest::default()).unwrap();
+    assert_eq!(view["scope"], original["scope"]);
+    assert_eq!(view["valid"], original["valid"]);
+    assert_eq!(view["classification"], original["classification"]);
+    assert_eq!(view["mutation_authorized"], false);
+    assert_eq!(view["full_receipt_hash"], original["receipt_hash"]);
+    assert_eq!(
+        view["readiness_policy_hash"],
+        original["readiness_policy_hash"]
+    );
+    let view_policy: Value = serde_json::from_str(include_str!(
+        "../../../../../cairn-policy/generated/readiness-view.json"
+    ))
+    .unwrap();
+    assert_eq!(view["view_policy_hash"], canonical_json_hash(&view_policy));
+    assert_ne!(view["view_policy_hash"], view["readiness_policy_hash"]);
+    assert_eq!(view["input_hash"], original["input_hash"]);
+    for (short, full) in view["stages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .zip(original["stages"].as_array().unwrap())
+    {
+        for key in ["stage", "state", "decision_hash"] {
+            assert_eq!(short[key], full[key]);
+        }
+    }
+    assert_eq!(view["actions"], original["actions"]);
+    assert_eq!(view["blockers"], original["blockers"]);
+    assert_eq!(view["omitted_stage_decisions"], 7);
+    assert_eq!(view["complete"], false);
+    assert_eq!(
+        serde_json::to_value(derive_readiness(&s)).unwrap(),
+        original
+    );
+    let first = &report.actions[0];
+    let detail =
+        readiness_detail(&report, DetailKind::Action, &first.id, &report.receipt_hash).unwrap();
+    assert_eq!(detail["detail"], json!(first));
+    assert_eq!(detail["full_receipt_hash"], original["receipt_hash"]);
+    assert_eq!(
+        readiness_detail(
+            &report,
+            DetailKind::Stage,
+            "completion",
+            &report.receipt_hash
+        )
+        .unwrap()["detail"],
+        original["stages"][4]
+    );
+}
+
+#[test]
+// r[verify cairn.agent_readiness.detail]
+fn agent_budget_boundaries_and_stale_or_unknown_details_fail_closed() {
+    let report = derive_readiness(&snapshot());
+    let base = project_agent_readiness(
+        &report,
+        AgentViewRequest {
+            max_bytes: None,
+            max_entries: Some(0),
+        },
+    )
+    .unwrap();
+    let size = serde_json::to_vec(&base).unwrap().len() + 1; // standalone CLI LF
+    assert!(project_agent_readiness(
+        &report,
+        AgentViewRequest {
+            max_bytes: Some(size),
+            max_entries: Some(0)
+        }
+    )
+    .is_ok());
+    assert_eq!(
+        project_agent_readiness(
+            &report,
+            AgentViewRequest {
+                max_bytes: Some(size - 1),
+                max_entries: Some(0)
+            }
+        )
+        .unwrap_err(),
+        "insufficient agent readiness budget for mandatory envelope"
+    );
+    assert_eq!(base["actions"].as_array().unwrap().len(), 0);
+    assert_eq!(base["omitted_actions"], report.actions.len());
+    assert_eq!(
+        base["detail_selectors"].as_array().unwrap().len(),
+        report.stages.len() + report.actions.len()
+    );
+    assert!(project_agent_readiness(
+        &report,
+        AgentViewRequest {
+            max_bytes: Some(16385),
+            max_entries: None
+        }
+    )
+    .is_err());
+    assert!(project_agent_readiness(
+        &report,
+        AgentViewRequest {
+            max_bytes: None,
+            max_entries: Some(17)
+        }
+    )
+    .is_err());
+    let stale = "a".repeat(64);
+    assert_eq!(
+        readiness_detail(&report, DetailKind::Stage, "artifact", &stale).unwrap_err(),
+        "stale readiness detail receipt"
+    );
+    assert_eq!(
+        readiness_detail(&report, DetailKind::Stage, "unknown", &report.receipt_hash).unwrap_err(),
+        "unknown readiness detail id"
+    );
+    assert_eq!(
+        readiness_detail(
+            &report,
+            DetailKind::Blocker,
+            "../escape",
+            &report.receipt_hash
+        )
+        .unwrap_err(),
+        "unsafe readiness detail id"
+    );
+}
+
+#[test]
+fn agent_projection_never_truncates_oversized_action_argv_or_prerequisites() {
+    let mut report = derive_readiness(&snapshot());
+    let id = report.actions[0].id.clone();
+    report.actions[0].argv = vec!["x".repeat(16384)];
+    report.actions[0].prerequisites = vec!["precondition".into()];
+    let view = project_agent_readiness(&report, AgentViewRequest::default()).unwrap();
+    assert!(view["actions"].as_array().unwrap().is_empty());
+    assert_eq!(view["omitted_actions"], report.actions.len());
+    assert!(view["detail_selectors"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|selector| selector["kind"] == "action" && selector["id"] == id));
+    assert_eq!(view["complete"], false);
+}
+
+#[test]
+fn agent_budget_preserves_omitted_selector_order_and_count_digit_transition() {
+    let mut s = snapshot();
+    s.observations[0].state = ReadinessState::Blocked;
+    s.observations[0].causes = (0..11)
+        .map(|index| {
+            readiness_cause(
+                "artifact.incomplete",
+                &format!("tasks-{index:02}.md"),
+                "missing task",
+            )
+        })
+        .collect();
+    let report = derive_readiness(&s);
+    assert_eq!(report.blockers.len(), 11);
+    let one = project_agent_readiness(
+        &report,
+        AgentViewRequest {
+            max_bytes: None,
+            max_entries: Some(1),
+        },
+    )
+    .unwrap();
+    let bytes = serde_json::to_vec(&one).unwrap().len() + 1;
+    let bounded = project_agent_readiness(
+        &report,
+        AgentViewRequest {
+            max_bytes: Some(bytes),
+            max_entries: None,
+        },
+    )
+    .unwrap();
+    assert_eq!(bounded["blockers"], one["blockers"]);
+    assert_eq!(bounded["omitted_blockers"], 10);
+    assert_eq!(bounded["actions"].as_array().unwrap().len(), 0);
+    let selectors = bounded["detail_selectors"].as_array().unwrap();
+    let ids: Vec<&str> = selectors
+        .iter()
+        .map(|selector| selector["id"].as_str().unwrap())
+        .collect();
+    let expected: Vec<&str> = report
+        .stages
+        .iter()
+        .map(|stage| stage.stage.as_str())
+        .chain(
+            report
+                .blockers
+                .iter()
+                .skip(1)
+                .map(|blocker| blocker.id.as_str()),
+        )
+        .chain(report.actions.iter().map(|action| action.id.as_str()))
+        .collect();
+    assert_eq!(ids, expected);
+    assert_eq!(serde_json::to_vec(&bounded).unwrap().len() + 1, bytes);
+}
+
+#[test]
+fn detail_byte_limit_counts_standalone_cli_lf() {
+    let mut report = derive_readiness(&snapshot());
+    report.actions[0].argv.clear();
+    let id = report.actions[0].id.clone();
+    let base = readiness_detail(&report, DetailKind::Action, &id, &report.receipt_hash).unwrap();
+    let base_bytes = serde_json::to_vec(&base).unwrap().len() + 1;
+    let fill = agent_view_policy().max_detail_bytes - base_bytes - 2; // [] becomes ["..."].
+    report.actions[0].argv = vec!["x".repeat(fill)];
+    let exact = readiness_detail(&report, DetailKind::Action, &id, &report.receipt_hash).unwrap();
+    assert_eq!(
+        serde_json::to_vec(&exact).unwrap().len() + 1,
+        agent_view_policy().max_detail_bytes
+    );
+    report.actions[0].argv[0].push('x');
+    assert_eq!(
+        readiness_detail(&report, DetailKind::Action, &id, &report.receipt_hash).unwrap_err(),
+        "readiness detail exceeds policy byte limit"
+    );
+}
+
+#[test]
+fn agent_projection_keeps_identity_conflicts_and_unsafe_targets_unavailable() {
+    let mut s = snapshot();
+    s.observations[0].scope.evidence_hash = "d".repeat(64);
+    s.observations[1].state = ReadinessState::Blocked;
+    s.observations[1].causes = vec![readiness_cause(
+        "artifact.incomplete",
+        "../escape",
+        "unsafe",
+    )];
+    let report = derive_readiness(&s);
+    let view = project_agent_readiness(&report, AgentViewRequest::default()).unwrap();
+    assert_eq!(view["valid"], false);
+    assert_eq!(view["classification"], "unavailable");
+    assert!(view["stages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|stage| stage["state"] == "unavailable"));
+    assert!(view["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|d| d.as_str().unwrap().contains("identity.conflict")));
+    assert!(view["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|d| d.as_str().unwrap().contains("target.unsafe")));
+    assert_eq!(view["mutation_authorized"], false);
+    assert_eq!(view["full_receipt_hash"], report.receipt_hash);
+}
