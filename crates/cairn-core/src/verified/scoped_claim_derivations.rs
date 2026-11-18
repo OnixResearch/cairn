@@ -794,7 +794,7 @@ fn admit_producer(
     Ok(())
 }
 
-fn rule_policy<'a>(policy: &'a ClaimPolicy, rule: Rule) -> Option<&'a RulePolicy> {
+fn rule_policy(policy: &ClaimPolicy, rule: Rule) -> Option<&RulePolicy> {
     policy.rules.iter().find(|candidate| candidate.id == rule)
 }
 

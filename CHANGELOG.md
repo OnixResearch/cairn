@@ -17,6 +17,14 @@ surface.
   separate contract/interpretation/review identities, and read-only
   `cairn requirement-contract inspect` that keeps well-formedness, reviewed
   correspondence, finite example evaluation and proof evidence distinct.
+- Opt-in revision classification: `cairn revision classify` compares two
+  requirement revisions or two policy-fragment revisions over declared common
+  domains. Equivalence is classified as editorial or clarifying, containment as
+  strengthening or weakening, and incomparable, unsupported or bound-exhausted
+  pairs as incompatible or undetermined, each with a replayable counterexample
+  witness. Assumption, activation and guarantee relations are reported
+  separately; old receipts are never current after a revision, and evidence
+  transfer stays disabled and explicit.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change

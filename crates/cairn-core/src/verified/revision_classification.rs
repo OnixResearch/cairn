@@ -18,8 +18,7 @@ use super::typed_requirement_contracts::{
 
 pub const REVISION_CLASSIFICATION_POLICY_SCHEMA_V1: &str =
     "cairn.revision-classification-policy.v1";
-pub const REQUIREMENT_REVISION_REQUEST_SCHEMA_V1: &str =
-    "cairn.requirement-revision-comparison.v1";
+pub const REQUIREMENT_REVISION_REQUEST_SCHEMA_V1: &str = "cairn.requirement-revision-comparison.v1";
 pub const POLICY_REVISION_REQUEST_SCHEMA_V1: &str = "cairn.policy-revision-comparison.v1";
 pub const REQUIREMENT_REVISION_REPORT_SCHEMA_V1: &str = "cairn.requirement-revision-report.v1";
 pub const POLICY_REVISION_REPORT_SCHEMA_V1: &str = "cairn.policy-revision-report.v1";
@@ -686,10 +685,7 @@ pub struct EvidenceTransferRecord {
     pub record_blake3: String,
 }
 
-fn identity<T: Serialize>(
-    domain: &str,
-    value: &T,
-) -> Result<String, RevisionClassificationError> {
+fn identity<T: Serialize>(domain: &str, value: &T) -> Result<String, RevisionClassificationError> {
     let value = serde_json::to_value(value)
         .map_err(|error| RevisionClassificationError::Serialization(error.to_string()))?;
     let mut hash = blake3::Hasher::new();
@@ -740,11 +736,9 @@ fn validate_context(context: &RevisionContext) -> Result<(), RevisionClassificat
 
 fn typed_error(error: SemanticError) -> RevisionClassificationError {
     match error {
-        SemanticError::UnsupportedConstruct(construct) => {
-            RevisionClassificationError::Unsupported(format!(
-                "unsupported typed requirement construct {construct}"
-            ))
-        }
+        SemanticError::UnsupportedConstruct(construct) => RevisionClassificationError::Unsupported(
+            format!("unsupported typed requirement construct {construct}"),
+        ),
         SemanticError::UnknownProfile(profile) => RevisionClassificationError::Unsupported(
             format!("unknown typed requirement profile {profile}"),
         ),
@@ -928,7 +922,7 @@ fn build_models(
         common_values.insert(common.clone(), values);
     }
 
-    for (domain, _) in &old_contract.domains {
+    for domain in old_contract.domains.keys() {
         if !old_domains.contains_key(domain) {
             return unsupported(
                 "unmapped_domain",
@@ -936,7 +930,7 @@ fn build_models(
             );
         }
     }
-    for (domain, _) in &new_contract.domains {
+    for domain in new_contract.domains.keys() {
         if !new_domains.contains_key(domain) {
             return unsupported(
                 "unmapped_domain",
@@ -945,7 +939,7 @@ fn build_models(
         }
     }
 
-    for (domain, _) in &old_domains {
+    for domain in old_domains.keys() {
         if !old_contract.domains.contains_key(domain) {
             return unsupported(
                 "unknown_domain",
@@ -953,7 +947,7 @@ fn build_models(
             );
         }
     }
-    for (domain, _) in &new_domains {
+    for domain in new_domains.keys() {
         if !new_contract.domains.contains_key(domain) {
             return unsupported(
                 "unknown_domain",
@@ -1025,11 +1019,13 @@ fn build_models(
                         format!("value {local} in domain {domain} is mapped more than once"),
                     );
                 }
-                if model.value_to_common.iter().any(|((mapped_domain, mapped_value), common)| {
-                    mapped_domain == domain
-                        && mapped_value != local
-                        && common == &value.common
-                }) {
+                if model
+                    .value_to_common
+                    .iter()
+                    .any(|((mapped_domain, mapped_value), common)| {
+                        mapped_domain == domain && mapped_value != local && common == &value.common
+                    })
+                {
                     return unsupported(
                         "non_injective_value_mapping",
                         format!(
@@ -1040,7 +1036,7 @@ fn build_models(
                 }
                 let entry = model
                     .mapped_domain_values
-                    .entry(common.clone())
+                    .entry(value.common.clone())
                     .or_default();
                 if !entry.iter().any(|existing| existing == &value.common) {
                     entry.push(value.common.clone());
@@ -1077,17 +1073,16 @@ fn build_models(
                 }
             }
             let common = model.domain_to_common[domain].clone();
-            model
-                .mapped_domain_values
-                .entry(common)
-                .or_default()
-                .sort();
+            model.mapped_domain_values.entry(common).or_default().sort();
         }
     }
 
     for (common, correspondence) in &mapping.observables {
         if common.trim().is_empty() {
-            return unsupported("empty_observable", "common observable names must be non-empty");
+            return unsupported(
+                "empty_observable",
+                "common observable names must be non-empty",
+            );
         }
         if correspondence.arguments.len() > bounds.max_domains {
             return ModelBuild::Inconclusive(InconclusiveEvidence {
@@ -1326,22 +1321,28 @@ fn build_models(
     })
 }
 
-fn translate_term(term: &FiniteTerm, side: &SideModel) -> Result<FiniteTerm, UnsupportedDifference> {
+fn translate_term(
+    term: &FiniteTerm,
+    side: &SideModel,
+) -> Result<FiniteTerm, UnsupportedDifference> {
     match term {
         FiniteTerm::Literal { value } => {
-            let common_domain = side
-                .domain_to_common
-                .get(&value.domain)
-                .ok_or_else(|| UnsupportedDifference {
-                    code: "unmapped_domain".into(),
-                    detail: format!("domain {} has no common correspondence", value.domain),
-                })?;
+            let common_domain =
+                side.domain_to_common
+                    .get(&value.domain)
+                    .ok_or_else(|| UnsupportedDifference {
+                        code: "unmapped_domain".into(),
+                        detail: format!("domain {} has no common correspondence", value.domain),
+                    })?;
             let common_value = side
                 .value_to_common
                 .get(&(value.domain.clone(), value.value.clone()))
                 .ok_or_else(|| UnsupportedDifference {
                     code: "unmapped_value".into(),
-                    detail: format!("value {} in domain {} is unmapped", value.value, value.domain),
+                    detail: format!(
+                        "value {} in domain {} is unmapped",
+                        value.value, value.domain
+                    ),
                 })?;
             Ok(FiniteTerm::Literal {
                 value: FiniteValue {
@@ -1352,13 +1353,13 @@ fn translate_term(term: &FiniteTerm, side: &SideModel) -> Result<FiniteTerm, Uns
         }
         FiniteTerm::Variable { name } => Ok(FiniteTerm::Variable { name: name.clone() }),
         FiniteTerm::Observable { mapping, arguments } => {
-            let common = side
-                .observable_to_common
-                .get(mapping)
-                .ok_or_else(|| UnsupportedDifference {
-                    code: "unmapped_observable".into(),
-                    detail: format!("observable {mapping} has no common correspondence"),
-                })?;
+            let common =
+                side.observable_to_common
+                    .get(mapping)
+                    .ok_or_else(|| UnsupportedDifference {
+                        code: "unmapped_observable".into(),
+                        detail: format!("observable {mapping} has no common correspondence"),
+                    })?;
             let arguments = arguments
                 .iter()
                 .map(|argument| translate_term(argument, side))
@@ -1375,7 +1376,10 @@ fn translate_term(term: &FiniteTerm, side: &SideModel) -> Result<FiniteTerm, Uns
     }
 }
 
-fn translate_expr(expr: &FiniteExpr, side: &SideModel) -> Result<FiniteExpr, UnsupportedDifference> {
+fn translate_expr(
+    expr: &FiniteExpr,
+    side: &SideModel,
+) -> Result<FiniteExpr, UnsupportedDifference> {
     match expr {
         FiniteExpr::Bool { value } => Ok(FiniteExpr::Bool { value: *value }),
         FiniteExpr::Equal { left, right } => Ok(FiniteExpr::Equal {
@@ -1438,13 +1442,13 @@ fn translate_expr(expr: &FiniteExpr, side: &SideModel) -> Result<FiniteExpr, Uns
             domain,
             expression,
         } => {
-            let common = side
-                .domain_to_common
-                .get(domain)
-                .ok_or_else(|| UnsupportedDifference {
-                    code: "unmapped_domain".into(),
-                    detail: format!("domain {domain} has no common correspondence"),
-                })?;
+            let common =
+                side.domain_to_common
+                    .get(domain)
+                    .ok_or_else(|| UnsupportedDifference {
+                        code: "unmapped_domain".into(),
+                        detail: format!("domain {domain} has no common correspondence"),
+                    })?;
             Ok(FiniteExpr::Forall {
                 variable: variable.clone(),
                 domain: common.clone(),
@@ -1456,13 +1460,13 @@ fn translate_expr(expr: &FiniteExpr, side: &SideModel) -> Result<FiniteExpr, Uns
             domain,
             expression,
         } => {
-            let common = side
-                .domain_to_common
-                .get(domain)
-                .ok_or_else(|| UnsupportedDifference {
-                    code: "unmapped_domain".into(),
-                    detail: format!("domain {domain} has no common correspondence"),
-                })?;
+            let common =
+                side.domain_to_common
+                    .get(domain)
+                    .ok_or_else(|| UnsupportedDifference {
+                        code: "unmapped_domain".into(),
+                        detail: format!("domain {domain} has no common correspondence"),
+                    })?;
             Ok(FiniteExpr::Exists {
                 variable: variable.clone(),
                 domain: common.clone(),
@@ -1571,11 +1575,9 @@ fn eval_term(
                 .ok_or_else(|| EvalFailure::Internal("world result is out of domain".into()))?;
             Ok((observable.result.clone(), value.clone()))
         }
-        FiniteTerm::Unsupported { construct } => {
-            Err(EvalFailure::Internal(format!(
-                "unsupported typed construct {construct}"
-            )))
-        }
+        FiniteTerm::Unsupported { construct } => Err(EvalFailure::Internal(format!(
+            "unsupported typed construct {construct}"
+        ))),
     }
 }
 
@@ -1599,16 +1601,10 @@ fn eval_quantifier(
         .domains
         .get(common_domain)
         .ok_or_else(|| EvalFailure::Internal("common quantifier domain is absent".into()))?;
-    let previous = variables.insert(
-        variable.to_string(),
-        (common_domain.clone(), String::new()),
-    );
+    let previous = variables.insert(variable.to_string(), (common_domain.clone(), String::new()));
     let mut outcome = universal;
     for value in &values.values {
-        variables.insert(
-            variable.to_string(),
-            (common_domain.clone(), value.clone()),
-        );
+        variables.insert(variable.to_string(), (common_domain.clone(), value.clone()));
         let result = eval_expr(model, side, expression, variables, world, budget)?;
         if result != universal {
             outcome = result;
@@ -1693,30 +1689,14 @@ fn eval_expr(
             domain,
             expression,
         } => eval_quantifier(
-            model,
-            side,
-            variable,
-            domain,
-            expression,
-            true,
-            variables,
-            world,
-            budget,
+            model, side, variable, domain, expression, true, variables, world, budget,
         ),
         FiniteExpr::Exists {
             variable,
             domain,
             expression,
         } => eval_quantifier(
-            model,
-            side,
-            variable,
-            domain,
-            expression,
-            false,
-            variables,
-            world,
-            budget,
+            model, side, variable, domain, expression, false, variables, world, budget,
         ),
         FiniteExpr::Unsupported { construct } => Err(EvalFailure::Internal(format!(
             "unsupported typed construct {construct}"
@@ -1738,31 +1718,12 @@ fn eval_side(
     assumption_values.clear();
     for assumption in &contract.assumptions {
         assumption_values.push(eval_expr(
-            model,
-            side,
-            assumption,
-            variables,
-            world,
-            budget,
+            model, side, assumption, variables, world, budget,
         )?);
     }
     let assumptions_hold = assumption_values.iter().all(|value| *value);
-    let activated = eval_expr(
-        model,
-        side,
-        &contract.activation,
-        variables,
-        world,
-        budget,
-    )?;
-    let guarantee_holds = eval_expr(
-        model,
-        side,
-        &contract.guarantee,
-        variables,
-        world,
-        budget,
-    )?;
+    let activated = eval_expr(model, side, &contract.activation, variables, world, budget)?;
+    let guarantee_holds = eval_expr(model, side, &contract.guarantee, variables, world, budget)?;
     Ok(EvaluatedSide {
         assumptions_hold,
         activated,
@@ -2109,7 +2070,9 @@ fn unsatisfied_structural_delta() -> StructuralDelta {
         observables_changed: false,
         profile_bounds_changed: false,
         editorial_eligible: false,
-        details: vec!["the declared correspondence is not supported; no structural comparison ran".into()],
+        details: vec![
+            "the declared correspondence is not supported; no structural comparison ran".into(),
+        ],
     }
 }
 
@@ -2157,7 +2120,7 @@ fn implication_result(
     outcome: &SearchOutcome,
     witness: &Option<ImplicationWitness>,
 ) -> ImplicationResult {
-    let (holds, complete, reason) = if let Some(witness) = witness {
+    let (holds, complete, reason) = if witness.is_some() {
         (
             Some(false),
             true,
@@ -2221,7 +2184,8 @@ fn search_basis(
     } else if conclusive {
         "both failed implication directions have replayable witnesses; the bound stopped further enumeration".to_string()
     } else {
-        "the declared world or step bound was exhausted before a complete implication search".to_string()
+        "the declared world or step bound was exhausted before a complete implication search"
+            .to_string()
     };
     SearchBasis {
         common_domains,
@@ -2556,12 +2520,7 @@ pub fn compare_requirement_revisions(
             })
         }
         ModelBuild::Supported(model) => {
-            let outcome = search_worlds(
-                &model,
-                &old.contract,
-                &new.contract,
-                &policy.comparison,
-            )?;
+            let outcome = search_worlds(&model, &old.contract, &new.contract, &policy.comparison)?;
             let relation = revision_relation(
                 outcome.complete,
                 outcome.obligation_new_to_old_violated,
@@ -2603,11 +2562,8 @@ pub fn compare_requirement_revisions(
             };
             let classification = classify_requirement(relation, &structural);
             let evidence_reuse = evidence_reuse_decisions(request, &old, &new, classification)?;
-            let assumptions = assumption_guarantee_delta(
-                &outcome,
-                relation,
-                !structural.guarantee_changed,
-            );
+            let assumptions =
+                assumption_guarantee_delta(&outcome, relation, !structural.guarantee_changed);
             let implications = vec![
                 implication_result(
                     "new_implies_old",
@@ -2769,7 +2725,7 @@ fn world_from_witness(
             world[observable.offset + row_index] = result_index;
         }
     }
-    if world.iter().any(|value| *value == usize::MAX) {
+    if world.contains(&usize::MAX) {
         return Err(RevisionClassificationError::InvalidInput(
             "witness does not cover every observation slot".into(),
         ));
@@ -2794,8 +2750,10 @@ pub fn replay_requirement_witness(
     policy.admit()?;
     validate_native_row(old_native_requirement)?;
     validate_native_row(new_native_requirement)?;
-    let old = normalize_contract(profile, old_native_requirement, old_contract).map_err(typed_error)?;
-    let new = normalize_contract(profile, new_native_requirement, new_contract).map_err(typed_error)?;
+    let old =
+        normalize_contract(profile, old_native_requirement, old_contract).map_err(typed_error)?;
+    let new =
+        normalize_contract(profile, new_native_requirement, new_contract).map_err(typed_error)?;
     let model = match build_models(mapping, &old.contract, &new.contract, &policy.comparison) {
         ModelBuild::Supported(model) => model,
         ModelBuild::Unsupported(unsupported) => {
@@ -2854,7 +2812,10 @@ pub fn replay_requirement_witness(
         ),
         EvalFailure::Internal(detail) => RevisionClassificationError::InvalidInput(detail),
     })?;
-    let (premise, conclusion) = match (witness.premise_side.as_str(), witness.conclusion_side.as_str()) {
+    let (premise, conclusion) = match (
+        witness.premise_side.as_str(),
+        witness.conclusion_side.as_str(),
+    ) {
         ("new", "old") => (
             side_truths(new_side, &new_assumptions),
             side_truths(old_side, &old_assumptions),
@@ -2981,12 +2942,7 @@ fn first_candidate(fragment: &AcceptanceFragment) -> Option<EvidenceCandidate> {
     Some(EvidenceCandidate {
         checks: fragment.required_checks.iter().cloned().collect(),
         evidence_role: fragment.evidence_roles.iter().next()?.clone(),
-        assumptions: fragment
-            .assumption_sets
-            .first()?
-            .iter()
-            .cloned()
-            .collect(),
+        assumptions: fragment.assumption_sets.first()?.iter().cloned().collect(),
     })
 }
 
@@ -3108,7 +3064,9 @@ fn set_inclusion(
                     .map(|set| set.iter().cloned().collect())
                     .unwrap_or_default(),
             }),
-            reason: format!("evidence role {role} is accepted by the premise and rejected by the conclusion"),
+            reason: format!(
+                "evidence role {role} is accepted by the premise and rejected by the conclusion"
+            ),
         };
     }
     if let Some(assumptions) = premise
@@ -3164,7 +3122,8 @@ fn set_inclusion(
         holds: true,
         vacuous: false,
         witness: None,
-        reason: "every accepted evidence candidate in the premise is accepted by the conclusion".into(),
+        reason: "every accepted evidence candidate in the premise is accepted by the conclusion"
+            .into(),
     }
 }
 
@@ -3190,10 +3149,7 @@ fn policy_fragment_report(
     })
 }
 
-fn policy_universe_report(
-    universe: &EvidenceUniverse,
-    maximum: u64,
-) -> EvidenceUniverseReport {
+fn policy_universe_report(universe: &EvidenceUniverse, maximum: u64) -> EvidenceUniverseReport {
     EvidenceUniverseReport {
         checks: universe.checks.iter().cloned().collect(),
         evidence_roles: universe.evidence_roles.iter().cloned().collect(),
@@ -3257,7 +3213,11 @@ fn classify_policy(relation: SetRelation, structural: &PolicyStructuralDelta) ->
     }
 }
 
-fn policy_feasibility(inclusion: &[SetInclusion], old: &AcceptanceFragment, new: &AcceptanceFragment) -> PolicyFeasibility {
+fn policy_feasibility(
+    inclusion: &[SetInclusion],
+    old: &AcceptanceFragment,
+    new: &AcceptanceFragment,
+) -> PolicyFeasibility {
     let vacuous_inclusion = inclusion.iter().any(|result| result.vacuous);
     let note = if !fragment_feasible(old) || !fragment_feasible(new) {
         "an empty acceptance set is visible independently of the containment ordering; containment involving it is vacuous"
@@ -3309,7 +3269,8 @@ pub fn compare_policy_revisions(
     let new_report = policy_fragment_report(&new, policy.policy_fragment.max_accepted)?;
     let universe = policy_universe_report(&old.universe, policy.policy_fragment.max_accepted);
 
-    if old.fragment != SUPPORTED_POLICY_FRAGMENT_V1 || new.fragment != SUPPORTED_POLICY_FRAGMENT_V1 {
+    if old.fragment != SUPPORTED_POLICY_FRAGMENT_V1 || new.fragment != SUPPORTED_POLICY_FRAGMENT_V1
+    {
         let unsupported = UnsupportedDifference {
             code: "unsupported_fragment".into(),
             detail: "only the named required-check, evidence-role and assumption-set acceptance fragment is supported".into(),

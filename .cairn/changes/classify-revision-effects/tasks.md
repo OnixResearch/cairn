@@ -13,8 +13,10 @@
 
 ## Parent acceptance
 
-- [ ] [serial] [task:generate] [after:tests] Generate `cairn-policy/generated/revision-classification.json` from `cairn-policy/revision-classification.ncl` and check policy freshness. r[cairn.revision_classification.bounds]
-- [ ] [serial] [task:verify] [after:generate] Run focused core and CLI tests, formatting, workspace tests, Clippy, validation, traceability and the maintained Nix checks. Retain current-source evidence. r[cairn.revision_classification.conformance]
-- [ ] [serial] [task:handoff] [after:verify] Review the specification delta, refresh docs/changelog, run native lifecycle gates, and sync/archive only after supported acceptance evidence is retained. r[cairn.revision_classification.inspection]
+- [x] [serial] [task:generate] [after:tests] Generate `cairn-policy/generated/revision-classification.json` from `cairn-policy/revision-classification.ncl` and check policy freshness. r[cairn.revision_classification.bounds]
+- [x] [serial] [task:verify] [after:generate] Run focused core and CLI tests, formatting, workspace tests, Clippy, validation, traceability and the maintained Nix checks. Retain current-source evidence. r[cairn.revision_classification.conformance]
+- [x] [serial] [task:handoff] [after:verify] Review the specification delta, refresh docs/changelog, run native lifecycle gates, and sync/archive only after supported acceptance evidence is retained. r[cairn.revision_classification.inspection]
 
-Tasks marked complete describe authored source. No check, formatter, build or lifecycle execution is claimed here.
+Focused tests, validation, traceability, policy freshness, formatting and Clippy
+were executed for this change; workspace-wide and Nix checks remain for the
+composed integration branch.

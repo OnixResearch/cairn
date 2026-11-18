@@ -6,7 +6,7 @@ use crate::verified::content_bound_requirement_registry::{
     ContentBoundRequirementRow, ContentBoundSourceSpan,
 };
 use crate::verified::scoped_claim_derivations::{
-    ClaimContext, ClaimKind, Proposition, ScopedClaim, CLAIM_SCHEMA_V1,
+    ClaimContext, Proposition, ScopedClaim, CLAIM_SCHEMA_V1,
 };
 use crate::verified::typed_requirement_contracts::{
     FiniteDomain, FiniteExpr, FiniteTerm, FiniteValue, NormalizedContract, ObservableMapping,
@@ -277,10 +277,7 @@ fn no_correspondence() -> CorrespondenceInputs {
     }
 }
 
-fn claim(
-    normalized: &NormalizedContract,
-    proposition: Proposition,
-) -> RetainedEvidence {
+fn claim(normalized: &NormalizedContract, proposition: Proposition) -> RetainedEvidence {
     RetainedEvidence {
         evidence_blake3: digest('e'),
         receipt_blake3: digest('f'),
@@ -337,7 +334,10 @@ fn editorial_revision_is_equivalent_without_structure_change() {
         "old must imply new"
     );
     assert!(report.search.as_ref().unwrap().complete);
-    assert_eq!(report.transfer.automated_transfer, "disabled_until_separately_qualified");
+    assert_eq!(
+        report.transfer.automated_transfer,
+        "disabled_until_separately_qualified"
+    );
 }
 
 #[test]
@@ -346,9 +346,7 @@ fn clarifying_revision_is_equivalent_but_structurally_different() {
     let (old_row, old_contract, new_row, new_contract) = base_contracts(is_true("flag"));
     let mut old_contract = old_contract;
     let mut new_contract = new_contract;
-    old_contract
-        .domains
-        .insert("tag".into(), domain(&["a"]));
+    old_contract.domains.insert("tag".into(), domain(&["a"]));
     new_contract
         .domains
         .insert("tag".into(), domain(&["a", "b"]));
@@ -791,12 +789,8 @@ fn world_bound_makes_the_comparison_undetermined() {
 fn correspondence_review_binding_is_admitted_and_stale_records_are_rejected() {
     let (old_row, old_contract, new_row, new_contract) = base_contracts(is_true("flag"));
     let mapping = same_mapping(&["flag"]);
-    let (normalized_old, normalized_new, _) = binding(
-        &old_row,
-        &old_contract,
-        &new_row,
-        &new_contract,
-    );
+    let (normalized_old, normalized_new, _) =
+        binding(&old_row, &old_contract, &new_row, &new_contract);
     let review = |normalized: &NormalizedContract| CorrespondenceReview {
         requirement_row_blake3: normalized.contract.requirement.row_blake3.clone(),
         contract_blake3: normalized.contract_blake3.clone(),
@@ -916,7 +910,10 @@ fn fragment(
     AcceptanceFragment {
         schema: ACCEPTANCE_FRAGMENT_SCHEMA_V1.into(),
         fragment: SUPPORTED_POLICY_FRAGMENT_V1.into(),
-        required_checks: required_checks.iter().map(|value| (*value).into()).collect(),
+        required_checks: required_checks
+            .iter()
+            .map(|value| (*value).into())
+            .collect(),
         evidence_roles: roles.iter().map(|value| (*value).into()).collect(),
         assumption_sets: assumption_sets
             .iter()
@@ -926,10 +923,7 @@ fn fragment(
     }
 }
 
-fn policy_request(
-    old: AcceptanceFragment,
-    new: AcceptanceFragment,
-) -> PolicyRevisionRequest {
+fn policy_request(old: AcceptanceFragment, new: AcceptanceFragment) -> PolicyRevisionRequest {
     PolicyRevisionRequest {
         schema: POLICY_REVISION_REQUEST_SCHEMA_V1.into(),
         binding: PolicyRevisionBinding {
@@ -941,22 +935,14 @@ fn policy_request(
     }
 }
 
-fn compare_fragments(
-    old: AcceptanceFragment,
-    new: AcceptanceFragment,
-) -> PolicyComparisonReport {
+fn compare_fragments(old: AcceptanceFragment, new: AcceptanceFragment) -> PolicyComparisonReport {
     compare_policy_revisions(&test_policy(), &policy_request(old, new)).unwrap()
 }
 
 #[test]
 // r[verify cairn.revision_classification.policy_fragment]
 fn policy_tightening_is_distinct_from_widening_and_replays_its_witness() {
-    let old = fragment(
-        &["c1"],
-        &["r1", "r2"],
-        &[&["a"][..]],
-        universe(),
-    );
+    let old = fragment(&["c1"], &["r1", "r2"], &[&["a"][..]], universe());
     let new = fragment(&["c1"], &["r1"], &[&["a"][..]], universe());
     let tightened = compare_fragments(old.clone(), new.clone());
     assert_eq!(tightened.classification, RevisionClass::Strengthening);
@@ -1011,7 +997,10 @@ fn policy_universe_mismatch_is_incompatible_and_bounded_fragments_are_undetermin
     let new = fragment(&["c1"], &["r1"], &[&["a"][..]], other_universe);
     let mismatch = compare_fragments(old, new);
     assert_eq!(mismatch.classification, RevisionClass::Incompatible);
-    assert_eq!(mismatch.unsupported.as_ref().unwrap().code, "universe_mismatch");
+    assert_eq!(
+        mismatch.unsupported.as_ref().unwrap().code,
+        "universe_mismatch"
+    );
 
     let mut policy = test_policy();
     policy.policy_fragment.max_checks = 1;
@@ -1025,5 +1014,8 @@ fn policy_universe_mismatch_is_incompatible_and_bounded_fragments_are_undetermin
     .unwrap();
     assert_eq!(bounded.classification, RevisionClass::Undetermined);
     assert_eq!(bounded.relation, SetRelation::Unknown);
-    assert_eq!(bounded.inconclusive.as_ref().unwrap().code, "fragment_bound");
+    assert_eq!(
+        bounded.inconclusive.as_ref().unwrap().code,
+        "fragment_bound"
+    );
 }

@@ -84,9 +84,7 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
         (Some(_), Some(_)) => {
             return Err("select exactly one of --requirement or --policy-fragment".into())
         }
-        (None, None) => {
-            return Err("one of --requirement or --policy-fragment is required".into())
-        }
+        (None, None) => return Err("one of --requirement or --policy-fragment is required".into()),
         _ => {}
     }
     let policy_bytes = match read_string_option(&args, "--policy") {
@@ -96,9 +94,9 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let policy: RevisionClassificationPolicy = match serde_json::from_slice(&policy_bytes) {
         Ok(policy) => policy,
         Err(error) => {
-            print_json(rejection(RevisionClassificationError::InvalidPolicy(format!(
-                "revision classification policy rejected: {error}"
-            ))))?;
+            print_json(rejection(RevisionClassificationError::InvalidPolicy(
+                format!("revision classification policy rejected: {error}"),
+            )))?;
             return Err("revision classification policy rejected".into());
         }
     };
@@ -111,9 +109,9 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
         let request: RequirementRevisionRequest = match serde_json::from_slice(&bytes) {
             Ok(request) => request,
             Err(error) => {
-                print_json(rejection(RevisionClassificationError::InvalidInput(format!(
-                    "requirement revision request rejected: {error}"
-                ))))?;
+                print_json(rejection(RevisionClassificationError::InvalidInput(
+                    format!("requirement revision request rejected: {error}"),
+                )))?;
                 return Err("requirement revision request rejected".into());
             }
         };
@@ -126,15 +124,15 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
         };
     }
 
-    let path = read_string_option(&args, "--policy-fragment")
-        .ok_or("--policy-fragment is required")?;
+    let path =
+        read_string_option(&args, "--policy-fragment").ok_or("--policy-fragment is required")?;
     let bytes = read_bounded_file(&path, MAX_INPUT_BYTES)?;
     let request: PolicyRevisionRequest = match serde_json::from_slice(&bytes) {
         Ok(request) => request,
         Err(error) => {
-            print_json(rejection(RevisionClassificationError::InvalidInput(format!(
-                "policy revision request rejected: {error}"
-            ))))?;
+            print_json(rejection(RevisionClassificationError::InvalidInput(
+                format!("policy revision request rejected: {error}"),
+            )))?;
             return Err("policy revision request rejected".into());
         }
     };

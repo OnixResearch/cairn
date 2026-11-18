@@ -1,14 +1,14 @@
 use std::{collections::BTreeMap, env, fs, path::PathBuf, process::Command, time::SystemTime};
 
 use cairn_core::{
-    normalize_contract, ClaimContext, ClaimKind, ContentBoundRequirementRow, ContentBoundSourceSpan,
-    CorrespondenceInputs, DomainCorrespondence, FiniteDomain, FiniteExpr, FiniteTerm, FiniteValue,
-    ObservableCorrespondence, ObservableMapping, PolicyRevisionBinding, PolicyRevisionRequest,
-    Proposition, RequirementRevisionRequest, RetainedEvidence, RevisionBinding, RevisionContext,
-    RevisionMapping, ScopedClaim, SemanticContract, SemanticProfile, ACCEPTANCE_FRAGMENT_SCHEMA_V1,
-    CLAIM_SCHEMA_V1, FINITE_INTERPRETATION_V1, FINITE_SEMANTICS_PROFILE_V1,
-    POLICY_REVISION_REQUEST_SCHEMA_V1, REQUIREMENT_REVISION_REQUEST_SCHEMA_V1,
-    SUPPORTED_POLICY_FRAGMENT_V1,
+    normalize_contract, ClaimContext, ClaimKind, ContentBoundRequirementRow,
+    ContentBoundSourceSpan, CorrespondenceInputs, DomainCorrespondence, FiniteDomain, FiniteExpr,
+    FiniteTerm, FiniteValue, ObservableCorrespondence, ObservableMapping, PolicyRevisionBinding,
+    PolicyRevisionRequest, Proposition, RequirementRevisionRequest, RetainedEvidence,
+    RevisionBinding, RevisionContext, RevisionMapping, ScopedClaim, SemanticContract,
+    SemanticProfile, ValueCorrespondence, ACCEPTANCE_FRAGMENT_SCHEMA_V1, CLAIM_SCHEMA_V1,
+    FINITE_INTERPRETATION_V1, FINITE_SEMANTICS_PROFILE_V1, POLICY_REVISION_REQUEST_SCHEMA_V1,
+    REQUIREMENT_REVISION_REQUEST_SCHEMA_V1, SUPPORTED_POLICY_FRAGMENT_V1,
 };
 use serde_json::{json, Value};
 
@@ -355,7 +355,8 @@ fn cli_classifies_editorial_and_strengthening_requirements() {
     let fixture = Fixture::new("requirement");
     let editorial = fixture.write(
         "editorial.json",
-        &serde_json::to_value(requirement_request(is_true("flag"), is_true("flag"), false)).unwrap(),
+        &serde_json::to_value(requirement_request(is_true("flag"), is_true("flag"), false))
+            .unwrap(),
     );
     let output = fixture.classify("--requirement", &editorial, &[], true);
     assert_eq!(output["outcome"], "classified");
@@ -408,10 +409,8 @@ fn cli_weakening_and_stale_evidence_are_visible_nonaccepting_outcomes() {
         "not_reusable"
     );
 
-    let mut stale: Value =
-        serde_json::from_str(&fs::read_to_string(&weakening).unwrap()).unwrap();
-    stale["retained_evidence"][0]["claim"]["context"]["subject_blake3"] =
-        json!(digest('9'));
+    let mut stale: Value = serde_json::from_str(&fs::read_to_string(&weakening).unwrap()).unwrap();
+    stale["retained_evidence"][0]["claim"]["context"]["subject_blake3"] = json!(digest('9'));
     let path = fixture.write("stale.json", &stale);
     let output = fixture.classify("--requirement", &path, &[], true);
     assert_eq!(
@@ -489,7 +488,8 @@ fn cli_requires_exactly_one_input_and_rejects_unknown_options() {
     let fixture = Fixture::new("arguments");
     let path = fixture.write(
         "request.json",
-        &serde_json::to_value(requirement_request(is_true("flag"), is_true("flag"), false)).unwrap(),
+        &serde_json::to_value(requirement_request(is_true("flag"), is_true("flag"), false))
+            .unwrap(),
     );
     let both = Command::new(env!("CARGO_BIN_EXE_cairn"))
         .args([
