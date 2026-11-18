@@ -42,6 +42,14 @@ pub(crate) fn usage_text() -> &'static str {
         , "\n  agent-benchmark validate --input FILE [--root PATH]\n  agent-benchmark compare --input FILE [--root PATH]"
         , "\n  prose check [--root DIR] (FILE... | --change NAME) [--format json|text|github|sarif] [--report-version 1|2] [--profile NAME] [--profiles FILE] [--max-total-bytes N] [--max-diagnostics N] [--max-report-bytes N]  (advisory; no rewrites)\n  prose verify [--root DIR] --report FILE  (recheck current v2 inputs and suggestions)\n  prose profiles export [--source FILE] [--output FILE] [--check]"
         , "\n  drain-plan [--root PATH] [--policy PATH] [--view legacy|readiness] [--evidence-manifest FILE] [--cross-repo-evidence FILE]  (read-only; readiness view requires the explicit manifest)"
+        , "\n  mcp [--response-profile legacy|structured-summary] [--tool-profile full|inspect|author|verify] [--describe-tool NAME] [--paged-tools]  (profiles restrict discovery; never grant mutation)"
+        , "\n  context read --root PATH|--lifecycle-store ID --scope accepted|active|archived --artifact ID [--change ID] [--spec ID] (--requirement-id ID|--task-id ID|--heading TITLE...) [--expected-source-blake3 HEX]"
+        , "\n  readiness <change> [--root PATH] [--policy PATH] [--view agent] [--max-bytes N] [--max-entries N] [--detail-kind blocker|action|stage --detail-id ID --expected-receipt HASH]"
+        , "\n  observe active|readiness CHANGE|context [--root PATH] [--policy PATH] [--page-entries N] [--page-bytes N] [--cursor HEX] [--prior PATH] [--mode complete|page|unchanged|difference] [--output PATH]"
+        , "\n  requirement-contract inspect --requirement ID --registry FILE [--root DIR] [--policy FILE] [--inventory FILE] [--review FILE] [--example FILE]  (read-only finite semantics; never proof admission)"
+        , "\n  claim-derivation explain --case FILE [--policy FILE]  (advisory; no lifecycle mutation)"
+        , "\n  support-maintenance explain --case FILE [--policy FILE]  (advisory; no lifecycle mutation)"
+        , "\n  traceability compare --root PATH --fixtures DIR --out FILE [--observations DIR]  (read-only; upstream not executed)"
     )
 }
 
