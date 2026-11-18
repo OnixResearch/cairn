@@ -99,6 +99,13 @@ surface.
   meaning-change hints remain advisory. Aggregate bytes, diagnostics, traversal,
   and rendered reports have explicit hard ceilings.
 
+- `docs/replayable-completion.md`, an acceptance report that explains one
+  executed completion decision as an argument over requirement revisions,
+  admitted evidence, assumptions and inference rules, records the replay
+  commands and the drift rule, and states what the decision does not establish.
+  It is documentation for roadmap issue #4; codifying the argument as a checked
+  requirement needs a companion review command and is not claimed here.
+
 ### Removed
 
 - Post-release wording and source-text assertion tests. Historical documentation
