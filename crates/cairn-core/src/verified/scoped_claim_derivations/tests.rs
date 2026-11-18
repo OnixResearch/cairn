@@ -40,7 +40,8 @@ fn row() -> ContentBoundRequirementRow {
 fn profile() -> SemanticProfile {
     SemanticProfile {
         id: "cairn.requirement-semantics.finite.v1".into(),
-        interpretation: "finite-enumeration.equality.nominal-domains.total-observables.single-step.v1".into(),
+        interpretation:
+            "finite-enumeration.equality.nominal-domains.total-observables.single-step.v1".into(),
         max_nodes: 64,
         max_depth: 8,
         max_domain_values: 8,
@@ -219,7 +220,10 @@ fn structural_producer(context: &ClaimContext) -> ProducerInput {
     }
 }
 
-fn review(row: &ContentBoundRequirementRow, normalized: &super::super::typed_requirement_contracts::NormalizedContract) -> CorrespondenceReview {
+fn review(
+    row: &ContentBoundRequirementRow,
+    normalized: &super::super::typed_requirement_contracts::NormalizedContract,
+) -> CorrespondenceReview {
     CorrespondenceReview {
         requirement_row_blake3: row.row_blake3.clone(),
         contract_blake3: normalized.contract_blake3.clone(),
@@ -260,7 +264,10 @@ fn case() -> Case {
             check_id: "tests".into(),
         },
     );
-    let eligible = make(ClaimKind::CheckerAcceptedProperty, Proposition::NativeCompletionEligible);
+    let eligible = make(
+        ClaimKind::CheckerAcceptedProperty,
+        Proposition::NativeCompletionEligible,
+    );
     let reviewed = make(
         ClaimKind::ReviewedRequirementCorrespondence,
         Proposition::ReviewedCorrespondence,
@@ -279,14 +286,13 @@ fn case() -> Case {
     let derivation = Derivation {
         id: "derivation.completion".into(),
         rule: Rule::ReviewedCompletionV1,
-        premises: vec![
-            ids["eligible"].clone(),
-            ids["reviewed"].clone(),
-        ],
+        premises: vec![ids["eligible"].clone(), ids["reviewed"].clone()],
         conclusion: ids["decision"].clone(),
         applicability: context.clone(),
         assurance_scope: COMPLETION_SCOPE.into(),
-        residual_assumptions: BTreeSet::from(["reviewed-correspondence:accepted-declaration".into()]),
+        residual_assumptions: BTreeSet::from([
+            "reviewed-correspondence:accepted-declaration".into()
+        ]),
     };
     Case {
         request: EvaluationRequest {
@@ -353,9 +359,7 @@ fn native_completion_case_explains_decision_and_replays_deterministically() {
     let clippy = explanation(&report, &case.ids["clippy"]);
     let tests = explanation(&report, &case.ids["tests"]);
     let shared = "native-test-oracle:shared-cargo-test-harness";
-    assert!(clippy.support[0]
-        .residual_assumptions
-        .contains(shared));
+    assert!(clippy.support[0].residual_assumptions.contains(shared));
     assert!(tests.support[0].residual_assumptions.contains(shared));
     assert_eq!(
         report
@@ -393,9 +397,7 @@ fn timeout_and_unsupported_statuses_establish_neither_polarity() {
         assert_eq!(decision.state, ClaimState::Unresolved);
         assert!(decision.support.is_empty());
         assert!(decision.counterevidence.is_empty());
-        assert!(decision
-            .unresolved_premises
-            .contains(&case.ids["eligible"]));
+        assert!(decision.unresolved_premises.contains(&case.ids["eligible"]));
         assert!(report.unresolved.contains(&case.ids["decision"]));
     }
 }
@@ -427,9 +429,7 @@ fn observations_alone_do_not_establish_the_completion_property() {
     let decision = explanation(&report, &case.ids["decision"]);
     assert_eq!(decision.state, ClaimState::Unresolved);
     assert!(decision.support.is_empty());
-    assert!(decision
-        .unresolved_premises
-        .contains(&case.ids["reviewed"]));
+    assert!(decision.unresolved_premises.contains(&case.ids["reviewed"]));
 }
 
 #[test]
@@ -443,10 +443,16 @@ fn failed_check_refutes_only_its_exact_observation() {
     assert_eq!(clippy.kind, ClaimKind::Observation);
     assert!(clippy.support.is_empty());
     assert_eq!(clippy.counterevidence.len(), 1);
-    assert_eq!(clippy.counterevidence[0].rule, "native-check-observation.v1");
-    assert_eq!(clippy.claim.proposition, Proposition::CheckPassed {
-        check_id: "clippy".into()
-    });
+    assert_eq!(
+        clippy.counterevidence[0].rule,
+        "native-check-observation.v1"
+    );
+    assert_eq!(
+        clippy.claim.proposition,
+        Proposition::CheckPassed {
+            check_id: "clippy".into()
+        }
+    );
     assert_eq!(
         explanation(&report, &case.ids["tests"]).state,
         ClaimState::Supported
@@ -460,7 +466,9 @@ fn failed_check_refutes_only_its_exact_observation() {
 // r[verify cairn.scoped_claims.states]
 fn support_and_refutation_remain_visible_together() {
     let mut case = case();
-    case.request.producers.push(completion_producer("failed", &case.context));
+    case.request
+        .producers
+        .push(completion_producer("failed", &case.context));
     let report = evaluate_derivations(&case.policy, &case.request).unwrap();
     let clippy = explanation(&report, &case.ids["clippy"]);
     assert_eq!(clippy.state, ClaimState::Disputed);
@@ -497,11 +505,16 @@ fn structural_receipts_stay_recorded_only_and_cannot_establish_completion() {
     case.request.claims.push(structural);
     case.request.producers = vec![structural_producer(&case.context)];
     let report = evaluate_derivations(&case.policy, &case.request).unwrap();
-    let explanation = explanation(&report, &structural_id);
-    assert_eq!(explanation.state, ClaimState::Supported);
-    assert_eq!(explanation.kind, ClaimKind::StructuralRelationship);
-    assert_eq!(explanation.support[0].source, receipt_hash);
-    assert!(explanation.support[0].assurance_scope.starts_with("recorded_only:"));
+    let structural_explanation = explanation(&report, &structural_id);
+    assert_eq!(structural_explanation.state, ClaimState::Supported);
+    assert_eq!(
+        structural_explanation.kind,
+        ClaimKind::StructuralRelationship
+    );
+    assert_eq!(structural_explanation.support[0].source, receipt_hash);
+    assert!(structural_explanation.support[0]
+        .assurance_scope
+        .starts_with("recorded_only:"));
     assert!(report
         .trust_dependencies
         .contains("recorded-only:no-behavior"));
@@ -536,7 +549,9 @@ fn different_revisions_targets_environments_and_bounds_cannot_combine() {
     );
 
     let mut applicability = case();
-    applicability.request.derivations[0].applicability.environment = "other-os".into();
+    applicability.request.derivations[0]
+        .applicability
+        .environment = "other-os".into();
     assert_eq!(
         evaluate_derivations(&applicability.policy, &applicability.request)
             .unwrap_err()
@@ -546,13 +561,14 @@ fn different_revisions_targets_environments_and_bounds_cannot_combine() {
 
     let mut premise_scope = case();
     let mut foreign = premise_scope.request.claims[2].clone();
-    foreign.context.bounds.insert("max_checks".into(), "1".into());
+    foreign
+        .context
+        .bounds
+        .insert("max_checks".into(), "1".into());
     let foreign_id = claim_identity(&foreign).unwrap();
     premise_scope.request.claims.push(foreign);
-    premise_scope.request.derivations[0].premises = vec![
-        foreign_id,
-        premise_scope.ids["reviewed"].clone(),
-    ];
+    premise_scope.request.derivations[0].premises =
+        vec![foreign_id, premise_scope.ids["reviewed"].clone()];
     assert_eq!(
         evaluate_derivations(&premise_scope.policy, &premise_scope.request)
             .unwrap_err()
@@ -606,9 +622,7 @@ fn unsupported_rules_missing_premises_and_duplicates_are_explicit() {
     let report = evaluate_derivations(&missing.policy, &missing.request).unwrap();
     let decision = explanation(&report, &missing.ids["decision"]);
     assert_eq!(decision.state, ClaimState::Unresolved);
-    assert!(decision
-        .unresolved_premises
-        .contains("claim.not-declared"));
+    assert!(decision.unresolved_premises.contains("claim.not-declared"));
 
     let mut duplicate = case();
     let repeated = duplicate.request.derivations[0].clone();
@@ -753,10 +767,7 @@ fn defensive_cycle_detection_reports_a_cycle_outcome() {
         ("derivation.a".to_string(), Evidence::default()),
         ("derivation.b".to_string(), Evidence::default()),
     ]);
-    let declared = BTreeSet::from([
-        "derivation.a".to_string(),
-        "derivation.b".to_string(),
-    ]);
+    let declared = BTreeSet::from(["derivation.a".to_string(), "derivation.b".to_string()]);
     let error = replay(
         "derivation.a",
         &incoming,

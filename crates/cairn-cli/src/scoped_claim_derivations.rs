@@ -19,8 +19,11 @@ const DEFAULT_POLICY: &str =
     include_str!("../../../cairn-policy/generated/scoped-claim-derivations.json");
 
 fn read_bounded_file(path: &str, maximum: u64) -> Result<Vec<u8>, Box<dyn Error>> {
-    let (root, relative) =
-        CapabilityRoot::open_file_parent(CapabilityRootKind::EvidenceBundle, Path::new(path), false)?;
+    let (root, relative) = CapabilityRoot::open_file_parent(
+        CapabilityRootKind::EvidenceBundle,
+        Path::new(path),
+        false,
+    )?;
     Ok(root.read_bounded(&relative, maximum)?)
 }
 

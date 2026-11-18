@@ -79,12 +79,8 @@ impl ClaimKind {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Proposition {
-    CheckPassed {
-        check_id: String,
-    },
-    ReceiptStructurallyValid {
-        receipt_blake3: String,
-    },
+    CheckPassed { check_id: String },
+    ReceiptStructurallyValid { receipt_blake3: String },
     NativeCompletionEligible,
     ReviewedCorrespondence,
     ReviewedCompletionDecision,
@@ -313,8 +309,8 @@ impl std::fmt::Display for DerivationError {
 impl std::error::Error for DerivationError {}
 
 fn identity<T: Serialize>(domain: &str, value: &T) -> Result<String, DerivationError> {
-    let value =
-        serde_json::to_value(value).map_err(|error| DerivationError::InvalidInput(error.to_string()))?;
+    let value = serde_json::to_value(value)
+        .map_err(|error| DerivationError::InvalidInput(error.to_string()))?;
     let mut hash = blake3::Hasher::new();
     hash.update(domain.as_bytes());
     hash.update(&[0]);
@@ -395,9 +391,7 @@ pub fn claim_identity(claim: &ScopedClaim) -> Result<String, DerivationError> {
                 "check observation requires a check identity".into(),
             ));
         }
-        Proposition::ReceiptStructurallyValid { receipt_blake3 }
-            if !digest(receipt_blake3) =>
-        {
+        Proposition::ReceiptStructurallyValid { receipt_blake3 } if !digest(receipt_blake3) => {
             return Err(DerivationError::InvalidInput(
                 "structural claim requires a receipt identity".into(),
             ));
@@ -575,7 +569,10 @@ fn add_fact(
 }
 
 fn validate_dependencies(dependencies: &BTreeSet<String>) -> Result<(), DerivationError> {
-    if dependencies.iter().any(|dependency| dependency.trim().is_empty()) {
+    if dependencies
+        .iter()
+        .any(|dependency| dependency.trim().is_empty())
+    {
         return Err(DerivationError::InvalidInput(
             "trust dependencies must be non-empty labels".into(),
         ));
@@ -644,7 +641,8 @@ fn admit_producer(
             // Contract-level or result-set defects invalidate every observation;
             // they are not silently reduced to per-check evidence.
             if report.diagnostics.iter().any(|diagnostic| {
-                diagnostic.check_id.is_none() || diagnostic.code.starts_with("verification_contract.")
+                diagnostic.check_id.is_none()
+                    || diagnostic.code.starts_with("verification_contract.")
             }) {
                 return Ok(());
             }
@@ -668,8 +666,7 @@ fn admit_producer(
                 // Only an unambiguous single pass/non-pass row is an observation.
                 // Timeout, unsupported, missing, duplicate, blocked and malformed
                 // rows establish neither polarity.
-                if relevant.any(|diagnostic| diagnostic.code != "verification_result.non_passing")
-                {
+                if relevant.any(|diagnostic| diagnostic.code != "verification_result.non_passing") {
                     continue;
                 }
                 if report.passed_checks.contains(&result.check_id) {
@@ -881,8 +878,9 @@ fn replay<'a>(
                     missing.insert(premise.clone());
                     continue;
                 }
-                let premise_depth =
-                    replay(premise, incoming, evidence, declared, visiting, depths, max_depth)?;
+                let premise_depth = replay(
+                    premise, incoming, evidence, declared, visiting, depths, max_depth,
+                )?;
                 depth = depth.max(premise_depth + 1);
                 let entry = evidence.get(premise.as_str()).ok_or_else(|| {
                     DerivationError::InvalidInput(format!(
@@ -1054,10 +1052,13 @@ pub fn evaluate_derivations(
                 "review-authenticity:externally-retained-artifact".into(),
                 "native-requirement-row-freshness:caller-supplied".into(),
                 format!("interpreter:{}", claim.interpretation_blake3),
-                format!("declared-claim-context:{}", context_identity(&claim.context)?),
+                format!(
+                    "declared-claim-context:{}",
+                    context_identity(&claim.context)?
+                ),
             ]);
             evidence.entry(id.clone()).or_default().support.push(link(
-                review_identity.clone(),
+                review_identity.to_string(),
                 "native-correspondence-admission.v1",
                 1,
                 &claim.context,
@@ -1081,7 +1082,11 @@ pub fn evaluate_derivations(
                 derivation.id
             )));
         }
-        if derivation.residual_assumptions.iter().any(|assumption| assumption.trim().is_empty()) {
+        if derivation
+            .residual_assumptions
+            .iter()
+            .any(|assumption| assumption.trim().is_empty())
+        {
             return Err(DerivationError::InvalidInput(format!(
                 "derivation {} has an empty residual assumption",
                 derivation.id
@@ -1192,10 +1197,7 @@ pub fn evaluate_derivations(
         values.sort();
         values.dedup();
     }
-    let input_blake3 = identity(
-        "cairn.scoped-derivation-input.v1",
-        &(policy, request),
-    )?;
+    let input_blake3 = identity("cairn.scoped-derivation-input.v1", &(policy, request))?;
     let mut report = DerivationReport {
         schema: DERIVATION_REPORT_SCHEMA_V1.into(),
         advisory: true,

@@ -1,18 +1,11 @@
-use std::{
-    collections::BTreeMap,
-    env, fs,
-    path::PathBuf,
-    process::Command,
-    time::SystemTime,
-};
+use std::{collections::BTreeMap, env, fs, path::PathBuf, process::Command, time::SystemTime};
 
 use cairn_core::{
     authoritative_command_hash, authoritative_selection_hash, claim_identity,
     evaluate_content_bound_requirement_registry, normalize_contract, AgentRequiredCheck,
-    ClaimContext, ContentBoundRequirementRow, ContentBoundRevision,
-    ContentBoundSpecificationInput, CorrespondenceReview, Derivation, EvaluationRequest,
-    FiniteDomain, FiniteExpr, ProducerInput, Proposition, Rule, ScopedClaim, SemanticContract,
-    SemanticProfile, CLAIM_SCHEMA_V1,
+    ClaimContext, ContentBoundRequirementRow, ContentBoundRevision, ContentBoundSpecificationInput,
+    CorrespondenceReview, Derivation, EvaluationRequest, FiniteDomain, FiniteExpr, ProducerInput,
+    Proposition, Rule, ScopedClaim, SemanticContract, SemanticProfile, CLAIM_SCHEMA_V1,
 };
 use serde_json::{json, Value};
 
@@ -169,7 +162,12 @@ impl Fixture {
         }
     }
 
-    fn claim(&self, interpretation_blake3: &str, contract_blake3: &str, proposition: Proposition) -> ScopedClaim {
+    fn claim(
+        &self,
+        interpretation_blake3: &str,
+        contract_blake3: &str,
+        proposition: Proposition,
+    ) -> ScopedClaim {
         ScopedClaim {
             schema: CLAIM_SCHEMA_V1.into(),
             kind: proposition.claim_kind(),
@@ -324,7 +322,10 @@ fn advisory_explanation_covers_one_actual_native_completion_case() {
     assert_eq!(output["outcome"], "evaluated");
     assert_eq!(output["advisory"], true);
     assert_eq!(output["report"]["advisory"], true);
-    assert_eq!(output["report"]["schema"], "cairn.scoped-derivation-report.v1");
+    assert_eq!(
+        output["report"]["schema"],
+        "cairn.scoped-derivation-report.v1"
+    );
     assert_eq!(
         output["report"]["independence"],
         cairn_core::INDEPENDENCE_NOT_ESTABLISHED
@@ -340,7 +341,10 @@ fn advisory_explanation_covers_one_actual_native_completion_case() {
         decision["support"][0]["premises"],
         json!([ids["eligible"], ids["reviewed"]])
     );
-    assert_eq!(decision["support"][0]["applicability"], json!(request.claims[0].context));
+    assert_eq!(
+        decision["support"][0]["applicability"],
+        json!(request.claims[0].context)
+    );
 
     let clippy = explanation(&output["report"], "check_passed", Some("clippy"));
     assert_eq!(clippy["state"], "supported");
@@ -440,11 +444,7 @@ fn rejected_scopes_and_rules_are_visible_nonaccepting_outcomes() {
 fn cli_rejects_unknown_arguments_without_writing() {
     let fixture = Fixture::new();
     let output = Command::new(env!("CARGO_BIN_EXE_cairn"))
-        .args([
-            "claim-derivation",
-            "explain",
-            "--unknown",
-        ])
+        .args(["claim-derivation", "explain", "--unknown"])
         .output()
         .unwrap();
     assert!(!output.status.success());
