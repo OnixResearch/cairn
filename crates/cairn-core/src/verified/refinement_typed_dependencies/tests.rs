@@ -649,7 +649,7 @@ fn completing_children_does_not_establish_the_argument() {
             obligations: vec![composition_child("child.unresolved")],
         },
     );
-    let request = request(
+    let request = self::request(
         vec![pilot],
         vec![case],
         Vec::new(),
@@ -714,7 +714,7 @@ fn any_of_uses_only_one_complete_selected_alternative() {
         "child.a2".into(),
         "child.b1".into(),
     ]);
-    let request = request(
+    let request = self::request(
         vec![pilot],
         vec![case_a1, case_a2, case_b1],
         Vec::new(),
@@ -787,7 +787,7 @@ fn contradictory_or_unresolved_assumptions_cannot_support_the_parent() {
         "assumption.durable".into(),
         "assumption.not-durable".into(),
     ]);
-    let request = request(
+    let request = self::request(
         vec![pilot.clone()],
         vec![case_one.clone()],
         Vec::new(),
@@ -815,7 +815,7 @@ fn contradictory_or_unresolved_assumptions_cannot_support_the_parent() {
         "child.one".into(),
         "assumption.unresolved".into(),
     ]);
-    let request = request(
+    let request = self::request(
         vec![unresolved],
         vec![case_one],
         Vec::new(),
@@ -855,7 +855,7 @@ fn contradictory_child_guarantee_is_infeasible_not_vacuously_true() {
             obligations: vec![composition_child("child.failed")],
         },
     );
-    let request = request(
+    let request = self::request(
         vec![pilot],
         vec![case_failed],
         Vec::new(),
@@ -953,7 +953,7 @@ fn archive_ordering_does_not_discharge_integration_or_affect_independent_c() {
             coverage: EvidenceCoverage::WholeChange,
         },
     ];
-    let request = request(
+    let request = self::request(
         Vec::new(),
         Vec::new(),
         vec![ordering, integration, verified, independent],
@@ -1334,6 +1334,9 @@ fn semantic_fixture() -> SemanticFixture {
     );
     dependency.context.producer_repository = REPOSITORY.into();
     dependency.context.intended_target = REPOSITORY.into();
+    // Context identity includes the declared resource envelope, so the fixture's
+    // scopes and dependency must agree before the discharge rule is exercised.
+    dependency.context.bounds = scope().bounds;
     dependency.semantic = Some(SemanticBinding {
         producer_guarantee: GuaranteeRef {
             guarantee_case: "guarantee.producer".into(),
@@ -1574,7 +1577,7 @@ fn checked_proof_requires_an_admitted_checker_and_keeps_its_distinction() {
 #[test]
 // r[verify cairn.refinement.dependencies]
 fn unknown_relation_is_an_unsupported_obligation() {
-    let mut policy = policy(Vec::new(), Vec::new());
+    let mut policy = self::policy(Vec::new(), Vec::new());
     policy.relations.retain(|relation| *relation != DependencyRelation::Lifecycle);
     let mut dependency = dependency_baseline(
         "dependency.lifecycle",
@@ -1606,21 +1609,21 @@ fn unknown_relation_is_an_unsupported_obligation() {
 
 #[test]
 fn invalid_policy_bounds_and_unknowns_are_explicit() {
-    let mut policy = policy(Vec::new(), Vec::new());
+    let mut policy = self::policy(Vec::new(), Vec::new());
     policy.schema = "cairn.refinement-policy.v0".into();
     assert!(matches!(
         admit_refinement_policy(&policy),
         Err(RefinementError::Unsupported(_))
     ));
 
-    let mut policy = policy(Vec::new(), Vec::new());
+    let mut policy = self::policy(Vec::new(), Vec::new());
     policy.bounds.max_depth = 0;
     assert!(matches!(
         admit_refinement_policy(&policy),
         Err(RefinementError::BoundExhaustion(_))
     ));
 
-    let mut policy = policy(Vec::new(), Vec::new());
+    let mut policy = self::policy(Vec::new(), Vec::new());
     policy.assurances = vec![Assurance::Unassessed];
     assert!(matches!(
         admit_refinement_policy(&policy),
