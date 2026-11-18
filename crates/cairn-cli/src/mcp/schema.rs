@@ -5,6 +5,12 @@ pub(super) fn mcp_tools(is_mutation_allowed: bool) -> Vec<Value> {
     if is_mutation_allowed {
         tools.extend(mcp_mutation_tools());
     }
+    tools.push(mcp_tool(
+        "cairn_tool_describe",
+        true,
+        false,
+        "Describe one available tool exactly; never executes or expands the catalog",
+    ));
     tools
 }
 
@@ -219,6 +225,7 @@ pub(super) fn is_mutating_mcp_tool(name: &str) -> bool {
 
 fn mcp_input_schema(name: &str) -> Value {
     match name {
+        "cairn_tool_describe" => mcp_object_schema(&["name"], &[]),
         "cairn_status" | "cairn_list_content" => mcp_object_schema(&[], &["root"]),
         "cairn_doctor" | "cairn_init" => mcp_object_schema(&[], &["root", "policy"]),
         "cairn_implementation_ready" => json!({
@@ -531,6 +538,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         return Err(format!("invalid arguments for {name}: expected object").into());
     };
     match name {
+        "cairn_tool_describe" => validate_string_args(name, object, &["name"], &[]),
         "cairn_status" | "cairn_list_content" => validate_string_args(name, object, &[], &["root"]),
         "cairn_doctor" | "cairn_init" => {
             validate_string_args(name, object, &[], &["root", "policy"])

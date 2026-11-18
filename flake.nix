@@ -599,6 +599,16 @@
               touch $out
             '';
 
+        mcp-discovery-policy-fresh =
+          pkgs.runCommand "cairn-mcp-discovery-policy-fresh"
+            { nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ]; }
+            ''
+              # r[verify cairn.mcp_discovery.profiles]
+              nickel export --format json ${self}/cairn-policy/mcp-discovery.ncl > discovery.json
+              cmp discovery.json ${self}/cairn-policy/generated/mcp-discovery.json
+              touch $out
+            '';
+
         policy-stale-detects-drift =
           pkgs.runCommand "cairn-policy-stale-detects-drift"
             {

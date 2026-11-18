@@ -39,4 +39,6 @@ Account for discovery calls as well as the schemas that reach the model.
 - Assuming every MCP host injects every schema
 - Hiding diagnostic or repair tools required by the selected task
 
-Dependency: `measure-agent-lifecycle-token-cost`. Implementation remains open.
+Dependency: `measure-agent-lifecycle-token-cost`. Implementation is authored;
+acceptance execution, descriptor replay, and live-host measurement are distinct
+remaining evidence boundaries. No live-host token improvement is claimed.

@@ -4,6 +4,8 @@ mod agent_receipts;
 mod catalog;
 #[path = "mcp_cli/common.rs"]
 mod common;
+#[path = "mcp_cli/discovery.rs"]
+mod discovery;
 #[path = "mcp_cli/drain_plan.rs"]
 mod drain_plan;
 #[path = "mcp_cli/implementation_ready.rs"]

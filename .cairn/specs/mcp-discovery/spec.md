@@ -1,6 +1,10 @@
-# Task-scoped MCP discovery delta
+# Mcp Discovery Specification
 
-## ADDED Requirements
+## Purpose
+
+Defines the `mcp-discovery` capability.
+
+## Requirements
 
 ### Requirement: Explicit policy-owned tool profiles
 r[cairn.mcp_discovery.profiles] The system MUST select bounded task-specific tool catalogs through explicit checked policy profiles while preserving the existing full-catalog default.
@@ -41,6 +45,19 @@ r[cairn.mcp_discovery.pages] The system MUST paginate tool descriptors under exp
 - WHEN the client requests another page
 - THEN the server rejects continuation rather than mixing catalog versions
 
+#### Scenario: Paging is opt-in and terminal pages are nonempty
+- GIVEN no bounded listing selection
+- WHEN a client calls tools/list without a cursor
+- THEN the full selected catalog retains the unpaged tools result with no nextCursor
+- GIVEN explicit --paged-tools and a valid admitted catalog
+- WHEN a client consumes its last page
+- THEN the result contains descriptors and omits nextCursor, and continuations at or past the terminal position fail
+
+#### Scenario: Listing requests respect named policy bounds
+- GIVEN explicit --paged-tools and unchanged policy
+- WHEN the client lists descriptors
+- THEN each serialized result including nextCursor respects page-byte and entry bounds, every descriptor respects its bound, and oversized cursors or unknown request fields fail before product observation
+
 ### Requirement: Discovery never expands mutation authority
 r[cairn.mcp_discovery.authority] The system MUST keep catalog selection and lookup read-only and preserve capability-first mutation denial and strict tool arguments.
 
@@ -55,12 +72,12 @@ r[cairn.mcp_discovery.authority] The system MUST keep catalog selection and look
 - THEN capability denial occurs before argument-dependent product effects with mutated as false
 
 ### Requirement: Host-specific discovery evidence
-r[cairn.mcp_discovery.conformance] The system MUST compare eager-schema and lazy-discovery host presentations with complete task outcomes and include discovery overhead in token accounting.
+r[cairn.mcp_discovery.conformance] The system MUST compare the declared eager-schema and lazy-discovery presentations over retained fixtures, record the descriptors and discovery calls each presentation exposes, and keep live token accounting explicitly unavailable when no usage or exact tokenizer observation is supplied.
 
-#### Scenario: A task-specific catalog reduces measured exposure
-- GIVEN the same scenario, model, oracle, and host configuration except the declared catalog strategy
-- WHEN the paired benchmark runs
-- THEN it records schemas actually exposed, discovery calls, total tokens, and correct outcomes
+#### Scenario: Declared catalog strategies are compared on retained fixtures
+- GIVEN the same fixture set except the declared catalog strategy
+- WHEN both presentations are observed
+- THEN it records the descriptors exposed, the discovery calls required, and unchanged outcomes
 
 #### Scenario: Extra discovery costs remain visible
 - GIVEN a lazy host that already avoids unused schemas or a profile that omits a needed diagnostic tool

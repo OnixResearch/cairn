@@ -31,6 +31,107 @@ Mutation-capable startup is explicit:
 nix run .#cairn -- mcp --allow-mutations
 ```
 
+## Task-scoped discovery
+
+The server selects `--tool-profile full|inspect|author|verify` once at startup.
+`full` is the default. A profile restricts both listing and dispatch; it cannot
+grant mutation capability or expand itself after a missing-tool call. Restart
+with the appropriate profile when a task needs a tool outside its catalog.
+The standalone source `cairn-policy/mcp-discovery.ncl` owns membership, ordering,
+required diagnostic/repair routes, and named bounds. Runtime reads only its
+checked generated JSON. Invalid policy or an unknown profile fails startup.
+
+| Profile | Task and completeness boundary |
+| --- | --- |
+| `full` | Every existing read, planning, and capability-admitted mutation tool, plus descriptor lookup. |
+| `inspect` | Status, content/spec/change reads, context, workflow status/instructions, doctor, gate context, change graph, readiness, implementation-ready selection, and descriptor lookup. No validation, execution, or migration. |
+| `author` | `inspect` plus validate, gate, all three dry-run plans, and the five mutation tools when separately enabled. Retains workflow instructions and dry-run repair routes. |
+| `verify` | Status, spec/change reads, context, doctor, validate, gate/context, change graph, receipt/completion validation, readiness, verification impact, adoption report, drain plan, implementation-ready selection, sync/archive plans, and descriptor lookup. No authoring or migration. |
+
+Each profile retains `cairn_doctor` and `cairn_gate_context`. Authoring also
+retains all mutation dry-run counterparts; verification retains sync/archive
+plans. The exact ordered catalog is available through `--describe`, which adds
+`tool_profile` and `catalog_identity` without changing existing descriptors.
+
+```sh
+cairn mcp --tool-profile inspect --describe
+cairn mcp --tool-profile inspect --describe-tool cairn_status
+cairn mcp --tool-profile inspect --call cairn_tool_describe '{"name":"cairn_status"}'
+cairn mcp --tool-profile author --allow-mutations
+cairn mcp --tool-profile verify --paged-tools
+```
+
+`--describe-tool NAME` returns the exact one descriptor, not a catalog wrapper.
+The read-only `cairn_tool_describe` tool requires only the nonempty string `name`
+and rejects all extra arguments, including `root`, `policy`, or forwarded tool
+arguments. It returns that same descriptor as `structuredContent` in the normal
+MCP envelope. Lookup never reads product files, runs a tool, or recursively
+expands the catalog; self-description is just one descriptor. Unknown names,
+profile nonmembers, and capability-filtered tools return `tool_unavailable`.
+The existing descriptors remain the sole schema and annotation authority.
+
+### Standard bounded tools/list
+
+Without `--paged-tools`, `tools/list` retains its unpaged `{"tools":[...]}`
+result and does not return `nextCursor`. With the flag, the standard optional
+`params.cursor` flow returns at most 8 descriptors and 131072 serialized result
+bytes per page. Individual descriptors are bounded to 65536 bytes, tool names
+to 128 bytes, and cursor strings to 256 bytes by the current policy. The byte
+bound includes the continuation and result wrapper. A page never silently
+drops a descriptor to fit, and a valid admitted catalog has no empty terminal
+page. Only pages with remaining tools contain `nextCursor`.
+
+Send `tools/list` without `params` or with `{}` for the first page. Continue by
+sending `{"cursor":"<the exact returned nextCursor>"}` as `params`; stop when
+the result omits `nextCursor`. No custom JSON-RPC method or `limit` field is
+required. Unknown fields, non-object params, non-string/oversized cursors,
+noncanonical or out-of-range positions, and cursors when paging is disabled
+fail with JSON-RPC invalid params (`-32602`). Explicit `null` is not an object.
+
+Cursors are opaque client-side. They bind the BLAKE3 catalog identity and next
+position. Identity includes the admitted policy, complete descriptor authority
+(including schemas and annotations), selected profile, mutation capability,
+and deterministic tool order. Policy, schema, order, profile, or capability
+drift rejects a stale continuation instead of mixing catalogs. Identical
+server restarts admit the same cursor; cursors are not credentials. The CLI
+catalog identity is diagnostic metadata, not an execution permission.
+
+### Host compatibility and evidence limits
+
+Hosts using the full unpaged catalog need no configuration changes. Eager
+hosts may explicitly select a smaller profile; hosts supporting standard MCP
+cursor discovery may opt into bounded listing. Lazy hosts that already expose
+only requested tools may gain nothing and can pay extra discovery overhead.
+Hosts must consume every returned continuation when they intend to enumerate
+the complete selected catalog. A host that ignores `nextCursor` will see only
+the first page, so do not opt it into paging. Descriptor lookup is available
+when the host already knows the desired tool name.
+
+No live eager/lazy host campaign has been run for this change. Representation
+replays do not establish model-visible exposure or end-to-end savings. Record
+actual schemas exposed, discovery calls, profile restarts, missing-tool
+failures, token totals, and oracle outcomes in paired host measurements before
+claiming improvements. Separate response-profile projection, if selected,
+applies to tool result presentation, not profile membership or descriptor
+authority. r[verify cairn.mcp_discovery.conformance]
+
+Policy freshness is checked by the Nix `mcp-discovery-policy-fresh` check. The
+standalone export is the entire source root, with no field selection:
+
+```sh
+nickel export --format json cairn-policy/mcp-discovery.ncl > cairn-policy/generated/mcp-discovery.json
+nix build .#checks.x86_64-linux.mcp-discovery-policy-fresh --no-link
+```
+
+Profile policy changes must keep every tool ID and capability declaration in
+agreement with the descriptor authority; full coverage and required read-only
+routes are admitted before a server starts. Profiles do not bypass sync or
+archive preflight. Absent capability, malformed mutation calls still receive
+the original denial with `mutated=false` before argument-dependent product
+effects. With capability, profile admission precedes argument validation and
+product observation. r[verify cairn.mcp_discovery.authority]
+
+
 ## Default read-only and planning tools
 
 All default tools include MCP annotations equivalent to `readOnlyHint=true` and `destructiveHint=false`. Each tool advertises a strict object `inputSchema` with explicit properties, required arguments, and `additionalProperties=false` unless noted. Invalid arguments are rejected before lifecycle files are read or lifecycle plans are built. String arguments must be non-empty. r[verify cairn.supersede.mcp_server.strict_schemas.docs]
@@ -79,3 +180,9 @@ Structured receipts include Cairn fields such as `layout`, `valid`, `actions`, `
 {"jsonrpc":"2.0","id":2,"method":"tools/list"}
 {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"cairn_validate","arguments":{"root":"fixtures/basic"}}}
 ```
+
+Discovery unavailability in JSON-RPC uses error code `-32000` and typed
+`error.data` with `code: "tool_unavailable"`, the requested `tool`,
+`allowed: false`, and `mutated: false`. A capability-denied mutation keeps its
+existing structured capability receipt instead, including for profile
+nonmembers; this precedence never discloses the denied descriptor.

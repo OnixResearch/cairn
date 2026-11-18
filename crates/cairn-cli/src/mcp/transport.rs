@@ -1,7 +1,9 @@
-use super::schema::mcp_tools;
 use super::*;
 
-pub(super) fn run_mcp_json_rpc(is_mutation_allowed: bool) -> Result<(), Box<dyn Error>> {
+pub(super) fn run_mcp_json_rpc(
+    catalog: &cairn_core::verified::mcp_discovery::ToolCatalog,
+    paged_tools: bool,
+) -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
     for line in stdin.lock().lines() {
@@ -17,17 +19,30 @@ pub(super) fn run_mcp_json_rpc(is_mutation_allowed: bool) -> Result<(), Box<dyn 
                 "jsonrpc": "2.0", "id": id,
                 "result": {"protocolVersion": MCP_PROTOCOL_VERSION, "serverInfo": {"name": "cairn", "version": env!("CARGO_PKG_VERSION")}, "capabilities": {"tools": {}}}
             }),
-            "tools/list" => {
-                json!({"jsonrpc": "2.0", "id": id, "result": {"tools": mcp_tools(is_mutation_allowed)}})
-            }
+            "tools/list" => match catalog.list(request.get("params"), paged_tools) {
+                Ok(result) => json!({"jsonrpc": "2.0", "id": id, "result": result}),
+                Err(error) => {
+                    json!({"jsonrpc": "2.0", "id": id, "error": {"code": -32602, "message": error.to_string()}})
+                }
+            },
             "tools/call" => {
                 let params = &request["params"];
                 let name = params["name"].as_str().unwrap_or_default();
                 let arguments = params.get("arguments").unwrap_or(&Value::Null);
-                match mcp_call_tool(name, arguments, is_mutation_allowed) {
+                match mcp_call_tool_in_catalog(name, arguments, catalog) {
                     Ok(result) => json!({"jsonrpc": "2.0", "id": id, "result": result}),
                     Err(error) => {
-                        json!({"jsonrpc": "2.0", "id": id, "error": {"code": -32000, "message": error.to_string()}})
+                        if let Some(
+                            cairn_core::verified::mcp_discovery::DiscoveryError::Unavailable(tool),
+                        ) = error.downcast_ref()
+                        {
+                            json!({"jsonrpc":"2.0", "id":id, "error":{
+                                "code":-32000, "message":error.to_string(),
+                                "data":{"code":"tool_unavailable", "tool":tool, "allowed":false, "mutated":false}
+                            }})
+                        } else {
+                            json!({"jsonrpc": "2.0", "id": id, "error": {"code": -32000, "message": error.to_string()}})
+                        }
                     }
                 }
             }
