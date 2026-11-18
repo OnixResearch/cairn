@@ -634,9 +634,7 @@ fn validate_observe_args(
         }
     }
     let Some(view) = object.get("view") else {
-        return Err(
-            format!("invalid arguments for {tool}: missing required argument view").into(),
-        );
+        return Err(format!("invalid arguments for {tool}: missing required argument view").into());
     };
     if !matches!(
         view.as_str(),
@@ -677,17 +675,15 @@ fn validate_observe_args(
     for key in ["max_bytes", "max_entries", "page_entries", "page_bytes"] {
         if let Some(value) = object.get(key) {
             if value.as_u64().is_none() {
-                return Err(
-                    format!("invalid arguments for {tool}: {key} must be a non-negative integer")
-                        .into(),
-                );
+                return Err(format!(
+                    "invalid arguments for {tool}: {key} must be a non-negative integer"
+                )
+                .into());
             }
             if matches!(key, "max_bytes" | "page_entries" | "page_bytes")
                 && value.as_u64() == Some(0)
             {
-                return Err(
-                    format!("invalid arguments for {tool}: {key} must be positive").into(),
-                );
+                return Err(format!("invalid arguments for {tool}: {key} must be positive").into());
             }
         }
     }

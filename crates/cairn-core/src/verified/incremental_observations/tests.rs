@@ -23,7 +23,13 @@ fn snapshot(identities: &[(&str, Value)], omitted: usize, complete: bool) -> Obs
         .iter()
         .map(|(identity, content)| ObservationEntry::new(*identity, content.clone()).unwrap())
         .collect();
-    build_snapshot(cohort(if complete { 1 } else { 0 }), entries, omitted, complete).unwrap()
+    build_snapshot(
+        cohort(if complete { 1 } else { 0 }),
+        entries,
+        omitted,
+        complete,
+    )
+    .unwrap()
 }
 
 fn codes<T: std::fmt::Debug>(result: Result<T, ObservationIssue>) -> String {
@@ -135,7 +141,11 @@ fn pages_reconstruct_the_complete_observation_without_duplicates() {
 
 #[test]
 fn an_entry_is_never_split_to_fit_a_page() {
-    let full = snapshot(&[("change:alpha", json!({"value": "x".repeat(4096)}))], 0, true);
+    let full = snapshot(
+        &[("change:alpha", json!({"value": "x".repeat(4096)}))],
+        0,
+        true,
+    );
     assert_eq!(
         codes(page(
             &full,
@@ -298,11 +308,7 @@ fn forged_cursor_is_rejected_before_any_entry_is_returned() {
 // r[verify cairn.incremental_observations.delta]
 fn partial_or_forged_prior_state_cannot_become_a_baseline() {
     let full = snapshot(&[("change:alpha", json!({"value": 1}))], 0, true);
-    let partial = snapshot(
-        &[("change:alpha", json!({"value": 1}))],
-        1,
-        true,
-    );
+    let partial = snapshot(&[("change:alpha", json!({"value": 1}))], 1, true);
     assert!(!partial.complete);
     assert_eq!(
         codes(difference(&full, &partial)),
@@ -315,17 +321,11 @@ fn partial_or_forged_prior_state_cannot_become_a_baseline() {
 
     let mut forged = json!(full);
     forged["total"] = json!(9);
-    assert_eq!(
-        codes(admit_snapshot(&forged)),
-        "observation.forged_counts"
-    );
+    assert_eq!(codes(admit_snapshot(&forged)), "observation.forged_counts");
 
     let mut forged = json!(full);
     forged["entries"][0]["content"]["value"] = json!(2);
-    assert_eq!(
-        codes(admit_snapshot(&forged)),
-        "observation.hash_mismatch"
-    );
+    assert_eq!(codes(admit_snapshot(&forged)), "observation.hash_mismatch");
 
     let mut truncated = json!(full);
     truncated["entries"] = json!([]);
@@ -342,13 +342,13 @@ fn partial_or_forged_prior_state_cannot_become_a_baseline() {
 fn unchanged_comparison_tracks_source_and_contract_identity() {
     let prior = snapshot(&[("change:alpha", json!({"value": 1}))], 0, true);
     let same = admit_snapshot(&json!(prior)).unwrap();
-    let unchanged = unchanged(&same, &prior).unwrap();
-    assert!(unchanged.unchanged);
+    let comparison = unchanged(&same, &prior).unwrap();
+    assert!(comparison.unchanged);
+    assert_eq!(comparison.current_hash, comparison.prior_hash);
     assert_eq!(
-        unchanged.current_hash,
-        unchanged.prior_hash
+        comparison.comparison_hash,
+        comparison_hash(&comparison).unwrap()
     );
-    assert_eq!(unchanged.comparison_hash, comparison_hash(&unchanged).unwrap());
 
     let edited = snapshot(&[("change:alpha", json!({"value": 2}))], 0, true);
     let result = unchanged(&edited, &prior).unwrap();
@@ -392,13 +392,13 @@ fn differences_report_added_changed_and_removed_current_entries() {
     assert_eq!(diff.added[0].identity, "change:delta");
     assert_eq!(diff.changed_count, 1);
     assert_eq!(diff.changed[0].identity, "change:beta");
-    assert_eq!(diff.changed[0].prior_content_hash, prior.entries[1].content_hash);
+    assert_eq!(
+        diff.changed[0].prior_content_hash,
+        prior.entries[1].content_hash
+    );
     assert_eq!(diff.removed_count, 1);
     assert_eq!(diff.removed[0].identity, "change:gamma");
-    assert_eq!(
-        diff.difference_hash,
-        difference_hash(&diff).unwrap()
-    );
+    assert_eq!(diff.difference_hash, difference_hash(&diff).unwrap());
 
     // A renamed stable identity is an addition and a removal, never a change.
     let renamed = snapshot(&[("change:epsilon", json!({"value": 1}))], 0, true);
@@ -458,20 +458,10 @@ fn views_are_selector_bound_and_ordering_is_versioned() {
         change: Some("demo".into()),
         spec: None,
         artifact: "tasks".into(),
-        selectors: vec![crate::verified::validation::ContextSelector::Task {
-            id: "1.1".into(),
-        }],
+        selectors: vec![crate::verified::validation::ContextSelector::Task { id: "1.1".into() }],
     };
-    let bound = ObservationCohort::new(
-        ".",
-        None,
-        hash('a'),
-        hash('b'),
-        hash('c'),
-        hash('d'),
-        view,
-    )
-    .unwrap();
+    let bound = ObservationCohort::new(".", None, hash('a'), hash('b'), hash('c'), hash('d'), view)
+        .unwrap();
     let first = bound.contract_hash().unwrap();
     let mut other = bound.clone();
     other.view = ObservationView::Context {
@@ -479,16 +469,11 @@ fn views_are_selector_bound_and_ordering_is_versioned() {
         change: Some("demo".into()),
         spec: None,
         artifact: "tasks".into(),
-        selectors: vec![crate::verified::validation::ContextSelector::Task {
-            id: "1.2".into(),
-        }],
+        selectors: vec![crate::verified::validation::ContextSelector::Task { id: "1.2".into() }],
     };
     assert_ne!(first, other.contract_hash().unwrap());
 
     let mut unsupported = bound;
     unsupported.ordering = "offset-v1".into();
-    assert_eq!(
-        codes(validate_cohort(&unsupported)),
-        "observation.ordering"
-    );
+    assert_eq!(codes(validate_cohort(&unsupported)), "observation.ordering");
 }

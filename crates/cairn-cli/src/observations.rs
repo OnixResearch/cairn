@@ -95,10 +95,7 @@ fn active_observation(root: &Path, input: &Value) -> Result<ObservationParts, Bo
     Ok((cohort, entries, 0, true))
 }
 
-fn active_source_manifest(
-    root: &Path,
-    status: &RepoStatus,
-) -> Result<String, Box<dyn Error>> {
+fn active_source_manifest(root: &Path, status: &RepoStatus) -> Result<String, Box<dyn Error>> {
     let mut files = BTreeMap::new();
     let mut budget = bounds().max_observation_bytes as u64;
     for change in &status.changes {
@@ -225,8 +222,9 @@ fn context_selectors(input: &Value) -> Result<Vec<ContextSelector>, Box<dyn Erro
     let shorthand = ["requirement_id", "task_id", "heading_path"];
     if input.get("selectors").is_some() {
         if shorthand.iter().any(|key| input.get(*key).is_some()) {
-            return Err("context observation accepts selectors or one shorthand selector, not both"
-                .into());
+            return Err(
+                "context observation accepts selectors or one shorthand selector, not both".into(),
+            );
         }
         let values = input["selectors"]
             .as_array()
@@ -267,10 +265,9 @@ fn context_identity(selector: &ContextSelector) -> String {
     match selector {
         ContextSelector::Requirement { id } => format!("context:requirement:{id}"),
         ContextSelector::Task { id } => format!("context:task:{id}"),
-        ContextSelector::Section { path } => format!(
-            "context:section:{}",
-            canonical_json_hash(&json!(path))
-        ),
+        ContextSelector::Section { path } => {
+            format!("context:section:{}", canonical_json_hash(&json!(path)))
+        }
     }
 }
 
@@ -287,7 +284,10 @@ fn context_observation(root: &Path, input: &Value) -> Result<ObservationParts, B
     }
     let scope = required_str(input, "scope")?.to_string();
     let artifact = required_str(input, "artifact")?.to_string();
-    let change = input.get("change").and_then(Value::as_str).map(str::to_owned);
+    let change = input
+        .get("change")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
     let spec = input.get("spec").and_then(Value::as_str).map(str::to_owned);
     let mut entries = Vec::with_capacity(selectors.len());
     let mut source_binding: Option<(String, String)> = None;
@@ -325,9 +325,7 @@ fn context_observation(root: &Path, input: &Value) -> Result<ObservationParts, B
             .ok_or("targeted context read has no source identity")?
             .to_string();
         match &source_binding {
-            Some((bound_path, bound_source))
-                if bound_path != &path || bound_source != &source =>
-            {
+            Some((bound_path, bound_source)) if bound_path != &path || bound_source != &source => {
                 return Err(
                     "context source changed between selectors; request a complete observation"
                         .into(),
@@ -371,11 +369,7 @@ fn context_observation(root: &Path, input: &Value) -> Result<ObservationParts, B
     Ok((cohort, entries, 0, true))
 }
 
-fn reject_view_arguments(
-    input: &Value,
-    view: &str,
-    keys: &[&str],
-) -> Result<(), Box<dyn Error>> {
+fn reject_view_arguments(input: &Value, view: &str, keys: &[&str]) -> Result<(), Box<dyn Error>> {
     for key in keys {
         if input.get(*key).is_some() {
             return Err(format!("{view} observation does not accept {key}").into());
@@ -384,10 +378,7 @@ fn reject_view_arguments(
     Ok(())
 }
 
-fn build_observation(
-    root: &Path,
-    input: &Value,
-) -> Result<ObservationSnapshot, Box<dyn Error>> {
+fn build_observation(root: &Path, input: &Value) -> Result<ObservationSnapshot, Box<dyn Error>> {
     let view = required_str(input, "view")?;
     let (cohort, entries, omitted, complete) = match view {
         "active_changes" | "active" => {
@@ -447,9 +438,7 @@ fn resolve_mode(input: &Value) -> Result<&'static str, Box<dyn Error>> {
     };
     let mode = match input.get("mode") {
         None => inferred,
-        Some(value) => value
-            .as_str()
-            .ok_or("observation mode must be a string")?,
+        Some(value) => value.as_str().ok_or("observation mode must be a string")?,
     };
     match mode {
         "complete" | "page" | "unchanged" | "difference" => Ok(match mode {
@@ -473,17 +462,10 @@ fn prior_value(root: &Path, input: &Value) -> Result<Value, Box<dyn Error>> {
             Ok(prior.clone())
         }
         (None, Some(path)) => {
-            let path = path
-                .as_str()
-                .ok_or("prior_path must be a string")?;
-            let bytes = read_guarded_bytes(
-                root,
-                Path::new(path),
-                bounds().max_prior_bytes as u64,
-            )?;
-            Ok(serde_json::from_slice(&bytes).map_err(|error| {
-                format!("prior observation is malformed or truncated: {error}")
-            })?)
+            let path = path.as_str().ok_or("prior_path must be a string")?;
+            let bytes = read_guarded_bytes(root, Path::new(path), bounds().max_prior_bytes as u64)?;
+            Ok(serde_json::from_slice(&bytes)
+                .map_err(|error| format!("prior observation is malformed or truncated: {error}"))?)
         }
         (None, None) => Err(
             "unchanged and difference observations require an explicit prior observation".into(),
@@ -612,9 +594,7 @@ fn parse_cli(args: Vec<String>) -> Result<(Value, Option<String>), Box<dyn Error
         Some("readiness") => "readiness",
         Some("context") => "context",
         Some(_) | None => {
-            return Err(
-                "usage: cairn observe active|readiness CHANGE|context [options]".into(),
-            )
+            return Err("usage: cairn observe active|readiness CHANGE|context [options]".into())
         }
     };
     let mut input = serde_json::Map::new();
@@ -646,7 +626,11 @@ fn parse_cli(args: Vec<String>) -> Result<(Value, Option<String>), Box<dyn Error
                 headings.push(value);
                 continue;
             }
-            other if !other.starts_with('-') && view == "readiness" && !input.contains_key("change") => {
+            other
+                if !other.starts_with('-')
+                    && view == "readiness"
+                    && !input.contains_key("change") =>
+            {
                 input.insert("change".into(), json!(other));
                 continue;
             }
@@ -668,6 +652,15 @@ fn parse_cli(args: Vec<String>) -> Result<(Value, Option<String>), Box<dyn Error
             } else {
                 json!({"kind": "task", "id": value})
             });
+            continue;
+        }
+        if matches!(target, "max_bytes" | "max_entries" | "page_entries" | "page_bytes") {
+            let number: u64 = value
+                .parse()
+                .map_err(|_| format!("{argument} requires a non-negative integer"))?;
+            if input.insert(key.into(), json!(number)).is_some() {
+                return Err(format!("duplicate observe argument: {argument}").into());
+            }
             continue;
         }
         if input.insert(key.into(), json!(value)).is_some() {

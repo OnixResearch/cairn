@@ -45,7 +45,10 @@ fn copy_dir(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
 
 fn basic_fixture(label: &str) -> Result<PathBuf, Box<dyn Error>> {
     let root = temp_dir(label)?;
-    copy_dir(&repo_root().join("fixtures/basic/.cairn"), &root.join(".cairn"))?;
+    copy_dir(
+        &repo_root().join("fixtures/basic/.cairn"),
+        &root.join(".cairn"),
+    )?;
     Ok(root)
 }
 
@@ -128,7 +131,11 @@ fn active_pages_reconstruct_restart_and_replay_exactly() -> Result<(), Box<dyn E
     let mut collected = Vec::new();
     let mut cursor: Option<String> = None;
     loop {
-        let mut args = vec!["active", "--page-entries", "1"];
+        let mut args = vec!["active"];
+        if cursor.is_none() {
+            args.push("--page-entries");
+            args.push("1");
+        }
         let requested_cursor = cursor.clone();
         if let Some(cursor) = &cursor {
             args.push("--cursor");
@@ -163,7 +170,8 @@ fn active_pages_reconstruct_restart_and_replay_exactly() -> Result<(), Box<dyn E
 
 #[test]
 // r[verify cairn.incremental_observations.delta]
-fn active_difference_reports_edited_added_removed_and_renamed_entries() -> Result<(), Box<dyn Error>> {
+fn active_difference_reports_edited_added_removed_and_renamed_entries() -> Result<(), Box<dyn Error>>
+{
     let root = basic_fixture("active-diff")?;
     let baseline = observe(&root, &["active", "--output", "baseline.json"])?;
 
@@ -172,7 +180,10 @@ fn active_difference_reports_edited_added_removed_and_renamed_entries() -> Resul
         &["active", "--prior", "baseline.json", "--mode", "unchanged"],
     )?;
     assert_eq!(unchanged["unchanged"], true);
-    assert_eq!(unchanged["schema"], "cairn.incremental-observation-unchanged.v1");
+    assert_eq!(
+        unchanged["schema"],
+        "cairn.incremental-observation-unchanged.v1"
+    );
     assert_eq!(unchanged["current_hash"], unchanged["prior_hash"]);
 
     // A source edit that does not change the listing entry still changes the
@@ -194,7 +205,10 @@ fn active_difference_reports_edited_added_removed_and_renamed_entries() -> Resul
         &root,
         &["active", "--prior", "baseline.json", "--mode", "difference"],
     )?;
-    assert_eq!(edited["schema"], "cairn.incremental-observation-difference.v1");
+    assert_eq!(
+        edited["schema"],
+        "cairn.incremental-observation-difference.v1"
+    );
     assert_eq!(edited["unchanged"], false);
     assert!(edited["changed"]
         .as_array()
@@ -249,10 +263,7 @@ fn active_difference_reports_edited_added_removed_and_renamed_entries() -> Resul
 // r[verify cairn.incremental_observations.delta]
 fn readiness_pages_and_differences_reuse_selected_entries() -> Result<(), Box<dyn Error>> {
     let root = basic_fixture("readiness")?;
-    let baseline = observe(
-        &root,
-        &["readiness", "demo", "--output", "readiness.json"],
-    )?;
+    let baseline = observe(&root, &["readiness", "demo", "--output", "readiness.json"])?;
     assert_eq!(baseline["schema"], "cairn.incremental-observation.v1");
     assert_eq!(baseline["cohort"]["view"]["view"], "readiness");
     assert!(baseline["entries"]
@@ -264,7 +275,11 @@ fn readiness_pages_and_differences_reuse_selected_entries() -> Result<(), Box<dy
     let mut collected = Vec::new();
     let mut cursor: Option<String> = None;
     loop {
-        let mut args = vec!["readiness", "demo", "--page-entries", "2"];
+        let mut args = vec!["readiness", "demo"];
+        if cursor.is_none() {
+            args.push("--page-entries");
+            args.push("2");
+        }
         if let Some(cursor) = &cursor {
             args.push("--cursor");
             args.push(cursor);
@@ -332,8 +347,14 @@ fn context_entries_are_exact_and_stable_across_content_edits() -> Result<(), Box
         ],
     )?;
     assert_eq!(baseline["entries"].as_array().ok_or("entries")?.len(), 2);
-    assert_eq!(baseline["entries"][0]["identity"], "context:requirement:demo.a");
-    assert_eq!(baseline["entries"][1]["identity"], "context:requirement:demo.b");
+    assert_eq!(
+        baseline["entries"][0]["identity"],
+        "context:requirement:demo.a"
+    );
+    assert_eq!(
+        baseline["entries"][1]["identity"],
+        "context:requirement:demo.b"
+    );
 
     let mut collected = Vec::new();
     let mut cursor: Option<String> = None;
@@ -350,9 +371,11 @@ fn context_entries_are_exact_and_stable_across_content_edits() -> Result<(), Box
             "demo.a",
             "--requirement-id",
             "demo.b",
-            "--page-entries",
-            "1",
         ];
+        if cursor.is_none() {
+            args.push("--page-entries");
+            args.push("1");
+        }
         if let Some(cursor) = &cursor {
             args.push("--cursor");
             args.push(cursor);
@@ -505,7 +528,10 @@ fn negative_prior_paths_cursors_counts_and_cohorts_are_explicit() -> Result<(), 
                 "out.json",
             ],
         )?;
-        assert!(stderr.contains("symlink") || stderr.contains("Permission"), "{stderr}");
+        assert!(
+            stderr.contains("symlink") || stderr.contains("Permission"),
+            "{stderr}"
+        );
     }
 
     let second = root.join(".cairn/changes/demo-two");
@@ -606,10 +632,7 @@ fn negative_prior_paths_cursors_counts_and_cohorts_are_explicit() -> Result<(), 
     )?;
     assert!(stderr.contains("entry_bounds"), "{stderr}");
 
-    let readiness = observe(
-        &root,
-        &["readiness", "demo", "--output", "readiness.json"],
-    )?;
+    let readiness = observe(&root, &["readiness", "demo", "--output", "readiness.json"])?;
     let stderr = run_failure(
         &repo_root(),
         &[
@@ -705,10 +728,7 @@ fn mcp_inline_and_declared_prior_paths_match_cli_semantics() -> Result<(), Box<d
             "prior": baseline
         }),
     )?;
-    assert_eq!(
-        inline["structuredContent"]["unchanged"],
-        true
-    );
+    assert_eq!(inline["structuredContent"]["unchanged"], true);
     let declared = mcp_call(
         &repo_root(),
         json!({

@@ -8,11 +8,7 @@ use crate::verified::evidence::{blake3_hex, canonical_json};
 use crate::verified::validation::ContextSelector;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{
-    error::Error,
-    fmt,
-    sync::LazyLock,
-};
+use std::{error::Error, fmt, sync::LazyLock};
 
 pub const OBSERVATION_SNAPSHOT_SCHEMA: &str = "cairn.incremental-observation.v1";
 pub const OBSERVATION_PAGE_SCHEMA: &str = "cairn.incremental-observation-page.v1";
@@ -62,11 +58,8 @@ pub struct ObservationBounds {
 }
 
 static POLICY_BINDING: LazyLock<(ObservationPolicy, String)> = LazyLock::new(|| {
-    let raw = include_str!(
-        "../../../../cairn-policy/generated/incremental-observations.json"
-    );
-    let value: Value =
-        serde_json::from_str(raw).expect("checked incremental observation policy");
+    let raw = include_str!("../../../../cairn-policy/generated/incremental-observations.json");
+    let value: Value = serde_json::from_str(raw).expect("checked incremental observation policy");
     let policy: ObservationPolicy =
         serde_json::from_value(value).expect("typed incremental observation policy");
     assert_eq!(
@@ -117,17 +110,15 @@ impl fmt::Display for ObservationIssue {
 impl Error for ObservationIssue {}
 
 fn domain_hash_bytes(domain: &str, bytes: &[u8]) -> String {
-    let mut material = Vec::with_capacity(domain.len().saturating_add(1).saturating_add(bytes.len()));
+    let mut material =
+        Vec::with_capacity(domain.len().saturating_add(1).saturating_add(bytes.len()));
     material.extend_from_slice(domain.as_bytes());
     material.push(DOMAIN_SEPARATOR);
     material.extend_from_slice(bytes);
     blake3_hex(&material)
 }
 
-fn domain_hash_json<T: Serialize>(
-    domain: &str,
-    value: &T,
-) -> Result<String, ObservationIssue> {
+fn domain_hash_json<T: Serialize>(domain: &str, value: &T) -> Result<String, ObservationIssue> {
     let value = serde_json::to_value(value).map_err(|error| {
         ObservationIssue::new(
             "observation.serialization",
@@ -156,8 +147,7 @@ fn safe_identity(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= OBSERVATION_MAX_IDENTITY_BYTES
         && value.bytes().all(|byte| {
-            byte.is_ascii_alphanumeric()
-                || matches!(byte, b'.' | b'_' | b'-' | b':' | b'/')
+            byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-' | b':' | b'/')
         })
         && !value.starts_with('/')
         && !value.ends_with('/')
@@ -255,9 +245,7 @@ fn validate_selector(selector: &ContextSelector) -> Result<(), ObservationIssue>
         ContextSelector::Section { path } => {
             if path.is_empty()
                 || path.iter().any(|part| {
-                    part.is_empty()
-                        || part.len() > 512
-                        || part.chars().any(char::is_control)
+                    part.is_empty() || part.len() > 512 || part.chars().any(char::is_control)
                 })
             {
                 return Err(ObservationIssue::new(
@@ -279,9 +267,8 @@ fn validate_view(view: &ObservationView) -> Result<(), ObservationIssue> {
             max_bytes,
             max_entries,
         } => {
-            crate::validate_change_name(change).map_err(|error| {
-                ObservationIssue::new("observation.selector", error)
-            })?;
+            crate::validate_change_name(change)
+                .map_err(|error| ObservationIssue::new("observation.selector", error))?;
             if max_bytes.is_some_and(|value| value == 0) {
                 return Err(ObservationIssue::new(
                     "observation.bounds",
@@ -522,7 +509,11 @@ fn validate_cohort(cohort: &ObservationCohort) -> Result<(), ObservationIssue> {
             "observation root identity is empty, unsafe, or unbounded",
         ));
     }
-    if cohort.store.as_deref().is_some_and(|store| !safe_root(store)) {
+    if cohort
+        .store
+        .as_deref()
+        .is_some_and(|store| !safe_root(store))
+    {
         return Err(ObservationIssue::new(
             "observation.root",
             "observation store identity is unsafe or unbounded",
@@ -622,11 +613,7 @@ pub fn build_snapshot(
             ));
         }
     }
-    entries.sort_by(|left, right| {
-        left.identity
-            .as_bytes()
-            .cmp(right.identity.as_bytes())
-    });
+    entries.sort_by(|left, right| left.identity.as_bytes().cmp(right.identity.as_bytes()));
     for pair in entries.windows(2) {
         if pair[0].identity == pair[1].identity {
             return Err(ObservationIssue::new(
@@ -704,9 +691,12 @@ fn validate_snapshot(snapshot: &ObservationSnapshot) -> Result<(), ObservationIs
             "observation included count does not match its entries",
         ));
     }
-    let total = snapshot.included.checked_add(snapshot.omitted).ok_or_else(|| {
-        ObservationIssue::new("observation.forged_counts", "observation counts overflow")
-    })?;
+    let total = snapshot
+        .included
+        .checked_add(snapshot.omitted)
+        .ok_or_else(|| {
+            ObservationIssue::new("observation.forged_counts", "observation counts overflow")
+        })?;
     if total != snapshot.total {
         return Err(ObservationIssue::new(
             "observation.forged_counts",
@@ -871,8 +861,7 @@ fn decode_cursor(token: &str) -> Result<ObservationCursor, ObservationIssue> {
             format!("observation cursor is malformed: {error}"),
         )
     })?;
-    if cursor.schema != OBSERVATION_CURSOR_SCHEMA
-        || cursor.page_contract != OBSERVATION_PAGE_SCHEMA
+    if cursor.schema != OBSERVATION_CURSOR_SCHEMA || cursor.page_contract != OBSERVATION_PAGE_SCHEMA
     {
         return Err(ObservationIssue::new(
             "observation.invalid_cursor",
@@ -969,7 +958,12 @@ pub fn page(
             }
             let index = snapshot
                 .entries
-                .binary_search_by(|entry| entry.identity.as_bytes().cmp(cursor.last_identity.as_bytes()))
+                .binary_search_by(|entry| {
+                    entry
+                        .identity
+                        .as_bytes()
+                        .cmp(cursor.last_identity.as_bytes())
+                })
                 .map_err(|_| {
                     ObservationIssue::new(
                         "observation.invalid_cursor",
@@ -980,9 +974,7 @@ pub fn page(
         }
         None => (
             0,
-            request
-                .max_entries
-                .unwrap_or(bounds().default_page_entries),
+            request.max_entries.unwrap_or(bounds().default_page_entries),
             request.max_bytes.unwrap_or(bounds().default_page_bytes),
             None,
         ),
@@ -1080,10 +1072,10 @@ pub fn page(
     Ok(page)
 }
 
-fn ensure_complete(
-    snapshot: &ObservationSnapshot,
+fn ensure_complete<'a>(
+    snapshot: &'a ObservationSnapshot,
     role: &str,
-) -> Result<&ObservationSnapshot, ObservationIssue> {
+) -> Result<&'a ObservationSnapshot, ObservationIssue> {
     if !snapshot.complete || snapshot.omitted != 0 {
         return Err(ObservationIssue::new(
             "observation.partial_baseline",
@@ -1142,8 +1134,7 @@ pub fn unchanged(
     ensure_complete(current, "current")?;
     ensure_complete(prior, "prior")?;
     ensure_same_contract(current, prior)?;
-    let unchanged = current.cohort_hash == prior.cohort_hash
-        && current.entries == prior.entries;
+    let unchanged = current.cohort_hash == prior.cohort_hash && current.entries == prior.entries;
     let mut result = ObservationUnchanged {
         schema: OBSERVATION_UNCHANGED_SCHEMA.into(),
         view: current.cohort.view.clone(),
