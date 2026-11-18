@@ -801,7 +801,7 @@ fn validate_case_shape(
             if case.fixture.is_some() || case.native_expectation.is_some() {
                 issues.push(issue(
                     ISSUE_CASE_INVALID,
-                    &format!("{path}"),
+                    path,
                     "a not-executed case must not present a fixture or native expectation",
                 ));
             }
@@ -1655,9 +1655,7 @@ fn safe_relative_path(value: &str) -> bool {
         && value.len() <= MAX_STRING_BYTES
         && !value.starts_with('/')
         && !value.starts_with('\\')
-        && !value
-            .split(|character| character == '/' || character == '\\')
-            .any(|part| part == "..")
+        && !value.split(['/', '\\']).any(|part| part == "..")
 }
 
 fn value_is_nonempty(value: &str) -> bool {

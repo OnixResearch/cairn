@@ -81,6 +81,7 @@ mod workspace_contract_matrix;
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules.visible_boundaries]
 // r[impl cli_maintainability.main_compat_release_followup.focused_modules.narrow_bridges]
 mod collaboration;
+mod concurrent_change_footprints;
 mod config_export;
 mod content_addressed_evidence;
 
@@ -218,6 +219,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "refinement" => refinement_typed_dependencies::run(args.collect())?,
         "source-review" => source_review::run(args.collect())?,
         "requirement-contract" => typed_requirement_contracts::run(args.collect())?,
+        "footprints" => concurrent_change_footprints::run(args.collect())?,
         "revision" => revision_classification::run(args.collect())?,
         "requirement-analysis" => requirement_consistency::run(args.collect())?,
         "prose" => prose::run(args.collect())?,

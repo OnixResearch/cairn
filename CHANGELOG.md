@@ -76,6 +76,15 @@ surface.
   accepted exception requires current applicability plus the compensating
   control carried by its snapshot. Activity counts, checked boxes and agent
   success statements are recorded but never treated as evidence.
+- Opt-in concurrent-change footprints: `cairn footprints inspect` derives
+  compatibility obligations between two declared change footprints, naming the
+  combined candidate, participants, composition order and required evidence, and
+  reporting coexistence, invariant preservation and commutativity as separate
+  propositions with `conflict`, `needs_joint_evidence`,
+  `supported_within_declared_scope` or `unknown`. Individual receipts never
+  discharge a combined obligation, a finite witness never establishes
+  preservation over all compositions, and prior applicability is invalidated when
+  participants, dependencies, configuration or composition change.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change

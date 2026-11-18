@@ -9,7 +9,7 @@ fn repository_root() -> PathBuf {
 /// the relative default policy locator cannot resolve; name the checked-in
 /// policy explicitly instead.
 fn policy_path() -> String {
-    path_string(&repository_root().join("cairn-policy/generated/cairn-policy.json"))
+    path_string(repository_root().join("cairn-policy/generated/cairn-policy.json"))
 }
 
 fn lifecycle_root(name: &str) -> Result<PathBuf, Box<dyn Error>> {

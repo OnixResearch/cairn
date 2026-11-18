@@ -734,7 +734,9 @@ fn comparison_work_directory() -> Result<PathBuf, Box<dyn Error>> {
     Ok(directory)
 }
 
-fn read_comparison_fixture_files(root: &Path) -> Result<Vec<(String, Vec<u8>)>, Box<dyn Error>> {
+type FixtureFiles = Vec<(String, Vec<u8>)>;
+
+fn read_comparison_fixture_files(root: &Path) -> Result<FixtureFiles, Box<dyn Error>> {
     let mut files = Vec::new();
     let mut pending = vec![(root.to_path_buf(), String::new())];
     let mut total_bytes = 0u64;

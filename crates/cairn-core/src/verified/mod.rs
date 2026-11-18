@@ -17,6 +17,7 @@ pub mod collaboration_import;
 pub mod collaboration_portable;
 pub mod collaboration_resolution;
 pub mod collaboration_update;
+pub mod concurrent_change_footprints;
 pub mod consumer_bootstrap;
 pub mod content_addressed;
 pub mod content_bound_requirement_registry;

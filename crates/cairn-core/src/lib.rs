@@ -15,6 +15,8 @@
 //! r[impl cairn.supersede.doctor.boundary]
 
 pub mod verified;
+pub use verified::concurrent_change_footprints;
+pub use verified::concurrent_change_footprints::*;
 pub use verified::refinement_typed_dependencies;
 pub use verified::refinement_typed_dependencies::*;
 pub use verified::requirement_consistency;
