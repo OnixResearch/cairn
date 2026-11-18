@@ -21,12 +21,31 @@ that is merely redundant from one that constrains behaviour, the second classifi
 a genuinely contradictory pair as vacuous, and the third reports one more
 incomplete/unsupported entry than the fixture declares.
 
-They share an area — how a guarantee's excluded models are computed and how a
-correspondence-declared pair is combined — so a fix should start from the
-strong-Kleene enumeration in `analyze_consistency` and the
-`guarantee_constraining` query, with the contradictory-pair case checked first
-because a vacuous classification there is the most consequential error: it would
-report a contradiction as if the requirement constrained nothing.
+**Root cause identified for the vacuity errors.** In `evaluate_query`, an
+unsatisfiable goal is mapped to `Vacuous` whenever `plan.vacuous_when_unsatisfiable`
+is set. That shortcut is only sound when the *withheld* premise set is itself
+satisfiable: the constraining query is `withheld ∧ ¬guarantee`, so unsatisfiability
+means "the guarantee adds nothing" only if `withheld` has models. When `withheld`
+is already unsatisfiable the implication is vacuous in both directions, and the
+honest status is `Inconsistent` (the surrounding set is contradictory) — which is
+exactly the contradictory-with-correspondence case that currently reports
+`Vacuous`.
+
+The fix is to condition the vacuous classification on a satisfiability check of
+the withheld set (a second bounded solve sharing the same work budget), so:
+
+| withheld set | goal `withheld ∧ ¬g` | status |
+|---|---|---|
+| satisfiable | unsatisfiable | `Vacuous` (the guarantee excludes nothing) |
+| satisfiable | satisfiable | `Consistent` (the guarantee constrains) |
+| unsatisfiable | either | `Inconsistent` (others contradict) |
+
+That is also why the redundant-vs-constraining count is wrong: the same shortcut
+collapses the constraining case into the vacuous one.
+
+Starting there is preferable to adjusting the three assertions: a vacuous
+classification for a contradictory pair would report a contradiction as if the
+requirement constrained nothing.
 
 No archive, sync or completion claim is made here.
 
