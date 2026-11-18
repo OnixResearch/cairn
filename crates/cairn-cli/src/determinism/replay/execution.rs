@@ -195,7 +195,7 @@ pub(super) fn run_replay_case(case: &ReplayCase, root: &Path) -> Result<Value, B
                 migration_plan_json(root, &policy, &plan, Value::Null),
             ))
         }
-        ReplayCaseKind::McpDescribe => Ok(mcp_tool_catalog(false)),
+        ReplayCaseKind::McpDescribe => mcp_tool_catalog(false),
         ReplayCaseKind::McpStatus => {
             mcp_call_tool("cairn_status", &json!({"root": path_string(root)}), false)
         }

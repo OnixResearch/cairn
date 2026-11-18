@@ -41,6 +41,20 @@ r[cairn.mcp_discovery.pages] The system MUST paginate tool descriptors under exp
 - WHEN the client requests another page
 - THEN the server rejects continuation rather than mixing catalog versions
 
+#### Scenario: Paging is opt-in and terminal pages are nonempty
+- GIVEN no bounded listing selection
+- WHEN a client calls tools/list without a cursor
+- THEN the full selected catalog retains the unpaged tools result with no nextCursor
+- GIVEN explicit --paged-tools and a valid admitted catalog
+- WHEN a client consumes its last page
+- THEN the result contains descriptors and omits nextCursor, and continuations at or past the terminal position fail
+
+#### Scenario: Listing requests respect named policy bounds
+- GIVEN explicit --paged-tools and unchanged policy
+- WHEN the client lists descriptors
+- THEN each serialized result including nextCursor respects page-byte and entry bounds, every descriptor respects its bound, and oversized cursors or unknown request fields fail before product observation
+
+
 ### Requirement: Discovery never expands mutation authority
 r[cairn.mcp_discovery.authority] The system MUST keep catalog selection and lookup read-only and preserve capability-first mutation denial and strict tool arguments.
 

@@ -12,6 +12,10 @@ surface.
 
 ### Added
 
+- Policy-owned MCP tool catalog profiles (`full`, `inspect`, `author`, `verify`)
+  with exact single-descriptor lookup and opt-in identity-bound `tools/list`
+  pagination. Profiles restrict discovery only, never grant mutation capability,
+  and the unpaged full catalog remains the default.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change

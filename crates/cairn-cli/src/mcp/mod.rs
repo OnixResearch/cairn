@@ -57,12 +57,14 @@ const MCP_PROTOCOL_VERSION: &str = "2024-11-05";
 const MCP_MAX_CONTENT_BYTES: usize = 64 * 1024;
 
 mod common;
+mod discovery;
 mod mutation_tools;
 mod read_tools;
 mod schema;
 mod transport;
 
 use common::mcp_root;
+use discovery::{catalog_json, load_catalog};
 use mutation_tools::*;
 use read_tools::*;
 use schema::*;
@@ -76,6 +78,9 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut is_mutation_allowed = false;
     let mut describe = false;
     let mut call = None;
+    let mut describe_tool = None;
+    let mut tool_profile = None;
+    let mut paged_tools = false;
     let mut index = 0;
     while index < args.len() {
         match args[index].as_str() {
@@ -93,6 +98,29 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 describe = true;
                 index += 1;
             }
+            "--tool-profile" | "--describe-tool" => {
+                let option = args[index].as_str();
+                let value = args
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty() && !value.starts_with("--"))
+                    .ok_or_else(|| format!("{option} requires a value"))?;
+                let target = if option == "--tool-profile" {
+                    &mut tool_profile
+                } else {
+                    &mut describe_tool
+                };
+                if target.replace(value.clone()).is_some() {
+                    return Err(format!("duplicate option: {option}").into());
+                }
+                index += 2;
+            }
+            "--paged-tools" => {
+                if paged_tools {
+                    return Err("duplicate option: --paged-tools".into());
+                }
+                paged_tools = true;
+                index += 1;
+            }
             "--call" => {
                 if call.is_some() {
                     return Err("duplicate option: --call".into());
@@ -108,24 +136,33 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             unknown => return Err(format!("unknown option: {unknown}").into()),
         }
     }
-    if describe && call.is_some() {
-        return Err("mcp --describe and --call cannot be combined".into());
+    if usize::from(describe) + usize::from(call.is_some()) + usize::from(describe_tool.is_some())
+        > 1
+    {
+        return Err("mcp --describe, --describe-tool and --call cannot be combined".into());
     }
+    let catalog = load_catalog(
+        tool_profile.as_deref().unwrap_or("full"),
+        is_mutation_allowed,
+    )?;
     if describe {
-        return print_json(mcp_tool_catalog(is_mutation_allowed));
+        return print_json(catalog_json(&catalog));
+    }
+    if let Some(name) = describe_tool {
+        return print_json(catalog.describe(&name)?.clone());
     }
     if let Some((name, input)) = call {
         let input = input
             .map(|text| serde_json::from_str(&text))
             .transpose()?
             .unwrap_or_else(|| json!({}));
-        return print_json(mcp_call_tool(&name, &input, is_mutation_allowed)?);
+        return print_json(mcp_call_tool_in_catalog(&name, &input, &catalog)?);
     }
-    run_mcp_json_rpc(is_mutation_allowed)
+    run_mcp_json_rpc(&catalog, paged_tools)
 }
-pub(crate) fn mcp_tool_catalog(is_allow_mutations: bool) -> Value {
-    // r[impl cairn.supersede.mcp_server.boundary.core]
-    json!({"protocol_version": MCP_PROTOCOL_VERSION, "allow_mutations": is_allow_mutations, "tools": mcp_tools(is_allow_mutations)})
+
+pub(crate) fn mcp_tool_catalog(is_allow_mutations: bool) -> Result<Value, Box<dyn Error>> {
+    Ok(catalog_json(&load_catalog("full", is_allow_mutations)?))
 }
 
 pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Error>> {
@@ -144,7 +181,7 @@ pub(crate) fn mcp_agent_smoke_receipt(root: PathBuf) -> Result<Value, Box<dyn Er
         .ok_or("agent completion fixture missing final_subject_hash")?
         .to_string();
     let root_string = path_string(root.clone());
-    let catalog = mcp_tool_catalog(false);
+    let catalog = mcp_tool_catalog(false)?;
     let tools = catalog["tools"]
         .as_array()
         .ok_or("MCP catalog missing tools")?;
@@ -245,17 +282,33 @@ pub(crate) fn mcp_call_tool(
     input: &Value,
     is_mutation_allowed: bool,
 ) -> Result<Value, Box<dyn Error>> {
+    let catalog = load_catalog("full", is_mutation_allowed)?;
+    mcp_call_tool_in_catalog(name, input, &catalog)
+}
+
+fn mcp_call_tool_in_catalog(
+    name: &str,
+    input: &Value,
+    catalog: &cairn_core::verified::mcp_discovery::ToolCatalog,
+) -> Result<Value, Box<dyn Error>> {
+    let is_mutation_allowed = catalog.allow_mutations;
     // r[impl cairn.supersede.mcp_server.strict_schemas]
     // r[impl cairn.supersede.mcp_server.strict_schemas.validation]
     // r[impl cairn.supersede.mcp_server.strict_schemas.errors]
     let receipt = if is_mutating_mcp_tool(name) && !is_mutation_allowed {
         mutation_denied(name)
     } else {
+        // r[impl cairn.mcp_discovery.authority]
+        // Capability denial above deliberately precedes profile and argument admission.
+        catalog.describe(name)?;
         validate_mcp_tool_input(name, input)?;
         if mcp_tool_requires_native_lifecycle(name) {
             reject_legacy_only_lifecycle_root(&mcp_root(input))?;
         }
         match name {
+            "cairn_tool_describe" => catalog
+                .describe(input["name"].as_str().ok_or("missing tool name")?)?
+                .clone(),
             "cairn_status" => mcp_status(input)?,
             "cairn_list_content" => mcp_list_content(input)?,
             "cairn_read_spec" => mcp_read_spec(input)?,

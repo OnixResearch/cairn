@@ -62,3 +62,53 @@ Include discovery calls, profile restarts, missing-tool failures, and actual mod
 A host can ignore pagination or inject previously cached schemas. Report the declared host behavior and actual exposure.
 Catalog identity proves selected descriptor equality, not tool correctness or execution authority.
 MCP maintainers own the host compatibility matrix. Policy maintainers own profile completeness.
+
+## Implemented interfaces and admission
+
+The standalone Nickel root `cairn-policy/mcp-discovery.ncl` exports to
+`cairn-policy/generated/mcp-discovery.json`. No field selection or runtime
+evaluator is used. `mcp-discovery-policy-fresh` compares the native export with
+the generated file. Every supported profile explicitly declares ordered tool
+membership, mutation requirements, and required read-only diagnostic routes.
+Pure admission rejects duplicate/unknown tool IDs, duplicate/unsupported or
+missing profiles, capability disagreements with the descriptor/dispatch
+authority, missing routes, incomplete full coverage, and inconsistent bounds.
+
+`cairn_core::verified::mcp_discovery` owns policy admission, descriptor bounds,
+filtering, exact descriptor lookup, canonical BLAKE3 identity, and tools/list
+paging. `mcp/discovery.rs` only loads generated policy and supplies existing
+`schema.rs` descriptors plus mutation facts; it does not create another schema.
+The stdio shell holds one admitted `ToolCatalog` for its lifetime. Internal
+full-catalog consumers also use admission and propagate its errors.
+
+The opt-in listing mode is `--paged-tools`. List params are absent or a strict
+object containing only an optional nonempty valid cursor. No page-size or
+custom MCP method is introduced. The current named limits are 65536 descriptor
+bytes, 131072 serialized result bytes, 8 entries, 256 cursor bytes, and 128 name
+bytes. Continuations use a versioned identity/position encoding, reject stale
+identity and noncanonical/out-of-range offsets, and are emitted only when more
+tools remain. Identical server restarts do not stale an unchanged identity.
+
+Single lookup uses `--describe-tool NAME` or
+`cairn_tool_describe {"name":"NAME"}`. The CLI emits one descriptor directly;
+the MCP read tool emits it in normal structuredContent. No root, policy,
+arguments, or generic forwarding is admitted. Nonmembers are unavailable even
+when they are otherwise valid tool names. Mutation capability denial remains
+first; profile admission then precedes input validation and lifecycle reads.
+No response-profile selection or projection is introduced here: future result
+presentation composes after this catalog/authority boundary.
+
+## Evidence status
+
+Consumer tests author all four profiles with both capability states, strict
+lookup, unavailable dispatch before argument effects, admitted status calls,
+bounded pages, duplicate-free enumeration, invalid/terminal/stale cursors, and
+unpaged compatibility. Pure tests author policy admission, schema/policy/order
+identity drift, oversized descriptors, and byte-bound page splitting. These
+tests have not been executed in this implementation worktree. Descriptor
+equality replay and repository gates belong to parent acceptance. No live host
+campaign has occurred; eager/lazy exposure and savings remain unavailable.
+
+Baseline capture and paired representation replay are supplied separately by
+the integration owner. They do not retroactively establish live-host evidence.
+
