@@ -12,6 +12,34 @@ surface.
 
 ### Added
 
+- Offline agent lifecycle cost measurement: typed scenario and cohort contracts,
+  checked accounting, saved-observation import and comparison, with token data
+  explicitly unavailable rather than estimated and representation-only verdicts.
+- Explicit MCP `structured-summary` response profile: one complete structured
+  receipt plus bounded status text, retaining the legacy default, native hashes,
+  error behaviour and capability-first mutation denial.
+- Policy-owned MCP catalog profiles (`full`, `inspect`, `author`, `verify`), exact
+  single-descriptor lookup and opt-in identity-bound `tools/list` pagination, with
+  the unpaged catalog unchanged and profiles never granting capability.
+- Versioned selected-work CLI/MCP and portable Rust DTO for explicit change/task
+  cohorts, typed requirement and acceptance references, native phase readiness,
+  prerequisite closure, identity-checked local detail and consumer admission.
+- Opt-in finite requirement semantics with revision-bound contracts over finite
+  nominal domains, deterministic normalization, separate contract, interpretation
+  and review identities, and read-only `cairn requirement-contract inspect`.
+- Scoped claim derivations: a closed rule vocabulary over native producer
+  conclusions with unresolved/supported/refuted/disputed states, counterevidence
+  retention, residual assumptions and a read-only explanation command.
+- Readiness-backed drain view with an explicit per-change evidence manifest,
+  declared dependency order and preview-only actions; generated guidance now
+  requests readiness and exact artifact routes without adding authority.
+- Incremental observation pages, unchanged results and exact entry differences
+  bound to a complete cohort identity, with stateless cursors and guarded paths.
+- Compact project-local entry guidance derived from the checked workflow catalog,
+  with freshness checks, preview-first installation and report-only inspection of
+  copied guides.
+- Alternative support maintenance across evidence invalidation, assumption
+  withdrawal and revision changes, retaining historical withdrawal reasons.
 - Opt-in bounded readiness agent view and identity-checked blocker/action/stage
   detail retrieval, retaining full receipt identity, stage decisions, complete
   selected entries, omission counts and exact standalone JSON byte bounds.
