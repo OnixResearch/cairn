@@ -1,0 +1,312 @@
+{
+  "schema": "cairn.buoy-comparison.fixtures.v1",
+  "upstream": {
+    "producer": "buoy",
+    "repository": "https://github.com/Chelis-Lang/buoy",
+    "revision": "01096fbdd0b9bf39b2fec468f90e7b1db958f615",
+    "source_content_hash": "sha256-1+/x0hY3+YMYgLVXs0uoUmA1VPPlg5i/7qt19NrBruc=",
+    "source_content_hash_algorithm": "sha256",
+    "source_content_hash_mode": "recursive-nar",
+    "consumer_package": "nix/consumer-package-v1.nix",
+    "rust_toolchain": "nightly-2026-04-16",
+    "digest_feature": "blake3-256",
+    "commands": [
+      "static",
+      "trace",
+      "package-identity"
+    ],
+    "command_behavior": [
+      "static emits read-only requirement and implementation reports without invoking source rewriting",
+      "trace reads stored relations and classifies current, stale, or historical without writing source",
+      "package-identity reports the pinned source revision, toolchain, and enabled digest feature"
+    ],
+    "report_schemas": [
+      "buoy/trace-report/v1",
+      "buoy/package-identity/v1",
+      "chelis-static-report/v3"
+    ],
+    "evidence": [
+      "https://github.com/Chelis-Lang/buoy/blob/01096fbdd0b9bf39b2fec468f90e7b1db958f615/nix/consumer-package-v1.nix",
+      "https://github.com/Chelis-Lang/buoy/blob/01096fbdd0b9bf39b2fec468f90e7b1db958f615/nix/consumer-package-v1.source-content.json",
+      "https://github.com/Chelis-Lang/buoy/blob/01096fbdd0b9bf39b2fec468f90e7b1db958f615/docs/schema/v3/content-addressed-bindings.md",
+      "https://github.com/Chelis-Lang/buoy/blob/01096fbdd0b9bf39b2fec468f90e7b1db958f615/docs/testing/golden-and-mutation-policy.md",
+      "https://github.com/Chelis-Lang/buoy/blob/01096fbdd0b9bf39b2fec468f90e7b1db958f615/docs/release/maintenance.md"
+    ],
+    "artifact": {
+      "available": false,
+      "reason": "No realized pinned Buoy binary or Nix derivation is present in the comparison environment. The pinned consumer package sets doCheck = false, so building it would not execute comparison cases; full upstream Devenv acceptance requires private Atoll access, and the first source Cargo build downloads public registry dependencies. Upstream static, trace, and package-identity commands therefore did not run. Realizing the declared revision and source content hash would be required before any upstream observation can be executed."
+    }
+  },
+  "mapping": {
+    "id": "cairn.buoy-comparison.mapping.binding-v3-subset.v1",
+    "semantic_subset": "current, stale_requirement, stale_item, missing_object, ambiguous, unsupported, invalid_output",
+    "projection_version": "cairn.trace-index.projection.v1",
+    "original_authority": "cairn-content-bound-trace-index",
+    "preserves_original_identities": true,
+    "external_projection_is_authority": false
+  },
+  "decision": {
+    "disposition": "retain_bounded_declared_comparator_pending_pinned_artifact",
+    "runtime_adoption": false,
+    "reason": "Cairn retains the independently specified fixtures and executed native mutation checks. Upstream observations stay declared and report-only until the pinned source closure is realized offline; the experiment does not justify permanent runtime adoption."
+  },
+  "cases": [
+    {
+      "id": "clean",
+      "fixture": "cases/clean",
+      "execution": {
+        "mode": "export_and_verify"
+      },
+      "native_expectation": {
+        "exit": 0,
+        "valid": true,
+        "issue_codes": [],
+        "semantic": "current"
+      },
+      "buoy_observation": {
+        "disposition": "declared_not_executed",
+        "semantic": "current",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "Declared from the pinned binding protocol: a fresh relation resolves as current. Not an upstream execution result."
+      },
+      "comparison": "agreement",
+      "reason": "Clean fixture: executed Cairn export and verification pass; the declared upstream observation is current."
+    },
+    {
+      "id": "missing_marker",
+      "fixture": "cases/missing_marker",
+      "execution": {
+        "mode": "verify_base_index",
+        "base": "clean",
+        "registry_source": "base"
+      },
+      "mutation": {
+        "of": "clean",
+        "kind": "missing_marker"
+      },
+      "native_expectation": {
+        "exit": 1,
+        "valid": false,
+        "issue_codes": [
+          "trace_index.source_stale",
+          "trace_index.link_stale"
+        ],
+        "semantic": "stale_item"
+      },
+      "buoy_observation": {
+        "disposition": "declared_not_executed",
+        "semantic": "stale_item",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "Declared from the pinned binding protocol: CAB-RECORD-ABSENT or CAB-SUBJECT-STALE keeps the old relation out of current state. Not an upstream execution result."
+      },
+      "comparison": "agreement",
+      "reason": "Planted drift removes the exact marker; the saved index must become stale rather than silently pass."
+    },
+    {
+      "id": "duplicate_marker",
+      "fixture": "cases/duplicate_marker",
+      "execution": {
+        "mode": "verify_base_index",
+        "base": "clean",
+        "registry_source": "base"
+      },
+      "mutation": {
+        "of": "clean",
+        "kind": "duplicate_marker"
+      },
+      "native_expectation": {
+        "exit": 1,
+        "valid": false,
+        "issue_codes": [
+          "trace_index.source_unexpected",
+          "trace_index.link_stale"
+        ],
+        "semantic": "stale_item"
+      },
+      "buoy_observation": {
+        "disposition": "declared_not_executed",
+        "semantic": "stale_item",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "Declared from the pinned binding protocol: a copied compact locator creates a second current attachment and leaves the saved relation stale. Not an upstream execution result."
+      },
+      "comparison": "agreement",
+      "reason": "Planted drift copies the marker into a second source file; the changed current link set must fail verification."
+    },
+    {
+      "id": "moved_span",
+      "fixture": "cases/moved_span",
+      "execution": {
+        "mode": "verify_base_index",
+        "base": "clean",
+        "registry_source": "base"
+      },
+      "mutation": {
+        "of": "clean",
+        "kind": "moved_span"
+      },
+      "native_expectation": {
+        "exit": 1,
+        "valid": false,
+        "issue_codes": [
+          "trace_index.source_stale",
+          "trace_index.link_stale"
+        ],
+        "semantic": "stale_item"
+      },
+      "buoy_observation": {
+        "disposition": "declared_not_executed",
+        "semantic": "stale_item",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "Declared from the pinned binding protocol: the exact implementation subject changed, so the saved binding is stale. Not an upstream execution result."
+      },
+      "comparison": "agreement",
+      "reason": "Planted drift moves the marker after a leading newline; the exact byte span must change and fail freshness."
+    },
+    {
+      "id": "changed_requirement_body",
+      "fixture": "cases/changed_requirement_body",
+      "execution": {
+        "mode": "verify_base_index",
+        "base": "clean",
+        "registry_source": "case"
+      },
+      "mutation": {
+        "of": "clean",
+        "kind": "changed_requirement_body"
+      },
+      "native_expectation": {
+        "exit": 1,
+        "valid": false,
+        "issue_codes": [
+          "trace_index.registry_stale",
+          "trace_index.link_stale"
+        ],
+        "semantic": "stale_requirement"
+      },
+      "buoy_observation": {
+        "disposition": "declared_not_executed",
+        "semantic": "stale_requirement",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "Declared from the pinned binding protocol: CAB-REQUIREMENT-STALE classifies a changed requirement revision. Not an upstream execution result."
+      },
+      "comparison": "agreement",
+      "reason": "Planted drift edits the requirement body while retaining its ID; the saved index still binds the old requirement revision."
+    },
+    {
+      "id": "schema_version_drift",
+      "fixture": "cases/schema_version_drift",
+      "execution": {
+        "mode": "reject_base_index",
+        "base": "clean",
+        "registry_source": "base",
+        "index_mutation": "schema_version"
+      },
+      "mutation": {
+        "of": "clean",
+        "kind": "schema_version_drift"
+      },
+      "native_expectation": {
+        "exit": 1,
+        "valid": false,
+        "issue_codes": [
+          "trace_index.schema_unsupported"
+        ],
+        "semantic": "unsupported"
+      },
+      "buoy_observation": {
+        "disposition": "declared_unsupported",
+        "semantic": "unsupported",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "The selected projection covers requirement and item relations only; a cross-schema trace-index schema change is outside the supported input subset."
+      },
+      "comparison": "comparison_unsupported",
+      "reason": "Planted schema drift is refused by the native closed-schema reader before any accepting result. The selected upstream projection does not implement this input dimension, so no upstream result is inferred."
+    },
+    {
+      "id": "unicode_crlf",
+      "fixture": "cases/unicode_crlf",
+      "execution": {
+        "mode": "export_and_verify"
+      },
+      "native_expectation": {
+        "exit": 0,
+        "valid": true,
+        "issue_codes": [],
+        "semantic": "current"
+      },
+      "buoy_observation": {
+        "disposition": "declared_not_executed",
+        "semantic": "unsupported",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "The selected upstream projection normalizes semantic text and CRLF and does not retain Cairn's exact byte spans, so the exact-span comparison dimension is not supported by the declared subset."
+      },
+      "comparison": "expected_divergence",
+      "divergence": "exact_byte_span_vs_normalized_semantic_identity",
+      "reason": "Cairn's exact-marker projection retains CRLF and UTF-8 byte spans; the declared upstream projection is NFC/CRLF-normalized. This is a named identity divergence, not a waiver of native acceptance."
+    },
+    {
+      "id": "cfg_not_any",
+      "fixture": "cases/cfg_not_any",
+      "execution": {
+        "mode": "export_and_verify"
+      },
+      "native_expectation": {
+        "exit": 0,
+        "valid": true,
+        "issue_codes": [],
+        "semantic": "current"
+      },
+      "buoy_observation": {
+        "disposition": "declared_not_executed",
+        "semantic": "unsupported",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "The exact-marker v1 Cairn profile records declaration linkage only and does not interpret Rust cfg. The in-progress rust_item_v1 profile owns structural cfg handling, so this comparison dimension is unsupported here."
+      },
+      "comparison": "expected_divergence",
+      "divergence": "rust_cfg_scope_not_in_exact_marker_v1",
+      "reason": "Cairn's exact-marker project links the declaration without a cfg claim; a structural cfg interpretation belongs to the separately versioned Rust-item profile. The case stays named rather than silently waived."
+    },
+    {
+      "id": "historical_only",
+      "execution": {
+        "mode": "not_executed"
+      },
+      "buoy_observation": {
+        "disposition": "declared_unsupported",
+        "semantic": "unsupported",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "The selected exact-marker Cairn projection has no historical binding record, and the pinned upstream artifact is unavailable. No historical row is promoted to a current relationship."
+      },
+      "comparison": "comparison_unsupported",
+      "reason": "Historical-only accounting is outside the executed native subset; it remains an explicit unsupported case rather than a passing comparison."
+    },
+    {
+      "id": "ambiguous_mapping",
+      "execution": {
+        "mode": "not_executed"
+      },
+      "buoy_observation": {
+        "disposition": "declared_unsupported",
+        "semantic": "unsupported",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "The selected projection does not implement ambiguous mapping refusal. Native copied-marker drift is qualified separately by the duplicate_marker fixture."
+      },
+      "comparison": "comparison_unsupported",
+      "reason": "Ambiguous mapping refusal has no executed upstream result; it is not inferred from the duplicate_marker case."
+    },
+    {
+      "id": "unavailable_or_truncated_output",
+      "execution": {
+        "mode": "not_executed"
+      },
+      "buoy_observation": {
+        "disposition": "declared_unsupported",
+        "semantic": "unsupported",
+        "report_schema": "buoy/trace-report/v1",
+        "reason": "No upstream execution exists. Invalid, truncated, timed-out, or unavailable upstream output is nonaccepting infrastructure disposition and never a successful comparison."
+      },
+      "comparison": "comparison_unsupported",
+      "reason": "The unavailable-tool dimension is declared blocked; it cannot become a pass without executed upstream evidence."
+    }
+  ]
+}

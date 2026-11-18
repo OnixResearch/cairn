@@ -73,6 +73,7 @@ pub mod state_machine_receipt;
 pub mod structured_lifecycle;
 pub mod toolchain_profile_matrix;
 pub mod traceability;
+pub mod traceability_comparison;
 pub mod trellis_proof_readiness;
 pub mod typed_requirement_contracts;
 pub mod validation;

@@ -1022,6 +1022,108 @@
               cp "$proof"/*.json "$out"/
             '';
 
+        buoy-traceability-comparison =
+          pkgs.runCommand "cairn-buoy-traceability-comparison"
+            {
+              nativeBuildInputs = [
+                pkgs.gnugrep
+                pkgs.diffutils
+                pkgs.jq
+              ];
+            }
+            ''
+              cp -r ${self} source
+              chmod -R u+w source
+              cd source
+              cairn=${self.packages.${pkgs.stdenv.hostPlatform.system}.cairn}/bin/cairn
+              fixtures=fixtures/buoy-comparison/v1
+              work=target/buoy-comparison-check
+              mkdir -p "$work"
+
+              find "$fixtures" -type f -print0 | sort -z | xargs -0 sha256sum \
+                > "$work/fixtures-before.sha256"
+
+              check_start=$(date +%s)
+              "$cairn" traceability compare \
+                --root . \
+                --fixtures "$fixtures" \
+                --out "$work/receipt.json" \
+                --observations "$work/observations" \
+                > "$work/stdout.json"
+              check_end=$(date +%s)
+              echo "$((check_end - check_start))" > "$work/check-elapsed-seconds.txt"
+              wc -c < "$work/receipt.json" > "$work/receipt-size-bytes.txt"
+
+              grep -q '"valid":true' "$work/receipt.json"
+              grep -q '"verdict":"pass"' "$work/receipt.json"
+              grep -q '"complete":false' "$work/receipt.json"
+              grep -q '"upstream_executed":false' "$work/receipt.json"
+              grep -q '"artifact_available":false' "$work/receipt.json"
+              grep -q '"planted_drift_detected":true' "$work/receipt.json"
+              grep -q '"restated_observation_rejected":true' "$work/receipt.json"
+              grep -q '"restated_native_expectation_rejected":true' "$work/receipt.json"
+              for case in \
+                clean \
+                missing_marker \
+                duplicate_marker \
+                moved_span \
+                changed_requirement_body \
+                schema_version_drift \
+                unicode_crlf \
+                cfg_not_any
+              do
+                grep -q "\"id\":\"$case\"" "$work/receipt.json"
+              done
+
+              grep -q '"comparison":"agreement"' "$work/receipt.json"
+              grep -q '"comparison":"expected_divergence"' "$work/receipt.json"
+              grep -q '"comparison":"comparison_unsupported"' "$work/receipt.json"
+              grep -q '"native_semantic":"current"' "$work/receipt.json"
+              grep -q '"native_semantic":"stale_item"' "$work/receipt.json"
+              grep -q '"native_semantic":"stale_requirement"' "$work/receipt.json"
+              grep -q '"native_semantic":"unsupported"' "$work/receipt.json"
+
+              grep -q '"valid": true' "$work/observations/clean/stdout.json"
+              grep -q 'trace_index.source_stale' \
+                "$work/observations/missing_marker/stdout.json"
+              grep -q 'trace_index.source_unexpected' \
+                "$work/observations/duplicate_marker/stdout.json"
+              grep -q 'trace_index.source_stale' \
+                "$work/observations/moved_span/stdout.json"
+              grep -q 'trace_index.registry_stale' \
+                "$work/observations/changed_requirement_body/stdout.json"
+              grep -q 'trace_index.schema_unsupported' \
+                "$work/observations/schema_version_drift/stdout.json"
+              test -f "$work/observations/schema_version_drift/stderr.txt"
+              test ! -s "$work/observations/schema_version_drift/stderr.txt"
+              test "$(cat "$work/observations/schema_version_drift/exit.txt")" = "1"
+              grep -q '"valid": true' "$work/observations/unicode_crlf/stdout.json"
+              grep -q '"valid": true' "$work/observations/cfg_not_any/stdout.json"
+
+              find "$fixtures" -type f -print0 | sort -z | xargs -0 sha256sum \
+                > "$work/fixtures-after.sha256"
+              cmp "$work/fixtures-before.sha256" "$work/fixtures-after.sha256"
+
+              cp -r "$fixtures" restated-fixtures
+              jq '(.cases[] | select(.id == "missing_marker") | .buoy_observation.semantic) = "current"' \
+                restated-fixtures/manifest.json > restated-manifest.json
+              mv restated-manifest.json restated-fixtures/manifest.json
+              if "$cairn" traceability compare \
+                --root . \
+                --fixtures restated-fixtures \
+                --out "$work/restated-receipt.json" \
+                > "$work/restated-stdout.json"
+              then
+                echo "expected a restated mutation observation to be rejected" >&2
+                exit 1
+              fi
+              grep -q '"valid":false' "$work/restated-receipt.json"
+              grep -q 'comparison.mutation_restated' "$work/restated-receipt.json"
+
+              mkdir -p "$out"
+              cp -r "$work"/* "$out"/
+            '';
+
         rename-classification =
           pkgs.runCommand "cairn-rename-classification"
             {
