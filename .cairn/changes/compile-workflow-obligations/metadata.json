@@ -1,0 +1,12 @@
+{
+  "depends_on": [
+    "add-typed-requirement-contracts",
+    "add-scoped-claim-derivations",
+    "refinement-typed-dependencies"
+  ],
+  "workflow_profile": {
+    "id": "spec-driven",
+    "source": "change_create",
+    "version": 1
+  }
+}

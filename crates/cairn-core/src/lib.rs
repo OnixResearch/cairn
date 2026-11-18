@@ -19,6 +19,8 @@ pub use verified::refinement_typed_dependencies;
 pub use verified::refinement_typed_dependencies::*;
 pub use verified::scoped_claim_derivations;
 pub use verified::scoped_claim_derivations::*;
+pub use verified::workflow_obligations;
+pub use verified::workflow_obligations::*;
 pub use verified::source_review;
 pub use verified::typed_requirement_contracts;
 pub use verified::typed_requirement_contracts::*;

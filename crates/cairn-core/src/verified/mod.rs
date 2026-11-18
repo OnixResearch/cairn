@@ -77,4 +77,5 @@ pub mod validation;
 pub mod verification_impact;
 pub mod verification_role;
 pub mod workflow_collaboration;
+pub mod workflow_obligations;
 pub mod workspace_contract_matrix;

@@ -42,6 +42,7 @@ pub(crate) fn usage_text() -> &'static str {
         , "\n  prose check [--root DIR] (FILE... | --change NAME) [--format json|text|github|sarif] [--report-version 1|2] [--profile NAME] [--profiles FILE] [--max-total-bytes N] [--max-diagnostics N] [--max-report-bytes N]  (advisory; no rewrites)\n  prose verify [--root DIR] --report FILE  (recheck current v2 inputs and suggestions)\n  prose profiles export [--source FILE] [--output FILE] [--check]"
         , "\n  requirement-contract inspect --requirement ID --registry FILE [--root DIR] [--policy FILE] [--inventory FILE] [--review FILE] [--example FILE]  (read-only finite semantics; never proof admission)"
         , "\n  refinement explain --case FILE [--policy FILE]  (read-only composition and typed-dependency argument; never lifecycle authority)"
+        , "\n  obligation list|explain|export [--case FILE] [--policy FILE] [--obligations FILE]  (read-only workflow obligations; never execution authority)"
     )
 }
 
