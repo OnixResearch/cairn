@@ -11,7 +11,10 @@ fn lifecycle_root(name: &str) -> Result<PathBuf, Box<dyn Error>> {
         std::process::id()
     ));
     let _ = std::fs::remove_dir_all(&root);
-    copy_tree(&repository_root().join("fixtures/basic/.cairn"), &root.join(".cairn"))?;
+    copy_tree(
+        &repository_root().join("fixtures/basic/.cairn"),
+        &root.join(".cairn"),
+    )?;
     std::fs::create_dir_all(root.join(".cairn/archive"))?;
     Ok(root)
 }
@@ -72,9 +75,8 @@ fn shared_budget_bounds_the_complete_multi_change_observation() -> Result<(), Bo
 fn manifest_admission_requires_exact_active_change_keys_and_complete_selectors(
 ) -> Result<(), Box<dyn Error>> {
     let root = lifecycle_root("manifest-admission")?;
-    let policy = cairn_core::workflow_readiness_policy().map_err(|code| {
-        format!("{code}: generated workflow readiness policy is not admitted")
-    })?;
+    let policy = cairn_core::workflow_readiness_policy()
+        .map_err(|code| format!("{code}: generated workflow readiness policy is not admitted"))?;
     let status = scan_repo_with_budget(root.clone(), detect_layout(&root).layout, None)?;
     let budget = ObservationBudget::new();
     let manifest = |changes: Value| EvidenceManifest {
@@ -87,8 +89,10 @@ fn manifest_admission_requires_exact_active_change_keys_and_complete_selectors(
             .to_string()
     };
     assert!(error(manifest(json!([{"change": "absent"}]))).contains(MANIFEST_UNKNOWN_CHANGE));
-    assert!(error(manifest(json!([{"change": "demo"}, {"change": "demo"}])))
-        .contains(MANIFEST_DUPLICATE_CHANGE));
+    assert!(
+        error(manifest(json!([{"change": "demo"}, {"change": "demo"}])))
+            .contains(MANIFEST_DUPLICATE_CHANGE)
+    );
     assert!(error(manifest(
         json!([{"change": "demo", "contract": "contract.json"}])
     ))
@@ -97,8 +101,10 @@ fn manifest_admission_requires_exact_active_change_keys_and_complete_selectors(
         json!([{"change": "demo", "contract": "../escape.json", "results": "results.json", "subject_hash": "c"}])
     ))
     .contains(MANIFEST_UNSAFE_PATH));
-    assert!(error(manifest(json!([{"change": "demo", "cross_repo_evidence": ["/etc/passwd"]}])))
-        .contains(MANIFEST_UNSAFE_PATH));
+    assert!(error(manifest(
+        json!([{"change": "demo", "cross_repo_evidence": ["/etc/passwd"]}])
+    ))
+    .contains(MANIFEST_UNSAFE_PATH));
     assert!(error(EvidenceManifest {
         schema: "cairn.workflow-readiness-manifest.v0".into(),
         changes: serde_json::from_value(json!([{"change": "demo"}])).expect("entries"),
@@ -127,15 +133,9 @@ fn manifest_admission_requires_exact_active_change_keys_and_complete_selectors(
             "changes": [{"change": "demo"}, {"unexpected": true}],
         }))?,
     )?;
-    let error = load_evidence_manifest(
-        &root,
-        "manifest.json",
-        &status.changes,
-        policy,
-        &budget,
-    )
-    .expect_err("unknown manifest field")
-    .to_string();
+    let error = load_evidence_manifest(&root, "manifest.json", &status.changes, policy, &budget)
+        .expect_err("unknown manifest field")
+        .to_string();
     assert!(error.contains(MANIFEST_INVALID), "{error}");
     std::fs::remove_dir_all(root)?;
     Ok(())
@@ -148,7 +148,9 @@ fn manifest_selection_matches_direct_readiness_and_absent_evidence_stays_unavail
     let root = lifecycle_root("direct-parity")?;
     for file in ["contract.json", "results.json"] {
         std::fs::copy(
-            repository_root().join("fixtures/agent-completion").join(file),
+            repository_root()
+                .join("fixtures/agent-completion")
+                .join(file),
             root.join(file),
         )?;
     }
@@ -194,7 +196,10 @@ fn manifest_selection_matches_direct_readiness_and_absent_evidence_stays_unavail
     let unavailable = &no_manifest["changes"][0];
     assert_eq!(unavailable["evidence"]["declared"], false);
     assert_eq!(unavailable["evidence"]["completion_inputs"], false);
-    assert_eq!(unavailable["readiness"]["stages"][4]["state"], "unavailable");
+    assert_eq!(
+        unavailable["readiness"]["stages"][4]["state"],
+        "unavailable"
+    );
     assert!(no_manifest["next_actions"]
         .as_array()
         .ok_or("next actions")?

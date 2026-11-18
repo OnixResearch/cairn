@@ -253,13 +253,13 @@ fn fresh_readiness_report(input: &Value) -> Result<ReadinessReport, Box<dyn Erro
     let root = PathBuf::from(input["root"].as_str().unwrap_or("."));
     let policy_path = PathBuf::from(input["policy"].as_str().unwrap_or(default_policy_path()));
     let budget = crate::support::observation_budget::ObservationBudget::new();
-    Ok(serde_json::to_value(readiness_report_with_budget(
+    Ok(readiness_report_with_budget(
         &root,
         &policy_path,
         change,
         input,
         &budget,
-    ))?)
+    ))
 }
 
 /// Observe one change under a caller-owned shared budget.
@@ -277,7 +277,7 @@ pub(crate) fn readiness_report_with_budget(
     let snapshot =
         match gather_observation_cohort(|| gather_once(root, policy_path, change, input, budget)) {
             Ok(snapshot) => snapshot,
-            Err(error) => unavailable_readiness_snapshot(change, input, &error),
+            Err(error) => unavailable_readiness_snapshot(change, input, error.as_ref()),
         };
     derive_readiness(&snapshot)
 }
@@ -293,25 +293,25 @@ fn unavailable_readiness_snapshot(
         source_hash: canonical_json_hash(&Value::Null),
         evidence_hash: canonical_json_hash(input),
     };
-    let snapshot = match gather(&root, &policy_path, change, input) {
-        Ok(snapshot) => snapshot,
-        Err(error) => {
-            let error_class = error
-                .downcast_ref::<std::io::Error>()
-                .map(|error| format!("{:?}", error.kind()))
-                .unwrap_or_else(|| "ObservationAdmission".into());
-            ReadinessSnapshot {
-                observations: vec![ReadinessObservation {
-                    scope: scope.clone(), stage: "artifact".into(), state: ReadinessState::Unavailable,
-                    decision: json!({"evaluated": false, "error_class": error_class}),
-                    causes: vec![readiness_cause("observation.load_failed", change, "An observation could not be admitted. Inspect the selected inputs with the original validator.")],
-                }], scope,
-            }
-        }
-    };
-    Ok(derive_readiness(&snapshot))
+    let error_class = error
+        .downcast_ref::<std::io::Error>()
+        .map(|error| format!("{:?}", error.kind()))
+        .unwrap_or_else(|| "ObservationAdmission".into());
+    ReadinessSnapshot {
+        observations: vec![ReadinessObservation {
+            scope: scope.clone(),
+            stage: "artifact".into(),
+            state: ReadinessState::Unavailable,
+            decision: json!({"evaluated": false, "error_class": error_class}),
+            causes: vec![readiness_cause(
+                "observation.load_failed",
+                change,
+                "An observation could not be admitted. Inspect the selected inputs with the original validator.",
+            )],
+        }],
+        scope,
+    }
 }
-
 
 fn gather_observation_cohort(
     mut observe: impl FnMut() -> Result<ReadinessSnapshot, Box<dyn Error>>,

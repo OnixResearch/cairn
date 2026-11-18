@@ -1516,10 +1516,6 @@
         "permission": "read"
       },
       {
-        "id": "readiness",
-        "permission": "read"
-      },
-      {
         "id": "receipt-inspect",
         "permission": "read"
       },
@@ -1549,34 +1545,29 @@
         "command_classes": [
           "artifact-edit",
           "context",
-          "readiness",
           "workflow-inspect"
         ],
         "constraints": [
           "Use only explicit project roots and policy-known Cairn command classes.",
           "Treat generated text as guidance; policy and gates remain authoritative.",
           "Do not call a model, access the network, or load a remote package.",
-          "Preview each mutation and execute only the checked, content-bound plan.",
-          "Route diagnosis through the current readiness report; guidance never executes an action or promotes an unavailable observation."
+          "Preview each mutation and execute only the checked, content-bound plan."
         ],
         "goal": "Implement the accepted change without weakening its requirements or policy boundaries.",
         "id": "apply",
-        "immediate_action": "Run `cairn readiness CHANGE` for the selected change, follow its selected artifact action to the exact `cairn workflow instructions ARTIFACT --change CHANGE` route, then edit only that artifact and record the required checks.",
+        "immediate_action": "Run cairn workflow instructions for the selected change, then inspect its accepted artifacts before editing files.",
         "mutation_class": "preview_first",
         "non_claims": [
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone",
-          "readiness guidance is diagnostic and advisory; it executes no action and never promotes an unavailable observation"
+          "workflow success depends on checked project evidence and does not follow from generated text alone"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
         "required_evidence": [
           "Accepted proposal, design, specifications, and tasks",
-          "Baseline and final check results",
-          "Current readiness report for the selected change",
-          "Explicit completion contract, results, and subject identity when completion evidence is required"
+          "Baseline and final check results"
         ],
         "success_evidence": [
           "Changed code and tests map to accepted requirements.",
@@ -1588,7 +1579,6 @@
         "command_classes": [
           "archive-execute",
           "gate",
-          "readiness",
           "sync-execute",
           "workflow-inspect"
         ],
@@ -1596,27 +1586,24 @@
           "Use only explicit project roots and policy-known Cairn command classes.",
           "Treat generated text as guidance; policy and gates remain authoritative.",
           "Do not call a model, access the network, or load a remote package.",
-          "Preview each mutation and execute only the checked, content-bound plan.",
-          "Route diagnosis through the current readiness report; guidance never executes an action or promotes an unavailable observation."
+          "Preview each mutation and execute only the checked, content-bound plan."
         ],
         "goal": "Archive a completed change only after required gates, sync, and evidence checks pass.",
         "id": "archive",
-        "immediate_action": "Run `cairn readiness CHANGE` for the selected change; when it is ready, preview its sync and archive plans, then execute only their unchanged plan hashes.",
+        "immediate_action": "Run the required gates, preview sync and archive plans, then execute only their unchanged plan hashes.",
         "mutation_class": "preview_first",
         "non_claims": [
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone",
-          "readiness guidance is diagnostic and advisory; it executes no action and never promotes an unavailable observation"
+          "workflow success depends on checked project evidence and does not follow from generated text alone"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
         "required_evidence": [
           "Passing required gates",
           "Fresh sync and archive plans",
-          "Completed task evidence",
-          "Current readiness report with passing completion and mutation stages"
+          "Completed task evidence"
         ],
         "success_evidence": [
           "Accepted specification deltas are synchronized.",
@@ -1630,7 +1617,6 @@
           "artifact-edit",
           "context",
           "gate",
-          "readiness",
           "sync-execute",
           "workflow-inspect"
         ],
@@ -1638,28 +1624,24 @@
           "Use only explicit project roots and policy-known Cairn command classes.",
           "Treat generated text as guidance; policy and gates remain authoritative.",
           "Do not call a model, access the network, or load a remote package.",
-          "Preview each mutation and execute only the checked, content-bound plan.",
-          "Route diagnosis through the current readiness report; guidance never executes an action or promotes an unavailable observation."
+          "Preview each mutation and execute only the checked, content-bound plan."
         ],
         "goal": "Complete each active change through implementation, validation, sync, and archive with bounded evidence.",
         "id": "drain",
-        "immediate_action": "Run `cairn drain-plan --view readiness`, select the first change in dependency order whose readiness is not ready, and follow its selected next action; author only through `cairn workflow instructions ARTIFACT --change CHANGE`.",
+        "immediate_action": "Run cairn workflow status, select the first unblocked change, and inspect its instructions and task evidence.",
         "mutation_class": "preview_first",
         "non_claims": [
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone",
-          "readiness guidance is diagnostic and advisory; it executes no action and never promotes an unavailable observation"
+          "workflow success depends on checked project evidence and does not follow from generated text alone"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
         "required_evidence": [
           "Dependency order and active status",
           "Implementation and gate receipts",
-          "Fresh sync and archive plans",
-          "Readiness report and selected next action for each change",
-          "Per-change completion and cross-repository selectors supplied through the readiness evidence manifest"
+          "Fresh sync and archive plans"
         ],
         "success_evidence": [
           "Each selected task is complete or has an exact blocker.",
@@ -1678,8 +1660,7 @@
           "Use only explicit project roots and policy-known Cairn command classes.",
           "Treat generated text as guidance; policy and gates remain authoritative.",
           "Do not call a model, access the network, or load a remote package.",
-          "Do not create a change, edit lifecycle artifacts, execute mutation plans, or claim implementation completion.",
-          "Route diagnosis through the current readiness report; guidance never executes an action or promotes an unavailable observation."
+          "Do not create a change, edit lifecycle artifacts, execute mutation plans, or claim implementation completion."
         ],
         "goal": "Inspect project lifecycle state and evidence without creating or changing lifecycle artifacts.",
         "id": "explore",
@@ -1689,8 +1670,7 @@
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone",
-          "readiness guidance is diagnostic and advisory; it executes no action and never promotes an unavailable observation"
+          "workflow success depends on checked project evidence and does not follow from generated text alone"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
@@ -1716,8 +1696,7 @@
           "Use only explicit project roots and policy-known Cairn command classes.",
           "Treat generated text as guidance; policy and gates remain authoritative.",
           "Do not call a model, access the network, or load a remote package.",
-          "Preview each mutation and execute only the checked, content-bound plan.",
-          "Route diagnosis through the current readiness report; guidance never executes an action or promotes an unavailable observation."
+          "Preview each mutation and execute only the checked, content-bound plan."
         ],
         "goal": "Create a reviewable change package that states the problem, requirements, design, tasks, and evidence plan.",
         "id": "propose",
@@ -1727,8 +1706,7 @@
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone",
-          "readiness guidance is diagnostic and advisory; it executes no action and never promotes an unavailable observation"
+          "workflow success depends on checked project evidence and does not follow from generated text alone"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
@@ -1745,7 +1723,6 @@
       {
         "command_classes": [
           "gate",
-          "readiness",
           "receipt-inspect",
           "traceability",
           "workflow-inspect"
@@ -1753,28 +1730,24 @@
         "constraints": [
           "Use only explicit project roots and policy-known Cairn command classes.",
           "Treat generated text as guidance; policy and gates remain authoritative.",
-          "Do not call a model, access the network, or load a remote package.",
-          "Route diagnosis through the current readiness report; guidance never executes an action or promotes an unavailable observation."
+          "Do not call a model, access the network, or load a remote package."
         ],
         "goal": "Check requirement coverage, gates, tests, and receipts without changing lifecycle artifacts.",
         "id": "verify",
-        "immediate_action": "Run `cairn readiness CHANGE` for the selected change, then run only the tests and gates its blocked or unavailable stages name; record each receipt and keep unresolved diagnostics explicit.",
+        "immediate_action": "Run the smallest required gate and traceability check for the selected change before broad validation.",
         "mutation_class": "read_only",
         "non_claims": [
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone",
-          "readiness guidance is diagnostic and advisory; it executes no action and never promotes an unavailable observation"
+          "workflow success depends on checked project evidence and does not follow from generated text alone"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
         "required_evidence": [
           "Gate and test outputs",
           "Traceability and receipt identities",
-          "Known blockers and non-claims",
-          "Current readiness report and its exact stage diagnostics",
-          "Explicit completion inputs and review evidence for the selected profile"
+          "Known blockers and non-claims"
         ],
         "success_evidence": [
           "Required checks pass or return exact diagnostics.",
@@ -1797,8 +1770,7 @@
       "deterministic generation proves only a bounded transformation of admitted policy",
       "an adapter changes representation but does not add authority or lifecycle semantics",
       "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-      "workflow success depends on checked project evidence and does not follow from generated text alone",
-      "readiness guidance is diagnostic and advisory; it executes no action and never promotes an unavailable observation"
+      "workflow success depends on checked project evidence and does not follow from generated text alone"
     ],
     "schema": "cairn.generated-agent-workflow-policy.v1"
   },

@@ -422,8 +422,7 @@ fn plan_receipts_are_checkout_independent_and_do_not_expose_roots() -> Result<()
 
 // r[verify cairn.agent_workflow_readiness.guidance]
 #[test]
-fn readiness_guidance_routes_match_the_current_cli_and_mcp_schemas(
-) -> Result<(), Box<dyn Error>> {
+fn readiness_guidance_routes_match_the_current_cli_and_mcp_schemas() -> Result<(), Box<dyn Error>> {
     let policy = policy_path().display().to_string();
     let (catalog_output, catalog) = run(&["mcp", "--describe"])?;
     assert!(catalog_output.status.success());
@@ -494,13 +493,15 @@ fn readiness_guidance_routes_match_the_current_cli_and_mcp_schemas(
             .is_some_and(|classes| classes.iter().any(|class| class == "readiness")));
         assert!(descriptor["required_evidence"]
             .as_array()
-            .is_some_and(|evidence| evidence
-                .iter()
-                .any(|entry| entry.as_str().is_some_and(|text| text.contains("readiness")))));
-        assert!(descriptor["non_claims"].as_array().is_some_and(|claims| {
-            claims.iter().any(|claim| claim
+            .is_some_and(|evidence| evidence.iter().any(|entry| entry
                 .as_str()
-                .is_some_and(|text| text.contains("never promotes an unavailable observation")))
+                .is_some_and(|text| text.contains("readiness")))));
+        assert!(descriptor["non_claims"].as_array().is_some_and(|claims| {
+            claims.iter().any(|claim| {
+                claim
+                    .as_str()
+                    .is_some_and(|text| text.contains("never promotes an unavailable observation"))
+            })
         }));
     }
     let (output, show) = run(&["agent", "workflow", "show", "verify", "--policy", &policy])?;

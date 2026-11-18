@@ -133,11 +133,7 @@ pub fn admit_workflow_readiness_policy(
     }
     if policy.instruction.tool.is_empty()
         || policy.instruction.cli.is_empty()
-        || policy
-            .instruction
-            .cli
-            .iter()
-            .any(|part| part.is_empty())
+        || policy.instruction.cli.iter().any(|part| part.is_empty())
         || policy.instruction.task_artifact.is_empty()
         || policy.instruction.expected_observation.trim().is_empty()
     {
@@ -255,10 +251,7 @@ pub fn select_drain_readiness(
     };
     let mut remaining_actions = policy.bounds.max_actions;
     for name in &selection.change_order {
-        let Some(change) = changes
-            .iter()
-            .find(|change| change.name == name.as_str())
-        else {
+        let Some(change) = changes.iter().find(|change| change.name == name.as_str()) else {
             continue;
         };
         let ordering_blocked = !change.blocked_by.is_empty() || change.dependency_issue_count > 0;
@@ -272,11 +265,7 @@ pub fn select_drain_readiness(
             .actions
             .iter()
             .filter(|action| {
-                !ordering_blocked
-                    || !policy
-                        .preview_kinds
-                        .iter()
-                        .any(|kind| kind == &action.kind)
+                !ordering_blocked || !policy.preview_kinds.iter().any(|kind| kind == &action.kind)
             })
             .collect::<Vec<_>>();
         actions.sort_by(|left, right| {
@@ -323,10 +312,7 @@ pub fn select_drain_readiness(
 }
 
 /// Dependency order first, then any admitted change absent from that order.
-fn order_change_names(
-    changes: &[DrainReadinessChange<'_>],
-    drain_order: &[String],
-) -> Vec<String> {
+fn order_change_names(changes: &[DrainReadinessChange<'_>], drain_order: &[String]) -> Vec<String> {
     let present = changes
         .iter()
         .map(|change| change.name)
@@ -334,10 +320,7 @@ fn order_change_names(
     let mut ordered = Vec::with_capacity(changes.len());
     let mut seen: std::collections::BTreeSet<&str> = std::collections::BTreeSet::new();
     for name in drain_order {
-        if let Some(change) = changes
-            .iter()
-            .find(|change| change.name == name.as_str())
-        {
+        if let Some(change) = changes.iter().find(|change| change.name == name.as_str()) {
             if seen.insert(change.name) {
                 ordered.push(change.name.to_string());
             }
@@ -369,11 +352,7 @@ fn task_prerequisites_ready(
     })
 }
 
-fn next_task_route(
-    change: &str,
-    task: &str,
-    policy: &WorkflowReadinessPolicy,
-) -> DrainNextTask {
+fn next_task_route(change: &str, task: &str, policy: &WorkflowReadinessPolicy) -> DrainNextTask {
     let instruction = &policy.instruction;
     let mut argv = instruction.cli.clone();
     argv.push(instruction.task_artifact.clone());

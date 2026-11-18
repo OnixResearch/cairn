@@ -107,10 +107,7 @@ pub(crate) fn run_drain_plan(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
 // r[impl cairn.agent_workflow_readiness.compatibility]
 // r[impl cairn.agent_workflow_readiness.shared]
-pub(crate) fn readiness_drain_value(
-    input: &Value,
-    command: &str,
-) -> Result<Value, Box<dyn Error>> {
+pub(crate) fn readiness_drain_value(input: &Value, command: &str) -> Result<Value, Box<dyn Error>> {
     readiness_drain_with_budget(input, command, &ObservationBudget::new())
 }
 
@@ -119,9 +116,8 @@ fn readiness_drain_with_budget(
     command: &str,
     budget: &ObservationBudget,
 ) -> Result<Value, Box<dyn Error>> {
-    let policy_handle = workflow_readiness_policy().map_err(|code| {
-        format!("{code}: generated workflow readiness policy is not admitted")
-    })?;
+    let policy_handle = workflow_readiness_policy()
+        .map_err(|code| format!("{code}: generated workflow readiness policy is not admitted"))?;
     if let Some(view) = input.get("view") {
         let view = view.as_str().ok_or("drain plan view must be a string")?;
         if view != policy_handle.readiness_view {
@@ -154,7 +150,9 @@ fn readiness_drain_with_budget(
 
     let mut observed = Vec::with_capacity(status.changes.len());
     for change in &status.changes {
-        let evidence = manifest.as_ref().and_then(|manifest| manifest.get(&change.name));
+        let evidence = manifest
+            .as_ref()
+            .and_then(|manifest| manifest.get(&change.name));
         let change_input = change_observation_input(input, &change.name, evidence);
         let report =
             readiness_report_with_budget(&root, &policy_path, &change.name, &change_input, budget);
@@ -166,13 +164,14 @@ fn readiness_drain_with_budget(
             task_ordering: task_order,
         });
     }
-    let dependency_issue_counts = graph
-        .issues
-        .iter()
-        .fold(BTreeMap::<&str, usize>::new(), |mut counts, issue| {
-            *counts.entry(issue.change.as_str()).or_default() += 1;
-            counts
-        });
+    let dependency_issue_counts =
+        graph
+            .issues
+            .iter()
+            .fold(BTreeMap::<&str, usize>::new(), |mut counts, issue| {
+                *counts.entry(issue.change.as_str()).or_default() += 1;
+                counts
+            });
     let admitted = observed
         .iter()
         .map(|change| DrainReadinessChange {
@@ -213,7 +212,9 @@ fn readiness_drain_with_budget(
             .filter(|issue| issue.change == selected_change.name)
             .map(change_dependency_issue_json)
             .collect::<Vec<_>>();
-        let evidence = manifest.as_ref().and_then(|manifest| manifest.get(&selected_change.name));
+        let evidence = manifest
+            .as_ref()
+            .and_then(|manifest| manifest.get(&selected_change.name));
         let next_task = selected_change.next_task.as_ref().map(|task| {
             json!({
                 "task": task.task,

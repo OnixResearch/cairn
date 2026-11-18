@@ -61,6 +61,7 @@ fn temp_root(name: &str) -> PathBuf {
 
 // r[verify cairn.agent_workflow_readiness.compatibility]
 #[test]
+// r[verify cairn.agent_workflow_readiness.conformance]
 fn legacy_drain_receipt_is_byte_compatible_and_the_direct_route_aliases_it(
 ) -> Result<(), Box<dyn Error>> {
     let default = run_json(&[
@@ -89,8 +90,14 @@ fn legacy_drain_receipt_is_byte_compatible_and_the_direct_route_aliases_it(
     assert_receipt_hash(&cli)?;
     let mut cli_compare = cli.clone();
     let mut mcp_compare = receipt.clone();
-    cli_compare.as_object_mut().ok_or("cli object")?.remove("command");
-    cli_compare.as_object_mut().ok_or("cli object")?.remove("receipt_hash");
+    cli_compare
+        .as_object_mut()
+        .ok_or("cli object")?
+        .remove("command");
+    cli_compare
+        .as_object_mut()
+        .ok_or("cli object")?
+        .remove("receipt_hash");
     mcp_compare
         .as_object_mut()
         .ok_or("mcp object")?
@@ -137,7 +144,9 @@ fn readiness_view_shares_direct_reports_and_keeps_missing_evidence_unavailable(
     assert_eq!(view["unavailable_change_count"], 1);
     let actions = view["next_actions"].as_array().ok_or("next actions")?;
     assert!(!actions.is_empty());
-    assert!(actions.iter().all(|action| action["authority"] == "advisory"));
+    assert!(actions
+        .iter()
+        .all(|action| action["authority"] == "advisory"));
     assert!(actions.iter().any(|action| action["kind"] == "unresolved"));
     assert!(actions
         .iter()
@@ -247,18 +256,26 @@ fn readiness_view_orders_dependencies_and_withholds_blocked_work() -> Result<(),
 
 // r[verify cairn.agent_workflow_readiness.order]
 #[test]
-fn readiness_view_retains_cycles_without_selecting_executable_work(
-) -> Result<(), Box<dyn Error>> {
+fn readiness_view_retains_cycles_without_selecting_executable_work() -> Result<(), Box<dyn Error>> {
     let root = temp_root("readiness-drain-cycle");
-    copy_dir_recursive(&repo_root().join("fixtures/basic/.cairn"), &root.join(".cairn"))?;
+    copy_dir_recursive(
+        &repo_root().join("fixtures/basic/.cairn"),
+        &root.join(".cairn"),
+    )?;
     fs::create_dir_all(root.join(".cairn/archive"))?;
     let demo = root.join(".cairn/changes/demo");
     let first = root.join(".cairn/changes/cycle-a");
     let second = root.join(".cairn/changes/cycle-b");
     copy_dir_recursive(&demo, &first)?;
     copy_dir_recursive(&demo, &second)?;
-    fs::write(first.join("metadata.json"), "{\"depends_on\":[\"cycle-b\"]}\n")?;
-    fs::write(second.join("metadata.json"), "{\"depends_on\":[\"cycle-a\"]}\n")?;
+    fs::write(
+        first.join("metadata.json"),
+        "{\"depends_on\":[\"cycle-b\"]}\n",
+    )?;
+    fs::write(
+        second.join("metadata.json"),
+        "{\"depends_on\":[\"cycle-a\"]}\n",
+    )?;
     let marked_tasks = "## Phase 1\n\n- [ ] [serial] [task:build] Build r[demo.behavior]\n";
     fs::write(first.join("tasks.md"), marked_tasks)?;
     fs::write(second.join("tasks.md"), marked_tasks)?;
@@ -286,7 +303,9 @@ fn readiness_view_retains_cycles_without_selecting_executable_work(
     assert!(actions.iter().all(|action| action["kind"] != "task"
         && action["kind"] != "sync_preview"
         && action["kind"] != "archive_preview"));
-    assert!(actions.iter().any(|action| action["authority"] == "advisory"));
+    assert!(actions
+        .iter()
+        .any(|action| action["authority"] == "advisory"));
     fs::remove_dir_all(root)?;
     Ok(())
 }
@@ -295,7 +314,10 @@ fn readiness_view_retains_cycles_without_selecting_executable_work(
 #[test]
 fn readiness_view_selects_the_declared_ready_task_route() -> Result<(), Box<dyn Error>> {
     let root = temp_root("readiness-drain-task");
-    copy_dir_recursive(&repo_root().join("fixtures/basic/.cairn"), &root.join(".cairn"))?;
+    copy_dir_recursive(
+        &repo_root().join("fixtures/basic/.cairn"),
+        &root.join(".cairn"),
+    )?;
     fs::create_dir_all(root.join(".cairn/archive"))?;
     fs::write(
         root.join(".cairn/changes/demo/tasks.md"),
@@ -320,7 +342,14 @@ fn readiness_view_selects_the_declared_ready_task_route() -> Result<(), Box<dyn 
     );
     assert_eq!(
         task["instruction"]["argv"],
-        json!(["cairn", "workflow", "instructions", "tasks", "--change", "demo"])
+        json!([
+            "cairn",
+            "workflow",
+            "instructions",
+            "tasks",
+            "--change",
+            "demo"
+        ])
     );
     let first = &view["next_actions"][0];
     assert_eq!(first["change"], "demo");
@@ -338,7 +367,10 @@ fn readiness_view_selects_the_declared_ready_task_route() -> Result<(), Box<dyn 
 fn readiness_view_selects_explicit_evidence_and_rejects_stale_or_malformed_manifests(
 ) -> Result<(), Box<dyn Error>> {
     let root = temp_root("readiness-drain-manifest");
-    copy_dir_recursive(&repo_root().join("fixtures/basic/.cairn"), &root.join(".cairn"))?;
+    copy_dir_recursive(
+        &repo_root().join("fixtures/basic/.cairn"),
+        &root.join(".cairn"),
+    )?;
     fs::create_dir_all(root.join(".cairn/archive"))?;
     for file in ["contract.json", "results.json"] {
         fs::copy(
@@ -503,7 +535,9 @@ fn readiness_view_selects_explicit_evidence_and_rejects_stale_or_malformed_manif
             "--view",
             "readiness",
             "--evidence-manifest",
-            path.file_name().and_then(|name| name.to_str()).ok_or("path")?,
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .ok_or("path")?,
         ])?;
         assert!(error.contains(code), "{name}: {error}");
         assert!(!error.contains("--execute"));

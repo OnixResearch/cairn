@@ -43,13 +43,6 @@ pub use crate::verified::change_dependencies::{
     DEPENDENCY_ISSUE_INVALID_ID, DEPENDENCY_ISSUE_INVALID_ITEM, DEPENDENCY_ISSUE_INVALID_TYPE,
     DEPENDENCY_ISSUE_SELF, DEPENDENCY_ISSUE_UNKNOWN,
 };
-pub use crate::verified::readiness::{
-    admit_workflow_readiness_policy, select_drain_readiness, workflow_readiness_policy,
-    DrainChangeSelection, DrainInstructionRoute, DrainNextTask, DrainReadinessChange,
-    DrainReadinessSelection, DrainSelectedAction, DrainTaskOrdering, WorkflowReadinessBounds,
-    WorkflowReadinessInstruction, WorkflowReadinessPolicy, WORKFLOW_READINESS_BOUND,
-    WORKFLOW_READINESS_POLICY_BOUNDS, WORKFLOW_READINESS_POLICY_INVALID,
-};
 pub use crate::verified::delta_merge::{
     merge_delta_spec, DeltaMerge, DeltaMergeDiagnostic, DeltaOperation, DeltaOperationKind,
     DeltaOperationOutcome, DeltaOperationState,
@@ -97,6 +90,13 @@ pub use crate::verified::lifecycle_store_context::{
     REFERENCE_SNAPSHOT_STALE, REFERENCE_SPEC_DUPLICATE, REFERENCE_STORE_AMBIGUOUS,
     REFERENCE_STORE_MISSING, REFERENCE_STORE_STALE, ROOT_PROJECT_POINTER_STALE,
     ROOT_SELECTOR_CONFLICT, ROOT_STORE_AMBIGUOUS, ROOT_STORE_MISSING, ROOT_STORE_STALE,
+};
+pub use crate::verified::readiness::{
+    admit_workflow_readiness_policy, select_drain_readiness, workflow_readiness_policy,
+    DrainChangeSelection, DrainInstructionRoute, DrainNextTask, DrainReadinessChange,
+    DrainReadinessSelection, DrainSelectedAction, DrainTaskOrdering, WorkflowReadinessBounds,
+    WorkflowReadinessInstruction, WorkflowReadinessPolicy, WORKFLOW_READINESS_BOUND,
+    WORKFLOW_READINESS_POLICY_BOUNDS, WORKFLOW_READINESS_POLICY_INVALID,
 };
 #[rustfmt::skip]
 root_type_compatibility! {

@@ -1,9 +1,9 @@
 use super::*;
-use crate::{ChangeDependencyGraph, ChangeDependencyNode};
 use crate::verified::readiness::{
     derive_readiness, readiness_cause, ReadinessObservation, ReadinessReport, ReadinessScope,
     ReadinessSnapshot, READINESS_STAGES,
 };
+use crate::{ChangeDependencyGraph, ChangeDependencyNode};
 
 fn scope(change: &str) -> ReadinessScope {
     ReadinessScope {
@@ -90,21 +90,27 @@ fn checked_projection_is_admitted_from_generated_policy() {
 #[test]
 // r[verify cairn.agent_workflow_readiness.compatibility]
 fn policy_admission_rejects_inconsistent_views_and_non_positive_bounds() {
-    let mut policy = workflow_readiness_policy().expect("checked projection").clone();
+    let mut policy = workflow_readiness_policy()
+        .expect("checked projection")
+        .clone();
     policy.views = vec!["legacy".into(), "legacy".into()];
     assert_eq!(
         admit_workflow_readiness_policy(&policy),
         Err(WORKFLOW_READINESS_POLICY_INVALID)
     );
 
-    let mut policy = workflow_readiness_policy().expect("checked projection").clone();
+    let mut policy = workflow_readiness_policy()
+        .expect("checked projection")
+        .clone();
     policy.bounds.max_actions = 0;
     assert_eq!(
         admit_workflow_readiness_policy(&policy),
         Err(WORKFLOW_READINESS_POLICY_BOUNDS)
     );
 
-    let mut policy = workflow_readiness_policy().expect("checked projection").clone();
+    let mut policy = workflow_readiness_policy()
+        .expect("checked projection")
+        .clone();
     policy.action_order.retain(|kind| kind != "task");
     assert_eq!(
         admit_workflow_readiness_policy(&policy),
@@ -163,10 +169,7 @@ fn dependency_order_precedes_actions_and_blocked_predecessors_cannot_execute() {
         .actions
         .iter()
         .all(|action| !policy.preview_kinds.contains(&action.kind)));
-    assert!(beta
-        .actions
-        .iter()
-        .all(|action| action.kind != "task"));
+    assert!(beta.actions.iter().all(|action| action.kind != "task"));
     assert_eq!(selection.ready_change_count, 1);
     assert_eq!(selection.blocked_change_count, 1);
 }
@@ -271,12 +274,7 @@ fn selected_actions_follow_declared_action_order() {
     let policy = workflow_readiness_policy().expect("checked projection");
     let mut snapshot = snapshot("demo");
     set_blocked(&mut snapshot, 0, "unreviewed.diagnostic", "demo");
-    set_blocked(
-        &mut snapshot,
-        5,
-        "dependency.blocked",
-        "predecessor",
-    );
+    set_blocked(&mut snapshot, 5, "dependency.blocked", "predecessor");
     let report = derive_readiness(&snapshot);
     let graph = complete_graph(&["demo"]);
     let changes = [DrainReadinessChange {
@@ -310,7 +308,9 @@ fn selected_actions_follow_declared_action_order() {
 #[test]
 // r[verify cairn.agent_workflow_readiness.order]
 fn action_bounds_truncate_in_dependency_order() {
-    let mut policy = workflow_readiness_policy().expect("checked projection").clone();
+    let mut policy = workflow_readiness_policy()
+        .expect("checked projection")
+        .clone();
     policy.bounds.max_actions = 1;
     let first = report("first");
     let second = report("second");
@@ -382,7 +382,9 @@ fn changes_absent_from_the_declared_order_follow_it_deterministically() {
 #[test]
 // r[verify cairn.agent_workflow_readiness.compatibility]
 fn admitted_changes_beyond_the_declared_bound_are_rejected() {
-    let mut policy = workflow_readiness_policy().expect("checked projection").clone();
+    let mut policy = workflow_readiness_policy()
+        .expect("checked projection")
+        .clone();
     policy.bounds.max_changes = 1;
     let report = report("demo");
     let graph = complete_graph(&["demo"]);

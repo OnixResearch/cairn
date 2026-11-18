@@ -370,8 +370,14 @@ fn validate_mcp_drain_plan_args(
     object: &serde_json::Map<String, Value>,
 ) -> Result<(), Box<dyn Error>> {
     for key in object.keys() {
-        if !["root", "policy", "cross_repo_evidence", "view", "evidence_manifest"]
-            .contains(&key.as_str())
+        if ![
+            "root",
+            "policy",
+            "cross_repo_evidence",
+            "view",
+            "evidence_manifest",
+        ]
+        .contains(&key.as_str())
         {
             return Err(format!("invalid arguments for {tool}: unknown argument {key}").into());
         }
@@ -382,9 +388,8 @@ fn validate_mcp_drain_plan_args(
         }
     }
     validate_evidence_array(tool, object)?;
-    let policy = cairn_core::workflow_readiness_policy().map_err(|code| {
-        format!("{code}: generated workflow readiness policy is not admitted")
-    })?;
+    let policy = cairn_core::workflow_readiness_policy()
+        .map_err(|code| format!("{code}: generated workflow readiness policy is not admitted"))?;
     let view = object
         .get("view")
         .and_then(Value::as_str)
