@@ -15,20 +15,14 @@ const PASS_ONLY_REQUIREMENT: &str = "cairn.supersede.agent_run_receipts.pass_onl
 const FRESHNESS_REQUIREMENT: &str = "cairn.supersede.agent_run_receipts.freshness";
 const AUTHORITY_REQUIREMENT: &str = "cairn.supersede.agent_run_receipts.completion_authority";
 const CLAIM_REQUIREMENT: &str = "cairn.verification_obligation_cob.claim_revision";
-const CONTRACT_REVISION: &str =
-    "cab928f04ff3d61d2ea9e2a2640262e2022dc3ba820d1949fad73d8d6dc977af";
-const PASS_ONLY_REVISION: &str =
-    "34abbfe64cae739b75554f48d89d0e0bc19ca8e55d54cf51a9363ffe84a6f58d";
-const FRESHNESS_REVISION: &str =
-    "653914140db582ef1145f36f87c233a9ab57a310f715cadf8a23efa5f5333e5e";
-const AUTHORITY_REVISION: &str =
-    "5427af464b1ebc00db599a9ec90cdee48d0ce7b4a0b2652c6dc1d134bd89451b";
-const CLAIM_REVISION: &str =
-    "1de40130cc0a88bb88288b16daa621de599b1508511648332e9e23ef11a3b666";
+const CONTRACT_REVISION: &str = "cab928f04ff3d61d2ea9e2a2640262e2022dc3ba820d1949fad73d8d6dc977af";
+const PASS_ONLY_REVISION: &str = "34abbfe64cae739b75554f48d89d0e0bc19ca8e55d54cf51a9363ffe84a6f58d";
+const FRESHNESS_REVISION: &str = "653914140db582ef1145f36f87c233a9ab57a310f715cadf8a23efa5f5333e5e";
+const AUTHORITY_REVISION: &str = "5427af464b1ebc00db599a9ec90cdee48d0ce7b4a0b2652c6dc1d134bd89451b";
+const CLAIM_REVISION: &str = "1de40130cc0a88bb88288b16daa621de599b1508511648332e9e23ef11a3b666";
 const SUBJECT: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const CONTEXT: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-const EXCEPTION_POLICY: &str =
-    "9f463020b564b252f6322a6f4ecfa8094a28a78ff5bc32e6b9ad1b2e01541542";
+const EXCEPTION_POLICY: &str = "9f463020b564b252f6322a6f4ecfa8094a28a78ff5bc32e6b9ad1b2e01541542";
 const CONTROL_REVISION: &str = FRESHNESS_REVISION;
 
 fn repo_root() -> PathBuf {
@@ -174,7 +168,7 @@ fn exception_state() -> PolicyExceptionState {
 }
 
 // r[verify cairn.workflow_obligations.export]
-// r[verify cairn.workflow_obligations.inspection]
+// r[verify cairn.workflow_obligations.export]
 #[test]
 fn export_reports_the_bound_predicate_and_obligation_ids_for_consumers() {
     let root = test_root("export");
@@ -188,7 +182,12 @@ fn export_reports_the_bound_predicate_and_obligation_ids_for_consumers() {
     assert_eq!(export["binding"]["workflow_id"], "verify");
     assert_eq!(
         export["predicate"]["allowed_command_classes"],
-        json!(["gate", "receipt-inspect", "traceability", "workflow-inspect"])
+        json!([
+            "gate",
+            "receipt-inspect",
+            "traceability",
+            "workflow-inspect"
+        ])
     );
     assert!(export["obligations"]
         .as_array()
@@ -203,8 +202,10 @@ fn export_reports_the_bound_predicate_and_obligation_ids_for_consumers() {
         .as_array()
         .unwrap()
         .iter()
-        .any(|requirement| requirement["requirement_id"] == OBLIGATION_REQUIREMENT
-            && requirement["accepted_revision_blake3"] == CONTRACT_REVISION));
+        .any(
+            |requirement| requirement["requirement_id"] == OBLIGATION_REQUIREMENT
+                && requirement["accepted_revision_blake3"] == CONTRACT_REVISION
+        ));
 }
 
 // r[verify cairn.workflow_obligations.evaluation]
@@ -249,7 +250,8 @@ fn explain_keeps_incomplete_alternatives_unsatisfied() {
     let root = test_root("alternative");
     let mut case = base_case("verify", &[("verify.traceability", "claim-revision")]);
     let evidence = case["evidence"].as_array_mut().unwrap();
-    evidence.retain(|observation| observation["predicate"] != "verification-obligation.claim-revision");
+    evidence
+        .retain(|observation| observation["predicate"] != "verification-obligation.claim-revision");
     let (output, value) = run_case(&root, "explain", &case);
     assert!(output.status.success(), "{output:?}");
     let report = &value.unwrap()["report"];
@@ -359,9 +361,10 @@ fn list_reports_admitted_definitions_without_a_case() {
     let value: Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(value["outcome"], "listed");
     let definitions = value["definitions"].as_array().unwrap();
-    assert!(definitions.iter().any(|definition| definition["definition"] == "verify"));
     assert!(definitions
         .iter()
-        .any(|definition| definition["definition"] == "verify.bounded-exception"
-            && definition["temporal"] == true));
+        .any(|definition| definition["definition"] == "verify"));
+    assert!(definitions.iter().any(|definition| definition["definition"]
+        == "verify.bounded-exception"
+        && definition["temporal"] == true));
 }

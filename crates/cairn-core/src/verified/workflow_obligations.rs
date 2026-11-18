@@ -392,7 +392,11 @@ fn valid_id(value: &str) -> bool {
 // Admission
 // ---------------------------------------------------------------------------
 
-fn issue(code: &str, field_path: impl Into<String>, message: impl Into<String>) -> WorkflowObligationIssue {
+fn issue(
+    code: &str,
+    field_path: impl Into<String>,
+    message: impl Into<String>,
+) -> WorkflowObligationIssue {
     WorkflowObligationIssue {
         code: code.to_string(),
         field_path: field_path.into(),
@@ -759,7 +763,9 @@ fn validate_expr(
             }
         }
         ObligationExpr::AnyOf { alternatives, .. } => {
-            if alternatives.is_empty() || alternatives.len() > context.policy.bounds.max_alternatives {
+            if alternatives.is_empty()
+                || alternatives.len() > context.policy.bounds.max_alternatives
+            {
                 issues.push(issue(
                     WORKFLOW_OBLIGATION_ISSUE_EXPRESSION,
                     format!("{path}.{}.alternatives", expression.id()),
@@ -1208,8 +1214,7 @@ fn validate_selection(
         ObligationExpr::Evidence { .. } | ObligationExpr::Temporal { .. } => Ok(()),
         ObligationExpr::AllOf { obligations, .. } => obligations
             .iter()
-            .map(|child| validate_declared_alternative(child, selection))
-            .collect(),
+            .try_for_each(|child| validate_declared_alternative(child, selection)),
         ObligationExpr::AnyOf { id, alternatives } => {
             if let Some(selected) = selection.get(id) {
                 let declared = alternatives
@@ -1225,8 +1230,7 @@ fn validate_selection(
                 alternative
                     .obligations
                     .iter()
-                    .map(|child| validate_declared_alternative(child, selection))
-                    .collect()
+                    .try_for_each(|child| validate_declared_alternative(child, selection))
             })
         }
         ObligationExpr::Applicable { then, .. } => validate_declared_alternative(then, selection),
@@ -1244,8 +1248,7 @@ fn validate_declared_alternative(
         ObligationExpr::Evidence { .. } | ObligationExpr::Temporal { .. } => Ok(()),
         ObligationExpr::AllOf { obligations, .. } => obligations
             .iter()
-            .map(|child| validate_declared_alternative(child, selection))
-            .collect(),
+            .try_for_each(|child| validate_declared_alternative(child, selection)),
         ObligationExpr::AnyOf { id, alternatives } => {
             if let Some(selected) = selection.get(id) {
                 let declared = alternatives
@@ -1261,13 +1264,10 @@ fn validate_declared_alternative(
                 alternative
                     .obligations
                     .iter()
-                    .map(|child| validate_declared_alternative(child, selection))
-                    .collect()
+                    .try_for_each(|child| validate_declared_alternative(child, selection))
             })
         }
-        ObligationExpr::Applicable { then, .. } => {
-            validate_declared_alternative(then, selection)
-        }
+        ObligationExpr::Applicable { then, .. } => validate_declared_alternative(then, selection),
     }
 }
 
@@ -1327,7 +1327,9 @@ fn collect_requirements(
                 }
             }
         }
-        ObligationExpr::Applicable { condition, then, .. } => {
+        ObligationExpr::Applicable {
+            condition, then, ..
+        } => {
             if seen.insert(condition.clone()) {
                 let known = predicates.get(condition).ok_or_else(|| {
                     WorkflowObligationError::Unsupported(format!(
@@ -1545,7 +1547,10 @@ fn collect_alternatives(
                 collect_alternatives(child, alternatives);
             }
         }
-        ObligationExpr::AnyOf { id, alternatives: values } => {
+        ObligationExpr::AnyOf {
+            id,
+            alternatives: values,
+        } => {
             alternatives.insert(
                 id.clone(),
                 values
@@ -1840,17 +1845,6 @@ impl NodeState {
             Self::ExceptionAccepted => "exception_accepted",
         }
     }
-
-    fn successful(&self) -> bool {
-        matches!(
-            self,
-            Self::Satisfied | Self::NotApplicable | Self::ExceptionAccepted
-        )
-    }
-
-    fn proved(&self) -> bool {
-        matches!(self, Self::Satisfied | Self::NotApplicable)
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -2032,10 +2026,16 @@ pub fn evaluate_workflow_obligations(
             "subject and context revision identities are required".into(),
         ));
     }
-    validate_selection(&admitted.definition.completion, &request.selected_alternatives)?;
+    validate_selection(
+        &admitted.definition.completion,
+        &request.selected_alternatives,
+    )?;
     let mut exceptions = BTreeMap::new();
     for snapshot in &request.exceptions {
-        if exceptions.insert(snapshot.path.as_str(), snapshot).is_some() {
+        if exceptions
+            .insert(snapshot.path.as_str(), snapshot)
+            .is_some()
+        {
             return Err(WorkflowObligationError::InvalidInput(format!(
                 "duplicate exception snapshot for path {}",
                 snapshot.path
@@ -2057,7 +2057,11 @@ pub fn evaluate_workflow_obligations(
     };
     let root = evaluation.evaluate_expr(&admitted.definition.completion)?;
     let mut completion = Vec::new();
-    collect_explanations(&mut evaluation.outcomes, &admitted.definition.completion, &mut completion);
+    collect_explanations(
+        &mut evaluation.outcomes,
+        &admitted.definition.completion,
+        &mut completion,
+    );
 
     let mut remaining = Vec::new();
     let mut satisfied = Vec::new();
@@ -2078,19 +2082,18 @@ pub fn evaluate_workflow_obligations(
         }
     }
 
-    let (outcome, proved, successful_delivery) = match request.terminal.as_ref().map(|terminal| terminal.state) {
-        Some(TerminalState::Blocked) => ("blocked", false, false),
-        Some(TerminalState::Abandoned) => ("abandoned", false, false),
-        _ => match root.state {
-            NodeState::Satisfied | NodeState::NotApplicable => {
-                ("proved", true, true)
-            }
-            NodeState::ExceptionAccepted => ("exception_accepted", false, true),
-            NodeState::Unsatisfied => ("unsatisfied", false, false),
-            NodeState::Unknown => ("unknown", false, false),
-            NodeState::Unsupported => ("unsupported", false, false),
-        },
-    };
+    let (outcome, proved, successful_delivery) =
+        match request.terminal.as_ref().map(|terminal| terminal.state) {
+            Some(TerminalState::Blocked) => ("blocked", false, false),
+            Some(TerminalState::Abandoned) => ("abandoned", false, false),
+            _ => match root.state {
+                NodeState::Satisfied | NodeState::NotApplicable => ("proved", true, true),
+                NodeState::ExceptionAccepted => ("exception_accepted", false, true),
+                NodeState::Unsatisfied => ("unsatisfied", false, false),
+                NodeState::Unknown => ("unknown", false, false),
+                NodeState::Unsupported => ("unsupported", false, false),
+            },
+        };
 
     let mut preconditions = Vec::new();
     for precondition in &admitted.definition.action_preconditions {
@@ -2179,9 +2182,9 @@ pub fn evaluate_workflow_obligations(
                 applicability,
                 control: exception.control.id.clone(),
                 control_state,
-                applied: completion.iter().any(|node| {
-                    node.id == exception.node && node.state == "exception_accepted"
-                }),
+                applied: completion
+                    .iter()
+                    .any(|node| node.id == exception.node && node.state == "exception_accepted"),
                 detail,
             });
         }
@@ -2196,19 +2199,16 @@ pub fn evaluate_workflow_obligations(
     let mut ignored_claims = Vec::new();
     if let Some(claims) = &request.agent_claims {
         if claims.success_statement.is_some() {
-            ignored_claims.push(
-                "agent success statement is not native evidence".to_string(),
-            );
+            ignored_claims.push("agent success statement is not native evidence".to_string());
         }
         if claims.checked_task_boxes > 0 {
             ignored_claims.push(
-                "checked task boxes and counts are progress claims, not native evidence".to_string(),
+                "checked task boxes and counts are progress claims, not native evidence"
+                    .to_string(),
             );
         }
         if claims.activity_count > 0 {
-            ignored_claims.push(
-                "activity counts are not native evidence".to_string(),
-            );
+            ignored_claims.push("activity counts are not native evidence".to_string());
         }
     }
 
@@ -2227,7 +2227,8 @@ pub fn evaluate_workflow_obligations(
         "alternative selection change".to_string(),
     ]);
     if !admitted.definition.exceptions.is_empty() {
-        reevaluation_triggers.insert("exception revocation, expiry or request revision change".to_string());
+        reevaluation_triggers
+            .insert("exception revocation, expiry or request revision change".to_string());
         reevaluation_triggers.insert("compensating-control evidence change".to_string());
     }
     if admitted.definition.temporal.is_some() {
@@ -2306,13 +2307,18 @@ fn collect_explanations(
                 }
             }
         }
-        ObligationExpr::Applicable { then, .. } => collect_explanations(outcomes, then, explanations),
+        ObligationExpr::Applicable { then, .. } => {
+            collect_explanations(outcomes, then, explanations)
+        }
         ObligationExpr::Evidence { .. } | ObligationExpr::Temporal { .. } => {}
     }
 }
 
 impl Evaluation<'_> {
-    fn evaluate_expr(&mut self, expression: &ObligationExpr) -> Result<NodeOutcome, WorkflowObligationError> {
+    fn evaluate_expr(
+        &mut self,
+        expression: &ObligationExpr,
+    ) -> Result<NodeOutcome, WorkflowObligationError> {
         if let Some(outcome) = self.outcomes.get(expression.id()) {
             return Ok(outcome.clone());
         }
@@ -2336,7 +2342,9 @@ impl Evaluation<'_> {
                     .map(|observation| observation.observation_id.clone())
                     .collect();
                 if outcome.evidence.is_empty() {
-                    outcome.evidence.push(format!("{id}: no observation supplied"));
+                    outcome
+                        .evidence
+                        .push(format!("{id}: no observation supplied"));
                 }
                 outcome
             }
@@ -2371,7 +2379,8 @@ impl Evaluation<'_> {
                         .insert(expression.id().to_string(), outcome.clone());
                     return Ok(outcome);
                 };
-                let Some(alternative) = alternatives.iter().find(|value| value.id == *selected) else {
+                let Some(alternative) = alternatives.iter().find(|value| value.id == *selected)
+                else {
                     let mut outcome = NodeOutcome::new(
                         NodeState::Unsupported,
                         format!("any_of {id} selects unknown alternative {selected}"),
@@ -2403,7 +2412,11 @@ impl Evaluation<'_> {
                 outcome.children = children;
                 outcome
             }
-            ObligationExpr::Applicable { id, condition, then } => {
+            ObligationExpr::Applicable {
+                id,
+                condition,
+                then,
+            } => {
                 let (condition_state, detail) = self.evidence_state(condition);
                 match condition_state {
                     "satisfied" => {
@@ -2430,77 +2443,84 @@ impl Evaluation<'_> {
                     ),
                 }
             }
-            ObligationExpr::Temporal { id, check } => {
-                match &self.admitted.definition.temporal {
-                    Some(extension) if extension.id == *check => {
-                        let explanation =
-                            temporal_explanation(extension, self.request.temporal.as_ref());
-                        let state = match explanation.state.as_str() {
-                            "satisfied" => NodeState::Satisfied,
-                            "unsatisfied" => NodeState::Unsatisfied,
-                            "unsupported" => NodeState::Unsupported,
-                            _ => NodeState::Unknown,
-                        };
-                        NodeOutcome::new(state, explanation.detail)
-                    }
-                    Some(_) => NodeOutcome::new(
-                        NodeState::Unsupported,
-                        format!("temporal node {id} references an undeclared extension {check}"),
-                    ),
-                    None => NodeOutcome::new(
-                        NodeState::Unsupported,
-                        format!("temporal node {id} has no declared extension"),
-                    ),
+            ObligationExpr::Temporal { id, check } => match &self.admitted.definition.temporal {
+                Some(extension) if extension.id == *check => {
+                    let explanation =
+                        temporal_explanation(extension, self.request.temporal.as_ref());
+                    let state = match explanation.state.as_str() {
+                        "satisfied" => NodeState::Satisfied,
+                        "unsatisfied" => NodeState::Unsatisfied,
+                        "unsupported" => NodeState::Unsupported,
+                        _ => NodeState::Unknown,
+                    };
+                    NodeOutcome::new(state, explanation.detail)
                 }
-            }
+                Some(_) => NodeOutcome::new(
+                    NodeState::Unsupported,
+                    format!("temporal node {id} references an undeclared extension {check}"),
+                ),
+                None => NodeOutcome::new(
+                    NodeState::Unsupported,
+                    format!("temporal node {id} has no declared extension"),
+                ),
+            },
         };
-        let exception = self.admitted.definition.exceptions.iter().find_map(|exception| {
-            if exception.node != expression.id() {
-                return None;
-            }
-            self.exceptions
-                .get(exception.id.as_str())
-                .copied()
-                .map(|snapshot| (exception, snapshot))
-        });
+        let exception = self
+            .admitted
+            .definition
+            .exceptions
+            .iter()
+            .find_map(|exception| {
+                if exception.node != expression.id() {
+                    return None;
+                }
+                self.exceptions
+                    .get(exception.id.as_str())
+                    .copied()
+                    .map(|snapshot| (exception, snapshot))
+            });
         if let (true, Some((exception, snapshot))) =
             (outcome.state != NodeState::Satisfied, exception)
         {
-                let (applicability, control_state, detail) =
-                    exception_applicability(exception, snapshot, &self.evidence);
-                let mut evaluation = ExceptionEvaluation {
-                    path: exception.id.clone(),
-                    exception_id: exception.exception_id.clone(),
-                    request_revision: exception.request_revision,
-                    applicability: applicability.clone(),
-                    control: exception.control.id.clone(),
-                    control_state: control_state.clone(),
-                    applied: false,
-                    detail: detail.clone(),
-                };
-                match (outcome.state, applicability.as_str(), control_state.as_str()) {
-                    (NodeState::Unsatisfied, "applicable", "satisfied") => {
-                        outcome.original = Some(OriginalCondition {
-                            node: expression.id().to_string(),
-                            state: outcome.state.tag().to_string(),
-                            basis: outcome.detail.clone(),
-                        });
-                        evaluation.applied = true;
-                        outcome.state = NodeState::ExceptionAccepted;
-                        outcome.detail = format!(
+            let (applicability, control_state, detail) =
+                exception_applicability(exception, snapshot, &self.evidence);
+            let mut evaluation = ExceptionEvaluation {
+                path: exception.id.clone(),
+                exception_id: exception.exception_id.clone(),
+                request_revision: exception.request_revision,
+                applicability: applicability.clone(),
+                control: exception.control.id.clone(),
+                control_state: control_state.clone(),
+                applied: false,
+                detail: detail.clone(),
+            };
+            match (
+                outcome.state,
+                applicability.as_str(),
+                control_state.as_str(),
+            ) {
+                (NodeState::Unsatisfied, "applicable", "satisfied") => {
+                    outcome.original = Some(OriginalCondition {
+                        node: expression.id().to_string(),
+                        state: outcome.state.tag().to_string(),
+                        basis: outcome.detail.clone(),
+                    });
+                    evaluation.applied = true;
+                    outcome.state = NodeState::ExceptionAccepted;
+                    outcome.detail = format!(
                             "exception {} accepted with control {}; original condition remains unsatisfied and unproved",
                             exception.id, exception.control.id
                         );
-                    }
-                    (NodeState::Unknown, _, _) => {
-                        evaluation.detail = format!(
-                            "{}; exception path is not applied to an unknown condition",
-                            evaluation.detail
-                        );
-                    }
-                    _ => {}
                 }
-                outcome.exception = Some(evaluation);
+                (NodeState::Unknown, _, _) => {
+                    evaluation.detail = format!(
+                        "{}; exception path is not applied to an unknown condition",
+                        evaluation.detail
+                    );
+                }
+                _ => {}
+            }
+            outcome.exception = Some(evaluation);
         }
         self.outcomes
             .insert(expression.id().to_string(), outcome.clone());
@@ -2509,7 +2529,10 @@ impl Evaluation<'_> {
 
     fn evidence_state(&self, predicate: &str) -> (&'static str, String) {
         let Some(known) = self.evidence.predicates.get(predicate) else {
-            return ("unsupported", format!("predicate {predicate} is not admitted"));
+            return (
+                "unsupported",
+                format!("predicate {predicate} is not admitted"),
+            );
         };
         let mut matching = self
             .evidence
@@ -2517,7 +2540,10 @@ impl Evaluation<'_> {
             .iter()
             .filter(|observation| observation.predicate == predicate);
         let Some(observation) = matching.next() else {
-            return ("unknown", format!("no observation supplied for {}", known.requirement_id));
+            return (
+                "unknown",
+                format!("no observation supplied for {}", known.requirement_id),
+            );
         };
         if let Some(duplicate) = matching.next() {
             return (
@@ -2546,14 +2572,19 @@ impl Evaluation<'_> {
         match observation.state {
             ObservationState::Satisfied => (
                 "satisfied",
-                format!("{} at revision {}", known.requirement_id, known.accepted_revision_blake3),
+                format!(
+                    "{} at revision {}",
+                    known.requirement_id, known.accepted_revision_blake3
+                ),
             ),
-            ObservationState::Unsatisfied => {
-                ("unsatisfied", format!("{} reports unsatisfied", known.requirement_id))
-            }
-            ObservationState::Unknown => {
-                ("unknown", format!("{} remains unknown", known.requirement_id))
-            }
+            ObservationState::Unsatisfied => (
+                "unsatisfied",
+                format!("{} reports unsatisfied", known.requirement_id),
+            ),
+            ObservationState::Unknown => (
+                "unknown",
+                format!("{} remains unknown", known.requirement_id),
+            ),
             ObservationState::Unsupported => (
                 "unsupported",
                 format!("{} is unsupported", known.requirement_id),
@@ -2613,7 +2644,13 @@ fn exception_applicability(
             "exception policy identity is stale".to_string(),
         );
     }
-    if !state.request.scope.rule_ids.iter().any(|rule| rule == &exception.scope_rule_id) {
+    if !state
+        .request
+        .scope
+        .rule_ids
+        .iter()
+        .any(|rule| rule == &exception.scope_rule_id)
+    {
         return (
             "inapplicable".to_string(),
             control_state,
@@ -2666,8 +2703,7 @@ fn exception_applicability(
         );
     }
     if control_state != "satisfied" {
-        let detail =
-            format!("compensating control evidence is {control_state}: {control_detail}");
+        let detail = format!("compensating control evidence is {control_state}: {control_detail}");
         return ("applicable".to_string(), control_state, detail);
     }
     (
@@ -2686,13 +2722,19 @@ fn evidence_for(
     predicate: &str,
 ) -> (&'static str, String) {
     let Some(known) = evidence.predicates.get(predicate) else {
-        return ("unsupported", format!("predicate {predicate} is not admitted"));
+        return (
+            "unsupported",
+            format!("predicate {predicate} is not admitted"),
+        );
     };
     let mut matching = declared
         .iter()
         .filter(|observation| observation.predicate == predicate);
     let Some(observation) = matching.next() else {
-        return ("unknown", format!("no observation supplied for {}", known.requirement_id));
+        return (
+            "unknown",
+            format!("no observation supplied for {}", known.requirement_id),
+        );
     };
     if matching.next().is_some() {
         return ("unknown", "conflicting duplicate observations".to_string());
@@ -2704,7 +2746,10 @@ fn evidence_for(
         || observation.policy_blake3 != evidence.policy_blake3
         || observation.observation_id.trim().is_empty()
     {
-        return ("unknown", "compensating-control observation is stale or out of scope".to_string());
+        return (
+            "unknown",
+            "compensating-control observation is stale or out of scope".to_string(),
+        );
     }
     match observation.state {
         ObservationState::Satisfied => ("satisfied", String::new()),
@@ -2732,10 +2777,12 @@ fn temporal_explanation(
         second_epoch: None,
         state: "unknown".to_string(),
         detail: String::new(),
-        non_claim: "a finite trace ordering result implies no unbounded safety or liveness".to_string(),
+        non_claim: "a finite trace ordering result implies no unbounded safety or liveness"
+            .to_string(),
     };
     let Some(observation) = observation else {
-        explanation.detail = "no temporal observation supplied; ordering remains unknown".to_string();
+        explanation.detail =
+            "no temporal observation supplied; ordering remains unknown".to_string();
         return explanation;
     };
     explanation.window_start_epoch = observation.window_start_epoch;
@@ -2797,9 +2844,11 @@ fn temporal_explanation(
     let (Some(first_epoch), Some(second_epoch)) = (first, second) else {
         if observation.completeness == TraceCompleteness::Complete {
             explanation.state = "unsatisfied".to_string();
-            explanation.detail = "a declared complete interval lacks one of the named events".to_string();
+            explanation.detail =
+                "a declared complete interval lacks one of the named events".to_string();
         } else {
-            explanation.detail = "the declared interval is incomplete; ordering remains unknown".to_string();
+            explanation.detail =
+                "the declared interval is incomplete; ordering remains unknown".to_string();
         }
         return explanation;
     };
@@ -2836,21 +2885,27 @@ pub fn render_with_workflow_obligations(
     catalog: &AdmittedGeneratedWorkflowCatalog,
     obligations: &AdmittedWorkflowObligationCatalog,
     adapter_id: &str,
-) -> Result<Vec<super::generated_agent_workflow::RenderedGeneratedWorkflowFile>, Vec<GeneratedWorkflowIssue>>
-{
-    let adapter = super::generated_agent_workflow::find_generated_workflow_adapter(catalog, adapter_id)
-        .map_err(|issue| vec![issue])?;
+) -> Result<
+    Vec<super::generated_agent_workflow::RenderedGeneratedWorkflowFile>,
+    Vec<GeneratedWorkflowIssue>,
+> {
+    let adapter =
+        super::generated_agent_workflow::find_generated_workflow_adapter(catalog, adapter_id)
+            .map_err(|issue| vec![issue])?;
     let presentation = presentation_for_adapter(&adapter.format);
-    let mut rendered_files: BTreeMap<String, super::generated_agent_workflow::RenderedGeneratedWorkflowFile> =
-        super::generated_agent_workflow::render_generated_agent_workflows(catalog, adapter_id)?
-            .into_iter()
-            .map(|file| (file.workflow_id.clone(), file))
-            .collect();
+    let mut rendered_files: BTreeMap<
+        String,
+        super::generated_agent_workflow::RenderedGeneratedWorkflowFile,
+    > = super::generated_agent_workflow::render_generated_agent_workflows(catalog, adapter_id)?
+        .into_iter()
+        .map(|file| (file.workflow_id.clone(), file))
+        .collect();
     let mut files = Vec::with_capacity(catalog.policy.descriptors.len());
     for descriptor in &catalog.policy.descriptors {
         let mut rendered = rendered_files.remove(&descriptor.id).ok_or_else(|| {
             vec![super::generated_agent_workflow::GeneratedWorkflowIssue {
-                code: super::generated_agent_workflow::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER.to_string(),
+                code: super::generated_agent_workflow::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER
+                    .to_string(),
                 field_path: format!("adapters.{}", adapter.id),
                 message: "adapter did not render the admitted workflow".to_string(),
             }]
@@ -2859,11 +2914,14 @@ pub fn render_with_workflow_obligations(
             if admitted.binding.catalog_identity != catalog.catalog_identity
                 || admitted.binding.workflow_policy_blake3 != obligations.workflow_policy_blake3
             {
-                return Err(vec![super::generated_agent_workflow::GeneratedWorkflowIssue {
-                    code: WORKFLOW_OBLIGATION_ISSUE_BINDING.to_string(),
-                    field_path: format!("obligations.{}", descriptor.id),
-                    message: "obligation binding does not match the rendering catalog".to_string(),
-                }]);
+                return Err(vec![
+                    super::generated_agent_workflow::GeneratedWorkflowIssue {
+                        code: WORKFLOW_OBLIGATION_ISSUE_BINDING.to_string(),
+                        field_path: format!("obligations.{}", descriptor.id),
+                        message: "obligation binding does not match the rendering catalog"
+                            .to_string(),
+                    },
+                ]);
             }
             let guidance = obligation_guidance(admitted, &obligations.policy, &BTreeMap::new())
                 .and_then(|guidance| render_guidance(&guidance, &presentation))
@@ -2876,22 +2934,24 @@ pub fn render_with_workflow_obligations(
                 })?;
             rendered.contents.push('\n');
             rendered.contents.push_str(&guidance);
-            rendered.content_blake3 =
-                super::evidence::blake3_hex(rendered.contents.as_bytes());
-            rendered.descriptor_identity = super::evidence::canonical_json_hash(
-                &serde_json::json!({
+            rendered.content_blake3 = super::evidence::blake3_hex(rendered.contents.as_bytes());
+            rendered.descriptor_identity =
+                super::evidence::canonical_json_hash(&serde_json::json!({
                     "descriptor": descriptor,
                     "generator_version": catalog.policy.generator_version,
                     "obligation_binding": admitted.binding,
-                }),
-            );
+                }));
         }
         if rendered.contents.len() > catalog.policy.bounds.max_file_bytes {
-            return Err(vec![super::generated_agent_workflow::GeneratedWorkflowIssue {
-                code: super::generated_agent_workflow::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER.to_string(),
-                field_path: format!("adapters.{}.file_bytes", adapter.id),
-                message: "adapter output with obligations exceeds the policy file bound".to_string(),
-            }]);
+            return Err(vec![
+                super::generated_agent_workflow::GeneratedWorkflowIssue {
+                    code: super::generated_agent_workflow::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER
+                        .to_string(),
+                    field_path: format!("adapters.{}.file_bytes", adapter.id),
+                    message: "adapter output with obligations exceeds the policy file bound"
+                        .to_string(),
+                },
+            ]);
         }
         files.push(rendered);
     }

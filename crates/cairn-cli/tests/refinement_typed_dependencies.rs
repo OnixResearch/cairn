@@ -7,11 +7,11 @@ use std::{
 };
 
 use cairn_core::{
-    ArgumentScope, Assurance, ChildGuarantee, Composition, ContentBoundRequirementRow,
-    Coverage, DependencyContext, DependencyEndpoint, DependencyEvidence, DependencyRelation,
-    EvidenceCoverage, Feasibility, FeasibilityDisposition, ImplicationRelation,
-    RefinementPolicy, RefinementRequest, RequirementRevision, TypedDependency,
-    DEPENDENCY_SCHEMA_V1, REFINEMENT_POLICY_SCHEMA_V1, REFINEMENT_SCHEMA_V1,
+    ArgumentScope, Assurance, ChildGuarantee, Composition, ContentBoundRequirementRow, Coverage,
+    DependencyContext, DependencyEndpoint, DependencyEvidence, DependencyRelation,
+    EvidenceCoverage, Feasibility, FeasibilityDisposition, ImplicationRelation, RefinementPolicy,
+    RefinementRequest, RequirementRevision, TypedDependency, DEPENDENCY_SCHEMA_V1,
+    REFINEMENT_POLICY_SCHEMA_V1, REFINEMENT_SCHEMA_V1,
 };
 use serde_json::Value;
 
@@ -19,7 +19,8 @@ const HASH_A: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 const HASH_B: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 const HASH_C: &str = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
 const HASH_D: &str = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
-const POLICY: &str = include_str!("../../../cairn-policy/generated/refinement-typed-dependencies.json");
+const POLICY: &str =
+    include_str!("../../../cairn-policy/generated/refinement-typed-dependencies.json");
 
 struct Fixture {
     root: PathBuf,
@@ -95,13 +96,12 @@ fn revision(index: u64) -> RequirementRevision {
             requirement_id: format!("cairn.test.refinement.cli.{index}"),
             specification_path: ".cairn/specs/refinement/spec.md".into(),
             specification_blake3: HASH_A.into(),
-            source_span:
-                cairn_core::ContentBoundSourceSpan {
-                    start_byte: 0,
-                    end_byte: 32,
-                    start_line: 1,
-                    end_line: 1,
-                },
+            source_span: cairn_core::ContentBoundSourceSpan {
+                start_byte: 0,
+                end_byte: 32,
+                start_line: 1,
+                end_line: 1,
+            },
             requirement_body_blake3: format!("{index:064x}"),
             row_blake3: format!("{:064x}", index + 10_000),
         },
@@ -237,10 +237,7 @@ fn read_only_explanation_of_a_supported_dependency() {
         output["report"]["schema"],
         "cairn.refinement-argument-report.v1"
     );
-    assert_eq!(
-        output["report"]["dependencies"][0]["state"],
-        "supported"
-    );
+    assert_eq!(output["report"]["dependencies"][0]["state"], "supported");
     assert_eq!(output["boundary"], cairn_core::REFINEMENT_BOUNDARY);
     let after = fs::read(fixture.root.join(".cairn/specs/refinement/spec.md")).unwrap();
     assert_eq!(before, after);
@@ -255,10 +252,7 @@ fn pending_argument_is_an_explicit_successful_explanation() {
     let (output, success) = fixture.explain("pending", &request_with_unobserved_condition(), &[]);
     assert!(success);
     assert_eq!(output["outcome"], "evaluated");
-    assert_eq!(
-        output["report"]["decompositions"][0]["state"],
-        "pending"
-    );
+    assert_eq!(output["report"]["decompositions"][0]["state"], "pending");
     assert!(output["report"]["decompositions"][0]["reason"]
         .as_str()
         .unwrap()
@@ -283,8 +277,7 @@ fn malformed_case_and_policy_are_rejected() {
 
     let mut policy: RefinementPolicy = serde_json::from_str(POLICY).unwrap();
     policy.schema = "cairn.refinement-policy.v0".into();
-    let (value, success) =
-        fixture.explain_policy("policy", &request_with_dependency(), &policy);
+    let (value, success) = fixture.explain_policy("policy", &request_with_dependency(), &policy);
     assert!(!success);
     assert_eq!(value["outcome"], "rejected");
     assert_eq!(value["error"]["outcome"], "unsupported");

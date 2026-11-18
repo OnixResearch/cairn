@@ -14,8 +14,7 @@ const SHIPPED_DEFAULT: &str =
 const POLICY_HASH: &str = "abababababababababababababababababababababababababababababababab";
 const SUBJECT: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const CONTEXT: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-const EXCEPTION_POLICY: &str =
-    "9f463020b564b252f6322a6f4ecfa8094a28a78ff5bc32e6b9ad1b2e01541542";
+const EXCEPTION_POLICY: &str = "9f463020b564b252f6322a6f4ecfa8094a28a78ff5bc32e6b9ad1b2e01541542";
 const SIGNAL: &str = "signal:selected-change";
 
 fn shipped_policy() -> WorkflowObligationPolicy {
@@ -100,8 +99,16 @@ fn base_evidence(admitted: &AdmittedWorkflowObligation) -> Vec<EvidenceObservati
             "agent-receipt.verification-contract",
             ObservationState::Satisfied,
         ),
-        observation(admitted, "agent-receipt.pass-only", ObservationState::Satisfied),
-        observation(admitted, "agent-receipt.freshness", ObservationState::Satisfied),
+        observation(
+            admitted,
+            "agent-receipt.pass-only",
+            ObservationState::Satisfied,
+        ),
+        observation(
+            admitted,
+            "agent-receipt.freshness",
+            ObservationState::Satisfied,
+        ),
         observation(
             admitted,
             "agent-receipt.completion-authority",
@@ -125,7 +132,11 @@ fn bounded_evidence(admitted: &AdmittedWorkflowObligation) -> Vec<EvidenceObserv
     evidence
 }
 
-fn exception_state(request_revision: u64, lifecycle: &str, controls: Vec<String>) -> PolicyExceptionState {
+fn exception_state(
+    request_revision: u64,
+    lifecycle: &str,
+    controls: Vec<String>,
+) -> PolicyExceptionState {
     let mut requesters = std::collections::BTreeSet::new();
     requesters.insert("requester".to_string());
     let mut reviewers = std::collections::BTreeSet::new();
@@ -200,7 +211,11 @@ fn exception_snapshot(
     }
 }
 
-fn trace(completeness: TraceCompleteness, first: Option<u64>, second: Option<u64>) -> TemporalObservation {
+fn trace(
+    completeness: TraceCompleteness,
+    first: Option<u64>,
+    second: Option<u64>,
+) -> TemporalObservation {
     let mut events = Vec::new();
     if let Some(epoch) = first {
         events.push(ObservedEvent {
@@ -251,7 +266,12 @@ fn shipped_policy_admits_and_binds_exact_catalog_and_policy_identity() {
     );
     assert_eq!(
         verify.command_classes,
-        ["gate", "receipt-inspect", "traceability", "workflow-inspect"]
+        [
+            "gate",
+            "receipt-inspect",
+            "traceability",
+            "workflow-inspect"
+        ]
     );
     assert!(definition(&catalog, "verify.bounded-exception")
         .definition
@@ -362,11 +382,13 @@ fn missing_alternative_and_partial_branches_do_not_combine() {
     }
     let report = evaluate_workflow_obligations(verify, &catalog.policy, &partial_receipt).unwrap();
     assert_eq!(report.outcome, "unsatisfied");
-    assert!(!report
-        .completion
-        .iter()
-        .any(|node| node.id == "verify.traceability.claim"),
-        "unselected alternative must not be evaluated or combined");
+    assert!(
+        !report
+            .completion
+            .iter()
+            .any(|node| node.id == "verify.traceability.claim"),
+        "unselected alternative must not be evaluated or combined"
+    );
 
     let mut proved = request(
         verify,
@@ -650,14 +672,9 @@ fn adapters_change_layout_but_not_obligations_evidence_or_authority() {
     let generated = shipped_catalog();
     let verify = definition(&catalog, "verify");
     let guidance = obligation_guidance(verify, &catalog.policy, &BTreeMap::new()).unwrap();
-    let baseline = export_workflow_obligation(
-        verify,
-        &catalog.policy,
-        &BTreeMap::new(),
-        SUBJECT,
-        CONTEXT,
-    )
-    .unwrap();
+    let baseline =
+        export_workflow_obligation(verify, &catalog.policy, &BTreeMap::new(), SUBJECT, CONTEXT)
+            .unwrap();
 
     let mut layouts = Vec::new();
     for adapter in ["agent-skills", "claude", "codex"] {
@@ -675,7 +692,9 @@ fn adapters_change_layout_but_not_obligations_evidence_or_authority() {
         for requirement in &baseline.predicate.evidence_requirements {
             assert!(
                 file.contents.contains(requirement.requirement_id.as_str())
-                    && file.contents.contains(requirement.accepted_revision_blake3.as_str()),
+                    && file
+                        .contents
+                        .contains(requirement.accepted_revision_blake3.as_str()),
                 "adapter {adapter} dropped native evidence revision"
             );
         }
@@ -685,8 +704,8 @@ fn adapters_change_layout_but_not_obligations_evidence_or_authority() {
     assert_ne!(layouts[1], layouts[2], "adapters must differ in layout");
 
     // Presentation-only edits cannot change the predicate or command authority.
-    let predicate = obligation_predicate(verify, &catalog.policy, &BTreeMap::new(), SUBJECT, CONTEXT)
-        .unwrap();
+    let predicate =
+        obligation_predicate(verify, &catalog.policy, &BTreeMap::new(), SUBJECT, CONTEXT).unwrap();
     for presentation in [
         Presentation {
             format: PresentationFormat::Markdown,
@@ -705,14 +724,8 @@ fn adapters_change_layout_but_not_obligations_evidence_or_authority() {
             assert!(text.contains(requirement.as_str()));
         }
     }
-    let repeated = obligation_predicate(
-        verify,
-        &catalog.policy,
-        &BTreeMap::new(),
-        SUBJECT,
-        CONTEXT,
-    )
-    .unwrap();
+    let repeated =
+        obligation_predicate(verify, &catalog.policy, &BTreeMap::new(), SUBJECT, CONTEXT).unwrap();
     assert_eq!(predicate.predicate_blake3, repeated.predicate_blake3);
     assert_eq!(predicate.allowed_command_classes, verify.command_classes);
     assert!(render_guidance(
@@ -740,14 +753,19 @@ fn workflows_without_obligations_keep_legacy_render_identity() {
         let legacy_explore = rendered_file(&legacy, "explore");
         let composed_explore = rendered_file(&composed, "explore");
         assert_eq!(legacy_explore.contents, composed_explore.contents);
-        assert_eq!(legacy_explore.content_blake3, composed_explore.content_blake3);
+        assert_eq!(
+            legacy_explore.content_blake3,
+            composed_explore.content_blake3
+        );
         assert_eq!(
             legacy_explore.descriptor_identity,
             composed_explore.descriptor_identity
         );
         let legacy_verify = rendered_file(&legacy, "verify");
         let composed_verify = rendered_file(&composed, "verify");
-        assert!(composed_verify.contents.starts_with(legacy_verify.contents.as_str()));
+        assert!(composed_verify
+            .contents
+            .starts_with(legacy_verify.contents.as_str()));
         assert_ne!(legacy_verify.content_blake3, composed_verify.content_blake3);
     }
 }
@@ -766,7 +784,10 @@ fn export_binds_intent_policy_subject_context_and_selected_alternative() {
     assert_eq!(export.predicate.subject_blake3, SUBJECT);
     assert_eq!(export.predicate.context_blake3, CONTEXT);
     assert_eq!(
-        export.predicate.selected_alternatives.get("verify.traceability"),
+        export
+            .predicate
+            .selected_alternatives
+            .get("verify.traceability"),
         Some(&"claim-revision".to_string())
     );
     assert!(export
@@ -806,6 +827,9 @@ fn export_binds_intent_policy_subject_context_and_selected_alternative() {
     );
     request.evidence = base_evidence(verify);
     let report = evaluate_workflow_obligations(verify, &catalog.policy, &request).unwrap();
-    assert_eq!(report.predicate_blake3, other_selection.predicate.predicate_blake3);
+    assert_eq!(
+        report.predicate_blake3,
+        other_selection.predicate.predicate_blake3
+    );
     assert_eq!(report.binding, export.binding);
 }

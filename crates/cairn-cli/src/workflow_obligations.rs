@@ -78,13 +78,7 @@ fn rejected(error: WorkflowObligationError) -> Result<(), Box<dyn Error>> {
 fn load_admitted(
     policy_path: &Path,
     obligation_policy_path: Option<&str>,
-) -> Result<
-    (
-        cairn_core::AdmittedWorkflowObligationCatalog,
-        String,
-    ),
-    Box<dyn Error>,
-> {
+) -> Result<(cairn_core::AdmittedWorkflowObligationCatalog, String), Box<dyn Error>> {
     let policy = load_policy_file(policy_path.to_path_buf())?;
     let policy_hash = canonical_json_hash(&policy.raw);
     let workflow_catalog =
@@ -96,24 +90,22 @@ fn load_admitted(
         None => serde_json::from_str(DEFAULT_OBLIGATION_POLICY)
             .map_err(|error| format!("workflow obligation policy is invalid: {error}"))?,
     };
-    let catalog = match admit_workflow_obligation_policy(
-        &obligation_policy,
-        &workflow_catalog,
-        &policy_hash,
-    ) {
-        Ok(catalog) => catalog,
-        Err(issues) => {
-            print_json(json!({
-                "schema_version": EXPLANATION_SCHEMA,
-                "outcome": "rejected",
-                "advisory": true,
-                "report": null,
-                "error": {"outcome": "policy_rejected", "detail": format!("{issues:?}")},
-                "boundary": WORKFLOW_OBLIGATION_BOUNDARY,
-            }))?;
-            return Err("workflow obligation policy admission rejected".into());
-        }
-    };
+    let catalog =
+        match admit_workflow_obligation_policy(&obligation_policy, &workflow_catalog, &policy_hash)
+        {
+            Ok(catalog) => catalog,
+            Err(issues) => {
+                print_json(json!({
+                    "schema_version": EXPLANATION_SCHEMA,
+                    "outcome": "rejected",
+                    "advisory": true,
+                    "report": null,
+                    "error": {"outcome": "policy_rejected", "detail": format!("{issues:?}")},
+                    "boundary": WORKFLOW_OBLIGATION_BOUNDARY,
+                }))?;
+                return Err("workflow obligation policy admission rejected".into());
+            }
+        };
     Ok((catalog, policy_hash))
 }
 
@@ -138,24 +130,20 @@ fn case_and_definition<'a>(
 }
 
 /// Read-only inspection of admitted obligations. No lifecycle mutation.
-// r[impl cairn.workflow_obligations.inspection]
+// r[impl cairn.workflow_obligations.export]
 pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let Some(command) = args.first().map(String::as_str) else {
         return Err(usage());
     };
     let command = command.to_string();
     args.remove(0);
-    reject_unknown_options(
-        &args,
-        &["--case", "--policy", "--obligations"],
-    )?;
+    reject_unknown_options(&args, &["--case", "--policy", "--obligations"])?;
     reject_positional_arguments(&args)?;
     let policy_path = read_string_option(&args, "--policy")
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| std::path::PathBuf::from(default_policy_path()));
     let obligations_path = read_string_option(&args, "--obligations");
-    let (catalog, policy_hash) =
-        load_admitted(&policy_path, obligations_path.as_deref())?;
+    let (catalog, policy_hash) = load_admitted(&policy_path, obligations_path.as_deref())?;
     match command.as_str() {
         "list" => {
             let definitions = catalog
@@ -184,9 +172,8 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
             }))
         }
         "explain" => {
-            let case = load_case(
-                read_string_option(&args, "--case").ok_or("--case is required")?,
-            )?;
+            let case_path = read_string_option(&args, "--case").ok_or("--case is required")?;
+            let case = load_case(&case_path)?;
             let admitted = case_and_definition(&catalog, &case)?;
             let ObligationCase {
                 subject_blake3,
@@ -225,9 +212,8 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
             }
         }
         "export" => {
-            let case = load_case(
-                read_string_option(&args, "--case").ok_or("--case is required")?,
-            )?;
+            let case_path = read_string_option(&args, "--case").ok_or("--case is required")?;
+            let case = load_case(&case_path)?;
             let admitted = case_and_definition(&catalog, &case)?;
             match export_workflow_obligation(
                 admitted,
