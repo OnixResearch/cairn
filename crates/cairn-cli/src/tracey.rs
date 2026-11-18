@@ -215,13 +215,18 @@ pub(crate) fn collect_traceability_files_with_bound(
                 continue;
             }
             if max_source_bytes.is_some_and(|limit| metadata.len() > limit) {
-                return Err(format!("traceability source exceeds saved-byte budget: {relative}").into());
+                return Err(
+                    format!("traceability source exceeds saved-byte budget: {relative}").into(),
+                );
             }
             let text = fs::read_to_string(&path).map_err(|source_error| {
                 format!("failed to read traceability source {relative}: {source_error}")
             })?;
             if max_source_bytes.is_some_and(|limit| text.len() as u64 > limit) {
-                return Err(format!("traceability source changed beyond saved-byte budget: {relative}").into());
+                return Err(format!(
+                    "traceability source changed beyond saved-byte budget: {relative}"
+                )
+                .into());
             }
             files.insert(
                 relative.clone(),

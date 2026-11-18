@@ -6,6 +6,13 @@ use std::{
     process::Command,
 };
 
+use cairn_core::verified::traceability_comparison::{
+    buoy_comparison_fixture_tree_blake3, buoy_comparison_manifest_blake3, evaluate_buoy_comparison,
+    parse_buoy_comparison_manifest_value, BuoyComparisonInputs, BuoyComparisonManifest,
+    BuoyComparisonObservation, BUOY_COMPARISON_INDEX_MUTATION_SCHEMA_VERSION,
+    BUOY_COMPARISON_MODE_EXPORT_AND_VERIFY, BUOY_COMPARISON_MODE_NOT_EXECUTED,
+    BUOY_COMPARISON_MODE_REJECT_BASE_INDEX, BUOY_COMPARISON_MODE_VERIFY_BASE_INDEX,
+};
 use cairn_core::{
     canonical_json, content_bound_requirement_registry_issues_json,
     evaluate_content_bound_trace_index, evaluate_structural_trace_index,
@@ -16,13 +23,6 @@ use cairn_core::{
     ContentBoundTraceIndexIssue, RustItemConfiguration, TraceabilityFile,
     CONTENT_BOUND_TRACE_INDEX_BOUNDARY, CONTENT_BOUND_TRACE_INDEX_SCHEMA_V1,
     TRACEABILITY_ANCHOR_RUST_ITEM_V1,
-};
-use cairn_core::verified::traceability_comparison::{
-    buoy_comparison_fixture_tree_blake3, buoy_comparison_manifest_blake3,
-    evaluate_buoy_comparison, parse_buoy_comparison_manifest_value, BuoyComparisonInputs,
-    BuoyComparisonManifest, BuoyComparisonObservation, BUOY_COMPARISON_INDEX_MUTATION_SCHEMA_VERSION,
-    BUOY_COMPARISON_MODE_EXPORT_AND_VERIFY, BUOY_COMPARISON_MODE_NOT_EXECUTED,
-    BUOY_COMPARISON_MODE_REJECT_BASE_INDEX, BUOY_COMPARISON_MODE_VERIFY_BASE_INDEX,
 };
 use serde_json::{json, Value};
 
@@ -72,7 +72,15 @@ fn run_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.trace_index.cli]
     reject_unknown_options(
         &args,
-        &["--root", "--policy", "--profile", "--registry", "--out", "--configuration", "--previous-index"],
+        &[
+            "--root",
+            "--policy",
+            "--profile",
+            "--registry",
+            "--out",
+            "--configuration",
+            "--previous-index",
+        ],
     )?;
     reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
@@ -109,14 +117,28 @@ fn run_export(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             return Err("configuration path differs from selected structural profile".into());
         }
     }
-    let previous = read_string_option(&args, "--previous-index").map(|path| read_index(Path::new(&path))).transpose()?;
+    let previous = read_string_option(&args, "--previous-index")
+        .map(|path| read_index(Path::new(&path)))
+        .transpose()?;
     if previous.is_some() && profile.anchor_kind != TRACEABILITY_ANCHOR_RUST_ITEM_V1 {
         return Err("--previous-index is only valid for rust_item_v1".into());
     }
-    let evaluation = match evaluate_current_trace_index(&root, &registry, &profile, evidence_files, previous.as_ref()) {
+    let evaluation = match evaluate_current_trace_index(
+        &root,
+        &registry,
+        &profile,
+        evidence_files,
+        previous.as_ref(),
+    ) {
         Ok(evaluation) => evaluation,
         Err(error) => {
-            print_json(export_receipt(&root, &out, None, vec![item_issue(error.to_string())], Vec::new()))?;
+            print_json(export_receipt(
+                &root,
+                &out,
+                None,
+                vec![item_issue(error.to_string())],
+                Vec::new(),
+            ))?;
             std::process::exit(1);
         }
     };
@@ -148,7 +170,14 @@ fn run_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     // r[impl cairn.trace_index.freshness]
     reject_unknown_options(
         &args,
-        &["--root", "--policy", "--profile", "--registry", "--index", "--configuration"],
+        &[
+            "--root",
+            "--policy",
+            "--profile",
+            "--registry",
+            "--index",
+            "--configuration",
+        ],
     )?;
     reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
@@ -163,7 +192,9 @@ fn run_verify(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         &registry_path,
         &index_path,
         &index_path,
-        read_string_option(&args, "--configuration").as_deref().map(Path::new),
+        read_string_option(&args, "--configuration")
+            .as_deref()
+            .map(Path::new),
     )?;
     let valid = receipt.get("valid").and_then(Value::as_bool) == Some(true);
     print_json(receipt)?;
@@ -189,7 +220,8 @@ pub(crate) fn current_root_trace_index_verification_receipt(
     };
     let policy = crate::support::load_policy_file(resolved_policy_path.clone())?;
     let index = read_index(index_path)?;
-    let selected = profile_id.or_else(|| (index.structural.is_some()).then_some(index.profile.id.as_str()));
+    let selected =
+        profile_id.or_else(|| (index.structural.is_some()).then_some(index.profile.id.as_str()));
     let profile = selected_traceability_profile(&policy, selected)?;
     let evidence_files = collect_selected_traceability_files(root, &profile)?;
     let policy_bytes = read_bounded_file(
@@ -217,22 +249,50 @@ pub(crate) fn current_root_trace_index_verification_receipt(
     }
     let report = (|| -> Result<cairn_core::ContentBoundTraceIndexVerification, Box<dyn Error>> {
         if index.structural.is_some() {
-            let configured = profile.rust_configuration_path.as_deref().ok_or("selected structural profile has no configuration path")?;
+            let configured = profile
+                .rust_configuration_path
+                .as_deref()
+                .ok_or("selected structural profile has no configuration path")?;
             let path = configuration_path.unwrap_or_else(|| Path::new(configured));
-            if path != Path::new(configured) { return Err("configuration path differs from selected structural profile".into()); }
+            if path != Path::new(configured) {
+                return Err("configuration path differs from selected structural profile".into());
+            }
             let configuration = read_configuration(root, path)?;
-            let preliminary = evaluate_content_bound_trace_index(&registry, &profile, evidence_files.clone());
+            let preliminary =
+                evaluate_content_bound_trace_index(&registry, &profile, evidence_files.clone());
             let facts = if let Some(preliminary) = preliminary.index {
                 rust_items::facts(&evidence_files, &preliminary.links, &configuration)?
-            } else { Vec::new() };
-            Ok(verify_structural_trace_index(&index, &registry, &profile, evidence_files, facts, configuration))
+            } else {
+                Vec::new()
+            };
+            Ok(verify_structural_trace_index(
+                &index,
+                &registry,
+                &profile,
+                evidence_files,
+                facts,
+                configuration,
+            ))
         } else {
-            Ok(verify_content_bound_trace_index(&index, &registry, &profile, evidence_files))
+            Ok(verify_content_bound_trace_index(
+                &index,
+                &registry,
+                &profile,
+                evidence_files,
+            ))
         }
     })();
     let report = match report {
         Ok(report) => report,
-        Err(error) => return Ok(trace_index_verify_receipt(root, displayed_index_path, Some(&index), vec![item_issue(error.to_string())], Vec::new())),
+        Err(error) => {
+            return Ok(trace_index_verify_receipt(
+                root,
+                displayed_index_path,
+                Some(&index),
+                vec![item_issue(error.to_string())],
+                Vec::new(),
+            ))
+        }
     };
     Ok(trace_index_verify_receipt(
         root,
@@ -252,7 +312,17 @@ fn run_show(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     else {
         return Err("traceability show requires <requirement-id>".into());
     };
-    reject_unknown_options(&args[1..], &["--root", "--index", "--registry", "--policy", "--profile", "--configuration"])?;
+    reject_unknown_options(
+        &args[1..],
+        &[
+            "--root",
+            "--index",
+            "--registry",
+            "--policy",
+            "--profile",
+            "--configuration",
+        ],
+    )?;
     reject_positional_arguments(&args[1..])?;
     let root = read_option(args.clone(), "--root", ".");
     let index_path = required_path_option(&args, "--index", "show")?;
@@ -279,9 +349,23 @@ fn run_show(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "issues": evaluation.issues,
     });
     if let Some(structural) = &index.structural {
-        let active = structural.bindings.iter().filter(|binding| binding.requirement_id == *requirement_id).collect::<Vec<_>>();
-        let historical = structural.history.iter().filter(|binding| binding.requirement_id == *requirement_id).collect::<Vec<_>>();
-        let status = if !active.is_empty() { "unavailable" } else if !historical.is_empty() { "historical" } else { "absent" };
+        let active = structural
+            .bindings
+            .iter()
+            .filter(|binding| binding.requirement_id == *requirement_id)
+            .collect::<Vec<_>>();
+        let historical = structural
+            .history
+            .iter()
+            .filter(|binding| binding.requirement_id == *requirement_id)
+            .collect::<Vec<_>>();
+        let status = if !active.is_empty() {
+            "unavailable"
+        } else if !historical.is_empty() {
+            "historical"
+        } else {
+            "absent"
+        };
         receipt["bindings"] = serde_json::to_value(active)?;
         receipt["history"] = serde_json::to_value(historical)?;
         receipt["binding_status"] = json!(status);
@@ -290,10 +374,23 @@ fn run_show(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             let policy = read_option(args.clone(), "--policy", default_policy_path());
             let profile = read_string_option(&args, "--profile");
             let configuration = read_string_option(&args, "--configuration");
-            let verification = current_root_trace_index_verification_receipt(&root, &policy, profile.as_deref(),
-                Path::new(&registry), &index_path, &index_path, configuration.as_deref().map(Path::new))?;
+            let verification = current_root_trace_index_verification_receipt(
+                &root,
+                &policy,
+                profile.as_deref(),
+                Path::new(&registry),
+                &index_path,
+                &index_path,
+                configuration.as_deref().map(Path::new),
+            )?;
             let fresh = verification["valid"].as_bool() == Some(true);
-            receipt["binding_status"] = json!(if status != "unavailable" { status } else if fresh { "current" } else { "stale" });
+            receipt["binding_status"] = json!(if status != "unavailable" {
+                status
+            } else if fresh {
+                "current"
+            } else {
+                "stale"
+            });
             receipt["freshness"] = verification;
         }
     }
@@ -307,7 +404,13 @@ fn run_show(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 fn run_compare(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     reject_unknown_options(
         &args,
-        &["--root", "--policy", "--fixtures", "--out", "--observations"],
+        &[
+            "--root",
+            "--policy",
+            "--fixtures",
+            "--out",
+            "--observations",
+        ],
     )?;
     reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
@@ -323,11 +426,8 @@ fn run_compare(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     } else {
         root.join(&policy_path)
     };
-    let policy_bytes = read_bounded_file(
-        &resolved_policy,
-        MAX_POLICY_BYTES,
-        "traceability policy",
-    )?;
+    let policy_bytes =
+        read_bounded_file(&resolved_policy, MAX_POLICY_BYTES, "traceability policy")?;
     let policy_blake3 = blake3::hash(&policy_bytes).to_hex().to_string();
     let manifest_path = fixtures.join(COMPARISON_MANIFEST_FILE);
     let manifest_bytes = read_bounded_file(
@@ -341,9 +441,8 @@ fn run_compare(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             manifest_path.display()
         )
     })?;
-    let manifest: BuoyComparisonManifest =
-        parse_buoy_comparison_manifest_value(&manifest_value)
-            .map_err(|issue| format!("invalid Buoy comparison manifest: {}", issue.message))?;
+    let manifest: BuoyComparisonManifest = parse_buoy_comparison_manifest_value(&manifest_value)
+        .map_err(|issue| format!("invalid Buoy comparison manifest: {}", issue.message))?;
     let manifest_blake3 = buoy_comparison_manifest_blake3(&manifest_bytes);
 
     let mut fixture_blake3 = BTreeMap::new();
@@ -359,19 +458,11 @@ fn run_compare(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         })?;
         let fixture_root = fixtures.join(relative);
         let files = read_comparison_fixture_files(&fixture_root)?;
-        fixture_blake3.insert(
-            case.id.clone(),
-            buoy_comparison_fixture_tree_blake3(&files),
-        );
+        fixture_blake3.insert(case.id.clone(), buoy_comparison_fixture_tree_blake3(&files));
     }
 
     let work = comparison_work_directory()?;
-    let execution = execute_comparison_cases(
-        &manifest,
-        &fixtures,
-        &work,
-        &policy_bytes,
-    );
+    let execution = execute_comparison_cases(&manifest, &fixtures, &work, &policy_bytes);
     let observations = match execution {
         Ok(observations) => observations,
         Err(error) => {
@@ -393,11 +484,7 @@ fn run_compare(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         let current = buoy_comparison_fixture_tree_blake3(&files);
         if fixture_blake3.get(&case.id) != Some(&current) {
             let _ = fs::remove_dir_all(&work);
-            return Err(format!(
-                "comparison fixture changed during execution: {}",
-                case.id
-            )
-            .into());
+            return Err(format!("comparison fixture changed during execution: {}", case.id).into());
         }
     }
     if let Some(directory) = observations_out {
@@ -483,22 +570,17 @@ fn execute_comparison_cases(
                             &index,
                         ))?;
                         if verification.exit_code == 0 {
-                            base_artifacts.insert(
-                                case.id.clone(),
-                                (fs::read(&registry)?, fs::read(&index)?),
-                            );
+                            base_artifacts
+                                .insert(case.id.clone(), (fs::read(&registry)?, fs::read(&index)?));
                         }
                         verification
                     }
                 }
             }
-            BUOY_COMPARISON_MODE_VERIFY_BASE_INDEX
-            | BUOY_COMPARISON_MODE_REJECT_BASE_INDEX => {
-                let base_id = case
-                    .execution
-                    .base
-                    .as_deref()
-                    .ok_or_else(|| "base-index comparison execution requires a base case".to_string())?;
+            BUOY_COMPARISON_MODE_VERIFY_BASE_INDEX | BUOY_COMPARISON_MODE_REJECT_BASE_INDEX => {
+                let base_id = case.execution.base.as_deref().ok_or_else(|| {
+                    "base-index comparison execution requires a base case".to_string()
+                })?;
                 let (base_registry, base_index) = base_artifacts
                     .get(base_id)
                     .ok_or_else(|| format!("base case {base_id} was not executed"))?
@@ -514,29 +596,31 @@ fn execute_comparison_cases(
                         &case.id,
                         &registry,
                     ))?),
-                    _ => return Err("base-index comparison execution requires a registry source".into()),
+                    _ => {
+                        return Err(
+                            "base-index comparison execution requires a registry source".into()
+                        )
+                    }
                 };
-                if preparation
-                    .as_ref()
-                    .is_some_and(|run| run.exit_code != 0)
-                {
+                if preparation.as_ref().is_some_and(|run| run.exit_code != 0) {
                     preparation.expect("preparation run")
                 } else {
                     let index = repository.join("target/trace-index.json");
-                    let index_bytes =
-                        if case.execution.mode == BUOY_COMPARISON_MODE_REJECT_BASE_INDEX {
-                            if case.execution.index_mutation.as_deref()
-                                != Some(BUOY_COMPARISON_INDEX_MUTATION_SCHEMA_VERSION)
-                            {
-                                return Err(
+                    let index_bytes = if case.execution.mode
+                        == BUOY_COMPARISON_MODE_REJECT_BASE_INDEX
+                    {
+                        if case.execution.index_mutation.as_deref()
+                            != Some(BUOY_COMPARISON_INDEX_MUTATION_SCHEMA_VERSION)
+                        {
+                            return Err(
                                     "schema-drift comparison execution requires the schema_version mutation"
                                         .into(),
                                 );
-                            }
-                            mutate_comparison_index_schema(&base_index)?
-                        } else {
-                            base_index
-                        };
+                        }
+                        mutate_comparison_index_schema(&base_index)?
+                    } else {
+                        base_index
+                    };
                     write_comparison_file(&index, &index_bytes)?;
                     run_cairn_command(&index_verify_arguments(
                         &repository,
@@ -573,11 +657,7 @@ fn run_cairn_command(args: &[String]) -> Result<ComparisonRun, Box<dyn Error>> {
     })
 }
 
-fn registry_export_arguments(
-    repository: &Path,
-    revision: &str,
-    registry: &Path,
-) -> Vec<String> {
+fn registry_export_arguments(repository: &Path, revision: &str, registry: &Path) -> Vec<String> {
     vec![
         "requirement-registry".to_string(),
         "export".to_string(),
@@ -654,9 +734,7 @@ fn comparison_work_directory() -> Result<PathBuf, Box<dyn Error>> {
     Ok(directory)
 }
 
-fn read_comparison_fixture_files(
-    root: &Path,
-) -> Result<Vec<(String, Vec<u8>)>, Box<dyn Error>> {
+fn read_comparison_fixture_files(root: &Path) -> Result<Vec<(String, Vec<u8>)>, Box<dyn Error>> {
     let mut files = Vec::new();
     let mut pending = vec![(root.to_path_buf(), String::new())];
     let mut total_bytes = 0u64;
@@ -884,8 +962,12 @@ struct RustConfigurationFile {
 
 fn read_configuration(root: &Path, path: &Path) -> Result<RustItemConfiguration, Box<dyn Error>> {
     let relative = path.to_str().ok_or("configuration path is not UTF-8")?;
-    if !crate::support::is_safe_relative_reference(relative) || relative.len() > 4096
-        || relative.contains(':') || relative.contains('\\') || relative.contains('\0') {
+    if !crate::support::is_safe_relative_reference(relative)
+        || relative.len() > 4096
+        || relative.contains(':')
+        || relative.contains('\\')
+        || relative.contains('\0')
+    {
         return Err("Rust configuration path must be safe and relative to --root".into());
     }
     let repository = CapabilityRoot::open(CapabilityRootKind::Repository, root)?;
@@ -898,9 +980,13 @@ fn read_configuration(root: &Path, path: &Path) -> Result<RustItemConfiguration,
     hasher.update(b"cairn.rust-item-configuration-file.v1\0");
     hasher.update(&bytes);
     Ok(RustItemConfiguration {
-        source_path: document.source_path, file_blake3: hasher.finalize().to_hex().to_string(),
-        schema_version: document.schema_version, target: document.target,
-        features: document.features, declared_features: document.declared_features, cfg: document.cfg,
+        source_path: document.source_path,
+        file_blake3: hasher.finalize().to_hex().to_string(),
+        schema_version: document.schema_version,
+        target: document.target,
+        features: document.features,
+        declared_features: document.declared_features,
+        cfg: document.cfg,
     })
 }
 
@@ -914,19 +1000,38 @@ pub(crate) fn evaluate_current_trace_index(
     if profile.anchor_kind != TRACEABILITY_ANCHOR_RUST_ITEM_V1 {
         return Ok(evaluate_content_bound_trace_index(registry, profile, files));
     }
-    let configured = profile.rust_configuration_path.as_deref().ok_or("structural profile requires rust_configuration_path")?;
+    let configured = profile
+        .rust_configuration_path
+        .as_deref()
+        .ok_or("structural profile requires rust_configuration_path")?;
     let configuration = read_configuration(root, Path::new(configured))?;
     let preliminary = evaluate_content_bound_trace_index(registry, profile, files.clone());
-    let Some(index) = preliminary.index.as_ref() else { return Ok(preliminary) };
+    let Some(index) = preliminary.index.as_ref() else {
+        return Ok(preliminary);
+    };
     let facts = rust_items::facts(&files, &index.links, &configuration)?;
-    Ok(evaluate_structural_trace_index(registry, profile, files, facts, configuration, previous))
+    Ok(evaluate_structural_trace_index(
+        registry,
+        profile,
+        files,
+        facts,
+        configuration,
+        previous,
+    ))
 }
 
-pub(crate) fn collect_selected_traceability_files(root: &Path, profile: &cairn_core::TraceabilityProfile) -> Result<Vec<TraceabilityFile>, Box<dyn Error>> {
+pub(crate) fn collect_selected_traceability_files(
+    root: &Path,
+    profile: &cairn_core::TraceabilityProfile,
+) -> Result<Vec<TraceabilityFile>, Box<dyn Error>> {
     let limit = (profile.anchor_kind == TRACEABILITY_ANCHOR_RUST_ITEM_V1).then_some(1024 * 1024);
     collect_traceability_files_with_bound(root, &profile.evidence_sources, limit)
 }
 
 fn item_issue(message: String) -> ContentBoundTraceIndexIssue {
-    ContentBoundTraceIndexIssue { code: "trace_index.item_unsupported".into(), field_path: "structural".into(), message }
+    ContentBoundTraceIndexIssue {
+        code: "trace_index.item_unsupported".into(),
+        field_path: "structural".into(),
+        message,
+    }
 }

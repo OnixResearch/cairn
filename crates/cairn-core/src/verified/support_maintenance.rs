@@ -117,7 +117,12 @@ pub struct EvidenceRecord {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "kind", content = "detail", rename_all = "snake_case", deny_unknown_fields)]
+#[serde(
+    tag = "kind",
+    content = "detail",
+    rename_all = "snake_case",
+    deny_unknown_fields
+)]
 pub enum Change {
     EvidenceStale {
         evidence: String,
@@ -167,7 +172,11 @@ impl Change {
             }
             Self::AssumptionWithdrawn { assumption } => assumption.clone(),
             Self::EvidenceAdmitted { evidence } => evidence.id.clone(),
-            Self::ClaimRevised { from_claim, to_claim, .. } => {
+            Self::ClaimRevised {
+                from_claim,
+                to_claim,
+                ..
+            } => {
                 format!("{from_claim}->{to_claim}")
             }
             Self::PolicyChanged {
@@ -421,7 +430,8 @@ pub fn admit_support_policy(policy: &SupportPolicy) -> Result<(), DerivationErro
         || bounds.max_depth > MAX_DEPTH_CEILING
     {
         return Err(DerivationError::BoundExhaustion(
-            "support-maintenance policy bounds are outside supported implementation ceilings".into(),
+            "support-maintenance policy bounds are outside supported implementation ceilings"
+                .into(),
         ));
     }
     if policy.change_kinds.is_empty() {
@@ -456,7 +466,8 @@ fn validate_record(
         || record.version == 0
     {
         return Err(DerivationError::InvalidInput(
-            "evidence record requires a non-empty identity, rule, version and assurance scope".into(),
+            "evidence record requires a non-empty identity, rule, version and assurance scope"
+                .into(),
         ));
     }
     if known.contains(&record.id) {
@@ -503,12 +514,7 @@ fn event_reference(event: &ChangeEvent) -> EventReference {
     }
 }
 
-fn event_origin(
-    event: &ChangeEvent,
-    kind: &str,
-    subject: String,
-    detail: String,
-) -> CauseOrigin {
+fn event_origin(event: &ChangeEvent, kind: &str, subject: String, detail: String) -> CauseOrigin {
     CauseOrigin {
         kind: kind.into(),
         subject,
@@ -643,10 +649,7 @@ fn apply_changes(
             }
             Change::EvidenceAdmitted { evidence } => {
                 validate_record(evidence, claims, &known_evidence)?;
-                if effective
-                    .invalidated_evidence
-                    .contains_key(&evidence.id)
-                {
+                if effective.invalidated_evidence.contains_key(&evidence.id) {
                     return Err(DerivationError::InvalidInput(format!(
                         "evidence {} was already invalidated; admission is not a reversal",
                         evidence.id
@@ -906,11 +909,7 @@ fn missing_origin(kind: &str, subject: String, detail: String) -> CauseOrigin {
 
 /// Evaluates every claim. Callers must invoke this for every claim identity so
 /// that all branches and evidence receive a deterministic explanation.
-fn eval_claim(
-    id: &str,
-    graph: &Graph<'_>,
-    state: &mut EvalState,
-) -> Result<(), DerivationError> {
+fn eval_claim(id: &str, graph: &Graph<'_>, state: &mut EvalState) -> Result<(), DerivationError> {
     if state.cache.contains_key(id) {
         return Ok(());
     }
@@ -983,11 +982,9 @@ fn eval_claim(
     if claim_context_cause.is_none() {
         if let Some(branches) = graph.branches.get(id) {
             for branch in branches {
-                let mut branch_cause = withdrawn_assumption_cause(
-                    &branch.assumptions,
-                    graph.withdrawn_assumptions,
-                )
-                .map(|origin| cause(origin, vec![branch.id.clone()]));
+                let mut branch_cause =
+                    withdrawn_assumption_cause(&branch.assumptions, graph.withdrawn_assumptions)
+                        .map(|origin| cause(origin, vec![branch.id.clone()]));
                 let mut discharge_paths = Vec::new();
                 let mut transitive_assumptions = branch.assumptions.clone();
                 if branch_cause.is_none() {
@@ -1230,10 +1227,7 @@ fn state_reason(state: ClaimState) -> &'static str {
     }
 }
 
-fn obligation_status(
-    claim: &ClaimMaintenance,
-    affected: bool,
-) -> (&'static str, String) {
+fn obligation_status(claim: &ClaimMaintenance, affected: bool) -> (&'static str, String) {
     if !claim.current {
         return (
             "historical_claim_superseded",
@@ -1361,7 +1355,10 @@ pub fn evaluate_support_maintenance(
                 "obligation requires a non-empty identity, description and declared claim".into(),
             ));
         }
-        if obligations.insert(obligation.id.as_str(), obligation).is_some() {
+        if obligations
+            .insert(obligation.id.as_str(), obligation)
+            .is_some()
+        {
             return Err(DerivationError::InvalidInput(format!(
                 "duplicate obligation identity {}",
                 obligation.id
@@ -1629,18 +1626,21 @@ pub fn evaluate_support_maintenance(
             .as_ref()
             .map_or(BranchStatus::Withdrawn, |result| result.status);
         let link = result.as_ref().and_then(|result| result.link.clone());
-        let cause = result.as_ref().and_then(|result| result.cause.clone()).or_else(|| {
-            (status == BranchStatus::Withdrawn).then(|| {
-                cause(
-                    missing_origin(
-                        "not_evaluated",
-                        branch.id.clone(),
-                        "branch was not reached by the bounded evaluation".into(),
-                    ),
-                    vec![branch.id.clone()],
-                )
-            })
-        });
+        let cause = result
+            .as_ref()
+            .and_then(|result| result.cause.clone())
+            .or_else(|| {
+                (status == BranchStatus::Withdrawn).then(|| {
+                    cause(
+                        missing_origin(
+                            "not_evaluated",
+                            branch.id.clone(),
+                            "branch was not reached by the bounded evaluation".into(),
+                        ),
+                        vec![branch.id.clone()],
+                    )
+                })
+            });
         let discharge_paths = result
             .as_ref()
             .map(|result| result.discharge_paths.clone())
@@ -1753,10 +1753,9 @@ pub fn evaluate_support_maintenance(
     let mut evidence_out = Vec::with_capacity(all_evidence.len());
     for (id, record) in &all_evidence {
         let result = current.evidence_results.get(id).cloned();
-        let (effective_flag, link, cause) = result.map_or(
-            (false, None, None),
-            |result| (result.effective, result.link, result.cause),
-        );
+        let (effective_flag, link, cause) = result.map_or((false, None, None), |result| {
+            (result.effective, result.link, result.cause)
+        });
         evidence_out.push(EvidenceExplanation {
             evidence: (**record).clone(),
             historical: evidence.contains_key(id),
@@ -1808,7 +1807,11 @@ pub fn evaluate_support_maintenance(
         values
             .into_iter()
             .map(|branch| {
-                let mut premises = branch.premises.iter().map(String::as_str).collect::<Vec<_>>();
+                let mut premises = branch
+                    .premises
+                    .iter()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>();
                 premises.sort_unstable();
                 CanonicalBranch {
                     id: &branch.id,

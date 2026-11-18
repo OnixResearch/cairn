@@ -3,7 +3,11 @@ pub const CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2: &str = "cairn.content-bound-trace
 pub const TRACEABILITY_ANCHOR_RUST_ITEM_V1: &str = "rust_item_v1";
 const STRUCTURAL_INDEX_DOMAIN: &str = "cairn.trace-index.structural-index.v2";
 const STRUCTURAL_BINDING_DOMAIN: &str = "cairn.trace-index.rust-item-binding.v1";
-const STRUCTURAL_NON_CLAIMS: &[&str] = &["not callee behavior", "not reusable proof freshness", "not executed tests"];
+const STRUCTURAL_NON_CLAIMS: &[&str] = &[
+    "not callee behavior",
+    "not reusable proof freshness",
+    "not executed tests",
+];
 pub const CONTENT_BOUND_TRACE_INDEX_BOUNDARY: &str = "content-bound trace index validation proves canonical identity, current-input freshness, and declared marker linkage only; it does not prove requirement satisfaction, implementation correctness, test adequacy, proof soundness, release eligibility, lifecycle readiness, or behavioral correctness";
 pub const TRACEABILITY_ASSURANCE_DECLARED: &str = "declared";
 pub const TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES: &str = "exact_marker_bytes";
@@ -130,7 +134,6 @@ pub struct StructuralTraceData {
     pub bindings: Vec<RustItemBinding>,
     pub history: Vec<RustItemBinding>,
 }
-
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -352,81 +355,173 @@ pub fn evaluate_structural_trace_index(
     configuration: RustItemConfiguration,
     previous: Option<&ContentBoundTraceIndex>,
 ) -> ContentBoundTraceIndexEvaluation {
-    let source_lengths = evidence_files.iter().map(|file| (file.path.clone(), file.text.len())).collect::<std::collections::BTreeMap<_, _>>();
+    let source_lengths = evidence_files
+        .iter()
+        .map(|file| (file.path.clone(), file.text.len()))
+        .collect::<std::collections::BTreeMap<_, _>>();
     let mut evaluation = evaluate_content_bound_trace_index(registry, profile, evidence_files);
     if profile.anchor_kind != TRACEABILITY_ANCHOR_RUST_ITEM_V1 {
-        evaluation.issues.push(issue(ISSUE_PROFILE_UNSUPPORTED, "profile.anchor_kind", "structural evaluation requires rust_item_v1"));
+        evaluation.issues.push(issue(
+            ISSUE_PROFILE_UNSUPPORTED,
+            "profile.anchor_kind",
+            "structural evaluation requires rust_item_v1",
+        ));
         evaluation.index = None;
         return evaluation;
     }
-    let Some(mut index) = evaluation.index.take() else { return evaluation };
+    let Some(mut index) = evaluation.index.take() else {
+        return evaluation;
+    };
     if facts.len() != index.links.len() {
-        evaluation.issues.push(issue("trace_index.item_fact_count", "structural.facts", "parser facts must correspond one-to-one with selected exact marker occurrences"));
+        evaluation.issues.push(issue(
+            "trace_index.item_fact_count",
+            "structural.facts",
+            "parser facts must correspond one-to-one with selected exact marker occurrences",
+        ));
         return evaluation;
     }
     let mut issues = Vec::new();
     let mut bindings = Vec::new();
     for link in &index.links {
-        let mut matches = facts.iter().filter(|fact| fact.source_path == link.source_path && fact.marker_start_byte == link.marker_span.start_byte);
+        let mut matches = facts.iter().filter(|fact| {
+            fact.source_path == link.source_path
+                && fact.marker_start_byte == link.marker_span.start_byte
+        });
         let Some(item) = matches.next() else {
-            push_issue(&mut issues, "trace_index.item_selection", &format!("links.{}", link.link_blake3), "marker has no supported Rust declaration");
+            push_issue(
+                &mut issues,
+                "trace_index.item_selection",
+                &format!("links.{}", link.link_blake3),
+                "marker has no supported Rust declaration",
+            );
             continue;
         };
         if matches.next().is_some() {
-            push_issue(&mut issues, "trace_index.item_selection", &format!("links.{}", link.link_blake3), "marker resolves ambiguously to multiple Rust declarations");
+            push_issue(
+                &mut issues,
+                "trace_index.item_selection",
+                &format!("links.{}", link.link_blake3),
+                "marker resolves ambiguously to multiple Rust declarations",
+            );
             continue;
         }
         let item = item.clone();
-        if !safe_structural_path(&item.source_path) || item.start_byte >= item.end_byte
-            || source_lengths.get(item.source_path.as_str()).is_none_or(|size| item.end_byte > *size as u64)
+        if !safe_structural_path(&item.source_path)
+            || item.start_byte >= item.end_byte
+            || source_lengths
+                .get(item.source_path.as_str())
+                .is_none_or(|size| item.end_byte > *size as u64)
             || item.normalized_item_blake3.len() != BLAKE3_HEX_LENGTH
-            || item.scoped_locator.is_empty() {
-            push_issue(&mut issues, "trace_index.item_invalid", &format!("links.{}", link.link_blake3), "parser fact has invalid source path, bounds, locator or identity");
+            || item.scoped_locator.is_empty()
+        {
+            push_issue(
+                &mut issues,
+                "trace_index.item_invalid",
+                &format!("links.{}", link.link_blake3),
+                "parser fact has invalid source path, bounds, locator or identity",
+            );
             continue;
         }
         let mut binding = RustItemBinding {
-            link_blake3: link.link_blake3.clone(), requirement_id: link.requirement_id.clone(),
+            link_blake3: link.link_blake3.clone(),
+            requirement_id: link.requirement_id.clone(),
             requirement_row_blake3: link.requirement_row_blake3.clone(),
-            source_path: link.source_path.clone(), source_file_blake3: link.source_file_blake3.clone(),
-            marker_span: link.marker_span.clone(), item, configuration: configuration.clone(), binding_blake3: String::new(),
+            source_path: link.source_path.clone(),
+            source_file_blake3: link.source_file_blake3.clone(),
+            marker_span: link.marker_span.clone(),
+            item,
+            configuration: configuration.clone(),
+            binding_blake3: String::new(),
         };
         binding.binding_blake3 = structural_binding_hash(&binding);
         bindings.push(binding);
     }
     let mut history = Vec::new();
     if let Some(previous) = previous {
-        if previous.schema_version != CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2 || !validate_content_bound_trace_index(previous).is_empty() {
-            push_issue(&mut issues, "trace_index.history_invalid", "previous", "previous structural index must be a valid self-bound v2 artifact");
+        if previous.schema_version != CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2
+            || !validate_content_bound_trace_index(previous).is_empty()
+        {
+            push_issue(
+                &mut issues,
+                "trace_index.history_invalid",
+                "previous",
+                "previous structural index must be a valid self-bound v2 artifact",
+            );
         } else if let Some(prior) = &previous.structural {
             history.extend(prior.history.iter().cloned());
-            history.extend(prior.bindings.iter().filter(|binding| !bindings.iter().any(|current| current.binding_blake3 == binding.binding_blake3)).cloned());
+            history.extend(
+                prior
+                    .bindings
+                    .iter()
+                    .filter(|binding| {
+                        !bindings
+                            .iter()
+                            .any(|current| current.binding_blake3 == binding.binding_blake3)
+                    })
+                    .cloned(),
+            );
         }
     }
     history.sort_by(|a, b| a.binding_blake3.cmp(&b.binding_blake3));
     history.dedup_by(|a, b| a.binding_blake3 == b.binding_blake3);
     if bindings.len() > MAX_STRUCTURAL_BINDINGS || history.len() > MAX_STRUCTURAL_BINDINGS {
-        push_issue(&mut issues, "trace_index.binding_budget_exceeded", "structural", "current or historical Rust binding budget exceeded");
+        push_issue(
+            &mut issues,
+            "trace_index.binding_budget_exceeded",
+            "structural",
+            "current or historical Rust binding budget exceeded",
+        );
     }
-    if configuration.schema_version != "cairn.rust-item-configuration.v1" || configuration.target.is_empty()
+    if configuration.schema_version != "cairn.rust-item-configuration.v1"
+        || configuration.target.is_empty()
         || !safe_structural_path(&configuration.source_path)
         || configuration.file_blake3.len() != BLAKE3_HEX_LENGTH
-        || configuration.features.windows(2).any(|pair| pair[0] >= pair[1])
-        || configuration.declared_features.windows(2).any(|pair| pair[0] >= pair[1])
-        || configuration.features.iter().any(|feature| configuration.declared_features.binary_search(feature).is_err())
-        || configuration.cfg.windows(2).any(|pair| pair[0] >= pair[1]) {
+        || configuration
+            .features
+            .windows(2)
+            .any(|pair| pair[0] >= pair[1])
+        || configuration
+            .declared_features
+            .windows(2)
+            .any(|pair| pair[0] >= pair[1])
+        || configuration.features.iter().any(|feature| {
+            configuration
+                .declared_features
+                .binary_search(feature)
+                .is_err()
+        })
+        || configuration.cfg.windows(2).any(|pair| pair[0] >= pair[1])
+    {
         push_issue(&mut issues, "trace_index.configuration_invalid", "configuration", "configuration requires v1 schema, explicit target and sorted unique feature/cfg values");
     }
-    if !issues.is_empty() { sort_issues(&mut issues); return ContentBoundTraceIndexEvaluation { index: None, issues } }
-    index.non_claims.extend(STRUCTURAL_NON_CLAIMS.iter().map(|claim| (*claim).to_string()));
+    if !issues.is_empty() {
+        sort_issues(&mut issues);
+        return ContentBoundTraceIndexEvaluation {
+            index: None,
+            issues,
+        };
+    }
+    index.non_claims.extend(
+        STRUCTURAL_NON_CLAIMS
+            .iter()
+            .map(|claim| (*claim).to_string()),
+    );
     index.schema_version = CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2.to_string();
     index.structural = Some(StructuralTraceData {
-        adapter: "cairn.saved-rust-bytes.v1".into(), parser: "syn-2.0.117".into(),
-        schema: "cairn.rust-item-binding.v1".into(), configuration, bindings, history,
+        adapter: "cairn.saved-rust-bytes.v1".into(),
+        parser: "syn-2.0.117".into(),
+        schema: "cairn.rust-item-binding.v1".into(),
+        configuration,
+        bindings,
+        history,
     });
     index.index_blake3 = structural_index_hash(&index);
     let validation = validate_content_bound_trace_index(&index);
     if !validation.is_empty() {
-        return ContentBoundTraceIndexEvaluation { index: None, issues: validation };
+        return ContentBoundTraceIndexEvaluation {
+            index: None,
+            issues: validation,
+        };
     }
     evaluation.index = Some(index);
     evaluation
@@ -442,43 +537,110 @@ pub fn verify_structural_trace_index(
     configuration: RustItemConfiguration,
 ) -> ContentBoundTraceIndexVerification {
     let mut issues = validate_content_bound_trace_index(saved);
-    let current = evaluate_structural_trace_index(registry, profile, evidence_files, facts, configuration, None);
+    let current = evaluate_structural_trace_index(
+        registry,
+        profile,
+        evidence_files,
+        facts,
+        configuration,
+        None,
+    );
     issues.extend(current.issues);
     if let Some(current) = current.index {
         compare_current_index(saved, &current, &mut issues);
         if saved.requirement_registry_blake3 != current.requirement_registry_blake3 {
-            push_issue(&mut issues, "trace_index.requirement_revision_stale", "requirement_registry_blake3",
-                &format!("expected {}; actual {}", saved.requirement_registry_blake3, current.requirement_registry_blake3));
+            push_issue(
+                &mut issues,
+                "trace_index.requirement_revision_stale",
+                "requirement_registry_blake3",
+                &format!(
+                    "expected {}; actual {}",
+                    saved.requirement_registry_blake3, current.requirement_registry_blake3
+                ),
+            );
         }
-        if saved.structural.as_ref().map(|data| &data.configuration) != current.structural.as_ref().map(|data| &data.configuration) {
-            push_issue(&mut issues, "trace_index.configuration_stale", "structural.configuration",
-                &format!("expected {}; actual {}",
-                    saved.structural.as_ref().map_or("absent", |data| data.configuration.file_blake3.as_str()),
-                    current.structural.as_ref().map_or("absent", |data| data.configuration.file_blake3.as_str())));
+        if saved.structural.as_ref().map(|data| &data.configuration)
+            != current.structural.as_ref().map(|data| &data.configuration)
+        {
+            push_issue(
+                &mut issues,
+                "trace_index.configuration_stale",
+                "structural.configuration",
+                &format!(
+                    "expected {}; actual {}",
+                    saved
+                        .structural
+                        .as_ref()
+                        .map_or("absent", |data| data.configuration.file_blake3.as_str()),
+                    current
+                        .structural
+                        .as_ref()
+                        .map_or("absent", |data| data.configuration.file_blake3.as_str())
+                ),
+            );
         }
         let old = saved.structural.as_ref().map(|data| &data.bindings);
         let new = current.structural.as_ref().map(|data| &data.bindings);
         if old != new {
-            let expected = old.map_or_else(String::new, |bindings| bindings.iter().map(|binding| binding.binding_blake3.as_str()).collect::<Vec<_>>().join(","));
-            let actual = new.map_or_else(String::new, |bindings| bindings.iter().map(|binding| binding.binding_blake3.as_str()).collect::<Vec<_>>().join(","));
-            push_issue(&mut issues, "trace_index.binding_stale", "structural.bindings", &format!("saved bindings {expected}; current bindings {actual}"));
+            let expected = old.map_or_else(String::new, |bindings| {
+                bindings
+                    .iter()
+                    .map(|binding| binding.binding_blake3.as_str())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            });
+            let actual = new.map_or_else(String::new, |bindings| {
+                bindings
+                    .iter()
+                    .map(|binding| binding.binding_blake3.as_str())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            });
+            push_issue(
+                &mut issues,
+                "trace_index.binding_stale",
+                "structural.bindings",
+                &format!("saved bindings {expected}; current bindings {actual}"),
+            );
         }
     }
     sort_issues(&mut issues);
-    ContentBoundTraceIndexVerification { valid: issues.is_empty(), index_blake3: saved.index_blake3.clone(),
-        requirement_count: saved.requirements.len(), source_count: saved.sources.len(), link_count: saved.links.len(),
-        issues, boundary: CONTENT_BOUND_TRACE_INDEX_BOUNDARY.to_string() }
+    ContentBoundTraceIndexVerification {
+        valid: issues.is_empty(),
+        index_blake3: saved.index_blake3.clone(),
+        requirement_count: saved.requirements.len(),
+        source_count: saved.sources.len(),
+        link_count: saved.links.len(),
+        issues,
+        boundary: CONTENT_BOUND_TRACE_INDEX_BOUNDARY.to_string(),
+    }
 }
 
 fn structural_binding_hash(binding: &RustItemBinding) -> String {
-    domain_hash_json(STRUCTURAL_BINDING_DOMAIN, &(binding.link_blake3.as_str(), binding.requirement_row_blake3.as_str(),
-        binding.source_path.as_str(), binding.source_file_blake3.as_str(), &binding.marker_span, &binding.item,
-        "cairn.saved-rust-bytes.v1", "syn-2.0.117", "cairn.rust-item-binding.v1", &binding.configuration)).unwrap_or_default()
+    domain_hash_json(
+        STRUCTURAL_BINDING_DOMAIN,
+        &(
+            binding.link_blake3.as_str(),
+            binding.requirement_row_blake3.as_str(),
+            binding.source_path.as_str(),
+            binding.source_file_blake3.as_str(),
+            &binding.marker_span,
+            &binding.item,
+            "cairn.saved-rust-bytes.v1",
+            "syn-2.0.117",
+            "cairn.rust-item-binding.v1",
+            &binding.configuration,
+        ),
+    )
+    .unwrap_or_default()
 }
 
 fn structural_index_hash(index: &ContentBoundTraceIndex) -> String {
     let mut value = serde_json::to_value(index).expect("trace index is serializable");
-    value.as_object_mut().expect("trace index is an object").remove("index_blake3");
+    value
+        .as_object_mut()
+        .expect("trace index is an object")
+        .remove("index_blake3");
     domain_hash_json(STRUCTURAL_INDEX_DOMAIN, &value).unwrap_or_default()
 }
 
@@ -513,7 +675,12 @@ pub fn validate_content_bound_trace_index(
         || (index.schema_version == CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2
             && index.profile.anchor_kind != TRACEABILITY_ANCHOR_RUST_ITEM_V1)
     {
-        push_issue(&mut issues, ISSUE_SCHEMA_UNSUPPORTED, "structural", "index schema, profile anchor and structural payload must agree");
+        push_issue(
+            &mut issues,
+            ISSUE_SCHEMA_UNSUPPORTED,
+            "structural",
+            "index schema, profile anchor and structural payload must agree",
+        );
     }
     validate_hash(&index.profile_blake3, "profile_blake3", &mut issues);
     validate_hash(&index.policy_blake3, "policy_blake3", &mut issues);
@@ -546,7 +713,8 @@ pub fn verify_content_bound_trace_index(
     // r[impl cairn.trace_index.freshness]
     let mut issues = validate_content_bound_trace_index(index);
     if index.schema_version == CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2
-        || profile.anchor_kind == TRACEABILITY_ANCHOR_RUST_ITEM_V1 {
+        || profile.anchor_kind == TRACEABILITY_ANCHOR_RUST_ITEM_V1
+    {
         push_issue(&mut issues, "trace_index.item_facts_required", "structural",
             "structural freshness requires recomputed saved-byte parser facts and explicit configuration");
     }
@@ -784,8 +952,12 @@ fn validate_profile(
     issues: &mut Vec<ContentBoundTraceIndexIssue>,
 ) {
     if profile.assurance_level != TRACEABILITY_ASSURANCE_DECLARED
-        || !matches!(profile.anchor_kind.as_str(), TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES | TRACEABILITY_ANCHOR_RUST_ITEM_V1)
-        || (profile.anchor_kind == TRACEABILITY_ANCHOR_RUST_ITEM_V1) != profile.rust_configuration_path.is_some()
+        || !matches!(
+            profile.anchor_kind.as_str(),
+            TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES | TRACEABILITY_ANCHOR_RUST_ITEM_V1
+        )
+        || (profile.anchor_kind == TRACEABILITY_ANCHOR_RUST_ITEM_V1)
+            != profile.rust_configuration_path.is_some()
         || profile.id.is_empty()
         || profile.marker_verbs.is_empty()
     {
@@ -983,52 +1155,136 @@ fn validate_profile_hash(
     }
 }
 
-fn validate_structural(index: &ContentBoundTraceIndex, data: &StructuralTraceData, issues: &mut Vec<ContentBoundTraceIndexIssue>) {
-    if data.adapter != "cairn.saved-rust-bytes.v1" || data.parser != "syn-2.0.117"
+fn validate_structural(
+    index: &ContentBoundTraceIndex,
+    data: &StructuralTraceData,
+    issues: &mut Vec<ContentBoundTraceIndexIssue>,
+) {
+    if data.adapter != "cairn.saved-rust-bytes.v1"
+        || data.parser != "syn-2.0.117"
         || data.schema != "cairn.rust-item-binding.v1"
         || data.configuration.schema_version != "cairn.rust-item-configuration.v1"
         || !safe_structural_path(&data.configuration.source_path)
         || data.configuration.file_blake3.len() != BLAKE3_HEX_LENGTH
-        || data.configuration.target.is_empty() {
-        push_issue(issues, "trace_index.interpretation_unsupported", "structural", "unsupported adapter, parser, schema or configuration");
+        || data.configuration.target.is_empty()
+    {
+        push_issue(
+            issues,
+            "trace_index.interpretation_unsupported",
+            "structural",
+            "unsupported adapter, parser, schema or configuration",
+        );
     }
-    validate_hash(&data.configuration.file_blake3, "structural.configuration.file_blake3", issues);
+    validate_hash(
+        &data.configuration.file_blake3,
+        "structural.configuration.file_blake3",
+        issues,
+    );
     for claim in STRUCTURAL_NON_CLAIMS {
         if !index.non_claims.iter().any(|present| present == claim) {
-            push_issue(issues, ISSUE_NON_CLAIM_MISSING, "non_claims", &format!("structural index must retain `{claim}`"));
+            push_issue(
+                issues,
+                ISSUE_NON_CLAIM_MISSING,
+                "non_claims",
+                &format!("structural index must retain `{claim}`"),
+            );
         }
     }
     for source in &index.sources {
         if !safe_structural_path(&source.path) {
-            push_issue(issues, ISSUE_PATH_UNSAFE, "sources", "structural source path is not a safe logical path");
+            push_issue(
+                issues,
+                ISSUE_PATH_UNSAFE,
+                "sources",
+                "structural source path is not a safe logical path",
+            );
         }
     }
-    if data.configuration.features.windows(2).any(|pair| pair[0] >= pair[1])
-        || data.configuration.declared_features.windows(2).any(|pair| pair[0] >= pair[1])
-        || data.configuration.features.iter().any(|feature| data.configuration.declared_features.binary_search(feature).is_err())
-        || data.configuration.cfg.windows(2).any(|pair| pair[0] >= pair[1])
-        || index.profile.rust_configuration_path.as_deref() != Some(data.configuration.source_path.as_str()) {
-        push_issue(issues, "trace_index.configuration_invalid", "structural.configuration", "configuration must be canonical and match the selected profile path");
+    if data
+        .configuration
+        .features
+        .windows(2)
+        .any(|pair| pair[0] >= pair[1])
+        || data
+            .configuration
+            .declared_features
+            .windows(2)
+            .any(|pair| pair[0] >= pair[1])
+        || data.configuration.features.iter().any(|feature| {
+            data.configuration
+                .declared_features
+                .binary_search(feature)
+                .is_err()
+        })
+        || data
+            .configuration
+            .cfg
+            .windows(2)
+            .any(|pair| pair[0] >= pair[1])
+        || index.profile.rust_configuration_path.as_deref()
+            != Some(data.configuration.source_path.as_str())
+    {
+        push_issue(
+            issues,
+            "trace_index.configuration_invalid",
+            "structural.configuration",
+            "configuration must be canonical and match the selected profile path",
+        );
     }
-    if data.bindings.len() > MAX_STRUCTURAL_BINDINGS || data.history.len() > MAX_STRUCTURAL_BINDINGS
+    if data.bindings.len() > MAX_STRUCTURAL_BINDINGS
+        || data.history.len() > MAX_STRUCTURAL_BINDINGS
         || data.configuration.features.len() > MAX_CONFIGURATION_VALUES
         || data.configuration.declared_features.len() > MAX_CONFIGURATION_VALUES
-        || data.configuration.cfg.len() > MAX_CONFIGURATION_VALUES {
-        push_issue(issues, "trace_index.binding_budget_exceeded", "structural", "structural binding or configuration budget exceeded");
+        || data.configuration.cfg.len() > MAX_CONFIGURATION_VALUES
+    {
+        push_issue(
+            issues,
+            "trace_index.binding_budget_exceeded",
+            "structural",
+            "structural binding or configuration budget exceeded",
+        );
     }
-    let links = index.links.iter().map(|link| (link.link_blake3.as_str(), link)).collect::<std::collections::BTreeMap<_, _>>();
+    let links = index
+        .links
+        .iter()
+        .map(|link| (link.link_blake3.as_str(), link))
+        .collect::<std::collections::BTreeMap<_, _>>();
     if data.bindings.len() != index.links.len() {
-        push_issue(issues, "trace_index.binding_missing", "structural.bindings", "each current marker link requires one current Rust item binding");
+        push_issue(
+            issues,
+            "trace_index.binding_missing",
+            "structural.bindings",
+            "each current marker link requires one current Rust item binding",
+        );
     }
-    if data.bindings.iter().map(|binding| binding.link_blake3.as_str()).collect::<Vec<_>>()
-        != index.links.iter().map(|link| link.link_blake3.as_str()).collect::<Vec<_>>() {
-        push_issue(issues, ISSUE_ORDER_INVALID, "structural.bindings", "current item attachments must follow canonical marker-link order");
+    if data
+        .bindings
+        .iter()
+        .map(|binding| binding.link_blake3.as_str())
+        .collect::<Vec<_>>()
+        != index
+            .links
+            .iter()
+            .map(|link| link.link_blake3.as_str())
+            .collect::<Vec<_>>()
+    {
+        push_issue(
+            issues,
+            ISSUE_ORDER_INVALID,
+            "structural.bindings",
+            "current item attachments must follow canonical marker-link order",
+        );
     }
     let mut selected = std::collections::BTreeSet::new();
     for (position, binding) in data.bindings.iter().enumerate() {
         let field = format!("structural.bindings[{position}]");
         if !selected.insert(binding.link_blake3.as_str()) {
-            push_issue(issues, "trace_index.binding_duplicate", &field, "current marker link is bound more than once");
+            push_issue(
+                issues,
+                "trace_index.binding_duplicate",
+                &field,
+                "current marker link is bound more than once",
+            );
         }
         match links.get(binding.link_blake3.as_str()) {
             Some(link) if binding.requirement_id == link.requirement_id
@@ -1040,26 +1296,74 @@ fn validate_structural(index: &ContentBoundTraceIndex, data: &StructuralTraceDat
                 && binding.item.marker_start_byte == link.marker_span.start_byte => {},
             _ => push_issue(issues, "trace_index.binding_link_invalid", &field, "current binding must match exactly one current marker occurrence and requirement revision"),
         }
-        if binding.configuration != data.configuration || !safe_structural_path(&binding.source_path)
+        if binding.configuration != data.configuration
+            || !safe_structural_path(&binding.source_path)
             || binding.item.start_byte < binding.marker_span.end_byte
-            || binding.item.start_byte >= binding.item.end_byte || binding.item.scoped_locator.is_empty()
-            || !matches!(binding.item.item_kind.as_str(), "fn" | "struct" | "enum" | "union" | "mod" | "trait" | "impl" | "type" | "const" | "static" | "trait_fn" | "trait_const" | "trait_type" | "impl_fn" | "impl_const" | "impl_type") {
-            push_issue(issues, "trace_index.binding_invalid", &field, "current interpretation configuration, source path, span or locator is invalid");
+            || binding.item.start_byte >= binding.item.end_byte
+            || binding.item.scoped_locator.is_empty()
+            || !matches!(
+                binding.item.item_kind.as_str(),
+                "fn" | "struct"
+                    | "enum"
+                    | "union"
+                    | "mod"
+                    | "trait"
+                    | "impl"
+                    | "type"
+                    | "const"
+                    | "static"
+                    | "trait_fn"
+                    | "trait_const"
+                    | "trait_type"
+                    | "impl_fn"
+                    | "impl_const"
+                    | "impl_type"
+            )
+        {
+            push_issue(
+                issues,
+                "trace_index.binding_invalid",
+                &field,
+                "current interpretation configuration, source path, span or locator is invalid",
+            );
         }
-        validate_hash(&binding.item.normalized_item_blake3, &format!("{field}.item.normalized_item_blake3"), issues);
-        validate_hash(&binding.binding_blake3, &format!("{field}.binding_blake3"), issues);
+        validate_hash(
+            &binding.item.normalized_item_blake3,
+            &format!("{field}.item.normalized_item_blake3"),
+            issues,
+        );
+        validate_hash(
+            &binding.binding_blake3,
+            &format!("{field}.binding_blake3"),
+            issues,
+        );
         if structural_binding_hash(binding) != binding.binding_blake3 {
-            push_issue(issues, ISSUE_HASH_INVALID, &field, "binding does not match its versioned content identity");
+            push_issue(
+                issues,
+                ISSUE_HASH_INVALID,
+                &field,
+                "binding does not match its versioned content identity",
+            );
         }
     }
-    let current_hashes = data.bindings.iter().map(|binding| binding.binding_blake3.as_str()).collect::<std::collections::BTreeSet<_>>();
+    let current_hashes = data
+        .bindings
+        .iter()
+        .map(|binding| binding.binding_blake3.as_str())
+        .collect::<std::collections::BTreeSet<_>>();
     let mut previous_hash: Option<&str> = None;
     for (position, binding) in data.history.iter().enumerate() {
         let field = format!("structural.history[{position}]");
         if previous_hash.is_some_and(|previous| previous >= binding.binding_blake3.as_str())
             || current_hashes.contains(binding.binding_blake3.as_str())
-            || structural_binding_hash(binding) != binding.binding_blake3 {
-            push_issue(issues, "trace_index.history_invalid", &field, "history must be sorted, unique, distinct from current attachments and self-bound");
+            || structural_binding_hash(binding) != binding.binding_blake3
+        {
+            push_issue(
+                issues,
+                "trace_index.history_invalid",
+                &field,
+                "history must be sorted, unique, distinct from current attachments and self-bound",
+            );
         }
         previous_hash = Some(&binding.binding_blake3);
     }
@@ -1074,10 +1378,16 @@ fn validate_index_hash(
         Some(structural_index_hash(index))
     } else {
         index_hash(
-            &index.profile, &index.profile_blake3, &index.policy_blake3,
-            &index.requirement_registry_blake3, &index.requirements,
-            &index.sources, &index.links, &index.non_claims,
-        ).ok()
+            &index.profile,
+            &index.profile_blake3,
+            &index.policy_blake3,
+            &index.requirement_registry_blake3,
+            &index.requirements,
+            &index.sources,
+            &index.links,
+            &index.non_claims,
+        )
+        .ok()
     };
     if let Some(expected) = expected {
         if expected != index.index_blake3 {
@@ -1650,34 +1960,85 @@ mod tests {
         profile.anchor_kind = TRACEABILITY_ANCHOR_RUST_ITEM_V1.into();
         profile.rust_configuration_path = Some("rust-config.json".into());
         let configuration = RustItemConfiguration {
-            source_path: "rust-config.json".into(), file_blake3: "a".repeat(64), schema_version: "cairn.rust-item-configuration.v1".into(),
-            target: "x86_64-unknown-linux-gnu".into(), features: vec![], declared_features: vec![], cfg: vec![],
+            source_path: "rust-config.json".into(),
+            file_blake3: "a".repeat(64),
+            schema_version: "cairn.rust-item-configuration.v1".into(),
+            target: "x86_64-unknown-linux-gnu".into(),
+            features: vec![],
+            declared_features: vec![],
+            cfg: vec![],
         };
         let text = format!("// r[impl {REQUIREMENT_ID}]\nfn x() {{}}\n");
-        let file = crate::verified::traceability::TraceabilityFile { path: SOURCE_PATH.into(), text: text.clone() };
-        let fact = RustItemFact { source_path: SOURCE_PATH.into(), marker_start_byte: 3,
-            start_byte: text.find("fn x").unwrap() as u64, end_byte: text.len() as u64,
-            item_kind: "fn".into(), scoped_locator: "crate/fn:x#0".into(),
-            normalized_item_blake3: "a".repeat(64), };
-        let original = evaluate_structural_trace_index(&registry(POLICY_BYTES), &profile,
-            vec![file.clone()], vec![fact.clone()], configuration.clone(), None).index.unwrap();
+        let file = crate::verified::traceability::TraceabilityFile {
+            path: SOURCE_PATH.into(),
+            text: text.clone(),
+        };
+        let fact = RustItemFact {
+            source_path: SOURCE_PATH.into(),
+            marker_start_byte: 3,
+            start_byte: text.find("fn x").unwrap() as u64,
+            end_byte: text.len() as u64,
+            item_kind: "fn".into(),
+            scoped_locator: "crate/fn:x#0".into(),
+            normalized_item_blake3: "a".repeat(64),
+        };
+        let original = evaluate_structural_trace_index(
+            &registry(POLICY_BYTES),
+            &profile,
+            vec![file.clone()],
+            vec![fact.clone()],
+            configuration.clone(),
+            None,
+        )
+        .index
+        .unwrap();
         assert_eq!(original.schema_version, CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2);
         assert!(validate_content_bound_trace_index(&original).is_empty());
-        assert!(verify_structural_trace_index(&original, &registry(POLICY_BYTES), &profile,
-            vec![file.clone()], vec![fact.clone()], configuration.clone()).valid);
-        let incomplete = verify_content_bound_trace_index(&original, &registry(POLICY_BYTES), &profile, vec![file.clone()]);
+        assert!(
+            verify_structural_trace_index(
+                &original,
+                &registry(POLICY_BYTES),
+                &profile,
+                vec![file.clone()],
+                vec![fact.clone()],
+                configuration.clone()
+            )
+            .valid
+        );
+        let incomplete = verify_content_bound_trace_index(
+            &original,
+            &registry(POLICY_BYTES),
+            &profile,
+            vec![file.clone()],
+        );
         assert!(!incomplete.valid);
         assert!(issue_codes(&incomplete.issues).contains(&"trace_index.item_facts_required".into()));
 
-        let copied = crate::verified::traceability::TraceabilityFile { path: SECOND_SOURCE_PATH.into(), text: text.clone() };
-        let copied_fact = RustItemFact { source_path: SECOND_SOURCE_PATH.into(), ..fact.clone() };
-        let copied_report = verify_structural_trace_index(&original, &registry(POLICY_BYTES), &profile,
-            vec![file.clone(), copied], vec![fact.clone(), copied_fact], configuration.clone());
+        let copied = crate::verified::traceability::TraceabilityFile {
+            path: SECOND_SOURCE_PATH.into(),
+            text: text.clone(),
+        };
+        let copied_fact = RustItemFact {
+            source_path: SECOND_SOURCE_PATH.into(),
+            ..fact.clone()
+        };
+        let copied_report = verify_structural_trace_index(
+            &original,
+            &registry(POLICY_BYTES),
+            &profile,
+            vec![file.clone(), copied],
+            vec![fact.clone(), copied_fact],
+            configuration.clone(),
+        );
         assert!(!copied_report.valid);
-        assert!(issue_codes(&copied_report.issues).contains(&"trace_index.source_unexpected".into()));
+        assert!(
+            issue_codes(&copied_report.issues).contains(&"trace_index.source_unexpected".into())
+        );
 
         let mut edited_spec = specification();
-        edited_spec.markdown = edited_spec.markdown.replace("declared link", "reviewed link");
+        edited_spec.markdown = edited_spec
+            .markdown
+            .replace("declared link", "reviewed link");
         let changed_registry = crate::verified::content_bound_requirement_registry::evaluate_content_bound_requirement_registry(
             vec![edited_spec], POLICY_BYTES, REPOSITORY_ID,
             crate::verified::content_bound_requirement_registry::ContentBoundRevision {
@@ -1685,26 +2046,60 @@ mod tests {
                 value: REVISION.into(),
             },
         ).registry.unwrap();
-        let requirement_stale = verify_structural_trace_index(&original, &changed_registry, &profile,
-            vec![file], vec![fact.clone()], configuration.clone());
-        assert!(issue_codes(&requirement_stale.issues).contains(&"trace_index.requirement_revision_stale".into()));
-        assert!(requirement_stale.issues.iter().any(|issue| issue.message.contains("expected ") && issue.message.contains("actual ")));
+        let requirement_stale = verify_structural_trace_index(
+            &original,
+            &changed_registry,
+            &profile,
+            vec![file],
+            vec![fact.clone()],
+            configuration.clone(),
+        );
+        assert!(issue_codes(&requirement_stale.issues)
+            .contains(&"trace_index.requirement_revision_stale".into()));
+        assert!(requirement_stale
+            .issues
+            .iter()
+            .any(|issue| issue.message.contains("expected ") && issue.message.contains("actual ")));
 
         let formatted = format!("// r[impl {REQUIREMENT_ID}]\nfn x() {{ }}\n");
-        let changed_file = crate::verified::traceability::TraceabilityFile { path: SOURCE_PATH.into(), text: formatted.clone() };
-        let changed_fact = RustItemFact { end_byte: formatted.len() as u64, ..fact };
-        let stale = verify_structural_trace_index(&original, &registry(POLICY_BYTES), &profile,
-            vec![changed_file.clone()], vec![changed_fact.clone()], configuration.clone());
+        let changed_file = crate::verified::traceability::TraceabilityFile {
+            path: SOURCE_PATH.into(),
+            text: formatted.clone(),
+        };
+        let changed_fact = RustItemFact {
+            end_byte: formatted.len() as u64,
+            ..fact
+        };
+        let stale = verify_structural_trace_index(
+            &original,
+            &registry(POLICY_BYTES),
+            &profile,
+            vec![changed_file.clone()],
+            vec![changed_fact.clone()],
+            configuration.clone(),
+        );
         assert!(!stale.valid);
         assert!(issue_codes(&stale.issues).contains(&"trace_index.binding_stale".into()));
-        let next = evaluate_structural_trace_index(&registry(POLICY_BYTES), &profile,
-            vec![changed_file], vec![changed_fact], configuration, Some(&original)).index.unwrap();
-        assert_eq!(next.structural.as_ref().unwrap().history[0].binding_blake3,
-            original.structural.as_ref().unwrap().bindings[0].binding_blake3);
+        let next = evaluate_structural_trace_index(
+            &registry(POLICY_BYTES),
+            &profile,
+            vec![changed_file],
+            vec![changed_fact],
+            configuration,
+            Some(&original),
+        )
+        .index
+        .unwrap();
+        assert_eq!(
+            next.structural.as_ref().unwrap().history[0].binding_blake3,
+            original.structural.as_ref().unwrap().bindings[0].binding_blake3
+        );
         assert!(validate_content_bound_trace_index(&next).is_empty());
         let mut corrupted = next;
-        corrupted.structural.as_mut().unwrap().bindings[0].item.normalized_item_blake3 = "b".repeat(64);
-        assert!(issue_codes(&validate_content_bound_trace_index(&corrupted)).contains(&"trace_index.hash_invalid".into()));
+        corrupted.structural.as_mut().unwrap().bindings[0]
+            .item
+            .normalized_item_blake3 = "b".repeat(64);
+        assert!(issue_codes(&validate_content_bound_trace_index(&corrupted))
+            .contains(&"trace_index.hash_invalid".into()));
     }
-
 }

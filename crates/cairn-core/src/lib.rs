@@ -17,10 +17,10 @@
 pub mod verified;
 pub use verified::refinement_typed_dependencies;
 pub use verified::refinement_typed_dependencies::*;
-pub use verified::revision_classification;
-pub use verified::revision_classification::*;
 pub use verified::requirement_consistency;
 pub use verified::requirement_consistency::*;
+pub use verified::revision_classification;
+pub use verified::revision_classification::*;
 pub use verified::scoped_claim_derivations;
 pub use verified::scoped_claim_derivations::*;
 pub use verified::source_review;

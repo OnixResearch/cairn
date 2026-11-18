@@ -117,22 +117,34 @@ pub(super) fn export_trace_evidence(
             return None;
         }
     };
-    let evidence_files = match crate::trace_index::collect_selected_traceability_files(root, &profile) {
-        Ok(files) => files,
-        Err(_) => {
-            issues.push(evidence_export_issue(
-                "export.trace_sources_failed",
-                "trace_index.sources",
-                "bounded traceability sources",
-                "unreadable",
-            ));
-            return None;
-        }
-    };
-    let index_evaluation = match crate::trace_index::evaluate_current_trace_index(root, &registry, &profile, evidence_files, None) {
+    let evidence_files =
+        match crate::trace_index::collect_selected_traceability_files(root, &profile) {
+            Ok(files) => files,
+            Err(_) => {
+                issues.push(evidence_export_issue(
+                    "export.trace_sources_failed",
+                    "trace_index.sources",
+                    "bounded traceability sources",
+                    "unreadable",
+                ));
+                return None;
+            }
+        };
+    let index_evaluation = match crate::trace_index::evaluate_current_trace_index(
+        root,
+        &registry,
+        &profile,
+        evidence_files,
+        None,
+    ) {
         Ok(value) => value,
         Err(error) => {
-            issues.push(evidence_export_issue("export.trace_item_adapter_failed", "trace_index.structural", "bounded supported Rust item interpretation", &error.to_string()));
+            issues.push(evidence_export_issue(
+                "export.trace_item_adapter_failed",
+                "trace_index.structural",
+                "bounded supported Rust item interpretation",
+                &error.to_string(),
+            ));
             return None;
         }
     };

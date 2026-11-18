@@ -295,10 +295,13 @@ fn trace_index_verify_rejects_policy_drift_and_malformed_indexes() -> Result<(),
 fn rust_item_profile_exports_verifies_queries_and_revises() -> Result<(), Box<dyn Error>> {
     let root = temp_project("rust-items")?;
     let policy_path = write_fixture(&root)?;
-    let first_source = format!("// r[impl {REQUIREMENT_ID}]\r\n/* é */ #[cfg(not(any()))] fn x() {{}}\r\n");
+    let first_source =
+        format!("// r[impl {REQUIREMENT_ID}]\r\n/* é */ #[cfg(not(any()))] fn x() {{}}\r\n");
     write_text(&root.join(SOURCE_RELATIVE), &first_source)?;
-    write_text(&root.join("rust-config.json"),
-        include_str!("../../../fixtures/trace-index-rust-items/rust-config.json"))?;
+    write_text(
+        &root.join("rust-config.json"),
+        include_str!("../../../fixtures/trace-index-rust-items/rust-config.json"),
+    )?;
     let mut policy: Value = serde_json::from_slice(&fs::read(&policy_path)?)?;
     let mut profile = policy["traceability_policy"]["profiles"][0].clone();
     profile["id"] = Value::String("rust-items".into());
@@ -307,27 +310,57 @@ fn rust_item_profile_exports_verifies_queries_and_revises() -> Result<(), Box<dy
     profile["evidence_sources"] = serde_json::json!([{
         "root": "crates/demo/src", "source_kind": "rust_source", "extensions": ["rs"]
     }]);
-    policy["traceability_policy"]["profiles"].as_array_mut().unwrap().push(profile);
+    policy["traceability_policy"]["profiles"]
+        .as_array_mut()
+        .unwrap()
+        .push(profile);
     fs::write(&policy_path, serde_json::to_vec_pretty(&policy)?)?;
     let registry = build_registry(&root)?;
     let index = root.join(INDEX_RELATIVE);
-    let export = cairn().args(["traceability", "export", "--root"]).arg(&root)
-        .args(["--policy"]).arg(&policy_path).args(["--profile", "rust-items"])
-        .args(["--registry"]).arg(&registry).args(["--out"]).arg(&index).output()?;
+    let export = cairn()
+        .args(["traceability", "export", "--root"])
+        .arg(&root)
+        .args(["--policy"])
+        .arg(&policy_path)
+        .args(["--profile", "rust-items"])
+        .args(["--registry"])
+        .arg(&registry)
+        .args(["--out"])
+        .arg(&index)
+        .output()?;
     assert_success(&export, "structural traceability export");
     let saved: Value = serde_json::from_slice(&fs::read(&index)?)?;
-    assert_eq!(saved["schema_version"], "cairn.content-bound-trace-index.v2");
+    assert_eq!(
+        saved["schema_version"],
+        "cairn.content-bound-trace-index.v2"
+    );
     let item = &saved["structural"]["bindings"][0]["item"];
-    assert_eq!(item["start_byte"].as_u64().unwrap() as usize, first_source.find("#[cfg").unwrap());
+    assert_eq!(
+        item["start_byte"].as_u64().unwrap() as usize,
+        first_source.find("#[cfg").unwrap()
+    );
     assert_eq!(item["item_kind"], "fn");
-    assert_success(&verify_index(&root, &policy_path, &registry, &index)?, "structural verification");
-    let show = cairn().args(["traceability", "show", REQUIREMENT_ID, "--root"]).arg(&root)
-        .args(["--index"]).arg(&index).args(["--registry"]).arg(&registry)
-        .args(["--policy"]).arg(&policy_path).output()?;
+    assert_success(
+        &verify_index(&root, &policy_path, &registry, &index)?,
+        "structural verification",
+    );
+    let show = cairn()
+        .args(["traceability", "show", REQUIREMENT_ID, "--root"])
+        .arg(&root)
+        .args(["--index"])
+        .arg(&index)
+        .args(["--registry"])
+        .arg(&registry)
+        .args(["--policy"])
+        .arg(&policy_path)
+        .output()?;
     assert_success(&show, "structural query");
     let shown: Value = serde_json::from_slice(&show.stdout)?;
     assert_eq!(shown["binding_status"], "current");
-    assert_eq!(shown["bindings"][0]["binding_blake3"], saved["structural"]["bindings"][0]["binding_blake3"]);
+    assert_eq!(
+        shown["bindings"][0]["binding_blake3"],
+        saved["structural"]["bindings"][0]["binding_blake3"]
+    );
 
     let changed = first_source.replace("fn x() {}", "fn x() { }");
     write_text(&root.join(SOURCE_RELATIVE), &changed)?;
@@ -336,16 +369,33 @@ fn rust_item_profile_exports_verifies_queries_and_revises() -> Result<(), Box<dy
     let stale_receipt: Value = serde_json::from_slice(&stale.stdout)?;
     assert!(issue_codes(&stale_receipt, "issues").contains(&"trace_index.binding_stale".into()));
     let next = root.join(SECOND_INDEX_RELATIVE);
-    let export = cairn().args(["traceability", "export", "--root"]).arg(&root)
-        .args(["--policy"]).arg(&policy_path).args(["--profile", "rust-items"])
-        .args(["--registry"]).arg(&registry).args(["--previous-index"]).arg(&index)
-        .args(["--out"]).arg(&next).output()?;
+    let export = cairn()
+        .args(["traceability", "export", "--root"])
+        .arg(&root)
+        .args(["--policy"])
+        .arg(&policy_path)
+        .args(["--profile", "rust-items"])
+        .args(["--registry"])
+        .arg(&registry)
+        .args(["--previous-index"])
+        .arg(&index)
+        .args(["--out"])
+        .arg(&next)
+        .output()?;
     assert_success(&export, "structural revision export");
     let revised: Value = serde_json::from_slice(&fs::read(&next)?)?;
-    assert_eq!(revised["structural"]["history"][0]["binding_blake3"], saved["structural"]["bindings"][0]["binding_blake3"]);
-    assert_eq!(revised["structural"]["history"][0]["item"]["normalized_item_blake3"],
-        revised["structural"]["bindings"][0]["item"]["normalized_item_blake3"]);
-    assert_success(&verify_index(&root, &policy_path, &registry, &next)?, "revised structural verification");
+    assert_eq!(
+        revised["structural"]["history"][0]["binding_blake3"],
+        saved["structural"]["bindings"][0]["binding_blake3"]
+    );
+    assert_eq!(
+        revised["structural"]["history"][0]["item"]["normalized_item_blake3"],
+        revised["structural"]["bindings"][0]["item"]["normalized_item_blake3"]
+    );
+    assert_success(
+        &verify_index(&root, &policy_path, &registry, &next)?,
+        "revised structural verification",
+    );
     let reconfigured = include_str!("../../../fixtures/trace-index-rust-items/rust-config.json")
         .replace("x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu");
     write_text(&root.join("rust-config.json"), &reconfigured)?;
@@ -353,22 +403,38 @@ fn rust_item_profile_exports_verifies_queries_and_revises() -> Result<(), Box<dy
     assert!(!configuration_stale.status.success());
     let receipt: Value = serde_json::from_slice(&configuration_stale.stdout)?;
     assert!(issue_codes(&receipt, "issues").contains(&"trace_index.configuration_stale".into()));
-    write_text(&root.join("rust-config.json"), include_str!("../../../fixtures/trace-index-rust-items/rust-config.json"))?;
+    write_text(
+        &root.join("rust-config.json"),
+        include_str!("../../../fixtures/trace-index-rust-items/rust-config.json"),
+    )?;
 
-    write_text(&root.join(SOURCE_RELATIVE), &(changed.clone() + "fn helper() { 1 + 2; }\r\n"))?;
+    write_text(
+        &root.join(SOURCE_RELATIVE),
+        &(changed.clone() + "fn helper() { 1 + 2; }\r\n"),
+    )?;
     let helper_stale = verify_index(&root, &policy_path, &registry, &next)?;
     assert!(!helper_stale.status.success());
     let receipt: Value = serde_json::from_slice(&helper_stale.stdout)?;
     assert!(issue_codes(&receipt, "issues").contains(&"trace_index.source_stale".into()));
-    assert_eq!(revised["structural"]["bindings"][0]["item"]["normalized_item_blake3"],
-        saved["structural"]["bindings"][0]["item"]["normalized_item_blake3"]);
+    assert_eq!(
+        revised["structural"]["bindings"][0]["item"]["normalized_item_blake3"],
+        saved["structural"]["bindings"][0]["item"]["normalized_item_blake3"]
+    );
     write_text(&root.join(SOURCE_RELATIVE), &changed)?;
 
     let unsupported = format!("// r[impl {REQUIREMENT_ID}]\nfoo!();\n");
     write_text(&root.join(SOURCE_RELATIVE), &unsupported)?;
-    let rejected = cairn().args(["traceability", "export", "--root"]).arg(&root)
-        .args(["--policy"]).arg(&policy_path).args(["--profile", "rust-items"])
-        .args(["--registry"]).arg(&registry).args(["--out"]).arg(root.join("target/unsupported.json")).output()?;
+    let rejected = cairn()
+        .args(["traceability", "export", "--root"])
+        .arg(&root)
+        .args(["--policy"])
+        .arg(&policy_path)
+        .args(["--profile", "rust-items"])
+        .args(["--registry"])
+        .arg(&registry)
+        .args(["--out"])
+        .arg(root.join("target/unsupported.json"))
+        .output()?;
     assert!(!rejected.status.success());
     let receipt: Value = serde_json::from_slice(&rejected.stdout)?;
     assert!(issue_codes(&receipt, "issues").contains(&"trace_index.item_unsupported".into()));
