@@ -65,6 +65,7 @@ pub mod refinement_typed_dependencies;
 pub mod release_decision;
 pub mod release_run_ledger;
 pub mod repo;
+pub mod requirement_consistency;
 pub mod requirement_id_registry;
 pub mod revision_classification;
 pub mod runtime_evidence;

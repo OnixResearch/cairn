@@ -59,6 +59,13 @@ surface.
   witness. Assumption, activation and guarantee relations are reported
   separately; old receipts are never current after a revision, and evidence
   transfer stays disabled and explicit.
+- Opt-in bounded requirement consistency analysis: `cairn requirement-analysis
+  inspect` answers shared-assumption satisfiability, per-requirement activation
+  reachability, joint guarantee compatibility and guarantee-withholding
+  redundancy over admitted typed contracts, with total observable tables,
+  pairwise-minimal conflicts and a pure witness replay. Vacuity is reported only
+  relative to a satisfiable shared premise; contradictory sets are inconsistent,
+  and every bound, unsupported form and exhausted search stays explicit.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change
