@@ -334,7 +334,7 @@ pub struct ObligationImpact {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct AnalysisStatus {
+pub struct ClaimAnalysisStatus {
     pub mode: String,
     pub complete: bool,
     pub incremental: bool,
@@ -368,7 +368,7 @@ pub struct MaintenanceReport {
     pub affected_obligations: Vec<ObligationImpact>,
     pub trust_dependencies: BTreeSet<String>,
     pub independence: String,
-    pub analysis: AnalysisStatus,
+    pub analysis: ClaimAnalysisStatus,
     pub bounds: BoundUsage,
     pub input_blake3: String,
     pub report_blake3: String,
@@ -1883,7 +1883,7 @@ pub fn evaluate_support_maintenance(
         affected_obligations: obligations_out,
         trust_dependencies,
         independence: INDEPENDENCE_NOT_ESTABLISHED.into(),
-        analysis: AnalysisStatus {
+        analysis: ClaimAnalysisStatus {
             mode: "full_recomputation".into(),
             complete: true,
             incremental: false,

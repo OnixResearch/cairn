@@ -62,13 +62,13 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
         None => {
             let repository =
                 CapabilityRoot::open(CapabilityRootKind::Repository, Path::new(&root_path))
-                    .map_err(|error| format!("cannot open --root {root_path}: {error}"))?;
+                    .map_err(|error| {
+                        format!("cannot open --root {}: {error}", root_path.display())
+                    })?;
             repository
                 .read_bounded(Path::new(DEFAULT_POLICY), MAX_POLICY_BYTES)
                 .map_err(|_| {
-                    format!(
-                        "concurrent change footprints policy unavailable: pass --policy FILE with the checked export of cairn-policy/concurrent-change-footprints.ncl"
-                    )
+                    "concurrent change footprints policy unavailable: pass --policy FILE with the checked export of cairn-policy/concurrent-change-footprints.ncl".to_string()
                 })?
         }
     };

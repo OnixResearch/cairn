@@ -182,12 +182,8 @@ pub struct ChangeIdentity {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "detail", rename_all = "snake_case")]
 pub enum StatementForm {
-    Finite {
-        expression: FiniteExpr,
-    },
-    Informal {
-        statement: String,
-    },
+    Finite { expression: FiniteExpr },
+    Informal { statement: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -992,10 +988,9 @@ fn statement_identity(
     form: &StatementForm,
 ) -> Result<String, FootprintError> {
     match form {
-        StatementForm::Finite { expression } => identity(
-            domain,
-            &(row_blake3, declaration, "finite", expression),
-        ),
+        StatementForm::Finite { expression } => {
+            identity(domain, &(row_blake3, declaration, "finite", expression))
+        }
         StatementForm::Informal { statement } => {
             require_text("informal statement", statement)?;
             // Informal guarantees and invariants reuse the refinement statement
@@ -1007,7 +1002,8 @@ fn statement_identity(
                 )
             } else {
                 super::refinement_typed_dependencies::assumption_statement_identity(
-                    declaration, statement,
+                    declaration,
+                    statement,
                 )
             };
             identity.map_err(|error| {
@@ -1023,7 +1019,7 @@ fn statement_identity(
 /// refinement guarantee statement identity over the requirement row and
 /// proposition.
 // r[impl cairn.concurrent_footprints.footprint]
-pub fn guarantee_statement_identity(
+pub fn footprint_guarantee_identity(
     requirement_row_blake3: &str,
     guarantee_id: &str,
     form: &StatementForm,
@@ -1185,8 +1181,7 @@ fn admit_guarantee(
                     guarantee.change.tag()
                 )));
             }
-            if guarantee.change != GuaranteeChange::Unknown
-                && previous_identity == current_identity
+            if guarantee.change != GuaranteeChange::Unknown && previous_identity == current_identity
             {
                 return Err(FootprintError::InvalidInput(format!(
                     "guarantee {} declares {} but keeps one statement identity",
@@ -1323,14 +1318,20 @@ fn admit_footprint(
     for assumption in &footprint.assumptions {
         require_text("assumption id", &assumption.id)?;
         require_text("assumption meaning", &assumption.meaning)?;
-        require_digest("assumption consumed identity", &assumption.consumed_identity)?;
+        require_digest(
+            "assumption consumed identity",
+            &assumption.consumed_identity,
+        )?;
         if !assumption_ids.insert(assumption.id.clone()) {
             return Err(FootprintError::InvalidInput(format!(
                 "change footprint {} declares assumption {} twice",
                 footprint.change.change_id, assumption.id
             )));
         }
-        if !admitted.requirements.contains_key(&assumption.requirement_id) {
+        if !admitted
+            .requirements
+            .contains_key(&assumption.requirement_id)
+        {
             return Err(FootprintError::InvalidInput(format!(
                 "assumption {} names an unknown requirement {}",
                 assumption.id, assumption.requirement_id
@@ -1372,7 +1373,10 @@ fn admit_footprint(
         require_text("invalidation id", &invalidation.id)?;
         require_text("invalidated obligation", &invalidation.obligation)?;
         require_text("invalidation reason", &invalidation.reason)?;
-        if !admitted.requirements.contains_key(&invalidation.requirement_id) {
+        if !admitted
+            .requirements
+            .contains_key(&invalidation.requirement_id)
+        {
             return Err(FootprintError::InvalidInput(format!(
                 "invalidation {} names an unknown requirement {}",
                 invalidation.id, invalidation.requirement_id
@@ -1420,7 +1424,10 @@ fn admit_footprint(
     }
     for interface in &footprint.interfaces {
         require_text("interface id", &interface.id)?;
-        require_digest("interface configuration identity", &interface.configuration_blake3)?;
+        require_digest(
+            "interface configuration identity",
+            &interface.configuration_blake3,
+        )?;
         require_text("interface operation", &interface.operation)?;
         if admitted
             .interfaces
@@ -1694,7 +1701,10 @@ fn admit_case(
 
 type Tables = BTreeMap<String, BTreeMap<Vec<FiniteValue>, FiniteValue>>;
 
-fn cartesian(arguments: &[(String, Vec<String>)], max_worlds: u64) -> Result<Vec<Vec<FiniteValue>>, String> {
+fn cartesian(
+    arguments: &[(String, Vec<String>)],
+    max_worlds: u64,
+) -> Result<Vec<Vec<FiniteValue>>, String> {
     let mut out: Vec<Vec<FiniteValue>> = vec![Vec::new()];
     for (domain, values) in arguments {
         let next_len = (out.len() as u64)
@@ -1766,9 +1776,7 @@ fn build_universe(
         let tuple_list = cartesian(&arguments, max_worlds)?;
         let tuple_count = tuple_list.len() as u64;
         let result_count = result_values.len() as u64;
-        let table_worlds = if tuple_count == 0 {
-            1
-        } else if result_count == 1 {
+        let table_worlds = if tuple_count == 0 || result_count == 1 {
             1
         } else {
             let mut product = 1u64;
@@ -1842,13 +1850,18 @@ fn type_check_term(
                 .get(mapping)
                 .ok_or_else(|| format!("unsupported: unknown observable {mapping}"))?;
             if declared.arguments.len() != arguments.len() {
-                return Err(format!(
-                    "ill_typed: observable {mapping} arity mismatch"
-                ));
+                return Err(format!("ill_typed: observable {mapping} arity mismatch"));
             }
             for (position, argument) in arguments.iter().enumerate() {
                 let argument_domain = type_check_term(
-                    argument, domains, observables, scope, profile, max_depth, depth + 1, nodes,
+                    argument,
+                    domains,
+                    observables,
+                    scope,
+                    profile,
+                    max_depth,
+                    depth + 1,
+                    nodes,
                 )?;
                 if argument_domain != declared.arguments[position] {
                     return Err(format!(
@@ -1891,10 +1904,24 @@ fn type_check_expr(
         FiniteExpr::Bool { .. } => Ok("bool".into()),
         FiniteExpr::Equal { left, right } => {
             let left_domain = type_check_term(
-                left, domains, observables, scope, profile, max_depth, depth + 1, nodes,
+                left,
+                domains,
+                observables,
+                scope,
+                profile,
+                max_depth,
+                depth + 1,
+                nodes,
             )?;
             let right_domain = type_check_term(
-                right, domains, observables, scope, profile, max_depth, depth + 1, nodes,
+                right,
+                domains,
+                observables,
+                scope,
+                profile,
+                max_depth,
+                depth + 1,
+                nodes,
             )?;
             if left_domain != right_domain {
                 return Err(format!(
@@ -1905,7 +1932,14 @@ fn type_check_expr(
         }
         FiniteExpr::Member { term, values } => {
             let term_domain = type_check_term(
-                term, domains, observables, scope, profile, max_depth, depth + 1, nodes,
+                term,
+                domains,
+                observables,
+                scope,
+                profile,
+                max_depth,
+                depth + 1,
+                nodes,
             )?;
             for value in values {
                 if value.domain != term_domain {
@@ -1914,9 +1948,9 @@ fn type_check_expr(
                         value.value, value.domain
                     ));
                 }
-                let domain = domains.get(&value.domain).ok_or_else(|| {
-                    format!("unsupported: membership domain {}", value.domain)
-                })?;
+                let domain = domains
+                    .get(&value.domain)
+                    .ok_or_else(|| format!("unsupported: membership domain {}", value.domain))?;
                 if !domain.values.contains(&value.value) {
                     return Err(format!(
                         "ill_typed: membership value {} is absent from domain {}",
@@ -1928,7 +1962,14 @@ fn type_check_expr(
         }
         FiniteExpr::Not { expression } => {
             let domain = type_check_expr(
-                expression, domains, observables, scope, profile, max_depth, depth + 1, nodes,
+                expression,
+                domains,
+                observables,
+                scope,
+                profile,
+                max_depth,
+                depth + 1,
+                nodes,
             )?;
             if domain != "bool" {
                 return Err("ill_typed: negation of a non-boolean expression".into());
@@ -1938,18 +1979,37 @@ fn type_check_expr(
         FiniteExpr::And { expressions } | FiniteExpr::Or { expressions } => {
             for expression in expressions {
                 let domain = type_check_expr(
-                    expression, domains, observables, scope, profile, max_depth, depth + 1, nodes,
+                    expression,
+                    domains,
+                    observables,
+                    scope,
+                    profile,
+                    max_depth,
+                    depth + 1,
+                    nodes,
                 )?;
                 if domain != "bool" {
-                    return Err("ill_typed: conjunction or disjunction of a non-boolean expression".into());
+                    return Err(
+                        "ill_typed: conjunction or disjunction of a non-boolean expression".into(),
+                    );
                 }
             }
             Ok("bool".into())
         }
-        FiniteExpr::Implies { premise, conclusion } => {
+        FiniteExpr::Implies {
+            premise,
+            conclusion,
+        } => {
             for expression in [premise, conclusion] {
                 let domain = type_check_expr(
-                    expression, domains, observables, scope, profile, max_depth, depth + 1, nodes,
+                    expression,
+                    domains,
+                    observables,
+                    scope,
+                    profile,
+                    max_depth,
+                    depth + 1,
+                    nodes,
                 )?;
                 if domain != "bool" {
                     return Err("ill_typed: implication of a non-boolean expression".into());
@@ -1972,7 +2032,14 @@ fn type_check_expr(
             }
             let previous = scope.insert(variable.clone(), domain.clone());
             let result = type_check_expr(
-                expression, domains, observables, scope, profile, max_depth, depth + 1, nodes,
+                expression,
+                domains,
+                observables,
+                scope,
+                profile,
+                max_depth,
+                depth + 1,
+                nodes,
             );
             match previous {
                 Some(value) => {
@@ -2083,7 +2150,10 @@ fn eval_expr(
             }
             Ok(false)
         }
-        FiniteExpr::Implies { premise, conclusion } => {
+        FiniteExpr::Implies {
+            premise,
+            conclusion,
+        } => {
             if !eval_expr(premise, tables, domains, scope)? {
                 return Ok(true);
             }
@@ -2224,18 +2294,8 @@ impl Exploration<'_> {
         if self.stopped {
             return Ok(());
         }
-        let tuples = self
-            .universe
-            .tuples
-            .get(name)
-            .cloned()
-            .unwrap_or_default();
-        let results = self
-            .universe
-            .results
-            .get(name)
-            .cloned()
-            .unwrap_or_default();
+        let tuples = self.universe.tuples.get(name).cloned().unwrap_or_default();
+        let results = self.universe.results.get(name).cloned().unwrap_or_default();
         if tuple_index == tuples.len() {
             return self.assign_observable(observable_index + 1, tables);
         }
@@ -2298,15 +2358,15 @@ impl Exploration<'_> {
             self.previous_ok = false;
         }
         let mut current_scope = BTreeMap::new();
-        let current_holds =
-            match eval_expr(self.current, tables, self.domains, &mut current_scope) {
-                Ok(value) => value,
-                Err(error) => {
-                    self.problem = Some(error);
-                    self.stopped = true;
-                    return Ok(());
-                }
-            };
+        let current_holds = match eval_expr(self.current, tables, self.domains, &mut current_scope)
+        {
+            Ok(value) => value,
+            Err(error) => {
+                self.problem = Some(error);
+                self.stopped = true;
+                return Ok(());
+            }
+        };
         if current_holds {
             self.current_ok = false;
             if self.witness.is_none() {
@@ -2346,7 +2406,8 @@ fn finite_guarantee_check(
         resolved.assumption.finite_predicate.as_ref(),
     ) else {
         return CheckOutcome::Unavailable(
-            "declaration does not supply finite previous, current and assumption expressions".into(),
+            "declaration does not supply finite previous, current and assumption expressions"
+                .into(),
         );
     };
     let (Some(previous_requirement), Some(current_requirement)) = (
@@ -2379,8 +2440,7 @@ fn finite_guarantee_check(
         ("current guarantee", current_finite),
         ("consumer assumption", predicate),
     ] {
-        if let Err(error) =
-            type_check_finite(expression, domains, observables, profile, max_depth)
+        if let Err(error) = type_check_finite(expression, domains, observables, profile, max_depth)
         {
             if error.starts_with("unsupported:") || error.starts_with("ill_typed:") {
                 return CheckOutcome::Unsupported(format!("{label}: {error}"));
@@ -2622,19 +2682,6 @@ fn guarantee_assessment(
     }
 }
 
-fn invariant_interfaces(
-    admitted: &AdmittedCase,
-    change: &str,
-    invariant_id: &str,
-) -> Vec<String> {
-    admitted
-        .footprints
-        .get(change)
-        .and_then(|footprint| footprint.invariants.get(invariant_id))
-        .map(|invariant| invariant.invariant.interfaces.clone())
-        .unwrap_or_default()
-}
-
 fn affected_invariants_for_assumption(
     admitted: &AdmittedCase,
     consumer: &str,
@@ -2690,8 +2737,7 @@ fn derive_interactions(
         let mut interfaces: Vec<String> = resolved.guarantee.guarantee.interfaces.clone();
         interfaces.sort();
         interfaces.dedup();
-        let (assessment, finite) =
-            guarantee_assessment(policy, profile, admitted, resolved, usage);
+        let (assessment, finite) = guarantee_assessment(policy, profile, admitted, resolved, usage);
         let mut affected_claims = resolved.guarantee.guarantee.affected_claims.clone();
         affected_claims.extend(resolved.assumption.evidence_basis.iter().cloned());
         affected_claims.sort();
@@ -3020,7 +3066,10 @@ fn derive_interactions(
                     });
                 }
                 let operation_conflict = matches!(
-                    (producer_interface.change_kind, consumer_interface.change_kind),
+                    (
+                        producer_interface.change_kind,
+                        consumer_interface.change_kind
+                    ),
                     (InterfaceChange::Remove, InterfaceChange::Add)
                         | (InterfaceChange::Remove, InterfaceChange::Modify)
                         | (InterfaceChange::Add, InterfaceChange::Remove)
@@ -3139,7 +3188,6 @@ struct ObligationDraft {
     required_evidence: Vec<RequiredEvidence>,
     order_sensitive: bool,
     commutativity_required: bool,
-    composition_refs: Vec<CompositionRef>,
     propositions: ObligationPropositions,
     outcome: ObligationOutcome,
     outcome_basis: String,
@@ -3174,7 +3222,10 @@ fn map_diff(
 }
 
 // r[impl cairn.concurrent_footprints.invalidation]
-fn prior_applicability(admitted: &AdmittedCase, obligations: &[CompatibilityObligation]) -> Vec<PriorApplicability> {
+fn prior_applicability(
+    admitted: &AdmittedCase,
+    obligations: &[CompatibilityObligation],
+) -> Vec<PriorApplicability> {
     let mut prior: Vec<ObligationFingerprint> = admitted.prior_obligations.clone();
     prior.sort_by(|left, right| left.obligation_id.cmp(&right.obligation_id));
     let mut out = Vec::new();
@@ -3276,7 +3327,7 @@ fn build_obligation(
     let admitted_compositions: Vec<CompositionRef> = selected
         .iter()
         .filter(|composition| composition.admitted)
-        .map(|composition| composition_ref(*composition))
+        .map(|composition| composition_ref(composition))
         .collect();
     let admitted_compositions = normalize_composition_refs(&admitted_compositions);
     let participants: Vec<String> = if let Some(first) = selected.first() {
@@ -3306,9 +3357,7 @@ fn build_obligation(
     let mut binding = BTreeMap::new();
     for participant in &participants {
         let footprint = admitted.footprints.get(participant).ok_or_else(|| {
-            FootprintError::InvalidInput(format!(
-                "composition names unknown change {participant}"
-            ))
+            FootprintError::InvalidInput(format!("composition names unknown change {participant}"))
         })?;
         let participant_bound = participant_bound(footprint);
         binding.insert(participant.clone(), participant_bound);
@@ -3354,7 +3403,8 @@ fn build_obligation(
             affected_invariants.insert(invariant.clone());
         }
         if interaction.kind == InteractionKind::ChangedGuaranteeAffectsAssumption {
-            if let (Some(assumption_id), Some(_)) = (&interaction.assumption, &interaction.guarantee)
+            if let (Some(assumption_id), Some(_)) =
+                (&interaction.assumption, &interaction.guarantee)
             {
                 for invariant in affected_invariants_for_assumption(
                     admitted,
@@ -3518,10 +3568,7 @@ fn build_obligation(
                     .clone()
                     .unwrap_or_else(|| "removed".into());
                 fingerprint_dependencies.insert(
-                    format!(
-                        "guarantee.{}.{}",
-                        interaction.producer_change, guarantee_id
-                    ),
+                    format!("guarantee.{}.{}", interaction.producer_change, guarantee_id),
                     current_identity,
                 );
                 let Some(consumer) = admitted.footprints.get(&interaction.consumer_change) else {
@@ -3606,10 +3653,8 @@ fn build_obligation(
                 .get(participant)
                 .and_then(|footprint| footprint.interfaces.get(interface))
             {
-                fingerprint_configurations.insert(
-                    interface.clone(),
-                    declared.configuration_blake3.clone(),
-                );
+                fingerprint_configurations
+                    .insert(interface.clone(), declared.configuration_blake3.clone());
                 break;
             }
         }
@@ -3668,9 +3713,7 @@ fn build_obligation(
     applicable_evidence.sort_by(|left, right| left.id.cmp(&right.id));
     for candidate_evidence in applicable_evidence {
         let mut reasons = Vec::new();
-        if candidate_evidence.combined_candidate_blake3
-            != candidate.combined_candidate_blake3
-        {
+        if candidate_evidence.combined_candidate_blake3 != candidate.combined_candidate_blake3 {
             reasons.push("candidate_mismatch".to_string());
         }
         let mut evidence_participants = candidate_evidence.participants.clone();
@@ -3793,9 +3836,7 @@ fn build_obligation(
             .get(participant)
             .is_some_and(|footprint| !footprint.unknown.is_empty())
     });
-    let participant_gap = gaps
-        .iter()
-        .any(|gap| participants.contains(&gap.change));
+    let participant_gap = gaps.iter().any(|gap| participants.contains(&gap.change));
     let discharged = coexistence == PropositionState::Supported
         && preservation == PropositionState::Supported
         && (!commutativity_required || commutativity == PropositionState::Supported);
@@ -3882,8 +3923,13 @@ fn build_obligation(
                                 change: Some(interaction.producer_change.clone()),
                                 reference: Some(guarantee.clone()),
                                 detail: format!(
-                                    "guarantee {} changed {} to {}",
+                                    "guarantee {} in requirement {} changed {} to {}",
                                     guarantee,
+                                    changed
+                                        .current_requirement
+                                        .as_deref()
+                                        .or(changed.previous_requirement.as_deref())
+                                        .unwrap_or("unknown"),
                                     changed.previous_identity.as_deref().unwrap_or("none"),
                                     changed.current_identity.as_deref().unwrap_or("none")
                                 ),
@@ -3903,8 +3949,9 @@ fn build_obligation(
                                 change: Some(interaction.consumer_change.clone()),
                                 reference: Some(assumption.clone()),
                                 detail: format!(
-                                    "assumption {} consumes identity {} with {} dependency and meaning \"{}\"",
+                                    "assumption {} in requirement {} consumes identity {} with {} dependency and meaning \"{}\"",
                                     assumption,
+                                    consumed.requirement_id,
                                     consumed.consumed_identity,
                                     consumed.dependency.tag(),
                                     consumed.meaning
@@ -4044,7 +4091,6 @@ fn build_obligation(
         required_evidence,
         order_sensitive,
         commutativity_required,
-        composition_refs: admitted_compositions,
         propositions: ObligationPropositions {
             coexistence,
             invariant_preservation: preservation,
@@ -4086,8 +4132,7 @@ pub fn analyze_concurrent_changes(
         complete: true,
         bound_exhausted: Vec::new(),
     };
-    let pair_interactions =
-        derive_interactions(policy, &case.profile, &admitted, &mut usage);
+    let pair_interactions = derive_interactions(policy, &case.profile, &admitted, &mut usage);
 
     let mut obligation_ids = BTreeSet::new();
     let mut obligations = Vec::new();
@@ -4140,8 +4185,10 @@ pub fn analyze_concurrent_changes(
     interactions.sort_by(|left, right| left.id.cmp(&right.id));
 
     let mut unmatched_joint_evidence = Vec::new();
-    let mutual_obligation_ids: BTreeSet<String> =
-        obligations.iter().map(|obligation| obligation.id.clone()).collect();
+    let mutual_obligation_ids: BTreeSet<String> = obligations
+        .iter()
+        .map(|obligation| obligation.id.clone())
+        .collect();
     for evidence in &admitted.joint_evidence {
         if !mutual_obligation_ids.contains(&evidence.obligation) {
             unmatched_joint_evidence.push(EvidenceRejection {
@@ -4170,10 +4217,13 @@ pub fn analyze_concurrent_changes(
         .iter()
         .map(|receipt| {
             let change_known = admitted.footprints.contains_key(&receipt.change);
-            let requirement_known = admitted
-                .footprints
-                .get(&receipt.change)
-                .is_some_and(|footprint| footprint.requirements.contains_key(&receipt.requirement_id));
+            let requirement_known =
+                admitted
+                    .footprints
+                    .get(&receipt.change)
+                    .is_some_and(|footprint| {
+                        footprint.requirements.contains_key(&receipt.requirement_id)
+                    });
             IndividualReceiptStatus {
                 id: receipt.id.clone(),
                 change: receipt.change.clone(),
@@ -4208,7 +4258,9 @@ pub fn analyze_concurrent_changes(
                 interfaces: footprint.interfaces.len(),
                 unknown: footprint.unknown.len(),
                 complete: footprint.unknown.is_empty()
-                    && !gaps.iter().any(|gap| gap.change == footprint.change.change_id),
+                    && !gaps
+                        .iter()
+                        .any(|gap| gap.change == footprint.change.change_id),
             }
         })
         .collect();
@@ -4229,11 +4281,16 @@ pub fn analyze_concurrent_changes(
         (left.change.clone(), left.scope.clone()).cmp(&(right.change.clone(), right.scope.clone()))
     });
     gaps.sort_by(|left, right| {
-        (left.change.clone(), left.kind.clone(), left.reference.clone()).cmp(&(
-            right.change.clone(),
-            right.kind.clone(),
-            right.reference.clone(),
-        ))
+        (
+            left.change.clone(),
+            left.kind.clone(),
+            left.reference.clone(),
+        )
+            .cmp(&(
+                right.change.clone(),
+                right.kind.clone(),
+                right.reference.clone(),
+            ))
     });
     usage.complete = usage.bound_exhausted.is_empty();
     let prior_applicability = prior_applicability(&admitted, &obligations);

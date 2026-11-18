@@ -82,13 +82,10 @@ fn exact_unicode_crlf_requirement_and_mcp_parity() -> Result<(), Box<dyn Error>>
         cli["selection"]["text"],
         String::from_utf8(source.as_bytes()[start..end].to_vec())?
     );
-    assert!(
-        cli["policy_constraints"]
-            .as_array()
-            .ok_or("constraints")?
-            .len()
-            > 0
-    );
+    assert!(!cli["policy_constraints"]
+        .as_array()
+        .ok_or("constraints")?
+        .is_empty());
     assert_eq!(cli["authority"]["project_fact"], "not_included");
     assert_eq!(cli["guidance_route"]["tool"], "cairn_context");
     assert!(cli["selection"]["text"]
@@ -374,13 +371,10 @@ fn requirement_duplicates_and_fenced_references_cannot_select() -> Result<(), Bo
     let (_, selected, _) = cli(&root, &request)?;
     assert_eq!(selected["selection"]["status"], "selected");
     assert_eq!(selected["selection"]["document_valid"], false);
-    assert!(
-        selected["selection"]["diagnostics"]
-            .as_array()
-            .ok_or("diagnostics")?
-            .len()
-            > 0
-    );
+    assert!(!selected["selection"]["diagnostics"]
+        .as_array()
+        .ok_or("diagnostics")?
+        .is_empty());
     Ok(())
 }
 

@@ -2,16 +2,15 @@
 use std::{collections::BTreeMap, env, fs, path::PathBuf, process::Command, time::SystemTime};
 
 use cairn_core::{
-    analyze_concurrent_changes, guarantee_statement_identity, normalize_contract,
-    AffectedInterface, AssuranceScope, AssumptionDependency, CaseContext, ChangeFootprint,
+    analyze_concurrent_changes, footprint_guarantee_identity, normalize_contract,
+    AffectedInterface, AssumptionDependency, AssuranceScope, CaseContext, ChangeFootprint,
     ChangeIdentity, ChangedGuarantee, CompositionCandidate, ConcurrentChangeCase,
     ConsumedAssumption, ContentBoundRequirementRow, ContentBoundSourceSpan, EvidenceScope,
     FiniteDomain, FiniteExpr, FiniteTerm, FiniteValue, FootprintBounds, FootprintPolicy,
-    FootprintRevision, GuaranteeChange, GuaranteeStatement, IntegrationCondition,
-    InterfaceChange, JointEvidence, ObservableMapping, PreservedInvariant, PropositionEvidence,
-    PropositionKind, PropositionState, SemanticContract, SemanticProfile, StatementForm,
-    CASE_SCHEMA_V1, FINITE_INTERPRETATION_V1, FINITE_SEMANTICS_PROFILE_V1, FOOTPRINT_SCHEMA_V1,
-    POLICY_SCHEMA_V1,
+    FootprintRevision, GuaranteeChange, GuaranteeStatement, IntegrationCondition, InterfaceChange,
+    JointEvidence, ObservableMapping, PreservedInvariant, PropositionEvidence, PropositionKind,
+    PropositionState, SemanticContract, SemanticProfile, StatementForm, CASE_SCHEMA_V1,
+    FINITE_INTERPRETATION_V1, FINITE_SEMANTICS_PROFILE_V1, FOOTPRINT_SCHEMA_V1, POLICY_SCHEMA_V1,
 };
 use serde_json::Value;
 
@@ -273,7 +272,7 @@ fn compatible_case() -> ConcurrentChangeCase {
         expression: and(is_true("flag"), is_true("guard")),
     };
     let previous_identity =
-        guarantee_statement_identity(&alpha_row.row_blake3, "alpha.feature", &previous_form)
+        footprint_guarantee_identity(&alpha_row.row_blake3, "alpha.feature", &previous_form)
             .unwrap();
 
     let mut alpha = footprint("alpha", vec![alpha_revision]);
@@ -359,7 +358,7 @@ fn retry_case() -> ConcurrentChangeCase {
     let previous_form = StatementForm::Finite {
         expression: forall_attempt(),
     };
-    let previous_identity = guarantee_statement_identity(
+    let previous_identity = footprint_guarantee_identity(
         &authorization_row.row_blake3,
         "authorization.dispatch",
         &previous_form,
@@ -626,7 +625,10 @@ fn cli_rejects_malformed_input_and_unknown_options() {
     assert_eq!(rejected["lifecycle_authority"], "none");
 
     let unsupported_policy = fixture.write_raw("bad-policy.json", b"{\"schema\":\"other\"}");
-    let case = fixture.write("case.json", &serde_json::to_value(compatible_case()).unwrap());
+    let case = fixture.write(
+        "case.json",
+        &serde_json::to_value(compatible_case()).unwrap(),
+    );
     let rejected = fixture.inspect(&case, &["--policy", &unsupported_policy], false);
     assert_eq!(rejected["outcome"], "rejected");
     assert_eq!(rejected["error"]["outcome"], "unsupported");

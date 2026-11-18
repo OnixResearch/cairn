@@ -443,7 +443,7 @@ pub struct CommonObservableReport {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct SearchBasis {
+pub struct RevisionSearchBasis {
     pub common_domains: BTreeMap<String, Vec<String>>,
     pub common_observables: BTreeMap<String, CommonObservableReport>,
     pub world_count: u64,
@@ -522,7 +522,7 @@ pub struct RequirementComparisonReport {
     pub structural: Option<StructuralDelta>,
     pub assumption_guarantee: Option<AssumptionGuaranteeDelta>,
     pub implications: Vec<ImplicationResult>,
-    pub search: Option<SearchBasis>,
+    pub search: Option<RevisionSearchBasis>,
     pub evidence_reuse: Vec<EvidenceReuseDecision>,
     pub correspondence: CorrespondenceStatus,
     pub transfer: TransferPolicyStatus,
@@ -2159,7 +2159,7 @@ fn search_basis(
     outcome: &SearchOutcome,
     relation: RevisionRelation,
     bounds: &ComparisonBounds,
-) -> SearchBasis {
+) -> RevisionSearchBasis {
     let common_domains = model
         .domains
         .iter()
@@ -2187,7 +2187,7 @@ fn search_basis(
         "the declared world or step bound was exhausted before a complete implication search"
             .to_string()
     };
-    SearchBasis {
+    RevisionSearchBasis {
         common_domains,
         common_observables,
         world_count: model.world_count,
@@ -2461,7 +2461,7 @@ pub fn compare_requirement_revisions(
             let classification = RevisionClass::Undetermined;
             let relation = RevisionRelation::Unknown;
             let evidence_reuse = evidence_reuse_decisions(request, &old, &new, classification)?;
-            let search = SearchBasis {
+            let search = RevisionSearchBasis {
                 common_domains: BTreeMap::new(),
                 common_observables: BTreeMap::new(),
                 world_count: 0,
@@ -2640,7 +2640,7 @@ pub fn compare_requirement_revisions(
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct WitnessReplay {
+pub struct RevisionWitnessReplay {
     pub premise: SideTruths,
     pub conclusion: SideTruths,
     pub distinguishing: bool,
@@ -2746,7 +2746,7 @@ pub fn replay_requirement_witness(
     new_contract: &SemanticContract,
     mapping: &RevisionMapping,
     witness: &ImplicationWitness,
-) -> Result<WitnessReplay, RevisionClassificationError> {
+) -> Result<RevisionWitnessReplay, RevisionClassificationError> {
     policy.admit()?;
     validate_native_row(old_native_requirement)?;
     validate_native_row(new_native_requirement)?;
@@ -2836,7 +2836,7 @@ pub fn replay_requirement_witness(
         ));
     }
     let distinguishing = premise.obligation_holds && !conclusion.obligation_holds;
-    Ok(WitnessReplay {
+    Ok(RevisionWitnessReplay {
         premise,
         conclusion,
         distinguishing,

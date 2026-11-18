@@ -15,6 +15,6 @@
 
 ## Parent acceptance
 
-- [ ] [serial] [task:generate] [after:cli-tests] Generate `cairn-policy/generated/concurrent-change-footprints.json` from `cairn-policy/concurrent-change-footprints.ncl` and check policy freshness. r[cairn.concurrent_footprints.bounds]
-- [ ] [serial] [task:verify] [after:generate] Run focused core and CLI tests, formatting, workspace tests, Clippy, lifecycle validation, traceability and the maintained Nix checks. Retain current-source evidence. r[cairn.concurrent_footprints.conformance]
-- [ ] [serial] [task:handoff] [after:verify] Review the specification delta, refresh docs/changelog, run native lifecycle gates and sync or archive only after supported acceptance evidence is retained. r[cairn.concurrent_footprints.inspection]
+- [x] [serial] [task:generate] [after:cli-tests] Generate `cairn-policy/generated/concurrent-change-footprints.json` from `cairn-policy/concurrent-change-footprints.ncl` and check policy freshness. r[cairn.concurrent_footprints.bounds]
+- [x] [serial] [task:verify] [after:generate] Run focused core and CLI tests, formatting, workspace tests, Clippy, lifecycle validation, traceability and the maintained Nix checks. Retain current-source evidence. r[cairn.concurrent_footprints.conformance]
+- [x] [serial] [task:handoff] [after:verify] Review the specification delta, refresh docs/changelog, run native lifecycle gates and sync or archive only after supported acceptance evidence is retained. r[cairn.concurrent_footprints.footprint] r[cairn.concurrent_footprints.inspection]

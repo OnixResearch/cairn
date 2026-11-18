@@ -81,7 +81,10 @@ fn boolean_observable() -> ObservableMapping {
 
 fn observable(result: &str, arguments: &[&str]) -> ObservableMapping {
     ObservableMapping {
-        arguments: arguments.iter().map(|argument| (*argument).into()).collect(),
+        arguments: arguments
+            .iter()
+            .map(|argument| (*argument).into())
+            .collect(),
         result: result.into(),
         phase: "state".into(),
         source: "test observable".into(),
@@ -564,7 +567,10 @@ fn disjoint_changes_interacting_through_assumption_emit_joint_obligation() {
     let check = interaction.finite.as_ref().unwrap();
     assert_eq!(check.previous_implies_assumption, Some(true));
     assert_eq!(check.current_implies_assumption, Some(true));
-    assert_eq!(report.obligations[0].outcome, ObligationOutcome::NeedsJointEvidence);
+    assert_eq!(
+        report.obligations[0].outcome,
+        ObligationOutcome::NeedsJointEvidence
+    );
 }
 
 #[test]
@@ -583,7 +589,7 @@ fn report_explains_the_path_from_guarantee_to_assumption_to_obligation() {
         .collect::<Vec<String>>()
         .join("\n");
     assert!(detail.contains("the feature flag stays enabled"));
-    assert!(detail.contains("alpha.requirement"));
+    assert!(detail.contains("alpha.requirement"), "{detail}");
     assert!(detail.contains("current_implies_assumption=Some(true)"));
 }
 
@@ -604,7 +610,10 @@ fn compatible_fixture_names_assumptions_meaning_evidence_and_composition() {
         obligation.outcome,
         ObligationOutcome::SupportedWithinDeclaredScope
     );
-    assert_eq!(obligation.propositions.coexistence, PropositionState::Supported);
+    assert_eq!(
+        obligation.propositions.coexistence,
+        PropositionState::Supported
+    );
     assert_eq!(
         obligation.propositions.invariant_preservation,
         PropositionState::Supported
@@ -613,7 +622,10 @@ fn compatible_fixture_names_assumptions_meaning_evidence_and_composition() {
         obligation.propositions.commutativity,
         PropositionState::NotApplicable
     );
-    assert_eq!(obligation.evidence.admitted, vec!["joint.evidence".to_string()]);
+    assert_eq!(
+        obligation.evidence.admitted,
+        vec!["joint.evidence".to_string()]
+    );
     assert_eq!(obligation.candidate.compositions.len(), 1);
     assert_eq!(obligation.candidate.compositions[0].id, "c1");
     assert_eq!(
@@ -723,10 +735,7 @@ fn order_sensitive_composition_keeps_commutativity_separate() {
         obligation.propositions.commutativity,
         PropositionState::NotEstablished
     );
-    assert_eq!(
-        obligation.outcome,
-        ObligationOutcome::NeedsJointEvidence
-    );
+    assert_eq!(obligation.outcome, ObligationOutcome::NeedsJointEvidence);
 
     attach_evidence(
         &mut case,
@@ -749,11 +758,13 @@ fn order_sensitive_composition_keeps_commutativity_separate() {
         PropositionState::NotEstablished
     );
 
-    case.joint_evidence[0].propositions.push(PropositionEvidence {
-        proposition: PropositionKind::Commutativity,
-        state: PropositionState::Supported,
-        basis: "both declared orders were checked".into(),
-    });
+    case.joint_evidence[0]
+        .propositions
+        .push(PropositionEvidence {
+            proposition: PropositionKind::Commutativity,
+            state: PropositionState::Supported,
+            basis: "both declared orders were checked".into(),
+        });
     let third = analyze_concurrent_changes(&policy(), &case).unwrap();
     assert_eq!(
         third.obligations[0].outcome,
@@ -800,20 +811,18 @@ fn invalidation_of_another_changes_evidence_basis_needs_joint_evidence() {
     assert_eq!(report.obligations.len(), 1);
     let obligation = &report.obligations[0];
     assert_eq!(obligation.outcome, ObligationOutcome::NeedsJointEvidence);
-    assert_eq!(
-        obligation.affected_claims,
-        vec!["claim.delta".to_string()]
-    );
+    assert_eq!(obligation.affected_claims, vec!["claim.delta".to_string()]);
     let interaction = report
         .interactions
         .iter()
-        .find(|interaction| {
-            interaction.kind == InteractionKind::InvalidationAffectsEvidenceBasis
-        })
+        .find(|interaction| interaction.kind == InteractionKind::InvalidationAffectsEvidenceBasis)
         .unwrap();
     assert_eq!(interaction.producer_change, "gamma");
     assert_eq!(interaction.consumer_change, "delta");
-    assert_eq!(interaction.invalidation.as_deref(), Some("gamma.invalidation"));
+    assert_eq!(
+        interaction.invalidation.as_deref(),
+        Some("gamma.invalidation")
+    );
     assert_eq!(interaction.evidence_basis.as_deref(), Some("delta.basis"));
 }
 
@@ -893,10 +902,9 @@ fn unknown_scope_unsupported_interpretation_and_bounds_stay_explicit() {
     assert_eq!(report.scoped_unknown.len(), 1);
 
     let mut unsupported = compatible_case();
-    unsupported.changes[1].assumptions[0].finite_predicate =
-        Some(FiniteExpr::Unsupported {
-            construct: "affine-arithmetic".into(),
-        });
+    unsupported.changes[1].assumptions[0].finite_predicate = Some(FiniteExpr::Unsupported {
+        construct: "affine-arithmetic".into(),
+    });
     let report = analyze_concurrent_changes(&policy(), &unsupported).unwrap();
     assert_eq!(report.obligations[0].outcome, ObligationOutcome::Unknown);
     assert!(report.obligations[0]
@@ -1023,10 +1031,7 @@ fn identical_inputs_produce_identical_reports_and_identities() {
     assert_eq!(first.input_blake3, second.input_blake3);
     assert_eq!(first.policy_blake3, second.policy_blake3);
     assert_eq!(first.report_blake3, second.report_blake3);
-    assert_eq!(
-        first.obligations[0].id,
-        second.obligations[0].id
-    );
+    assert_eq!(first.obligations[0].id, second.obligations[0].id);
     assert_eq!(
         first.obligations[0].candidate.combined_candidate_blake3,
         second.obligations[0].candidate.combined_candidate_blake3
@@ -1051,7 +1056,5 @@ fn textual_collaboration_and_verification_impact_reports_remain_independent() {
     assert!(report
         .independent_reports
         .contains(&"verification_impact".to_string()));
-    assert!(report
-        .boundary
-        .contains("remain independently usable"));
+    assert!(report.boundary.contains("remain independently usable"));
 }

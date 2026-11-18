@@ -173,7 +173,7 @@ fn active_pages_reconstruct_restart_and_replay_exactly() -> Result<(), Box<dyn E
 fn active_difference_reports_edited_added_removed_and_renamed_entries() -> Result<(), Box<dyn Error>>
 {
     let root = basic_fixture("active-diff")?;
-    let baseline = observe(&root, &["active", "--output", "baseline.json"])?;
+    observe(&root, &["active", "--output", "baseline.json"])?;
 
     let unchanged = observe(
         &root,
@@ -677,7 +677,7 @@ fn partial_baseline_is_rejected_instead_of_becoming_empty() -> Result<(), Box<dy
         ObservationView::ActiveChanges,
     )?;
     let partial = build_snapshot(cohort, Vec::new(), 1, true)?;
-    assert_eq!(partial.complete, false);
+    assert!(!partial.complete);
     fs::write(root.join("partial.json"), serde_json::to_vec(&partial)?)?;
     let stderr = run_failure(
         &repo_root(),
