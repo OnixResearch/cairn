@@ -1,0 +1,146 @@
+{
+  "baseline": {
+    "attempted_runs": 1,
+    "cohort_hash": "fb86876c6b6a35ce376760656561af4184791d533ce5be222f91ff98531befb1",
+    "input_hash": "9f98e9a92991f8730fabcfd6ec30be294e0356b522b049ae8cea0049b5212634",
+    "mode": "representation_replay",
+    "non_claims": [
+      "Saved observations and provider usage are declared inputs, not independently authenticated facts.",
+      "Representation replays do not establish end-to-end agent efficiency or task correctness.",
+      "A scoped live-host comparison does not establish general token savings or code correctness."
+    ],
+    "outcomes": {
+      "completed": 1,
+      "correctly_blocked": 0,
+      "failed": 0,
+      "false_completion": 0,
+      "incomplete": 0
+    },
+    "policy_hash": "c3778a10d139b346c5d7ec3edaf2ab0e9ed5d4bf72db9329152d6665684a272e",
+    "product_revision": "9999999999999999999999999999999999999999999999999999999999999999",
+    "repetitions": 1,
+    "runs": [
+      {
+        "cost_available": true,
+        "outcome": "completed",
+        "run_id": "4444444444444444444444444444444444444444444444444444444444444444",
+        "totals": {
+          "billed_output": 3,
+          "billed_total": 8,
+          "cached_input": 1,
+          "complete_cost": true,
+          "duration_ms": 1,
+          "output": 3,
+          "reasoning": 0,
+          "reasoning_complete": false,
+          "repeated_read_count": 0,
+          "retry_count": 0,
+          "tool_call_count": 1,
+          "uncached_input": 4
+        }
+      }
+    ],
+    "schema": "cairn.agent-benchmark.report.v1",
+    "scope": "representation-fixture",
+    "tokens_per_correct_block": null,
+    "tokens_per_correct_completion": {
+      "attempted_tokens": 8,
+      "correct_completions": 1
+    },
+    "totals": {
+      "billed_output": 3,
+      "billed_total": 8,
+      "cached_input": 1,
+      "complete_cost": true,
+      "duration_ms": 1,
+      "output": 3,
+      "reasoning": 0,
+      "reasoning_complete": false,
+      "repeated_read_count": 0,
+      "retry_count": 0,
+      "tool_call_count": 1,
+      "uncached_input": 4
+    }
+  },
+  "candidate": {
+    "attempted_runs": 1,
+    "cohort_hash": "bd8659a345f3e6662474640958f6900ad5de4fb671ae9d52e89a7fcb9c8d9279",
+    "input_hash": "eaf59ee850f51d98c0c3a89bb10147efd7d699a640d77758705a8e2267d81dae",
+    "mode": "representation_replay",
+    "non_claims": [
+      "Saved observations and provider usage are declared inputs, not independently authenticated facts.",
+      "Representation replays do not establish end-to-end agent efficiency or task correctness.",
+      "A scoped live-host comparison does not establish general token savings or code correctness."
+    ],
+    "outcomes": {
+      "completed": 1,
+      "correctly_blocked": 0,
+      "failed": 0,
+      "false_completion": 0,
+      "incomplete": 0
+    },
+    "policy_hash": "c3778a10d139b346c5d7ec3edaf2ab0e9ed5d4bf72db9329152d6665684a272e",
+    "product_revision": "0000000000000000000000000000000000000000000000000000000000000000",
+    "repetitions": 1,
+    "runs": [
+      {
+        "cost_available": true,
+        "outcome": "completed",
+        "run_id": "4444444444444444444444444444444444444444444444444444444444444444",
+        "totals": {
+          "billed_output": 3,
+          "billed_total": 8,
+          "cached_input": 1,
+          "complete_cost": true,
+          "duration_ms": 1,
+          "output": 3,
+          "reasoning": 0,
+          "reasoning_complete": false,
+          "repeated_read_count": 0,
+          "retry_count": 0,
+          "tool_call_count": 1,
+          "uncached_input": 4
+        }
+      }
+    ],
+    "schema": "cairn.agent-benchmark.report.v1",
+    "scope": "representation-fixture",
+    "tokens_per_correct_block": null,
+    "tokens_per_correct_completion": {
+      "attempted_tokens": 8,
+      "correct_completions": 1
+    },
+    "totals": {
+      "billed_output": 3,
+      "billed_total": 8,
+      "cached_input": 1,
+      "complete_cost": true,
+      "duration_ms": 1,
+      "output": 3,
+      "reasoning": 0,
+      "reasoning_complete": false,
+      "repeated_read_count": 0,
+      "retry_count": 0,
+      "tool_call_count": 1,
+      "uncached_input": 4
+    }
+  },
+  "comparable": true,
+  "drift_fields": [],
+  "non_claims": [
+    "Saved observations and provider usage are declared inputs, not independently authenticated facts.",
+    "Representation replays do not establish end-to-end agent efficiency or task correctness.",
+    "A scoped live-host comparison does not establish general token savings or code correctness."
+  ],
+  "schema": "cairn.agent-benchmark.comparison-report.v1",
+  "scoped_token_change": {
+    "baseline_attempted_tokens": 8,
+    "baseline_correct_completions": 1,
+    "candidate_attempted_tokens": 8,
+    "candidate_correct_completions": 1
+  },
+  "verdict": "withheld",
+  "withheld_reasons": [
+    "representation_only"
+  ]
+}

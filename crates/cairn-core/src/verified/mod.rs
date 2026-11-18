@@ -1,4 +1,5 @@
 pub mod adoption_report;
+pub mod agent_benchmark;
 pub mod agent_guidance;
 pub mod agent_receipt;
 pub mod ai_spec_draft;
