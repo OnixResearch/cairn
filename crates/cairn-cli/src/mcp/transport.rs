@@ -1,7 +1,11 @@
 use super::schema::mcp_tools;
 use super::*;
 
-pub(super) fn run_mcp_json_rpc(is_mutation_allowed: bool) -> Result<(), Box<dyn Error>> {
+pub(super) fn run_mcp_json_rpc(
+    is_mutation_allowed: bool,
+    profile: ResponseProfile,
+    policy: &ResponsePolicy,
+) -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
     for line in stdin.lock().lines() {
@@ -24,7 +28,13 @@ pub(super) fn run_mcp_json_rpc(is_mutation_allowed: bool) -> Result<(), Box<dyn 
                 let params = &request["params"];
                 let name = params["name"].as_str().unwrap_or_default();
                 let arguments = params.get("arguments").unwrap_or(&Value::Null);
-                match mcp_call_tool(name, arguments, is_mutation_allowed) {
+                match mcp_call_tool_with_profile(
+                    name,
+                    arguments,
+                    is_mutation_allowed,
+                    profile,
+                    policy,
+                ) {
                     Ok(result) => json!({"jsonrpc": "2.0", "id": id, "result": result}),
                     Err(error) => {
                         json!({"jsonrpc": "2.0", "id": id, "error": {"code": -32000, "message": error.to_string()}})

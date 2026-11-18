@@ -10,6 +10,8 @@ mod drain_plan;
 mod implementation_ready;
 #[path = "mcp_cli/json_rpc.rs"]
 mod json_rpc;
+#[path = "mcp_cli/response_profile.rs"]
+mod response_profile;
 #[path = "mcp_cli/validation.rs"]
 mod validation;
 

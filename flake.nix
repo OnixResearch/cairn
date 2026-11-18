@@ -439,6 +439,28 @@
               touch $out
             '';
 
+        # r[verify cairn.mcp_projection.profile]
+        mcp-response-policy-fresh =
+          pkgs.runCommand "cairn-mcp-response-policy-fresh"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
+            }
+            ''
+              cp -r ${self}/cairn-policy policy
+              chmod -R u+w policy
+              nickel typecheck policy/mcp-response-profile.ncl
+              nickel export --format json policy/mcp-response-profile.ncl > response-profile.json
+              cmp response-profile.json policy/generated/mcp-response-profile.json
+              substituteInPlace policy/mcp-response-profile.ncl \
+                --replace-fail 'max_summary_bytes = 256' 'max_summary_bytes = 255'
+              nickel export --format json policy/mcp-response-profile.ncl > drift.json
+              if cmp -s drift.json policy/generated/mcp-response-profile.json; then
+                echo "expected MCP response policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         # r[verify cairn.adoption_report.inputs]
         # r[verify cairn.adoption_report.stages]
         adoption-report-contracts =

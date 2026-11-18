@@ -12,6 +12,9 @@ surface.
 
 ### Added
 
+- Explicit MCP `structured-summary` response profile: one complete structured
+  receipt plus bounded status text, retaining legacy default output, native
+  hashes, error behavior, strict options and capability-first mutation denial.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change

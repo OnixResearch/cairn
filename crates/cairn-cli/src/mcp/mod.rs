@@ -11,6 +11,7 @@ use std::{
     path::PathBuf,
 };
 
+use cairn_core::verified::mcp_projection::{ResponsePolicy, ResponseProfile};
 use cairn_core::{
     archive_dir, build_archive_plan_for_effect_with_dependency_blockers,
     build_cairn_migration_plan, build_change_dependency_graph, build_change_detail,
@@ -76,6 +77,7 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut is_mutation_allowed = false;
     let mut describe = false;
     let mut call = None;
+    let mut response_profile = None;
     let mut index = 0;
     while index < args.len() {
         match args[index].as_str() {
@@ -93,6 +95,17 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 describe = true;
                 index += 1;
             }
+            "--response-profile" => {
+                if response_profile.is_some() {
+                    return Err("duplicate option: --response-profile".into());
+                }
+                let id = args
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty() && !value.starts_with("--"))
+                    .ok_or("mcp --response-profile requires a value")?;
+                response_profile = Some(id.as_str());
+                index += 2;
+            }
             "--call" => {
                 if call.is_some() {
                     return Err("duplicate option: --call".into());
@@ -108,6 +121,13 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             unknown => return Err(format!("unknown option: {unknown}").into()),
         }
     }
+    let response_policy = ResponsePolicy::from_json(include_str!(
+        "../../../../cairn-policy/generated/mcp-response-profile.json"
+    ))?;
+    let profile = match response_profile {
+        Some(id) => response_policy.admit(id)?,
+        None => response_policy.default_profile()?,
+    };
     if describe && call.is_some() {
         return Err("mcp --describe and --call cannot be combined".into());
     }
@@ -119,9 +139,15 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             .map(|text| serde_json::from_str(&text))
             .transpose()?
             .unwrap_or_else(|| json!({}));
-        return print_json(mcp_call_tool(&name, &input, is_mutation_allowed)?);
+        return print_json(mcp_call_tool_with_profile(
+            &name,
+            &input,
+            is_mutation_allowed,
+            profile,
+            &response_policy,
+        )?);
     }
-    run_mcp_json_rpc(is_mutation_allowed)
+    run_mcp_json_rpc(is_mutation_allowed, profile, &response_policy)
 }
 pub(crate) fn mcp_tool_catalog(is_allow_mutations: bool) -> Value {
     // r[impl cairn.supersede.mcp_server.boundary.core]
@@ -245,6 +271,25 @@ pub(crate) fn mcp_call_tool(
     input: &Value,
     is_mutation_allowed: bool,
 ) -> Result<Value, Box<dyn Error>> {
+    mcp_call_tool_inner(name, input, is_mutation_allowed, None)
+}
+
+fn mcp_call_tool_with_profile(
+    name: &str,
+    input: &Value,
+    is_mutation_allowed: bool,
+    profile: ResponseProfile,
+    policy: &ResponsePolicy,
+) -> Result<Value, Box<dyn Error>> {
+    mcp_call_tool_inner(name, input, is_mutation_allowed, Some((profile, policy)))
+}
+
+fn mcp_call_tool_inner(
+    name: &str,
+    input: &Value,
+    is_mutation_allowed: bool,
+    projection: Option<(ResponseProfile, &ResponsePolicy)>,
+) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.mcp_server.strict_schemas]
     // r[impl cairn.supersede.mcp_server.strict_schemas.validation]
     // r[impl cairn.supersede.mcp_server.strict_schemas.errors]
@@ -288,7 +333,11 @@ pub(crate) fn mcp_call_tool(
             unknown => return Err(format!("unknown MCP tool: {unknown}").into()),
         }
     };
+    let summary = match projection {
+        Some((ResponseProfile::StructuredSummary, policy)) => policy.summarize(name, &receipt),
+        _ => mcp_summary(name, &receipt),
+    };
     Ok(
-        json!({"content": [{"type": "text", "text": mcp_summary(name, &receipt)}], "structuredContent": receipt, "isError": false}),
+        json!({"content": [{"type": "text", "text": summary}], "structuredContent": receipt, "isError": false}),
     )
 }
