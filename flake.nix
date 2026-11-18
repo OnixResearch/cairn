@@ -488,20 +488,13 @@
               touch $out
             '';
 
-<<<<<<< HEAD
         # r[verify cairn.incremental_observations.conformance]
         incremental-observations-policy-fresh =
           pkgs.runCommand "cairn-incremental-observations-policy-fresh"
-=======
-        # r[verify cairn.targeted_context.conformance]
-        targeted-context-policy-fresh =
-          pkgs.runCommand "cairn-targeted-context-policy-fresh"
->>>>>>> change/targeted-context-reads-20261117
             { nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ]; }
             ''
               cp -r ${self}/cairn-policy policy
               chmod -R u+w policy
-<<<<<<< HEAD
               nickel export --format json --field policy policy/incremental-observations.ncl > incremental-observations.json
               cmp incremental-observations.json policy/generated/incremental-observations.json
               nickel export --format json policy/fixtures/incremental-observations-positive.ncl > positive.json
@@ -514,7 +507,18 @@
               nickel export --format json --field policy policy/incremental-observations.ncl > drift.json
               if cmp -s drift.json policy/generated/incremental-observations.json; then
                 echo "expected incremental observation policy drift" >&2
-=======
+                exit 1
+              fi
+              touch $out
+            '';
+
+        # r[verify cairn.targeted_context.conformance]
+        targeted-context-policy-fresh =
+          pkgs.runCommand "cairn-targeted-context-policy-fresh"
+            { nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ]; }
+            ''
+              cp -r ${self}/cairn-policy policy
+              chmod -R u+w policy
               nickel export --format json --field policy policy/targeted-context.ncl > targeted-context.json
               cmp targeted-context.json policy/generated/targeted-context.json
               nickel export --format json policy/fixtures/targeted-context-positive.ncl > positive.json
@@ -527,7 +531,6 @@
               nickel export --format json --field policy policy/targeted-context.ncl > drift.json
               if cmp -s drift.json policy/generated/targeted-context.json; then
                 echo "expected targeted-context policy drift" >&2
->>>>>>> change/targeted-context-reads-20261117
                 exit 1
               fi
               touch $out
