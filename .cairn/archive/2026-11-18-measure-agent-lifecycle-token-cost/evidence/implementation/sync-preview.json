@@ -1,0 +1,130 @@
+{
+  "acceptance_ids": [],
+  "actions": [
+    {
+      "description": "merge delta spec into main specs: ./.cairn/changes/measure-agent-lifecycle-token-cost/specs/agent-efficiency-benchmark/spec.md",
+      "kind": "sync_delta_spec",
+      "path": "./.cairn/changes/measure-agent-lifecycle-token-cost/specs/agent-efficiency-benchmark/spec.md"
+    }
+  ],
+  "blocked": false,
+  "change": "measure-agent-lifecycle-token-cost",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "db590aa05b790925fdf986f022250368d1d39b2a83586461571de4946c808d37",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+    "receipt_hash": "a904c2e684f22844da630261b04dcd4f165f82816b2d7612b88f0099fedec311",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "delta_specs": [
+    "./.cairn/changes/measure-agent-lifecycle-token-cost/specs/agent-efficiency-benchmark/spec.md"
+  ],
+  "dry_run": true,
+  "input_hash": "e50829f4a42bacfe1b93628d2d482d1c5b71694cea4c0a64d78ce4f93926f362",
+  "layout": "cairn",
+  "merge_preflight": {
+    "documents": [
+      {
+        "accepted_before_exists": false,
+        "accepted_before_hash": "9152c724a7dd2eaeebfdd38a5b878dc3c9843fa3fe77fcc140bfee8d38c66ec8",
+        "blocked": false,
+        "changed": true,
+        "delta_hash": "bfdae7d30d849e29a379c6019f0993a3c4d55ba937ea5e99f24ce99dc4260488",
+        "destination": ".cairn/specs/agent-efficiency-benchmark/spec.md",
+        "diagnostics": [],
+        "expected_after_hash": "bc40e2d07b47f6d9b919feda3b9294ea5a2ecf1976cce4b01c9ee868c505b67c",
+        "operations": [
+          {
+            "block_hash": "8339bc7cf089a199488d9435aa9a75100293d1673a2606193bb147a920d1f624",
+            "heading": "### Requirement: Explicit comparable cohorts",
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.cohort"
+          },
+          {
+            "block_hash": "ed18a1b3b7e16b968e696e2daa4e8c7f34041aeacb9d0513dd57f06f541595f5",
+            "heading": "### Requirement: Exact token accounting",
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.accounting"
+          },
+          {
+            "block_hash": "10871261c70bce272155bbd57c1af33778e1f3559c8af10ee1daa8ba979f2be3",
+            "heading": "### Requirement: Independent outcome classification",
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.outcomes"
+          },
+          {
+            "block_hash": "7ebb36b578dea93bd8165cdb58033e1df80fcccd2257cbf135f8dcb64b8eb354",
+            "heading": "### Requirement: Bounded observation import",
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.import"
+          },
+          {
+            "block_hash": "676ba85a2d14358e3105bf90bcebe9ddd139c793261608e1ce072fdde86089d4",
+            "heading": "### Requirement: Maintained comparisons and non-claims",
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.conformance"
+          }
+        ],
+        "outcomes": [
+          {
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.cohort",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.accounting",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.outcomes",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.import",
+            "state": "applied"
+          },
+          {
+            "kind": "added",
+            "requirement_id": "cairn.agent_efficiency.conformance",
+            "state": "applied"
+          }
+        ],
+        "source": ".cairn/changes/measure-agent-lifecycle-token-cost/specs/agent-efficiency-benchmark/spec.md"
+      }
+    ]
+  },
+  "mutated": false,
+  "mutation_manifest": null,
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "d6834aa027b1d1646b7c63fbe43646346e03193f4b9aa69d46b2d00e5f196137",
+  "policy": "cairn-default",
+  "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "profile_identity_hash": "50a9f26bf0ccbd042e4cf1de820224d5196174cc895c05645e7ff4912ff39b3c",
+  "reasons": [],
+  "receipt_hash": "2f07d4e73f6c05b112c9ae7804162ea86fb91ffa1cce6d4dcad72e352f206aa0",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

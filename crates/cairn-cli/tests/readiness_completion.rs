@@ -54,6 +54,63 @@ fn completion_and_stale_missing_and_symlink_controls() -> Result<(), Box<dyn Err
         assert!(mcp_output.status.success());
         let mcp: Value = serde_json::from_slice(&mcp_output.stdout)?;
         assert_eq!(mcp["structuredContent"], report);
+        let compact_output = Command::new(env!("CARGO_BIN_EXE_cairn"))
+            .current_dir(&source)
+            .args([
+                "readiness",
+                "demo",
+                "--root",
+                temporary.to_str().ok_or("root")?,
+                "--contract",
+                "contract.json",
+                "--results",
+                "results.json",
+                "--subject-hash",
+                subject,
+                "--view",
+                "agent",
+            ])
+            .output()?;
+        assert!(
+            compact_output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&compact_output.stderr)
+        );
+        let compact: Value = serde_json::from_slice(&compact_output.stdout)?;
+        assert_eq!(compact["full_receipt_hash"], report["receipt_hash"]);
+        assert_eq!(compact["valid"], report["valid"]);
+        assert_eq!(compact["classification"], report["classification"]);
+        assert_eq!(compact["mutation_authorized"], false);
+        for (short, full) in compact["stages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .zip(report["stages"].as_array().unwrap())
+        {
+            assert_eq!(short["state"], full["state"]);
+            assert_eq!(short["decision_hash"], full["decision_hash"]);
+        }
+        for action in compact["actions"].as_array().unwrap() {
+            assert!(report["actions"].as_array().unwrap().contains(action));
+        }
+        let mut compact_input = mcp_input.clone();
+        compact_input["view"] = serde_json::json!("agent");
+        let compact_mcp_output = Command::new(env!("CARGO_BIN_EXE_cairn"))
+            .current_dir(&source)
+            .args([
+                "mcp",
+                "--call",
+                "cairn_readiness",
+                &compact_input.to_string(),
+            ])
+            .output()?;
+        assert!(
+            compact_mcp_output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&compact_mcp_output.stderr)
+        );
+        let compact_mcp: Value = serde_json::from_slice(&compact_mcp_output.stdout)?;
+        assert_eq!(compact_mcp["structuredContent"], compact);
         if report["stages"][4]["state"] != "unavailable" {
             let original_output = Command::new(env!("CARGO_BIN_EXE_cairn"))
                 .current_dir(&source)
@@ -97,6 +154,35 @@ fn completion_and_stale_missing_and_symlink_controls() -> Result<(), Box<dyn Err
         .unwrap()
         .iter()
         .any(|a| a["kind"] == "evidence_refresh"));
+    assert_ne!(missing["receipt_hash"], passing["receipt_hash"]);
+    let expected = passing["receipt_hash"]
+        .as_str()
+        .ok_or("passing receipt hash")?;
+    let stale_detail = Command::new(env!("CARGO_BIN_EXE_cairn"))
+        .current_dir(&source)
+        .args([
+            "readiness",
+            "demo",
+            "--root",
+            temporary.to_str().ok_or("root")?,
+            "--contract",
+            "contract.json",
+            "--results",
+            "results.json",
+            "--subject-hash",
+            &"c".repeat(64),
+            "--detail-kind",
+            "stage",
+            "--detail-id",
+            "completion",
+            "--expected-receipt",
+            expected,
+        ])
+        .output()?;
+    assert!(!stale_detail.status.success());
+    assert!(
+        String::from_utf8_lossy(&stale_detail.stderr).contains("stale readiness detail receipt")
+    );
     #[cfg(unix)]
     {
         fs::remove_file(temporary.join("results.json"))?;

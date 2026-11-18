@@ -55,12 +55,12 @@ r[cairn.agent_readiness.detail] The system MUST retrieve omitted blockers, actio
 - THEN it returns a stale or unknown-detail result without silently substituting another report
 
 ### Requirement: Projection safety and efficiency evidence
-r[cairn.agent_readiness.conformance] The system MUST retain positive and negative full-versus-compact fixtures and measure complete diagnostic tasks without weakening existing validator or mutation boundaries.
+r[cairn.agent_readiness.conformance] The system MUST retain positive and negative full-versus-compact fixtures, record representation sizes for complete diagnostic loops including detail calls, and keep token cost explicitly unavailable when no usage or exact tokenizer observation is supplied.
 
 #### Scenario: A compact diagnostic loop preserves the full decision
 - GIVEN matching successful and blocked fixtures
-- WHEN the benchmark compares full and compact loops including detail calls
-- THEN it records total tokens, calls, and equal oracle outcomes with bounded claims
+- WHEN both views are observed over the same inputs including detail calls
+- THEN representation sizes are recorded with equal oracle outcomes and bounded claims
 
 #### Scenario: A compact view cannot grant future authority
 - GIVEN a previously ready compact report and later changed inputs

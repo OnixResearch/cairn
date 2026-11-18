@@ -17,6 +17,10 @@ JSON is the default format. CLI and MCP return the same semantic report and rece
 The machine envelope retains its existing transport contract.
 `ok: true` means transport success. It does not mean lifecycle readiness.
 
+`--view agent` selects the bounded JSON projection; the default `--view full` retains the original report and receipt identity. The projection carries both the original `readiness_policy_hash` and its separate `view_policy_hash`, plus the original full receipt hash. `--max-bytes` and `--max-entries` can only lower the policy-owned agent-view limits. The byte limit counts the actual standalone compact CLI JSON bytes **including its terminating LF**. It does not count the separate `--machine` envelope or MCP tool-result framing. A budget too small for the required envelope fails rather than truncating stage states or an action. Omitted selectors remain ordered, and `complete: false` means detail is still omitted.
+
+For an exact detail read, use `--detail-kind blocker|action|stage --detail-id ID --expected-receipt FULL_RECEIPT_HASH` together (or the MCP `detail` object with the same three fields). The shell gathers a fresh full report and refuses stale or unknown selectors. Detail's policy byte limit likewise counts standalone compact CLI JSON plus LF, excluding MCP framing. Neither projection nor detail grants mutation authority; mutation commands still require fresh preflight.
+
 ## States and authority
 
 - `ready`: the selected observation passed its existing validator.

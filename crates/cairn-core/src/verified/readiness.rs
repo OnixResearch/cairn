@@ -28,6 +28,10 @@ pub const READINESS_STAGES: [&str; 7] = [
     "sync",
     "archive",
 ];
+mod view;
+pub use view::{
+    agent_view_policy, project_agent_readiness, readiness_detail, AgentViewRequest, DetailKind,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

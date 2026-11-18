@@ -1,0 +1,49 @@
+{
+  "catalog_identity": "46c493a19335827988a3ea7496608f548032bb9ce400f27dd7118fc7348d8dc9",
+  "command": "agent workflow show",
+  "non_claims": [
+    "deterministic generation proves only a bounded transformation of admitted policy",
+    "an adapter changes representation but does not add authority or lifecycle semantics",
+    "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
+    "workflow success depends on checked project evidence and does not follow from generated text alone"
+  ],
+  "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "receipt_hash": "632b7f147a73d44533610e1df5cf7c92b24599e5501ad6ee29c2e43c245a7efd",
+  "schema": "cairn.generated-agent-workflow-descriptor.v1",
+  "valid": true,
+  "workflow": {
+    "command_classes": [
+      "gate",
+      "receipt-inspect",
+      "traceability",
+      "workflow-inspect"
+    ],
+    "constraints": [
+      "Do not call a model, access the network, or load a remote package.",
+      "Treat generated text as guidance; policy and gates remain authoritative.",
+      "Use only explicit project roots and policy-known Cairn command classes."
+    ],
+    "goal": "Check requirement coverage, gates, tests, and receipts without changing lifecycle artifacts.",
+    "id": "verify",
+    "immediate_action": "Run the smallest required gate and traceability check for the selected change before broad validation.",
+    "mutation_class": "read_only",
+    "non_claims": [
+      "an adapter changes representation but does not add authority or lifecycle semantics",
+      "deterministic generation proves only a bounded transformation of admitted policy",
+      "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
+      "workflow success depends on checked project evidence and does not follow from generated text alone"
+    ],
+    "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
+    "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
+    "required_evidence": [
+      "Gate and test outputs",
+      "Known blockers and non-claims",
+      "Traceability and receipt identities"
+    ],
+    "success_evidence": [
+      "Required checks pass or return exact diagnostics.",
+      "Traceability has no missing or dangling references."
+    ],
+    "version": 1
+  }
+}

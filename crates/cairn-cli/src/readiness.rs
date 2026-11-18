@@ -26,6 +26,8 @@ pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut input = json!({"change": change});
     let mut format = "json";
     let mut format_seen = false;
+    let mut view = "full";
+    let mut view_seen = false;
     let mut pairs = args[1..].chunks_exact(2);
     for pair in &mut pairs {
         if pair[1].is_empty() || pair[1].starts_with("--") {
@@ -55,6 +57,41 @@ pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 format = &pair[1];
                 continue;
             }
+            "--view" => {
+                if view_seen {
+                    return Err("duplicate readiness option".into());
+                }
+                view_seen = true;
+                view = &pair[1];
+                input["view"] = json!(view);
+                continue;
+            }
+            "--max-bytes" | "--max-entries" => {
+                let key = if pair[0] == "--max-bytes" {
+                    "max_bytes"
+                } else {
+                    "max_entries"
+                };
+                if input.get(key).is_some() {
+                    return Err("duplicate readiness option".into());
+                }
+                input[key] = json!(pair[1]
+                    .parse::<u64>()
+                    .map_err(|_| "invalid readiness budget")?);
+                continue;
+            }
+            "--detail-kind" | "--detail-id" | "--expected-receipt" => {
+                let key = match pair[0].as_str() {
+                    "--detail-kind" => "kind",
+                    "--detail-id" => "id",
+                    _ => "expected_receipt",
+                };
+                if input["detail"].get(key).is_some() {
+                    return Err("duplicate readiness option".into());
+                }
+                input["detail"][key] = json!(pair[1]);
+                continue;
+            }
             _ => return Err("unsupported readiness option (inspection cannot execute)".into()),
         };
         if input.get(key).is_some() {
@@ -62,11 +99,21 @@ pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         }
         input[key] = json!(pair[1]);
     }
-    if !pairs.remainder().is_empty() || !matches!(format, "json" | "summary") {
+    if !pairs.remainder().is_empty()
+        || !matches!(format, "json" | "summary")
+        || !matches!(view, "full" | "agent")
+    {
         return Err("invalid readiness options".into());
+    }
+    if format == "summary" && (view == "agent" || input.get("detail").is_some()) {
+        return Err("agent readiness and detail require JSON format".into());
     }
     let value = readiness_value(&input)?;
     if format == "json" {
+        if view == "agent" || input.get("detail").is_some() {
+            println!("{}", serde_json::to_string(&value)?);
+            return Ok(());
+        }
         return print_json(value);
     }
     println!(
@@ -98,6 +145,107 @@ pub(crate) fn run_readiness(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 // r[impl cairn.unified_readiness.transport]
 // r[impl cairn.unified_readiness.boundary]
 pub(crate) fn readiness_value(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let view = input
+        .get("view")
+        .map(|v| v.as_str().ok_or("readiness view must be a string"))
+        .transpose()?
+        .unwrap_or("full");
+    if !matches!(view, "full" | "agent") {
+        return Err("unknown readiness view".into());
+    }
+    let detail = input.get("detail");
+    if let Some(detail) = detail {
+        let object = detail
+            .as_object()
+            .ok_or("readiness detail must be an object")?;
+        if object.len() != 3
+            || !["kind", "id", "expected_receipt"].iter().all(|key| {
+                object
+                    .get(*key)
+                    .and_then(Value::as_str)
+                    .is_some_and(|s| !s.is_empty())
+            })
+        {
+            return Err("readiness detail requires kind, id, and expected_receipt together".into());
+        }
+        if view != "full" {
+            return Err("readiness detail cannot combine with agent view".into());
+        }
+        DetailKind::parse(object["kind"].as_str().unwrap())?;
+        let expected = object["expected_receipt"].as_str().unwrap();
+        if expected.len() != 64 || !expected.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Err("invalid expected readiness receipt".into());
+        }
+        let id = object["id"].as_str().unwrap();
+        if id.len() > 64
+            || !id
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+        {
+            return Err("unsafe readiness detail id".into());
+        }
+    }
+    let max_bytes = input
+        .get("max_bytes")
+        .map(|v| {
+            v.as_u64()
+                .and_then(|n| usize::try_from(n).ok())
+                .ok_or("invalid readiness byte budget")
+        })
+        .transpose()?;
+    let max_entries = input
+        .get("max_entries")
+        .map(|v| {
+            v.as_u64()
+                .and_then(|n| usize::try_from(n).ok())
+                .ok_or("invalid readiness entry budget")
+        })
+        .transpose()?;
+    if view != "agent" && (max_bytes.is_some() || max_entries.is_some()) {
+        return Err("readiness budgets require agent view".into());
+    }
+    // Presentation fields must never enter the observation/source/evidence hashes.
+    let observation_input;
+    let source_input = if view == "agent"
+        || detail.is_some()
+        || max_bytes.is_some()
+        || max_entries.is_some()
+        || input.get("view").is_some()
+    {
+        let mut stripped = input.clone();
+        for key in ["view", "detail", "max_bytes", "max_entries"] {
+            let _ = stripped
+                .as_object_mut()
+                .ok_or("readiness input must be an object")?
+                .remove(key);
+        }
+        observation_input = stripped;
+        &observation_input
+    } else {
+        input
+    };
+    let report = fresh_readiness_report(source_input)?;
+    if let Some(detail) = detail {
+        return Ok(readiness_detail(
+            &report,
+            DetailKind::parse(detail["kind"].as_str().unwrap())?,
+            detail["id"].as_str().unwrap(),
+            detail["expected_receipt"].as_str().unwrap(),
+        )?);
+    }
+    if view == "agent" {
+        return Ok(project_agent_readiness(
+            &report,
+            AgentViewRequest {
+                max_bytes,
+                max_entries,
+            },
+        )?);
+    }
+    Ok(serde_json::to_value(report)?)
+}
+
+fn fresh_readiness_report(input: &Value) -> Result<ReadinessReport, Box<dyn Error>> {
     let change = input["change"]
         .as_str()
         .ok_or("readiness requires change")?;
@@ -145,24 +293,23 @@ fn unavailable_readiness_snapshot(
         source_hash: canonical_json_hash(&Value::Null),
         evidence_hash: canonical_json_hash(input),
     };
-    let error_class = error
-        .downcast_ref::<std::io::Error>()
-        .map(|error| format!("{:?}", error.kind()))
-        .unwrap_or_else(|| "ObservationAdmission".into());
-    ReadinessSnapshot {
-        observations: vec![ReadinessObservation {
-            scope: scope.clone(),
-            stage: "artifact".into(),
-            state: ReadinessState::Unavailable,
-            decision: json!({"evaluated": false, "error_class": error_class}),
-            causes: vec![readiness_cause(
-                "observation.load_failed",
-                change,
-                "An observation could not be admitted. Inspect the selected inputs with the original validator.",
-            )],
-        }],
-        scope,
-    }
+    let snapshot = match gather(&root, &policy_path, change, input) {
+        Ok(snapshot) => snapshot,
+        Err(error) => {
+            let error_class = error
+                .downcast_ref::<std::io::Error>()
+                .map(|error| format!("{:?}", error.kind()))
+                .unwrap_or_else(|| "ObservationAdmission".into());
+            ReadinessSnapshot {
+                observations: vec![ReadinessObservation {
+                    scope: scope.clone(), stage: "artifact".into(), state: ReadinessState::Unavailable,
+                    decision: json!({"evaluated": false, "error_class": error_class}),
+                    causes: vec![readiness_cause("observation.load_failed", change, "An observation could not be admitted. Inspect the selected inputs with the original validator.")],
+                }], scope,
+            }
+        }
+    };
+    Ok(derive_readiness(&snapshot))
 }
 
 
