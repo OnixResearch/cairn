@@ -1,0 +1,25 @@
+{
+  "schema": "cairn.incremental-observations.representation-measurement.v1",
+  "tokens": {
+    "state": "unavailable",
+    "reason": "No provider usage or exact tokenizer observation was supplied; byte counts are not token estimates."
+  },
+  "scope": "Standalone JSON sizes for a complete readiness observation and its first page, plus a complete active-change observation; not a resumed-loop or model-visible measurement.",
+  "observations": [
+    {
+      "view": "readiness_complete",
+      "stdout_bytes": 5264,
+      "exit_code": 0
+    },
+    {
+      "view": "readiness_page_1",
+      "stdout_bytes": 2892,
+      "exit_code": 0
+    },
+    {
+      "view": "active_complete",
+      "stdout_bytes": 6058,
+      "exit_code": 0
+    }
+  ]
+}

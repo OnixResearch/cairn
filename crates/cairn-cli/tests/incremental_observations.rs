@@ -419,8 +419,20 @@ fn context_entries_are_exact_and_stable_across_content_edits() -> Result<(), Box
             "difference",
         ],
     )?;
+    // Both selected blocks are reported. Editing demo.a changes its own text; the
+    // following block's absolute byte span shifts by the inserted bytes, which is a
+    // real positional change even though its text is identical.
+    assert_eq!(diff["changed_count"], 2);
     assert_eq!(diff["changed"][0]["identity"], "context:requirement:demo.a");
-    assert_eq!(diff["changed_count"], 1);
+    assert_eq!(diff["changed"][1]["identity"], "context:requirement:demo.b");
+    assert!(diff["changed"][0]["content"]["selection"]["text"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("au lait"));
+    assert!(diff["changed"][1]["content"]["selection"]["text"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("MUST work"));
     Ok(())
 }
 

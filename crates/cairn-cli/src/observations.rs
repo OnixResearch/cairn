@@ -334,7 +334,13 @@ fn context_observation(root: &Path, input: &Value) -> Result<ObservationParts, B
             Some(_) => {}
             None => source_binding = Some((path, source)),
         }
-        entries.push(observation_entry(context_identity(selector), value)?);
+        // The admitted source identity is bound once at cohort level; repeating it
+        // inside every entry would mark all selectors changed on any document edit.
+        let mut entry_value = value;
+        if let Some(object) = entry_value.as_object_mut() {
+            object.remove("source_blake3");
+        }
+        entries.push(observation_entry(context_identity(selector), entry_value)?);
     }
     let (path, source) = source_binding.ok_or("context observation selected no source")?;
     let source_manifest = canonical_json_hash(&json!({
