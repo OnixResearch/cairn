@@ -225,6 +225,7 @@ Read [Implementation-ready projection](docs/implementation-ready.md) for selecta
 Read [Agent guidance context](docs/agent-guidance-context.md) before you declare local context or advisory text.
 Read [Generated agent workflows](docs/generated-agent-workflows.md) before you install project-local agent guidance.
 Read [Developer-loop profiles](docs/developer-loop-profiles.md) before you define or verify a fast local loop.
+Read [Offline agent benchmarks](docs/agent-benchmark.md) for exact saved-run accounting, repository-owned outcome oracles, cohort comparison, and measurement non-claims.
 Read [Check evidence producer](docs/check-evidence-producer.md) for pure admission, read-only planning, and the current execution/import blockers.
 Read [Verification guidance](docs/verification-impact.md) for advisory check selection, exact plan requests, and structural evidence limits.
 Read [RFD collaboration](docs/rfd-collaboration.md) before you use the RFD document commands.

@@ -439,6 +439,41 @@
               touch $out
             '';
 
+        # r[verify cairn.agent_efficiency.conformance]
+        agent-benchmark-contracts =
+          pkgs.runCommand "cairn-agent-benchmark-contracts"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) pkgs.jq ];
+            }
+            ''
+              cp -r ${self}/cairn-policy policy
+              cp -r ${self}/contracts contracts
+              mkdir fixtures
+              cp -r ${self}/fixtures/agent-benchmark fixtures/agent-benchmark
+              chmod -R u+w policy
+              nickel export --format json policy/agent-benchmark.ncl | jq -S . > benchmark-policy.json
+              cmp benchmark-policy.json policy/generated/agent-benchmark.json
+              for fixture in positive-input positive-comparison; do
+                nickel export --format json "fixtures/agent-benchmark/$fixture.ncl" | jq -S . > "$fixture.json"
+                cmp "$fixture.json" "fixtures/agent-benchmark/$fixture.json"
+              done
+              for fixture in fixtures/agent-benchmark/negative-*.ncl; do
+                if nickel export --format json "$fixture" > negative.json 2> negative.err; then
+                  echo "expected benchmark contract rejection: $fixture" >&2
+                  exit 1
+                fi
+                test -s negative.err
+              done
+              substituteInPlace policy/agent-benchmark.ncl \
+                --replace-fail 'max_repetitions = 16,' 'max_repetitions = 15,'
+              nickel export --format json policy/agent-benchmark.ncl | jq -S . > drift.json
+              if cmp -s drift.json policy/generated/agent-benchmark.json; then
+                echo "expected benchmark policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         # r[verify cairn.targeted_context.conformance]
         targeted-context-policy-fresh =
           pkgs.runCommand "cairn-targeted-context-policy-fresh"
