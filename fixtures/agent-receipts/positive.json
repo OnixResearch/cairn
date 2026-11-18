@@ -21,11 +21,11 @@
     "forbidden_uncaptured": []
   },
   "plan_hash": "2222222222222222222222222222222222222222222222222222222222222222",
-  "receipt_hash": "d3e9758229b896de43e60f61f29608dd0f62b3e8848376ee45edfe1e763be0f3",
+  "receipt_hash": "db04064ad0a8941f0cde6b42802a0c7bd01b6a898faf70e653282be3b3556e3c",
   "replay_evidence": {
     "replay_artifact_path": "/tmp/cairn-replay.json",
     "replay_environment_attestation_hash": "2c6628b65df328dc8de2f75cd48e17ea7ebfd8c9c1da30a5ac675750574de45c",
-    "replay_policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+    "replay_policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
     "replay_receipt_hash": "b1c1320bd6612a3d05bb35cda82ede64a185d4914799d6337a600d3d0a4f8a86",
     "replay_selected_cases": [
       "agent_completion_validate",
