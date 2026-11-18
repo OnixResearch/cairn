@@ -60,6 +60,7 @@ mod state_machine_receipt;
 mod steel_orchestration;
 mod support;
 mod targeted_context;
+mod support_maintenance;
 mod test_harness;
 mod toolchain_profile_matrix;
 mod trace_index;
@@ -209,6 +210,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "change" => run_change(args.collect())?,
         "check-evidence" => check_evidence::run_check_evidence(args.collect())?,
         "claim-derivation" => scoped_claim_derivations::run(args.collect())?,
+        "support-maintenance" => support_maintenance::run(args.collect())?,
         "source-review" => source_review::run(args.collect())?,
         "requirement-contract" => typed_requirement_contracts::run(args.collect())?,
         "prose" => prose::run(args.collect())?,
