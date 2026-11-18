@@ -61,6 +61,7 @@ pub mod release_decision;
 pub mod release_run_ledger;
 pub mod repo;
 pub mod requirement_id_registry;
+pub mod requirement_consistency;
 pub mod runtime_evidence;
 pub mod scoped_claim_derivations;
 pub mod semantic_review;
