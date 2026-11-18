@@ -48,7 +48,29 @@ pub(super) fn observe_generated_workflow_destination(
         .into_iter()
         .map(|path| observe_file(root, Path::new(&path), catalog.policy.bounds.max_file_bytes))
         .collect::<Result<Vec<_>, _>>()?;
-    Ok(GeneratedWorkflowDestinationSnapshot { files, manifest })
+    Ok(GeneratedWorkflowDestinationSnapshot {
+        files,
+        manifest,
+        pending_transactions: pending_transactions(root)?,
+    })
+}
+
+fn pending_transactions(root: &CapabilityRoot) -> Result<Vec<String>, Box<dyn Error>> {
+    const MAX_ENTRIES: usize = 256;
+    let entries = match root.entries_bounded(Path::new(".cairn"), MAX_ENTRIES) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(error.into()),
+    };
+    let mut pending = entries
+        .into_iter()
+        .filter_map(|entry| entry.file_name().to_str().map(str::to_string))
+        .filter(|name| name.starts_with("generated-agent-workflow-") && name.ends_with(".pending"))
+        .map(|name| format!(".cairn/{name}"))
+        .collect::<Vec<_>>();
+    pending.sort();
+    pending.dedup();
+    Ok(pending)
 }
 
 fn observe_manifest(
@@ -160,7 +182,10 @@ fn observe_file(
     })
 }
 
-fn has_symlink_component(root: &CapabilityRoot, path: &Path) -> Result<bool, Box<dyn Error>> {
+pub(super) fn has_symlink_component(
+    root: &CapabilityRoot,
+    path: &Path,
+) -> Result<bool, Box<dyn Error>> {
     let mut current = PathBuf::new();
     for component in path.components() {
         current.push(component.as_os_str());

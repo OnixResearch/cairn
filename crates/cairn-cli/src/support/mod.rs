@@ -102,11 +102,12 @@ pub(crate) use receipts::{
     print_json, with_portable_content_hash_receipt, with_portable_receipt_hash, with_receipt_hash,
 };
 pub(crate) use scan::{
-    collect_archived_change_ids, collect_spec_sources, collect_validation_spec_sources,
-    find_change, find_spec_source, mutation_gate_blockers, mutation_gate_observation_with_budget,
-    read_change_dependency_graph, read_change_dependency_graph_with_budget, read_gate_snapshot,
-    read_gate_snapshot_with_budget, read_gate_stage_snapshot_with_budget,
-    read_selected_change_with_budget, read_selected_metadata_with_budget, scan_repo,
+    collect_archived_change_ids, collect_archived_change_ids_with_budget, collect_spec_sources,
+    collect_validation_spec_sources, find_change, find_spec_source, mutation_gate_blockers,
+    mutation_gate_observation_with_budget, read_change_dependency_graph,
+    read_change_dependency_graph_with_budget, read_gate_snapshot, read_gate_snapshot_with_budget,
+    read_gate_stage_snapshot_with_budget, read_selected_change_with_budget,
+    read_selected_metadata_with_budget, scan_repo, scan_repo_with_budget,
 };
 pub(crate) use usage::{print_usage, usage_text};
 

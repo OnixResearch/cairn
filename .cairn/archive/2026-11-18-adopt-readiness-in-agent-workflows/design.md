@@ -47,6 +47,16 @@ Keep filesystem reads and manifest decoding in the CLI shell.
 Keep multi-change ordering and selection in pure functions over admitted facts.
 No scheduler, new execution port, or cross-repository runtime dependency is necessary.
 
+### Implementation decisions
+
+- Nickel source `cairn-policy/workflow-readiness.ncl` exports the `policy` field to `cairn-policy/generated/workflow-readiness.json`. It declares the view names, the action-kind order, the preview kinds, the task prerequisite stages, the task instruction route, the collection bounds, and the non-claims.
+- The readiness view schema is `cairn.drain-readiness.v1`. The manifest schema is `cairn.workflow-readiness-manifest.v1`. The manifest is a `changes` array of entries keyed by unique `change`; each entry may carry `contract`, `results`, `subject_hash`, and `cross_repo_evidence`.
+- The direct route is `cairn drain-plan` with `--view legacy|readiness`, `--evidence-manifest FILE`, and the existing `--root`, `--policy`, and repeated `--cross-repo-evidence` options. The MCP tool accepts `view` and `evidence_manifest` with the same strictness.
+- The MCP default (`view` absent) keeps its existing receipt fields and hashes. The direct CLI uses `command: "cairn drain-plan"`; the MCP receipt keeps `command: "mcp cairn_drain_plan"`.
+- Manifest admission returns stable `workflow_readiness.manifest.*` diagnostics for unavailable, invalid, schema, bound, unknown-change, duplicate-change, partial-completion, unsafe-path, invalid-subject, and duplicate-evidence cases.
+- The core selects a task action first for an eligible change, then readiness actions in the declared kind order. Ordering-blocked changes withhold task and preview selection.
+- Generated workflow descriptors add the read `readiness` command class, the exact `cairn readiness CHANGE`, `cairn drain-plan --view readiness`, and `cairn workflow instructions ARTIFACT --change CHANGE` routes, and a shared advisory non-claim.
+
 ## Alternatives rejected
 
 - Replacing legacy receipts in place breaks saved consumers and evidence hashes.

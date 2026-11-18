@@ -23,7 +23,18 @@ pub fn plan_generated_agent_workflow_install(
     let prior = super::freshness::supported_prior_manifest(snapshot, adapter_id, adapter.version);
     let prior_files = prior_file_map(prior.as_ref());
     let mut desired_paths = std::collections::BTreeSet::new();
-    let mut blockers = Vec::new();
+    let mut recovery_required = snapshot.pending_transactions.clone();
+    recovery_required.sort();
+    recovery_required.dedup();
+    let mut blockers = recovery_required
+        .iter()
+        .map(|path| {
+            format!(
+                "{}: {path}",
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_RECOVERY
+            )
+        })
+        .collect::<Vec<_>>();
     let mut files = Vec::with_capacity(rendered.len());
 
     for file in rendered {
@@ -105,6 +116,7 @@ pub fn plan_generated_agent_workflow_install(
             .map(|manifest| manifest.manifest_identity.clone()),
         manifest_freshness,
         removal_candidates,
+        recovery_required,
         blockers,
         plan_hash: String::new(),
         non_claims: catalog.policy.required_non_claims.clone(),
@@ -138,6 +150,7 @@ pub fn generated_workflow_plan_identity(
         "expected_prior_manifest_identity": plan.expected_prior_manifest_identity,
         "manifest_freshness": plan.manifest_freshness,
         "removal_candidates": plan.removal_candidates,
+        "recovery_required": plan.recovery_required,
         "blockers": plan.blockers,
         "non_claims": plan.non_claims,
     }))

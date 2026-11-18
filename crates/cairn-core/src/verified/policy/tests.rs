@@ -394,6 +394,18 @@ fn parses_generated_default_policy_text() {
         policy.generated_agent_workflow_policy.adapters.len(),
         crate::verified::generated_agent_workflow::INITIAL_ADAPTER_IDS.len()
     );
+    assert_eq!(
+        policy.generated_agent_workflow_policy.entry.id,
+        crate::verified::generated_agent_workflow::GENERATED_AGENT_WORKFLOW_ENTRY_ID
+    );
+    assert_eq!(
+        policy.generated_agent_workflow_policy.entry.layout,
+        crate::verified::generated_agent_workflow::GENERATED_AGENT_WORKFLOW_NATIVE_LAYOUT
+    );
+    assert!(!policy
+        .generated_agent_workflow_policy
+        .command_catalog
+        .is_empty());
     let metadata = policy
         .policy_schema_compatibility
         .expect("generated policy includes schema compatibility metadata");

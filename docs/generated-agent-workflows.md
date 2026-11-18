@@ -32,6 +32,25 @@ cairn agent workflow show explore --policy cairn-policy/generated/cairn-policy.j
 
 These commands read the checked JSON policy. They do not evaluate Nickel at runtime.
 
+## Readiness-driven guidance
+
+The `apply`, `verify`, `drain`, and `archive` descriptors route diagnosis through the current readiness report:
+
+```bash
+cairn readiness CHANGE
+cairn drain-plan --view readiness
+```
+
+Each descriptor directs the agent to the readiness route first, then to an exact artifact instruction route for authoring:
+
+```bash
+cairn workflow instructions ARTIFACT --change CHANGE
+```
+
+The descriptors retain their required tests, completion inputs, review evidence, and mutation preflight. The `verify` and `explore` workflows remain read-only. Rendered guidance contains no `--execute` argument.
+
+Readiness guidance is advisory. It does not run actions, satisfy gates, or make an unavailable observation authoritative. The compact-entry-guide change owns how much of this text a host loads.
+
 ## Select an adapter
 
 Cairn supports these versioned adapters:

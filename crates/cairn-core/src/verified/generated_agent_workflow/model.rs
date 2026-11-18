@@ -6,15 +6,23 @@ pub const GENERATED_AGENT_WORKFLOW_GENERATOR_VERSION: &str = "cairn-agent-workfl
 pub const GENERATED_AGENT_WORKFLOW_MANIFEST_PREFIX: &str = ".cairn-agent-workflows-";
 pub const GENERATED_AGENT_WORKFLOW_MANIFEST_SUFFIX: &str = ".json";
 pub const GENERATED_AGENT_WORKFLOW_EXPLORE_ID: &str = "explore";
+pub const GENERATED_AGENT_WORKFLOW_ENTRY_ID: &str = "entry";
+pub const GENERATED_AGENT_WORKFLOW_NATIVE_LAYOUT: &str = ".cairn";
 pub const GENERATED_AGENT_WORKFLOW_EXPLORE_NO_WRITE: &str =
     "Do not create a change, edit lifecycle artifacts, execute mutation plans, or claim implementation completion.";
 pub const GENERATED_AGENT_WORKFLOW_ISSUE_POLICY: &str = "generated_workflow.policy.invalid";
 pub const GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR: &str = "generated_workflow.descriptor.invalid";
 pub const GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER: &str = "generated_workflow.adapter.invalid";
+pub const GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY: &str = "generated_workflow.entry.invalid";
 pub const GENERATED_AGENT_WORKFLOW_ISSUE_DESTINATION: &str =
     "generated_workflow.destination.invalid";
 pub const GENERATED_AGENT_WORKFLOW_ISSUE_CONFLICT: &str = "generated_workflow.destination.conflict";
 pub const GENERATED_AGENT_WORKFLOW_ISSUE_PLAN_STALE: &str = "generated_workflow.plan.stale";
+pub const GENERATED_AGENT_WORKFLOW_ISSUE_RECOVERY: &str = "generated_workflow.recovery.required";
+pub const GENERATED_AGENT_WORKFLOW_ISSUE_GUIDE_LAYOUT: &str =
+    "generated_workflow.guide.layout.stale";
+pub const GENERATED_AGENT_WORKFLOW_ISSUE_COPIED_GUIDE: &str =
+    "generated_workflow.copied_guide.unclassified";
 
 pub const INITIAL_WORKFLOW_IDS: &[&str] =
     &["apply", "archive", "drain", "explore", "propose", "verify"];
@@ -86,6 +94,32 @@ pub struct GeneratedWorkflowCommandClass {
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct GeneratedWorkflowCommand {
+    pub id: String,
+    pub command_class: String,
+    pub invocation: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GeneratedWorkflowEntryGuide {
+    pub id: String,
+    pub version: u32,
+    pub goal: String,
+    pub layout: String,
+    pub discovery_routes: Vec<String>,
+    pub readiness_routes: Vec<String>,
+    pub stage_route: String,
+    pub profile_route: String,
+    pub profiles: Vec<String>,
+    pub boundaries: Vec<String>,
+    pub required_evidence: Vec<String>,
+    pub max_bytes: usize,
+    pub max_stage_route_bytes: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct GeneratedWorkflowDescriptor {
     pub id: String,
     pub version: u32,
@@ -120,6 +154,8 @@ pub struct GeneratedAgentWorkflowPolicy {
     pub schema: String,
     pub generator_version: String,
     pub command_classes: Vec<GeneratedWorkflowCommandClass>,
+    pub command_catalog: Vec<GeneratedWorkflowCommand>,
+    pub entry: GeneratedWorkflowEntryGuide,
     pub descriptors: Vec<GeneratedWorkflowDescriptor>,
     pub adapters: Vec<GeneratedWorkflowAdapter>,
     pub bounds: GeneratedWorkflowBounds,
@@ -150,6 +186,7 @@ impl std::error::Error for GeneratedWorkflowIssue {}
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AdmittedGeneratedWorkflowCatalog {
     pub policy: GeneratedAgentWorkflowPolicy,
+    pub command_catalog_identity: String,
     pub catalog_identity: String,
 }
 
@@ -210,6 +247,7 @@ pub enum GeneratedWorkflowManifestObservation {
 pub struct GeneratedWorkflowDestinationSnapshot {
     pub files: Vec<GeneratedWorkflowFileObservation>,
     pub manifest: GeneratedWorkflowManifestObservation,
+    pub pending_transactions: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -242,6 +280,7 @@ pub struct GeneratedWorkflowInstallPlan {
     pub expected_prior_manifest_identity: Option<String>,
     pub manifest_freshness: GeneratedWorkflowFreshness,
     pub removal_candidates: Vec<String>,
+    pub recovery_required: Vec<String>,
     pub blockers: Vec<String>,
     pub plan_hash: String,
     pub non_claims: Vec<String>,
@@ -261,4 +300,27 @@ impl GeneratedWorkflowInstallPlan {
                 .all(|file| file.freshness == GeneratedWorkflowFreshness::Current)
             && self.removal_candidates.is_empty()
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum GeneratedWorkflowCopiedGuideClassification {
+    Current,
+    StaleSource,
+    Modified,
+    Unclassified,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GeneratedWorkflowCopiedGuideInspection {
+    pub workflow_id: String,
+    pub classification: GeneratedWorkflowCopiedGuideClassification,
+    pub declared_manifest_identity: Option<String>,
+    pub observed_manifest_identity: Option<String>,
+    pub observed_blake3: String,
+    pub generated_blake3: Option<String>,
+    pub expected_prior_blake3: Option<String>,
+    pub native_layout_current: bool,
+    pub issues: Vec<GeneratedWorkflowIssue>,
 }

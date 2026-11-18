@@ -49,7 +49,7 @@ pub(crate) fn collect_archived_change_ids(
     collect_archived_change_ids_with_budget(root, layout, None)
 }
 
-fn collect_archived_change_ids_with_budget(
+pub(crate) fn collect_archived_change_ids_with_budget(
     root: &Path,
     layout: LifecycleLayout,
     budget: Option<&super::observation_budget::ObservationBudget>,

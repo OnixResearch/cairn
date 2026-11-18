@@ -1,7 +1,57 @@
-use cairn_core::{AdmittedGeneratedWorkflowCatalog, GeneratedWorkflowInstallPlan};
+use cairn_core::{
+    AdmittedGeneratedWorkflowCatalog, GeneratedWorkflowCopiedGuideClassification,
+    GeneratedWorkflowCopiedGuideInspection, GeneratedWorkflowInstallPlan,
+    RenderedGeneratedWorkflowFile,
+};
 use serde_json::{json, Value};
 
 use crate::support::with_receipt_hash;
+
+pub(super) fn entry_receipt(
+    catalog: &AdmittedGeneratedWorkflowCatalog,
+    policy_hash: &str,
+    adapter_id: &str,
+    profile: Option<&str>,
+    file: &RenderedGeneratedWorkflowFile,
+) -> Value {
+    with_receipt_hash(json!({
+        "schema": "cairn.generated-agent-workflow-entry.v1",
+        "command": "agent workflow show",
+        "valid": true,
+        "workflow": file.workflow_id,
+        "adapter": adapter_id,
+        "profile": profile,
+        "catalog_identity": catalog.catalog_identity,
+        "command_catalog_identity": catalog.command_catalog_identity,
+        "policy_hash": policy_hash,
+        "file": {
+            "relative_path": file.relative_path,
+            "content_blake3": file.content_blake3,
+            "descriptor_identity": file.descriptor_identity,
+            "contents": file.contents,
+        },
+        "entry": catalog.policy.entry,
+        "command_catalog": catalog.policy.command_catalog,
+        "non_claims": catalog.policy.required_non_claims,
+    }))
+}
+
+pub(super) fn copied_guide_receipt(
+    catalog: &AdmittedGeneratedWorkflowCatalog,
+    inspection: &GeneratedWorkflowCopiedGuideInspection,
+) -> Value {
+    with_receipt_hash(json!({
+        "schema": "cairn.generated-agent-workflow-copied-guide.v1",
+        "command": "agent workflow inspect-copy",
+        "valid": true,
+        "report_only": true,
+        "mutated": false,
+        "classified": inspection.classification
+            != GeneratedWorkflowCopiedGuideClassification::Unclassified,
+        "inspection": inspection,
+        "non_claims": catalog.policy.required_non_claims,
+    }))
+}
 
 pub(super) fn catalog_receipt(
     catalog: &AdmittedGeneratedWorkflowCatalog,
@@ -28,7 +78,10 @@ pub(super) fn catalog_receipt(
         "valid": true,
         "generator_version": catalog.policy.generator_version,
         "catalog_identity": catalog.catalog_identity,
+        "command_catalog_identity": catalog.command_catalog_identity,
         "policy_hash": policy_hash,
+        "entry": catalog.policy.entry,
+        "command_catalog": catalog.policy.command_catalog,
         "workflows": workflows,
         "adapters": catalog.policy.adapters,
         "non_claims": catalog.policy.required_non_claims,
@@ -106,6 +159,7 @@ pub(super) fn install_plan_receipt(
             "removal_candidates": plan.removal_candidates,
         },
         "blockers": plan.blockers,
+        "recovery_required": plan.recovery_required,
         "plan_hash": plan.plan_hash,
         "non_claims": plan.non_claims,
     }))

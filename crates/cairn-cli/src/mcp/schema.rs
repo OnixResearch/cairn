@@ -122,7 +122,7 @@ fn mcp_read_tools() -> Vec<Value> {
             "cairn_drain_plan",
             true,
             false,
-            "Plan a repository-wide active-change drain without mutation",
+            "Plan a repository-wide active-change drain without mutation; an explicit view selects the readiness-backed projection",
         ),
         mcp_tool(
             "cairn_implementation_ready",
@@ -223,7 +223,7 @@ fn mcp_input_schema(name: &str) -> Value {
                 "limit": {"type": "integer", "minimum": 1, "maximum": 1000}
             }
         }),
-        "cairn_validate" | "cairn_drain_plan" => json!({
+        "cairn_validate" => json!({
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -236,6 +236,7 @@ fn mcp_input_schema(name: &str) -> Value {
                 }
             }
         }),
+        "cairn_drain_plan" => mcp_drain_plan_input_schema(),
         "cairn_change_graph" => mcp_object_schema(&[], &["root"]),
         "cairn_adoption_report" => mcp_object_schema(&["snapshot"], &["root"]),
         "cairn_read_spec" => mcp_object_schema(&["spec"], &["root"]),
@@ -251,6 +252,21 @@ fn mcp_input_schema(name: &str) -> Value {
             );
             schema["properties"]["cross_repo_evidence"]["description"] =
                 json!("Explicit repository-relative receipt summary files only");
+            let view_policy = cairn_core::verified::readiness::agent_view_policy();
+            schema["properties"]["view"] = json!({"type": "string", "enum": ["full", "agent"], "description": "Agent view is a bounded JSON projection; full is the default"});
+            schema["properties"]["max_bytes"] =
+                json!({"type": "integer", "minimum": 1, "maximum": view_policy.max_bytes});
+            schema["properties"]["max_entries"] =
+                json!({"type": "integer", "minimum": 0, "maximum": view_policy.max_entries});
+            schema["properties"]["detail"] = json!({
+                "type": "object", "additionalProperties": false,
+                "properties": {
+                    "kind": {"type": "string", "enum": ["blocker", "action", "stage"]},
+                    "id": {"type": "string", "minLength": 1, "maxLength": 64},
+                    "expected_receipt": {"type": "string", "minLength": 64, "maxLength": 64}
+                },
+                "required": ["kind", "id", "expected_receipt"]
+            });
             schema
         }
         "cairn_verification_impact" => json!({
@@ -319,6 +335,88 @@ fn mcp_input_schema(name: &str) -> Value {
     }
 }
 
+fn mcp_drain_plan_input_schema() -> Value {
+    // The declared view names come from the checked generated policy; an
+    // unavailable projection fails closed with an empty enum.
+    let views = cairn_core::workflow_readiness_policy()
+        .map(|policy| policy.views.clone())
+        .unwrap_or_default();
+    json!({
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "root": {"type": "string", "description": mcp_argument_description("root")},
+            "policy": {"type": "string", "description": mcp_argument_description("policy")},
+            "cross_repo_evidence": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Explicit receipt files or evidence bundle directories for the default receipt view"
+            },
+            "view": {
+                "type": "string",
+                "enum": views,
+                "description": "Policy-declared drain projection; omit for the unchanged default receipt"
+            },
+            "evidence_manifest": {
+                "type": "string",
+                "description": "Repository-relative readiness evidence manifest keyed by exact active change identifiers"
+            }
+        }
+    })
+}
+
+fn validate_mcp_drain_plan_args(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    for key in object.keys() {
+        if ![
+            "root",
+            "policy",
+            "cross_repo_evidence",
+            "view",
+            "evidence_manifest",
+        ]
+        .contains(&key.as_str())
+        {
+            return Err(format!("invalid arguments for {tool}: unknown argument {key}").into());
+        }
+    }
+    for key in ["root", "policy", "view", "evidence_manifest"] {
+        if let Some(value) = object.get(key) {
+            validate_non_empty_string(tool, &format!("argument {key}"), value)?;
+        }
+    }
+    validate_evidence_array(tool, object)?;
+    let policy = cairn_core::workflow_readiness_policy()
+        .map_err(|code| format!("{code}: generated workflow readiness policy is not admitted"))?;
+    let view = object
+        .get("view")
+        .and_then(Value::as_str)
+        .unwrap_or(policy.default_view.as_str());
+    if !policy.views.iter().any(|candidate| candidate == view) {
+        return Err(format!(
+            "invalid arguments for {tool}: argument view must be one of {}",
+            policy.views.join(", ")
+        )
+        .into());
+    }
+    let readiness = view == policy.readiness_view;
+    if readiness && object.contains_key("cross_repo_evidence") {
+        return Err(format!(
+            "invalid arguments for {tool}: the readiness view selects cross-repository evidence from evidence_manifest"
+        )
+        .into());
+    }
+    if !readiness && object.contains_key("evidence_manifest") {
+        return Err(format!(
+            "invalid arguments for {tool}: evidence_manifest requires the readiness view"
+        )
+        .into());
+    }
+    Ok(())
+}
+
 fn mcp_object_schema(required: &[&str], optional: &[&str]) -> Value {
     let mut properties = serde_json::Map::new();
     for key in required.iter().chain(optional.iter()) {
@@ -377,7 +475,8 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_doctor" | "cairn_init" => {
             validate_string_args(name, object, &[], &["root", "policy"])
         }
-        "cairn_validate" | "cairn_drain_plan" => validate_mcp_validate_args(name, object),
+        "cairn_validate" => validate_mcp_validate_args(name, object),
+        "cairn_drain_plan" => validate_mcp_drain_plan_args(name, object),
         "cairn_implementation_ready" => validate_mcp_implementation_args(name, object),
         "cairn_change_graph" => validate_string_args(name, object, &[], &["root"]),
         "cairn_adoption_report" => validate_string_args(name, object, &["snapshot"], &["root"]),
@@ -397,13 +496,62 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_readiness" => {
             validate_evidence_array(name, object)?;
             let mut strings = object.clone();
-            strings.remove("cross_repo_evidence");
+            for key in ["cross_repo_evidence", "max_bytes", "max_entries", "detail"] {
+                let _ = strings.remove(key);
+            }
             validate_string_args(
                 name,
                 &strings,
                 &["change"],
-                &["root", "policy", "contract", "results", "subject_hash"],
-            )
+                &[
+                    "root",
+                    "policy",
+                    "contract",
+                    "results",
+                    "subject_hash",
+                    "view",
+                ],
+            )?;
+            for key in ["max_bytes", "max_entries"] {
+                if let Some(value) = object.get(key) {
+                    if value.as_u64().is_none() {
+                        return Err(format!(
+                            "invalid arguments for {name}: {key} must be a nonnegative integer"
+                        )
+                        .into());
+                    }
+                }
+            }
+            if let Some(detail) = object.get("detail") {
+                let Some(detail) = detail.as_object() else {
+                    return Err(
+                        format!("invalid arguments for {name}: detail must be an object").into(),
+                    );
+                };
+                validate_string_args(name, detail, &["kind", "id", "expected_receipt"], &[])?;
+            }
+            for key in object.keys() {
+                if ![
+                    "change",
+                    "root",
+                    "policy",
+                    "contract",
+                    "results",
+                    "subject_hash",
+                    "view",
+                    "cross_repo_evidence",
+                    "max_bytes",
+                    "max_entries",
+                    "detail",
+                ]
+                .contains(&key.as_str())
+                {
+                    return Err(
+                        format!("invalid arguments for {name}: unknown argument {key}").into(),
+                    );
+                }
+            }
+            Ok(())
         }
         "cairn_verification_impact" => validate_verification_impact_args(name, object),
         "cairn_workflow_status" => {

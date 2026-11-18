@@ -346,6 +346,7 @@ mod tests {
         let snapshot = GeneratedWorkflowDestinationSnapshot {
             files: Vec::new(),
             manifest: GeneratedWorkflowManifestObservation::Missing,
+            pending_transactions: Vec::new(),
         };
         let mut plan = plan_generated_agent_workflow_install(
             &catalog,

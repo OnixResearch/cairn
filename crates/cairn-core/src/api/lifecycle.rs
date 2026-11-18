@@ -91,6 +91,13 @@ pub use crate::verified::lifecycle_store_context::{
     REFERENCE_STORE_MISSING, REFERENCE_STORE_STALE, ROOT_PROJECT_POINTER_STALE,
     ROOT_SELECTOR_CONFLICT, ROOT_STORE_AMBIGUOUS, ROOT_STORE_MISSING, ROOT_STORE_STALE,
 };
+pub use crate::verified::readiness::{
+    admit_workflow_readiness_policy, select_drain_readiness, workflow_readiness_policy,
+    DrainChangeSelection, DrainInstructionRoute, DrainNextTask, DrainReadinessChange,
+    DrainReadinessSelection, DrainSelectedAction, DrainTaskOrdering, WorkflowReadinessBounds,
+    WorkflowReadinessInstruction, WorkflowReadinessPolicy, WORKFLOW_READINESS_BOUND,
+    WORKFLOW_READINESS_POLICY_BOUNDS, WORKFLOW_READINESS_POLICY_INVALID,
+};
 #[rustfmt::skip]
 root_type_compatibility! {
     lifecycle_store_context;

@@ -423,17 +423,31 @@
               chmod -R u+w policy
               nickel export --format json --field policy policy/readiness.ncl > readiness.json
               cmp readiness.json policy/generated/readiness.json
+              nickel export --format json --field view_policy policy/readiness.ncl > readiness-view.json
+              cmp readiness-view.json policy/generated/readiness-view.json
               nickel export --format json policy/fixtures/readiness-positive.ncl > positive.json
               if nickel export --format json policy/fixtures/readiness-negative.ncl > negative.json 2> negative.err; then
                 echo "expected readiness authority rejection" >&2
                 exit 1
               fi
               grep -q 'advisory' negative.err
+              if nickel export --format json policy/fixtures/readiness-view-negative.ncl > view-negative.json 2> view-negative.err; then
+                echo "expected readiness selector rejection" >&2
+                exit 1
+              fi
+              grep -q 'blocker' view-negative.err
               substituteInPlace policy/readiness.ncl \
                 --replace-fail 'max_blockers | Positive = 512' 'max_blockers | Positive = 511'
               nickel export --format json --field policy policy/readiness.ncl > drift.json
               if cmp -s drift.json policy/generated/readiness.json; then
                 echo "expected readiness policy drift" >&2
+                exit 1
+              fi
+              substituteInPlace policy/readiness.ncl \
+                --replace-fail 'max_bytes = 16384' 'max_bytes = 16383'
+              nickel export --format json --field view_policy policy/readiness.ncl > view-drift.json
+              if cmp -s view-drift.json policy/generated/readiness-view.json; then
+                echo "expected readiness view policy drift" >&2
                 exit 1
               fi
               touch $out
@@ -469,6 +483,32 @@
               nickel export --format json policy/agent-benchmark.ncl | jq -S . > drift.json
               if cmp -s drift.json policy/generated/agent-benchmark.json; then
                 echo "expected benchmark policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
+        # r[verify cairn.agent_workflow_readiness.compatibility]
+        workflow-readiness-policy-fresh =
+          pkgs.runCommand "cairn-workflow-readiness-policy-fresh"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
+            }
+            ''
+              cp -r ${self}/cairn-policy policy
+              chmod -R u+w policy
+              nickel export --format json --field policy policy/workflow-readiness.ncl > workflow-readiness.json
+              cmp workflow-readiness.json policy/generated/workflow-readiness.json
+              nickel export --format json policy/fixtures/workflow-readiness-positive.ncl > positive.json
+              if nickel export --format json policy/fixtures/workflow-readiness-negative.ncl > negative.json 2> negative.err; then
+                echo "expected duplicate change selector rejection" >&2
+                exit 1
+              fi
+              substituteInPlace policy/workflow-readiness.ncl \
+                --replace-fail 'max_actions | Positive = 128' 'max_actions | Positive = 127'
+              nickel export --format json --field policy policy/workflow-readiness.ncl > drift.json
+              if cmp -s drift.json policy/generated/workflow-readiness.json; then
+                echo "expected workflow readiness policy drift" >&2
                 exit 1
               fi
               touch $out
