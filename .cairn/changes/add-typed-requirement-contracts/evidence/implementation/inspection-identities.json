@@ -1,0 +1,57 @@
+[
+  {
+    "requirement_id": "cairn.supersede.agent_run_receipts.verification_contract",
+    "meaning": "finite_typed_contract",
+    "correspondence": "not_reviewed",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "8f6616d8f25e616778c2c493e710a56e500633e901bf966234badf74beb63cc5",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "18491211d8b87be63fdde1a8933b0ec12f2db641e91f13104aa2070baa6b30fa",
+    "row_blake3": "cab928f04ff3d61d2ea9e2a2640262e2022dc3ba820d1949fad73d8d6dc977af",
+    "proposed_by": "cairn-typed-requirements-author"
+  },
+  {
+    "requirement_id": "cairn.supersede.agent_run_receipts.pass_only",
+    "meaning": "finite_typed_contract",
+    "correspondence": "not_reviewed",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "f8a0bc4982dd437653a6a68e43875852a300f03ecf8c429011efbac04d59ef59",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "e84910ddd981f08e8d8a801a0a972def8c96c24a6f7d5d3a41e89bf0098bb21c",
+    "row_blake3": "34abbfe64cae739b75554f48d89d0e0bc19ca8e55d54cf51a9363ffe84a6f58d",
+    "proposed_by": "cairn-typed-requirements-author"
+  },
+  {
+    "requirement_id": "cairn.supersede.agent_run_receipts.freshness",
+    "meaning": "finite_typed_contract",
+    "correspondence": "not_reviewed",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "303394b1a46b0fe715c346c50fc05369ffcc85e80bbbc5445d91d666574e4932",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "b59d990b291e6d6853814c1f8c0a3bea993f5d871e21b1d55ce870c909f5028a",
+    "row_blake3": "653914140db582ef1145f36f87c233a9ab57a310f715cadf8a23efa5f5333e5e",
+    "proposed_by": "cairn-typed-requirements-author"
+  },
+  {
+    "requirement_id": "cairn.supersede.agent_run_receipts.completion_authority",
+    "meaning": "finite_typed_contract",
+    "correspondence": "not_reviewed",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "0da83d7244efc08cc3c03d52ad8510933992b53dcc61f06cef9c4d3381a6eb0b",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "3403dc05eace9131de6e0b0c498a8e39d6156f3c75bc29f221fb4fdddcd9383e",
+    "row_blake3": "5427af464b1ebc00db599a9ec90cdee48d0ce7b4a0b2652c6dc1d134bd89451b",
+    "proposed_by": "cairn-typed-requirements-author"
+  },
+  {
+    "requirement_id": "cairn.verification_obligation_cob.claim_revision",
+    "meaning": "finite_typed_contract",
+    "correspondence": "not_reviewed",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "1e160a4066a673c0cd600aa1e3ac6e5270b71f1c15791a6903e264dc7d0e3405",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "a3727644be01e4c181c36cf3884fc8e5474b3fc9af515f03332f5421542f2790",
+    "row_blake3": "1de40130cc0a88bb88288b16daa621de599b1508511648332e9e23ef11a3b666",
+    "proposed_by": "cairn-typed-requirements-author"
+  }
+]

@@ -1,0 +1,178 @@
+{
+  "admitted_proof_evidence": "not_supplied",
+  "boundary": "Well-formedness is not correspondence; correspondence review is not proof; finite example evaluation is not admitted proof evidence, unbounded validity, or source-code correctness. Observable tables are supplied observations, not executed or verified program behavior. EARS keywords confer no review or proof authority.",
+  "correspondence": "reviewed_declaration",
+  "example_evaluation": null,
+  "meaning": "finite_typed_contract",
+  "normalized": {
+    "contract": {
+      "activation": {
+        "kind": "bool",
+        "value": true
+      },
+      "assumptions": [],
+      "domains": {
+        "bool": {
+          "values": [
+            "false",
+            "true"
+          ]
+        },
+        "component": {
+          "values": [
+            "commands",
+            "policy",
+            "prerequisites",
+            "registry_hash",
+            "registry_id",
+            "repository",
+            "required_checks",
+            "selection",
+            "subject"
+          ]
+        },
+        "identity": {
+          "values": [
+            "a",
+            "absent",
+            "b"
+          ]
+        }
+      },
+      "guarantee": {
+        "expressions": [
+          {
+            "kind": "equal",
+            "left": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "repository_contract_present"
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "domain": "bool",
+                "value": "true"
+              }
+            }
+          },
+          {
+            "domain": "component",
+            "expression": {
+              "kind": "equal",
+              "left": {
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "name": "component"
+                  }
+                ],
+                "kind": "observable",
+                "mapping": "repository_identity"
+              },
+              "right": {
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "name": "component"
+                  }
+                ],
+                "kind": "observable",
+                "mapping": "decision_identity"
+              }
+            },
+            "kind": "forall",
+            "variable": "component"
+          }
+        ],
+        "kind": "and"
+      },
+      "informal_remainder": "Repository ownership/authenticity, canonicalization implementation, cryptographic hash syntax/collision resistance, arbitrary registry size, command execution and full diagnostic classes remain outside this finite interpretation.",
+      "observables": {
+        "decision_identity": {
+          "arguments": [
+            "component"
+          ],
+          "phase": "state",
+          "projection": "same components in independently normalized repository decision inputs/report; registry/selection/policy/subject also compared to AgentExecutionResult fields; no result row may define repository_identity",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "repository_contract_present": {
+          "arguments": [],
+          "phase": "state",
+          "projection": "AgentVerificationContract deserialization succeeds for repository-owned contract supplied independently of result rows; false for missing/unparseable contract",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "repository_identity": {
+          "arguments": [
+            "component"
+          ],
+          "phase": "state",
+          "projection": "component selects exact AgentVerificationContract.repository_id, registry_id, registry_hash, selection_hash, policy_hash, final_subject_hash, or canonical required_checks/check_id set, command argv/hash map, prerequisites edge set; injectively label exact values",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        }
+      },
+      "profile": "cairn.requirement-semantics.finite.v1",
+      "proposed_by": "cairn-typed-requirements-author",
+      "requirement": {
+        "requirement_body_blake3": "6a30659535a7f87cce3625cab7db6bdc8ede8be27f95eed08d5ad5860bfebb8b",
+        "requirement_id": "cairn.supersede.agent_run_receipts.verification_contract",
+        "row_blake3": "cab928f04ff3d61d2ea9e2a2640262e2022dc3ba820d1949fad73d8d6dc977af",
+        "source_span": {
+          "end_byte": 466,
+          "end_line": 11,
+          "start_byte": 184,
+          "start_line": 11
+        },
+        "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+        "specification_path": ".cairn/specs/agent-completion/spec.md"
+      },
+      "supported_portion": "Finite exact equality of independently supplied repository verification contract identities, including required-set, command and prerequisite identities. Missing repository contract is distinguished from self-authored passing rows."
+    },
+    "contract_blake3": "8f6616d8f25e616778c2c493e710a56e500633e901bf966234badf74beb63cc5",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "18491211d8b87be63fdde1a8933b0ec12f2db641e91f13104aa2070baa6b30fa"
+  },
+  "proposed_correspondence": [
+    {
+      "proposed_by": "cairn-typed-requirements-author",
+      "rationale": "Finite exact equality of independently supplied repository verification contract identities, including required-set, command and prerequisite identities. Missing repository contract is distinguished from self-authored passing rows. INFORMAL REMAINDER: Repository ownership/authenticity, canonicalization implementation, cryptographic hash syntax/collision resistance, arbitrary registry size, command execution and full diagnostic classes remain outside this finite interpretation.",
+      "requirement_id": "cairn.supersede.agent_run_receipts.verification_contract"
+    }
+  ],
+  "requirement": {
+    "requirement_body_blake3": "6a30659535a7f87cce3625cab7db6bdc8ede8be27f95eed08d5ad5860bfebb8b",
+    "requirement_id": "cairn.supersede.agent_run_receipts.verification_contract",
+    "row_blake3": "cab928f04ff3d61d2ea9e2a2640262e2022dc3ba820d1949fad73d8d6dc977af",
+    "source_span": {
+      "end_byte": 466,
+      "end_line": 11,
+      "start_byte": 184,
+      "start_line": 11
+    },
+    "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+    "specification_path": ".cairn/specs/agent-completion/spec.md"
+  },
+  "review_authenticity": "external_retained_artifact_and_reviewer_policy_trust",
+  "reviews": [
+    {
+      "record": {
+        "contract_blake3": "8f6616d8f25e616778c2c493e710a56e500633e901bf966234badf74beb63cc5",
+        "decision": "approved",
+        "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+        "mapping_blake3": "18491211d8b87be63fdde1a8933b0ec12f2db641e91f13104aa2070baa6b30fa",
+        "proposed_by": "cairn-typed-requirements-author",
+        "requirement_row_blake3": "cab928f04ff3d61d2ea9e2a2640262e2022dc3ba820d1949fad73d8d6dc977af",
+        "review_artifact_blake3": "f98b14c0f4cc68cc520347934523bc798f7334758324fe761c33b69565a5d70e",
+        "reviewer": "parent-independent-review-2026-11-18"
+      },
+      "review_blake3": "7167c8ea5c5859194f0c80165c14ac7d58ae901030049932b0cd20092524876d",
+      "status": "admitted_review_declaration"
+    }
+  ],
+  "schema_version": "cairn.requirement-contract.inspection.v1",
+  "well_formedness": "well_formed"
+}

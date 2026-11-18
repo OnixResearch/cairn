@@ -12,6 +12,11 @@ surface.
 
 ### Added
 
+- Opt-in finite requirement semantics: revision-bound contracts over finite
+  nominal domains with total observable mappings, deterministic normalization,
+  separate contract/interpretation/review identities, and read-only
+  `cairn requirement-contract inspect` that keeps well-formedness, reviewed
+  correspondence, finite example evaluation and proof evidence distinct.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change

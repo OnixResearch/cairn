@@ -1,0 +1,97 @@
+[
+  {
+    "requirement": {
+      "requirement_body_blake3": "97a773f0545b2e3aa12cd5b0cbdafe2698381256f3de1878a809332a381008b6",
+      "requirement_id": "cairn.verification_obligation_cob.claim_revision",
+      "row_blake3": "1de40130cc0a88bb88288b16daa621de599b1508511648332e9e23ef11a3b666",
+      "source_span": {
+        "end_byte": 3646,
+        "end_line": 65,
+        "start_byte": 3392,
+        "start_line": 65
+      },
+      "specification_blake3": "56240c57533326ccee1e6fe41c57408db9d47f24226ec22f3643f365eeff517f",
+      "specification_path": ".cairn/specs/verification-obligation-radicle-cob/spec.md"
+    },
+    "meaning": "finite_typed_contract",
+    "correspondence": "reviewed_declaration",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "1e160a4066a673c0cd600aa1e3ac6e5270b71f1c15791a6903e264dc7d0e3405"
+  },
+  {
+    "requirement": {
+      "requirement_body_blake3": "2b32b4728e4d48cd067823340e77bb5d92a6d1106f44747c2c9066c21a8d4568",
+      "requirement_id": "cairn.supersede.agent_run_receipts.completion_authority",
+      "row_blake3": "5427af464b1ebc00db599a9ec90cdee48d0ce7b4a0b2652c6dc1d134bd89451b",
+      "source_span": {
+        "end_byte": 7737,
+        "end_line": 127,
+        "start_byte": 7484,
+        "start_line": 127
+      },
+      "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+      "specification_path": ".cairn/specs/agent-completion/spec.md"
+    },
+    "meaning": "finite_typed_contract",
+    "correspondence": "reviewed_declaration",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "0da83d7244efc08cc3c03d52ad8510933992b53dcc61f06cef9c4d3381a6eb0b"
+  },
+  {
+    "requirement": {
+      "requirement_body_blake3": "be11d3a5ca69b23a147df33c11a591998537fc649cd8e8f9aed6801dbb07fe3f",
+      "requirement_id": "cairn.supersede.agent_run_receipts.freshness",
+      "row_blake3": "653914140db582ef1145f36f87c233a9ab57a310f715cadf8a23efa5f5333e5e",
+      "source_span": {
+        "end_byte": 4280,
+        "end_line": 74,
+        "start_byte": 4080,
+        "start_line": 74
+      },
+      "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+      "specification_path": ".cairn/specs/agent-completion/spec.md"
+    },
+    "meaning": "finite_typed_contract",
+    "correspondence": "reviewed_declaration",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "303394b1a46b0fe715c346c50fc05369ffcc85e80bbbc5445d91d666574e4932"
+  },
+  {
+    "requirement": {
+      "requirement_body_blake3": "7c55795bcf82118d164643e0ad3e57494d3eccc26cfd5300db11da82b44357d3",
+      "requirement_id": "cairn.supersede.agent_run_receipts.pass_only",
+      "row_blake3": "34abbfe64cae739b75554f48d89d0e0bc19ca8e55d54cf51a9363ffe84a6f58d",
+      "source_span": {
+        "end_byte": 2206,
+        "end_line": 38,
+        "start_byte": 1992,
+        "start_line": 38
+      },
+      "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+      "specification_path": ".cairn/specs/agent-completion/spec.md"
+    },
+    "meaning": "finite_typed_contract",
+    "correspondence": "reviewed_declaration",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "f8a0bc4982dd437653a6a68e43875852a300f03ecf8c429011efbac04d59ef59"
+  },
+  {
+    "requirement": {
+      "requirement_body_blake3": "6a30659535a7f87cce3625cab7db6bdc8ede8be27f95eed08d5ad5860bfebb8b",
+      "requirement_id": "cairn.supersede.agent_run_receipts.verification_contract",
+      "row_blake3": "cab928f04ff3d61d2ea9e2a2640262e2022dc3ba820d1949fad73d8d6dc977af",
+      "source_span": {
+        "end_byte": 466,
+        "end_line": 11,
+        "start_byte": 184,
+        "start_line": 11
+      },
+      "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+      "specification_path": ".cairn/specs/agent-completion/spec.md"
+    },
+    "meaning": "finite_typed_contract",
+    "correspondence": "reviewed_declaration",
+    "admitted_proof_evidence": "not_supplied",
+    "contract_blake3": "8f6616d8f25e616778c2c493e710a56e500633e901bf966234badf74beb63cc5"
+  }
+]

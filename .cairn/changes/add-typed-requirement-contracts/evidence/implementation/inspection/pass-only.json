@@ -1,0 +1,399 @@
+{
+  "admitted_proof_evidence": "not_supplied",
+  "boundary": "Well-formedness is not correspondence; correspondence review is not proof; finite example evaluation is not admitted proof evidence, unbounded validity, or source-code correctness. Observable tables are supplied observations, not executed or verified program behavior. EARS keywords confer no review or proof authority.",
+  "correspondence": "reviewed_declaration",
+  "example_evaluation": null,
+  "meaning": "finite_typed_contract",
+  "normalized": {
+    "contract": {
+      "activation": {
+        "kind": "bool",
+        "value": true
+      },
+      "assumptions": [],
+      "domains": {
+        "bool": {
+          "values": [
+            "false",
+            "true"
+          ]
+        },
+        "check": {
+          "values": [
+            "check-a",
+            "check-b",
+            "unknown"
+          ]
+        },
+        "row": {
+          "values": [
+            "row-a",
+            "row-b"
+          ]
+        },
+        "status": {
+          "values": [
+            "blocked",
+            "cancelled",
+            "cleanup_failed",
+            "deferred",
+            "dry_run",
+            "failed",
+            "infrastructure_error",
+            "not_selected",
+            "passed",
+            "skipped",
+            "timed_out",
+            "unknown"
+          ]
+        }
+      },
+      "guarantee": {
+        "expressions": [
+          {
+            "domain": "check",
+            "expression": {
+              "conclusion": {
+                "domain": "row",
+                "expression": {
+                  "expressions": [
+                    {
+                      "kind": "equal",
+                      "left": {
+                        "arguments": [
+                          {
+                            "kind": "variable",
+                            "name": "row"
+                          }
+                        ],
+                        "kind": "observable",
+                        "mapping": "present"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "value": {
+                          "domain": "bool",
+                          "value": "true"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "equal",
+                      "left": {
+                        "arguments": [
+                          {
+                            "kind": "variable",
+                            "name": "row"
+                          }
+                        ],
+                        "kind": "observable",
+                        "mapping": "row_check"
+                      },
+                      "right": {
+                        "kind": "variable",
+                        "name": "check"
+                      }
+                    },
+                    {
+                      "domain": "row",
+                      "expression": {
+                        "conclusion": {
+                          "kind": "equal",
+                          "left": {
+                            "kind": "variable",
+                            "name": "other"
+                          },
+                          "right": {
+                            "kind": "variable",
+                            "name": "row"
+                          }
+                        },
+                        "kind": "implies",
+                        "premise": {
+                          "expressions": [
+                            {
+                              "kind": "equal",
+                              "left": {
+                                "arguments": [
+                                  {
+                                    "kind": "variable",
+                                    "name": "other"
+                                  }
+                                ],
+                                "kind": "observable",
+                                "mapping": "present"
+                              },
+                              "right": {
+                                "kind": "literal",
+                                "value": {
+                                  "domain": "bool",
+                                  "value": "true"
+                                }
+                              }
+                            },
+                            {
+                              "kind": "equal",
+                              "left": {
+                                "arguments": [
+                                  {
+                                    "kind": "variable",
+                                    "name": "other"
+                                  }
+                                ],
+                                "kind": "observable",
+                                "mapping": "row_check"
+                              },
+                              "right": {
+                                "kind": "variable",
+                                "name": "check"
+                              }
+                            }
+                          ],
+                          "kind": "and"
+                        }
+                      },
+                      "kind": "forall",
+                      "variable": "other"
+                    }
+                  ],
+                  "kind": "and"
+                },
+                "kind": "exists",
+                "variable": "row"
+              },
+              "kind": "implies",
+              "premise": {
+                "kind": "equal",
+                "left": {
+                  "arguments": [
+                    {
+                      "kind": "variable",
+                      "name": "check"
+                    }
+                  ],
+                  "kind": "observable",
+                  "mapping": "selected"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": {
+                    "domain": "bool",
+                    "value": "true"
+                  }
+                }
+              }
+            },
+            "kind": "forall",
+            "variable": "check"
+          },
+          {
+            "domain": "row",
+            "expression": {
+              "conclusion": {
+                "expressions": [
+                  {
+                    "kind": "equal",
+                    "left": {
+                      "arguments": [
+                        {
+                          "kind": "variable",
+                          "name": "row"
+                        }
+                      ],
+                      "kind": "observable",
+                      "mapping": "eligible"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "value": {
+                        "domain": "bool",
+                        "value": "true"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "equal",
+                    "left": {
+                      "arguments": [
+                        {
+                          "kind": "variable",
+                          "name": "row"
+                        }
+                      ],
+                      "kind": "observable",
+                      "mapping": "row_status"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "value": {
+                        "domain": "status",
+                        "value": "passed"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "equal",
+                    "left": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "variable",
+                              "name": "row"
+                            }
+                          ],
+                          "kind": "observable",
+                          "mapping": "row_check"
+                        }
+                      ],
+                      "kind": "observable",
+                      "mapping": "selected"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "value": {
+                        "domain": "bool",
+                        "value": "true"
+                      }
+                    }
+                  }
+                ],
+                "kind": "and"
+              },
+              "kind": "implies",
+              "premise": {
+                "kind": "equal",
+                "left": {
+                  "arguments": [
+                    {
+                      "kind": "variable",
+                      "name": "row"
+                    }
+                  ],
+                  "kind": "observable",
+                  "mapping": "present"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": {
+                    "domain": "bool",
+                    "value": "true"
+                  }
+                }
+              }
+            },
+            "kind": "forall",
+            "variable": "row"
+          }
+        ],
+        "kind": "and"
+      },
+      "informal_remainder": "The eligible observation summarizes existing native validation rather than proving it: prerequisite graph traversal, argv/digest validation and external evidence truth remain informal. The model covers at most two result slots and two known checks, not arbitrary cardinalities.",
+      "observables": {
+        "eligible": {
+          "arguments": [
+            "row"
+          ],
+          "phase": "state",
+          "projection": "row satisfies command argv/hash, registry/selection/policy/subject equality, required evidence/artifact hash syntax and every prerequisite edge passing as checked by evaluate_authoritative_agent_completion; this is a supplied observation, not an uninterpreted predicate assumed true",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "present": {
+          "arguments": [
+            "row"
+          ],
+          "phase": "state",
+          "projection": "whether result slot exists in supplied Vec<AgentExecutionResult>; two slots permit duplicate IDs and missing rows without collapsing them",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "row_check": {
+          "arguments": [
+            "row"
+          ],
+          "phase": "state",
+          "projection": "AgentExecutionResult.check_id mapped injectively to selected IDs or unknown sentinel",
+          "result": "check",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "row_status": {
+          "arguments": [
+            "row"
+          ],
+          "phase": "state",
+          "projection": "AgentExecutionResult.status exact string; unsupported strings are rejected by adapter, never mapped to passed",
+          "result": "status",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "selected": {
+          "arguments": [
+            "check"
+          ],
+          "phase": "state",
+          "projection": "membership of check_id in AgentVerificationContract.required_checks; unknown sentinel is never selected",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        }
+      },
+      "profile": "cairn.requirement-semantics.finite.v1",
+      "proposed_by": "cairn-typed-requirements-author",
+      "requirement": {
+        "requirement_body_blake3": "7c55795bcf82118d164643e0ad3e57494d3eccc26cfd5300db11da82b44357d3",
+        "requirement_id": "cairn.supersede.agent_run_receipts.pass_only",
+        "row_blake3": "34abbfe64cae739b75554f48d89d0e0bc19ca8e55d54cf51a9363ffe84a6f58d",
+        "source_span": {
+          "end_byte": 2206,
+          "end_line": 38,
+          "start_byte": 1992,
+          "start_line": 38
+        },
+        "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+        "specification_path": ".cairn/specs/agent-completion/spec.md"
+      },
+      "supported_portion": "Exactly one present eligible passed result per selected required check in the declared finite universe, with no unknown result rows. A duplicate passed row is not equivalent to one passed row."
+    },
+    "contract_blake3": "f8a0bc4982dd437653a6a68e43875852a300f03ecf8c429011efbac04d59ef59",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "e84910ddd981f08e8d8a801a0a972def8c96c24a6f7d5d3a41e89bf0098bb21c"
+  },
+  "proposed_correspondence": [
+    {
+      "proposed_by": "cairn-typed-requirements-author",
+      "rationale": "Exactly one present eligible passed result per selected required check in the declared finite universe, with no unknown result rows. A duplicate passed row is not equivalent to one passed row. INFORMAL REMAINDER: The eligible observation summarizes existing native validation rather than proving it: prerequisite graph traversal, argv/digest validation and external evidence truth remain informal. The model covers at most two result slots and two known checks, not arbitrary cardinalities.",
+      "requirement_id": "cairn.supersede.agent_run_receipts.pass_only"
+    }
+  ],
+  "requirement": {
+    "requirement_body_blake3": "7c55795bcf82118d164643e0ad3e57494d3eccc26cfd5300db11da82b44357d3",
+    "requirement_id": "cairn.supersede.agent_run_receipts.pass_only",
+    "row_blake3": "34abbfe64cae739b75554f48d89d0e0bc19ca8e55d54cf51a9363ffe84a6f58d",
+    "source_span": {
+      "end_byte": 2206,
+      "end_line": 38,
+      "start_byte": 1992,
+      "start_line": 38
+    },
+    "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+    "specification_path": ".cairn/specs/agent-completion/spec.md"
+  },
+  "review_authenticity": "external_retained_artifact_and_reviewer_policy_trust",
+  "reviews": [
+    {
+      "record": {
+        "contract_blake3": "f8a0bc4982dd437653a6a68e43875852a300f03ecf8c429011efbac04d59ef59",
+        "decision": "approved",
+        "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+        "mapping_blake3": "e84910ddd981f08e8d8a801a0a972def8c96c24a6f7d5d3a41e89bf0098bb21c",
+        "proposed_by": "cairn-typed-requirements-author",
+        "requirement_row_blake3": "34abbfe64cae739b75554f48d89d0e0bc19ca8e55d54cf51a9363ffe84a6f58d",
+        "review_artifact_blake3": "aa0a8041d3b934a295d5c3cae7899aa2970755bb8d50b0d28b36a9ab80f3d99f",
+        "reviewer": "parent-independent-review-2026-11-18"
+      },
+      "review_blake3": "25df3c4943c80e4971ff9b660006668e7930cf32bd160681372e5882b1b4a235",
+      "status": "admitted_review_declaration"
+    }
+  ],
+  "schema_version": "cairn.requirement-contract.inspection.v1",
+  "well_formedness": "well_formed"
+}

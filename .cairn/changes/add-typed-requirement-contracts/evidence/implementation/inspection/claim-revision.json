@@ -1,0 +1,225 @@
+{
+  "admitted_proof_evidence": "not_supplied",
+  "boundary": "Well-formedness is not correspondence; correspondence review is not proof; finite example evaluation is not admitted proof evidence, unbounded validity, or source-code correctness. Observable tables are supplied observations, not executed or verified program behavior. EARS keywords confer no review or proof authority.",
+  "correspondence": "reviewed_declaration",
+  "example_evaluation": null,
+  "meaning": "finite_typed_contract",
+  "normalized": {
+    "contract": {
+      "activation": {
+        "expression": {
+          "kind": "equal",
+          "left": {
+            "arguments": [],
+            "kind": "observable",
+            "mapping": "revision_before"
+          },
+          "right": {
+            "arguments": [],
+            "kind": "observable",
+            "mapping": "revision_after"
+          }
+        },
+        "kind": "not"
+      },
+      "assumptions": [],
+      "domains": {
+        "bool": {
+          "values": [
+            "false",
+            "true"
+          ]
+        },
+        "identity": {
+          "values": [
+            "a",
+            "absent",
+            "b"
+          ]
+        },
+        "lifecycle": {
+          "values": [
+            "discharged",
+            "invalidated",
+            "open",
+            "rejected"
+          ]
+        },
+        "operation": {
+          "values": [
+            "operation-a",
+            "operation-b"
+          ]
+        }
+      },
+      "guarantee": {
+        "expressions": [
+          {
+            "kind": "equal",
+            "left": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "lifecycle_after"
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "domain": "lifecycle",
+                "value": "open"
+              }
+            }
+          },
+          {
+            "domain": "operation",
+            "expression": {
+              "conclusion": {
+                "kind": "equal",
+                "left": {
+                  "arguments": [
+                    {
+                      "kind": "variable",
+                      "name": "operation"
+                    }
+                  ],
+                  "kind": "observable",
+                  "mapping": "operation_after"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": {
+                    "domain": "bool",
+                    "value": "true"
+                  }
+                }
+              },
+              "kind": "implies",
+              "premise": {
+                "kind": "equal",
+                "left": {
+                  "arguments": [
+                    {
+                      "kind": "variable",
+                      "name": "operation"
+                    }
+                  ],
+                  "kind": "observable",
+                  "mapping": "operation_before"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": {
+                    "domain": "bool",
+                    "value": "true"
+                  }
+                }
+              }
+            },
+            "kind": "forall",
+            "variable": "operation"
+          }
+        ],
+        "kind": "and"
+      },
+      "informal_remainder": "Current WorkflowState does not carry individual claim-root fields on every evidence link, finding and decision. That stronger prose portion is not established here; per-fact root binding, retained full claim payloads, authorized complete-basis revision admission, concurrent heads, numeric increment/overflow and arbitrary history remain informal.",
+      "observables": {
+        "lifecycle_after": {
+          "arguments": [],
+          "phase": "after",
+          "projection": "WorkflowState.lifecycle.status after resolve_field",
+          "result": "lifecycle",
+          "source": "crates/cairn-core/src/verified/workflow_collaboration_impl.rs"
+        },
+        "operation_after": {
+          "arguments": [
+            "operation"
+          ],
+          "phase": "after",
+          "projection": "membership of the same operation ID in WorkflowState.operations after admitted claim field revision",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/workflow_collaboration_impl.rs"
+        },
+        "operation_before": {
+          "arguments": [
+            "operation"
+          ],
+          "phase": "before",
+          "projection": "membership of operation ID in WorkflowState.operations before admitted claim field revision",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/workflow_collaboration_impl.rs"
+        },
+        "revision_after": {
+          "arguments": [],
+          "phase": "after",
+          "projection": "WorkflowState.claim_root.revision after admitted resolve_field; a different exact revision has a different token",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/workflow_collaboration_impl.rs"
+        },
+        "revision_before": {
+          "arguments": [],
+          "phase": "before",
+          "projection": "WorkflowState.claim_root.revision before resolve_field; injective token for the exact revision number, not arithmetic",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/workflow_collaboration_impl.rs"
+        }
+      },
+      "profile": "cairn.requirement-semantics.finite.v1",
+      "proposed_by": "cairn-typed-requirements-author",
+      "requirement": {
+        "requirement_body_blake3": "97a773f0545b2e3aa12cd5b0cbdafe2698381256f3de1878a809332a381008b6",
+        "requirement_id": "cairn.verification_obligation_cob.claim_revision",
+        "row_blake3": "1de40130cc0a88bb88288b16daa621de599b1508511648332e9e23ef11a3b666",
+        "source_span": {
+          "end_byte": 3646,
+          "end_line": 65,
+          "start_byte": 3392,
+          "start_line": 65
+        },
+        "specification_blake3": "56240c57533326ccee1e6fe41c57408db9d47f24226ec22f3643f365eeff517f",
+        "specification_path": ".cairn/specs/verification-obligation-radicle-cob/spec.md"
+      },
+      "supported_portion": "Single admitted claim revision changes the exact review epoch, resets lifecycle to open (so a prior discharge is not inherited), and preserves the selected finite operation history."
+    },
+    "contract_blake3": "1e160a4066a673c0cd600aa1e3ac6e5270b71f1c15791a6903e264dc7d0e3405",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "a3727644be01e4c181c36cf3884fc8e5474b3fc9af515f03332f5421542f2790"
+  },
+  "proposed_correspondence": [
+    {
+      "proposed_by": "cairn-typed-requirements-author",
+      "rationale": "Single admitted claim revision changes the exact review epoch, resets lifecycle to open (so a prior discharge is not inherited), and preserves the selected finite operation history. INFORMAL REMAINDER: Current WorkflowState does not carry individual claim-root fields on every evidence link, finding and decision. That stronger prose portion is not established here; per-fact root binding, retained full claim payloads, authorized complete-basis revision admission, concurrent heads, numeric increment/overflow and arbitrary history remain informal.",
+      "requirement_id": "cairn.verification_obligation_cob.claim_revision"
+    }
+  ],
+  "requirement": {
+    "requirement_body_blake3": "97a773f0545b2e3aa12cd5b0cbdafe2698381256f3de1878a809332a381008b6",
+    "requirement_id": "cairn.verification_obligation_cob.claim_revision",
+    "row_blake3": "1de40130cc0a88bb88288b16daa621de599b1508511648332e9e23ef11a3b666",
+    "source_span": {
+      "end_byte": 3646,
+      "end_line": 65,
+      "start_byte": 3392,
+      "start_line": 65
+    },
+    "specification_blake3": "56240c57533326ccee1e6fe41c57408db9d47f24226ec22f3643f365eeff517f",
+    "specification_path": ".cairn/specs/verification-obligation-radicle-cob/spec.md"
+  },
+  "review_authenticity": "external_retained_artifact_and_reviewer_policy_trust",
+  "reviews": [
+    {
+      "record": {
+        "contract_blake3": "1e160a4066a673c0cd600aa1e3ac6e5270b71f1c15791a6903e264dc7d0e3405",
+        "decision": "approved",
+        "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+        "mapping_blake3": "a3727644be01e4c181c36cf3884fc8e5474b3fc9af515f03332f5421542f2790",
+        "proposed_by": "cairn-typed-requirements-author",
+        "requirement_row_blake3": "1de40130cc0a88bb88288b16daa621de599b1508511648332e9e23ef11a3b666",
+        "review_artifact_blake3": "9376fdeccc5d50a81f5d932007eea83d133cd0a6f8550da277db11ce19a7666b",
+        "reviewer": "parent-independent-review-2026-11-18"
+      },
+      "review_blake3": "759cd9f457e434a04e0f2c79e4005967b3359b220fa8c736cf718a0ca95841de",
+      "status": "admitted_review_declaration"
+    }
+  ],
+  "schema_version": "cairn.requirement-contract.inspection.v1",
+  "well_formedness": "well_formed"
+}

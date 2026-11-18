@@ -71,6 +71,7 @@ pub mod structured_lifecycle;
 pub mod toolchain_profile_matrix;
 pub mod traceability;
 pub mod trellis_proof_readiness;
+pub mod typed_requirement_contracts;
 pub mod validation;
 pub mod verification_impact;
 pub mod verification_role;
