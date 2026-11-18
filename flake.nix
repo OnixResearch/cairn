@@ -439,6 +439,30 @@
               touch $out
             '';
 
+        # r[verify cairn.targeted_context.conformance]
+        targeted-context-policy-fresh =
+          pkgs.runCommand "cairn-targeted-context-policy-fresh"
+            { nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ]; }
+            ''
+              cp -r ${self}/cairn-policy policy
+              chmod -R u+w policy
+              nickel export --format json --field policy policy/targeted-context.ncl > targeted-context.json
+              cmp targeted-context.json policy/generated/targeted-context.json
+              nickel export --format json policy/fixtures/targeted-context-positive.ncl > positive.json
+              if nickel export --format json policy/fixtures/targeted-context-negative.ncl > negative.json 2> negative.err; then
+                echo "expected targeted-context bound rejection" >&2
+                exit 1
+              fi
+              substituteInPlace policy/targeted-context.ncl \
+                --replace-fail 'max_selected_bytes = 65536' 'max_selected_bytes = 65535'
+              nickel export --format json --field policy policy/targeted-context.ncl > drift.json
+              if cmp -s drift.json policy/generated/targeted-context.json; then
+                echo "expected targeted-context policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         # r[verify cairn.adoption_report.inputs]
         # r[verify cairn.adoption_report.stages]
         adoption-report-contracts =

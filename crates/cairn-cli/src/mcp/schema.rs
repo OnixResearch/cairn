@@ -47,6 +47,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Return bounded project facts and advisory guidance with explicit authority labels",
         ),
         mcp_tool(
+            "cairn_context_read",
+            true,
+            false,
+            "Read exactly one source-bound lifecycle requirement, task, or full heading path",
+        ),
+        mcp_tool(
             "cairn_workflow_status",
             true,
             false,
@@ -244,6 +250,21 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_context" => {
             mcp_object_schema(&[], &["root", "policy", "profile", "artifact", "operation"])
         }
+        "cairn_context_read" => {
+            let mut schema = mcp_object_schema(
+                &["root", "scope", "artifact"],
+                &[
+                    "change",
+                    "spec",
+                    "requirement_id",
+                    "task_id",
+                    "expected_source_blake3",
+                ],
+            );
+            schema["properties"]["scope"]["enum"] = json!(["accepted", "active", "archived"]);
+            schema["properties"]["heading_path"] = json!({"type": "array", "minItems": 1, "items": {"type": "string"}, "description": "Complete heading ancestry, including document title"});
+            schema
+        }
         "cairn_readiness" => {
             let mut schema = mcp_schema_with_evidence(
                 &["change"],
@@ -394,6 +415,47 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
             &[],
             &["root", "policy", "profile", "artifact", "operation"],
         ),
+        "cairn_context_read" => {
+            let mut strings = object.clone();
+            if let Some(path) = strings.remove("heading_path") {
+                let Some(headings) = path.as_array() else {
+                    return Err(
+                        "invalid arguments for cairn_context_read: heading_path must be an array"
+                            .into(),
+                    );
+                };
+                if headings.is_empty()
+                    || headings
+                        .iter()
+                        .any(|heading| heading.as_str().is_none_or(str::is_empty))
+                {
+                    return Err("invalid arguments for cairn_context_read: heading_path requires nonempty strings".into());
+                }
+            }
+            validate_string_args(
+                name,
+                &strings,
+                &["root", "scope", "artifact"],
+                &[
+                    "change",
+                    "spec",
+                    "requirement_id",
+                    "task_id",
+                    "expected_source_blake3",
+                ],
+            )?;
+            let selectors = ["requirement_id", "task_id", "heading_path"]
+                .iter()
+                .filter(|key| object.contains_key(**key))
+                .count();
+            if selectors != 1 {
+                return Err(
+                    "invalid arguments for cairn_context_read: exactly one selector required"
+                        .into(),
+                );
+            }
+            validate_enum_arg(name, object, "scope", &["accepted", "active", "archived"])
+        }
         "cairn_readiness" => {
             validate_evidence_array(name, object)?;
             let mut strings = object.clone();

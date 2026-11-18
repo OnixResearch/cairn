@@ -108,6 +108,7 @@ pub(crate) use scan::{
     read_gate_snapshot_with_budget, read_gate_stage_snapshot_with_budget,
     read_selected_change_with_budget, read_selected_metadata_with_budget, scan_repo,
 };
+pub(crate) use source::SourceReader;
 pub(crate) use usage::{print_usage, usage_text};
 
 // r[impl cli_maintainability.support_helper_submodule_split.focused_modules]

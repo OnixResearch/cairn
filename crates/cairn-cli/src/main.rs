@@ -55,6 +55,7 @@ mod stack_provenance;
 mod state_machine_receipt;
 mod steel_orchestration;
 mod support;
+mod targeted_context;
 mod test_harness;
 mod toolchain_profile_matrix;
 mod trace_index;
@@ -177,6 +178,14 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         print_usage();
         return Ok(());
     };
+    if command == "context"
+        && all_args.get(1).map(String::as_str) == Some("read")
+        && !all_args
+            .iter()
+            .any(|arg| arg == "--root" || arg == "--lifecycle-store")
+    {
+        return Err("context read requires an explicit --root or --lifecycle-store".into());
+    }
     let prepared = prepare_invocation(command, all_args[1..].to_vec())?;
     if command_requires_native_lifecycle(command) {
         let selected_root = read_option(prepared.args.clone(), "--root", ".");
@@ -212,12 +221,19 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 .ok_or("status root resolution is unavailable")?,
         )?,
         "store" => lifecycle_store::run_store(args.collect())?,
-        "context" => run_context(
-            args.collect(),
-            root_local
-                .as_ref()
-                .ok_or("context root resolution is unavailable")?,
-        )?,
+        "context" => {
+            let context_args: Vec<String> = args.collect();
+            if context_args.first().map(String::as_str) == Some("read") {
+                targeted_context::run(context_args)?;
+            } else {
+                run_context(
+                    context_args,
+                    root_local
+                        .as_ref()
+                        .ok_or("context root resolution is unavailable")?,
+                )?;
+            }
+        }
         "config" => config_export::run_config(args.collect())?,
         "doctor" => run_doctor(
             args.collect(),

@@ -12,6 +12,9 @@ surface.
 
 ### Added
 
+- Exact source-bound lifecycle context reads for requirement IDs, authored task
+  IDs and heading paths through CLI/MCP, with UTF-8 byte spans, stale-source
+  refusal, separate document validity and explicit prerequisite/authority routes.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change
