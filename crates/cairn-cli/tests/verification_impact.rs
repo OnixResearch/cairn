@@ -52,6 +52,7 @@ fn index(files: Vec<TraceabilityFile>) -> ContentBoundTraceIndex {
             marker_verbs: vec!["impl".into(), "verify".into()],
             assurance_level: "declared".into(),
             anchor_kind: "exact_marker_bytes".into(),
+            rust_configuration_path: None,
         },
         files,
     )

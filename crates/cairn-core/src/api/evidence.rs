@@ -50,14 +50,17 @@ pub use crate::verified::content_bound_requirement_registry::{
     CONTENT_BOUND_REVISION_KIND_JUJUTSU, CONTENT_BOUND_REVISION_KIND_OPAQUE,
 };
 pub use crate::verified::content_bound_trace_index::{
-    evaluate_content_bound_trace_index, parse_content_bound_trace_index_value,
-    query_content_bound_trace_index, validate_content_bound_trace_index,
-    verify_content_bound_trace_index, ContentBoundTraceIndex, ContentBoundTraceIndexEvaluation,
+    evaluate_content_bound_trace_index, evaluate_structural_trace_index,
+    parse_content_bound_trace_index_value, query_content_bound_trace_index,
+    validate_content_bound_trace_index, verify_content_bound_trace_index,
+    verify_structural_trace_index, ContentBoundTraceIndex, ContentBoundTraceIndexEvaluation,
     ContentBoundTraceIndexIssue, ContentBoundTraceIndexVerification, ContentBoundTraceLink,
     ContentBoundTraceMarkerSpan, ContentBoundTraceQuery, ContentBoundTraceQueryEvaluation,
-    ContentBoundTraceSourceIdentity, CONTENT_BOUND_TRACE_INDEX_BOUNDARY,
+    ContentBoundTraceSourceIdentity, RustItemBinding, RustItemConfiguration, RustItemFact,
+    StructuralTraceData, CONTENT_BOUND_TRACE_INDEX_BOUNDARY,
     CONTENT_BOUND_TRACE_INDEX_NON_CLAIMS, CONTENT_BOUND_TRACE_INDEX_SCHEMA_V1,
-    TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES, TRACEABILITY_ASSURANCE_DECLARED,
+    CONTENT_BOUND_TRACE_INDEX_SCHEMA_V2, TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES,
+    TRACEABILITY_ANCHOR_RUST_ITEM_V1, TRACEABILITY_ASSURANCE_DECLARED,
 };
 pub use crate::verified::cross_repo_dependencies::{
     build_radicle_issue_receipt, cross_repo_dependency_contract, dependency_blocker_messages,

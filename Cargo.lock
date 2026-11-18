@@ -347,11 +347,14 @@ dependencies = [
  "nickel-export-core",
  "onix-cairn-radicle-cob",
  "onix-radicle-cob-git-store",
+ "proc-macro2",
+ "quote",
  "rat-nodegraph",
  "ratatui",
  "redb",
  "serde",
  "serde_json",
+ "syn 2.0.117",
 ]
 
 [[package]]

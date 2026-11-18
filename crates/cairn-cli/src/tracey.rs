@@ -184,6 +184,14 @@ pub(crate) fn collect_traceability_files(
     root: &Path,
     sources: &[TraceabilitySource],
 ) -> Result<Vec<TraceabilityFile>, Box<dyn Error>> {
+    collect_traceability_files_with_bound(root, sources, None)
+}
+
+pub(crate) fn collect_traceability_files_with_bound(
+    root: &Path,
+    sources: &[TraceabilitySource],
+    max_source_bytes: Option<u64>,
+) -> Result<Vec<TraceabilityFile>, Box<dyn Error>> {
     let mut files = BTreeMap::new();
     for source in sources {
         let source_root = root.join(&source.root);
@@ -204,9 +212,15 @@ pub(crate) fn collect_traceability_files(
             if !metadata.is_file() {
                 continue;
             }
+            if max_source_bytes.is_some_and(|limit| metadata.len() > limit) {
+                return Err(format!("traceability source exceeds saved-byte budget: {relative}").into());
+            }
             let text = fs::read_to_string(&path).map_err(|source_error| {
                 format!("failed to read traceability source {relative}: {source_error}")
             })?;
+            if max_source_bytes.is_some_and(|limit| text.len() as u64 > limit) {
+                return Err(format!("traceability source changed beyond saved-byte budget: {relative}").into());
+            }
             files.insert(
                 relative.clone(),
                 TraceabilityFile {

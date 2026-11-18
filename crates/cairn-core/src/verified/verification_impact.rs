@@ -1291,6 +1291,7 @@ mod tests {
             marker_verbs: vec!["impl".to_string(), "verify".to_string()],
             assurance_level: "declared".to_string(),
             anchor_kind: "exact_marker_bytes".to_string(),
+            rust_configuration_path: None,
         }
     }
 

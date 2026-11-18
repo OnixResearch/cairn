@@ -41,6 +41,8 @@ pub struct TraceabilityProfile {
     pub marker_verbs: Vec<String>,
     pub assurance_level: String,
     pub anchor_kind: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rust_configuration_path: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -650,6 +652,7 @@ mod tests {
             ],
             assurance_level: "declared".to_string(),
             anchor_kind: "exact_marker_bytes".to_string(),
+            rust_configuration_path: None,
         }
     }
 
