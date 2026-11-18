@@ -1,0 +1,691 @@
+{
+  "allow_mutations": false,
+  "protocol_version": "2024-11-05",
+  "tools": [
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "List Cairn lifecycle state for a bounded root",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cairn_status"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "List accepted specs, active changes, and archived changes",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cairn_list_content"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read a bounded accepted spec by id",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          },
+          "spec": {
+            "description": "Accepted spec lifecycle identifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "spec"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_read_spec"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read bounded active change metadata by id",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_change_show"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Return bounded project facts and advisory guidance with explicit authority labels",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact": {
+            "description": "Policy-owned workflow artifact identifier",
+            "type": "string"
+          },
+          "operation": {
+            "description": "String argument",
+            "type": "string"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "profile": {
+            "description": "String argument",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cairn_context"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Return policy-owned artifact states and next actions for one change",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          },
+          "schema": {
+            "description": "Policy-owned workflow schema identifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_workflow_status"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Return one bounded policy-owned artifact instruction envelope",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact": {
+            "description": "Policy-owned workflow artifact identifier",
+            "type": "string"
+          },
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          },
+          "schema": {
+            "description": "Policy-owned workflow schema identifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change",
+          "artifact"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_workflow_instructions"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Run Cairn diagnostics and return a structured receipt",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cairn_doctor"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Run Cairn validation and return a structured receipt",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cross_repo_evidence": {
+            "description": "Explicit receipt files or evidence bundle directories",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "cairn_validate"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Evaluate a Cairn gate for proposal, design, or tasks",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          },
+          "stage": {
+            "description": "Gate stage: proposal, design, or tasks",
+            "enum": [
+              "proposal",
+              "design",
+              "tasks"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "change",
+          "stage"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_gate"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Return bounded gate context for a change",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_gate_context"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Return dependency graph readiness for active changes",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cairn_change_graph"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Inspect a legacy agent-run receipt without granting completion",
+      "inputSchema": {
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "path"
+            ]
+          },
+          {
+            "required": [
+              "receipt"
+            ]
+          }
+        ],
+        "properties": {
+          "path": {
+            "description": "Repository-relative bounded receipt path",
+            "type": "string"
+          },
+          "receipt": {
+            "description": "Inline bounded agent-run receipt",
+            "type": "object"
+          },
+          "root": {
+            "description": "Repository root for path input",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "cairn_agent_receipt_validate"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Validate repository-owned completion evidence without executing checks",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "contract": {
+            "type": "object"
+          },
+          "policy": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array"
+          },
+          "root": {
+            "type": "string"
+          },
+          "subject_hash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "contract",
+          "results",
+          "subject_hash"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_agent_completion_validate"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Inspect change readiness without execution or mutation",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "contract": {
+            "description": "String argument",
+            "type": "string"
+          },
+          "cross_repo_evidence": {
+            "description": "Explicit repository-relative receipt summary files only",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "results": {
+            "description": "String argument",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          },
+          "subject_hash": {
+            "description": "String argument",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_readiness"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Derive read-only verification guidance from an admitted source comparison",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "applicability": {
+            "type": "string"
+          },
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "contract": {
+            "type": "string"
+          },
+          "evidence": {
+            "description": "Optional source-bound structural observations; no completion authority",
+            "type": "object"
+          },
+          "input": {
+            "description": "Admitted cairn.verification-impact.v1 source comparison",
+            "type": "object"
+          },
+          "profiles": {
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_verification_impact"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Inspect a saved cross-repository adoption snapshot without execution or mutation",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          },
+          "snapshot": {
+            "description": "String argument",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_adoption_report"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Plan a repository-wide active-change drain without mutation",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cross_repo_evidence": {
+            "description": "Explicit receipt files or evidence bundle directories",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "cairn_drain_plan"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Select implementation-ready change/task units without mutation",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cross_repo_evidence": {
+            "description": "Explicit receipt files or evidence bundle directories",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "cairn_implementation_ready"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Plan sync without mutation",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "cross_repo_evidence": {
+            "description": "Explicit receipt files or evidence bundle directories",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_sync_plan"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Plan archive without mutation",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "description": "Active change lifecycle identifier",
+            "type": "string"
+          },
+          "cross_repo_evidence": {
+            "description": "Explicit receipt files or evidence bundle directories",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_archive_plan"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Plan legacy migration without mutation",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "policy": {
+            "description": "Policy JSON path; defaults to Cairn's checked-in policy",
+            "type": "string"
+          },
+          "root": {
+            "description": "Repository root; defaults to the current directory",
+            "type": "string"
+          },
+          "source": {
+            "description": "Legacy migration source: cairn, openspec, or ironspec",
+            "enum": [
+              "cairn",
+              "openspec",
+              "ironspec"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "type": "object"
+      },
+      "name": "cairn_migrate_plan"
+    }
+  ]
+}

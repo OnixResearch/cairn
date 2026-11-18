@@ -1,0 +1,142 @@
+{
+  "active_change_count": 1,
+  "changes": [
+    {
+      "archive_ready": false,
+      "blocked_tasks": [],
+      "blockers": [],
+      "completed_tasks": [],
+      "completion_only": false,
+      "cross_repo_dependencies": {
+        "blocked_count": 0,
+        "dependency_count": 0,
+        "input_hash": "db590aa05b790925fdf986f022250368d1d39b2a83586461571de4946c808d37",
+        "non_claims": [
+          "dependency satisfaction proves presented receipt linkage only",
+          "dependency satisfaction does not prove upstream correctness or remote trust",
+          "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+        ],
+        "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+        "receipt_hash": "a904c2e684f22844da630261b04dcd4f165f82816b2d7612b88f0099fedec311",
+        "rows": [],
+        "satisfied_count": 0,
+        "schema": "cairn.cross-repo-dependency-receipt.v1",
+        "valid": true,
+        "verdict": "PASS"
+      },
+      "gates": {
+        "design": {
+          "issue_count": 0,
+          "issues": [],
+          "stage": "design",
+          "task_ordering": null,
+          "valid": true,
+          "verdict": "PASS"
+        },
+        "proposal": {
+          "issue_count": 0,
+          "issues": [],
+          "stage": "proposal",
+          "task_ordering": null,
+          "valid": true,
+          "verdict": "PASS"
+        },
+        "tasks": {
+          "issue_count": 0,
+          "issues": [],
+          "stage": "tasks",
+          "task_ordering": {
+            "active": false,
+            "edges": [],
+            "issues": [],
+            "nodes": [],
+            "order": [],
+            "ready_tasks": [],
+            "valid": true
+          },
+          "valid": true,
+          "verdict": "PASS"
+        }
+      },
+      "implementation_ready": true,
+      "name": "demo",
+      "path": "fixtures/basic/.cairn/changes/demo",
+      "snapshot_digest": "157f09b8cf4328287910dfa195920b5dcc70a35b811747a96fea73315aee8649",
+      "task_counts": {
+        "done": 0,
+        "in_progress": 0,
+        "todo": 2,
+        "total": 2,
+        "unmarked": 0
+      },
+      "task_ordering": {
+        "active": false,
+        "edges": [],
+        "issues": [],
+        "nodes": [],
+        "order": [],
+        "ready_tasks": [],
+        "valid": true
+      },
+      "units": [
+        {
+          "requirement_references": [
+            "demo.behavior",
+            "demo.behavior.scenario"
+          ],
+          "unit": "change:demo"
+        }
+      ],
+      "workflow_profile": {
+        "acceptance_ids": [],
+        "non_claims": [
+          "workflow state proves only the selected policy graph and observed structural artifact facts",
+          "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+          "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+          "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+        ],
+        "profile_identity_hash": "8e810c1f497a916d6ec0076be088f7d87335136f6f5691d695aada8c15ff1608",
+        "review_receipt_hashes": [],
+        "spec_effect": "delta",
+        "workflow_profile": "spec-driven",
+        "workflow_profile_compatibility_fallback": true,
+        "workflow_profile_source": "compatibility_fallback",
+        "workflow_profile_version": 1
+      }
+    }
+  ],
+  "command": "cairn implementation-ready",
+  "complete": true,
+  "completion_only_count": 0,
+  "layout": "cairn",
+  "mcp": {
+    "destructive": false,
+    "read_only": true
+  },
+  "next_actions": [
+    {
+      "action": "implement the selected unit",
+      "change": "demo",
+      "unit": "change:demo"
+    }
+  ],
+  "outcome": "ready",
+  "policy": "cairn-default",
+  "processed_change_count": 1,
+  "ready_change_count": 1,
+  "receipt_hash": "a713f55c5239703e291ac1a14de2991512eedf3d6978d89b00cb2bacb9fb0f81",
+  "root": "fixtures/basic",
+  "schema": "cairn.implementation-ready.v1",
+  "selection": [
+    {
+      "archive_ready": false,
+      "change": "demo",
+      "requirement_references": [
+        "demo.behavior",
+        "demo.behavior.scenario"
+      ],
+      "snapshot_digest": "157f09b8cf4328287910dfa195920b5dcc70a35b811747a96fea73315aee8649",
+      "unit": "change:demo"
+    }
+  ]
+}

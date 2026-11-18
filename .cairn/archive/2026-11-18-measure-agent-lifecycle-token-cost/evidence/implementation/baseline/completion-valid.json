@@ -1,0 +1,46 @@
+{
+  "checks_executed": false,
+  "classification": "authoritative",
+  "command": "agent-receipt complete",
+  "completion": {
+    "classification": "authoritative",
+    "diagnostics": [],
+    "final_subject_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "input_hash": "2a1d980671c3390d2e2d3402cbf770168414b9e744b560b592447d0118773c3f",
+    "non_claims": [
+      "completion validation does not prove check-oracle soundness",
+      "completion validation does not prove honest command execution beyond supplied evidence",
+      "completion validation does not prove model correctness",
+      "completion validation does not prove whole-product correctness",
+      "completion validation does not prove release eligibility outside the selected contract"
+    ],
+    "non_passing_checks": [],
+    "passed_checks": [
+      "clippy",
+      "tests"
+    ],
+    "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+    "receipt_hash": "c59d1c221fce8f65d87fc37a22ae3ac28159098dbbd15e9799c4db083d1bb085",
+    "registry_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "registry_id": "cairn-release-checks",
+    "repository_id": "onixresearch/cairn",
+    "required_checks": [
+      "clippy",
+      "tests"
+    ],
+    "schema": "cairn.agent-completion.v2",
+    "selection_hash": "b9da53c190687f8ff0bf2a465d6823056328363c7aa4b73f97ee0a10ff158581",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "completion_receipt_hash": "c59d1c221fce8f65d87fc37a22ae3ac28159098dbbd15e9799c4db083d1bb085",
+  "contract_path": "fixtures/agent-completion/contract.json",
+  "current_policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "current_subject_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "input_kind": "path",
+  "max_content_bytes": 65536,
+  "receipt_hash": "6eb8f27783addb199f24478d9a0f09ecf77adbb64c5e3f46c590c345d466e831",
+  "results_path": "fixtures/agent-completion/results.json",
+  "valid": true,
+  "verdict": "PASS"
+}

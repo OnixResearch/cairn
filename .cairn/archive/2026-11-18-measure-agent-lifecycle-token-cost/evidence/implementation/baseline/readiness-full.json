@@ -1,0 +1,365 @@
+{
+  "actions": [
+    {
+      "argv": [],
+      "authority": "advisory",
+      "causes": [
+        "2ae64b985d0facbe1fb7c99ecfa4e1f991da6aa2a9b48b36a9df0f3a2b42c71d"
+      ],
+      "expected_observation": "reviewed remediation rule for this exact diagnostic",
+      "id": "4d62733ef0e723412f456bba4fc31ebc3803b0f26cd5d918012e4c38eef454a1",
+      "kind": "unresolved",
+      "prerequisites": [
+        "43eb4a9c397c9d8a885a129813dac25a9cb8a8e6175b5b1dceb354b10ba51e5c",
+        "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+        "fc81239937212b0d09aecb671a7ba837906e42ef484e9e97a251ba6b1b45df02"
+      ],
+      "target": "demo"
+    },
+    {
+      "argv": [],
+      "authority": "advisory",
+      "causes": [
+        "fad31bd7fe1360eaa3f7779b18246a1507aa34d754c4d64cedfdb6bb985e25d1"
+      ],
+      "expected_observation": "reviewed remediation rule for this exact diagnostic",
+      "id": "7f6baa4b552327883b2425c53694f1237eb21602ff8b84c991c77f39fbd151a4",
+      "kind": "unresolved",
+      "prerequisites": [
+        "43eb4a9c397c9d8a885a129813dac25a9cb8a8e6175b5b1dceb354b10ba51e5c",
+        "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+        "fc81239937212b0d09aecb671a7ba837906e42ef484e9e97a251ba6b1b45df02"
+      ],
+      "target": "demo"
+    }
+  ],
+  "blockers": [
+    {
+      "code": "plan.blocked",
+      "id": "fad31bd7fe1360eaa3f7779b18246a1507aa34d754c4d64cedfdb6bb985e25d1",
+      "message": "demo: tasks not archive-ready (todo: 2, in_progress: 0, unmarked: 0)",
+      "stage": "archive",
+      "target": "demo"
+    },
+    {
+      "code": "observation.unavailable",
+      "id": "2ae64b985d0facbe1fb7c99ecfa4e1f991da6aa2a9b48b36a9df0f3a2b42c71d",
+      "message": "Observation is unavailable",
+      "stage": "completion",
+      "target": "demo"
+    }
+  ],
+  "classification": "unavailable",
+  "diagnostics": [],
+  "input_hash": "5a445461ee768e1a62860854a3355d645044c133b9a3057888e98808d67ff2d4",
+  "mutation_authorized": false,
+  "non_claims": [
+    "Readiness does not authorize mutation or execute checks",
+    "Readiness does not prove evidence truth, code correctness, or release eligibility"
+  ],
+  "readiness_policy_hash": "3daf5296f1c72472fa26cb1aa80b6c661ecf791b500443457c6f1c256669ad98",
+  "receipt_hash": "fc06b7fdce033b903527585b2f6d058cb44297b4448a13704c4ff68873cebd58",
+  "schema": "cairn.readiness.v1",
+  "scope": {
+    "change": "demo",
+    "evidence_hash": "fc81239937212b0d09aecb671a7ba837906e42ef484e9e97a251ba6b1b45df02",
+    "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+    "source_hash": "43eb4a9c397c9d8a885a129813dac25a9cb8a8e6175b5b1dceb354b10ba51e5c"
+  },
+  "stages": [
+    {
+      "decision": {
+        "artifacts": [
+          {
+            "blockers": [],
+            "files": [
+              {
+                "blake3": "ed539afaa9323197e33614c6ce588d99a337bdb624f83d6d82e38d9b68b24738",
+                "path": ".cairn/changes/demo/proposal.md"
+              }
+            ],
+            "id": "proposal",
+            "missing": [],
+            "output_path": "proposal.md",
+            "path_kind": "file",
+            "requires": [],
+            "stage": "proposal",
+            "state": "done",
+            "structural_admission": "proposal",
+            "unlocks": [
+              "specs",
+              "design"
+            ]
+          },
+          {
+            "blockers": [],
+            "files": [
+              {
+                "blake3": "0597e17429f8fff8a325226eae381542e2cc357a702e1e1ece9c768a9ef1a9db",
+                "path": ".cairn/changes/demo/specs/demo/spec.md"
+              }
+            ],
+            "id": "specs",
+            "missing": [],
+            "output_path": "specs",
+            "path_kind": "spec_directory",
+            "requires": [
+              "proposal"
+            ],
+            "stage": "design",
+            "state": "done",
+            "structural_admission": "delta_specs",
+            "unlocks": [
+              "tasks"
+            ]
+          },
+          {
+            "blockers": [],
+            "files": [
+              {
+                "blake3": "8fa0f56eca1c07192ee108782e669adcdba3d1a20ef0c57eb31a08cf7f6bb01f",
+                "path": ".cairn/changes/demo/design.md"
+              }
+            ],
+            "id": "design",
+            "missing": [],
+            "output_path": "design.md",
+            "path_kind": "file",
+            "requires": [
+              "proposal"
+            ],
+            "stage": "design",
+            "state": "done",
+            "structural_admission": "design",
+            "unlocks": [
+              "tasks"
+            ]
+          },
+          {
+            "blockers": [],
+            "files": [
+              {
+                "blake3": "afbad300becd162a1c85650b05f700c7e18549355a235065e98f47b9fe1937b1",
+                "path": ".cairn/changes/demo/tasks.md"
+              }
+            ],
+            "id": "tasks",
+            "missing": [],
+            "output_path": "tasks.md",
+            "path_kind": "file",
+            "requires": [
+              "specs",
+              "design"
+            ],
+            "stage": "tasks",
+            "state": "done",
+            "structural_admission": "tasks",
+            "unlocks": []
+          }
+        ],
+        "issues": [],
+        "next_actions": [],
+        "non_claims": [
+          "workflow state proves only the selected policy graph and observed structural artifact facts",
+          "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+          "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+          "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+        ],
+        "profile_evaluation": {
+          "acceptance_ids": [],
+          "issues": [],
+          "non_claims": [
+            "workflow state proves only the selected policy graph and observed structural artifact facts",
+            "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+            "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+            "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+          ],
+          "profile_id": "spec-driven",
+          "profile_version": 1,
+          "review_receipt_hashes": [],
+          "spec_effect": "delta"
+        },
+        "schema_description": "Cairn proposal, delta-spec, design, and tasks lifecycle",
+        "schema_id": "spec-driven",
+        "schema_version": "cairn.workflow-status.v1",
+        "valid": true
+      },
+      "decision_hash": "f6e2a461737cac9e6fe221f5ceb70b3156281fd0e7a4caa4da9753c172b8d965",
+      "stage": "artifact",
+      "state": "ready"
+    },
+    {
+      "decision": {
+        "change": "demo",
+        "issues": [],
+        "stage": "proposal",
+        "verdict": "PASS"
+      },
+      "decision_hash": "32fa4b7778c51d7e7a09349246b50757e26ebf13cb807fe10c2584ff97faa99d",
+      "stage": "proposal",
+      "state": "ready"
+    },
+    {
+      "decision": {
+        "change": "demo",
+        "issues": [],
+        "stage": "design",
+        "verdict": "PASS"
+      },
+      "decision_hash": "66e5e87a28e42a5b03d6f96509ada3cef07483b239077ca2aa8ffe7e842c9c91",
+      "stage": "design",
+      "state": "ready"
+    },
+    {
+      "decision": {
+        "change": "demo",
+        "issues": [],
+        "stage": "tasks",
+        "verdict": "PASS"
+      },
+      "decision_hash": "5a781cd7e3984054b1d059ddda19a5a4db70e1b375259b83edba5289008c6fe6",
+      "stage": "tasks",
+      "state": "ready"
+    },
+    {
+      "decision": null,
+      "decision_hash": "03f88b99c3d8073bba8948d6e762aac443b265f606cc05abd4d172f03a4def6a",
+      "stage": "completion",
+      "state": "unavailable"
+    },
+    {
+      "decision": {
+        "cross_repo_dependencies": {
+          "blocked_count": 0,
+          "dependency_count": 0,
+          "input_hash": "db590aa05b790925fdf986f022250368d1d39b2a83586461571de4946c808d37",
+          "non_claims": [
+            "dependency satisfaction proves presented receipt linkage only",
+            "dependency satisfaction does not prove upstream correctness or remote trust",
+            "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+          ],
+          "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+          "receipt_hash": "a904c2e684f22844da630261b04dcd4f165f82816b2d7612b88f0099fedec311",
+          "rows": [],
+          "satisfied_count": 0,
+          "schema": "cairn.cross-repo-dependency-receipt.v1",
+          "valid": true,
+          "verdict": "PASS"
+        },
+        "gate_required": true,
+        "merge_preflight": {
+          "documents": [
+            {
+              "accepted_before_exists": true,
+              "accepted_before_hash": "89bbfc267aa6e363ab1a8eeef964ef628519557fbc874c9acaf3c46288b98600",
+              "blocked": false,
+              "changed": true,
+              "delta_hash": "0597e17429f8fff8a325226eae381542e2cc357a702e1e1ece9c768a9ef1a9db",
+              "destination": ".cairn/specs/demo/spec.md",
+              "diagnostics": [],
+              "expected_after_hash": "fdb7614934331d4cb17973fc0fee6b121d2e7d2695bf372ddc8bed0f933a7b3f",
+              "operations": [
+                {
+                  "block_hash": "075ec81b5693c5d44734aee4a28e3fad8e0cd5a67c684430aa3d18ac465b0050",
+                  "heading": "### Requirement: Demo behavior",
+                  "kind": "added",
+                  "requirement_id": "demo.behavior"
+                }
+              ],
+              "outcomes": [
+                {
+                  "kind": "added",
+                  "requirement_id": "demo.behavior",
+                  "state": "applied"
+                }
+              ],
+              "source": ".cairn/changes/demo/specs/demo/spec.md"
+            }
+          ]
+        },
+        "preview_argv": [
+          "cairn",
+          "sync",
+          "demo",
+          "--root",
+          "fixtures/basic",
+          "--policy",
+          "/home/brittonr/git/OnixResearch/.worktrees/cairn-agent-benchmark-20261117/cairn-policy/generated/cairn-policy.json"
+        ],
+        "reasons": [],
+        "validation_input_hash": "2d72e0d79e59221becf78c9bf3da59c23b079c28070e8033b77da493de69d6db"
+      },
+      "decision_hash": "dd838f961d7c1dd1c86c14c1a5dd3a0dabcc0effa575733c33e387addcf7463b",
+      "stage": "sync",
+      "state": "blocked"
+    },
+    {
+      "decision": {
+        "cross_repo_dependencies": {
+          "blocked_count": 0,
+          "dependency_count": 0,
+          "input_hash": "db590aa05b790925fdf986f022250368d1d39b2a83586461571de4946c808d37",
+          "non_claims": [
+            "dependency satisfaction proves presented receipt linkage only",
+            "dependency satisfaction does not prove upstream correctness or remote trust",
+            "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+          ],
+          "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+          "receipt_hash": "a904c2e684f22844da630261b04dcd4f165f82816b2d7612b88f0099fedec311",
+          "rows": [],
+          "satisfied_count": 0,
+          "schema": "cairn.cross-repo-dependency-receipt.v1",
+          "valid": true,
+          "verdict": "PASS"
+        },
+        "gate_required": false,
+        "merge_preflight": {
+          "documents": [
+            {
+              "accepted_before_exists": true,
+              "accepted_before_hash": "89bbfc267aa6e363ab1a8eeef964ef628519557fbc874c9acaf3c46288b98600",
+              "blocked": false,
+              "changed": true,
+              "delta_hash": "0597e17429f8fff8a325226eae381542e2cc357a702e1e1ece9c768a9ef1a9db",
+              "destination": ".cairn/specs/demo/spec.md",
+              "diagnostics": [],
+              "expected_after_hash": "fdb7614934331d4cb17973fc0fee6b121d2e7d2695bf372ddc8bed0f933a7b3f",
+              "operations": [
+                {
+                  "block_hash": "075ec81b5693c5d44734aee4a28e3fad8e0cd5a67c684430aa3d18ac465b0050",
+                  "heading": "### Requirement: Demo behavior",
+                  "kind": "added",
+                  "requirement_id": "demo.behavior"
+                }
+              ],
+              "outcomes": [
+                {
+                  "kind": "added",
+                  "requirement_id": "demo.behavior",
+                  "state": "applied"
+                }
+              ],
+              "source": ".cairn/changes/demo/specs/demo/spec.md"
+            }
+          ]
+        },
+        "preview_argv": [
+          "cairn",
+          "archive",
+          "demo",
+          "--root",
+          "fixtures/basic",
+          "--policy",
+          "/home/brittonr/git/OnixResearch/.worktrees/cairn-agent-benchmark-20261117/cairn-policy/generated/cairn-policy.json"
+        ],
+        "reasons": [
+          "demo: tasks not archive-ready (todo: 2, in_progress: 0, unmarked: 0)"
+        ]
+      },
+      "decision_hash": "25571e5e5b49461b67e345f0b34e143c76b63f4b20d15b5bfdf8ac1c18f54885",
+      "stage": "archive",
+      "state": "blocked"
+    }
+  ],
+  "valid": true
+}

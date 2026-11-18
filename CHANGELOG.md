@@ -12,6 +12,11 @@ surface.
 
 ### Added
 
+- Read-only `cairn agent-benchmark validate|compare` commands for bounded saved-run
+  accounting and scoped cohort comparisons, with typed Nickel contracts, exact
+  token categories, independent outcome classes, and explicit unavailable data.
+  Provider/model execution remains host-owned; representation replays cannot
+  establish end-to-end efficiency or lifecycle completion.
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change
