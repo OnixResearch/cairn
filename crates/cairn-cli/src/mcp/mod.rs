@@ -240,6 +240,10 @@ pub(crate) fn implementation_ready(input: &Value) -> Result<Value, Box<dyn Error
     read_tools::mcp_implementation_ready(input)
 }
 
+pub(crate) fn drain_plan(input: &Value, command: &str) -> Result<Value, Box<dyn Error>> {
+    read_tools::mcp_drain_plan(input, command)
+}
+
 pub(crate) fn mcp_call_tool(
     name: &str,
     input: &Value,
@@ -270,7 +274,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_change_graph" => mcp_change_graph(input)?,
             "cairn_agent_receipt_validate" => mcp_agent_receipt_validate(input)?,
             "cairn_agent_completion_validate" => mcp_agent_completion_validate(input)?,
-            "cairn_drain_plan" => mcp_drain_plan(input)?,
+            "cairn_drain_plan" => mcp_drain_plan(input, "mcp cairn_drain_plan")?,
             "cairn_implementation_ready" => mcp_implementation_ready(input)?,
             "cairn_readiness" => crate::readiness::readiness_value(input)?,
             "cairn_verification_impact" => {

@@ -362,7 +362,24 @@ pub(super) fn mcp_change_graph(input: &Value) -> Result<Value, Box<dyn Error>> {
     Ok(with_portable_receipt_hash(&root, value))
 }
 
-pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
+// r[impl cairn.agent_workflow_readiness.compatibility]
+pub(super) fn mcp_drain_plan(input: &Value, command: &str) -> Result<Value, Box<dyn Error>> {
+    let Some(view) = input.get("view") else {
+        return drain_plan_receipt(input, command);
+    };
+    let view = view.as_str().ok_or("drain plan view must be a string")?;
+    let policy = cairn_core::workflow_readiness_policy()
+        .map_err(|code| format!("{code}: generated workflow readiness policy is not admitted"))?;
+    if view == policy.readiness_view {
+        crate::drain_plan::readiness_drain_value(input, command)
+    } else if view == policy.default_view {
+        drain_plan_receipt(input, command)
+    } else {
+        Err(format!("drain plan view has no projection: {view}").into())
+    }
+}
+
+fn drain_plan_receipt(input: &Value, command: &str) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.mcp_drain_all.plan]
     // r[impl cairn.task_ordering.drain]
     // r[impl cairn.mcp_drain_all.plan.read_only]
@@ -520,7 +537,7 @@ pub(super) fn mcp_drain_plan(input: &Value) -> Result<Value, Box<dyn Error>> {
     Ok(with_portable_receipt_hash(
         &root,
         json!({
-            "command": "mcp cairn_drain_plan",
+            "command": command,
             "root": path_string(&root),
             "layout": layout_name(selected.layout),
             "policy": policy.name,
@@ -556,7 +573,7 @@ pub(super) fn mcp_implementation_ready(input: &Value) -> Result<Value, Box<dyn E
             limit
         }
     };
-    let drain = mcp_drain_plan(input)?;
+    let drain = mcp_drain_plan(input, "mcp cairn_drain_plan")?;
     let root = mcp_root(input);
     let changes = drain["changes"]
         .as_array()

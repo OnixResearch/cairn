@@ -2,6 +2,7 @@ use std::{env, error::Error, path::Path};
 
 mod adoption;
 mod adr;
+mod agent_benchmark;
 mod agent_guidance_shell;
 mod agent_receipt;
 mod archive_compaction;
@@ -13,6 +14,7 @@ mod cross_repo_dependencies;
 mod determinism;
 mod developer_experience;
 mod developer_loop;
+mod drain_plan;
 mod evidence;
 mod evidence_manifest;
 mod evidence_registry;
@@ -158,6 +160,7 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "view"
             | "workflow"
             | "readiness"
+            | "drain-plan"
             | "implementation-ready"
             | "adoption"
             | "release-readiness"
@@ -205,6 +208,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 .ok_or("spec root resolution is unavailable")?,
         )?,
         "implementation-ready" => run_implementation_ready(args.collect())?,
+        "drain-plan" => drain_plan::run_drain_plan(args.collect())?,
         "status" => run_status(
             args.collect(),
             root_local
@@ -247,6 +251,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "determinism" => run_determinism(args.collect())?,
         "developer-loop" => run_developer_loop(args.collect())?,
         "agent" => run_agent(args.collect())?,
+        "agent-benchmark" => agent_benchmark::run(args.collect())?,
         "adr" => run_adr(args.collect())?,
         "agent-receipt" => agent_receipt::run_agent_receipt(args.collect())?,
         "evidence" => run_evidence(args.collect())?,
