@@ -1,0 +1,31 @@
+{
+  "schema": "cairn.mcp-discovery.representation-measurement.v1",
+  "tokens": {
+    "state": "unavailable",
+    "reason": "No provider usage or exact tokenizer observation was supplied; descriptor counts and byte sizes are not token estimates."
+  },
+  "scope": "Declared eager versus lazy discovery presentations over the retained catalog fixtures; no live host or model-visible measurement.",
+  "observations": [
+    {
+      "presentation": "eager_full_catalog",
+      "calls": 1,
+      "descriptors_exposed": 23,
+      "stdout_bytes": 19967,
+      "exit_code": 0
+    },
+    {
+      "presentation": "eager_inspect_profile",
+      "calls": 1,
+      "descriptors_exposed": 13,
+      "stdout_bytes": 10479,
+      "exit_code": 0
+    },
+    {
+      "presentation": "lazy_single_lookup",
+      "calls": 1,
+      "descriptors_exposed": 1,
+      "stdout_bytes": 965,
+      "exit_code": 0
+    }
+  ]
+}

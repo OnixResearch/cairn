@@ -203,6 +203,7 @@ fn strict_lookup_rejects_unknown_unavailable_and_forwarded_arguments() -> Result
 }
 
 #[test]
+// r[verify cairn.mcp_discovery.conformance]
 fn bounded_pages_complete_without_empty_terminal_pages_and_reject_stale_cursors(
 ) -> Result<(), Box<dyn Error>> {
     // r[verify cairn.mcp_discovery.pages]
