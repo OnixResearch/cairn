@@ -216,7 +216,7 @@ pub struct ConsistencyCase {
 
 /// One exact formula fragment: the requirement revision and the syntactic
 /// location inside its normalized contract.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FormulaFragment {
     pub requirement_id: String,
