@@ -1,0 +1,51 @@
+# Advisory refinement and typed-dependency policy.
+# Bounds and admitted vocabulary only. Independent of the legacy default policy,
+# so it changes no existing policy or receipt hash material.
+{
+  schema = "cairn.refinement-policy.v1",
+  relations = [
+    "ordering_archive",
+    "verified_specification",
+    "verified_candidate",
+    "candidate_input",
+    "integrated_revision",
+    "lifecycle",
+    "semantic",
+  ],
+  assurances = ["reviewed", "bounded_check"],
+  feasibility_methods = [
+    "finite-enumeration-exhaustive.v1",
+    "reviewed-argument.v1",
+  ],
+  root_assumptions = [],
+  proof_checkers = [],
+  bounds = {
+    max_decompositions = 64,
+    max_requirements = 256,
+    max_assumptions = 128,
+    max_obligations = 512,
+    max_alternatives = 32,
+    max_dependencies = 256,
+    max_evidence = 1024,
+    max_guarantee_cases = 64,
+    max_depth = 16,
+  },
+} | {
+  schema | String,
+  relations | Array String,
+  assurances | Array String,
+  feasibility_methods | Array String,
+  root_assumptions | Array { id | String, statement | String },
+  proof_checkers | Array String,
+  bounds | {
+    max_decompositions | Number,
+    max_requirements | Number,
+    max_assumptions | Number,
+    max_obligations | Number,
+    max_alternatives | Number,
+    max_dependencies | Number,
+    max_evidence | Number,
+    max_guarantee_cases | Number,
+    max_depth | Number,
+  },
+}

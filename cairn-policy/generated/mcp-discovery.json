@@ -106,6 +106,14 @@
           "requires_mutations": false
         },
         {
+          "name": "cairn_context_read",
+          "requires_mutations": false
+        },
+        {
+          "name": "cairn_observe",
+          "requires_mutations": false
+        },
+        {
           "name": "cairn_init",
           "requires_mutations": true
         },
@@ -190,6 +198,14 @@
         {
           "name": "cairn_tool_describe",
           "requires_mutations": false
+        },
+        {
+          "name": "cairn_context_read",
+          "requires_mutations": false
+        },
+        {
+          "name": "cairn_observe",
+          "requires_mutations": false
         }
       ]
     },
@@ -254,6 +270,14 @@
         },
         {
           "name": "cairn_tool_describe",
+          "requires_mutations": false
+        },
+        {
+          "name": "cairn_context_read",
+          "requires_mutations": false
+        },
+        {
+          "name": "cairn_observe",
           "requires_mutations": false
         },
         {

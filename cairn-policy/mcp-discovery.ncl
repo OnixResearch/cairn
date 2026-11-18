@@ -9,6 +9,7 @@ let Inspect = std.array.map ReadTool [
   "cairn_context", "cairn_workflow_status", "cairn_workflow_instructions",
   "cairn_doctor", "cairn_gate_context", "cairn_change_graph",
   "cairn_readiness", "cairn_implementation_ready", "cairn_tool_describe",
+  "cairn_context_read", "cairn_observe",
 ] in
 let AllRead = std.array.map ReadTool [
   "cairn_status", "cairn_list_content", "cairn_read_spec", "cairn_change_show",
@@ -18,6 +19,7 @@ let AllRead = std.array.map ReadTool [
   "cairn_readiness", "cairn_verification_impact", "cairn_adoption_report",
   "cairn_drain_plan", "cairn_implementation_ready", "cairn_sync_plan",
   "cairn_archive_plan", "cairn_migrate_plan",
+  "cairn_context_read", "cairn_observe",
 ] in
 let Mutations = std.array.map MutationTool [
   "cairn_init", "cairn_change_create", "cairn_sync_execute",

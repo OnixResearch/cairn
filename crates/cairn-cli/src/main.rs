@@ -44,6 +44,7 @@ mod radicle_change;
 mod readiness;
 mod receipt_preserves_diff;
 mod receipt_verify_content_hash;
+mod refinement_typed_dependencies;
 mod release_decision;
 mod release_evidence;
 mod release_readiness;
@@ -211,6 +212,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "check-evidence" => check_evidence::run_check_evidence(args.collect())?,
         "claim-derivation" => scoped_claim_derivations::run(args.collect())?,
         "support-maintenance" => support_maintenance::run(args.collect())?,
+        "refinement" => refinement_typed_dependencies::run(args.collect())?,
         "source-review" => source_review::run(args.collect())?,
         "requirement-contract" => typed_requirement_contracts::run(args.collect())?,
         "prose" => prose::run(args.collect())?,

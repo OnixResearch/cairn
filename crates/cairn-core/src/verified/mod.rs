@@ -61,6 +61,7 @@ pub mod radicle_checkout;
 pub mod radicle_import;
 pub mod readiness;
 pub mod receipt_drift;
+pub mod refinement_typed_dependencies;
 pub mod release_decision;
 pub mod release_run_ledger;
 pub mod repo;
