@@ -49,6 +49,7 @@ pub(crate) fn usage_text() -> &'static str {
         , "\n  requirement-contract inspect --requirement ID --registry FILE [--root DIR] [--policy FILE] [--inventory FILE] [--review FILE] [--example FILE]  (read-only finite semantics; never proof admission)"
         , "\n  claim-derivation explain --case FILE [--policy FILE]  (advisory; no lifecycle mutation)"
         , "\n  support-maintenance explain --case FILE [--policy FILE]  (advisory; no lifecycle mutation)"
+        , "\n  footprints inspect --case FILE [--policy FILE] [--root DIR]  (read-only advisory; no lifecycle mutation)"
         , "\n  traceability compare --root PATH --fixtures DIR --out FILE [--observations DIR]  (read-only; upstream not executed)"
     )
 }
