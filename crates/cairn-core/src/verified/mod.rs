@@ -68,6 +68,7 @@ pub mod source_review;
 pub mod stack_provenance;
 pub mod state_machine_receipt;
 pub mod structured_lifecycle;
+pub mod support_maintenance;
 pub mod toolchain_profile_matrix;
 pub mod traceability;
 pub mod trellis_proof_readiness;
