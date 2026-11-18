@@ -146,6 +146,7 @@ fn reject(args: &[&str], fragment: &str) -> Result<(), Box<dyn Error>> {
 #[test]
 // r[verify cairn.agent_readiness.view]
 // r[verify cairn.agent_readiness.actions]
+// r[verify cairn.agent_readiness.conformance]
 fn real_cli_mcp_agent_projection_and_details_preserve_full_identity() -> Result<(), Box<dyn Error>>
 {
     let path = root().join("fixtures/basic/.cairn/changes/demo/tasks.md");
