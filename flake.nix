@@ -439,6 +439,32 @@
               touch $out
             '';
 
+        # r[verify cairn.agent_workflow_readiness.compatibility]
+        workflow-readiness-policy-fresh =
+          pkgs.runCommand "cairn-workflow-readiness-policy-fresh"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ];
+            }
+            ''
+              cp -r ${self}/cairn-policy policy
+              chmod -R u+w policy
+              nickel export --format json --field policy policy/workflow-readiness.ncl > workflow-readiness.json
+              cmp workflow-readiness.json policy/generated/workflow-readiness.json
+              nickel export --format json policy/fixtures/workflow-readiness-positive.ncl > positive.json
+              if nickel export --format json policy/fixtures/workflow-readiness-negative.ncl > negative.json 2> negative.err; then
+                echo "expected duplicate change selector rejection" >&2
+                exit 1
+              fi
+              substituteInPlace policy/workflow-readiness.ncl \
+                --replace-fail 'max_actions | Positive = 128' 'max_actions | Positive = 127'
+              nickel export --format json --field policy policy/workflow-readiness.ncl > drift.json
+              if cmp -s drift.json policy/generated/workflow-readiness.json; then
+                echo "expected workflow readiness policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         # r[verify cairn.adoption_report.inputs]
         # r[verify cairn.adoption_report.stages]
         adoption-report-contracts =

@@ -419,3 +419,97 @@ fn plan_receipts_are_checkout_independent_and_do_not_expose_roots() -> Result<()
     assert!(!serialized.contains("raw_prompt"));
     Ok(())
 }
+
+// r[verify cairn.agent_workflow_readiness.guidance]
+#[test]
+fn readiness_guidance_routes_match_the_current_cli_and_mcp_schemas(
+) -> Result<(), Box<dyn Error>> {
+    let policy = policy_path().display().to_string();
+    let (catalog_output, catalog) = run(&["mcp", "--describe"])?;
+    assert!(catalog_output.status.success());
+    let catalog = catalog.ok_or("missing catalog")?;
+    let tools = catalog["tools"].as_array().ok_or("tools")?;
+    let drain = tools
+        .iter()
+        .find(|tool| tool["name"] == "cairn_drain_plan")
+        .ok_or("drain tool")?;
+    let views = drain["inputSchema"]["properties"]["view"]["enum"]
+        .as_array()
+        .ok_or("drain views")?;
+    assert!(views.iter().any(|view| view == "readiness"));
+    assert!(views.iter().any(|view| view == "legacy"));
+    let instructions = tools
+        .iter()
+        .find(|tool| tool["name"] == "cairn_workflow_instructions")
+        .ok_or("workflow instructions tool")?;
+    for required in ["change", "artifact"] {
+        assert!(instructions["inputSchema"]["required"]
+            .as_array()
+            .is_some_and(|values| values.iter().any(|value| value == required)));
+    }
+    let readiness = tools
+        .iter()
+        .find(|tool| tool["name"] == "cairn_readiness")
+        .ok_or("readiness tool")?;
+    assert!(readiness["inputSchema"]["required"]
+        .as_array()
+        .is_some_and(|values| values.iter().any(|value| value == "change")));
+
+    let expectation = [
+        (
+            "apply",
+            "cairn readiness CHANGE",
+            "cairn workflow instructions ARTIFACT --change CHANGE",
+        ),
+        (
+            "verify",
+            "cairn readiness CHANGE",
+            "cairn workflow instructions ARTIFACT --change CHANGE",
+        ),
+        (
+            "archive",
+            "cairn readiness CHANGE",
+            "preview its sync and archive plans",
+        ),
+        (
+            "drain",
+            "cairn drain-plan --view readiness",
+            "cairn workflow instructions ARTIFACT --change CHANGE",
+        ),
+    ];
+    for (workflow, readiness_route, artifact_route) in expectation {
+        let (output, show) = run(&["agent", "workflow", "show", workflow, "--policy", &policy])?;
+        assert!(output.status.success());
+        let show = show.ok_or("missing workflow")?;
+        let descriptor = &show["workflow"];
+        assert_eq!(descriptor["id"], workflow);
+        let action = descriptor["immediate_action"]
+            .as_str()
+            .ok_or("immediate action")?;
+        assert!(action.contains(readiness_route), "{workflow}: {action}");
+        assert!(action.contains(artifact_route), "{workflow}: {action}");
+        assert!(!action.contains("--execute"), "{workflow}: {action}");
+        assert!(descriptor["command_classes"]
+            .as_array()
+            .is_some_and(|classes| classes.iter().any(|class| class == "readiness")));
+        assert!(descriptor["required_evidence"]
+            .as_array()
+            .is_some_and(|evidence| evidence
+                .iter()
+                .any(|entry| entry.as_str().is_some_and(|text| text.contains("readiness")))));
+        assert!(descriptor["non_claims"].as_array().is_some_and(|claims| {
+            claims.iter().any(|claim| claim
+                .as_str()
+                .is_some_and(|text| text.contains("never promotes an unavailable observation")))
+        }));
+    }
+    let (output, show) = run(&["agent", "workflow", "show", "verify", "--policy", &policy])?;
+    assert!(output.status.success());
+    let verify = show.ok_or("missing verify")?;
+    assert!(verify["workflow"]["required_evidence"]
+        .as_array()
+        .is_some_and(|evidence| evidence.iter().any(|entry| entry
+            .as_str()
+            .is_some_and(|text| text.contains("completion inputs")))));
+    Ok(())
+}

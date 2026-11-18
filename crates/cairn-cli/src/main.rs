@@ -12,6 +12,7 @@ mod check_evidence;
 mod cross_repo_dependencies;
 mod determinism;
 mod developer_experience;
+mod drain_plan;
 mod developer_loop;
 mod evidence;
 mod evidence_manifest;
@@ -158,6 +159,7 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "view"
             | "workflow"
             | "readiness"
+            | "drain-plan"
             | "implementation-ready"
             | "adoption"
             | "release-readiness"
@@ -205,6 +207,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 .ok_or("spec root resolution is unavailable")?,
         )?,
         "implementation-ready" => run_implementation_ready(args.collect())?,
+        "drain-plan" => drain_plan::run_drain_plan(args.collect())?,
         "status" => run_status(
             args.collect(),
             root_local

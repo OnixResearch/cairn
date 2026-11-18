@@ -8,7 +8,10 @@ cairn readiness demo --root fixtures/basic
 cairn readiness demo --root fixtures/basic --format summary
 cairn --machine readiness demo --root fixtures/basic
 cairn mcp --call cairn_readiness '{"change":"demo","root":"fixtures/basic"}'
+cairn drain-plan --root fixtures/basic --view readiness
 ```
+
+`cairn drain-plan` without `--view` returns the unchanged legacy drain receipt.
 
 JSON is the default format. CLI and MCP return the same semantic report and receipt identity.
 The machine envelope retains its existing transport contract.
@@ -57,9 +60,46 @@ The report binds the lifecycle source, selected policy, supplied evidence, and r
 The model admits seven stages, at most 512 blockers, and targets of at most 4096 bytes.
 Its semantic observation limit is 16 MiB. Existing loaders retain their own limits.
 
+## Readiness-backed drain view
+
+`cairn drain-plan --view readiness` and `cairn_drain_plan` with `"view": "readiness"` add a `cairn.drain-readiness.v1` projection.
+The default drain receipt (no `view`) keeps its existing fields, hashes, and meanings.
+The direct CLI route without `--view` prints that same legacy receipt with `command: "cairn drain-plan"`.
+
+The view observes every active change through this adapter with one shared request budget, so a later change becomes unavailable when earlier observations consume the budget.
+Each change entry carries the same `cairn.readiness.v1` report that `cairn readiness` returns for identical admitted selectors, the declared dependency order from the existing graph, the admitted ready-task order, and selected advisory actions.
+A change blocked by an unarchived dependency cannot select implementation work or a sync/archive preview, even when another report is ready.
+
+Evidence is an explicit bounded manifest keyed by exact active change identifiers:
+
+```json
+{
+  "schema": "cairn.workflow-readiness-manifest.v1",
+  "changes": [
+    {
+      "change": "example",
+      "contract": "contract.json",
+      "results": "results.json",
+      "subject_hash": "<subject-hash>",
+      "cross_repo_evidence": ["upstream.json"]
+    }
+  ]
+}
+```
+
+The declaration, instruction route, ordering profile, and bounds live in `cairn-policy/workflow-readiness.ncl`.
+Duplicate or unknown change identifiers, unsafe paths, partial completion selectors, unknown fields, schema drift, and declared bounds are rejected with stable `workflow_readiness.manifest.*` diagnostics.
+Missing selectors keep completion and cross-repository observations `unavailable`.
+The shell reads only supplied selectors; it never discovers evidence, measures subject identity, or fetches remote repositories.
+
+Selected actions retain the readiness report's `advisory` authority class.
+Ready sync or archive stages contribute existing preview commands without `--execute`.
+Unresolved causes remain unresolved, and a blocked dependency never becomes satisfied through another change's transport success.
+The view does not recalculate gate policy or reinterpret completion validity, and it executes no selected action.
+
 ## Reproduction and limits
 
-The maintained tests are `crates/cairn-core/src/verified/readiness/tests.rs`, `crates/cairn-cli/tests/readiness.rs`, `readiness_completion.rs`, and `readiness_isolation.rs`.
+The maintained tests are `crates/cairn-core/src/verified/readiness/tests.rs`, `crates/cairn-core/src/verified/readiness/workflow/tests.rs`, `crates/cairn-cli/tests/readiness.rs`, `readiness_completion.rs`, `readiness_isolation.rs`, and `readiness_drain.rs`.
 The basic fixture compares three direct gate calls with one readiness call. All three gate verdicts and issue counts agree.
 The completion fixture also compares direct completion decisions with both transports for passing, stale-subject, and missing-result cases.
 The symlink case compares both transports and confirms that inspection does not change the task file.
@@ -71,8 +111,8 @@ For the stale-subject and missing-result completion fixtures, the legacy sequenc
 For malformed saved-probe declarations, the legacy sequence uses the tasks gate to surface the declaration failure. The unified sequence uses one readiness call, carries the same tasks-gate issue, and leaves the declaration-wide remediation as `unresolved` because no reviewed safe repair command exists.
 For ready checked mutation fixtures with current completion and cross-repository evidence, the unified report returns advisory `sync` or `archive` preview argv with the selected `--root`, `--policy`, and repeated `--cross-repo-evidence` arguments. These argv values omit `--execute` and do not grant mutation authority.
 
-Drain presentation is deliberately outside this increment. The full unified compatibility matrix remains incomplete.
-Passing legacy drain tests do not establish compatibility for a shared-model replacement. Legacy receipts remain unchanged.
+Drain presentation is additive: the explicit readiness view shares this adapter, while the default drain receipt remains unchanged.
+The full unified compatibility matrix remains incomplete. Passing legacy drain tests do not establish compatibility for a default switch. Legacy receipts remain unchanged.
 Explicit cross-repository evidence uses repeated `--cross-repo-evidence FILE` options or the MCP `cross_repo_evidence` array.
 This surface admits repository-relative summary files only. It does not discover bundles or fetch remote evidence.
 It uses the existing `cairn.cross-repo-receipt-summary.v1` admission contract.
@@ -97,7 +137,7 @@ Profile admission failure retains the cross-repository decision when its inputs 
 Stage-local reads preserve earlier gates when a later artifact is unreadable. Each preserved gate binds its exact admitted source bytes.
 This path uses an available profile or the existing metadata-selected compatibility profile. It never substitutes that profile for an unknown or explicit profile.
 
-Independent loading now covers failed explicit profiles, policy admission failures, stage-local profile admission, producer-specific evidence-refresh contracts, and supported preview argv. Drain adoption remains outside this increment.
+Independent loading now covers failed explicit profiles, policy admission failures, stage-local profile admission, producer-specific evidence-refresh contracts, and supported preview argv. The readiness-backed drain view reuses the same per-change observation and restores named observations to scope.
 Repeated reads detect observed differences but do not protect against arbitrary concurrent filesystem changes.
 
 Saved probe observation admits at most 64 declarations and 64 KiB per declaration document or receipt.
