@@ -14,9 +14,14 @@
 - [x] [serial] [task:negative] [after:positive] Test duplicate calls, overflow, mixed cohorts, missing usage, false success, unsafe paths, and truncated observations. r[cairn.agent_efficiency.cohort] r[cairn.agent_efficiency.outcomes] r[cairn.agent_efficiency.import]
 - [x] [serial] [task:baseline-corpus] [after:negative] Record source-bound baseline scenarios for all planned consumers and separate representation replays from authorized live-host observations. r[cairn.agent_efficiency.conformance]
 - [x] [serial] [task:docs] [after:baseline-corpus] Document accounting conventions, oracle scope, host authority, sampling budgets, raw-data privacy, and unavailable-measurement behavior. r[cairn.agent_efficiency.accounting] r[cairn.agent_efficiency.outcomes] r[cairn.agent_efficiency.import]
-- [ ] [serial] [task:verify] [after:docs] Run focused tests, policy freshness, formatting, workspace tests, Clippy, validation, traceability, and Nix checks. Retain current-source evidence. r[cairn.agent_efficiency.conformance]
-- [ ] [serial] [task:handoff] [after:verify] Prepare reviewed specification sync and archive previews after implementation evidence passes. r[cairn.agent_efficiency.conformance]
+- [x] [serial] [task:verify] [after:docs] Run focused tests, policy freshness, formatting, workspace tests, Clippy, validation, traceability, and Nix checks. Retain current-source evidence. r[cairn.agent_efficiency.conformance]
+- [x] [serial] [task:handoff] [after:verify] Prepare reviewed specification sync and archive previews after implementation evidence passes. r[cairn.agent_efficiency.conformance]
 
 Save source-bound implementation evidence under `evidence/implementation/`; the baseline manifest records unavailable token data explicitly.
+Executed rails, their exact results, and the two scoped limitations are recorded in
+`evidence/implementation/verification-rails.md`. The repository-wide `octet`
+attribute remains a separately tracked decision
+(`use-canonical-octet-integration`); it is not claimed as passing here and is not
+a result of this change. No live agent-host campaign was run.
 Planning receipts do not satisfy implementation tasks or authorize archive execution.
 The shared verification and measurement rules are in `docs/agent-efficiency-roadmap.md`.
