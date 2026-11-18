@@ -333,9 +333,9 @@ fn missing_alternative_and_partial_branches_do_not_combine() {
     let catalog = admitted_catalog();
     let verify = definition(&catalog, "verify");
 
-    let mut request = request(verify, BTreeMap::new());
-    request.evidence = base_evidence(verify);
-    let report = evaluate_workflow_obligations(verify, &catalog.policy, &request).unwrap();
+    let mut partial = request(verify, BTreeMap::new());
+    partial.evidence = base_evidence(verify);
+    let report = evaluate_workflow_obligations(verify, &catalog.policy, &partial).unwrap();
     assert_eq!(report.outcome, "unknown");
     assert!(report
         .remaining
@@ -348,19 +348,19 @@ fn missing_alternative_and_partial_branches_do_not_combine() {
         "verification-obligation.claim-revision",
         ObservationState::Satisfied,
     ));
-    let mut request = request(
+    let mut partial_receipt = request(
         verify,
         selection(&[("verify.traceability", "receipt-chain")]),
     );
-    request.evidence = evidence.clone();
-    if let Some(freshness) = request
+    partial_receipt.evidence = evidence.clone();
+    if let Some(freshness) = partial_receipt
         .evidence
         .iter_mut()
         .find(|observation| observation.predicate == "agent-receipt.freshness")
     {
         freshness.state = ObservationState::Unsatisfied;
     }
-    let report = evaluate_workflow_obligations(verify, &catalog.policy, &request).unwrap();
+    let report = evaluate_workflow_obligations(verify, &catalog.policy, &partial_receipt).unwrap();
     assert_eq!(report.outcome, "unsatisfied");
     assert!(!report
         .completion
@@ -368,12 +368,12 @@ fn missing_alternative_and_partial_branches_do_not_combine() {
         .any(|node| node.id == "verify.traceability.claim"),
         "unselected alternative must not be evaluated or combined");
 
-    let mut request = request(
+    let mut proved = request(
         verify,
         selection(&[("verify.traceability", "claim-revision")]),
     );
-    request.evidence = evidence;
-    let report = evaluate_workflow_obligations(verify, &catalog.policy, &request).unwrap();
+    proved.evidence = evidence;
+    let report = evaluate_workflow_obligations(verify, &catalog.policy, &proved).unwrap();
     assert_eq!(report.outcome, "proved");
 }
 

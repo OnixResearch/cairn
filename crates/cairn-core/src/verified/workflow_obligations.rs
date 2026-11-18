@@ -1208,7 +1208,8 @@ fn validate_selection(
         ObligationExpr::Evidence { .. } | ObligationExpr::Temporal { .. } => Ok(()),
         ObligationExpr::AllOf { obligations, .. } => obligations
             .iter()
-            .try_for_each(|child| validate_selection(child, selection)),
+            .map(|child| validate_declared_alternative(child, selection))
+            .collect(),
         ObligationExpr::AnyOf { id, alternatives } => {
             if let Some(selected) = selection.get(id) {
                 let declared = alternatives
@@ -1220,16 +1221,53 @@ fn validate_selection(
                     )));
                 }
             }
-            alternatives
-                .iter()
-                .try_for_each(|alternative| {
-                    alternative
-                        .obligations
-                        .iter()
-                        .try_for_each(|child| validate_selection(child, selection))
-                })
+            alternatives.iter().try_for_each(|alternative| {
+                alternative
+                    .obligations
+                    .iter()
+                    .map(|child| validate_declared_alternative(child, selection))
+                    .collect()
+            })
         }
-        ObligationExpr::Applicable { then, .. } => validate_selection(then, selection),
+        ObligationExpr::Applicable { then, .. } => validate_declared_alternative(then, selection),
+    }
+}
+
+/// Check that every selected alternative is declared by its node. The node set
+/// is checked once at the root, so this recursion must not re-check it against
+/// a sub-expression.
+fn validate_declared_alternative(
+    expression: &ObligationExpr,
+    selection: &BTreeMap<String, String>,
+) -> Result<(), WorkflowObligationError> {
+    match expression {
+        ObligationExpr::Evidence { .. } | ObligationExpr::Temporal { .. } => Ok(()),
+        ObligationExpr::AllOf { obligations, .. } => obligations
+            .iter()
+            .map(|child| validate_declared_alternative(child, selection))
+            .collect(),
+        ObligationExpr::AnyOf { id, alternatives } => {
+            if let Some(selected) = selection.get(id) {
+                let declared = alternatives
+                    .iter()
+                    .any(|alternative| alternative.id == *selected);
+                if !declared {
+                    return Err(WorkflowObligationError::MissingAlternative(format!(
+                        "any_of node {id} does not declare alternative {selected}"
+                    )));
+                }
+            }
+            alternatives.iter().try_for_each(|alternative| {
+                alternative
+                    .obligations
+                    .iter()
+                    .map(|child| validate_declared_alternative(child, selection))
+                    .collect()
+            })
+        }
+        ObligationExpr::Applicable { then, .. } => {
+            validate_declared_alternative(then, selection)
+        }
     }
 }
 
@@ -2545,6 +2583,7 @@ fn exception_applicability(
 ) -> (String, String, String) {
     let control = evidence_for(
         evidence,
+        &snapshot.control_evidence,
         &exception.control.evidence_predicate,
     );
     let control_state = control.0.to_string();
@@ -2627,11 +2666,9 @@ fn exception_applicability(
         );
     }
     if control_state != "satisfied" {
-        return (
-            "applicable".to_string(),
-            control_state,
-            format!("compensating control evidence is {control_state}: {control_detail}"),
-        );
+        let detail =
+            format!("compensating control evidence is {control_state}: {control_detail}");
+        return ("applicable".to_string(), control_state, detail);
     }
     (
         "applicable".to_string(),
@@ -2640,12 +2677,18 @@ fn exception_applicability(
     )
 }
 
-fn evidence_for(evidence: &EvidenceView<'_>, predicate: &str) -> (&'static str, String) {
+/// Resolve the compensating-control predicate from the exception snapshot's
+/// declared observations. Control evidence is carried by the snapshot; a
+/// general evidence observation cannot silently substitute for it.
+fn evidence_for(
+    evidence: &EvidenceView<'_>,
+    declared: &[EvidenceObservation],
+    predicate: &str,
+) -> (&'static str, String) {
     let Some(known) = evidence.predicates.get(predicate) else {
         return ("unsupported", format!("predicate {predicate} is not admitted"));
     };
-    let mut matching = evidence
-        .observations
+    let mut matching = declared
         .iter()
         .filter(|observation| observation.predicate == predicate);
     let Some(observation) = matching.next() else {

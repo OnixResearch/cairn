@@ -125,7 +125,9 @@ evidence predicate. Evaluation reuses the native `PolicyExceptionState` and
 - native applicability must be current; revoked, expired, unapproved or
   missing observations invalidate the path;
 - the supplied validity epoch must be before the latest finite validity bound;
-- the control predicate observation must be satisfied and in scope.
+- the control predicate observation must be satisfied and in scope, carried by
+  the exception snapshot's declared control evidence; a general evidence
+  observation cannot silently substitute for it.
 
 Only an `unsatisfied` original node can be replaced. An `unknown` node is never
 replaced. Acceptance produces `exception_accepted` with `proved: false`,

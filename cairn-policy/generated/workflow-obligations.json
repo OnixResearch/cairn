@@ -335,7 +335,7 @@
       "description": "The verification obligation COB claim revision is current for the selected candidate.",
       "id": "verification-obligation.claim-revision",
       "kind": "evidence",
-      "owner": "cairn_core::verified::agent_receipt::authoritative",
+      "owner": "cairn_core::verified::workflow_collaboration",
       "requirement_id": "cairn.verification_obligation_cob.claim_revision"
     },
     {

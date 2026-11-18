@@ -68,11 +68,11 @@ let ApplicabilityScope = {
   kind = "applicability",
   description = "Native observation that the selected candidate is inside the repository contract verification scope.",
 } in
-let evidence = fun node predicate => { kind = "evidence", id = node, predicate = predicate } in
+let evidence = fun node predicate_id => { kind = "evidence", id = node, predicate = predicate_id } in
 let all_of = fun node children => { kind = "all_of", id = node, obligations = children } in
-let any_of = fun node alternatives => { kind = "any_of", id = node, alternatives = alternatives } in
+let any_of = fun node alternatives_list => { kind = "any_of", id = node, alternatives = alternatives_list } in
 let alternative = fun node children => { id = node, obligations = children } in
-let applicable = fun node condition child => { kind = "applicable", id = node, condition = condition, "then" = child } in
+let applicable = fun node condition_expr child => { kind = "applicable", id = node, condition = condition_expr, "then" = child } in
 let Completion = all_of "verify.completion" [
   evidence "verify.evidence.contract" "agent-receipt.verification-contract",
   evidence "verify.evidence.pass-only" "agent-receipt.pass-only",
