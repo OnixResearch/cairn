@@ -3,6 +3,8 @@ use super::*;
 pub(super) fn run_mcp_json_rpc(
     catalog: &cairn_core::verified::mcp_discovery::ToolCatalog,
     paged_tools: bool,
+    profile: ResponseProfile,
+    policy: &ResponsePolicy,
 ) -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
@@ -29,7 +31,12 @@ pub(super) fn run_mcp_json_rpc(
                 let params = &request["params"];
                 let name = params["name"].as_str().unwrap_or_default();
                 let arguments = params.get("arguments").unwrap_or(&Value::Null);
-                match mcp_call_tool_in_catalog(name, arguments, catalog) {
+                match mcp_call_tool_in_catalog(
+                    name,
+                    arguments,
+                    catalog,
+                    Some((profile, policy)),
+                ) {
                     Ok(result) => json!({"jsonrpc": "2.0", "id": id, "result": result}),
                     Err(error) => {
                         if let Some(

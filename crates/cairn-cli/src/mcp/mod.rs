@@ -11,6 +11,7 @@ use std::{
     path::PathBuf,
 };
 
+use cairn_core::verified::mcp_projection::{ResponsePolicy, ResponseProfile};
 use cairn_core::{
     archive_dir, build_archive_plan_for_effect_with_dependency_blockers,
     build_cairn_migration_plan, build_change_dependency_graph, build_change_detail,
@@ -81,6 +82,7 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let mut describe_tool = None;
     let mut tool_profile = None;
     let mut paged_tools = false;
+    let mut response_profile = None;
     let mut index = 0;
     while index < args.len() {
         match args[index].as_str() {
@@ -121,6 +123,17 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 paged_tools = true;
                 index += 1;
             }
+            "--response-profile" => {
+                if response_profile.is_some() {
+                    return Err("duplicate option: --response-profile".into());
+                }
+                let id = args
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty() && !value.starts_with("--"))
+                    .ok_or("mcp --response-profile requires a value")?;
+                response_profile = Some(id.as_str());
+                index += 2;
+            }
             "--call" => {
                 if call.is_some() {
                     return Err("duplicate option: --call".into());
@@ -141,6 +154,16 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     {
         return Err("mcp --describe, --describe-tool and --call cannot be combined".into());
     }
+    let response_policy = ResponsePolicy::from_json(include_str!(
+        "../../../../cairn-policy/generated/mcp-response-profile.json"
+    ))?;
+    let profile = match response_profile {
+        Some(id) => response_policy.admit(id)?,
+        None => response_policy.default_profile()?,
+    };
+    if describe && call.is_some() {
+        return Err("mcp --describe and --call cannot be combined".into());
+    }
     let catalog = load_catalog(
         tool_profile.as_deref().unwrap_or("full"),
         is_mutation_allowed,
@@ -156,9 +179,14 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             .map(|text| serde_json::from_str(&text))
             .transpose()?
             .unwrap_or_else(|| json!({}));
-        return print_json(mcp_call_tool_in_catalog(&name, &input, &catalog)?);
+        return print_json(mcp_call_tool_in_catalog(
+            &name,
+            &input,
+            &catalog,
+            Some((profile, &response_policy)),
+        )?);
     }
-    run_mcp_json_rpc(&catalog, paged_tools)
+    run_mcp_json_rpc(&catalog, paged_tools, profile, &response_policy)
 }
 
 pub(crate) fn mcp_tool_catalog(is_allow_mutations: bool) -> Result<Value, Box<dyn Error>> {
@@ -289,13 +317,25 @@ pub(crate) fn mcp_call_tool(
     is_mutation_allowed: bool,
 ) -> Result<Value, Box<dyn Error>> {
     let catalog = load_catalog("full", is_mutation_allowed)?;
-    mcp_call_tool_in_catalog(name, input, &catalog)
+    mcp_call_tool_in_catalog(name, input, &catalog, None)
+}
+
+pub(crate) fn mcp_call_tool_with_profile(
+    name: &str,
+    input: &Value,
+    is_mutation_allowed: bool,
+    profile: ResponseProfile,
+    policy: &ResponsePolicy,
+) -> Result<Value, Box<dyn Error>> {
+    let catalog = load_catalog("full", is_mutation_allowed)?;
+    mcp_call_tool_in_catalog(name, input, &catalog, Some((profile, policy)))
 }
 
 fn mcp_call_tool_in_catalog(
     name: &str,
     input: &Value,
     catalog: &cairn_core::verified::mcp_discovery::ToolCatalog,
+    projection: Option<(ResponseProfile, &ResponsePolicy)>,
 ) -> Result<Value, Box<dyn Error>> {
     let is_mutation_allowed = catalog.allow_mutations;
     // r[impl cairn.supersede.mcp_server.strict_schemas]
@@ -349,7 +389,11 @@ fn mcp_call_tool_in_catalog(
             unknown => return Err(format!("unknown MCP tool: {unknown}").into()),
         }
     };
+    let summary = match projection {
+        Some((ResponseProfile::StructuredSummary, policy)) => policy.summarize(name, &receipt),
+        _ => mcp_summary(name, &receipt),
+    };
     Ok(
-        json!({"content": [{"type": "text", "text": mcp_summary(name, &receipt)}], "structuredContent": receipt, "isError": false}),
+        json!({"content": [{"type": "text", "text": summary}], "structuredContent": receipt, "isError": false}),
     )
 }

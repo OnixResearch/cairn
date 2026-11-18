@@ -165,11 +165,33 @@ MCP artifact selectors are lifecycle identifiers, not arbitrary paths. Selectors
 
 ## Response shape
 
-`tools/call` responses contain:
+`tools/call` responses contain `content` text, the complete `structuredContent`
+receipt, and the existing `isError` transport/tool classification. Transport
+success does not establish lifecycle readiness or authorize mutation.
 
-- `content`: a short text summary for humans.
-- `structuredContent`: the Cairn receipt payload.
-- `isError`: false for successful tool execution.
+The default `legacy` response profile retains the complete receipt in both text
+and structured content for text-only hosts. A host that consumes
+`structuredContent` can explicitly select a single complete payload:
+
+```sh
+cairn mcp --response-profile structured-summary
+cairn mcp --response-profile structured-summary --call cairn_readiness '{"root":"fixtures/basic","change":"demo"}'
+```
+
+`structured-summary` keeps the structured receipt, its hashes, error behavior,
+and capability checks unchanged. Only text changes: a policy-bounded summary of
+admitted status/boundary fields and a reference to `structuredContent`. Raw
+diagnostics, source, and paths are not copied into summary text. Unknown receipt
+families are explicitly unclassified; unavailable lifecycle state never becomes
+success. Oversized summaries use an omission fallback without truncating the
+structured payload.
+
+The profile is fixed at server startup, also applies to direct `--call`, and is
+not a tool argument. Unknown, missing, repeated, or unsupported profile options
+fail before dispatch. `--response-profile legacy` preserves the default; neither
+profile grants `--allow-mutations` or alters tool schemas. Select legacy for a
+host that ignores structured content. A smaller representation alone is not an
+end-to-end efficiency result.
 
 Structured receipts include Cairn fields such as `layout`, `valid`, `actions`, `blocked`, `mutated`, `policy_hash`, `plan_hash`, and `receipt_hash` where applicable, plus an `mcp` object describing read/destructive behavior.
 

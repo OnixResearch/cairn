@@ -48,6 +48,7 @@ pub mod lifecycle_store_identity;
 pub mod lifecycle_views;
 pub mod lifecycle_worksets;
 pub mod mcp_discovery;
+pub mod mcp_projection;
 pub mod nominal_identity;
 pub mod oxide_lifecycle_patterns;
 pub mod plan;
