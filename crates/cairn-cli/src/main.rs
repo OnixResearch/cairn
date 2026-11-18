@@ -49,6 +49,7 @@ mod rename_classification;
 mod requirement_id_registry;
 mod rfd;
 mod runtime_evidence;
+mod scoped_claim_derivations;
 mod semantic_review;
 mod source_review;
 mod stack_provenance;
@@ -192,6 +193,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "setup" => bootstrap::run(args.collect())?,
         "change" => run_change(args.collect())?,
         "check-evidence" => check_evidence::run_check_evidence(args.collect())?,
+        "claim-derivation" => scoped_claim_derivations::run(args.collect())?,
         "source-review" => source_review::run(args.collect())?,
         "prose" => prose::run(args.collect())?,
         "compact" => archive_compaction::run_compact(args.collect())?,
