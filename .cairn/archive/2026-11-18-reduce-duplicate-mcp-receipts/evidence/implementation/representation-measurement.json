@@ -1,0 +1,66 @@
+{
+  "schema": "cairn.mcp-projection.representation-measurement.v1",
+  "tokens": {
+    "state": "unavailable",
+    "reason": "No provider usage or exact tokenizer observation was supplied; byte counts are not token estimates."
+  },
+  "scope": "Representation sizes for the declared fixture calls; not an end-to-end host or model-visible measurement.",
+  "observations": [
+    {
+      "tool": "cairn_validate",
+      "profile": "legacy",
+      "stdout_bytes": 4907,
+      "text_chars": 1920,
+      "exit_code": 0
+    },
+    {
+      "tool": "cairn_validate",
+      "profile": "structured-summary",
+      "stdout_bytes": 2883,
+      "text_chars": 74,
+      "exit_code": 0
+    },
+    {
+      "tool": "cairn_gate",
+      "profile": "legacy",
+      "stdout_bytes": 0,
+      "text_chars": 0,
+      "exit_code": 1
+    },
+    {
+      "tool": "cairn_gate",
+      "profile": "structured-summary",
+      "stdout_bytes": 0,
+      "text_chars": 0,
+      "exit_code": 1
+    },
+    {
+      "tool": "cairn_readiness",
+      "profile": "legacy",
+      "stdout_bytes": 14705,
+      "text_chars": 6096,
+      "exit_code": 0
+    },
+    {
+      "tool": "cairn_readiness",
+      "profile": "structured-summary",
+      "stdout_bytes": 8196,
+      "text_chars": 101,
+      "exit_code": 0
+    },
+    {
+      "tool": "cairn_sync_execute",
+      "profile": "legacy",
+      "stdout_bytes": 378,
+      "text_chars": 120,
+      "exit_code": 0
+    },
+    {
+      "tool": "cairn_sync_execute",
+      "profile": "structured-summary",
+      "stdout_bytes": 319,
+      "text_chars": 73,
+      "exit_code": 0
+    }
+  ]
+}

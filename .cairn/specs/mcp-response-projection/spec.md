@@ -1,6 +1,10 @@
-# MCP response projection delta
+# Mcp Response Projection Specification
 
-## ADDED Requirements
+## Purpose
+
+Defines the `mcp-response-projection` capability.
+
+## Requirements
 
 ### Requirement: Explicit response profile
 r[cairn.mcp_projection.profile] The system MUST select an admitted response profile explicitly and preserve the existing response shape when no profile is selected.
@@ -55,13 +59,13 @@ r[cairn.mcp_projection.compatibility] The system MUST retain complete text in th
 - WHEN Cairn handles the request
 - THEN it denies mutation before argument-dependent product effects and reports mutated as false
 
-### Requirement: Consumer-visible cost evidence
-r[cairn.mcp_projection.conformance] The system MUST compare both response profiles through declared host presentations with positive and negative parity fixtures and source-bound benchmark receipts.
+### Requirement: Consumer-visible presentation parity
+r[cairn.mcp_projection.conformance] The system MUST compare both response profiles over maintained parity fixtures for successful and blocked calls, and MUST withhold any end-to-end savings claim that the declared host presentation does not establish.
 
-#### Scenario: A structured host exposes less duplicate content
-- GIVEN a maintained host adapter that exposes structured results to the model
-- WHEN the paired benchmark runs the same successful and blocked tasks
-- THEN it records exposed token cost and unchanged oracle outcomes for both profiles
+#### Scenario: Maintained parity fixtures compare both profiles
+- GIVEN a maintained host presentation declaration
+- WHEN the parity fixtures run the same successful and blocked calls under both profiles
+- THEN each profile's exposed representation is recorded and oracle outcomes are unchanged
 
 #### Scenario: Hidden structured content prevents a misleading savings claim
 - GIVEN a host that exposes only text or already removes duplicate payloads

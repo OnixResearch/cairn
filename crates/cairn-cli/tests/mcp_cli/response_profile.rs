@@ -74,6 +74,7 @@ fn direct_profiles_preserve_receipts_and_distinguish_states() -> Result<(), Box<
     // r[verify cairn.mcp_projection.single_payload]
     // r[verify cairn.mcp_projection.status]
     // r[verify cairn.mcp_projection.compatibility]
+    // r[verify cairn.mcp_projection.conformance]
     for (tool, arguments) in [
         ("cairn_validate", r#"{"root":"fixtures/basic"}"#),
         (
