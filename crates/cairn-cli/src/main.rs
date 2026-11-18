@@ -59,6 +59,7 @@ mod test_harness;
 mod toolchain_profile_matrix;
 mod trace_index;
 mod tracey;
+mod typed_requirement_contracts;
 mod verification_impact;
 mod view;
 mod vo;
@@ -193,6 +194,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "change" => run_change(args.collect())?,
         "check-evidence" => check_evidence::run_check_evidence(args.collect())?,
         "source-review" => source_review::run(args.collect())?,
+        "requirement-contract" => typed_requirement_contracts::run(args.collect())?,
         "prose" => prose::run(args.collect())?,
         "compact" => archive_compaction::run_compact(args.collect())?,
         "template" => developer_experience::run_template(args.collect())?,
