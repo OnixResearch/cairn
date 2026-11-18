@@ -1,0 +1,79 @@
+{
+  "change": "missing",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "fc9cb1cb534ca3543b9471357eef24eaa691a2653e1186a01f01f6e676d8279b",
+  "issues": [
+    {
+      "code": "cairn.gate.validation",
+      "message": "missing: missing proposal.md",
+      "promoted": "no",
+      "scope": "tasks"
+    },
+    {
+      "code": "cairn.gate.validation",
+      "message": "missing: missing design.md",
+      "promoted": "no",
+      "scope": "tasks"
+    },
+    {
+      "code": "cairn.gate.validation",
+      "message": "missing: missing tasks.md",
+      "promoted": "no",
+      "scope": "tasks"
+    },
+    {
+      "code": "cairn.gate.validation",
+      "message": "missing: missing proposal.md",
+      "promoted": "no",
+      "scope": "tasks"
+    },
+    {
+      "code": "cairn.gate.validation",
+      "message": "missing: missing tasks.md",
+      "promoted": "no",
+      "scope": "tasks"
+    }
+  ],
+  "layout": "cairn",
+  "policy": "cairn-default",
+  "policy_hash": "c8276321e0e82c524e09ad9357fa48a9d38ac8590263ee6f79c51a328dc6037d",
+  "policy_selection": {
+    "blake3": "7a67802377005c18ebded42899e7f564f5d87087b6c14ca70464b35886f340a9",
+    "installation_receipt": false,
+    "locator": "/home/brittonr/git/OnixResearch/.worktrees/cairn-agent-benchmark-20261117/cairn-policy/generated/cairn-policy.json",
+    "source": "legacy_default"
+  },
+  "probe_evidence": {
+    "declarations_present": false,
+    "probes": []
+  },
+  "receipt_hash": "7cbee73f60c04c2463d3d755645f97bb1175df2993ad6a4f4464d9261e7a408b",
+  "stage": "tasks",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "fixtures/missing-artifacts/.cairn/changes/missing/specs/demo/spec.md",
+      "requirement_blocks": 1,
+      "scenario_blocks": 1,
+      "substantive_lines": 4,
+      "substantive_requirement_blocks": 1,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    }
+  ],
+  "task_ordering": null,
+  "valid": false,
+  "verdict": "FAIL"
+}

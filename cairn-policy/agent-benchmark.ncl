@@ -1,0 +1,19 @@
+# Additive benchmark policy: intentionally not merged into the lifecycle policy.
+let Contract = import "../contracts/agent-benchmark.ncl" in
+{
+  schema = "cairn.agent-benchmark.policy.v1",
+  bounds = {
+    max_repetitions = 16,
+    max_calls_per_run = 128,
+    max_input_bytes = 1048576,
+    max_scope_bytes = 96,
+    max_event_count = 1000000,
+    max_token_count = 1000000000000000000,
+    max_duration_ms = 3600000,
+  },
+  non_claims = [
+    "Saved observations and provider usage are declared inputs, not independently authenticated facts.",
+    "Representation replays do not establish end-to-end agent efficiency or task correctness.",
+    "A scoped live-host comparison does not establish general token savings or code correctness.",
+  ],
+} | Contract.Policy
