@@ -4,6 +4,10 @@ let Positive = std.contract.from_predicate (fun n => std.is_number n && n > 0 &&
 let State = [| 'ready, 'blocked, 'unavailable, 'not_applicable |] in
 let StageKind = [| 'artifact, 'proposal, 'design, 'tasks, 'completion, 'sync, 'archive |] in
 let ActionKind = [| 'artifact_repair, 'evidence_refresh, 'dependency_wait, 'diagnostic_inspection, 'sync_preview, 'archive_preview, 'unresolved |] in
+let NonNegative = std.contract.from_predicate (fun n => std.is_number n && n >= 0 && std.number.floor n == n) in
+let DetailKind = [| 'blocker, 'action, 'stage |] in
+let ViewPolicy = { max_bytes | Positive, default_bytes | Positive,
+  max_entries | NonNegative, default_entries | NonNegative, max_detail_bytes | Positive } in
 {
   contracts = {
     Scope = { change | String, policy_hash | String, source_hash | String, evidence_hash | String },
@@ -14,6 +18,24 @@ let ActionKind = [| 'artifact_repair, 'evidence_refresh, 'dependency_wait, 'diag
       argv | Array String },
     Snapshot = { scope | { change | String, policy_hash | String, source_hash | String, evidence_hash | String },
       stages | Array { stage | StageKind, state | State, decision_hash | String } },
+    DetailSelector = { kind | DetailKind, id | String },
+    DetailRequest = { kind | DetailKind, id | String, expected_receipt | String },
+    View = { schema | String,
+      scope | { change | String, policy_hash | String, source_hash | String, evidence_hash | String },
+      valid | Bool, classification | State,
+      stages | Array { stage | StageKind, state | State, decision_hash | String },
+      mutation_authorized | Bool, readiness_policy_hash | String, view_policy_hash | String, input_hash | String,
+      full_receipt_hash | String, receipt_hash | String, diagnostics | Array String,
+      blockers | Array { id | String, stage | StageKind, code | String, target | String,
+        message | String, prerequisites | Array String },
+      actions | Array { id | String, kind | ActionKind, causes | Array String, target | String,
+        prerequisites | Array String, authority | [| 'advisory |], expected_observation | String,
+        argv | Array String },
+      blocker_count | NonNegative, action_count | NonNegative,
+      omitted_blockers | NonNegative, omitted_actions | NonNegative,
+      omitted_stage_decisions | NonNegative, complete | Bool,
+      detail_selectors | Array { kind | DetailKind, id | String } },
+    ViewPolicy = ViewPolicy,
   },
   policy = {
     schema = "cairn.readiness.v1",
@@ -29,5 +51,12 @@ let ActionKind = [| 'artifact_repair, 'evidence_refresh, 'dependency_wait, 'diag
       { code = "probe.saved_evidence.invalid", kind = "evidence_refresh" },
       { code = "verification_contract.subject_stale", kind = "evidence_refresh" },
     ],
+  },
+  view_policy | ViewPolicy = {
+    max_bytes = 16384,
+    default_bytes = 16384,
+    max_entries = 16,
+    default_entries = 16,
+    max_detail_bytes = 262144,
   },
 }

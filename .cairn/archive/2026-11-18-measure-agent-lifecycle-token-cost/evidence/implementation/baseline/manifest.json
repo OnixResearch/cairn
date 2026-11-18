@@ -1,0 +1,205 @@
+{
+  "schema": "cairn.agent-efficiency-command-baseline.v1",
+  "source_revision": "1cca6fe1b573218cd8ea4b5ecfb482f57a8c81b5",
+  "binary_blake3": "316e4c781e0ace47d55500bcf9af2fd869a4f4b01213e40efef4aaf6f2ec73fb",
+  "observations": [
+    {
+      "id": "readiness-full",
+      "argv": [
+        "cairn",
+        "readiness",
+        "demo",
+        "--root",
+        "fixtures/basic"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 13373,
+      "stdout_blake3": "11f60922dc686e01d748092a70b0bab1f1d024608b2a8abca2908203c1391aa2",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": true
+    },
+    {
+      "id": "readiness-mcp",
+      "argv": [
+        "cairn",
+        "mcp",
+        "--call",
+        "cairn_readiness",
+        "{\"root\":\"fixtures/basic\",\"change\":\"demo\"}"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 24348,
+      "stdout_blake3": "20a303f574369ad6ba7b8a148348647ff645b0d64c9e1ff606e47c5c12805ec4",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": null
+    },
+    {
+      "id": "drain",
+      "argv": [
+        "cairn",
+        "mcp",
+        "--call",
+        "cairn_drain_plan",
+        "{\"root\":\"fixtures/basic\"}"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 9243,
+      "stdout_blake3": "700be4175b7e666c9d7c27ec417999aaca938712c21fbcd9c847de10ad2ce920",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": null
+    },
+    {
+      "id": "catalog",
+      "argv": [
+        "cairn",
+        "mcp",
+        "--describe"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 19320,
+      "stdout_blake3": "c86b6a4ecff2ec0db552eb2dd7630f5147bedcff196c7637c2b990d050d8934b",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": null
+    },
+    {
+      "id": "spec-full",
+      "argv": [
+        "cairn",
+        "spec",
+        "show",
+        "demo",
+        "--root",
+        "fixtures/basic"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 830,
+      "stdout_blake3": "f873e2d980bbc3fafc8df1fe52504e1b41e7614c512c263d0d2ca30a0c989432",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": null
+    },
+    {
+      "id": "workflow-verify",
+      "argv": [
+        "cairn",
+        "agent",
+        "workflow",
+        "show",
+        "verify",
+        "--policy",
+        "cairn-policy/generated/cairn-policy.json"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 2487,
+      "stdout_blake3": "384327e120fd9d9e2eda55ee525f21aee01287ba8b019807b805548764aeaacb",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": true
+    },
+    {
+      "id": "implementation-ready",
+      "argv": [
+        "cairn",
+        "implementation-ready",
+        "--root",
+        "fixtures/basic"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 4389,
+      "stdout_blake3": "72b4c19a60b50e66f066dbbe47df4770ad9f4013b1546508047960d8f01f7e65",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": null
+    },
+    {
+      "id": "completion-valid",
+      "argv": [
+        "cairn",
+        "agent-receipt",
+        "complete",
+        "--contract",
+        "fixtures/agent-completion/contract.json",
+        "--results",
+        "fixtures/agent-completion/results.json",
+        "--subject-hash",
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 2055,
+      "stdout_blake3": "02a583f320dc031876ffdea68bcbbde58f5633d81ba3d9b894a54f8bd486040d",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": true
+    },
+    {
+      "id": "completion-stale",
+      "argv": [
+        "cairn",
+        "agent-receipt",
+        "complete",
+        "--contract",
+        "fixtures/agent-completion/contract.json",
+        "--results",
+        "fixtures/agent-completion/results.json",
+        "--subject-hash",
+        "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 3376,
+      "stdout_blake3": "ed1b96187bfb0f76eb559a8233f11ad69906bf3dc376e77d0daedaf47561ea32",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": false
+    },
+    {
+      "id": "artifacts-missing",
+      "argv": [
+        "cairn",
+        "gate",
+        "tasks",
+        "missing",
+        "--root",
+        "fixtures/missing-artifacts"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 2162,
+      "stdout_blake3": "129e6c1826f1fc06bdf51296477139ee6d2bea8b2e32175d4a1ec1f27e4de4d7",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": false
+    },
+    {
+      "id": "mutation-denied",
+      "argv": [
+        "cairn",
+        "mcp",
+        "--call",
+        "cairn_archive_execute",
+        "{\"root\":\"fixtures/archive-ready\",\"change\":\"ready\"}"
+      ],
+      "exit_code": 0,
+      "stdout_bytes": 387,
+      "stdout_blake3": "a0400210d46f877bd597ef429b1fdbb31f37f393e372f4de880fb415344bb9be",
+      "stderr_bytes": 0,
+      "stderr_blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "result_valid": null
+    }
+  ],
+  "tests": {
+    "mcp_cli": 22,
+    "readiness": 4,
+    "readiness_completion": 1,
+    "readiness_isolation": 4,
+    "test_harness": 7,
+    "failed": 0
+  },
+  "tokens": {
+    "state": "unavailable",
+    "reason": "No provider usage or exact tokenizer observation was supplied."
+  },
+  "scope": "Saved command representation and native validator observations, not end-to-end agent execution or a token-improvement claim."
+}

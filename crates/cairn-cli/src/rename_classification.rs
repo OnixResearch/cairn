@@ -127,6 +127,13 @@ fn rename_classification_bucket(path: &str, line: &str) -> &'static str {
     if path_text.starts_with("openspec/specs/") {
         return "requirement-id-history";
     }
+    // Exact pre-change command observations retain legacy wire values as data.
+    if path_text.starts_with(".cairn/changes/")
+        && path_text.contains("/evidence/implementation/baseline/")
+        && path_text.ends_with(".json")
+    {
+        return "intentional-reference";
+    }
     if path_text.contains("rename-ironspec-to-cairn")
         || path_text == "tools/check-rename-classification.rs"
     {
@@ -201,6 +208,24 @@ mod tests {
         assert!(!rename_classification_is_skipped(
             ".cairn/specs/demo/spec.md"
         ));
+    }
+
+    #[test]
+    fn historical_baseline_json_does_not_exempt_current_source_or_evidence() {
+        assert_eq!(
+            rename_classification_bucket(
+                ".cairn/changes/efficiency/evidence/implementation/baseline/catalog.json",
+                "\"ironspec\"",
+            ),
+            "intentional-reference",
+        );
+        for path in [
+            ".cairn/changes/efficiency/evidence/implementation/current/catalog.json",
+            ".cairn/changes/efficiency/evidence/implementation/baseline/check.rs",
+            "src/catalog.json",
+        ] {
+            assert_eq!(rename_classification_bucket(path, "ironspec"), "needs-fix");
+        }
     }
 }
 

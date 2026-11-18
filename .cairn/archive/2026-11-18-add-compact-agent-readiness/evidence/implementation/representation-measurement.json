@@ -1,0 +1,28 @@
+{
+  "schema": "cairn.agent-readiness.representation-measurement.v1",
+  "fixture": "fixtures/basic change demo, max_entries=0 for the agent view",
+  "tokens": {
+    "state": "unavailable",
+    "reason": "No provider usage or exact tokenizer observation was supplied; byte counts are not token estimates."
+  },
+  "scope": "Complete standalone JSON representation sizes for one readiness receipt; not a model-visible or end-to-end measurement.",
+  "observations": [
+    {
+      "view": "full",
+      "stdout_bytes": 13225,
+      "exit_code": 0,
+      "stderr_bytes": 0
+    },
+    {
+      "view": "agent",
+      "stdout_bytes": 2431,
+      "exit_code": 0,
+      "stderr_bytes": 0
+    }
+  ],
+  "byte_delta": {
+    "full_bytes": 13225,
+    "agent_bytes": 2431,
+    "difference": 10794
+  }
+}
