@@ -31,6 +31,7 @@ mod mcp;
 mod migration;
 mod native;
 mod nickel_export_boundary;
+mod observations;
 mod oxide_lifecycle_patterns;
 mod plan_receipts;
 mod policy;
@@ -58,6 +59,7 @@ mod stack_provenance;
 mod state_machine_receipt;
 mod steel_orchestration;
 mod support;
+mod targeted_context;
 mod test_harness;
 mod toolchain_profile_matrix;
 mod trace_index;
@@ -163,6 +165,7 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "workflow"
             | "readiness"
             | "drain-plan"
+            | "observe"
             | "implementation-ready"
             | "adoption"
             | "release-readiness"
@@ -182,6 +185,14 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         print_usage();
         return Ok(());
     };
+    if command == "context"
+        && all_args.get(1).map(String::as_str) == Some("read")
+        && !all_args
+            .iter()
+            .any(|arg| arg == "--root" || arg == "--lifecycle-store")
+    {
+        return Err("context read requires an explicit --root or --lifecycle-store".into());
+    }
     let prepared = prepare_invocation(command, all_args[1..].to_vec())?;
     if command_requires_native_lifecycle(command) {
         let selected_root = read_option(prepared.args.clone(), "--root", ".");
@@ -220,12 +231,19 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 .ok_or("status root resolution is unavailable")?,
         )?,
         "store" => lifecycle_store::run_store(args.collect())?,
-        "context" => run_context(
-            args.collect(),
-            root_local
-                .as_ref()
-                .ok_or("context root resolution is unavailable")?,
-        )?,
+        "context" => {
+            let context_args: Vec<String> = args.collect();
+            if context_args.first().map(String::as_str) == Some("read") {
+                targeted_context::run(context_args)?;
+            } else {
+                run_context(
+                    context_args,
+                    root_local
+                        .as_ref()
+                        .ok_or("context root resolution is unavailable")?,
+                )?;
+            }
+        }
         "config" => config_export::run_config(args.collect())?,
         "doctor" => run_doctor(
             args.collect(),
@@ -242,6 +260,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "view" => run_view(args.collect())?,
         "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
         "readiness" => readiness::run_readiness(args.collect())?,
+        "observe" => observations::run(args.collect())?,
         "adoption" => run_adoption(args.collect())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,

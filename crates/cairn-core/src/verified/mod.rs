@@ -38,6 +38,7 @@ pub mod function_address_stack_smoke;
 pub mod generated_agent_workflow;
 pub mod global_registry;
 pub mod hash_algorithm_policy;
+pub mod incremental_observations;
 pub mod kani_receipt;
 pub mod lifecycle;
 pub mod lifecycle_orchestration;

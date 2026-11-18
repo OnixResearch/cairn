@@ -154,13 +154,13 @@ pub fn validate_spec_source_with_policy(
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct VisibleHeading {
-    line_index: usize,
-    level: usize,
-    text: String,
+pub(super) struct VisibleHeading {
+    pub(super) line_index: usize,
+    pub(super) level: usize,
+    pub(super) text: String,
 }
 
-fn visible_heading_inventory(lines: &[&str]) -> Vec<VisibleHeading> {
+pub(super) fn visible_heading_inventory(lines: &[&str]) -> Vec<VisibleHeading> {
     let mut headings = Vec::new();
     let mut fenced = false;
     let mut in_comment = false;
@@ -184,7 +184,7 @@ fn visible_heading_inventory(lines: &[&str]) -> Vec<VisibleHeading> {
     headings
 }
 
-fn next_visible_heading_at_or_above(
+pub(super) fn next_visible_heading_at_or_above(
     headings: &[VisibleHeading],
     current_line: usize,
     max_level: usize,
@@ -196,7 +196,7 @@ fn next_visible_heading_at_or_above(
         .map_or(default_end, |heading| heading.line_index)
 }
 
-fn requirement_identities(lines: &[&str]) -> Vec<String> {
+pub(super) fn requirement_identities(lines: &[&str]) -> Vec<String> {
     let mut identities = Vec::new();
     let mut fenced = false;
     let mut in_comment = false;

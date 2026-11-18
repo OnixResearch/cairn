@@ -95,8 +95,8 @@ pub(crate) use mutation::{
 pub(crate) use paths::{
     collect_files, file_content_manifest, is_safe_relative_reference, path_string,
     portable_json_hash, portable_text, read_bounded_json_no_symlink, read_bounded_text_no_symlink,
-    read_existing_bounded_text_no_symlink, resolve_under_root, safe_relative_path,
-    tree_content_paths,
+    read_existing_bounded_text_no_symlink, read_guarded_bytes, resolve_under_root,
+    safe_relative_path, tree_content_paths, write_guarded_bytes,
 };
 pub(crate) use receipts::{
     print_json, with_portable_content_hash_receipt, with_portable_receipt_hash, with_receipt_hash,
@@ -109,6 +109,7 @@ pub(crate) use scan::{
     read_gate_stage_snapshot_with_budget, read_selected_change_with_budget,
     read_selected_metadata_with_budget, scan_repo, scan_repo_with_budget,
 };
+pub(crate) use source::SourceReader;
 pub(crate) use usage::{print_usage, usage_text};
 
 // r[impl cli_maintainability.support_helper_submodule_split.focused_modules]

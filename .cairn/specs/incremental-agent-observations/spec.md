@@ -1,6 +1,10 @@
-# Incremental agent observations delta
+# Incremental Agent Observations Specification
 
-## ADDED Requirements
+## Purpose
+
+Defines the `incremental-agent-observations` capability.
+
+## Requirements
 
 ### Requirement: Complete observation identity
 r[cairn.incremental_observations.identity] The system MUST bind observation continuity to explicit root identity, source, policy, evidence, tool contract, view, selectors, and deterministic ordering.
@@ -27,6 +31,11 @@ r[cairn.incremental_observations.pages] The system MUST provide bounded ordered 
 - GIVEN source changes after the first page or a malformed or out-of-scope cursor
 - WHEN the next page is requested
 - THEN it reports stale or invalid continuation without combining old and new entries
+
+#### Scenario: Replaying a cursor is deterministic
+- GIVEN an unchanged admitted cohort and a valid continuation cursor
+- WHEN the same cursor is requested more than once
+- THEN every response carries the same page identity and no cursor state changes
 
 ### Requirement: Exact observation differences
 r[cairn.incremental_observations.delta] The system MUST derive added, changed, and removed entries from explicit prior and current observations without treating a partial observation as a complete baseline.

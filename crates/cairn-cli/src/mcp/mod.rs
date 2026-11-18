@@ -216,6 +216,7 @@ fn mcp_tool_requires_native_lifecycle(name: &str) -> bool {
             | "cairn_read_spec"
             | "cairn_change_show"
             | "cairn_context"
+            | "cairn_context_read"
             | "cairn_workflow_status"
             | "cairn_workflow_instructions"
             | "cairn_doctor"
@@ -265,6 +266,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_read_spec" => mcp_read_spec(input)?,
             "cairn_change_show" => mcp_change_show(input)?,
             "cairn_context" => mcp_context(input)?,
+            "cairn_context_read" => read_tools::mcp_context_read(input)?,
             "cairn_workflow_status" => mcp_workflow_status(input)?,
             "cairn_workflow_instructions" => mcp_workflow_instructions(input)?,
             "cairn_doctor" => mcp_doctor(input)?,
@@ -277,6 +279,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_drain_plan" => mcp_drain_plan(input, "mcp cairn_drain_plan")?,
             "cairn_implementation_ready" => mcp_implementation_ready(input)?,
             "cairn_readiness" => crate::readiness::readiness_value(input)?,
+            "cairn_observe" => crate::observations::mcp_observe(input)?,
             "cairn_verification_impact" => {
                 crate::verification_impact::guidance_value_from_mcp(input)?
             }

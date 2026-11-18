@@ -47,6 +47,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Return bounded project facts and advisory guidance with explicit authority labels",
         ),
         mcp_tool(
+            "cairn_context_read",
+            true,
+            false,
+            "Read exactly one source-bound lifecycle requirement, task, or full heading path",
+        ),
+        mcp_tool(
             "cairn_workflow_status",
             true,
             false,
@@ -105,6 +111,12 @@ fn mcp_read_tools() -> Vec<Value> {
             true,
             false,
             "Inspect change readiness without execution or mutation",
+        ),
+        mcp_tool(
+            "cairn_observe",
+            true,
+            false,
+            "Return a complete, paged, unchanged, or difference observation for active changes, selected readiness entries, or targeted context",
         ),
         mcp_tool(
             "cairn_verification_impact",
@@ -245,6 +257,21 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_context" => {
             mcp_object_schema(&[], &["root", "policy", "profile", "artifact", "operation"])
         }
+        "cairn_context_read" => {
+            let mut schema = mcp_object_schema(
+                &["root", "scope", "artifact"],
+                &[
+                    "change",
+                    "spec",
+                    "requirement_id",
+                    "task_id",
+                    "expected_source_blake3",
+                ],
+            );
+            schema["properties"]["scope"]["enum"] = json!(["accepted", "active", "archived"]);
+            schema["properties"]["heading_path"] = json!({"type": "array", "minItems": 1, "items": {"type": "string"}, "description": "Complete heading ancestry, including document title"});
+            schema
+        }
         "cairn_readiness" => {
             let mut schema = mcp_schema_with_evidence(
                 &["change"],
@@ -269,6 +296,39 @@ fn mcp_input_schema(name: &str) -> Value {
             });
             schema
         }
+        "cairn_observe" => json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "root": {"type": "string", "description": mcp_argument_description("root")},
+                "policy": {"type": "string", "description": mcp_argument_description("policy")},
+                "view": {
+                    "type": "string",
+                    "enum": ["active_changes", "readiness", "context"],
+                    "description": "Observation view"
+                },
+                "change": {"type": "string", "description": "Active change lifecycle identifier"},
+                "max_bytes": {"type": "integer", "minimum": 1, "description": "Readiness agent-view byte limit"},
+                "max_entries": {"type": "integer", "minimum": 0, "description": "Readiness agent-view entry limit"},
+                "scope": {"type": "string", "enum": ["accepted", "active", "archived"]},
+                "spec": {"type": "string", "description": "Accepted spec lifecycle identifier"},
+                "artifact": {"type": "string", "description": "Policy-owned workflow artifact identifier"},
+                "requirement_id": {"type": "string"},
+                "task_id": {"type": "string"},
+                "heading_path": {"type": "array", "items": {"type": "string"}},
+                "selectors": {"type": "array", "items": {"type": "object"}, "description": "Exact targeted context selectors"},
+                "mode": {
+                    "type": "string",
+                    "enum": ["complete", "page", "unchanged", "difference"]
+                },
+                "page_entries": {"type": "integer", "minimum": 1},
+                "page_bytes": {"type": "integer", "minimum": 1},
+                "cursor": {"type": "string", "description": "Stateless continuation cursor from a prior page"},
+                "prior": {"type": "object", "description": "Bounded inline prior observation snapshot"},
+                "prior_path": {"type": "string", "description": "Root-relative saved prior observation path"}
+            },
+            "required": ["view"]
+        }),
         "cairn_verification_impact" => json!({
             "type": "object",
             "additionalProperties": false,
@@ -493,6 +553,47 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
             &[],
             &["root", "policy", "profile", "artifact", "operation"],
         ),
+        "cairn_context_read" => {
+            let mut strings = object.clone();
+            if let Some(path) = strings.remove("heading_path") {
+                let Some(headings) = path.as_array() else {
+                    return Err(
+                        "invalid arguments for cairn_context_read: heading_path must be an array"
+                            .into(),
+                    );
+                };
+                if headings.is_empty()
+                    || headings
+                        .iter()
+                        .any(|heading| heading.as_str().is_none_or(str::is_empty))
+                {
+                    return Err("invalid arguments for cairn_context_read: heading_path requires nonempty strings".into());
+                }
+            }
+            validate_string_args(
+                name,
+                &strings,
+                &["root", "scope", "artifact"],
+                &[
+                    "change",
+                    "spec",
+                    "requirement_id",
+                    "task_id",
+                    "expected_source_blake3",
+                ],
+            )?;
+            let selectors = ["requirement_id", "task_id", "heading_path"]
+                .iter()
+                .filter(|key| object.contains_key(**key))
+                .count();
+            if selectors != 1 {
+                return Err(
+                    "invalid arguments for cairn_context_read: exactly one selector required"
+                        .into(),
+                );
+            }
+            validate_enum_arg(name, object, "scope", &["accepted", "active", "archived"])
+        }
         "cairn_readiness" => {
             validate_evidence_array(name, object)?;
             let mut strings = object.clone();
@@ -553,6 +654,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
             }
             Ok(())
         }
+        "cairn_observe" => validate_observe_args(name, object),
         "cairn_verification_impact" => validate_verification_impact_args(name, object),
         "cairn_workflow_status" => {
             validate_string_args(name, object, &["change"], &["root", "policy", "schema"])
@@ -583,6 +685,119 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_agent_completion_validate" => validate_agent_completion_args(name, object),
         unknown => Err(format!("unknown MCP tool: {unknown}").into()),
     }
+}
+
+fn validate_observe_args(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    let allowed = [
+        "root",
+        "policy",
+        "view",
+        "change",
+        "max_bytes",
+        "max_entries",
+        "scope",
+        "spec",
+        "artifact",
+        "requirement_id",
+        "task_id",
+        "heading_path",
+        "selectors",
+        "mode",
+        "page_entries",
+        "page_bytes",
+        "cursor",
+        "prior",
+        "prior_path",
+    ];
+    for key in object.keys() {
+        if !allowed.contains(&key.as_str()) {
+            return Err(format!("invalid arguments for {tool}: unknown argument {key}").into());
+        }
+    }
+    let Some(view) = object.get("view") else {
+        return Err(format!("invalid arguments for {tool}: missing required argument view").into());
+    };
+    if !matches!(
+        view.as_str(),
+        Some("active_changes" | "readiness" | "context")
+    ) {
+        return Err(format!(
+            "invalid arguments for {tool}: view must be active_changes, readiness, or context"
+        )
+        .into());
+    }
+    for key in [
+        "root",
+        "policy",
+        "change",
+        "scope",
+        "spec",
+        "artifact",
+        "requirement_id",
+        "task_id",
+        "cursor",
+        "prior_path",
+    ] {
+        if let Some(value) = object.get(key) {
+            validate_non_empty_string(tool, key, value)?;
+        }
+    }
+    if let Some(value) = object.get("mode") {
+        let Some(mode) = value.as_str() else {
+            return Err(format!("invalid arguments for {tool}: mode must be a string").into());
+        };
+        if !matches!(mode, "complete" | "page" | "unchanged" | "difference") {
+            return Err(format!(
+                "invalid arguments for {tool}: mode must be complete, page, unchanged, or difference"
+            )
+            .into());
+        }
+    }
+    for key in ["max_bytes", "max_entries", "page_entries", "page_bytes"] {
+        if let Some(value) = object.get(key) {
+            if value.as_u64().is_none() {
+                return Err(format!(
+                    "invalid arguments for {tool}: {key} must be a non-negative integer"
+                )
+                .into());
+            }
+            if matches!(key, "max_bytes" | "page_entries" | "page_bytes")
+                && value.as_u64() == Some(0)
+            {
+                return Err(format!("invalid arguments for {tool}: {key} must be positive").into());
+            }
+        }
+    }
+    if object.get("prior").is_some_and(|value| !value.is_object()) {
+        return Err(format!("invalid arguments for {tool}: prior must be an object").into());
+    }
+    if object
+        .get("selectors")
+        .is_some_and(|value| !value.is_array())
+    {
+        return Err(format!("invalid arguments for {tool}: selectors must be an array").into());
+    }
+    if let Some(value) = object.get("heading_path") {
+        let Some(parts) = value.as_array() else {
+            return Err(
+                format!("invalid arguments for {tool}: heading_path must be an array").into(),
+            );
+        };
+        if parts.is_empty()
+            || parts
+                .iter()
+                .any(|part| part.as_str().is_none_or(str::is_empty))
+        {
+            return Err(format!(
+                "invalid arguments for {tool}: heading_path must contain non-empty strings"
+            )
+            .into());
+        }
+    }
+    Ok(())
 }
 
 fn validate_verification_impact_args(

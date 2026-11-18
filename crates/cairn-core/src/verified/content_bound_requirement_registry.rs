@@ -724,7 +724,7 @@ fn next_heading_at_or_above(lines: &[MarkdownLine<'_>], start: usize, level: usi
         .unwrap_or(lines.len())
 }
 
-fn declaration_markers(text: &str) -> Vec<String> {
+pub(crate) fn declaration_markers(text: &str) -> Vec<String> {
     let bytes = text.as_bytes();
     let mut markers = Vec::new();
     let mut index: usize = 0;

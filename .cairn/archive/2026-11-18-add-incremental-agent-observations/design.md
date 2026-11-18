@@ -48,6 +48,20 @@ Warm, cold, corrupt, and absent caches must preserve admission semantics.
 Fresh source and evidence checks still run before a current observation or protected mutation.
 Existing bounded readers remain authoritative. Repeated reads do not establish an atomic filesystem snapshot.
 
+### Implemented contract
+
+Views are `active_changes`, `readiness` (compact selected entries only), and `context` (exact targeted selectors).
+The core adds `incremental_observations` with typed cohort, entry, snapshot, cursor, page, unchanged, and difference values.
+Cohort continuation identity hashes root, optional store, source manifest, lifecycle policy, producer policy, evidence, producer contract, view, selectors, and ordering under `cairn.incremental-observation.cohort.v1`.
+Difference admission uses a contract identity that excludes source and evidence, because source and evidence drift is what a difference must report.
+Policy, root, producer contract, view, selectors, or ordering drift is a mixed cohort.
+Snapshots and pages carry explicit schema versions, total/included/omitted counts, completeness state, and domain-hashed receipts.
+Cursors are hexadecimal canonical JSON carrying the snapshot identity, last stable identity, page contract, and page limits; they are stateless and replay deterministically.
+The CLI takes root-relative prior and output paths through the guarded capability writer.
+MCP takes a bounded inline prior or a root-relative `prior_path` and never writes.
+Nickel owns all byte, entry, cursor, prior, selector, and page bounds in `cairn-policy/incremental-observations.ncl`; the generated projection is `cairn-policy/generated/incremental-observations.json` with root field `policy`.
+
+
 ## Alternatives rejected
 
 - A hidden server session makes restart and resume depend on ambient mutable state.

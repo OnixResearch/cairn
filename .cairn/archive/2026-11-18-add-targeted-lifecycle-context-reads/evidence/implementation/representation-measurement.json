@@ -1,0 +1,26 @@
+{
+  "schema": "cairn.targeted-context.representation-measurement.v1",
+  "fixture": "fixtures/basic change demo; targeted read selects one authored task",
+  "tokens": {
+    "state": "unavailable",
+    "reason": "No provider usage or exact tokenizer observation was supplied; byte counts are not token estimates."
+  },
+  "scope": "Standalone JSON representation size for one exact block. No paired whole-artifact baseline is claimed because that route did not produce output on this fixture.",
+  "observations": [
+    {
+      "presentation": "targeted_task_read",
+      "stdout_bytes": 2319,
+      "exit_code": 0,
+      "admitted": true
+    },
+    {
+      "presentation": "whole_change_context",
+      "stdout_bytes": 0,
+      "exit_code": 1,
+      "admitted": false,
+      "note": "route exited non-zero with no stdout on this fixture; recorded as unavailable, not as a zero-size baseline"
+    }
+  ],
+  "pairs": null,
+  "pairs_reason": "The whole-change baseline is unavailable on this fixture, so no paired byte comparison or saving is asserted."
+}

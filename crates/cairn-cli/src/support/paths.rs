@@ -160,6 +160,68 @@ pub(crate) fn path_string(path: impl Into<PathBuf>) -> String {
     path.into().display().to_string()
 }
 
+fn guarded_relative_path(path: &Path) -> std::io::Result<()> {
+    if path.as_os_str().is_empty()
+        || path.is_absolute()
+        || path
+            .components()
+            .any(|component| !matches!(component, std::path::Component::Normal(_)))
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "observation file path must be a normal path relative to the admitted root",
+        ));
+    }
+    Ok(())
+}
+
+pub(crate) fn read_guarded_bytes(
+    root: &Path,
+    relative: &Path,
+    max_bytes: u64,
+) -> std::io::Result<Vec<u8>> {
+    guarded_relative_path(relative)?;
+    CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?.read_bounded(relative, max_bytes)
+}
+
+pub(crate) fn write_guarded_bytes(
+    root: &Path,
+    relative: &Path,
+    bytes: &[u8],
+) -> std::io::Result<()> {
+    guarded_relative_path(relative)?;
+    let capability = CapabilityRoot::open_nofollow(CapabilityRootKind::Scan, root)?;
+    if let Some(parent) = relative
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        capability.create_dir_all(parent)?;
+    }
+    if capability
+        .symlink_metadata(relative)
+        .map(|metadata| metadata.file_type().is_symlink())
+        .unwrap_or(false)
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "observation output refuses a symlink destination",
+        ));
+    }
+    let file_name = relative
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "observation output path requires a UTF-8 file name",
+            )
+        })?;
+    let temporary = relative.with_file_name(format!(".{file_name}.cairn-observation-tmp"));
+    capability.write(&temporary, bytes)?;
+    capability.rename(&temporary, &capability, relative)?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{read_bounded_json_no_symlink, resolve_under_root};

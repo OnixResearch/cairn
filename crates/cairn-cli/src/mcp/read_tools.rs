@@ -84,6 +84,14 @@ pub(super) fn mcp_context(input: &Value) -> Result<Value, Box<dyn Error>> {
     Ok(with_portable_receipt_hash(&root, receipt))
 }
 
+pub(super) fn mcp_context_read(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let request: crate::targeted_context::ReadRequest = serde_json::from_value(input.clone())?;
+    let root = std::path::PathBuf::from(&request.root);
+    let mut value = crate::targeted_context::read_value(request)?;
+    value["mcp"] = json!({"read_only": true, "destructive": false});
+    Ok(with_portable_receipt_hash(&root, value))
+}
+
 pub(super) fn mcp_read_spec(input: &Value) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.supersede.mcp_server.read_tools.artifacts]
     let root = mcp_root(input);
