@@ -439,6 +439,30 @@
               touch $out
             '';
 
+        # r[verify cairn.incremental_observations.conformance]
+        incremental-observations-policy-fresh =
+          pkgs.runCommand "cairn-incremental-observations-policy-fresh"
+            { nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ]; }
+            ''
+              cp -r ${self}/cairn-policy policy
+              chmod -R u+w policy
+              nickel export --format json --field policy policy/incremental-observations.ncl > incremental-observations.json
+              cmp incremental-observations.json policy/generated/incremental-observations.json
+              nickel export --format json policy/fixtures/incremental-observations-positive.ncl > positive.json
+              if nickel export --format json policy/fixtures/incremental-observations-negative.ncl > negative.json 2> negative.err; then
+                echo "expected incremental observation bound rejection" >&2
+                exit 1
+              fi
+              substituteInPlace policy/incremental-observations.ncl \
+                --replace-fail 'default_page_entries = 32' 'default_page_entries = 31'
+              nickel export --format json --field policy policy/incremental-observations.ncl > drift.json
+              if cmp -s drift.json policy/generated/incremental-observations.json; then
+                echo "expected incremental observation policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         # r[verify cairn.adoption_report.inputs]
         # r[verify cairn.adoption_report.stages]
         adoption-report-contracts =

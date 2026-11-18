@@ -41,6 +41,7 @@ const KNOWN_COMMANDS: &[&str] = &[
     "view",
     "workflow",
     "readiness",
+    "observe",
     "implementation-ready",
     "adoption",
     "workset",

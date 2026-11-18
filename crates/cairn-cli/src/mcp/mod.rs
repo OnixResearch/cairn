@@ -273,6 +273,7 @@ pub(crate) fn mcp_call_tool(
             "cairn_drain_plan" => mcp_drain_plan(input)?,
             "cairn_implementation_ready" => mcp_implementation_ready(input)?,
             "cairn_readiness" => crate::readiness::readiness_value(input)?,
+            "cairn_observe" => crate::observations::mcp_observe(input)?,
             "cairn_verification_impact" => {
                 crate::verification_impact::guidance_value_from_mcp(input)?
             }

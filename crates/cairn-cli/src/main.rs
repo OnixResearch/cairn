@@ -29,6 +29,7 @@ mod mcp;
 mod migration;
 mod native;
 mod nickel_export_boundary;
+mod observations;
 mod oxide_lifecycle_patterns;
 mod plan_receipts;
 mod policy;
@@ -158,6 +159,7 @@ fn command_requires_native_lifecycle(command: &str) -> bool {
             | "view"
             | "workflow"
             | "readiness"
+            | "observe"
             | "implementation-ready"
             | "adoption"
             | "release-readiness"
@@ -234,6 +236,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "view" => run_view(args.collect())?,
         "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
         "readiness" => readiness::run_readiness(args.collect())?,
+        "observe" => observations::run(args.collect())?,
         "adoption" => run_adoption(args.collect())?,
         "workset" => worksets::run_workset(args.collect())?,
         "release-readiness" => release_readiness::run_release_readiness(args.collect())?,

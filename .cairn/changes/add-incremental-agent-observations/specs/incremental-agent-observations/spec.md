@@ -28,6 +28,11 @@ r[cairn.incremental_observations.pages] The system MUST provide bounded ordered 
 - WHEN the next page is requested
 - THEN it reports stale or invalid continuation without combining old and new entries
 
+#### Scenario: Replaying a cursor is deterministic
+- GIVEN an unchanged admitted cohort and a valid continuation cursor
+- WHEN the same cursor is requested more than once
+- THEN every response carries the same page identity and no cursor state changes
+
 ### Requirement: Exact observation differences
 r[cairn.incremental_observations.delta] The system MUST derive added, changed, and removed entries from explicit prior and current observations without treating a partial observation as a complete baseline.
 
