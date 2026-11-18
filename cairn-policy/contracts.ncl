@@ -147,7 +147,7 @@ let TraceabilityAssuranceLevel = std.contract.from_predicate (fun value =>
 ) in
 
 let TraceabilityAnchorKind = std.contract.from_predicate (fun value =>
-  std.is_string value && value == "exact_marker_bytes"
+  std.is_string value && (value == "exact_marker_bytes" || value == "rust_item_v1")
 ) in
 
 let TraceabilityExtension = std.contract.from_predicate (fun value =>
@@ -603,6 +603,7 @@ let DeveloperLoopStatusClass = std.contract.from_predicate (fun value =>
     marker_verbs | NonEmptyArray | Array TraceabilityMarkerVerb,
     assurance_level | TraceabilityAssuranceLevel,
     anchor_kind | TraceabilityAnchorKind,
+    rust_configuration_path | SafeRelativePath | optional,
   },
 
   TraceabilityPolicy = {

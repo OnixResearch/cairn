@@ -246,6 +246,7 @@ fn traceability_profile() -> crate::verified::traceability::TraceabilityProfile 
         ],
         assurance_level: "declared".to_string(),
         anchor_kind: "exact_marker_bytes".to_string(),
+        rust_configuration_path: None,
     }
 }
 

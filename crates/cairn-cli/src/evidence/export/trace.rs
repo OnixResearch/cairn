@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use cairn_core::{
     content_bound_requirement_registry_issues_json, evaluate_content_bound_requirement_registry,
-    evaluate_content_bound_trace_index, ContentBoundRevision, CONTENT_BOUND_REVISION_KIND_OPAQUE,
+    ContentBoundRevision, CONTENT_BOUND_REVISION_KIND_OPAQUE,
 };
 
 use super::issue::{evidence_export_issue, evidence_export_nested_issue};
@@ -10,7 +10,7 @@ use super::*;
 use crate::requirement_id_registry::read_accepted_specifications;
 use crate::support::CapabilityRoot;
 use crate::trace_index::current_root_trace_index_verification_receipt;
-use crate::tracey::{collect_traceability_files, selected_traceability_profile};
+use crate::tracey::selected_traceability_profile;
 
 const EVIDENCE_REPOSITORY_ID: &str = "cairn-evidence-local";
 const EVIDENCE_REVISION: &str = "evidence-snapshot";
@@ -117,7 +117,7 @@ pub(super) fn export_trace_evidence(
             return None;
         }
     };
-    let evidence_files = match collect_traceability_files(root, &profile.evidence_sources) {
+    let evidence_files = match crate::trace_index::collect_selected_traceability_files(root, &profile) {
         Ok(files) => files,
         Err(_) => {
             issues.push(evidence_export_issue(
@@ -129,7 +129,13 @@ pub(super) fn export_trace_evidence(
             return None;
         }
     };
-    let index_evaluation = evaluate_content_bound_trace_index(&registry, &profile, evidence_files);
+    let index_evaluation = match crate::trace_index::evaluate_current_trace_index(root, &registry, &profile, evidence_files, None) {
+        Ok(value) => value,
+        Err(error) => {
+            issues.push(evidence_export_issue("export.trace_item_adapter_failed", "trace_index.structural", "bounded supported Rust item interpretation", &error.to_string()));
+            return None;
+        }
+    };
     let Some(index) = index_evaluation.index else {
         issues.extend(index_evaluation.issues.into_iter().map(|issue| {
             json!({
@@ -168,6 +174,7 @@ pub(super) fn export_trace_evidence(
         &registry_path,
         &index_path,
         Path::new(TRACE_INDEX_FILE),
+        None,
     ) {
         Ok(receipt) => receipt,
         Err(_) => {

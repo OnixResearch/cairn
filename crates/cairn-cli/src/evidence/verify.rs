@@ -274,6 +274,7 @@ pub(crate) fn evidence_verify_receipt(options: &EvidenceVerifyOptions) -> Value 
         &bundle_dir.join("requirement-registry.json"),
         &bundle_dir.join("trace-index.json"),
         Path::new("trace-index.json"),
+        None,
     ) {
         Ok(receipt) if receipt.get("valid").and_then(Value::as_bool) == Some(true) => {}
         Ok(receipt) => {

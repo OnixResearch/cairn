@@ -8,6 +8,7 @@ const TRACEABILITY_EVIDENCE_SOURCES_FIELD: &str = "traceability_policy.profiles.
 const TRACEABILITY_MARKER_VERBS_FIELD: &str = "traceability_policy.profiles.marker_verbs";
 const TRACEABILITY_ASSURANCE_LEVEL_FIELD: &str = "traceability_policy.profiles.assurance_level";
 const TRACEABILITY_ANCHOR_KIND_FIELD: &str = "traceability_policy.profiles.anchor_kind";
+const TRACEABILITY_RUST_CONFIGURATION_FIELD: &str = "traceability_policy.profiles.rust_configuration_path";
 const TRACEABILITY_SOURCE_ROOT_FIELD: &str = "traceability_policy.profiles.sources.root";
 const TRACEABILITY_SOURCE_KIND_FIELD: &str = "traceability_policy.profiles.sources.source_kind";
 const TRACEABILITY_SOURCE_EXTENSIONS_FIELD: &str =
@@ -108,10 +109,22 @@ fn parse_profile(
     }
     if anchor_kind
         != crate::verified::content_bound_trace_index::TRACEABILITY_ANCHOR_EXACT_MARKER_BYTES
+        && anchor_kind
+            != crate::verified::content_bound_trace_index::TRACEABILITY_ANCHOR_RUST_ITEM_V1
     {
         return Err(super::PolicyError::InvalidField(
             TRACEABILITY_ANCHOR_KIND_FIELD,
         ));
+    }
+    let rust_configuration_path = match value.get("rust_configuration_path") {
+        None | Some(serde_json::Value::Null) => None,
+        Some(serde_json::Value::String(path)) if is_safe_traceability_path(path) && path.len() <= 4096 && !path.contains(':') && !path.contains('\0') => Some(path.clone()),
+        _ => return Err(super::PolicyError::InvalidField(TRACEABILITY_RUST_CONFIGURATION_FIELD)),
+    };
+    if (anchor_kind == crate::verified::content_bound_trace_index::TRACEABILITY_ANCHOR_RUST_ITEM_V1)
+        != rust_configuration_path.is_some()
+        || (rust_configuration_path.is_some() && evidence_sources.iter().any(|source| source.source_kind != "rust_source" || source.extensions.iter().any(|extension| extension != "rs"))) {
+        return Err(super::PolicyError::InvalidField(TRACEABILITY_RUST_CONFIGURATION_FIELD));
     }
     Ok(crate::verified::traceability::TraceabilityProfile {
         id,
@@ -120,6 +133,7 @@ fn parse_profile(
         marker_verbs,
         assurance_level,
         anchor_kind,
+        rust_configuration_path,
     })
 }
 
