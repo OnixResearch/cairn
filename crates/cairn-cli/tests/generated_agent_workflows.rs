@@ -536,9 +536,17 @@ fn inspect_copy_reports_identity_bound_state_without_writing() -> Result<(), Box
             "--policy".to_string(),
             policy.clone(),
             "--guide".to_string(),
-            guide.display().to_string(),
+            guide
+                .strip_prefix(&root)
+                .unwrap_or(guide)
+                .display()
+                .to_string(),
             "--manifest".to_string(),
-            manifest.display().to_string(),
+            manifest
+                .strip_prefix(&root)
+                .unwrap_or(manifest)
+                .display()
+                .to_string(),
         ];
         if let Some(identity) = identity {
             args.extend(["--manifest-identity".to_string(), identity.to_string()]);
@@ -812,6 +820,9 @@ fn invalid_entry_budget_and_legacy_layout_fail_cli_admission() -> Result<(), Box
         ])?;
         assert!(!output.status.success(), "{name} must fail admission");
     }
+    Ok(())
+}
+
 // r[verify cairn.agent_workflow_readiness.guidance]
 #[test]
 fn readiness_guidance_routes_match_the_current_cli_and_mcp_schemas() -> Result<(), Box<dyn Error>> {

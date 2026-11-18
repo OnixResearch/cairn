@@ -1568,6 +1568,10 @@
         "permission": "read"
       },
       {
+        "id": "readiness",
+        "permission": "read"
+      },
+      {
         "id": "receipt-inspect",
         "permission": "read"
       },
@@ -1597,6 +1601,7 @@
         "command_classes": [
           "artifact-edit",
           "context",
+          "readiness",
           "workflow-inspect"
         ],
         "constraints": [
@@ -1607,19 +1612,21 @@
         ],
         "goal": "Implement the accepted change without weakening its requirements or policy boundaries.",
         "id": "apply",
-        "immediate_action": "Run cairn workflow instructions for the selected change, then inspect its accepted artifacts before editing files.",
+        "immediate_action": "Run cairn readiness CHANGE, then follow cairn workflow instructions ARTIFACT --change CHANGE for the accepted artifacts before editing files.",
         "mutation_class": "preview_first",
         "non_claims": [
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone"
+          "workflow success depends on checked project evidence and does not follow from generated text alone",
+          "a workflow descriptor requests readiness as an input route; it never promotes an unavailable observation to authority"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
         "required_evidence": [
           "Accepted proposal, design, specifications, and tasks",
-          "Baseline and final check results"
+          "Baseline and final check results",
+          "Current readiness observation for the selected change"
         ],
         "success_evidence": [
           "Changed code and tests map to accepted requirements.",
@@ -1631,6 +1638,7 @@
         "command_classes": [
           "archive-execute",
           "gate",
+          "readiness",
           "sync-execute",
           "workflow-inspect"
         ],
@@ -1642,20 +1650,22 @@
         ],
         "goal": "Archive a completed change only after required gates, sync, and evidence checks pass.",
         "id": "archive",
-        "immediate_action": "Run the required gates, preview sync and archive plans, then execute only their unchanged plan hashes.",
+        "immediate_action": "Run cairn readiness CHANGE, then preview its sync and archive plans and execute only their unchanged plan hashes.",
         "mutation_class": "preview_first",
         "non_claims": [
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone"
+          "workflow success depends on checked project evidence and does not follow from generated text alone",
+          "a workflow descriptor requests readiness as an input route; it never promotes an unavailable observation to authority"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
         "required_evidence": [
           "Passing required gates",
           "Fresh sync and archive plans",
-          "Completed task evidence"
+          "Completed task evidence",
+          "Current readiness observation for the selected change"
         ],
         "success_evidence": [
           "Accepted specification deltas are synchronized.",
@@ -1669,6 +1679,7 @@
           "artifact-edit",
           "context",
           "gate",
+          "readiness",
           "sync-execute",
           "workflow-inspect"
         ],
@@ -1680,20 +1691,22 @@
         ],
         "goal": "Complete each active change through implementation, validation, sync, and archive with bounded evidence.",
         "id": "drain",
-        "immediate_action": "Run cairn workflow status, select the first unblocked change, and inspect its instructions and task evidence.",
+        "immediate_action": "Run cairn workflow status, then cairn drain-plan --view readiness for the next change and follow cairn workflow instructions ARTIFACT --change CHANGE.",
         "mutation_class": "preview_first",
         "non_claims": [
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone"
+          "workflow success depends on checked project evidence and does not follow from generated text alone",
+          "a workflow descriptor requests readiness as an input route; it never promotes an unavailable observation to authority"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
         "required_evidence": [
           "Dependency order and active status",
           "Implementation and gate receipts",
-          "Fresh sync and archive plans"
+          "Fresh sync and archive plans",
+          "Current readiness observation for each selected change"
         ],
         "success_evidence": [
           "Each selected task is complete or has an exact blocker.",
@@ -1722,7 +1735,8 @@
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone"
+          "workflow success depends on checked project evidence and does not follow from generated text alone",
+          "a workflow descriptor requests readiness as an input route; it never promotes an unavailable observation to authority"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
@@ -1758,7 +1772,8 @@
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone"
+          "workflow success depends on checked project evidence and does not follow from generated text alone",
+          "a workflow descriptor requests readiness as an input route; it never promotes an unavailable observation to authority"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
@@ -1775,6 +1790,7 @@
       {
         "command_classes": [
           "gate",
+          "readiness",
           "receipt-inspect",
           "traceability",
           "workflow-inspect"
@@ -1786,20 +1802,23 @@
         ],
         "goal": "Check requirement coverage, gates, tests, and receipts without changing lifecycle artifacts.",
         "id": "verify",
-        "immediate_action": "Run the smallest required gate and traceability check for the selected change before broad validation.",
+        "immediate_action": "Run cairn readiness CHANGE, then follow cairn workflow instructions ARTIFACT --change CHANGE for the recorded verification inputs.",
         "mutation_class": "read_only",
         "non_claims": [
           "deterministic generation proves only a bounded transformation of admitted policy",
           "an adapter changes representation but does not add authority or lifecycle semantics",
           "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-          "workflow success depends on checked project evidence and does not follow from generated text alone"
+          "workflow success depends on checked project evidence and does not follow from generated text alone",
+          "a workflow descriptor requests readiness as an input route; it never promotes an unavailable observation to authority"
         ],
         "output_shape": "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact.",
         "progress_rule": "For work with multiple steps, state the next action and report checked evidence after each major step.",
         "required_evidence": [
           "Gate and test outputs",
           "Traceability and receipt identities",
-          "Known blockers and non-claims"
+          "Known blockers and non-claims",
+          "Current readiness observation for the selected change",
+          "Declared completion inputs and subject identity"
         ],
         "success_evidence": [
           "Required checks pass or return exact diagnostics.",
@@ -1859,7 +1878,8 @@
       "deterministic generation proves only a bounded transformation of admitted policy",
       "an adapter changes representation but does not add authority or lifecycle semantics",
       "generated guidance does not grant command, filesystem, network, model, gate, or release authority",
-      "workflow success depends on checked project evidence and does not follow from generated text alone"
+      "workflow success depends on checked project evidence and does not follow from generated text alone",
+      "a workflow descriptor requests readiness as an input route; it never promotes an unavailable observation to authority"
     ],
     "schema": "cairn.generated-agent-workflow-policy.v1"
   },
