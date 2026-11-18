@@ -162,6 +162,7 @@ pub(crate) fn run_mcp(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 }
 
 pub(crate) fn mcp_tool_catalog(is_allow_mutations: bool) -> Result<Value, Box<dyn Error>> {
+    // r[impl cairn.supersede.mcp_server.boundary.core]
     Ok(catalog_json(&load_catalog("full", is_allow_mutations)?))
 }
 
