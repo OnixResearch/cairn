@@ -675,10 +675,7 @@ pub fn guarantee_statement_identity(
 }
 
 /// Statement identity for a declared environment assumption.
-pub fn assumption_statement_identity(
-    id: &str,
-    statement: &str,
-) -> Result<String, RefinementError> {
+pub fn assumption_statement_identity(id: &str, statement: &str) -> Result<String, RefinementError> {
     require_text(id, "assumption id")?;
     require_text(statement, "assumption statement")?;
     identity("cairn.refinement-assumption-statement.v1", &(id, statement))
@@ -1124,16 +1121,9 @@ fn validate_decomposition(
             decomposition.id
         )));
     }
-    assert_children_declared(
-        &decomposition.composition,
-        &child_ids,
-        &decomposition.id,
-    )?;
+    assert_children_declared(&decomposition.composition, &child_ids, &decomposition.id)?;
     validate_relation(&decomposition.relation, policy)?;
-    let mut known: BTreeSet<String> = child_ids
-        .iter()
-        .map(|id| (*id).to_string())
-        .collect();
+    let mut known: BTreeSet<String> = child_ids.iter().map(|id| (*id).to_string()).collect();
     known.extend(assumption_ids.iter().map(|id| (*id).to_string()));
     validate_feasibility(&decomposition.feasibility, policy, &known)
 }
@@ -1406,20 +1396,12 @@ fn assess_acyclic(
     ) -> Result<(), RefinementError> {
         match color.get(node) {
             Some(1) => {
-                let start = stack
-                    .iter()
-                    .position(|entry| entry == node)
-                    .unwrap_or(0);
+                let start = stack.iter().position(|entry| entry == node).unwrap_or(0);
                 let mut cycle = stack[start..].to_vec();
                 cycle.push(node.to_string());
                 let names = cycle
                     .iter()
-                    .map(|entry| {
-                        labels
-                            .get(entry)
-                            .cloned()
-                            .unwrap_or_else(|| entry.clone())
-                    })
+                    .map(|entry| labels.get(entry).cloned().unwrap_or_else(|| entry.clone()))
                     .collect::<Vec<_>>();
                 return Err(RefinementError::Cycle(format!(
                     "requirement justification cycle: {}",
@@ -1474,9 +1456,7 @@ fn assurance_for_proposition(tag: &str) -> Assurance {
     }
 }
 
-fn guarantee_statement_for(
-    guarantee: &AdmittedGuarantee,
-) -> Result<String, RefinementError> {
+fn guarantee_statement_for(guarantee: &AdmittedGuarantee) -> Result<String, RefinementError> {
     guarantee_statement_identity(&guarantee.requirement.row_blake3, &guarantee.proposition)
 }
 
@@ -1635,7 +1615,11 @@ fn composition_outcome(
     children: &BTreeMap<String, ChildGuarantee>,
     lookup: &GuaranteeLookup<'_>,
     conditions: &BTreeMap<String, Option<bool>>,
-) -> (CompositionOutcome, Vec<ObligationExplanation>, BTreeSet<String>) {
+) -> (
+    CompositionOutcome,
+    Vec<ObligationExplanation>,
+    BTreeSet<String>,
+) {
     match composition {
         Composition::Child { child } => {
             let Some(declared) = children.get(child) else {
@@ -1866,8 +1850,7 @@ fn assumption_status(
         return (AssumptionStatus::PolicyAccepted, paths);
     }
     let pending = uses.get(key).is_some_and(|states| {
-        states.contains(&ObligationState::Pending)
-            || states.contains(&ObligationState::Unsupported)
+        states.contains(&ObligationState::Pending) || states.contains(&ObligationState::Unsupported)
     });
     if pending {
         (AssumptionStatus::Pending, paths)
@@ -1969,9 +1952,7 @@ pub fn evaluate_refinement(
                     let claim = &explanation.claim;
                     let state = match explanation.state {
                         ClaimState::Supported => ObligationState::Supported,
-                        ClaimState::Refuted | ClaimState::Disputed => {
-                            ObligationState::Contradicted
-                        }
+                        ClaimState::Refuted | ClaimState::Disputed => ObligationState::Contradicted,
                         ClaimState::Unresolved => ObligationState::Pending,
                     };
                     guarantees.insert(
@@ -2047,10 +2028,7 @@ pub fn evaluate_refinement(
                         &assumption.statement,
                     )?,
                     source: assumption.source.clone(),
-                    referenced_by: BTreeSet::from([format!(
-                        "decomposition:{}",
-                        decomposition.id
-                    )]),
+                    referenced_by: BTreeSet::from([format!("decomposition:{}", decomposition.id)]),
                     atom: Some(assumption.atom.clone()),
                 },
             )?;
@@ -2060,8 +2038,7 @@ pub fn evaluate_refinement(
 
     // Validate and index dependencies.
     let mut dependency_ids = BTreeSet::new();
-    let mut dependencies: Vec<&TypedDependency> =
-        Vec::with_capacity(request.dependencies.len());
+    let mut dependencies: Vec<&TypedDependency> = Vec::with_capacity(request.dependencies.len());
     for dependency in &request.dependencies {
         if !dependency_ids.insert(dependency.id.as_str()) {
             return Err(RefinementError::InvalidInput(format!(
@@ -2075,17 +2052,21 @@ pub fn evaluate_refinement(
             edge_rows.insert(endpoint.requirement.requirement.row_blake3.clone());
             labels
                 .entry(endpoint.requirement.requirement.row_blake3.clone())
-                .or_insert_with(|| {
-                    endpoint
-                        .requirement
-                        .requirement
-                        .requirement_id
-                        .clone()
-                });
+                .or_insert_with(|| endpoint.requirement.requirement.requirement_id.clone());
         }
         edges.insert((
-            dependency.producer.requirement.requirement.row_blake3.clone(),
-            dependency.consumer.requirement.requirement.row_blake3.clone(),
+            dependency
+                .producer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
+            dependency
+                .consumer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
         ));
         if let Some(binding) = &dependency.semantic {
             let key = (
@@ -2157,7 +2138,7 @@ pub fn evaluate_refinement(
             "evidence exceeds the admitted bound".into(),
         ));
     }
-    assert_acyclic(&edge_rows, &edges, &labels, bounds.max_depth)?;
+    assess_acyclic(&edge_rows, &edges, &labels, bounds.max_depth)?;
 
     let mut triggers = BTreeSet::new();
     let mut trust_dependencies = BTreeSet::new();
@@ -2292,8 +2273,22 @@ pub fn evaluate_refinement(
         }
     }
     for dependency in &dependencies {
-        basis_requirement_rows.insert(dependency.producer.requirement.requirement.row_blake3.clone());
-        basis_requirement_rows.insert(dependency.consumer.requirement.requirement.row_blake3.clone());
+        basis_requirement_rows.insert(
+            dependency
+                .producer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
+        );
+        basis_requirement_rows.insert(
+            dependency
+                .consumer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
+        );
         basis_contexts.insert(context_identity(&dependency.context)?);
         if let Some(binding) = &dependency.semantic {
             basis_assumptions.insert(format!(
@@ -2338,7 +2333,10 @@ pub fn evaluate_refinement(
     Ok(report)
 }
 
-fn reevaluation_triggers(previous: &EvaluationBasis, current: &EvaluationBasis) -> BTreeSet<String> {
+fn reevaluation_triggers(
+    previous: &EvaluationBasis,
+    current: &EvaluationBasis,
+) -> BTreeSet<String> {
     let mut triggers = BTreeSet::new();
     if previous.policy_blake3 != current.policy_blake3 {
         triggers.insert("policy_changed".into());
@@ -2418,10 +2416,7 @@ fn evaluate_decomposition(
         ) {
             assumption_unresolved = true;
         }
-        if !matches!(
-            status,
-            AssumptionStatus::Discharged
-        ) {
+        if !matches!(status, AssumptionStatus::Discharged) {
             assumption_residuals.insert(assumption.id.clone());
         }
         let mut paths = discharge_paths.get(&key).cloned().unwrap_or_default();
@@ -2436,12 +2431,13 @@ fn evaluate_decomposition(
             } else {
                 Assurance::Unassessed
             },
-            statement_blake3: assumption_statement_identity(
-                &assumption.id,
-                &assumption.statement,
-            )?,
+            statement_blake3: assumption_statement_identity(&assumption.id, &assumption.statement)?,
             source: assumption.source.clone(),
-            reason: format!("assumption_{}:{}", assumption_status_tag(status), assumption.id),
+            reason: format!(
+                "assumption_{}:{}",
+                assumption_status_tag(status),
+                assumption.id
+            ),
             discharge_paths: paths,
         });
     }
@@ -2472,16 +2468,23 @@ fn evaluate_decomposition(
                 blockers.insert("statement_mismatch".to_string());
                 continue;
             }
-            exact.insert(serde_json::to_string(evidence).map_err(|error| {
-                RefinementError::InvalidInput(error.to_string())
-            })?);
+            exact.insert(
+                serde_json::to_string(evidence)
+                    .map_err(|error| RefinementError::InvalidInput(error.to_string()))?,
+            );
         }
         let (state, reason) = if exact.len() > 1 {
             (ObligationState::Pending, "integration_evidence_ambiguous")
         } else if exact.len() == 1 {
-            (ObligationState::Supported, "integration_obligation_established")
+            (
+                ObligationState::Supported,
+                "integration_obligation_established",
+            )
         } else if blockers.contains("out_of_scope") {
-            (ObligationState::Pending, "integration_evidence_out_of_scope")
+            (
+                ObligationState::Pending,
+                "integration_evidence_out_of_scope",
+            )
         } else if blockers.contains("statement_mismatch") {
             (ObligationState::Pending, "integration_statement_mismatch")
         } else {
@@ -2518,7 +2521,7 @@ fn evaluate_decomposition(
 
     // Feasibility is evaluated separately and cannot be inferred from children.
     let mut feasibility_blockers = BTreeSet::new();
-    let mut feasibility_state;
+    let feasibility_state;
     let mut feasibility_assurance = decomposition.feasibility.assurance;
     if assumption_contradicted {
         feasibility_state = ObligationState::Infeasible;
@@ -2552,8 +2555,11 @@ fn evaluate_decomposition(
                 {
                     blockers.insert("feasibility_method_unadmitted".into());
                 }
-                let mut required: BTreeSet<&str> =
-                    composition.required_children.iter().map(String::as_str).collect();
+                let mut required: BTreeSet<&str> = composition
+                    .required_children
+                    .iter()
+                    .map(String::as_str)
+                    .collect();
                 required.extend(
                     decomposition
                         .environment
@@ -2577,16 +2583,13 @@ fn evaluate_decomposition(
                 }
                 if blockers.is_empty() {
                     feasibility_state = ObligationState::Supported;
-                } else if blockers
-                    .iter()
-                    .any(|blocker| blocker.starts_with("feasibility_unassessed")
+                } else if blockers.iter().any(|blocker| {
+                    blocker.starts_with("feasibility_unassessed")
                         || blocker.starts_with("feasibility_assurance_not_admitted")
-                        || blocker.starts_with("feasibility_proof_checker"))
+                        || blocker.starts_with("feasibility_proof_checker")
+                }) || blockers.contains("feasibility_coverage_incomplete")
+                    || blockers.contains("feasibility_method_unadmitted")
                 {
-                    feasibility_state = ObligationState::Unsupported;
-                } else if blockers.contains("feasibility_coverage_incomplete") {
-                    feasibility_state = ObligationState::Unsupported;
-                } else if blockers.contains("feasibility_method_unadmitted") {
                     feasibility_state = ObligationState::Unsupported;
                 } else {
                     feasibility_state = ObligationState::Pending;
@@ -2726,8 +2729,18 @@ fn evaluate_dependency(
                 dependency.relation.tag()
             ),
             evidence: None,
-            producer_row_blake3: dependency.producer.requirement.requirement.row_blake3.clone(),
-            consumer_row_blake3: dependency.consumer.requirement.requirement.row_blake3.clone(),
+            producer_row_blake3: dependency
+                .producer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
+            consumer_row_blake3: dependency
+                .consumer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
             residual_assumption_ids: BTreeSet::new(),
         });
     }
@@ -2758,10 +2771,7 @@ fn evaluate_dependency(
             DependencyRelation::Semantic => continue,
         };
         if candidate.kind_tag() != expected {
-            blockers.insert(format!(
-                "evidence_not_applicable:{}",
-                candidate.kind_tag()
-            ));
+            blockers.insert(format!("evidence_not_applicable:{}", candidate.kind_tag()));
             continue;
         }
         match candidate {
@@ -2773,9 +2783,9 @@ fn evaluate_dependency(
                 coverage,
                 ..
             } => {
-                if change != &dependency.producer.work {
-                    blockers.insert("out_of_scope".into());
-                } else if repository != &dependency.context.producer_repository {
+                if change != &dependency.producer.work
+                    || repository != &dependency.context.producer_repository
+                {
                     blockers.insert("out_of_scope".into());
                 } else if revision != &dependency.producer.revision {
                     blockers.insert("stale_revision".into());
@@ -2806,10 +2816,7 @@ fn evaluate_dependency(
                 {
                     blockers.insert("missing_specification_gate".into());
                 } else {
-                    exact.insert(format!(
-                        "specification:{}:{}",
-                        revision, receipt_blake3
-                    ));
+                    exact.insert(format!("specification:{}:{}", revision, receipt_blake3));
                 }
             }
             DependencyEvidence::CandidateVerified {
@@ -2845,10 +2852,7 @@ fn evaluate_dependency(
                 } else if revision != &dependency.producer.revision {
                     blockers.insert("stale_revision".into());
                 } else {
-                    exact.insert(format!(
-                        "candidate_input:{}:{}",
-                        input_blake3, revision
-                    ));
+                    exact.insert(format!("candidate_input:{}:{}", input_blake3, revision));
                 }
             }
             DependencyEvidence::Integration {
@@ -2883,8 +2887,7 @@ fn evaluate_dependency(
                 ..
             } => {
                 if repository != &dependency.context.producer_repository
-                    || dependency.required_lifecycle_stage.as_deref()
-                        != Some(stage.as_str())
+                    || dependency.required_lifecycle_stage.as_deref() != Some(stage.as_str())
                 {
                     blockers.insert("out_of_scope".into());
                 } else if revision != &dependency.producer.revision {
@@ -2899,10 +2902,7 @@ fn evaluate_dependency(
         }
     }
     if blockers.contains("stale_revision") || blockers.contains("out_of_scope") {
-        triggers.insert(format!(
-            "applicability_reevaluation:{}",
-            dependency.id
-        ));
+        triggers.insert(format!("applicability_reevaluation:{}", dependency.id));
     }
     let (state, reason, label) = if exact.len() > 1 {
         (
@@ -2930,11 +2930,7 @@ fn evaluate_dependency(
         } else {
             "missing_evidence"
         };
-        (
-            ObligationState::Pending,
-            format!("pending: {code}"),
-            None,
-        )
+        (ObligationState::Pending, format!("pending: {code}"), None)
     };
     Ok(DependencyExplanation {
         id: dependency.id.clone(),
@@ -2947,8 +2943,18 @@ fn evaluate_dependency(
         },
         reason,
         evidence: label,
-        producer_row_blake3: dependency.producer.requirement.requirement.row_blake3.clone(),
-        consumer_row_blake3: dependency.consumer.requirement.requirement.row_blake3.clone(),
+        producer_row_blake3: dependency
+            .producer
+            .requirement
+            .requirement
+            .row_blake3
+            .clone(),
+        consumer_row_blake3: dependency
+            .consumer
+            .requirement
+            .requirement
+            .row_blake3
+            .clone(),
         residual_assumption_ids: BTreeSet::new(),
     })
 }
@@ -2971,8 +2977,18 @@ fn evaluate_semantic_dependency(
             assurance: Assurance::Unassessed,
             reason: "unsupported: semantic_binding_missing".into(),
             evidence: None,
-            producer_row_blake3: dependency.producer.requirement.requirement.row_blake3.clone(),
-            consumer_row_blake3: dependency.consumer.requirement.requirement.row_blake3.clone(),
+            producer_row_blake3: dependency
+                .producer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
+            consumer_row_blake3: dependency
+                .consumer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
             residual_assumption_ids: BTreeSet::new(),
         });
     };
@@ -3002,11 +3018,7 @@ fn evaluate_semantic_dependency(
             &binding.consumer_assumption.statement,
         )?,
     );
-    let admitted = admission_reason(
-        binding.witness.assurance,
-        policy,
-        None,
-    );
+    let admitted = admission_reason(binding.witness.assurance, policy, None);
     if let Some(reason) = admitted.clone() {
         assumption_uses
             .entry(key)
@@ -3019,8 +3031,18 @@ fn evaluate_semantic_dependency(
             assurance: binding.witness.assurance,
             reason: format!("unsupported: witness_{reason}"),
             evidence: None,
-            producer_row_blake3: dependency.producer.requirement.requirement.row_blake3.clone(),
-            consumer_row_blake3: dependency.consumer.requirement.requirement.row_blake3.clone(),
+            producer_row_blake3: dependency
+                .producer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
+            consumer_row_blake3: dependency
+                .consumer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
             residual_assumption_ids: residual,
         });
     }
@@ -3037,17 +3059,25 @@ fn evaluate_semantic_dependency(
             assurance: binding.witness.assurance,
             reason: "unsupported: context_incompatible".into(),
             evidence: None,
-            producer_row_blake3: dependency.producer.requirement.requirement.row_blake3.clone(),
-            consumer_row_blake3: dependency.consumer.requirement.requirement.row_blake3.clone(),
+            producer_row_blake3: dependency
+                .producer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
+            consumer_row_blake3: dependency
+                .consumer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
             residual_assumption_ids: residual,
         });
     }
-    let guarantee = lookup
-        .guarantees
-        .get(&(
-            binding.producer_guarantee.guarantee_case.clone(),
-            binding.producer_guarantee.claim_id.clone(),
-        ));
+    let guarantee = lookup.guarantees.get(&(
+        binding.producer_guarantee.guarantee_case.clone(),
+        binding.producer_guarantee.claim_id.clone(),
+    ));
     let witness_matches = guarantee.is_some_and(|guarantee| {
         guarantee_statement_for(guarantee)
             .is_ok_and(|statement| statement == binding.witness.guarantee_statement_blake3)
@@ -3067,8 +3097,18 @@ fn evaluate_semantic_dependency(
             assurance: binding.witness.assurance,
             reason: "unsupported: witness_mismatch".into(),
             evidence: None,
-            producer_row_blake3: dependency.producer.requirement.requirement.row_blake3.clone(),
-            consumer_row_blake3: dependency.consumer.requirement.requirement.row_blake3.clone(),
+            producer_row_blake3: dependency
+                .producer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
+            consumer_row_blake3: dependency
+                .consumer
+                .requirement
+                .requirement
+                .row_blake3
+                .clone(),
             residual_assumption_ids: residual,
         });
     }
@@ -3105,8 +3145,18 @@ fn evaluate_semantic_dependency(
             "guarantee:{}:{}",
             binding.producer_guarantee.guarantee_case, binding.producer_guarantee.claim_id
         )),
-        producer_row_blake3: dependency.producer.requirement.requirement.row_blake3.clone(),
-        consumer_row_blake3: dependency.consumer.requirement.requirement.row_blake3.clone(),
+        producer_row_blake3: dependency
+            .producer
+            .requirement
+            .requirement
+            .row_blake3
+            .clone(),
+        consumer_row_blake3: dependency
+            .consumer
+            .requirement
+            .requirement
+            .row_blake3
+            .clone(),
         residual_assumption_ids: residual,
     })
 }
@@ -3116,68 +3166,5 @@ fn evaluate_semantic_dependency(
 /// Nodes are requirement row identities; edges point parent → child. A node that is
 /// revisited while still on the active path closes a cycle. `labels` maps row
 /// identities to requirement ids so the error names the offending requirement path.
-fn assert_acyclic(
-    nodes: &BTreeSet<String>,
-    edges: &BTreeSet<(String, String)>,
-    labels: &BTreeMap<String, String>,
-    max_depth: usize,
-) -> Result<(), RefinementError> {
-    let mut adjacency: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
-    for (parent, child) in edges {
-        adjacency.entry(parent.as_str()).or_default().push(child.as_str());
-    }
-    fn visit<'a>(
-        node: &'a str,
-        adjacency: &BTreeMap<&'a str, Vec<&'a str>>,
-        state: &mut BTreeMap<&'a str, u8>,
-        path: &mut Vec<&'a str>,
-        labels: &BTreeMap<String, String>,
-        max_depth: usize,
-    ) -> Result<(), RefinementError> {
-        if path.len() > max_depth {
-            return Err(RefinementError::BoundExhaustion(
-                "refinement justification depth".into(),
-            ));
-        }
-        match state.get(node).copied().unwrap_or(0) {
-            2 => return Ok(()),
-            1 => {
-                path.push(node);
-                let rendered = path
-                    .iter()
-                    .map(|entry| labels.get(*entry).map_or(*entry, String::as_str))
-                    .collect::<Vec<_>>()
-                    .join(" -> ");
-                path.pop();
-                return Err(RefinementError::Cycle(rendered));
-            }
-            _ => {}
-        }
-        state.insert(node, 1);
-        path.push(node);
-        if let Some(children) = adjacency.get(node) {
-            for child in children {
-                visit(child, adjacency, state, path, labels, max_depth)?;
-            }
-        }
-        path.pop();
-        state.insert(node, 2);
-        Ok(())
-    }
-    let mut state: BTreeMap<&str, u8> = BTreeMap::new();
-    for node in nodes {
-        let mut path = Vec::new();
-        visit(
-            node.as_str(),
-            &adjacency,
-            &mut state,
-            &mut path,
-            labels,
-            max_depth,
-        )?;
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests;

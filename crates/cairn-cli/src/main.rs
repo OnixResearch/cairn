@@ -73,6 +73,7 @@ mod verification_impact;
 mod view;
 mod vo;
 mod workflow;
+mod workflow_obligations;
 mod worksets;
 mod workspace_contract_matrix;
 
@@ -267,6 +268,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         )?,
         "view" => run_view(args.collect())?,
         "workflow" => run_workflow(args.collect(), root_local.as_ref())?,
+        "obligation" => workflow_obligations::run(args.collect())?,
         "readiness" => readiness::run_readiness(args.collect())?,
         "observe" => observations::run(args.collect())?,
         "adoption" => run_adoption(args.collect())?,

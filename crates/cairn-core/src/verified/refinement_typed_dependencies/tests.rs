@@ -28,13 +28,12 @@ fn native_row(index: u64) -> ContentBoundRequirementRow {
         requirement_id: format!("cairn.test.refinement.{index}"),
         specification_path: ".cairn/specs/refinement/spec.md".into(),
         specification_blake3: HASH_A.into(),
-        source_span:
-            super::super::content_bound_requirement_registry::ContentBoundSourceSpan {
-                start_byte: 0,
-                end_byte: 64,
-                start_line: 1,
-                end_line: 1,
-            },
+        source_span: super::super::content_bound_requirement_registry::ContentBoundSourceSpan {
+            start_byte: 0,
+            end_byte: 64,
+            start_line: 1,
+            end_line: 1,
+        },
         requirement_body_blake3: hash(index + 10_000),
         row_blake3: hash(index + 20_000),
     }
@@ -163,9 +162,7 @@ fn structural_receipt() -> serde_json::Value {
 fn structural_case(case_id: &str, revision: &RequirementRevision) -> (GuaranteeCase, String) {
     let receipt = structural_receipt();
     let receipt_blake3 = ast_grep_receipt_hash(&receipt);
-    let proposition = Proposition::ReceiptStructurallyValid {
-        receipt_blake3,
-    };
+    let proposition = Proposition::ReceiptStructurallyValid { receipt_blake3 };
     let context = claim_context();
     let claim = ScopedClaim {
         schema: CLAIM_SCHEMA_V1.into(),
@@ -193,7 +190,7 @@ fn structural_case(case_id: &str, revision: &RequirementRevision) -> (GuaranteeC
                     repository_scope: ".".into(),
                     receipt,
                     trust_dependencies: BTreeSet::from([
-                        "structural-rule-bundle:caller-retained".to_string(),
+                        "structural-rule-bundle:caller-retained".to_string()
                     ]),
                 }],
                 derivations: Vec::new(),
@@ -327,7 +324,12 @@ fn failed_check_case(case_id: &str, revision: &RequirementRevision) -> (Guarante
     )
 }
 
-fn child(id: &str, revision: &RequirementRevision, case_id: &str, claim_id: &str) -> ChildGuarantee {
+fn child(
+    id: &str,
+    revision: &RequirementRevision,
+    case_id: &str,
+    claim_id: &str,
+) -> ChildGuarantee {
     ChildGuarantee {
         id: id.into(),
         requirement: revision.clone(),
@@ -516,7 +518,12 @@ fn supported_pilot() -> (RefinementPolicy, RefinementRequest) {
         parent,
         vec![
             child("child.durable", &durable, "guarantee.durable", &claim1),
-            child("child.idempotent", &idempotent, "guarantee.idempotent", &claim2),
+            child(
+                "child.idempotent",
+                &idempotent,
+                "guarantee.idempotent",
+                &claim2,
+            ),
             child("child.recovery", &recovery, "guarantee.recovery", &claim3),
         ],
         Composition::AllOf {
@@ -543,7 +550,10 @@ fn supported_pilot() -> (RefinementPolicy, RefinementRequest) {
         required: true,
         scope: scope(),
     }];
-    pilot.feasibility.covered.insert("assumption.harness".into());
+    pilot
+        .feasibility
+        .covered
+        .insert("assumption.harness".into());
 
     let integration_evidence = vec![IntegrationEvidence {
         obligation_id: "integration.durable-idempotent-recovery".into(),
@@ -583,10 +593,7 @@ fn supported_composition_names_every_premise_and_replays() {
         .obligations
         .iter()
         .all(|obligation| obligation.state == ObligationState::Supported));
-    assert_eq!(
-        pilot.feasibility.state,
-        ObligationState::Supported
-    );
+    assert_eq!(pilot.feasibility.state, ObligationState::Supported);
     let residual = report
         .residual_assumptions
         .iter()
@@ -696,10 +703,7 @@ fn any_of_uses_only_one_complete_selected_alternative() {
             alternatives: vec![
                 Alternative {
                     id: "strategy.a".into(),
-                    obligations: vec![
-                        composition_child("child.a1"),
-                        composition_child("child.a2"),
-                    ],
+                    obligations: vec![composition_child("child.a1"), composition_child("child.a2")],
                 },
                 Alternative {
                     id: "strategy.b".into(),
@@ -709,11 +713,8 @@ fn any_of_uses_only_one_complete_selected_alternative() {
             selected: "strategy.a".into(),
         },
     );
-    pilot.feasibility.covered = BTreeSet::from([
-        "child.a1".into(),
-        "child.a2".into(),
-        "child.b1".into(),
-    ]);
+    pilot.feasibility.covered =
+        BTreeSet::from(["child.a1".into(), "child.a2".into(), "child.b1".into()]);
     let request = self::request(
         vec![pilot],
         vec![case_a1, case_a2, case_b1],
@@ -798,7 +799,10 @@ fn contradictory_or_unresolved_assumptions_cannot_support_the_parent() {
     let report = evaluate_refinement(&policy(Vec::new(), Vec::new()), &request).unwrap();
     let infeasible = explanation(&report, "decomposition.assumptions");
     assert_eq!(infeasible.feasibility.state, ObligationState::Infeasible);
-    assert!(infeasible.feasibility.blockers.contains(&"contradictory_assumptions".to_string()));
+    assert!(infeasible
+        .feasibility
+        .blockers
+        .contains(&"contradictory_assumptions".to_string()));
     assert_ne!(infeasible.state, ObligationState::Supported);
 
     let mut unresolved = pilot;
@@ -811,10 +815,8 @@ fn contradictory_or_unresolved_assumptions_cannot_support_the_parent() {
         },
         source: "source.three".into(),
     }];
-    unresolved.feasibility.covered = BTreeSet::from([
-        "child.one".into(),
-        "assumption.unresolved".into(),
-    ]);
+    unresolved.feasibility.covered =
+        BTreeSet::from(["child.one".into(), "assumption.unresolved".into()]);
     let request = self::request(
         vec![unresolved],
         vec![case_one],
@@ -865,10 +867,7 @@ fn contradictory_child_guarantee_is_infeasible_not_vacuously_true() {
     );
     let report = evaluate_refinement(&policy(Vec::new(), Vec::new()), &request).unwrap();
     let contradiction = explanation(&report, "decomposition.contradiction");
-    assert_eq!(
-        contradiction.feasibility.state,
-        ObligationState::Infeasible
-    );
+    assert_eq!(contradiction.feasibility.state, ObligationState::Infeasible);
     assert_eq!(contradiction.state, ObligationState::Contradicted);
     assert_ne!(contradiction.state, ObligationState::Supported);
 }
@@ -933,10 +932,7 @@ fn archive_ordering_does_not_discharge_integration_or_affect_independent_c() {
     independent.context.producer_repository = "onixresearch/kiln".into();
 
     let evidence = vec![
-        archive_evidence(
-            "dependency.a-to-b-ordering",
-            EvidenceCoverage::WholeChange,
-        ),
+        archive_evidence("dependency.a-to-b-ordering", EvidenceCoverage::WholeChange),
         DependencyEvidence::CandidateVerified {
             dependency_id: "dependency.a-to-b-verified".into(),
             repository: "onixresearch/kiln".into(),
@@ -1067,7 +1063,9 @@ fn integrated_revision_requires_exact_admitted_observation() {
         ),
     )
     .unwrap();
-    assert!(dependency_explanation(&report).reason.contains("out_of_scope"));
+    assert!(dependency_explanation(&report)
+        .reason
+        .contains("out_of_scope"));
 
     let second_observation = DependencyEvidence::Integration {
         dependency_id: "dependency.integration".into(),
@@ -1131,10 +1129,7 @@ fn whole_change_coverage_is_not_a_selected_task_substitute() {
         .reason
         .contains("coverage_incomplete"));
 
-    let whole = archive_evidence(
-        "dependency.whole-change",
-        EvidenceCoverage::WholeChange,
-    );
+    let whole = archive_evidence("dependency.whole-change", EvidenceCoverage::WholeChange);
     let report = evaluate_refinement(
         &policy(Vec::new(), Vec::new()),
         &request(
@@ -1388,17 +1383,12 @@ fn semantic_fixture() -> SemanticFixture {
         },
         source: "cairn.test.refinement.consumer".into(),
     }];
-    consumer_decomposition.feasibility.covered = BTreeSet::from([
-        "child.consumer".into(),
-        "assumption.consumer".into(),
-    ]);
+    consumer_decomposition.feasibility.covered =
+        BTreeSet::from(["child.consumer".into(), "assumption.consumer".into()]);
     // The child guarantee itself stays pending; only the semantic discharge is
     // under test, so the decomposition state must not become supported.
     SemanticFixture {
-        policy: policy(
-            Vec::new(),
-            Vec::new(),
-        ),
+        policy: policy(Vec::new(), Vec::new()),
         request: request(
             vec![consumer_decomposition],
             vec![case],
@@ -1431,7 +1421,14 @@ fn semantic_dependency_discharges_assumption_with_path_and_source() {
         vec![
             "dependency.semantic".to_string(),
             "guarantee.producer".to_string(),
-            semantic.evidence.as_ref().unwrap().split(':').last().unwrap().to_string()
+            semantic
+                .evidence
+                .as_ref()
+                .unwrap()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .to_string()
         ]
     );
     assert!(report
@@ -1487,7 +1484,12 @@ fn circular_justification_reports_a_specific_cycle() {
     let forward = decomposition(
         "decomposition.forward",
         first.clone(),
-        vec![child("child.second", &second, "guarantee.second", "claim.second")],
+        vec![child(
+            "child.second",
+            &second,
+            "guarantee.second",
+            "claim.second",
+        )],
         Composition::AllOf {
             obligations: vec![composition_child("child.second")],
         },
@@ -1495,7 +1497,12 @@ fn circular_justification_reports_a_specific_cycle() {
     let backward = decomposition(
         "decomposition.backward",
         second,
-        vec![child("child.first", &first, "guarantee.first", "claim.first")],
+        vec![child(
+            "child.first",
+            &first,
+            "guarantee.first",
+            "claim.first",
+        )],
         Composition::AllOf {
             obligations: vec![composition_child("child.first")],
         },
@@ -1578,7 +1585,9 @@ fn checked_proof_requires_an_admitted_checker_and_keeps_its_distinction() {
 // r[verify cairn.refinement.dependencies]
 fn unknown_relation_is_an_unsupported_obligation() {
     let mut policy = self::policy(Vec::new(), Vec::new());
-    policy.relations.retain(|relation| *relation != DependencyRelation::Lifecycle);
+    policy
+        .relations
+        .retain(|relation| *relation != DependencyRelation::Lifecycle);
     let mut dependency = dependency_baseline(
         "dependency.lifecycle",
         DependencyRelation::Lifecycle,

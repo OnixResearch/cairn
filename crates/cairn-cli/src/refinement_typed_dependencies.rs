@@ -49,9 +49,7 @@ fn rejected(error: RefinementError) -> Result<(), Box<dyn Error>> {
 // r[impl cairn.refinement.inspection]
 pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
     if args.first().map(String::as_str) != Some("explain") {
-        return Err(
-            "usage: cairn refinement explain --case FILE [--policy FILE]".into(),
-        );
+        return Err("usage: cairn refinement explain --case FILE [--policy FILE]".into());
     }
     args.remove(0);
     reject_unknown_options(&args, &["--case", "--policy"])?;

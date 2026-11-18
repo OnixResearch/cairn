@@ -28,6 +28,8 @@ pub use verified::support_maintenance;
 pub use verified::support_maintenance::*;
 pub use verified::typed_requirement_contracts;
 pub use verified::typed_requirement_contracts::*;
+pub use verified::workflow_obligations;
+pub use verified::workflow_obligations::*;
 
 mod api;
 pub use api::*;

@@ -52,6 +52,7 @@ pub(crate) fn usage_text() -> &'static str {
         , "\n  refinement explain --case FILE [--policy FILE]  (read-only composition and typed-dependency argument; never lifecycle authority)"
         , "\n  revision classify (--requirement FILE | --policy-fragment FILE) [--policy FILE]  (read-only advisory revision classification; never evidence transfer)"
         , "\n  requirement-analysis inspect --case FILE --registry FILE [--root DIR] [--policy FILE] [--analysis-policy FILE] [--witness FILE]  (read-only bounded consistency; advisory only)"
+        , "\n  obligation list|explain|export [--case FILE] [--policy FILE] [--obligations FILE]  (read-only obligation inspection; advisory only)"
         , "\n  traceability compare --root PATH --fixtures DIR --out FILE [--observations DIR]  (read-only; upstream not executed)"
     )
 }
