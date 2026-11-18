@@ -3111,5 +3111,73 @@ fn evaluate_semantic_dependency(
     })
 }
 
+/// Reject a cyclic justification graph and bound its depth.
+///
+/// Nodes are requirement row identities; edges point parent → child. A node that is
+/// revisited while still on the active path closes a cycle. `labels` maps row
+/// identities to requirement ids so the error names the offending requirement path.
+fn assert_acyclic(
+    nodes: &BTreeSet<String>,
+    edges: &BTreeSet<(String, String)>,
+    labels: &BTreeMap<String, String>,
+    max_depth: usize,
+) -> Result<(), RefinementError> {
+    let mut adjacency: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+    for (parent, child) in edges {
+        adjacency.entry(parent.as_str()).or_default().push(child.as_str());
+    }
+    fn visit<'a>(
+        node: &'a str,
+        adjacency: &BTreeMap<&'a str, Vec<&'a str>>,
+        state: &mut BTreeMap<&'a str, u8>,
+        path: &mut Vec<&'a str>,
+        labels: &BTreeMap<String, String>,
+        max_depth: usize,
+    ) -> Result<(), RefinementError> {
+        if path.len() > max_depth {
+            return Err(RefinementError::BoundExhaustion(
+                "refinement justification depth".into(),
+            ));
+        }
+        match state.get(node).copied().unwrap_or(0) {
+            2 => return Ok(()),
+            1 => {
+                path.push(node);
+                let rendered = path
+                    .iter()
+                    .map(|entry| labels.get(*entry).map_or(*entry, String::as_str))
+                    .collect::<Vec<_>>()
+                    .join(" -> ");
+                path.pop();
+                return Err(RefinementError::Cycle(rendered));
+            }
+            _ => {}
+        }
+        state.insert(node, 1);
+        path.push(node);
+        if let Some(children) = adjacency.get(node) {
+            for child in children {
+                visit(child, adjacency, state, path, labels, max_depth)?;
+            }
+        }
+        path.pop();
+        state.insert(node, 2);
+        Ok(())
+    }
+    let mut state: BTreeMap<&str, u8> = BTreeMap::new();
+    for node in nodes {
+        let mut path = Vec::new();
+        visit(
+            node.as_str(),
+            &adjacency,
+            &mut state,
+            &mut path,
+            labels,
+            max_depth,
+        )?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests;
