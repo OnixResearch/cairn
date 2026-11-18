@@ -12,9 +12,15 @@ surface.
 
 ### Added
 
+<<<<<<< HEAD
 - Opt-in bounded readiness agent view and identity-checked blocker/action/stage
   detail retrieval, retaining full receipt identity, stage decisions, complete
   selected entries, omission counts and exact standalone JSON byte bounds.
+=======
+- Exact source-bound lifecycle context reads for requirement IDs, authored task
+  IDs and heading paths through CLI/MCP, with UTF-8 byte spans, stale-source
+  refusal, separate document validity and explicit prerequisite/authority routes.
+>>>>>>> change/targeted-context-reads-20261117
 - Opt-in `cairn prose check [--root DIR] FILE...` authoring diagnostics from the
   pinned englishc library, with JSON and machine-envelope output, UTF-8 source
   spans, and review-only suggestions. Findings never rewrite documents or change

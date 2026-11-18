@@ -10,6 +10,7 @@ mod markdown;
 mod references;
 mod spec;
 mod substance;
+mod targeted_context;
 mod task_ordering;
 
 pub use changes::{change_issues, validate_changes, validate_changes_with_archives};
@@ -25,6 +26,10 @@ pub use spec::{
 pub use substance::{
     evaluate_lifecycle_substance, lifecycle_substance_issues, ArtifactSubstanceInventory,
     LifecycleSubstanceReport,
+};
+pub use targeted_context::{
+    select_context, ContextReadBounds, ContextReference, ContextSelection, ContextSelectionStatus,
+    ContextSelector, ContextSpan,
 };
 pub use task_ordering::{
     build_task_ordering_graph, TaskOrderingEdge, TaskOrderingGraph, TaskOrderingIssue,

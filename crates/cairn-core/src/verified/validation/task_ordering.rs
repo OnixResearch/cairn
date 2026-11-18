@@ -525,7 +525,7 @@ fn marker_prefix(token: &str) -> &str {
     token.split('<').next().unwrap_or(token)
 }
 
-fn task_state(trimmed: &str) -> Option<TaskOrderingState> {
+pub(super) fn task_state(trimmed: &str) -> Option<TaskOrderingState> {
     if trimmed.starts_with("- [x]") || trimmed.starts_with("- [X]") {
         return Some(TaskOrderingState::Done);
     }
