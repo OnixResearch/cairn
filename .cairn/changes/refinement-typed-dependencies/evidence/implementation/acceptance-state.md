@@ -14,7 +14,8 @@ The branch had never been compiled. Three defects were fixed:
    `E0618` (`let request = request(...)`, `let mut policy = policy(...)`); the
    calls now use `self::request` / `self::policy`.
 
-`cargo test -p cairn-core --lib refinement` now runs: **17 passed, 2 failed**.
+`cargo test -p cairn-core --lib refinement` ran **17 passed, 2 failed** at that
+point; the resolution is recorded below and the suite is now 19 passed.
 
 ## Resolved: bounds are part of context identity
 
