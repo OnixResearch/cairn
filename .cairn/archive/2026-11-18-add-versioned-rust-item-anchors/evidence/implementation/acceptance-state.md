@@ -12,11 +12,13 @@ Status: **implemented and committed; one traceability self-reference to clear.**
   reports `completion: ready`, so the regenerated policy does not stale the
   completion fixture in the way an added top-level policy key would.
 
-`cairn policy export --check` could not be exercised directly: the packaged
-binary returns `error: No such file or directory (os error 2)` for that
-subcommand, which also happened on an unrelated branch and needs its own
-diagnosis. Freshness is therefore asserted only by construction (the generated
-file was produced from the Nickel source in this tree), not by the checker.
+`cairn policy export --check` reports `policy fresh:
+cairn-policy/generated/cairn-policy.json` when run inside the repository dev shell
+(`nix develop -c …`). Run directly from a host shell it fails with
+`No such file or directory (os error 2)` because the Nickel toolchain is not on
+PATH; that is an environment requirement of the dual-run exporter, not a defect
+in this change. Freshness is therefore both asserted by construction and checked
+by the maintained command.
 
 ## Outstanding
 
