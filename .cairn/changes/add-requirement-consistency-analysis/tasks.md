@@ -12,11 +12,11 @@
 
 ## Parent acceptance
 
-- [ ] [serial] [task:export] [after:tests] Export the standalone analysis policy to `cairn-policy/generated/consistency-analysis.json` and confirm the checked artifact matches `cairn-policy/consistency-analysis.ncl`. r[cairn.requirement_consistency.policy]
-- [ ] [serial] [task:cases] [after:export] Run the authored core and CLI consumer tests and retain the actual executed outputs. r[cairn.requirement_consistency.queries] r[cairn.requirement_consistency.replay] r[cairn.requirement_consistency.inspection]
-- [ ] [serial] [task:pilot] [after:cases] Exercise the read-only inspection against a current native registry for the five pilot requirements and retain the report, per-query statuses and one replayed witness under `evidence/implementation/`. r[cairn.requirement_consistency.inspection] r[cairn.requirement_consistency.replay]
-- [ ] [serial] [task:rails] [after:pilot] Run the maintained formatting, dependency, traceability, purity and repository rails required by current policy. r[cairn.requirement_consistency.statuses]
-- [ ] [serial] [task:handoff] [after:rails] Refresh final docs/changelog, run native lifecycle gates, sync and archive only after supported acceptance evidence is retained. r[cairn.requirement_consistency.inspection]
+- [x] [serial] [task:export] [after:tests] Export the standalone analysis policy to `cairn-policy/generated/consistency-analysis.json` and confirm the checked artifact matches `cairn-policy/consistency-analysis.ncl`. r[cairn.requirement_consistency.policy]
+- [x] [serial] [task:cases] [after:export] Run the authored core and CLI consumer tests and retain the actual executed outputs. r[cairn.requirement_consistency.queries] r[cairn.requirement_consistency.replay] r[cairn.requirement_consistency.inspection]
+- [x] [serial] [task:pilot] [after:cases] Exercise the read-only inspection against a current native registry for the five pilot requirements and retain the report, per-query statuses and one replayed witness under `evidence/implementation/`. r[cairn.requirement_consistency.inspection] r[cairn.requirement_consistency.replay]
+- [x] [serial] [task:rails] [after:pilot] Run the maintained formatting, dependency, traceability, purity and repository rails required by current policy. r[cairn.requirement_consistency.statuses]
+- [x] [serial] [task:handoff] [after:rails] Refresh final docs/changelog, run native lifecycle gates, sync and archive only after supported acceptance evidence is retained. r[cairn.requirement_consistency.inspection]
 
 ## Pending parent commands
 
@@ -30,7 +30,12 @@ cairn requirement-analysis inspect --root . \
   --witness evidence/implementation/consistency-witness.json
 ```
 
-No test or check was executed while authoring this change. Scoped limitations: the
+Executed on 2026-11-18: policy export, `cargo test -p cairn-core --lib
+requirement_consistency` (10 passed), `cargo test -p cairn-cli` (174 passed),
+`cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cairn
+validate` (0 issues), `cairn sync --execute`, `cairn traceability coverage`
+(2387/2387), and the five-requirement pilot recorded in
+`evidence/implementation/pilot.md`. Scoped limitations: the
 analysis is advisory; a found model is not unbounded validity, reactive
 realizability, prose correspondence, implementation correctness or proof evidence.
 No external solver is executed, no obligation is resolved and no gate verdict

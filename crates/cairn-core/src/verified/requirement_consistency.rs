@@ -277,18 +277,10 @@ pub struct AnalysisScope {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ConsistencyQuery {
-    AssumptionsSatisfiable {
-        contracts: Vec<String>,
-    },
-    ActivationReachable {
-        requirement_id: String,
-    },
-    GuaranteesCompatible {
-        guarantees: Vec<String>,
-    },
-    GuaranteeConstraining {
-        guarantee: String,
-    },
+    AssumptionsSatisfiable { contracts: Vec<String> },
+    ActivationReachable { requirement_id: String },
+    GuaranteesCompatible { guarantees: Vec<String> },
+    GuaranteeConstraining { guarantee: String },
 }
 
 impl ConsistencyQuery {
@@ -572,10 +564,7 @@ struct AdmittedContract {
 }
 
 /// The shared observation identity of one contract-local observable.
-fn state_of_contract<'a>(
-    contract: &'a AdmittedContract,
-    mapping: &str,
-) -> Result<&'a str, Stop> {
+fn state_of_contract<'a>(contract: &'a AdmittedContract, mapping: &str) -> Result<&'a str, Stop> {
     contract
         .observable_states
         .get(mapping)
@@ -733,10 +722,7 @@ impl Admitted {
             .iter()
             .flat_map(|contract| {
                 contract.domains.iter().map(move |(name, values)| {
-                    (
-                        format!("{}#{name}", contract.requirement_id),
-                        values.len(),
-                    )
+                    (format!("{}#{name}", contract.requirement_id), values.len())
                 })
             })
             .collect()
@@ -868,9 +854,7 @@ fn collect_quantifiers(
 
 fn guarantee_expressions(contract: &SemanticContract) -> Vec<&FiniteExpr> {
     match &contract.guarantee {
-        FiniteExpr::And { expressions } if !expressions.is_empty() => {
-            expressions.iter().collect()
-        }
+        FiniteExpr::And { expressions } if !expressions.is_empty() => expressions.iter().collect(),
         expression => vec![expression],
     }
 }
@@ -1082,7 +1066,8 @@ fn admit_case(
             ));
         }
     }
-    let correspondence = admit_correspondence(&case.correspondence, &mut contracts, &selected_seen)?;
+    let correspondence =
+        admit_correspondence(&case.correspondence, &mut contracts, &selected_seen)?;
     let mut total_cells = 0usize;
     let mut guarantees = Vec::new();
     let mut selected = Vec::with_capacity(case.selected.len());
@@ -1542,10 +1527,10 @@ fn solve(
                 frames.pop();
                 continue;
             };
-            work.states += 1;
-            if work.states > work.max_states {
+            if work.states >= work.max_states {
                 return Err(Stop::Exhausted("explored finite analysis states"));
             }
+            work.states += 1;
             cells.insert(cell, FiniteValue { domain, value });
             break;
         }
@@ -1652,12 +1637,26 @@ fn witness_for(
     })
 }
 
-/// One planned query: its exact goal and whether an unsatisfiable goal is a
-/// vacuous claim rather than an inconsistent one.
+/// What an unsatisfiable goal means for the claim under test.
+///
+/// `Terms` exists because vacuity is only sound when the premise set it rests
+/// on has a model: `guarantees compatible` is unsatisfiable either because the
+/// guarantees conflict or because the shared assumptions and activations have
+/// no model, and only the second is vacuity. When no planned query isolates
+/// those premise terms, they are searched directly.
+enum VacuityBasis<'a> {
+    /// Unsatisfiability of the goal is itself the vacuous verdict.
+    Unconditional,
+    /// Vacuity relative to a premise set searched here.
+    Terms(Goal<'a>),
+}
+
+/// One planned query: its exact goal and what an unsatisfiable goal means.
 struct PlannedQuery<'a> {
     query: ConsistencyQuery,
     goal: Goal<'a>,
-    vacuous_when_unsatisfiable: bool,
+    /// `None` means an unsatisfiable goal is inconsistent, never vacuous.
+    vacuity: Option<VacuityBasis<'a>>,
 }
 
 fn assumption_terms(admitted: &Admitted) -> Vec<GoalTerm<'_>> {
@@ -1693,10 +1692,9 @@ fn guarantee_terms(admitted: &Admitted) -> Vec<(&str, &FiniteExpr, String)> {
     let mut terms = Vec::new();
     for requirement_id in &admitted.selected {
         if let Ok(contract) = admitted.contract(requirement_id) {
-            for (index, expression) in
-                guarantee_expressions(&contract.normalized.contract)
-                    .into_iter()
-                    .enumerate()
+            for (index, expression) in guarantee_expressions(&contract.normalized.contract)
+                .into_iter()
+                .enumerate()
             {
                 terms.push((
                     contract.requirement_id.as_str(),
@@ -1721,7 +1719,7 @@ fn planned_queries(admitted: &Admitted) -> Vec<PlannedQuery<'_>> {
         goal: Goal {
             terms: assumptions.clone(),
         },
-        vacuous_when_unsatisfiable: false,
+        vacuity: None,
     });
     for requirement_id in &admitted.selected {
         let Ok(contract) = admitted.contract(requirement_id) else {
@@ -1746,28 +1744,33 @@ fn planned_queries(admitted: &Admitted) -> Vec<PlannedQuery<'_>> {
                 requirement_id: requirement_id.clone(),
             },
             goal: Goal { terms },
-            vacuous_when_unsatisfiable: true,
+            vacuity: Some(VacuityBasis::Unconditional),
         });
     }
-    let mut compatible = assumptions.clone();
-    compatible.extend(activations.iter().copied());
+    let mut shared = assumptions.clone();
+    shared.extend(activations.iter().copied());
+    let shared_premise = Goal {
+        terms: shared.clone(),
+    };
+    let mut compatible = shared;
     compatible.extend(
         guarantees
             .iter()
             .map(|(requirement_id, expression, _)| GoalTerm::Holds {
-                requirement_id: *requirement_id,
-                expression: *expression,
+                requirement_id,
+                expression,
             }),
     );
+    let guarantee_references: Vec<String> = guarantees
+        .iter()
+        .map(|(_, _, reference)| reference.clone())
+        .collect();
     plans.push(PlannedQuery {
         query: ConsistencyQuery::GuaranteesCompatible {
-            guarantees: guarantees
-                .iter()
-                .map(|(_, _, reference)| reference.clone())
-                .collect(),
+            guarantees: guarantee_references.clone(),
         },
         goal: Goal { terms: compatible },
-        vacuous_when_unsatisfiable: true,
+        vacuity: Some(VacuityBasis::Terms(shared_premise)),
     });
     for (index, (requirement_id, expression, reference)) in guarantees.iter().enumerate() {
         let mut terms = assumptions.clone();
@@ -1777,21 +1780,21 @@ fn planned_queries(admitted: &Admitted) -> Vec<PlannedQuery<'_>> {
         {
             if other_index != index {
                 terms.push(GoalTerm::Holds {
-                    requirement_id: *other_requirement_id,
-                    expression: *other_expression,
+                    requirement_id: other_requirement_id,
+                    expression: other_expression,
                 });
             }
         }
         terms.push(GoalTerm::Fails {
-            requirement_id: *requirement_id,
-            expression: *expression,
+            requirement_id,
+            expression,
         });
         plans.push(PlannedQuery {
             query: ConsistencyQuery::GuaranteeConstraining {
                 guarantee: reference.clone(),
             },
             goal: Goal { terms },
-            vacuous_when_unsatisfiable: true,
+            vacuity: None,
         });
     }
     plans
@@ -1859,16 +1862,50 @@ fn run_query(
                 )
             }
             Ok(None) => {
-                let status = if plan.vacuous_when_unsatisfiable {
-                    AnalysisStatus::Vacuous
-                } else {
-                    AnalysisStatus::Inconsistent
+                let mut premise_detail: Option<(SearchBasisKind, String)> = None;
+                let status = match &plan.vacuity {
+                    None => AnalysisStatus::Inconsistent,
+                    Some(VacuityBasis::Unconditional) => AnalysisStatus::Vacuous,
+                    Some(VacuityBasis::Terms(goal)) => {
+                        match solve(goal, &admitted.contracts, work) {
+                            // A model of the shared premise means the guarantees
+                            // themselves conflict, which is an inconsistency.
+                            Ok(Some(_)) => AnalysisStatus::Inconsistent,
+                            // No model of the shared premise means every guarantee
+                            // is vacuously implied.
+                            Ok(None) => AnalysisStatus::Vacuous,
+                            Err(Stop::Exhausted(detail)) => {
+                                premise_detail = Some((
+                                    SearchBasisKind::Exhausted,
+                                    format!(
+                                        "{detail} bound exhausted while checking the premise the vacuity claim rests on"
+                                    ),
+                                ));
+                                AnalysisStatus::Undetermined
+                            }
+                            Err(Stop::Unsupported(detail)) => {
+                                premise_detail = Some((SearchBasisKind::Unsupported, detail));
+                                AnalysisStatus::Unsupported
+                            }
+                            Err(Stop::Invalid(detail)) => {
+                                return Err(ConsistencyError::InvalidInput(detail))
+                            }
+                        }
+                    }
                 };
-                basis.kind = SearchBasisKind::Exhaustive;
-                basis.detail = format!(
-                    "complete exploration of {} independent observation cells under the declared finite domains",
-                    admitted.total_cells
-                );
+                if let Some((kind, detail)) = premise_detail {
+                    basis.kind = kind;
+                    basis.detail = detail;
+                } else if matches!(
+                    status,
+                    AnalysisStatus::Inconsistent | AnalysisStatus::Vacuous
+                ) {
+                    basis.kind = SearchBasisKind::Exhaustive;
+                    basis.detail = format!(
+                        "complete exploration of {} independent observation cells under the declared finite domains",
+                        admitted.total_cells
+                    );
+                }
                 (status, None, status_detail(status))
             }
             Err(Stop::Exhausted(detail)) => {
@@ -1933,8 +1970,8 @@ fn conflicting_subsets(
     for (index, (requirement_id, expression, reference)) in members.iter().enumerate() {
         let mut terms = base.to_vec();
         terms.push(GoalTerm::Holds {
-            requirement_id: *requirement_id,
-            expression: *expression,
+            requirement_id,
+            expression,
         });
         match solve(&Goal { terms }, &admitted.contracts, work) {
             Ok(Some(_)) => satisfiable[index] = true,
@@ -1958,12 +1995,12 @@ fn conflicting_subsets(
             }
             let mut terms = base.to_vec();
             terms.push(GoalTerm::Holds {
-                requirement_id: *left_requirement,
-                expression: *left_expression,
+                requirement_id: left_requirement,
+                expression: left_expression,
             });
             terms.push(GoalTerm::Holds {
-                requirement_id: *right_requirement,
-                expression: *right_expression,
+                requirement_id: right_requirement,
+                expression: right_expression,
             });
             match solve(&Goal { terms }, &admitted.contracts, work) {
                 Ok(None) => conflicts.push(ConflictingSubset {
@@ -1992,7 +2029,7 @@ fn finding(
     detail: String,
 ) -> AnalysisFinding {
     let mut fragments = fragments;
-    fragments.sort_by(|left, right| left.reference().cmp(&right.reference()));
+    fragments.sort_by_key(|fragment| fragment.reference());
     fragments.dedup_by(|left, right| left.reference() == right.reference());
     AnalysisFinding {
         kind,
@@ -2433,10 +2470,7 @@ pub fn analyze_consistency(
     let mut trust_dependencies = BTreeSet::from([
         "search:complete-finite-observation-cell-enumeration".to_string(),
         "observable-extraction:supplied-total-mapping-projection".to_string(),
-        format!(
-            "interpretation:{}",
-            admitted.scope.interpretation
-        ),
+        format!("interpretation:{}", admitted.scope.interpretation),
     ]);
     for contract in &admitted.scope.contracts {
         trust_dependencies.insert(format!(
@@ -2577,7 +2611,10 @@ pub fn replay_witness(
         contract_evaluations: evaluations,
         boundary: CONSISTENCY_BOUNDARY.into(),
     };
-    let Some(plan) = plans.iter().find(|plan| plan.query.label() == witness.query) else {
+    let Some(plan) = plans
+        .iter()
+        .find(|plan| plan.query.label() == witness.query)
+    else {
         return Ok(reject(
             "the witness names a query outside this exact case scope".into(),
             evaluations,
@@ -2608,16 +2645,15 @@ pub fn replay_witness(
         let example = SemanticExample {
             observables: table.observables.clone(),
         };
-        let evaluation =
-            match evaluate_example(&case.profile, &contract.normalized, &example) {
-                Ok(evaluation) => evaluation,
-                Err(error) => {
-                    return Ok(reject(
-                        format!("typed-contract evaluation rejected the witness: {error:?}"),
-                        evaluations,
-                    ))
-                }
-            };
+        let evaluation = match evaluate_example(&case.profile, &contract.normalized, &example) {
+            Ok(evaluation) => evaluation,
+            Err(error) => {
+                return Ok(reject(
+                    format!("typed-contract evaluation rejected the witness: {error:?}"),
+                    evaluations,
+                ))
+            }
+        };
         let mut assumptions_hold = true;
         for assumption in &contract.normalized.contract.assumptions {
             match whole_contract_holds(contract, assumption, &cells, &mut work) {

@@ -84,6 +84,14 @@ guarantee admits a previously excluded behavior — and MUST report exactly
 - AND no found model MUST be reported as redundancy inside that model rather than
   as an instruction to delete the requirement.
 
+#### Scenario: Vacuity is relative to a satisfiable shared premise
+- GIVEN guarantees that jointly have no model while the shared assumptions and
+  activations do
+- WHEN the guarantee queries run
+- THEN joint compatibility MUST report `inconsistent`, not `vacuous`
+- AND an unsatisfiable shared premise MUST report `vacuous` with a vacuous
+  requirement-set finding.
+
 ### Requirement: Nonvacuity, triviality and indistinguishability diagnostics
 
 r[cairn.requirement_consistency.nonvacuity] Cairn MUST distinguish unreachable

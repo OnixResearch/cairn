@@ -305,7 +305,7 @@ fn explanation<'a>(report: &'a Value, proposition: &str, check_id: Option<&str>)
         .iter()
         .find(|claim| {
             claim["claim"]["proposition"]["kind"].as_str() == Some(proposition)
-                && check_id.map_or(true, |expected| {
+                && check_id.is_none_or(|expected| {
                     claim["claim"]["proposition"]["check_id"].as_str() == Some(expected)
                 })
         })

@@ -285,8 +285,7 @@ fn satisfiable_constraints_yield_a_replayable_model() {
     assert_eq!(reachable.len(), 1);
     assert_eq!(reachable[0].disposition, UNRESOLVED_DISPOSITION);
     assert_eq!(
-        reachable[0].native_obligations[0].obligation_id,
-        "obligation.requirement-consistency",
+        reachable[0].native_obligations[0].obligation_id, "obligation.requirement-consistency",
         "findings attach to the caller-named native obligation without resolving it"
     );
     assert!(reachable[0]
@@ -311,7 +310,11 @@ fn redundant_and_constraining_guarantees_are_distinguished() {
         1,
         "the guarantee duplicated by an assumption adds no excluded behavior"
     );
-    let redundant_expression = &redundant[0].fragments.last().expect("guarantee fragment").expression;
+    let redundant_expression = &redundant[0]
+        .fragments
+        .last()
+        .expect("guarantee fragment")
+        .expression;
     assert_eq!(
         redundant_expression,
         &equal(
@@ -323,7 +326,9 @@ fn redundant_and_constraining_guarantees_are_distinguished() {
     assert!(redundant[0].witness.is_none());
     assert_eq!(redundant[0].status, Some(AnalysisStatus::Inconsistent));
     assert!(
-        redundant[0].detail.contains("does not make the requirement useless"),
+        redundant[0]
+            .detail
+            .contains("does not make the requirement useless"),
         "redundancy is not reported as removal guidance"
     );
 
@@ -422,9 +427,13 @@ fn contradictory_assumptions_are_inconsistent_and_exhaustive() {
     );
     assert_eq!(
         query(&report, AnalysisQueryKind::GuaranteesCompatible)[0].status,
-        AnalysisStatus::Vacuous
+        AnalysisStatus::Vacuous,
+        "no model of the shared premise leaves every guarantee vacuously implied"
     );
-    assert_eq!(findings(&report, FindingKind::VacuousRequirementSet).len(), 1);
+    assert_eq!(
+        findings(&report, FindingKind::VacuousRequirementSet).len(),
+        1
+    );
     assert!(
         findings(&report, FindingKind::UnreachableActivation).is_empty(),
         "an unreachable activation must stay distinct from contradictory assumptions"
@@ -546,7 +555,9 @@ fn single_valued_and_unobserved_domains_are_named() {
     assert_eq!(trivial.len(), 1);
     assert!(trivial[0].detail.contains("single-valued domain flag"));
     assert_eq!(
-        trivial[0].domains.get("cairn.test.requirement_consistency.trivial#flag"),
+        trivial[0]
+            .domains
+            .get("cairn.test.requirement_consistency.trivial#flag"),
         Some(&vec!["only".to_string()])
     );
     assert_eq!(
@@ -589,12 +600,9 @@ fn exhausted_bounds_and_disabled_queries_never_conclude_consistent() {
     assert_eq!(assumptions.basis.kind, SearchBasisKind::Exhausted);
     assert_eq!(assumptions.basis.states_explored, 1);
     assert!(assumptions.witness.is_none());
-    assert!(findings(&report, FindingKind::IncompleteAnalysis).len() >= 1);
+    assert!(!findings(&report, FindingKind::IncompleteAnalysis).is_empty());
 
-    let disabled_policy = policy(
-        vec![AnalysisQueryKind::AssumptionsSatisfiable],
-        bounds(),
-    );
+    let disabled_policy = policy(vec![AnalysisQueryKind::AssumptionsSatisfiable], bounds());
     let disabled = analyze_consistency(&disabled_policy, &case).expect("analysis is admitted");
     for outcome in &disabled.queries {
         assert_ne!(
@@ -614,8 +622,8 @@ fn exhausted_bounds_and_disabled_queries_never_conclude_consistent() {
         "the enabled query still decides the same exact case"
     );
 
-    let admitted = analyze_consistency(&policy(all_queries(), bounds()), &case)
-        .expect("analysis is admitted");
+    let admitted =
+        analyze_consistency(&policy(all_queries(), bounds()), &case).expect("analysis is admitted");
     assert_eq!(
         query(&admitted, AnalysisQueryKind::AssumptionsSatisfiable)[0].status,
         AnalysisStatus::Inconsistent,
@@ -882,10 +890,7 @@ fn verdict_contract(requirement_id: &str, identities: &[&str], verdict: &str) ->
         observables: BTreeMap::from([("verdict".to_string(), mapping(&[], "identity"))]),
         assumptions: Vec::new(),
         activation: FiniteExpr::Bool { value: true },
-        guarantee: equal(
-            observation("verdict", vec![]),
-            literal("identity", verdict),
-        ),
+        guarantee: equal(observation("verdict", vec![]), literal("identity", verdict)),
     })
 }
 
@@ -906,7 +911,11 @@ fn correspondence(members: &[(&str, &str)]) -> ObservablesCorrespondence {
 // r[verify cairn.requirement_consistency.queries]
 fn contradictory_guarantees_conflict_only_when_correspondence_is_declared() {
     let first = verdict_contract("cairn.test.requirement_consistency.first", &["a", "b"], "a");
-    let second = verdict_contract("cairn.test.requirement_consistency.second", &["a", "b"], "b");
+    let second = verdict_contract(
+        "cairn.test.requirement_consistency.second",
+        &["a", "b"],
+        "b",
+    );
     let policy = policy(all_queries(), bounds());
 
     let independent = case(
@@ -955,8 +964,11 @@ fn contradictory_guarantees_conflict_only_when_correspondence_is_declared() {
     assert!(conflicting[0].conflicting_exploration_complete);
 
     let mut mismatched = independent.clone();
-    mismatched.contracts[1].contract =
-        verdict_contract("cairn.test.requirement_consistency.second", &["a", "b", "c"], "b");
+    mismatched.contracts[1].contract = verdict_contract(
+        "cairn.test.requirement_consistency.second",
+        &["a", "b", "c"],
+        "b",
+    );
     mismatched.contracts[1].native_requirement =
         mismatched.contracts[1].contract.requirement.clone();
     mismatched.correspondence = vec![correspondence(&[

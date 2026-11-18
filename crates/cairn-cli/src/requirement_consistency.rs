@@ -70,10 +70,8 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
     let root_path = read_option(args.clone(), "--root", ".");
     let lifecycle_policy_path = read_option(args.clone(), "--policy", default_policy_path());
     let repository = CapabilityRoot::open(CapabilityRootKind::Repository, &root_path)?;
-    let registry_value: serde_json::Value = serde_json::from_slice(&read_bounded(
-        &registry_path,
-        MAX_INPUT_BYTES,
-    )?)?;
+    let registry_value: serde_json::Value =
+        serde_json::from_slice(&read_bounded(&registry_path, MAX_INPUT_BYTES)?)?;
     let registry = parse_content_bound_requirement_registry_value(&registry_value)
         .map_err(|issue| issue.message)?;
     let (policy_root, relative) = CapabilityRoot::open_file_parent(
@@ -161,19 +159,17 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
     };
     let witness_replay = match read_string_option(&args, "--witness") {
         Some(path) => {
-            let witness: AnalysisWitness = match serde_json::from_slice(&read_bounded(
-                &path,
-                MAX_INPUT_BYTES,
-            )?) {
-                Ok(witness) => witness,
-                Err(error) => {
-                    print_json(rejection(
-                        "invalid_input",
-                        format!("retained witness rejected: {error}"),
-                    ))?;
-                    return Err("retained witness rejected".into());
-                }
-            };
+            let witness: AnalysisWitness =
+                match serde_json::from_slice(&read_bounded(&path, MAX_INPUT_BYTES)?) {
+                    Ok(witness) => witness,
+                    Err(error) => {
+                        print_json(rejection(
+                            "invalid_input",
+                            format!("retained witness rejected: {error}"),
+                        ))?;
+                        return Err("retained witness rejected".into());
+                    }
+                };
             match replay_witness(&policy, &case, &witness) {
                 Ok(replay) => json!(replay),
                 Err(error) => return rejected(error),

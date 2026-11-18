@@ -3,13 +3,14 @@ use std::{
 };
 
 use cairn_core::{
-    evaluate_content_bound_requirement_registry, ContentBoundRevision,
-    ContentBoundSpecificationInput, ConsistencyCase, ConsistencyPolicy,
+    evaluate_content_bound_requirement_registry, ConsistencyCase, ConsistencyPolicy,
+    ContentBoundRevision, ContentBoundSpecificationInput,
 };
 use serde_json::{json, Value};
 
 const REQUIREMENT_ID: &str = "cairn.supersede.agent_run_receipts.verification_contract";
-const INVENTORY: &str = include_str!("../../../cairn-policy/generated/typed-requirement-contracts.json");
+const INVENTORY: &str =
+    include_str!("../../../cairn-policy/generated/typed-requirement-contracts.json");
 const ANALYSIS_POLICY: &str = r#"{
   "schema": "cairn.requirement-consistency-policy.v1",
   "queries": [
@@ -199,7 +200,10 @@ fn inspection_reports_bounded_consistency_without_granting_authority() {
     let fixture = Fixture::new();
     let before = tree(&fixture.root);
     let output = fixture.inspect("positive", None, true);
-    assert_eq!(output["schema_version"], "cairn.requirement-analysis.inspection.v1");
+    assert_eq!(
+        output["schema_version"],
+        "cairn.requirement-analysis.inspection.v1"
+    );
     assert_eq!(output["outcome"], "analyzed");
     assert_eq!(output["advisory"], true);
     assert_eq!(output["admitted_proof_evidence"], "not_supplied");
@@ -267,10 +271,7 @@ fn retained_witness_replays_and_tampering_is_reported() {
     );
 
     let mut tampered = witness;
-    tampered.insert(
-        "model_blake3".into(),
-        Value::String("0".repeat(64)),
-    );
+    tampered.insert("model_blake3".into(), Value::String("0".repeat(64)));
     let tampered = fixture.inspect("tampered", Some(&Value::Object(tampered)), true);
     assert_eq!(tampered["witness_replay"]["replays"], false);
     assert!(tampered["witness_replay"]["detail"]
