@@ -1,0 +1,259 @@
+{
+  "admitted_proof_evidence": "not_supplied",
+  "boundary": "Well-formedness is not correspondence; correspondence review is not proof; finite example evaluation is not admitted proof evidence, unbounded validity, or source-code correctness. Observable tables are supplied observations, not executed or verified program behavior. EARS keywords confer no review or proof authority.",
+  "correspondence": "reviewed_declaration",
+  "example_evaluation": null,
+  "meaning": "finite_typed_contract",
+  "normalized": {
+    "contract": {
+      "activation": {
+        "kind": "equal",
+        "left": {
+          "arguments": [],
+          "kind": "observable",
+          "mapping": "completion_claimed"
+        },
+        "right": {
+          "kind": "literal",
+          "value": {
+            "domain": "bool",
+            "value": "true"
+          }
+        }
+      },
+      "assumptions": [],
+      "domains": {
+        "bool": {
+          "values": [
+            "false",
+            "true"
+          ]
+        },
+        "check": {
+          "values": [
+            "check-a",
+            "check-b",
+            "unknown"
+          ]
+        },
+        "identity": {
+          "values": [
+            "a",
+            "absent",
+            "b"
+          ]
+        }
+      },
+      "guarantee": {
+        "expressions": [
+          {
+            "kind": "equal",
+            "left": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "receipt_passing"
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "domain": "bool",
+                "value": "true"
+              }
+            }
+          },
+          {
+            "kind": "equal",
+            "left": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "receipt_present"
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "domain": "bool",
+                "value": "true"
+              }
+            }
+          },
+          {
+            "kind": "equal",
+            "left": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "receipt_subject"
+            },
+            "right": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "final_subject"
+            }
+          },
+          {
+            "domain": "check",
+            "expression": {
+              "conclusion": {
+                "kind": "equal",
+                "left": {
+                  "arguments": [
+                    {
+                      "kind": "variable",
+                      "name": "check"
+                    }
+                  ],
+                  "kind": "observable",
+                  "mapping": "covered"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": {
+                    "domain": "bool",
+                    "value": "true"
+                  }
+                }
+              },
+              "kind": "implies",
+              "premise": {
+                "kind": "equal",
+                "left": {
+                  "arguments": [
+                    {
+                      "kind": "variable",
+                      "name": "check"
+                    }
+                  ],
+                  "kind": "observable",
+                  "mapping": "selected"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": {
+                    "domain": "bool",
+                    "value": "true"
+                  }
+                }
+              }
+            },
+            "kind": "forall",
+            "variable": "check"
+          }
+        ],
+        "kind": "and"
+      },
+      "informal_remainder": "Receipt origin/authenticity, schema/receipt-hash validation implementation, wrapper honesty, policy correctness, arbitrary check sets and broader release authority remain outside the finite model.",
+      "observables": {
+        "completion_claimed": {
+          "arguments": [],
+          "phase": "state",
+          "projection": "consumer requests authoritative completion or represents an agent task as complete; a caller-supplied assertion, not model text interpreted as authority",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "covered": {
+          "arguments": [
+            "check"
+          ],
+          "phase": "state",
+          "projection": "membership of check_id in AgentAuthoritativeCompletionReport.required_checks AND passed_checks, with no native coverage diagnostics; false if receipt absent",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "final_subject": {
+          "arguments": [],
+          "phase": "after",
+          "projection": "evaluate_authoritative_agent_completion current_subject_hash after final mutation",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "receipt_passing": {
+          "arguments": [],
+          "phase": "state",
+          "projection": "AgentAuthoritativeCompletionReport.valid is true AND verdict is PASS AND classification is authoritative AND schema is current; adapter must not label legacy receipt passing",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "receipt_present": {
+          "arguments": [],
+          "phase": "state",
+          "projection": "a supplied AgentAuthoritativeCompletionReport exists, independently of process exit, task counters, checkboxes or model text",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "receipt_subject": {
+          "arguments": [],
+          "phase": "state",
+          "projection": "AgentAuthoritativeCompletionReport.final_subject_hash, absent token when receipt absent",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "selected": {
+          "arguments": [
+            "check"
+          ],
+          "phase": "state",
+          "projection": "membership of check_id in independently repository-selected AgentVerificationContract.required_checks",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        }
+      },
+      "profile": "cairn.requirement-semantics.finite.v1",
+      "proposed_by": "cairn-typed-requirements-author",
+      "requirement": {
+        "requirement_body_blake3": "2b32b4728e4d48cd067823340e77bb5d92a6d1106f44747c2c9066c21a8d4568",
+        "requirement_id": "cairn.supersede.agent_run_receipts.completion_authority",
+        "row_blake3": "5427af464b1ebc00db599a9ec90cdee48d0ce7b4a0b2652c6dc1d134bd89451b",
+        "source_span": {
+          "end_byte": 7737,
+          "end_line": 127,
+          "start_byte": 7484,
+          "start_line": 127
+        },
+        "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+        "specification_path": ".cairn/specs/agent-completion/spec.md"
+      },
+      "supported_portion": "Authoritative completion assertion requires a present current passing native receipt for the final subject and all selected finite checks; successful prose/process observations cannot replace these fields."
+    },
+    "contract_blake3": "0da83d7244efc08cc3c03d52ad8510933992b53dcc61f06cef9c4d3381a6eb0b",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "3403dc05eace9131de6e0b0c498a8e39d6156f3c75bc29f221fb4fdddcd9383e"
+  },
+  "proposed_correspondence": [
+    {
+      "proposed_by": "cairn-typed-requirements-author",
+      "rationale": "Authoritative completion assertion requires a present current passing native receipt for the final subject and all selected finite checks; successful prose/process observations cannot replace these fields. INFORMAL REMAINDER: Receipt origin/authenticity, schema/receipt-hash validation implementation, wrapper honesty, policy correctness, arbitrary check sets and broader release authority remain outside the finite model.",
+      "requirement_id": "cairn.supersede.agent_run_receipts.completion_authority"
+    }
+  ],
+  "requirement": {
+    "requirement_body_blake3": "2b32b4728e4d48cd067823340e77bb5d92a6d1106f44747c2c9066c21a8d4568",
+    "requirement_id": "cairn.supersede.agent_run_receipts.completion_authority",
+    "row_blake3": "5427af464b1ebc00db599a9ec90cdee48d0ce7b4a0b2652c6dc1d134bd89451b",
+    "source_span": {
+      "end_byte": 7737,
+      "end_line": 127,
+      "start_byte": 7484,
+      "start_line": 127
+    },
+    "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+    "specification_path": ".cairn/specs/agent-completion/spec.md"
+  },
+  "review_authenticity": "external_retained_artifact_and_reviewer_policy_trust",
+  "reviews": [
+    {
+      "record": {
+        "contract_blake3": "0da83d7244efc08cc3c03d52ad8510933992b53dcc61f06cef9c4d3381a6eb0b",
+        "decision": "approved",
+        "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+        "mapping_blake3": "3403dc05eace9131de6e0b0c498a8e39d6156f3c75bc29f221fb4fdddcd9383e",
+        "proposed_by": "cairn-typed-requirements-author",
+        "requirement_row_blake3": "5427af464b1ebc00db599a9ec90cdee48d0ce7b4a0b2652c6dc1d134bd89451b",
+        "review_artifact_blake3": "312133ec853514f5be6d2e74405eb22a5912e16e814cee502874b53cd3e95234",
+        "reviewer": "parent-independent-review-2026-11-18"
+      },
+      "review_blake3": "ac58757bc4ac2562ce6ea46c535e824220cb871c83a7796c80d8ef49b441cee7",
+      "status": "admitted_review_declaration"
+    }
+  ],
+  "schema_version": "cairn.requirement-contract.inspection.v1",
+  "well_formedness": "well_formed"
+}

@@ -15,7 +15,11 @@
 //! r[impl cairn.supersede.doctor.boundary]
 
 pub mod verified;
+pub use verified::scoped_claim_derivations;
+pub use verified::scoped_claim_derivations::*;
 pub use verified::source_review;
+pub use verified::typed_requirement_contracts;
+pub use verified::typed_requirement_contracts::*;
 
 mod api;
 pub use api::*;

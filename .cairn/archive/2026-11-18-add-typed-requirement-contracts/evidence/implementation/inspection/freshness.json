@@ -1,0 +1,214 @@
+{
+  "admitted_proof_evidence": "not_supplied",
+  "boundary": "Well-formedness is not correspondence; correspondence review is not proof; finite example evaluation is not admitted proof evidence, unbounded validity, or source-code correctness. Observable tables are supplied observations, not executed or verified program behavior. EARS keywords confer no review or proof authority.",
+  "correspondence": "reviewed_declaration",
+  "example_evaluation": null,
+  "meaning": "finite_typed_contract",
+  "normalized": {
+    "contract": {
+      "activation": {
+        "kind": "bool",
+        "value": true
+      },
+      "assumptions": [],
+      "domains": {
+        "bool": {
+          "values": [
+            "false",
+            "true"
+          ]
+        },
+        "identity": {
+          "values": [
+            "a",
+            "absent",
+            "b"
+          ]
+        },
+        "row": {
+          "values": [
+            "row-a",
+            "row-b"
+          ]
+        }
+      },
+      "guarantee": {
+        "expressions": [
+          {
+            "kind": "equal",
+            "left": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "contract_subject"
+            },
+            "right": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "final_subject"
+            }
+          },
+          {
+            "kind": "equal",
+            "left": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "receipt_subject"
+            },
+            "right": {
+              "arguments": [],
+              "kind": "observable",
+              "mapping": "final_subject"
+            }
+          },
+          {
+            "domain": "row",
+            "expression": {
+              "conclusion": {
+                "kind": "equal",
+                "left": {
+                  "arguments": [
+                    {
+                      "kind": "variable",
+                      "name": "row"
+                    }
+                  ],
+                  "kind": "observable",
+                  "mapping": "result_subject"
+                },
+                "right": {
+                  "arguments": [],
+                  "kind": "observable",
+                  "mapping": "final_subject"
+                }
+              },
+              "kind": "implies",
+              "premise": {
+                "kind": "equal",
+                "left": {
+                  "arguments": [
+                    {
+                      "kind": "variable",
+                      "name": "row"
+                    }
+                  ],
+                  "kind": "observable",
+                  "mapping": "eligible"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": {
+                    "domain": "bool",
+                    "value": "true"
+                  }
+                }
+              }
+            },
+            "kind": "forall",
+            "variable": "row"
+          }
+        ],
+        "kind": "and"
+      },
+      "informal_remainder": "Filesystem subject measurement, mutation ordering, command/evidence/artifact hash syntax, hash authenticity and arbitrary result universes are not established by token equality.",
+      "observables": {
+        "contract_subject": {
+          "arguments": [],
+          "phase": "state",
+          "projection": "AgentVerificationContract.final_subject_hash",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "eligible": {
+          "arguments": [
+            "row"
+          ],
+          "phase": "state",
+          "projection": "membership of a supplied result row in completion-eligible required passed results; absent slots are false",
+          "result": "bool",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "final_subject": {
+          "arguments": [],
+          "phase": "after",
+          "projection": "evaluate_authoritative_agent_completion current_subject_hash argument after repository mutation",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "receipt_subject": {
+          "arguments": [],
+          "phase": "state",
+          "projection": "AgentAuthoritativeCompletionReport.final_subject_hash included in canonical_report_hash",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        },
+        "result_subject": {
+          "arguments": [
+            "row"
+          ],
+          "phase": "state",
+          "projection": "AgentExecutionResult.subject_hash exact identity; absent slots may use absent token",
+          "result": "identity",
+          "source": "crates/cairn-core/src/verified/agent_receipt/authoritative.rs"
+        }
+      },
+      "profile": "cairn.requirement-semantics.finite.v1",
+      "proposed_by": "cairn-typed-requirements-author",
+      "requirement": {
+        "requirement_body_blake3": "be11d3a5ca69b23a147df33c11a591998537fc649cd8e8f9aed6801dbb07fe3f",
+        "requirement_id": "cairn.supersede.agent_run_receipts.freshness",
+        "row_blake3": "653914140db582ef1145f36f87c233a9ab57a310f715cadf8a23efa5f5333e5e",
+        "source_span": {
+          "end_byte": 4280,
+          "end_line": 74,
+          "start_byte": 4080,
+          "start_line": 74
+        },
+        "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+        "specification_path": ".cairn/specs/agent-completion/spec.md"
+      },
+      "supported_portion": "Equality of selected finite result, contract, aggregate receipt and final post-mutation subject identities. A changed final subject distinguishes stale from current evidence."
+    },
+    "contract_blake3": "303394b1a46b0fe715c346c50fc05369ffcc85e80bbbc5445d91d666574e4932",
+    "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+    "mapping_blake3": "b59d990b291e6d6853814c1f8c0a3bea993f5d871e21b1d55ce870c909f5028a"
+  },
+  "proposed_correspondence": [
+    {
+      "proposed_by": "cairn-typed-requirements-author",
+      "rationale": "Equality of selected finite result, contract, aggregate receipt and final post-mutation subject identities. A changed final subject distinguishes stale from current evidence. INFORMAL REMAINDER: Filesystem subject measurement, mutation ordering, command/evidence/artifact hash syntax, hash authenticity and arbitrary result universes are not established by token equality.",
+      "requirement_id": "cairn.supersede.agent_run_receipts.freshness"
+    }
+  ],
+  "requirement": {
+    "requirement_body_blake3": "be11d3a5ca69b23a147df33c11a591998537fc649cd8e8f9aed6801dbb07fe3f",
+    "requirement_id": "cairn.supersede.agent_run_receipts.freshness",
+    "row_blake3": "653914140db582ef1145f36f87c233a9ab57a310f715cadf8a23efa5f5333e5e",
+    "source_span": {
+      "end_byte": 4280,
+      "end_line": 74,
+      "start_byte": 4080,
+      "start_line": 74
+    },
+    "specification_blake3": "18b48ac73b3632a800d40d818697dc05e282383dbf9f149aa6f77a3f396fe405",
+    "specification_path": ".cairn/specs/agent-completion/spec.md"
+  },
+  "review_authenticity": "external_retained_artifact_and_reviewer_policy_trust",
+  "reviews": [
+    {
+      "record": {
+        "contract_blake3": "303394b1a46b0fe715c346c50fc05369ffcc85e80bbbc5445d91d666574e4932",
+        "decision": "approved",
+        "interpretation_blake3": "8b04a2b9d425c8b417693f33c621ef5d922475d5df342565d9e91ceca0bbe648",
+        "mapping_blake3": "b59d990b291e6d6853814c1f8c0a3bea993f5d871e21b1d55ce870c909f5028a",
+        "proposed_by": "cairn-typed-requirements-author",
+        "requirement_row_blake3": "653914140db582ef1145f36f87c233a9ab57a310f715cadf8a23efa5f5333e5e",
+        "review_artifact_blake3": "795a0a28d207672934ceb8e8fc856b8589e15e65ec1cbc43e92644e24642ebe0",
+        "reviewer": "parent-independent-review-2026-11-18"
+      },
+      "review_blake3": "72a7e03477060fc93f3f8b86d8cfa7001f94f801139985e2e096e0a96b4e4ce5",
+      "status": "admitted_review_declaration"
+    }
+  ],
+  "schema_version": "cairn.requirement-contract.inspection.v1",
+  "well_formedness": "well_formed"
+}
