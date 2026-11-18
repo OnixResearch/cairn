@@ -1334,6 +1334,9 @@ fn semantic_fixture() -> SemanticFixture {
     );
     dependency.context.producer_repository = REPOSITORY.into();
     dependency.context.intended_target = REPOSITORY.into();
+    // Context identity includes the declared resource envelope, so the fixture's
+    // scopes and dependency must agree before the discharge rule is exercised.
+    dependency.context.bounds = scope().bounds;
     dependency.semantic = Some(SemanticBinding {
         producer_guarantee: GuaranteeRef {
             guarantee_case: "guarantee.producer".into(),

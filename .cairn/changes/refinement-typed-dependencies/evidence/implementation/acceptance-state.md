@@ -16,33 +16,25 @@ The branch had never been compiled. Three defects were fixed:
 
 `cargo test -p cairn-core --lib refinement` now runs: **17 passed, 2 failed**.
 
-## Outstanding failures
+## Resolved: bounds are part of context identity
 
-Both failures share one root cause. `evaluate_semantic_dependency` treats a context
-as compatible only when the producer and consumer `ArgumentScope` agree with the
-dependency's `DependencyContext` on `policy_blake3`, `environment`, `bounds` and
-the two targets. In the shared `semantic_fixture` the scopes come from `scope()`
-(`bounds = {max_checks: 2}`) while the dependency comes from
-`dependency_baseline` (`bounds = {max_tasks: 4}`), so every semantic discharge in
-that fixture is classified:
+Both failures shared one root cause. `evaluate_semantic_dependency` treats a
+context as compatible only when the producer and consumer `ArgumentScope` agree
+with the dependency's `DependencyContext` on `policy_blake3`, `environment`,
+`bounds` and the two targets. The shared `semantic_fixture` took its scopes from
+`scope()` (`bounds = {max_checks: 2}`) while `dependency_baseline` supplied
+(`bounds = {max_tasks: 4}`), so every semantic discharge in that fixture was
+rejected as `unsupported: context_incompatible`.
 
-| Test | Observed | Expected |
-|---|---|---|
-| `semantic_dependency_discharges_assumption_with_path_and_source` | `Unsupported` | discharged path with source |
-| `matching_names_and_receipt_identity_do_not_discharge_without_witness` | `unsupported: context_incompatible` | the test's asserted state |
+The conservative reading is kept: **resource bounds are part of context identity**
+— a guarantee checked under one resource envelope is not the same guarantee under
+another, so relaxing the comparison would weaken the check. The fixture now
+declares the same bounds on both sides, and `cargo test -p cairn-core --lib
+refinement` is **19 passed, 0 failed**.
 
-The second result is right in spirit — no witness must not discharge — but it is
-reported for the wrong reason.
-
-The open question is narrow and needs a decision rather than a guess: should
-resource bounds be part of context identity? Exact equality is the safer reading
-(a guarantee checked under one resource envelope is not the same guarantee under
-another), but then the fixture must share one bounds map. If bounds are intended
-to be non-identifying resource limits, the comparison should drop them and say so.
-Changing either side silently would weaken a compatibility check or rewrite a test
-to fit an implementation.
-
-No archive, sync or completion claim is made here.
+That decision is recorded here rather than silently applied: a future change that
+wants bounds to be non-identifying must change the comparison and this note
+together.
 
 ## Claim boundary
 
