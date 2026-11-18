@@ -268,6 +268,7 @@ fn shipped_policy_admits_and_binds_exact_catalog_and_policy_identity() {
         verify.command_classes,
         [
             "gate",
+            "readiness",
             "receipt-inspect",
             "traceability",
             "workflow-inspect"
@@ -719,7 +720,7 @@ fn adapters_change_layout_but_not_obligations_evidence_or_authority() {
         },
     ] {
         let text = render_guidance(&guidance, &presentation).unwrap();
-        assert!(text.contains("gate, receipt-inspect, traceability, workflow-inspect"));
+        assert!(text.contains("gate, readiness, receipt-inspect, traceability, workflow-inspect"));
         for requirement in &guidance.sections[0].items {
             assert!(text.contains(requirement.as_str()));
         }
