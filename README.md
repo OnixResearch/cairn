@@ -381,6 +381,17 @@ cairn traceability show cairn.trace_index.query \
 
 Read [Content-bound trace index](docs/content-bound-trace-index.md) for identities, workflow, freshness checks, retained live-proof receipts, and non-claims.
 
+Run the advisory declared comparison qualification:
+
+```bash
+cairn traceability compare \
+  --root . \
+  --fixtures fixtures/buoy-comparison/v1 \
+  --out target/buoy-comparison/receipt.json
+```
+
+Read [Buoy traceability comparison](docs/buoy-traceability-comparison.md) for the pinned upstream identity, executed native mutation evidence, declared unsupported cases, and reuse decision.
+
 <!-- r[impl cairn.trace_index.docs] -->
 
 ## Policy and deterministic enforcement

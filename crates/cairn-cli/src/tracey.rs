@@ -83,7 +83,9 @@ pub(crate) fn run_traceability(args: Vec<String>) -> Result<(), Box<dyn Error>> 
     // r[impl cairn.supersede.traceability_ownership.command]
     // r[impl cairn.supersede.traceability_ownership.command.maintained]
     let Some(command) = args.first().cloned() else {
-        return Err("traceability requires a command: coverage, export, verify, or show".into());
+        return Err(
+            "traceability requires a command: coverage, export, verify, show, or compare".into(),
+        );
     };
     if command == "coverage" {
         return run_coverage_command(args, "traceability");
