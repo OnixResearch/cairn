@@ -212,6 +212,7 @@ fn machine_mode_preserves_catalog_receipt_identity() -> Result<(), Box<dyn Error
 }
 
 #[test]
+// r[verify cairn.agent_entry_guidance.install]
 fn installs_and_checks_manifest_owned_files() -> Result<(), Box<dyn Error>> {
     let root = test_root("install-remove")?;
     let installed = install(&root, ADAPTER_SKILLS, SKILLS_DESTINATION)?;
@@ -422,6 +423,8 @@ fn plan_receipts_are_checkout_independent_and_do_not_expose_roots() -> Result<()
 }
 
 #[test]
+// r[verify cairn.agent_entry_guidance.generation]
+// r[verify cairn.agent_entry_guidance.conformance]
 fn entry_guide_show_renders_routes_for_every_adapter_and_refuses_unknown_selections(
 ) -> Result<(), Box<dyn Error>> {
     let policy = policy_path().display().to_string();
@@ -461,7 +464,12 @@ fn entry_guide_show_renders_routes_for_every_adapter_and_refuses_unknown_selecti
         for route in expected_routes {
             assert!(contents.contains(route), "{adapter} misses {route}");
         }
-        for profile in ["spec-driven", "assurance", "no-spec-delta", "outcome-machine"] {
+        for profile in [
+            "spec-driven",
+            "assurance",
+            "no-spec-delta",
+            "outcome-machine",
+        ] {
             assert!(contents.contains(profile));
         }
         assert!(receipt["command_catalog_identity"].is_string());
@@ -507,6 +515,7 @@ fn entry_guide_show_renders_routes_for_every_adapter_and_refuses_unknown_selecti
 }
 
 #[test]
+// r[verify cairn.agent_entry_guidance.examples]
 fn inspect_copy_reports_identity_bound_state_without_writing() -> Result<(), Box<dyn Error>> {
     let root = test_root("inspect-copy")?;
     let installed = install(&root, "claude", ".claude/commands")?;
@@ -593,12 +602,16 @@ fn inspect_copy_reports_identity_bound_state_without_writing() -> Result<(), Box
         no_identity.ok_or("no identity receipt")?["inspection"]["classification"],
         "unclassified"
     );
-    assert_eq!(fs::read_to_string(&copied_guide)?, "Read cairn/changes before starting.\n");
+    assert_eq!(
+        fs::read_to_string(&copied_guide)?,
+        "Read cairn/changes before starting.\n"
+    );
     assert!(copied_manifest.exists());
     Ok(())
 }
 
 #[test]
+// r[verify cairn.agent_entry_guidance.scope]
 fn modified_entry_guide_blocks_and_preserves_bytes() -> Result<(), Box<dyn Error>> {
     let root = test_root("modified-entry")?;
     let installed = install(&root, "claude", ".claude/commands")?;
@@ -625,11 +638,17 @@ fn modified_entry_guide_blocks_and_preserves_bytes() -> Result<(), Box<dyn Error
     ]);
     let (execute_output, _) = run_owned(&execute_args)?;
     assert!(!execute_output.status.success());
-    assert!(String::from_utf8_lossy(&execute_output.stderr).contains("generated_workflow.plan.stale"));
+    assert!(
+        String::from_utf8_lossy(&execute_output.stderr).contains("generated_workflow.plan.stale")
+    );
     assert_eq!(fs::read_to_string(root.join(entry_path))?, MODIFIED_CONTENT);
 
-    let (check_output, check) =
-        run_owned(&destination_args(&root, "check", "claude", ".claude/commands"))?;
+    let (check_output, check) = run_owned(&destination_args(
+        &root,
+        "check",
+        "claude",
+        ".claude/commands",
+    ))?;
     assert!(check_output.status.success());
     let check = check.ok_or("check receipt")?;
     assert_eq!(check["blocked"], true);
@@ -665,9 +684,7 @@ fn maintained_guidance_examples_match_current_command_contracts() -> Result<(), 
             catalog.policy.entry.profile_route.clone(),
         ])
         .collect::<BTreeSet<String>>();
-    let examples = fixture["examples"]
-        .as_array()
-        .ok_or("examples array")?;
+    let examples = fixture["examples"].as_array().ok_or("examples array")?;
     let mut accepted = 0;
     let mut covered_routes = BTreeSet::new();
     for example in examples {
@@ -703,16 +720,26 @@ fn maintained_guidance_examples_match_current_command_contracts() -> Result<(), 
             }
             "profile" => {
                 let profile = example["profile"].as_str().ok_or("profile")?;
-                catalog.policy.entry.profiles.iter().any(|value| value == profile)
+                catalog
+                    .policy
+                    .entry
+                    .profiles
+                    .iter()
+                    .any(|value| value == profile)
             }
             "adapter" => {
                 let adapter = example["adapter"].as_str().ok_or("adapter")?;
-                catalog.policy.adapters.iter().any(|value| value.id == adapter)
+                catalog
+                    .policy
+                    .adapters
+                    .iter()
+                    .any(|value| value.id == adapter)
             }
             other => return Err(format!("unknown example kind: {other}").into()),
         };
         assert_eq!(
-            matched, expect_accepted,
+            matched,
+            expect_accepted,
             "example {} did not match its expected outcome",
             example["id"].as_str().unwrap_or("<unknown>")
         );
@@ -765,9 +792,9 @@ fn command_catalog_drift_updates_only_the_stale_entry_guide() -> Result<(), Box<
     let (preview_output, preview) = run_owned(&preview_args)?;
     assert!(preview_output.status.success());
     let preview = preview.ok_or("drift preview")?;
-    assert!(preview["files"].as_array().is_some_and(|files| files.iter().any(
-        |file| file["workflow_id"] == "entry" && file["freshness"] == "stale-source"
-    )));
+    assert!(preview["files"].as_array().is_some_and(|files| files
+        .iter()
+        .any(|file| file["workflow_id"] == "entry" && file["freshness"] == "stale-source")));
     assert_eq!(preview["manifest"]["freshness"], "stale-source");
     assert_eq!(fs::read(root.join(&entry_path))?, entry_before);
 
@@ -815,9 +842,7 @@ fn invalid_entry_budget_and_legacy_layout_fail_cli_admission() -> Result<(), Box
         let path = root.join(format!("invalid-{name}.json"));
         fs::write(&path, serde_json::to_vec_pretty(&policy)?)?;
         let path_arg = path.display().to_string();
-        let (output, _) = run(&[
-            "agent", "workflow", "list", "--policy", &path_arg,
-        ])?;
+        let (output, _) = run(&["agent", "workflow", "list", "--policy", &path_arg])?;
         assert!(!output.status.success(), "{name} must fail admission");
     }
     Ok(())

@@ -175,8 +175,7 @@ pub fn inspect_copied_generated_workflow_guide(
     use super::model::GeneratedWorkflowCopiedGuideClassification as Classification;
     let observed_blake3 = crate::verified::evidence::blake3_hex(contents.as_bytes());
     let mut issues = Vec::new();
-    let native_layout_current =
-        !super::admission::contains_legacy_layout_reference(contents);
+    let native_layout_current = !super::admission::contains_legacy_layout_reference(contents);
     if !native_layout_current {
         issues.push(super::admission::issue(
             super::model::GENERATED_AGENT_WORKFLOW_ISSUE_GUIDE_LAYOUT,
@@ -184,8 +183,7 @@ pub fn inspect_copied_generated_workflow_guide(
             "copied guide references a legacy lifecycle layout",
         ));
     }
-    let observed_manifest_identity =
-        manifest.map(|manifest| manifest.manifest_identity.clone());
+    let observed_manifest_identity = manifest.map(|manifest| manifest.manifest_identity.clone());
     let (classification, generated_blake3, expected_prior_blake3) = match manifest {
         Some(manifest)
             if validate_generated_workflow_manifest(manifest)

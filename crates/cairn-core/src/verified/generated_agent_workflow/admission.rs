@@ -58,9 +58,10 @@ pub fn admit_generated_agent_workflow_policy(
         normalize_strings(&mut descriptor.constraints);
         normalize_strings(&mut descriptor.non_claims);
     }
-    let command_catalog_identity = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
-        "command_catalog": normalized.command_catalog,
-    }));
+    let command_catalog_identity =
+        crate::verified::evidence::canonical_json_hash(&serde_json::json!({
+            "command_catalog": normalized.command_catalog,
+        }));
     let catalog_identity = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "generator_version": normalized.generator_version,
         "command_classes": normalized.command_classes,
@@ -255,7 +256,9 @@ fn validate_entry_guide(
         if values.is_empty()
             || values.len() > policy.bounds.max_list_items
             || !unique_nonempty(values)
-            || values.iter().any(|value| !commands.contains(value.as_str()))
+            || values
+                .iter()
+                .any(|value| !commands.contains(value.as_str()))
         {
             issues.push(issue(
                 super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
@@ -276,10 +279,9 @@ fn validate_entry_guide(
     if entry.profiles.is_empty()
         || entry.profiles.len() > policy.bounds.max_list_items
         || !unique_nonempty(&entry.profiles)
-        || entry
-            .profiles
-            .iter()
-            .any(|profile| !valid_id(profile) || !bounded_text(profile, policy.bounds.max_text_bytes))
+        || entry.profiles.iter().any(|profile| {
+            !valid_id(profile) || !bounded_text(profile, policy.bounds.max_text_bytes)
+        })
     {
         issues.push(issue(
             super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
@@ -290,11 +292,10 @@ fn validate_entry_guide(
     if entry.boundaries.is_empty()
         || entry.boundaries.len() > policy.bounds.max_list_items
         || !unique_nonempty(&entry.boundaries)
-        || entry
-            .boundaries
-            .iter()
-            .any(|text| !bounded_text(text, policy.bounds.max_text_bytes)
-                || contains_legacy_layout_reference(text))
+        || entry.boundaries.iter().any(|text| {
+            !bounded_text(text, policy.bounds.max_text_bytes)
+                || contains_legacy_layout_reference(text)
+        })
     {
         issues.push(issue(
             super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
@@ -305,11 +306,10 @@ fn validate_entry_guide(
     if entry.required_evidence.is_empty()
         || entry.required_evidence.len() > policy.bounds.max_list_items
         || !unique_nonempty(&entry.required_evidence)
-        || entry
-            .required_evidence
-            .iter()
-            .any(|text| !bounded_text(text, policy.bounds.max_text_bytes)
-                || contains_legacy_layout_reference(text))
+        || entry.required_evidence.iter().any(|text| {
+            !bounded_text(text, policy.bounds.max_text_bytes)
+                || contains_legacy_layout_reference(text)
+        })
     {
         issues.push(issue(
             super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,

@@ -65,9 +65,7 @@ fn pending_transactions(root: &CapabilityRoot) -> Result<Vec<String>, Box<dyn Er
     let mut pending = entries
         .into_iter()
         .filter_map(|entry| entry.file_name().to_str().map(str::to_string))
-        .filter(|name| {
-            name.starts_with("generated-agent-workflow-") && name.ends_with(".pending")
-        })
+        .filter(|name| name.starts_with("generated-agent-workflow-") && name.ends_with(".pending"))
         .map(|name| format!(".cairn/{name}"))
         .collect::<Vec<_>>();
     pending.sort();
@@ -184,7 +182,10 @@ fn observe_file(
     })
 }
 
-pub(super) fn has_symlink_component(root: &CapabilityRoot, path: &Path) -> Result<bool, Box<dyn Error>> {
+pub(super) fn has_symlink_component(
+    root: &CapabilityRoot,
+    path: &Path,
+) -> Result<bool, Box<dyn Error>> {
     let mut current = PathBuf::new();
     for component in path.components() {
         current.push(component.as_os_str());

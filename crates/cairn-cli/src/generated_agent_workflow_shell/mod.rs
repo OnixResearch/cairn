@@ -87,7 +87,10 @@ fn run_inspect_copy(
 ) -> Result<(), Box<dyn Error>> {
     let root_path = options.root.as_deref().ok_or("root is unavailable")?;
     let guide = options.guide.as_deref().ok_or("guide is unavailable")?;
-    let manifest_path = options.manifest.as_deref().ok_or("manifest is unavailable")?;
+    let manifest_path = options
+        .manifest
+        .as_deref()
+        .ok_or("manifest is unavailable")?;
     let max_path_bytes = catalog.policy.bounds.max_path_bytes;
     if !safe_generated_destination_path(guide, max_path_bytes)
         || !safe_generated_destination_path(manifest_path, max_path_bytes)

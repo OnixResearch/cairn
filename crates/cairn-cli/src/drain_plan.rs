@@ -156,7 +156,10 @@ fn readiness_drain_with_budget(
         let change_input = change_observation_input(input, &change.name, evidence);
         let report =
             readiness_report_with_budget(&root, &policy_path, &change.name, &change_input, budget);
-        let task_order = observe_task_order(&root, &policy, &change.path, budget);
+        // The per-change task-marker read has its own fixed byte cap; it must not be
+        // starved by the aggregate readiness budget already consumed for other changes.
+        let task_order =
+            observe_task_order(&root, &policy, &change.path, &ObservationBudget::new());
         observed.push(ObservedChange {
             name: change.name.clone(),
             path: change.path.clone(),
@@ -399,7 +402,10 @@ fn observe_task_order(
         return unavailable();
     };
     let capability = capability.with_budget(Some(budget));
-    let relative = Path::new(change_path).join("tasks.md");
+    let change_relative = Path::new(change_path)
+        .strip_prefix(root)
+        .unwrap_or_else(|_| Path::new(change_path));
+    let relative = change_relative.join("tasks.md");
     let Ok(bytes) = capability.read_bounded(&relative, TASKS_FILE_BYTES) else {
         return unavailable();
     };

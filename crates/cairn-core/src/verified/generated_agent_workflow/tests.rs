@@ -550,7 +550,10 @@ fn entry_guide_routes_are_semantically_equal_across_adapters() {
             }
         }
         for profile in &catalog.policy.entry.profiles {
-            assert!(entry.contents.contains(profile), "{adapter} misses {profile}");
+            assert!(
+                entry.contents.contains(profile),
+                "{adapter} misses {profile}"
+            );
         }
         for boundary in &catalog.policy.entry.boundaries {
             assert!(entry.contents.contains(boundary));
@@ -571,14 +574,12 @@ fn entry_guide_rejects_legacy_layouts_unknown_routes_and_profiles() {
     legacy.entry.layout = "cairn".to_string();
     let issues = admit_generated_agent_workflow_policy(&legacy).expect_err("legacy layout");
     assert!(issues.iter().any(|issue| {
-        issue.code == GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY
-            && issue.field_path.contains("entry")
+        issue.code == GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY && issue.field_path.contains("entry")
     }));
 
     let mut unknown_route = policy();
     unknown_route.entry.discovery_routes = vec!["remote-command".to_string()];
-    let issues =
-        admit_generated_agent_workflow_policy(&unknown_route).expect_err("unknown route");
+    let issues = admit_generated_agent_workflow_policy(&unknown_route).expect_err("unknown route");
     assert!(issues
         .iter()
         .any(|issue| issue.field_path.contains("discovery_routes")));
@@ -586,11 +587,14 @@ fn entry_guide_rejects_legacy_layouts_unknown_routes_and_profiles() {
     let mut legacy_text = policy();
     legacy_text.entry.boundaries[0] = "Read cairn/changes for current work.".to_string();
     let issues = admit_generated_agent_workflow_policy(&legacy_text).expect_err("legacy text");
-    assert!(issues.iter().any(|issue| issue.field_path.contains("boundaries")));
+    assert!(issues
+        .iter()
+        .any(|issue| issue.field_path.contains("boundaries")));
 
     let mut legacy_command = policy();
     legacy_command.command_catalog[2].invocation = "cairn status --root cairn/specs".to_string();
-    let issues = admit_generated_agent_workflow_policy(&legacy_command).expect_err("legacy command");
+    let issues =
+        admit_generated_agent_workflow_policy(&legacy_command).expect_err("legacy command");
     assert!(issues
         .iter()
         .any(|issue| issue.field_path.contains("invocation")));
@@ -603,7 +607,9 @@ fn entry_guide_rejects_legacy_layouts_unknown_routes_and_profiles() {
     assert!(contains_legacy_layout_reference("read cairn/changes"));
     assert!(contains_legacy_layout_reference("cairn/specs"));
     assert!(!contains_legacy_layout_reference("read .cairn/changes"));
-    assert!(!contains_legacy_layout_reference("read spec-driven/assurance"));
+    assert!(!contains_legacy_layout_reference(
+        "read spec-driven/assurance"
+    ));
 }
 
 #[test]
@@ -660,7 +666,10 @@ fn command_catalog_drift_changes_entry_identity_and_reports_stale_source() {
         first_catalog.command_catalog_identity,
         second_catalog.command_catalog_identity
     );
-    assert_ne!(first_catalog.catalog_identity, second_catalog.catalog_identity);
+    assert_ne!(
+        first_catalog.catalog_identity,
+        second_catalog.catalog_identity
+    );
     let second = plan_generated_agent_workflow_install(
         &second_catalog,
         "codex",
@@ -674,7 +683,10 @@ fn command_catalog_drift_changes_entry_identity_and_reports_stale_source() {
         .iter()
         .find(|file| file.workflow_id == GENERATED_AGENT_WORKFLOW_ENTRY_ID)
         .expect("second entry");
-    assert_ne!(first_entry.descriptor_identity, second_entry.descriptor_identity);
+    assert_ne!(
+        first_entry.descriptor_identity,
+        second_entry.descriptor_identity
+    );
     assert_eq!(
         second_entry.freshness,
         GeneratedWorkflowFreshness::StaleSource

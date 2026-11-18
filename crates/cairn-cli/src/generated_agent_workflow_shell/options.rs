@@ -51,7 +51,9 @@ pub(super) fn parse_agent_workflow_options(
     args: &[String],
 ) -> Result<AgentWorkflowOptions, Box<dyn Error>> {
     let Some(command) = args.first().map(String::as_str) else {
-        return Err("agent workflow requires list, show, plan, check, install, or inspect-copy".into());
+        return Err(
+            "agent workflow requires list, show, plan, check, install, or inspect-copy".into(),
+        );
     };
     let command = match command {
         "list" => AgentWorkflowCommand::List,

@@ -43,10 +43,23 @@ displaced function now closes with `Ok(())` before the following `#[test]`.
 
 `readiness_drain` fails `readiness_view_orders_dependencies_and_withholds_blocked_work`
 and `readiness_view_selects_the_declared_ready_task_route` at
-`readiness_drain.rs:195` (`task_ordering.valid` is `false`, expected `true`). The
-fixture's requirements (`r[demo.behavior]`, `r[demo.behavior.scenario]`) are
-declared in the copied change specification, so the cause is inside the fixture
-construction or the ordering projection rather than a missing requirement.
+`readiness_drain.rs:195` (`task_ordering.valid` is `false`, expected `true`).
 
-These two tests are inherited from the archived readiness-adoption change rather
-than authored here; they must be diagnosed before this change is archived.
+A direct probe reproduces it outside the test harness. With the same fixture
+(`z-prereq`, `a-dependent`, valid `[serial] [task:build]`/`[after:build]`
+markers, both changes present) the projection returns:
+
+```json
+{"active":false,"available":false,"order":[],"ready_tasks":[],"valid":false}
+```
+
+`available: false` means the per-change `tasks.md` read was refused before the
+markers were parsed, so this is not a marker or requirement-reference problem. The
+ordering observer runs inside the shared multi-change observation budget, and it
+is starved once earlier reads for the same request have consumed it.
+
+That is a real defect in the drain composition: per-change ordering availability
+must not depend on unrelated earlier reads in the same aggregate request. It must
+be fixed in `crates/cairn-cli/src/drain_plan.rs` (budget provisioning or read
+ordering) before this change is archived. The two tests are inherited from the
+archived readiness-adoption change rather than authored here.

@@ -227,7 +227,9 @@ fn render_entry(
         &super::admission::find_generated_workflow_command(catalog, &entry.profile_route)?
             .invocation,
     );
-    output.push_str("`.\n\n## Stage instructions\n\nRequest one artifact's stage instructions with `");
+    output.push_str(
+        "`.\n\n## Stage instructions\n\nRequest one artifact's stage instructions with `",
+    );
     output.push_str(
         &super::admission::find_generated_workflow_command(catalog, &entry.stage_route)?.invocation,
     );
