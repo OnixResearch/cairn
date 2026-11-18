@@ -1281,6 +1281,13 @@ pub fn evaluate_buoy_comparison(
     let artifact_available = manifest.upstream.artifact.available;
     let valid = issues.is_empty() && executed > 0;
     let complete = unsupported_cases.is_empty() && declared_only == 0;
+    // These report whether the comparison *rejected* a restated input. The paired
+    // codes record the opposite (an accepted restatement), so their absence is the
+    // positive result.
+    let restated_observation_rejected =
+        !issues.iter().any(|issue| issue.code == ISSUE_RESTATED_OBSERVATION);
+    let restated_native_rejected =
+        !issues.iter().any(|issue| issue.code == ISSUE_RESTATED_NATIVE);
 
     let receipt = json!({
         "schema": BUOY_COMPARISON_RECEIPT_SCHEMA_V1,
@@ -1321,8 +1328,8 @@ pub fn evaluate_buoy_comparison(
             "required_kinds": required_kinds,
             "observed_kinds": observed_kinds,
             "planted_drift_detected": mutation_detected,
-            "restated_observation_rejected": issues.is_empty(),
-            "restated_native_expectation_rejected": issues.is_empty(),
+            "restated_observation_rejected": restated_observation_rejected,
+            "restated_native_expectation_rejected": restated_native_rejected,
         },
         "known_disagreements": known_disagreements,
         "unsupported_cases": unsupported_cases,
@@ -1586,12 +1593,12 @@ fn producer_identities(
         "native": {
             "producer": "cairn",
             "schema": NATIVE_RECEIPT_SCHEMA,
-            "report_blake3": domain_hash_json(NATIVE_REPORT_DOMAIN, &native_material),
+            "report_blake3": domain_hash_json(NATIVE_REPORT_DOMAIN, &json!(native_material)),
         },
         "declared_upstream": {
             "producer": manifest.upstream.producer,
             "schemas": manifest.upstream.report_schemas,
-            "report_blake3": domain_hash_json(BUOY_REPORT_DOMAIN, &buoy_material),
+            "report_blake3": domain_hash_json(BUOY_REPORT_DOMAIN, &json!(buoy_material)),
         },
         "fixture_set_blake3": domain_hash_json(IDENTITY_DOMAIN, &json!({
             "manifest_blake3": inputs.manifest_blake3,
