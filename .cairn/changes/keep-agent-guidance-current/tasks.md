@@ -20,3 +20,5 @@
 All tasks remain open. Save implementation evidence under `evidence/implementation/`.
 Planning receipts do not satisfy implementation tasks or authorize archive execution.
 The shared verification and measurement rules are in `docs/agent-efficiency-roadmap.md`.
+
+Implementation source notes are recorded in `evidence/implementation/implementation.md`. All tasks remain open; repository verification, projection generation, and lifecycle completion are owned by the integration pass.

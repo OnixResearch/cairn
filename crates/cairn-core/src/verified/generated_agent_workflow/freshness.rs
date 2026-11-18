@@ -166,6 +166,95 @@ pub fn validate_generated_workflow_manifest(
         && manifest.manifest_identity == generated_workflow_manifest_identity(manifest)
 }
 
+pub fn inspect_copied_generated_workflow_guide(
+    contents: &str,
+    workflow_id: &str,
+    manifest: Option<&super::model::GeneratedWorkflowManifest>,
+    declared_manifest_identity: Option<&str>,
+) -> super::model::GeneratedWorkflowCopiedGuideInspection {
+    use super::model::GeneratedWorkflowCopiedGuideClassification as Classification;
+    let observed_blake3 = crate::verified::evidence::blake3_hex(contents.as_bytes());
+    let mut issues = Vec::new();
+    let native_layout_current =
+        !super::admission::contains_legacy_layout_reference(contents);
+    if !native_layout_current {
+        issues.push(super::admission::issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_GUIDE_LAYOUT,
+            "guide",
+            "copied guide references a legacy lifecycle layout",
+        ));
+    }
+    let observed_manifest_identity =
+        manifest.map(|manifest| manifest.manifest_identity.clone());
+    let (classification, generated_blake3, expected_prior_blake3) = match manifest {
+        Some(manifest)
+            if validate_generated_workflow_manifest(manifest)
+                && declared_manifest_identity == Some(manifest.manifest_identity.as_str()) =>
+        {
+            match manifest
+                .files
+                .iter()
+                .find(|file| file.workflow_id == workflow_id)
+            {
+                Some(file) if file.generated_blake3 == observed_blake3 => (
+                    Classification::Current,
+                    Some(file.generated_blake3.clone()),
+                    file.expected_prior_blake3.clone(),
+                ),
+                Some(file)
+                    if file.expected_prior_blake3.as_deref() == Some(observed_blake3.as_str()) =>
+                {
+                    (
+                        Classification::StaleSource,
+                        Some(file.generated_blake3.clone()),
+                        file.expected_prior_blake3.clone(),
+                    )
+                }
+                Some(file) => (
+                    Classification::Modified,
+                    Some(file.generated_blake3.clone()),
+                    file.expected_prior_blake3.clone(),
+                ),
+                None => {
+                    issues.push(super::admission::issue(
+                        super::model::GENERATED_AGENT_WORKFLOW_ISSUE_COPIED_GUIDE,
+                        "workflow",
+                        format!("manifest does not declare workflow {workflow_id}"),
+                    ));
+                    (Classification::Unclassified, None, None)
+                }
+            }
+        }
+        Some(_) => {
+            issues.push(super::admission::issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_COPIED_GUIDE,
+                "manifest_identity",
+                "declared manifest identity does not match the admitted manifest",
+            ));
+            (Classification::Unclassified, None, None)
+        }
+        None => {
+            issues.push(super::admission::issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_COPIED_GUIDE,
+                "manifest",
+                "copied guide has no admitted manifest identity",
+            ));
+            (Classification::Unclassified, None, None)
+        }
+    };
+    super::model::GeneratedWorkflowCopiedGuideInspection {
+        workflow_id: workflow_id.to_string(),
+        classification,
+        declared_manifest_identity: declared_manifest_identity.map(str::to_string),
+        observed_manifest_identity,
+        observed_blake3,
+        generated_blake3,
+        expected_prior_blake3,
+        native_layout_current,
+        issues,
+    }
+}
+
 fn valid_blake3(value: &str) -> bool {
     const BLAKE3_HEX_LENGTH: usize = 64;
     value.len() == BLAKE3_HEX_LENGTH && value.chars().all(|character| character.is_ascii_hexdigit())

@@ -74,6 +74,18 @@ let GeneratedExploreConstraints = [
 ] in
 let GeneratedWorkflowProgress = "For work with multiple steps, state the next action and report checked evidence after each major step." in
 let GeneratedWorkflowOutput = "Return the result, checked evidence, blockers, and the next safe action. Keep paths and command names exact." in
+let AgentGuidanceProfiles = ["spec-driven", "assurance", "no-spec-delta", "outcome-machine"] in
+let GeneratedEntryMaxBytes = 3072 in
+let GeneratedEntryStageRouteMaxBytes = 512 in
+let GeneratedEntryBoundaries = [
+  "Generated guidance does not grant command, filesystem, network, model, gate, or release authority.",
+  "Report checked evidence or an exact blocker; generated text alone never proves implementation, gate passage, or release eligibility.",
+  "Use only explicit project roots and policy-known Cairn command classes.",
+] in
+let GeneratedEntryEvidence = [
+  "Current status and workflow receipts",
+  "The selected stage instructions and their declared evidence prerequisites",
+] in
 let MinimumWorksetMembers = 1 in
 let StoreIdentityNonClaims = [
   "store identity proves only the observed checked projection and native lifecycle identity",
@@ -528,7 +540,7 @@ let WorkflowRequiredNonClaims = [
     schema = "cairn.agent-guidance-policy.v1",
     allowed_source_roots = ["project", "lifecycle"],
     allowed_authority_classes = ["project_fact", "advisory_guidance"],
-    known_profiles = ["spec-driven", "assurance", "no-spec-delta", "outcome-machine"],
+    known_profiles = AgentGuidanceProfiles,
     known_artifacts = ["proposal", "specs", "design", "tasks", "risk", "verification", "assurance-review", "acceptance", "no-spec-review", "outcome-machine"],
     known_operations = ["context", "workflow-instructions"],
     bounds = {
@@ -643,6 +655,33 @@ let WorkflowRequiredNonClaims = [
       { id = "traceability", permission = "read" },
       { id = "workflow-inspect", permission = "read" },
     ],
+    command_catalog = [
+      { id = "change-create", command_class = "change-create", invocation = "cairn change create <name> --profile <profile> --root PATH" },
+      { id = "change-list", command_class = "status", invocation = "cairn change list --root PATH" },
+      { id = "context", command_class = "context", invocation = "cairn context --root PATH [--profile ID] [--artifact ID] [--operation ID]" },
+      { id = "doctor", command_class = "status", invocation = "cairn doctor --root PATH" },
+      { id = "gate-tasks", command_class = "gate", invocation = "cairn gate tasks <change> --root PATH" },
+      { id = "readiness", command_class = "gate", invocation = "cairn readiness <change> --root PATH" },
+      { id = "status", command_class = "status", invocation = "cairn status --root PATH" },
+      { id = "validate", command_class = "status", invocation = "cairn validate --root PATH" },
+      { id = "workflow-instructions", command_class = "workflow-inspect", invocation = "cairn workflow instructions <artifact> --change <change> --root PATH" },
+      { id = "workflow-status", command_class = "workflow-inspect", invocation = "cairn workflow status <change> --root PATH" },
+    ],
+    entry = {
+      id = "entry",
+      version = 1,
+      goal = "Find the current Cairn project state, then request one artifact's current stage instructions.",
+      layout = ".cairn",
+      discovery_routes = ["status", "change-list", "workflow-status", "context"],
+      readiness_routes = ["doctor", "validate", "readiness", "gate-tasks"],
+      stage_route = "workflow-instructions",
+      profile_route = "change-create",
+      profiles = AgentGuidanceProfiles,
+      boundaries = GeneratedEntryBoundaries,
+      required_evidence = GeneratedEntryEvidence,
+      max_bytes = GeneratedEntryMaxBytes,
+      max_stage_route_bytes = GeneratedEntryStageRouteMaxBytes,
+    },
     descriptors = [
       {
         id = "apply",

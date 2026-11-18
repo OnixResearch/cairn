@@ -1,0 +1,118 @@
+{
+  "schema": "cairn.generated-agent-guidance-examples.v1",
+  "source": "docs/generated-agent-workflows.md",
+  "examples": [
+    {
+      "id": "discover-status",
+      "kind": "command",
+      "command_id": "status",
+      "invocation": "cairn status --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "discover-changes",
+      "kind": "command",
+      "command_id": "change-list",
+      "invocation": "cairn change list --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "discover-workflow-status",
+      "kind": "command",
+      "command_id": "workflow-status",
+      "invocation": "cairn workflow status <change> --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "readiness-doctor",
+      "kind": "command",
+      "command_id": "doctor",
+      "invocation": "cairn doctor --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "readiness-validate",
+      "kind": "command",
+      "command_id": "validate",
+      "invocation": "cairn validate --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "stage-instructions",
+      "kind": "command",
+      "command_id": "workflow-instructions",
+      "invocation": "cairn workflow instructions <artifact> --change <change> --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "profile-selection",
+      "kind": "command",
+      "command_id": "change-create",
+      "invocation": "cairn change create <name> --profile <profile> --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "discover-context",
+      "kind": "command",
+      "command_id": "context",
+      "invocation": "cairn context --root PATH [--profile ID] [--artifact ID] [--operation ID]",
+      "expect": "accepted"
+    },
+    {
+      "id": "readiness-report",
+      "kind": "command",
+      "command_id": "readiness",
+      "invocation": "cairn readiness <change> --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "readiness-tasks-gate",
+      "kind": "command",
+      "command_id": "gate-tasks",
+      "invocation": "cairn gate tasks <change> --root PATH",
+      "expect": "accepted"
+    },
+    {
+      "id": "native-layout",
+      "kind": "layout",
+      "text": "Read .cairn/changes for active work.",
+      "expect": "accepted"
+    },
+    {
+      "id": "legacy-layout",
+      "kind": "layout",
+      "text": "Read cairn/changes for active work.",
+      "expect": "rejected"
+    },
+    {
+      "id": "supported-profile",
+      "kind": "profile",
+      "profile": "spec-driven",
+      "expect": "accepted"
+    },
+    {
+      "id": "unknown-profile",
+      "kind": "profile",
+      "profile": "remote-profile",
+      "expect": "rejected"
+    },
+    {
+      "id": "supported-adapter",
+      "kind": "adapter",
+      "adapter": "codex",
+      "expect": "accepted"
+    },
+    {
+      "id": "unknown-adapter",
+      "kind": "adapter",
+      "adapter": "remote-agent",
+      "expect": "rejected"
+    },
+    {
+      "id": "stale-command-identity",
+      "kind": "command_identity",
+      "invocation": "cairn workflow instruction <artifact> --change <change> --root PATH",
+      "expect": "rejected"
+    }
+  ]
+}

@@ -10,6 +10,7 @@ use serde_json::Value;
 const ADAPTER_SKILLS: &str = "agent-skills";
 const SKILLS_DESTINATION: &str = ".agents/skills";
 const EXPECTED_WORKFLOW_COUNT: usize = 6;
+const EXPECTED_GENERATED_FILE_COUNT: usize = 7;
 const MODIFIED_CONTENT: &str = "operator-owned content\n";
 const UPDATE_GOAL_SUFFIX: &str = " Use the reviewed update policy.";
 
@@ -173,7 +174,7 @@ fn lists_descriptors_and_plans_each_adapter_without_writes() -> Result<(), Box<d
         assert_eq!(receipt["dry_run"], true);
         assert_eq!(receipt["mutated"], false);
         assert!(receipt["files"].as_array().is_some_and(|files| {
-            files.len() == EXPECTED_WORKFLOW_COUNT
+            files.len() == EXPECTED_GENERATED_FILE_COUNT
                 && files.iter().all(|file| {
                     file["relative_path"]
                         .as_str()
@@ -217,7 +218,7 @@ fn installs_and_checks_manifest_owned_files() -> Result<(), Box<dyn Error>> {
     assert_eq!(installed["executed"], true);
     assert_eq!(installed["mutated"], true);
     let files = installed["files"].as_array().ok_or("missing files")?;
-    assert_eq!(files.len(), EXPECTED_WORKFLOW_COUNT);
+    assert_eq!(files.len(), EXPECTED_GENERATED_FILE_COUNT);
     for file in files {
         let path = file["relative_path"].as_str().ok_or("missing path")?;
         let contents = fs::read_to_string(root.join(path))?;
@@ -417,5 +418,399 @@ fn plan_receipts_are_checkout_independent_and_do_not_expose_roots() -> Result<()
     assert!(!serialized.contains(&first.display().to_string()));
     assert!(!serialized.contains("HOME"));
     assert!(!serialized.contains("raw_prompt"));
+    Ok(())
+}
+
+#[test]
+fn entry_guide_show_renders_routes_for_every_adapter_and_refuses_unknown_selections(
+) -> Result<(), Box<dyn Error>> {
+    let policy = policy_path().display().to_string();
+    let expected_routes = [
+        "cairn status --root PATH",
+        "cairn change list --root PATH",
+        "cairn workflow status <change> --root PATH",
+        "cairn context --root PATH",
+        "cairn doctor --root PATH",
+        "cairn validate --root PATH",
+        "cairn gate tasks <change> --root PATH",
+        "cairn workflow instructions <artifact> --change <change> --root PATH",
+        "cairn change create <name> --profile <profile> --root PATH",
+    ];
+    for adapter in ["agent-skills", "claude", "codex"] {
+        let (output, receipt) = run(&[
+            "agent",
+            "workflow",
+            "show",
+            "entry",
+            "--policy",
+            &policy,
+            "--adapter",
+            adapter,
+        ])?;
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let receipt = receipt.ok_or("missing entry receipt")?;
+        let contents = receipt["file"]["contents"]
+            .as_str()
+            .ok_or("missing entry contents")?;
+        assert!(contents.contains(".cairn/"));
+        assert!(!contents.contains("cairn/changes"));
+        for route in expected_routes {
+            assert!(contents.contains(route), "{adapter} misses {route}");
+        }
+        for profile in ["spec-driven", "assurance", "no-spec-delta", "outcome-machine"] {
+            assert!(contents.contains(profile));
+        }
+        assert!(receipt["command_catalog_identity"].is_string());
+        assert_eq!(receipt["workflow"], "entry");
+    }
+
+    let (unknown_adapter_output, _) = run(&[
+        "agent",
+        "workflow",
+        "show",
+        "entry",
+        "--policy",
+        &policy,
+        "--adapter",
+        "remote-agent",
+    ])?;
+    assert!(!unknown_adapter_output.status.success());
+    let (unknown_profile_output, _) = run(&[
+        "agent",
+        "workflow",
+        "show",
+        "entry",
+        "--policy",
+        &policy,
+        "--adapter",
+        "codex",
+        "--profile",
+        "remote-profile",
+    ])?;
+    assert!(!unknown_profile_output.status.success());
+    let (non_entry_selection, _) = run(&[
+        "agent",
+        "workflow",
+        "show",
+        "explore",
+        "--policy",
+        &policy,
+        "--adapter",
+        "codex",
+    ])?;
+    assert!(!non_entry_selection.status.success());
+    Ok(())
+}
+
+#[test]
+fn inspect_copy_reports_identity_bound_state_without_writing() -> Result<(), Box<dyn Error>> {
+    let root = test_root("inspect-copy")?;
+    let installed = install(&root, "claude", ".claude/commands")?;
+    let entry_path = installed["files"]
+        .as_array()
+        .and_then(|files| files.iter().find(|file| file["workflow_id"] == "entry"))
+        .and_then(|file| file["relative_path"].as_str())
+        .ok_or("installed entry")?;
+    let manifest_path = installed["manifest"]["relative_path"]
+        .as_str()
+        .ok_or("manifest path")?;
+    let identity = installed["manifest"]["identity"]
+        .as_str()
+        .ok_or("manifest identity")?;
+    let copied_guide = root.join("copied-entry.md");
+    let copied_manifest = root.join("copied-manifest.json");
+    fs::copy(root.join(entry_path), &copied_guide)?;
+    fs::copy(root.join(manifest_path), &copied_manifest)?;
+    let policy = policy_path().display().to_string();
+    let inspect = |guide: &Path, manifest: &Path, identity: Option<&str>| {
+        let mut args = vec![
+            "agent".to_string(),
+            "workflow".to_string(),
+            "inspect-copy".to_string(),
+            "--root".to_string(),
+            root.display().to_string(),
+            "--policy".to_string(),
+            policy.clone(),
+            "--guide".to_string(),
+            guide.display().to_string(),
+            "--manifest".to_string(),
+            manifest.display().to_string(),
+        ];
+        if let Some(identity) = identity {
+            args.extend(["--manifest-identity".to_string(), identity.to_string()]);
+        }
+        run_owned(&args)
+    };
+    let (output, receipt) = inspect(&copied_guide, &copied_manifest, Some(identity))?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt = receipt.ok_or("inspection receipt")?;
+    assert_eq!(receipt["report_only"], true);
+    assert_eq!(receipt["mutated"], false);
+    assert_eq!(receipt["inspection"]["classification"], "current");
+    assert_eq!(receipt["inspection"]["native_layout_current"], true);
+
+    fs::write(&copied_guide, MODIFIED_CONTENT)?;
+    let (_, modified) = inspect(&copied_guide, &copied_manifest, Some(identity))?;
+    assert_eq!(
+        modified.ok_or("modified receipt")?["inspection"]["classification"],
+        "modified"
+    );
+
+    fs::write(&copied_guide, "Read cairn/changes before starting.\n")?;
+    let (_, legacy) = inspect(&copied_guide, &copied_manifest, Some(identity))?;
+    let legacy = legacy.ok_or("legacy receipt")?;
+    assert_eq!(legacy["inspection"]["native_layout_current"], false);
+    assert!(legacy["inspection"]["issues"]
+        .as_array()
+        .is_some_and(|issues| issues
+            .iter()
+            .any(|issue| issue["code"] == "generated_workflow.guide.layout.stale")));
+
+    let wrong = "a".repeat(64);
+    let (_, wrong_identity) = inspect(&copied_guide, &copied_manifest, Some(wrong.as_str()))?;
+    assert_eq!(
+        wrong_identity.ok_or("wrong identity receipt")?["inspection"]["classification"],
+        "unclassified"
+    );
+    let (_, no_identity) = inspect(&copied_guide, &copied_manifest, None)?;
+    assert_eq!(
+        no_identity.ok_or("no identity receipt")?["inspection"]["classification"],
+        "unclassified"
+    );
+    assert_eq!(fs::read_to_string(&copied_guide)?, "Read cairn/changes before starting.\n");
+    assert!(copied_manifest.exists());
+    Ok(())
+}
+
+#[test]
+fn modified_entry_guide_blocks_and_preserves_bytes() -> Result<(), Box<dyn Error>> {
+    let root = test_root("modified-entry")?;
+    let installed = install(&root, "claude", ".claude/commands")?;
+    let entry_path = installed["files"]
+        .as_array()
+        .and_then(|files| files.iter().find(|file| file["workflow_id"] == "entry"))
+        .and_then(|file| file["relative_path"].as_str())
+        .ok_or("installed entry")?;
+    let preview_args = destination_args(&root, "install", "claude", ".claude/commands");
+    let (preview_output, preview) = run_owned(&preview_args)?;
+    assert!(preview_output.status.success());
+    let plan_hash = preview
+        .ok_or("preview")?
+        .get("plan_hash")
+        .and_then(Value::as_str)
+        .ok_or("plan hash")?
+        .to_string();
+    fs::write(root.join(entry_path), MODIFIED_CONTENT)?;
+    let mut execute_args = preview_args.clone();
+    execute_args.extend([
+        "--execute".to_string(),
+        "--plan-hash".to_string(),
+        plan_hash,
+    ]);
+    let (execute_output, _) = run_owned(&execute_args)?;
+    assert!(!execute_output.status.success());
+    assert!(String::from_utf8_lossy(&execute_output.stderr).contains("generated_workflow.plan.stale"));
+    assert_eq!(fs::read_to_string(root.join(entry_path))?, MODIFIED_CONTENT);
+
+    let (check_output, check) =
+        run_owned(&destination_args(&root, "check", "claude", ".claude/commands"))?;
+    assert!(check_output.status.success());
+    let check = check.ok_or("check receipt")?;
+    assert_eq!(check["blocked"], true);
+    assert!(check["files"].as_array().is_some_and(|files| files
+        .iter()
+        .any(|file| file["workflow_id"] == "entry" && file["freshness"] == "modified")));
+    assert_eq!(fs::read_to_string(root.join(entry_path))?, MODIFIED_CONTENT);
+    Ok(())
+}
+
+#[test]
+fn maintained_guidance_examples_match_current_command_contracts() -> Result<(), Box<dyn Error>> {
+    use cairn_core::contains_legacy_layout_reference;
+    use std::collections::BTreeSet;
+
+    let policy_text = fs::read_to_string(policy_path())?;
+    let policy = cairn_core::parse_policy_json(&policy_text)?;
+    let catalog =
+        cairn_core::admit_generated_agent_workflow_policy(&policy.generated_agent_workflow_policy)
+            .map_err(|issues| format!("policy admission: {issues:?}"))?;
+    let fixture: Value = serde_json::from_slice(&fs::read(
+        repo_root().join("fixtures/generated-agent-guidance/examples.json"),
+    )?)?;
+    let routes = catalog
+        .policy
+        .entry
+        .discovery_routes
+        .iter()
+        .chain(catalog.policy.entry.readiness_routes.iter())
+        .cloned()
+        .chain([
+            catalog.policy.entry.stage_route.clone(),
+            catalog.policy.entry.profile_route.clone(),
+        ])
+        .collect::<BTreeSet<String>>();
+    let examples = fixture["examples"]
+        .as_array()
+        .ok_or("examples array")?;
+    let mut accepted = 0;
+    let mut covered_routes = BTreeSet::new();
+    for example in examples {
+        let expect = example["expect"].as_str().ok_or("example expectation")?;
+        let expect_accepted = expect == "accepted";
+        let matched = match example["kind"].as_str().ok_or("example kind")? {
+            "command" => {
+                let id = example["command_id"].as_str().ok_or("command id")?;
+                let invocation = example["invocation"].as_str().ok_or("invocation")?;
+                let command = catalog
+                    .policy
+                    .command_catalog
+                    .iter()
+                    .find(|command| command.id == id);
+                let matches = command.is_some_and(|command| command.invocation == invocation);
+                if matches {
+                    assert!(routes.contains(id), "example {id} is not an entry route");
+                    covered_routes.insert(id.to_string());
+                }
+                matches
+            }
+            "command_identity" => {
+                let invocation = example["invocation"].as_str().ok_or("invocation")?;
+                catalog
+                    .policy
+                    .command_catalog
+                    .iter()
+                    .any(|command| command.invocation == invocation)
+            }
+            "layout" => {
+                let text = example["text"].as_str().ok_or("layout text")?;
+                !contains_legacy_layout_reference(text)
+            }
+            "profile" => {
+                let profile = example["profile"].as_str().ok_or("profile")?;
+                catalog.policy.entry.profiles.iter().any(|value| value == profile)
+            }
+            "adapter" => {
+                let adapter = example["adapter"].as_str().ok_or("adapter")?;
+                catalog.policy.adapters.iter().any(|value| value.id == adapter)
+            }
+            other => return Err(format!("unknown example kind: {other}").into()),
+        };
+        assert_eq!(
+            matched, expect_accepted,
+            "example {} did not match its expected outcome",
+            example["id"].as_str().unwrap_or("<unknown>")
+        );
+        if expect_accepted {
+            accepted += 1;
+        }
+    }
+    assert!(accepted > 0);
+    assert_eq!(covered_routes, routes);
+    Ok(())
+}
+
+#[test]
+fn command_catalog_drift_updates_only_the_stale_entry_guide() -> Result<(), Box<dyn Error>> {
+    let root = test_root("catalog-drift")?;
+    let installed = install(&root, "codex", ".codex/prompts")?;
+    let entry_path = installed["files"]
+        .as_array()
+        .and_then(|files| files.iter().find(|file| file["workflow_id"] == "entry"))
+        .and_then(|file| file["relative_path"].as_str())
+        .ok_or("installed entry")?
+        .to_string();
+    let unchanged_path = installed["files"]
+        .as_array()
+        .and_then(|files| files.iter().find(|file| file["workflow_id"] == "verify"))
+        .and_then(|file| file["relative_path"].as_str())
+        .ok_or("installed verify")?
+        .to_string();
+    let entry_before = fs::read(root.join(&entry_path))?;
+    let verify_before = fs::read(root.join(&unchanged_path))?;
+
+    let mut policy: Value = serde_json::from_slice(&fs::read(policy_path())?)?;
+    let commands = policy["generated_agent_workflow_policy"]["command_catalog"]
+        .as_array_mut()
+        .ok_or("command catalog")?;
+    commands
+        .iter_mut()
+        .find(|command| command["id"] == "status")
+        .ok_or("status command")?["invocation"] =
+        Value::String("cairn status --root . --format json".to_string());
+    let updated_policy_path = root.join("updated-policy.json");
+    fs::write(&updated_policy_path, serde_json::to_vec_pretty(&policy)?)?;
+
+    let mut preview_args = destination_args(&root, "install", "codex", ".codex/prompts");
+    let policy_index = preview_args
+        .iter()
+        .position(|value| value == "--policy")
+        .ok_or("policy option")?;
+    preview_args[policy_index + 1] = updated_policy_path.display().to_string();
+    let (preview_output, preview) = run_owned(&preview_args)?;
+    assert!(preview_output.status.success());
+    let preview = preview.ok_or("drift preview")?;
+    assert!(preview["files"].as_array().is_some_and(|files| files.iter().any(
+        |file| file["workflow_id"] == "entry" && file["freshness"] == "stale-source"
+    )));
+    assert_eq!(preview["manifest"]["freshness"], "stale-source");
+    assert_eq!(fs::read(root.join(&entry_path))?, entry_before);
+
+    let mut execute_args = preview_args;
+    execute_args.extend([
+        "--execute".to_string(),
+        "--plan-hash".to_string(),
+        preview["plan_hash"]
+            .as_str()
+            .ok_or("drift plan")?
+            .to_string(),
+    ]);
+    let (execute_output, receipt) = run_owned(&execute_args)?;
+    assert!(
+        execute_output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&execute_output.stderr)
+    );
+    let receipt = receipt.ok_or("drift receipt")?;
+    assert_eq!(receipt["executed"], true);
+    let entry_after = fs::read(root.join(&entry_path))?;
+    assert_ne!(entry_after, entry_before);
+    assert!(String::from_utf8_lossy(&entry_after).contains("cairn status --root . --format json"));
+    assert_eq!(fs::read(root.join(&unchanged_path))?, verify_before);
+    Ok(())
+}
+
+#[test]
+fn invalid_entry_budget_and_legacy_layout_fail_cli_admission() -> Result<(), Box<dyn Error>> {
+    let root = test_root("entry-admission")?;
+    let source: Value = serde_json::from_slice(&fs::read(policy_path())?)?;
+    for name in ["budget", "layout"] {
+        let mut policy = source.clone();
+        match name {
+            "budget" => {
+                policy["generated_agent_workflow_policy"]["entry"]["max_bytes"] =
+                    serde_json::json!(64);
+            }
+            "layout" => {
+                policy["generated_agent_workflow_policy"]["entry"]["layout"] =
+                    serde_json::json!("cairn");
+            }
+            _ => unreachable!("bounded test mutation"),
+        }
+        let path = root.join(format!("invalid-{name}.json"));
+        fs::write(&path, serde_json::to_vec_pretty(&policy)?)?;
+        let path_arg = path.display().to_string();
+        let (output, _) = run(&[
+            "agent", "workflow", "list", "--policy", &path_arg,
+        ])?;
+        assert!(!output.status.success(), "{name} must fail admission");
+    }
     Ok(())
 }

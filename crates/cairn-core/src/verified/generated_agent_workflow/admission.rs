@@ -22,6 +22,8 @@ pub fn admit_generated_agent_workflow_policy(
 {
     let mut issues = validate_policy_header(policy);
     let command_permissions = validate_command_classes(policy, &mut issues);
+    validate_command_catalog(policy, &command_permissions, &mut issues);
+    validate_entry_guide(policy, &mut issues);
     validate_descriptors(policy, &command_permissions, &mut issues);
     validate_adapters(policy, &mut issues);
     issues.sort_by(|left, right| {
@@ -41,6 +43,9 @@ pub fn admit_generated_agent_workflow_policy(
         .command_classes
         .sort_by(|left, right| left.id.cmp(&right.id));
     normalized
+        .command_catalog
+        .sort_by(|left, right| left.id.cmp(&right.id));
+    normalized
         .descriptors
         .sort_by(|left, right| left.id.cmp(&right.id));
     normalized
@@ -53,9 +58,15 @@ pub fn admit_generated_agent_workflow_policy(
         normalize_strings(&mut descriptor.constraints);
         normalize_strings(&mut descriptor.non_claims);
     }
+    let command_catalog_identity = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
+        "command_catalog": normalized.command_catalog,
+    }));
     let catalog_identity = crate::verified::evidence::canonical_json_hash(&serde_json::json!({
         "generator_version": normalized.generator_version,
         "command_classes": normalized.command_classes,
+        "command_catalog": normalized.command_catalog,
+        "command_catalog_identity": command_catalog_identity,
+        "entry": normalized.entry,
         "descriptors": normalized.descriptors,
         "adapters": normalized.adapters,
         "bounds": normalized.bounds,
@@ -63,6 +74,7 @@ pub fn admit_generated_agent_workflow_policy(
     }));
     Ok(super::model::AdmittedGeneratedWorkflowCatalog {
         policy: normalized,
+        command_catalog_identity,
         catalog_identity,
     })
 }
@@ -107,6 +119,263 @@ pub fn find_generated_workflow_adapter<'a>(
                 ),
             )
         })
+}
+
+pub fn find_generated_workflow_command<'a>(
+    catalog: &'a super::model::AdmittedGeneratedWorkflowCatalog,
+    id: &str,
+) -> Result<&'a super::model::GeneratedWorkflowCommand, super::model::GeneratedWorkflowIssue> {
+    catalog
+        .policy
+        .command_catalog
+        .iter()
+        .find(|command| command.id == id)
+        .ok_or_else(|| {
+            issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+                "entry.routes",
+                format!("unknown command catalog route {id}"),
+            )
+        })
+}
+
+pub fn find_entry_guide_profile<'a>(
+    catalog: &'a super::model::AdmittedGeneratedWorkflowCatalog,
+    profile_id: &str,
+) -> Result<&'a str, super::model::GeneratedWorkflowIssue> {
+    catalog
+        .policy
+        .entry
+        .profiles
+        .iter()
+        .find(|profile| profile.as_str() == profile_id)
+        .map(String::as_str)
+        .ok_or_else(|| {
+            issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+                "entry.profiles",
+                format!(
+                    "unknown workflow profile {profile_id}; supported profiles: {}",
+                    catalog.policy.entry.profiles.join(", ")
+                ),
+            )
+        })
+}
+
+fn validate_command_catalog(
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+    command_permissions: &std::collections::BTreeMap<
+        String,
+        super::model::GeneratedWorkflowPermission,
+    >,
+    issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
+) {
+    let mut ids = std::collections::BTreeSet::new();
+    if policy.command_catalog.len() > policy.bounds.max_command_classes {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_POLICY,
+            "generated_agent_workflow_policy.command_catalog",
+            "command catalog exceeds the policy collection bound",
+        ));
+    }
+    for (index, command) in policy.command_catalog.iter().enumerate() {
+        let path = format!("generated_agent_workflow_policy.command_catalog[{index}]");
+        if !valid_id(&command.id) || !ids.insert(command.id.clone()) {
+            issues.push(issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+                format!("{path}.id"),
+                "command catalog IDs must be safe and unique",
+            ));
+        }
+        if !command_permissions.contains_key(&command.command_class) {
+            issues.push(issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+                format!("{path}.command_class"),
+                format!("unknown command class: {}", command.command_class),
+            ));
+        }
+        if !bounded_text(&command.invocation, policy.bounds.max_text_bytes)
+            || !command.invocation.starts_with("cairn ")
+            || contains_legacy_layout_reference(&command.invocation)
+        {
+            issues.push(issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+                format!("{path}.invocation"),
+                "command invocation must be bounded, start with cairn, and use the native layout",
+            ));
+        }
+    }
+    if ids.is_empty() {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+            "generated_agent_workflow_policy.command_catalog",
+            "at least one command catalog entry is required",
+        ));
+    }
+}
+
+fn validate_entry_guide(
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+    issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
+) {
+    let entry = &policy.entry;
+    let path = "generated_agent_workflow_policy.entry";
+    if entry.id != super::model::GENERATED_AGENT_WORKFLOW_ENTRY_ID
+        || entry.version < MINIMUM_DESCRIPTOR_VERSION
+        || entry.layout != super::model::GENERATED_AGENT_WORKFLOW_NATIVE_LAYOUT
+    {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+            path,
+            "entry guide identity, version, or native layout is invalid",
+        ));
+    }
+    let scalar_text = [entry.goal.as_str(), entry.layout.as_str()];
+    if scalar_text
+        .iter()
+        .any(|text| !bounded_text(text, policy.bounds.max_text_bytes))
+        || contains_legacy_layout_reference(&entry.goal)
+    {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+            path,
+            "entry guide text is empty, out of bounds, or uses a legacy layout",
+        ));
+    }
+    let commands = policy
+        .command_catalog
+        .iter()
+        .map(|command| command.id.as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    let routes = [
+        (&entry.discovery_routes, "discovery_routes"),
+        (&entry.readiness_routes, "readiness_routes"),
+    ];
+    for (values, name) in routes {
+        if values.is_empty()
+            || values.len() > policy.bounds.max_list_items
+            || !unique_nonempty(values)
+            || values.iter().any(|value| !commands.contains(value.as_str()))
+        {
+            issues.push(issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+                format!("{path}.{name}"),
+                "entry routes must be unique, bounded, and present in the command catalog",
+            ));
+        }
+    }
+    for route in [&entry.stage_route, &entry.profile_route] {
+        if !commands.contains(route.as_str()) {
+            issues.push(issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+                format!("{path}.stage_route"),
+                format!("unknown command catalog route {route}"),
+            ));
+        }
+    }
+    if entry.profiles.is_empty()
+        || entry.profiles.len() > policy.bounds.max_list_items
+        || !unique_nonempty(&entry.profiles)
+        || entry
+            .profiles
+            .iter()
+            .any(|profile| !valid_id(profile) || !bounded_text(profile, policy.bounds.max_text_bytes))
+    {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+            format!("{path}.profiles"),
+            "entry profiles must be safe, unique, and bounded",
+        ));
+    }
+    if entry.boundaries.is_empty()
+        || entry.boundaries.len() > policy.bounds.max_list_items
+        || !unique_nonempty(&entry.boundaries)
+        || entry
+            .boundaries
+            .iter()
+            .any(|text| !bounded_text(text, policy.bounds.max_text_bytes)
+                || contains_legacy_layout_reference(text))
+    {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+            format!("{path}.boundaries"),
+            "entry boundaries must be unique, bounded, and use the native layout",
+        ));
+    }
+    if entry.required_evidence.is_empty()
+        || entry.required_evidence.len() > policy.bounds.max_list_items
+        || !unique_nonempty(&entry.required_evidence)
+        || entry
+            .required_evidence
+            .iter()
+            .any(|text| !bounded_text(text, policy.bounds.max_text_bytes)
+                || contains_legacy_layout_reference(text))
+    {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+            format!("{path}.required_evidence"),
+            "entry evidence constraints must be unique, bounded, and use the native layout",
+        ));
+    }
+    let stage_command = policy
+        .command_catalog
+        .iter()
+        .find(|command| command.id == entry.stage_route);
+    if entry.max_stage_route_bytes == 0
+        || stage_command.is_none_or(|command| {
+            command.invocation.is_empty()
+                || command.invocation.len() > entry.max_stage_route_bytes
+                || command.invocation.len() > policy.bounds.max_text_bytes
+        })
+    {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+            format!("{path}.max_stage_route_bytes"),
+            "stage route text exceeds the entry stage-route bound",
+        ));
+    }
+    let required_bytes = entry_required_bytes(policy);
+    if entry.max_bytes == 0
+        || entry.max_bytes > policy.bounds.max_file_bytes
+        || entry.max_bytes < required_bytes
+    {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
+            format!("{path}.max_bytes"),
+            "entry text bound cannot carry mandatory boundaries, evidence, and routes",
+        ));
+    }
+}
+
+fn entry_required_bytes(policy: &super::model::GeneratedAgentWorkflowPolicy) -> usize {
+    let entry = &policy.entry;
+    let mut total = entry.goal.len() + entry.layout.len() + 512;
+    for values in [
+        &entry.boundaries,
+        &entry.required_evidence,
+        &entry.profiles,
+        &policy.required_non_claims,
+    ] {
+        total = values
+            .iter()
+            .fold(total, |total, value| total.saturating_add(value.len() + 4));
+    }
+    for route in entry
+        .discovery_routes
+        .iter()
+        .chain(entry.readiness_routes.iter())
+        .chain(std::iter::once(&entry.stage_route))
+        .chain(std::iter::once(&entry.profile_route))
+    {
+        if let Some(command) = policy
+            .command_catalog
+            .iter()
+            .find(|command| &command.id == route)
+        {
+            total = total.saturating_add(command.invocation.len() + 4);
+        }
+    }
+    total
 }
 
 fn validate_policy_header(
@@ -283,11 +552,14 @@ fn validate_descriptor_shape(
     if scalar_text
         .iter()
         .any(|text| !bounded_text(text, policy.bounds.max_text_bytes))
+        || scalar_text
+            .iter()
+            .any(|text| contains_legacy_layout_reference(text))
     {
         issues.push(issue(
             super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
             path,
-            "workflow descriptor scalar text is empty or out of bounds",
+            "workflow descriptor scalar text is empty, out of bounds, or uses a legacy layout",
         ));
     }
     let lists = [
@@ -300,15 +572,16 @@ fn validate_descriptor_shape(
     if lists.iter().any(|values| {
         values.is_empty()
             || values.len() > policy.bounds.max_list_items
-            || values
-                .iter()
-                .any(|value| !bounded_text(value, policy.bounds.max_text_bytes))
+            || values.iter().any(|value| {
+                !bounded_text(value, policy.bounds.max_text_bytes)
+                    || contains_legacy_layout_reference(value)
+            })
     }) || !contains_all(&descriptor.non_claims, &policy.required_non_claims)
     {
         issues.push(issue(
             super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
             path,
-            "workflow descriptor lists or non-claims are incomplete or out of bounds",
+            "workflow descriptor lists or non-claims are incomplete, out of bounds, or use a legacy layout",
         ));
     }
 }
@@ -406,6 +679,25 @@ fn contains_required(values: &[String], required: &[&str]) -> bool {
 
 fn contains_all(values: &[String], required: &[String]) -> bool {
     required.iter().all(|required| values.contains(required))
+}
+
+pub fn contains_legacy_layout_reference(text: &str) -> bool {
+    const MARKER: &str = "cairn/";
+    let mut offset = 0;
+    while let Some(relative) = text[offset..].find(MARKER) {
+        let start = offset + relative;
+        let previous = text[..start].chars().next_back();
+        if previous.is_none_or(|character| {
+            !(character == '.'
+                || character.is_ascii_alphanumeric()
+                || character == '-'
+                || character == '_')
+        }) {
+            return true;
+        }
+        offset = start + MARKER.len();
+    }
+    false
 }
 
 pub(super) fn issue(

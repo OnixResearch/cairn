@@ -6,8 +6,12 @@ mod receipt;
 use std::{error::Error, path::Path};
 
 use cairn_core::{
-    admit_generated_agent_workflow_policy, canonical_json_hash, find_generated_workflow_descriptor,
-    plan_generated_agent_workflow_install, AdmittedGeneratedWorkflowCatalog, Policy,
+    admit_generated_agent_workflow_policy, canonical_json_hash, find_entry_guide_profile,
+    find_generated_workflow_descriptor, inspect_copied_generated_workflow_guide,
+    plan_generated_agent_workflow_install, render_generated_agent_workflows,
+    safe_generated_destination_path, validate_generated_workflow_manifest,
+    AdmittedGeneratedWorkflowCatalog, GeneratedWorkflowManifest, Policy,
+    GENERATED_AGENT_WORKFLOW_ENTRY_ID,
 };
 
 use crate::support::{load_policy_file, print_json, CapabilityRoot, CapabilityRootKind};
@@ -21,9 +25,12 @@ use crate::support::{load_policy_file, print_json, CapabilityRoot, CapabilityRoo
 // r[impl cairn.generated_agent_workflows.compatibility]
 use self::{
     execute::{execute_install_plan, AgentWorkflowLock},
-    observe::observe_generated_workflow_destination,
+    observe::{has_symlink_component, observe_generated_workflow_destination},
     options::{parse_agent_workflow_options, AgentWorkflowCommand, AgentWorkflowOptions},
-    receipt::{catalog_receipt, descriptor_receipt, install_plan_receipt},
+    receipt::{
+        catalog_receipt, copied_guide_receipt, descriptor_receipt, entry_receipt,
+        install_plan_receipt,
+    },
 };
 
 pub(crate) fn run_agent(args: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -39,6 +46,7 @@ pub(crate) fn run_agent(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             run_install_preview(&options, &catalog, &policy_hash)
         }
         AgentWorkflowCommand::Install => run_install(&options, &policy, &catalog, &policy_hash),
+        AgentWorkflowCommand::InspectCopy => run_inspect_copy(&options, &catalog),
     }
 }
 
@@ -51,8 +59,66 @@ fn run_show(
         .workflow
         .as_deref()
         .ok_or("workflow ID is unavailable")?;
-    find_generated_workflow_descriptor(catalog, workflow)?;
-    print_json(descriptor_receipt(catalog, policy_hash, workflow))
+    if workflow != GENERATED_AGENT_WORKFLOW_ENTRY_ID {
+        find_generated_workflow_descriptor(catalog, workflow)?;
+        return print_json(descriptor_receipt(catalog, policy_hash, workflow));
+    }
+    let adapter = options.adapter.as_deref().ok_or("adapter is unavailable")?;
+    if let Some(profile) = options.profile.as_deref() {
+        find_entry_guide_profile(catalog, profile)?;
+    }
+    let files = render_generated_agent_workflows(catalog, adapter).map_err(workflow_issues)?;
+    let file = files
+        .iter()
+        .find(|file| file.workflow_id == GENERATED_AGENT_WORKFLOW_ENTRY_ID)
+        .ok_or("rendered entry guide is unavailable")?;
+    print_json(entry_receipt(
+        catalog,
+        policy_hash,
+        adapter,
+        options.profile.as_deref(),
+        file,
+    ))
+}
+
+fn run_inspect_copy(
+    options: &AgentWorkflowOptions,
+    catalog: &AdmittedGeneratedWorkflowCatalog,
+) -> Result<(), Box<dyn Error>> {
+    let root_path = options.root.as_deref().ok_or("root is unavailable")?;
+    let guide = options.guide.as_deref().ok_or("guide is unavailable")?;
+    let manifest_path = options.manifest.as_deref().ok_or("manifest is unavailable")?;
+    let max_path_bytes = catalog.policy.bounds.max_path_bytes;
+    if !safe_generated_destination_path(guide, max_path_bytes)
+        || !safe_generated_destination_path(manifest_path, max_path_bytes)
+    {
+        return Err("guide and manifest must be safe project-relative paths".into());
+    }
+    let root = CapabilityRoot::open(CapabilityRootKind::Repository, root_path)?;
+    if has_symlink_component(&root, Path::new(guide))?
+        || has_symlink_component(&root, Path::new(manifest_path))?
+    {
+        return Err("inspect-copy rejects symlinked guide or manifest paths".into());
+    }
+    let max_file_bytes = u64::try_from(catalog.policy.bounds.max_file_bytes)?;
+    let guide_contents = String::from_utf8(root.read_bounded(Path::new(guide), max_file_bytes)?)?;
+    let manifest = match root.read_bounded(Path::new(manifest_path), max_file_bytes) {
+        Ok(bytes) => serde_json::from_slice::<GeneratedWorkflowManifest>(&bytes)
+            .ok()
+            .filter(validate_generated_workflow_manifest),
+        Err(_) => None,
+    };
+    let workflow = options
+        .workflow
+        .as_deref()
+        .unwrap_or(GENERATED_AGENT_WORKFLOW_ENTRY_ID);
+    let inspection = inspect_copied_generated_workflow_guide(
+        &guide_contents,
+        workflow,
+        manifest.as_ref(),
+        options.manifest_identity.as_deref(),
+    );
+    print_json(copied_guide_receipt(catalog, &inspection))
 }
 
 fn run_install_preview(
