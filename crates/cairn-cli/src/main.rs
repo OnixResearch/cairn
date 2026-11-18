@@ -44,6 +44,7 @@ mod receipt_verify_content_hash;
 mod release_decision;
 mod release_evidence;
 mod release_readiness;
+mod revision_classification;
 mod release_run;
 mod rename_classification;
 mod requirement_id_registry;
@@ -197,6 +198,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "claim-derivation" => scoped_claim_derivations::run(args.collect())?,
         "source-review" => source_review::run(args.collect())?,
         "requirement-contract" => typed_requirement_contracts::run(args.collect())?,
+        "revision" => revision_classification::run(args.collect())?,
         "prose" => prose::run(args.collect())?,
         "compact" => archive_compaction::run_compact(args.collect())?,
         "template" => developer_experience::run_template(args.collect())?,
