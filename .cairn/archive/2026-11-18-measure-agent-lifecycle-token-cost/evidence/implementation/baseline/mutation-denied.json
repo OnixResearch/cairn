@@ -1,0 +1,15 @@
+{
+  "content": [
+    {
+      "text": "cairn_archive_execute: {\"allowed\":false,\"error\":\"mutation capability required\",\"mutated\":false,\"tool\":\"cairn_archive_execute\"}",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "allowed": false,
+    "error": "mutation capability required",
+    "mutated": false,
+    "tool": "cairn_archive_execute"
+  }
+}
