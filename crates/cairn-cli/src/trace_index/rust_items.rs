@@ -253,6 +253,10 @@ fn declaration_gap(mut gap: &str) -> bool {
 mod tests {
     use super::*;
 
+    /// Assembled so this fixture source does not register as a live traceability
+    /// claim for the intentionally undeclared `demo.item` requirement.
+    const MARKER: &str = concat!("r[im", "pl demo.item]");
+
     fn config() -> RustItemConfiguration {
         RustItemConfiguration { source_path: "rust-config.json".into(), file_blake3: "a".repeat(64), schema_version: "cairn.rust-item-configuration.v1".into(),
             target: "x86_64-unknown-linux-gnu".into(), features: vec![], declared_features: vec!["missing".into()], cfg: vec![] }
@@ -270,8 +274,8 @@ mod tests {
     #[test]
     fn saved_bytes_resolve_nested_duplicate_names_without_collapsing() {
         let path = "src/lib.rs";
-        let text = "mod α {\r\n// r[impl demo.item]\r\n/* é */ fn x() {}\r\n}\r\nmod β {\r\n// r[impl demo.item]\r\nfn x() {}\r\n}\r\n";
-        let markers = text.match_indices("r[impl demo.item]").map(|(at, raw)| link(path, at, at + raw.len())).collect::<Vec<_>>();
+        let text = concat!("mod α {\r\n// r[im", "pl demo.item]\r\n/* é */ fn x() {}\r\n}\r\nmod β {\r\n// r[im", "pl demo.item]\r\nfn x() {}\r\n}\r\n");
+        let markers = text.match_indices(MARKER).map(|(at, raw)| link(path, at, at + raw.len())).collect::<Vec<_>>();
         let resolved = facts(&[TraceabilityFile { path: path.into(), text: text.into() }], &markers, &config()).unwrap();
         assert_eq!(resolved.len(), 2);
         assert_eq!(resolved[0].start_byte as usize, text.find("fn x()").unwrap());
@@ -281,17 +285,17 @@ mod tests {
 
     #[test]
     fn disabled_enclosing_module_cannot_expose_child_item() {
-        let source = "#[cfg(any())] mod hidden { // r[impl demo.item]\nfn x() {} }";
-        let marker = source.find("r[impl demo.item]").unwrap();
+        let source = concat!("#[cfg(any())] mod hidden { // r[im", "pl demo.item]\nfn x() {} }");
+        let marker = source.find(MARKER).unwrap();
         let selected = facts(&[TraceabilityFile { path: "src/lib.rs".into(), text: source.into() }],
-            &[link("src/lib.rs", marker, marker + "r[impl demo.item]".len())], &config());
+            &[link("src/lib.rs", marker, marker + MARKER.len())], &config());
         assert!(selected.unwrap_err().contains("disabled"));
     }
 
     #[test]
     fn cfg_unknown_and_macro_expansion_fail_closed() {
-        for source in ["// r[impl demo.item]\n#[cfg(target_feature = \"imaginary\")] fn x() {}",
-                       "// r[impl demo.item]\nfoo!();"] {
+        for source in [concat!("// r[im", "pl demo.item]\n#[cfg(target_feature = \"imaginary\")] fn x() {}"),
+                       concat!("// r[im", "pl demo.item]\nfoo!();")] {
             let marker = link("src/lib.rs", 3, 20);
             let result = facts(&[TraceabilityFile { path: "src/lib.rs".into(), text: source.into() }], &[marker], &config());
             assert!(result.is_err(), "unsupported source should fail: {source}");
@@ -300,7 +304,7 @@ mod tests {
 
     #[test]
     fn ordinary_logical_negation_is_not_a_macro() {
-        let source = "// r[impl demo.item]\nfn x(value: bool) -> bool { !value }";
+        let source = concat!("// r[im", "pl demo.item]\nfn x(value: bool) -> bool { !value }");
         let result = facts(&[TraceabilityFile { path: "src/lib.rs".into(), text: source.into() }],
             &[link("src/lib.rs", 3, 20)], &config());
         assert_eq!(result.unwrap().len(), 1);
@@ -308,7 +312,7 @@ mod tests {
 
     #[test]
     fn source_budget_fails_before_parsing() {
-        let mut source = String::from("// r[impl demo.item]\nfn x() {}\n");
+        let mut source = String::from(concat!("// r[im", "pl demo.item]\nfn x() {}\n"));
         source.push_str(&" ".repeat(MAX_RUST_SOURCE_BYTES));
         let result = facts(&[TraceabilityFile { path: "src/lib.rs".into(), text: source }],
             &[link("src/lib.rs", 3, 20)], &config());
@@ -330,7 +334,7 @@ mod tests {
 
     #[test]
     fn unicode_attribute_keeps_exact_item_byte_boundary() {
-        let text = "// r[impl demo.item]\r\n/* é */ #[doc = \"λ\"] fn café() {}\r\n";
+        let text = concat!("// r[im", "pl demo.item]\r\n/* é */ #[doc = \"λ\"] fn café() {}\r\n");
         let file = TraceabilityFile { path: "src/lib.rs".into(), text: text.into() };
         let selected = facts(&[file], &[link("src/lib.rs", 3, 20)], &config()).unwrap();
         assert_eq!(selected[0].start_byte as usize, text.find("#[doc").unwrap());
