@@ -672,6 +672,34 @@
               touch $out
             '';
 
+        # r[verify cairn.selected_work.contract]
+        # r[verify cairn.selected_work.obligations]
+        selected-work-contracts =
+          pkgs.runCommand "cairn-selected-work-contracts"
+            { nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) ]; }
+            ''
+              cp -r ${self}/cairn-policy policy
+              cp -r ${self}/contracts contracts
+              chmod -R u+w policy
+              nickel typecheck contracts/selected-work.ncl
+              nickel export --format json policy/selected-work.ncl > selected-work.json
+              cmp selected-work.json policy/generated/selected-work.json
+              nickel export --format json policy/fixtures/selected-work-positive.ncl > positive.json
+              if nickel export --format json policy/fixtures/selected-work-negative.ncl > negative.json 2> negative.err; then
+                echo "expected forged obligation state rejection" >&2
+                exit 1
+              fi
+              grep -q 'state' negative.err
+              substituteInPlace policy/selected-work.ncl \
+                --replace-fail '= selected.max_units,' '= 511,'
+              nickel export --format json policy/selected-work.ncl > drift.json
+              if cmp -s drift.json policy/generated/selected-work.json; then
+                echo "expected selected-work policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         policy-stale-detects-drift =
           pkgs.runCommand "cairn-policy-stale-detects-drift"
             {

@@ -56,16 +56,17 @@ fn report_budget_is_shared_across_readers_and_both_observation_passes() -> Resul
     input["cross_repo_evidence"] = json!(["upstream.json"]);
     let policy = PathBuf::from(input["policy"].as_str().ok_or("policy")?);
     let measured = ObservationBudget::new();
-    let first = gather_once(&root, &policy, "demo", &input, &measured)?;
+    let first = gather_once(&root, &policy, "demo", &input, &measured, false)?;
     let bytes = MAX_REPORT_BYTES - measured.read_limit(MAX_REPORT_BYTES);
     assert!(bytes > std::fs::metadata(&policy)?.len());
     let exact = ObservationBudget::with_limits(bytes * 2, MAX_REPORT_ENTRIES);
-    let stable = gather_observation_cohort(|| gather_once(&root, &policy, "demo", &input, &exact))?;
+    let stable =
+        gather_observation_cohort(|| gather_once(&root, &policy, "demo", &input, &exact, false))?;
     assert_eq!(stable, first);
     assert_eq!(exact.read_limit(MAX_REPORT_BYTES), 0);
     let short = ObservationBudget::with_limits(bytes * 2 - 1, MAX_REPORT_ENTRIES);
     let rejected =
-        gather_observation_cohort(|| gather_once(&root, &policy, "demo", &input, &short))?;
+        gather_observation_cohort(|| gather_once(&root, &policy, "demo", &input, &short, false))?;
     assert!(!derive_readiness(&rejected).valid);
     assert!(!derive_readiness(&rejected).mutation_authorized);
     std::fs::remove_dir_all(root)?;

@@ -42,6 +42,53 @@ pub(crate) fn read_change_dependency_graph_with_budget(
     ))
 }
 
+/// Build the native graph only for the selected change and its declared active
+/// prerequisites. Repository-wide scans would incorrectly couple this request
+/// to malformed, unrelated changes.
+pub(crate) fn read_selected_dependency_graph_with_budget(
+    root: &Path,
+    layout: LifecycleLayout,
+    selected: &str,
+    budget: Option<&super::observation_budget::ObservationBudget>,
+) -> std::io::Result<ChangeDependencyGraph> {
+    let archived = collect_archived_change_ids_with_budget(root, layout, budget)?;
+    let mut pending = vec![selected.to_owned()];
+    let mut visited = std::collections::BTreeSet::new();
+    let mut changes = Vec::new();
+    while let Some(name) = pending.pop() {
+        if !visited.insert(name.clone()) || archived.contains(&name) {
+            continue;
+        }
+        let change = match read_selected_change_with_budget(root, layout, &name, budget) {
+            Ok(change) => change,
+            Err(error)
+                if name != selected
+                    && error
+                        .downcast_ref::<std::io::Error>()
+                        .is_some_and(|io| io.kind() == std::io::ErrorKind::NotFound) =>
+            {
+                continue
+            }
+            Err(error) => return Err(std::io::Error::other(error.to_string())),
+        };
+        if !change.metadata_issues.is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "selected prerequisite metadata is invalid",
+            ));
+        }
+        if visited.len() > 1_000 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "selected prerequisite closure exceeds limit",
+            ));
+        }
+        pending.extend(change.metadata.depends_on.iter().cloned());
+        changes.push(change);
+    }
+    Ok(build_change_dependency_graph(&changes, &archived))
+}
+
 pub(crate) fn collect_archived_change_ids(
     root: &Path,
     layout: LifecycleLayout,

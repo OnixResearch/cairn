@@ -38,3 +38,12 @@ Each selected unit carries the requirement references found in its task range an
 ## Claim boundary
 
 The projection reports selected structural work only. It does not prove artifact truth, task completion, implementation correctness, archive readiness, or release eligibility. Blockers are advisory observations, not approval or mutation authority.
+
+## Selected-work snapshots
+
+`selected-work` is the versioned producer/consumer contract for one explicit
+change and optional authored task ID, optionally with typed workflow
+obligations. It does not replace implementation-ready enumeration or change its
+default receipts. See [selected-work snapshots](selected-work.md) for the
+`cairn.selected-work.v1` wire record, cohort identities, obligation facts,
+refusals and consumer non-claims.

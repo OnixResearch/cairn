@@ -29,6 +29,9 @@ use super::generated_agent_workflow::{
 };
 use super::policy_exception::{classify_applicability, PolicyExceptionState};
 
+mod consumer;
+pub use consumer::*;
+
 pub const WORKFLOW_OBLIGATION_POLICY_SCHEMA_V1: &str = "cairn.workflow-obligation-policy.v1";
 pub const WORKFLOW_OBLIGATION_PREDICATE_SCHEMA_V1: &str = "cairn.workflow-obligation-predicate.v1";
 pub const WORKFLOW_OBLIGATION_REPORT_SCHEMA_V1: &str = "cairn.workflow-obligation-report.v1";

@@ -141,6 +141,7 @@ All default tools include MCP annotations equivalent to `readOnlyHint=true` and 
 - `cairn_read_spec`: required `spec`, optional `root`; read a bounded accepted spec by spec id.
 - `cairn_change_show`: required `change`, optional `root`; read bounded active-change metadata by change id.
 - `cairn_observe`: required `view` (`active_changes`, `readiness`, or `context`), optional `root`, `policy`, `change`, readiness budgets, context scope/spec/artifact/selectors, `mode`, page limits, `cursor`, and one bounded `prior` object or root-relative `prior_path`; return a stateless complete, paged, unchanged, or difference observation. It never writes an output file.
+- `cairn_selected_work`: required `change` and exactly one of `root` or `lifecycle_store`; optional `task`, `policy`, `contract`, `results`, `subject_hash`, `cross_repo_evidence`, `obligation_definition`, `obligation_observations` (requires `obligation_definition`), `disclosure`, `expected_cohort` and `detail` (requires `expected_cohort`). Returns the same `cairn.selected-work.v1` snapshot as `cairn selected-work`; see [selected-work snapshots](selected-work.md).
 - `cairn_doctor`: optional `root`, `policy`; run diagnostics and return a structured receipt.
 - `cairn_validate`: optional `root`, `policy`; run validation and return a structured receipt.
 - `cairn_gate`: required `change` and `stage`, optional `root`, `policy`; `stage` must be `proposal`, `design`, or `tasks`.

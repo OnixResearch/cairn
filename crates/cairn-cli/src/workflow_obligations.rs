@@ -75,37 +75,65 @@ fn rejected(error: WorkflowObligationError) -> Result<(), Box<dyn Error>> {
     Err("workflow obligation admission rejected".into())
 }
 
+/// Admit an obligation policy against the loaded workflow policy. The outer
+/// error is an unusable input; the inner error carries admission issues.
+fn admit_catalog(
+    policy: &cairn_core::Policy,
+    obligation_policy: &WorkflowObligationPolicy,
+) -> Result<
+    Result<cairn_core::AdmittedWorkflowObligationCatalog, Vec<cairn_core::WorkflowObligationIssue>>,
+    Box<dyn Error>,
+> {
+    let policy_hash = canonical_json_hash(&policy.raw);
+    let workflow_catalog =
+        admit_generated_agent_workflow_policy(&policy.generated_agent_workflow_policy)
+            .map_err(|issues| format!("generated workflow policy is invalid: {issues:?}"))?;
+    Ok(admit_workflow_obligation_policy(
+        obligation_policy,
+        &workflow_catalog,
+        &policy_hash,
+    ))
+}
+
+/// The checked bundled obligation catalog for an already loaded policy, as
+/// used by `selected-work`. Admission failure is an error, never an empty set.
+pub(crate) fn admit_bundled_obligation_catalog(
+    policy: &cairn_core::Policy,
+) -> Result<cairn_core::AdmittedWorkflowObligationCatalog, Box<dyn Error>> {
+    let obligation_policy: WorkflowObligationPolicy =
+        serde_json::from_str(DEFAULT_OBLIGATION_POLICY)
+            .map_err(|error| format!("workflow obligation policy is invalid: {error}"))?;
+    admit_catalog(policy, &obligation_policy)?.map_err(|issues| {
+        format!("workflow obligation policy admission rejected: {issues:?}").into()
+    })
+}
+
 fn load_admitted(
     policy_path: &Path,
     obligation_policy_path: Option<&str>,
 ) -> Result<(cairn_core::AdmittedWorkflowObligationCatalog, String), Box<dyn Error>> {
     let policy = load_policy_file(policy_path.to_path_buf())?;
     let policy_hash = canonical_json_hash(&policy.raw);
-    let workflow_catalog =
-        admit_generated_agent_workflow_policy(&policy.generated_agent_workflow_policy)
-            .map_err(|issues| format!("generated workflow policy is invalid: {issues:?}"))?;
     let obligation_policy: WorkflowObligationPolicy = match obligation_policy_path {
         Some(path) => serde_json::from_slice(&read_bounded_file(path, MAX_POLICY_BYTES)?)
             .map_err(|error| format!("workflow obligation policy is invalid: {error}"))?,
         None => serde_json::from_str(DEFAULT_OBLIGATION_POLICY)
             .map_err(|error| format!("workflow obligation policy is invalid: {error}"))?,
     };
-    let catalog =
-        match admit_workflow_obligation_policy(&obligation_policy, &workflow_catalog, &policy_hash)
-        {
-            Ok(catalog) => catalog,
-            Err(issues) => {
-                print_json(json!({
-                    "schema_version": EXPLANATION_SCHEMA,
-                    "outcome": "rejected",
-                    "advisory": true,
-                    "report": null,
-                    "error": {"outcome": "policy_rejected", "detail": format!("{issues:?}")},
-                    "boundary": WORKFLOW_OBLIGATION_BOUNDARY,
-                }))?;
-                return Err("workflow obligation policy admission rejected".into());
-            }
-        };
+    let catalog = match admit_catalog(&policy, &obligation_policy)? {
+        Ok(catalog) => catalog,
+        Err(issues) => {
+            print_json(json!({
+                "schema_version": EXPLANATION_SCHEMA,
+                "outcome": "rejected",
+                "advisory": true,
+                "report": null,
+                "error": {"outcome": "policy_rejected", "detail": format!("{issues:?}")},
+                "boundary": WORKFLOW_OBLIGATION_BOUNDARY,
+            }))?;
+            return Err("workflow obligation policy admission rejected".into());
+        }
+    };
     Ok((catalog, policy_hash))
 }
 

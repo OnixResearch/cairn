@@ -119,6 +119,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Inspect change readiness without execution or mutation",
         ),
         mcp_tool(
+            "cairn_selected_work",
+            true,
+            false,
+            "Read a cohort-bound selected change or authored task, with optional typed workflow obligations, without mutation",
+        ),
+        mcp_tool(
             "cairn_observe",
             true,
             false,
@@ -264,6 +270,30 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_context" => {
             mcp_object_schema(&[], &["root", "policy", "profile", "artifact", "operation"])
         }
+        "cairn_selected_work" => json!({
+            "type": "object", "additionalProperties": false,
+            "properties": {
+                "change": {"type": "string"}, "task": {"type": "string"},
+                "root": {"type": "string"}, "lifecycle_store": {"type": "string"},
+                "policy": {"type": "string"}, "contract": {"type": "string"},
+                "results": {"type": "string"}, "subject_hash": {"type": "string"},
+                "cross_repo_evidence": {"type": "array", "items": {"type": "string"}},
+                "obligation_definition": {"type": "string"},
+                "obligation_observations": {"type": "string"},
+                "disclosure": {"type": "string", "enum": ["local", "portable"]},
+                "detail": {"type": "boolean"},
+                "expected_cohort": {
+                    "type": "object", "additionalProperties": false,
+                    "properties": {
+                        "source": {"type": "string"}, "intent": {"type": "string"},
+                        "context": {"type": "string"}, "verification_subject": {"type": "string"},
+                        "dependencies": {"type": "string"}, "obligations": {"type": "string"},
+                        "selection": {"type": "string"}, "observation": {"type": "string"}
+                    },
+                    "required": ["source", "intent", "context", "verification_subject", "dependencies", "obligations", "selection", "observation"]
+                }
+            }, "required": ["change"]
+        }),
         "cairn_context_read" => {
             let mut schema = mcp_object_schema(
                 &["root", "scope", "artifact"],
@@ -663,6 +693,7 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
             Ok(())
         }
         "cairn_observe" => validate_observe_args(name, object),
+        "cairn_selected_work" => validate_mcp_selected_work_args(name, object),
         "cairn_verification_impact" => validate_verification_impact_args(name, object),
         "cairn_workflow_status" => {
             validate_string_args(name, object, &["change"], &["root", "policy", "schema"])
@@ -804,6 +835,63 @@ fn validate_observe_args(
             )
             .into());
         }
+    }
+    Ok(())
+}
+
+fn validate_mcp_selected_work_args(
+    tool: &str,
+    object: &serde_json::Map<String, Value>,
+) -> Result<(), Box<dyn Error>> {
+    let mut strings = object.clone();
+    for key in ["cross_repo_evidence", "expected_cohort", "detail"] {
+        strings.remove(key);
+    }
+    validate_string_args(
+        tool,
+        &strings,
+        &["change"],
+        &[
+            "task",
+            "root",
+            "lifecycle_store",
+            "policy",
+            "contract",
+            "results",
+            "subject_hash",
+            "obligation_definition",
+            "obligation_observations",
+            "disclosure",
+        ],
+    )?;
+    validate_evidence_array(tool, object)?;
+    if object.contains_key("root") == object.contains_key("lifecycle_store") {
+        return Err("selected-work requires exactly one root or lifecycle_store".into());
+    }
+    if object
+        .get("detail")
+        .is_some_and(|value| !value.is_boolean())
+    {
+        return Err("selected-work detail must be boolean".into());
+    }
+    if let Some(expected) = object.get("expected_cohort") {
+        serde_json::from_value::<cairn_core::verified::selected_work::ExpectedCohort>(
+            expected.clone(),
+        )?;
+    }
+    if object.get("detail") == Some(&json!(true)) && !object.contains_key("expected_cohort") {
+        return Err("selected-work detail requires expected_cohort".into());
+    }
+    if object.contains_key("obligation_observations")
+        && !object.contains_key("obligation_definition")
+    {
+        return Err("selected-work obligation_observations require obligation_definition".into());
+    }
+    if object
+        .get("disclosure")
+        .is_some_and(|value| !matches!(value.as_str(), Some("local" | "portable")))
+    {
+        return Err("selected-work disclosure must be local or portable".into());
     }
     Ok(())
 }

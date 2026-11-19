@@ -73,6 +73,7 @@ pub mod requirement_id_registry;
 pub mod revision_classification;
 pub mod runtime_evidence;
 pub mod scoped_claim_derivations;
+pub mod selected_work;
 pub mod semantic_review;
 pub mod source_review;
 pub mod stack_provenance;
