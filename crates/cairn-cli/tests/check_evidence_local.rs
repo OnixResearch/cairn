@@ -13,6 +13,8 @@ use std::{
     process::Command,
 };
 
+mod check_evidence_tool_path;
+
 fn repo() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -68,8 +70,13 @@ impl Fixture {
             "projection.json",
         ])?;
         let mut environment = BTreeMap::new();
+        // The ambient PATH can exceed the profile's value bound; pass only the
+        // directories of the tools a Cargo fixture runs.
+        environment.insert(
+            "PATH".into(),
+            check_evidence_tool_path::tool_path(&["cargo", "rustc", "cc", "ld"])?,
+        );
         for key in [
-            "PATH",
             "HOME",
             "CARGO_HOME",
             "RUSTC",

@@ -435,7 +435,7 @@
                 echo "expected readiness selector rejection" >&2
                 exit 1
               fi
-              grep -q 'blocker' view-negative.err
+              grep -q 'DetailKind' view-negative.err
               substituteInPlace policy/readiness.ncl \
                 --replace-fail 'max_blockers | Positive = 512' 'max_blockers | Positive = 511'
               nickel export --format json --field policy policy/readiness.ncl > drift.json

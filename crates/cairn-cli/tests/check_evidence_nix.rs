@@ -7,6 +7,8 @@ use cairn_core::{
 use serde_json::{json, Value};
 use std::{collections::BTreeMap, error::Error, fs, path::PathBuf, process::Command};
 
+mod check_evidence_tool_path;
+
 fn binary(name: &str) -> Result<PathBuf, Box<dyn Error>> {
     for directory in std::env::split_paths(&std::env::var_os("PATH").ok_or("missing PATH")?) {
         let path = directory.join(name);
@@ -55,7 +57,13 @@ fn nix_fixture(name: &str, script: &str, expected: bool) -> Result<(), Box<dyn E
     let nix = binary("nix")?;
     let hash = blake3::hash(&fs::read(&nix)?).to_hex().to_string();
     let mut environment = BTreeMap::new();
-    for key in ["PATH", "HOME", "NIX_REMOTE", "NIX_SSL_CERT_FILE"] {
+    // The ambient PATH can exceed the profile's value bound; pass only the
+    // directory of the Nix executable the fixture runs.
+    environment.insert(
+        "PATH".into(),
+        check_evidence_tool_path::tool_path(&["nix"])?,
+    );
+    for key in ["HOME", "NIX_REMOTE", "NIX_SSL_CERT_FILE"] {
         if let Ok(v) = std::env::var(key) {
             environment.insert(key.into(), v);
         }

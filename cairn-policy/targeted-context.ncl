@@ -10,13 +10,13 @@ let Bounds = {
   max_diagnostics | Positive,
   max_references | Positive,
 } in
-let Policy = {
+let PolicyContract = {
   schema | std.contract.from_predicate (fun s => s == "cairn.targeted-context-policy.v1"),
   bounds | Bounds,
   required_non_claims | Array String,
 } in
 {
-  contracts = { Policy = Policy },
+  contracts = { Policy = PolicyContract },
   policy = {
     schema = "cairn.targeted-context-policy.v1",
     bounds = {
@@ -32,5 +32,5 @@ let Policy = {
       "references and policy constraints are prerequisites, not automatically expanded content or implementation evidence",
       "selected content and document validity are independent; omissions require explicit follow-up",
     ],
-  } | Policy,
+  } | PolicyContract,
 }

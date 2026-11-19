@@ -33,7 +33,7 @@ let SubjectHash = std.contract.from_predicate (fun value =>
   && std.string.length value > 0
   && std.string.length value <= 128
 ) in
-let Selector = {
+let SelectorContract = {
   change | ChangeName,
   contract | optional | RelativePath,
   results | optional | RelativePath,
@@ -47,13 +47,13 @@ let CompletionSelectors = fun entry =>
   has_select "contract" entry == has_select "results" entry
   && has_select "contract" entry == has_select "subject_hash" entry
 in
-let Manifest = {
+let ManifestContract = {
   schema
     | std.contract.from_predicate (fun value =>
       value == "cairn.workflow-readiness-manifest.v1"
     ),
   changes
-    | Array Selector
+    | Array SelectorContract
     | std.contract.from_predicate (fun values =>
       std.array.length values > 0
       && std.array.length values <= 256
@@ -67,7 +67,7 @@ let Manifest = {
         values
     ),
 } in
-let ActionKind = std.contract.from_predicate (fun value =>
+let ActionKindContract = std.contract.from_predicate (fun value =>
   std.is_string value
   && (value == "task"
     || value == "dependency_wait"
@@ -80,9 +80,9 @@ let ActionKind = std.contract.from_predicate (fun value =>
 ) in
 {
   contracts = {
-    Selector = Selector,
-    Manifest = Manifest,
-    ActionKind = ActionKind,
+    Selector = SelectorContract,
+    Manifest = ManifestContract,
+    ActionKind = ActionKindContract,
   },
   policy = {
     schema = "cairn.workflow-readiness-policy.v1",
