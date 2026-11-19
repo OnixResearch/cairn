@@ -1,0 +1,93 @@
+{
+  "contracts": [
+    {
+      "assumptions": [
+        {
+          "affected_clause_ids": [
+            "octet.requirements.example.assumption.lean_toolchain"
+          ],
+          "assumption_id": "assumption.lean_toolchain",
+          "identity": "lean-toolchain:4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa",
+          "required_empirical_evidence": [
+            "check.lean_toolchain"
+          ],
+          "statement": "The retained Lean toolchain bytes are the reviewed toolchain identity.",
+          "trusted_boundary_identity": "aeneas-lean-provider-pin:bc2eb6f941369fa3c695e30598b5758b11e4f0de"
+        }
+      ],
+      "contract_id": "octet.requirements.example",
+      "exclusions": [
+        {
+          "clause_id": "octet.requirements.example.excluded.gpu_paths",
+          "exclusion_id": "exclusion.gpu_paths",
+          "reason": "The fixture covers only the checked Aeneas/Lean CPU proof receipt.",
+          "reviewed_specification_blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814"
+        }
+      ],
+      "non_claims": [
+        "does not authenticate the reviewer or producer",
+        "does not prove Aeneas, Charon, or Lean soundness",
+        "does not prove whole-program correctness",
+        "does not establish release eligibility"
+      ],
+      "specification": {
+        "blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814",
+        "path": "standards/requirements/example-spec.md"
+      },
+      "targets": [
+        {
+          "assurance": "checked_proof",
+          "checked_scope": [
+            "formal-proof:fixture-only:octet.aeneas_lean_proof_rails.fixture#rail-0"
+          ],
+          "claim": "The checked Aeneas/Lean fixture theorem aeneas.fixture.safe_add is present and accepted over the generated model.",
+          "evidence_classes": [
+            "proof_card"
+          ],
+          "evidence_ids": [
+            "aeneas.fixture.safe_add"
+          ],
+          "evidence_job": {
+            "definition": "standards/proof-rails/aeneas-lean/fixtures/valid",
+            "job_id": "octet.aeneas_lean_proof_rails.fixture"
+          },
+          "informal_remainder": "Translation soundness, verifier soundness, whole-program correctness and release eligibility remain outside the fixture theorem.",
+          "negative_controls": [],
+          "provider": "aeneas-lean",
+          "requirement": {
+            "requirement_body_blake3": "46c3b1ce237a0448b4ea6b7b5a2145ba94ca86abeca874e761b1367e81e91960",
+            "requirement_id": "octet.aeneas_lean_proof_rail.theorem_adequacy",
+            "row_blake3": "07140bc15d66a3d0e77d838ba9836871df2743e2338a72825d4a48c86b221fcd",
+            "source_span": {
+              "end_byte": 439,
+              "end_line": 8,
+              "start_byte": 129,
+              "start_line": 5
+            },
+            "specification_blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814",
+            "specification_path": "standards/requirements/example-spec.md"
+          }
+        },
+        {
+          "assurance": "reviewed",
+          "claim": "GPU execution paths are outside the reviewed scope of this fixture.",
+          "informal_remainder": "The exclusion is reviewed prose only; no evidence job discharges it.",
+          "requirement": {
+            "requirement_body_blake3": "3c1b2c99bdf16ce42f0ccc0095bdffb171f4f494d73d70453057662de54a90ac",
+            "requirement_id": "octet.requirements.example.reviewed_scope",
+            "row_blake3": "9ed38bd20fcebbcf84013cd2ef1e0fb19baa74bd5f8947c76b94dc6f69e6a4f7",
+            "source_span": {
+              "end_byte": 723,
+              "end_line": 11,
+              "start_byte": 625,
+              "start_line": 11
+            },
+            "specification_blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814",
+            "specification_path": "standards/requirements/example-spec.md"
+          }
+        }
+      ]
+    }
+  ],
+  "schema_version": "cairn.assurance-targets.v1"
+}

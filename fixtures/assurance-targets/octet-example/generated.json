@@ -1,0 +1,30 @@
+{
+  "entries": [
+    {
+      "artifact_hashes": [
+        "1328a8e93950d7cf39724b33b7a932f6c544ea881dd6c44a0e31c8cf0aa3d8b5"
+      ],
+      "policy_ids": [
+        "octet.aeneas_lean_proof_rails.fixture"
+      ],
+      "requirement_id": "octet.aeneas_lean_proof_rail.theorem_adequacy",
+      "source_ids": [
+        "formal-proof:fixture-only:octet.aeneas_lean_proof_rails.fixture#rail-0"
+      ],
+      "sources": [
+        {
+          "blake3": "fc70d39d863627bf99ab6a2c13a0b798aac059dc2520d9d2e48f7ac599fb4502",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/valid/real_fixture/src/lib.rs"
+        },
+        {
+          "blake3": "08e7c2d1fb1e21b2e7a174340a9f5b87c3acc634c591c6102624cd3a231f1125",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/valid/real_fixture/Theorem.lean"
+        }
+      ],
+      "tool_identity_hashes": [
+        "4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa"
+      ]
+    }
+  ],
+  "schema_version": "cairn.assurance-target-sources.v1"
+}

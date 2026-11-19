@@ -1,0 +1,35 @@
+{
+  "assumptions": [
+    {
+      "affected_clause_ids": [
+        "octet.requirements.example.assumption.lean_toolchain"
+      ],
+      "assumption_id": "assumption.lean_toolchain",
+      "identity": "lean-toolchain:4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa",
+      "required_empirical_evidence": [
+        "check.lean_toolchain"
+      ],
+      "statement": "The retained Lean toolchain bytes are the reviewed toolchain identity.",
+      "trusted_boundary_identity": "aeneas-lean-provider-pin:bc2eb6f941369fa3c695e30598b5758b11e4f0de"
+    }
+  ],
+  "contract_id": "octet.requirements.example",
+  "exclusions": [
+    {
+      "clause_id": "octet.requirements.example.excluded.gpu_paths",
+      "exclusion_id": "exclusion.gpu_paths",
+      "reason": "The fixture covers only the checked Aeneas/Lean CPU proof receipt.",
+      "reviewed_specification_blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814"
+    }
+  ],
+  "non_claims": [
+    "does not authenticate the reviewer or producer",
+    "does not prove Aeneas, Charon, or Lean soundness",
+    "does not prove whole-program correctness",
+    "does not establish release eligibility"
+  ],
+  "reviewed_specification": {
+    "blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814",
+    "path": "standards/requirements/example-spec.md"
+  }
+}

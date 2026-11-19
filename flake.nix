@@ -488,6 +488,47 @@
               touch $out
             '';
 
+        # r[verify cairn.assurance_targets.contract]
+        # r[verify cairn.assurance_targets.projection]
+        assurance-targets-contracts =
+          pkgs.runCommand "cairn-assurance-targets-contracts"
+            {
+              nativeBuildInputs = [ (nickelCohort pkgs.stdenv.hostPlatform.system) pkgs.jq ];
+            }
+            ''
+              cp -r ${self}/cairn-policy policy
+              cp -r ${self}/contracts contracts
+              mkdir fixtures
+              cp -r ${self}/fixtures/assurance-targets fixtures/assurance-targets
+              chmod -R u+w policy
+              nickel export --format json policy/assurance-targets.ncl | jq -S . > targets-policy.json
+              cmp targets-policy.json policy/generated/assurance-targets.json
+              for fixture in targets generated contract; do
+                nickel export --format json "fixtures/assurance-targets/octet-example/$fixture.ncl" | jq -S . > "$fixture.json"
+                cmp "$fixture.json" "fixtures/assurance-targets/octet-example/$fixture.json"
+              done
+              test "$(jq '.clauses | length' contract.json)" = 1
+              jq -S '.clauses[0]' contract.json > clause-0.json
+              cmp clause-0.json fixtures/assurance-targets/octet-example/octet-clause-0.json
+              jq -S '{contract_id, reviewed_specification, assumptions, exclusions, non_claims}' contract.json > contract-meta.json
+              cmp contract-meta.json fixtures/assurance-targets/octet-example/octet-contract-meta.json
+              for fixture in fixtures/assurance-targets/negative-*.ncl; do
+                if nickel export --format json "$fixture" > negative.json 2> negative.err; then
+                  echo "expected assurance targets rejection: $fixture" >&2
+                  exit 1
+                fi
+                test -s negative.err
+              done
+              substituteInPlace policy/assurance-targets.ncl \
+                --replace-fail 'max_contracts = 64,' 'max_contracts = 63,'
+              nickel export --format json policy/assurance-targets.ncl | jq -S . > drift.json
+              if cmp -s drift.json policy/generated/assurance-targets.json; then
+                echo "expected assurance targets policy drift" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
         # r[verify cairn.agent_workflow_readiness.compatibility]
         workflow-readiness-policy-fresh =
           pkgs.runCommand "cairn-workflow-readiness-policy-fresh"
