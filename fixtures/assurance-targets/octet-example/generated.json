@@ -26,5 +26,11 @@
       ]
     }
   ],
-  "schema_version": "cairn.assurance-target-sources.v1"
+  "schema_version": "cairn.assurance-target-sources.v1",
+  "specifications": [
+    {
+      "blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814",
+      "path": "standards/requirements/example-spec.md"
+    }
+  ]
 }

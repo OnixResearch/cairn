@@ -37,6 +37,11 @@ const MAX_POLICY_BYTES: u64 = 16 * 1024 * 1024;
 const ISSUE_MALFORMED_JSON: &str = "convergence.malformed_json";
 const ISSUE_UNREADABLE_INPUT: &str = "convergence.unreadable_input";
 const ISSUE_UNKNOWN_SCHEMA: &str = "convergence.unknown_schema";
+const ISSUE_PROOF_DECK_OUTSIDE_OUTPUT: &str = "convergence.proof_deck_outside_output";
+
+/// Registry verification issues plus the plain BLAKE3 of each accepted
+/// specification, keyed by its repo-relative path.
+type RegistryVerification = (Vec<String>, BTreeMap<String, String>);
 
 /// The typed, closed convergence case file.
 #[derive(Debug, Deserialize)]
@@ -194,15 +199,32 @@ fn open_directory(path: &Path) -> Result<CapabilityRoot, Vec<Value>> {
         .map_err(|error| vec![issue(ISSUE_UNREADABLE_INPUT, path.display(), error)])
 }
 
-/// A deck path must stay inside the producer output directory.
-fn safe_deck_path(path: &str) -> Option<&str> {
-    let deck = Path::new(path);
-    if deck.is_absolute() || path.is_empty() {
+/// Resolve a proof-deck locator to the relative path read inside the producer
+/// output directory.
+///
+/// Octet names the deck it judged by the locator it resolved against its own
+/// source root, which may be absolute. A relative locator is used as given; an
+/// absolute locator must lexically start with the case's resolved
+/// `producer_output` directory followed by `/`. Nothing is canonicalized, so a
+/// link cannot widen the directory, and no `..` component may step outside it.
+fn deck_relative_path<'a>(directory: &Path, locator: &'a str) -> Option<&'a str> {
+    if locator.is_empty() {
+        return None;
+    }
+    let relative = if Path::new(locator).is_absolute() {
+        let directory = directory.to_string_lossy();
+        let prefix = format!("{}/", directory.trim_end_matches('/'));
+        locator.strip_prefix(&prefix)?
+    } else {
+        locator
+    };
+    let deck = Path::new(relative);
+    if relative.is_empty() || deck.is_absolute() {
         return None;
     }
     deck.components()
         .all(|component| matches!(component, Component::Normal(_)))
-        .then_some(path)
+        .then_some(relative)
 }
 
 fn handoff_facts(
@@ -289,18 +311,20 @@ fn producer_output_facts(
     let mut decks = BTreeMap::new();
     if let Some(proof_decks) = evidence.get("proof_decks").and_then(Value::as_array) {
         for deck in proof_decks {
-            let Some(deck_name) = deck.get("deck").and_then(Value::as_str) else {
+            let Some(locator) = deck.get("deck").and_then(Value::as_str) else {
                 continue;
             };
-            let Some(deck_name) = safe_deck_path(deck_name) else {
+            let Some(relative) = deck_relative_path(directory, locator) else {
                 return Err(vec![issue(
-                    ISSUE_UNREADABLE_INPUT,
+                    ISSUE_PROOF_DECK_OUTSIDE_OUTPUT,
                     directory.display(),
-                    format!("proof deck path escapes the producer output directory: {deck_name}"),
+                    format!(
+                        "proof deck locator is outside the producer output directory: {locator}"
+                    ),
                 )]);
             };
-            let path = directory.join(deck_name);
-            match root.read_bounded(Path::new(deck_name), maximum) {
+            let path = directory.join(relative);
+            match root.read_bounded(Path::new(relative), maximum) {
                 Ok(bytes) => {
                     let value = parse_json(&bytes, &path)?;
                     let facts = FileFacts {
@@ -313,7 +337,9 @@ fn producer_output_facts(
                         &policy.schemas.octet_proof_cards,
                         &path,
                     )?;
-                    decks.insert(deck_name.to_string(), facts);
+                    // Keyed by the locator the evidence bundle named, so the
+                    // core finds the deck whether it is relative or absolute.
+                    decks.insert(locator.to_string(), facts);
                 }
                 // A missing deck is a decision for the core (`incomplete`);
                 // any other read failure is an unreadable input.
@@ -430,11 +456,24 @@ fn registry_verification_issues(
     root_path: &Path,
     case: &ConvergenceCase,
     registry: &cairn_core::ContentBoundRequirementRegistry,
-) -> Result<Vec<String>, Vec<Value>> {
+) -> Result<RegistryVerification, Vec<Value>> {
     let repository = CapabilityRoot::open(CapabilityRootKind::Repository, root_path)
         .map_err(|error| vec![issue(ISSUE_UNREADABLE_INPUT, root_path.display(), error)])?;
     let specifications = read_accepted_specifications(&repository)
         .map_err(|error| vec![issue(ISSUE_UNREADABLE_INPUT, root_path.display(), error)])?;
+    // Octet verifies the plain BLAKE3 of the reviewed specification bytes, so
+    // the projection must carry this digest, not the registry's
+    // domain-separated identity. `read_accepted_specifications` returns the
+    // exact UTF-8 file bytes under the repo-relative accepted path.
+    let root_specification_digests = specifications
+        .iter()
+        .map(|specification| {
+            (
+                specification.path.clone(),
+                blake3_hex(specification.markdown.as_bytes()),
+            )
+        })
+        .collect();
     let policy_path = case
         .registry_policy
         .as_deref()
@@ -461,7 +500,7 @@ fn registry_verification_issues(
         .collect::<Vec<_>>();
     codes.sort();
     codes.dedup();
-    Ok(codes)
+    Ok((codes, root_specification_digests))
 }
 
 /// Build the pure request from already-read facts; every decision stays in the
@@ -528,7 +567,8 @@ fn inspect(case_path: &Path, root_path: &Path, policy_bytes: &[u8]) -> Result<Va
         contracts.push(contract_facts(entry, base, &policy)?);
     }
 
-    let registry_verification = registry_verification_issues(root_path, &case, &registry)?;
+    let (registry_verification, root_specification_digests) =
+        registry_verification_issues(root_path, &case, &registry)?;
 
     let request = ConvergenceRequest {
         policy,
@@ -541,6 +581,7 @@ fn inspect(case_path: &Path, root_path: &Path, policy_bytes: &[u8]) -> Result<Va
         targets_blake3,
         generated,
         generated_blake3,
+        root_specification_digests,
         trusted_signers: case.trusted_signers.clone(),
         contracts,
     };

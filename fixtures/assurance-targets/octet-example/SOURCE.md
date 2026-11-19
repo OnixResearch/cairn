@@ -14,6 +14,10 @@ example and executes no proof.
 - `generated.json`: the generated source record for clause 0. `sources` and the
   four `required_bindings` lists are copied from that clause; they stand in for
   the record a producer would generate and are not authored in the targets.
+  `specifications` carries the plain BLAKE3 of
+  `standards/requirements/example-spec.md` from Octet's contract at the tag
+  (`78afa0f6…`, the value Octet's `requirements check` recomputes), not the
+  registry's domain-separated `specification_blake3`.
 
 ## Fixture-local values
 

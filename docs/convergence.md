@@ -27,6 +27,14 @@ from a separately generated source record (`cairn.assurance-target-sources.v1`)
 that a producer writes from the realized output. The registry row copied into
 each target is the one hand-maintained lock.
 
+The generated record also carries `specifications`, one entry per reviewed
+specification file: its path and the **plain** BLAKE3 of that file's bytes at the
+revision, produced by a tool (for example `b3sum`). It is never typed into a
+target and it is not the registry's domain-separated `specification_blake3`,
+because Octet verifies the plain digest itself. The projection copies that plain
+digest into the contract's `reviewed_specification`; a missing or duplicated
+entry for the contract's specification path fails the projection.
+
 The Nickel `project` function turns a targets contract and the generated record
 into an `octet-requirement-contract/v1` contract. `checked_proof` maps to
 `formal_proof`, `bounded_check` to `empirical_check`, and `reviewed` targets
@@ -50,6 +58,18 @@ the producer output directory the bridge consumed, and the Mantle realization
 receipt and store-info record for the job's root output. Relative paths resolve
 against the case file's directory.
 
+Octet judges the contract with the consumer checkout at the registry revision as
+`--source-root`, so the reviewed specification is read from that checkout and
+its plain digest is recomputed there; Cairn does the same from the accepted
+specifications under `--root` and marks the target `stale` when the contract's
+`reviewed_specification` does not carry that digest. The proof deck, by
+contrast, lives in the realized producer output: the evidence bundle may name it
+by a path relative to `producer_output` or by an absolute path that starts with
+the case's resolved `producer_output` directory followed by `/`. Cairn reads only
+the remaining relative path inside that directory. No canonicalization or link
+resolution widens the directory, a `..` component is refused, and any other
+absolute locator is rejected with `convergence.proof_deck_outside_output`.
+
 Every read is bounded, refuses symbolic links and stays inside its directory. An
 unknown option, a missing `--case`, a malformed or oversized input, or a schema
 identifier the policy does not admit is rejected with exit status 1. Otherwise
@@ -64,7 +84,7 @@ The receipt lists every registry row in registry order with one state:
 | State | Condition |
 | --- | --- |
 | `untargeted` | The row has no target. |
-| `not_projected` | The target is `reviewed`. |
+| `not_projected` | The target is `reviewed` and its row binding holds. |
 | `current` | Every binding below holds and Octet's decision passes the clause. |
 | `unrealized` | No complete, trusted-signer Mantle realization is supplied for the job. |
 | `stale` | A binding does not match. |
@@ -83,6 +103,8 @@ A target is `current` only when all of these bind:
 - the target's row equals the registry row and its contract's specification
   equals the row's specification;
 - the recomputed projection equals the contract file;
+- the contract's `reviewed_specification` names an accepted specification under
+  `--root` and its `blake3` equals the plain BLAKE3 of that file's bytes;
 - the decision's `contract_blake3`, `evidence_blake3` and
   `reviewed_specification` bind the contract and evidence files, and the evidence
   names the same contract;
@@ -106,6 +128,12 @@ are.
 row is `current` or `not_projected`. `coverage_complete` is true when no row is
 `untargeted`. `complete` is true only when both are, so declaring two targets
 cannot make a repository look converged.
+
+The receipt also carries `unbound_target_issues`: the binding issues that no
+evaluated row consumed, sorted by code and field path. A target whose
+requirement_id is absent from the registry, or a contract-level specification
+mismatch on a contract with no located target, appears there instead of being
+dropped. `targets_current` additionally requires that list to be empty.
 
 Identical inputs give byte-identical receipts. `receipt_blake3` is the BLAKE3 of
 the canonical receipt without that field.

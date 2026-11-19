@@ -122,6 +122,13 @@ let TargetsFileContract = {
   contracts | Array ContractContract,
 } in
 
+# The plain BLAKE3 of a reviewed specification file at the revision, produced by
+# a tool over the exact bytes. It is never the registry's domain-separated hash
+# and never typed into a target: Octet verifies the plain digest itself.
+let SpecificationDigest = {
+  path | NonEmpty,
+  blake3 | Digest,
+} in
 let GeneratedEntryRecord = {
   requirement_id | NonEmpty,
   sources | Array SourceBinding,
@@ -139,6 +146,7 @@ let GeneratedEntry = std.contract.custom (fun label value =>
 ) in
 let GeneratedSourcesContract = {
   schema_version | OneOf ["cairn.assurance-target-sources.v1"],
+  specifications | Array SpecificationDigest,
   entries | Array GeneratedEntry,
 } in
 
@@ -160,6 +168,17 @@ let entry_for = fun generated requirement_id =>
   else
     std.fail_with
       "every projected target requires exactly one generated source entry for its requirement_id"
+in
+let specification_for = fun generated path =>
+  let matching = std.array.filter
+    (fun specification => specification.path == path)
+    generated.specifications
+  in
+  if std.array.length matching == 1 then
+    std.array.first matching
+  else
+    std.fail_with
+      "the generated source record requires exactly one plain specification digest for the contract specification path"
 in
 # The fixed clause mapping from assurance targets to an Octet requirement contract.
 # `reviewed` targets produce no clause: Octet has no review disposition.
@@ -197,7 +216,8 @@ let project_fn = fun contract generated =>
   {
     schema_version = "octet-requirement-contract/v1",
     contract_id = contract.contract_id,
-    reviewed_specification = contract.specification,
+    reviewed_specification =
+      specification_for generated contract.specification.path,
     clauses =
       contract.targets
       |> std.array.filter (fun target => target.assurance != "reviewed")

@@ -117,7 +117,17 @@ pub struct EvidenceJob {
 #[serde(deny_unknown_fields)]
 pub struct GeneratedSources {
     pub schema_version: String,
+    pub specifications: Vec<SpecificationDigest>,
     pub entries: Vec<GeneratedSourceEntry>,
+}
+
+/// The plain BLAKE3 of one reviewed specification file at the revision. It is
+/// not the registry's domain-separated hash: Octet verifies the plain digest.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SpecificationDigest {
+    pub path: String,
+    pub blake3: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -520,6 +530,37 @@ pub fn project_contract(
         return Err(issues);
     }
 
+    // Octet verifies the plain BLAKE3 of the reviewed specification file, so the
+    // projection copies the generated digest, never the registry's
+    // domain-separated specification identity.
+    let specification = {
+        let mut matching = generated
+            .specifications
+            .iter()
+            .filter(|specification| specification.path == contract.specification.path);
+        match (matching.next(), matching.next()) {
+            (Some(specification), None) => specification,
+            (None, _) => {
+                push_issue(
+                    &mut issues,
+                    ISSUE_MISSING_GENERATED_SOURCES,
+                    "specifications",
+                    "generated source record has no plain digest for the contract specification path",
+                );
+                return Err(issues);
+            }
+            (Some(_), Some(_)) => {
+                push_issue(
+                    &mut issues,
+                    ISSUE_UNEXPECTED_GENERATED_SOURCES,
+                    "specifications",
+                    "generated source record has more than one digest for the contract specification path",
+                );
+                return Err(issues);
+            }
+        }
+    };
+
     let mut contract_object = serde_json::Map::new();
     contract_object.insert(
         "schema_version".into(),
@@ -532,8 +573,8 @@ pub fn project_contract(
     contract_object.insert(
         "reviewed_specification".into(),
         serde_json::json!({
-            "path": contract.specification.path,
-            "blake3": contract.specification.blake3,
+            "path": specification.path,
+            "blake3": specification.blake3,
         }),
     );
     contract_object.insert("clauses".into(), serde_json::Value::Array(clauses));
@@ -1100,6 +1141,65 @@ fn check_generated_sources(
             bounds,
             issues,
         );
+    }
+
+    check_list_len(
+        generated.specifications.len(),
+        "specifications",
+        bounds.max_list_items,
+        issues,
+    );
+    for (index, specification) in generated.specifications.iter().enumerate() {
+        let path = format!("specifications[{index}]");
+        check_text(
+            &specification.path,
+            &format!("{path}.path"),
+            bounds.max_text_bytes,
+            issues,
+        );
+        check_text(
+            &specification.blake3,
+            &format!("{path}.blake3"),
+            bounds.max_text_bytes,
+            issues,
+        );
+    }
+    let contract_specification_paths: BTreeSet<&str> = targets
+        .contracts
+        .iter()
+        .map(|contract| contract.specification.path.as_str())
+        .collect();
+    for path in &contract_specification_paths {
+        let matching = generated
+            .specifications
+            .iter()
+            .filter(|specification| specification.path == *path)
+            .count();
+        if matching == 0 {
+            push_issue(
+                issues,
+                ISSUE_MISSING_GENERATED_SOURCES,
+                "specifications",
+                "generated source record has no plain digest for a contract specification path",
+            );
+        } else if matching > 1 {
+            push_issue(
+                issues,
+                ISSUE_UNEXPECTED_GENERATED_SOURCES,
+                "specifications",
+                "generated source record has more than one digest for a contract specification path",
+            );
+        }
+    }
+    for (index, specification) in generated.specifications.iter().enumerate() {
+        if !contract_specification_paths.contains(specification.path.as_str()) {
+            push_issue(
+                issues,
+                ISSUE_UNEXPECTED_GENERATED_SOURCES,
+                &format!("specifications[{index}].path"),
+                "generated source record has a plain digest for an unknown specification path",
+            );
+        }
     }
 
     for (contract_index, contract) in targets.contracts.iter().enumerate() {

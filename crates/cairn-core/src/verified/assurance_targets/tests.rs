@@ -120,6 +120,11 @@ fn golden_projection_reproduces_octet_clause() {
         projected["reviewed_specification"],
         meta["reviewed_specification"]
     );
+    assert_eq!(
+        projected["reviewed_specification"]["blake3"],
+        generated.specifications[0].blake3
+    );
+
     assert_eq!(projected["assumptions"], meta["assumptions"]);
     assert_eq!(projected["exclusions"], meta["exclusions"]);
     assert_eq!(projected["non_claims"], meta["non_claims"]);
@@ -129,6 +134,41 @@ fn golden_projection_reproduces_octet_clause() {
     let rows = registry_rows(&targets);
     let specifications = registry_specifications(&targets);
     assert!(bind_targets_to_registry(&targets, &rows, &specifications).is_empty());
+}
+
+// r[verify cairn.assurance_targets.projection]
+#[test]
+fn projection_uses_the_plain_specification_digest() {
+    let domain = "7".repeat(64);
+    let mut targets_value = value(TARGETS_JSON);
+    targets_value["contracts"][0]["specification"]["blake3"] = json!(domain);
+    for target in targets_value["contracts"][0]["targets"]
+        .as_array_mut()
+        .expect("targets must be an array")
+    {
+        target["requirement"]["specification_blake3"] = json!(domain);
+    }
+    let policy = policy();
+    let targets = admit_targets(&targets_value, &policy).expect("targets must be admitted");
+    let contract = &targets.contracts[0];
+    let generated = admit_generated_sources(&value(GENERATED_JSON), &targets, &policy)
+        .expect("golden generated record must be admitted");
+
+    let projected =
+        project_contract(contract, &generated, &policy).expect("golden targets must project");
+    assert_eq!(
+        projected["reviewed_specification"]["path"],
+        json!(contract.specification.path)
+    );
+    assert_eq!(
+        projected["reviewed_specification"]["blake3"],
+        json!(generated.specifications[0].blake3)
+    );
+    assert_ne!(
+        projected["reviewed_specification"]["blake3"],
+        json!(domain),
+        "the registry's domain-separated identity must never reach Octet"
+    );
 }
 
 // r[verify cairn.assurance_targets.projection]
@@ -355,6 +395,57 @@ fn missing_generated_sources_is_rejected() {
     generated["entries"][0]["sources"] = json!([]);
     let issues = expect_rejected(admit_generated_sources(&generated, &targets, &policy()));
     assert_code(&issues, ISSUE_MISSING_GENERATED_SOURCES);
+}
+
+// r[verify cairn.assurance_targets.evidence_job]
+#[test]
+fn missing_specification_digest_is_rejected() {
+    let targets = admitted_targets();
+
+    let mut generated = value(GENERATED_JSON);
+    generated["specifications"] = json!([]);
+    let issues = expect_rejected(admit_generated_sources(&generated, &targets, &policy()));
+    assert_code(&issues, ISSUE_MISSING_GENERATED_SOURCES);
+
+    let mut generated = value(GENERATED_JSON);
+    generated["specifications"][0]["path"] = json!("standards/requirements/other.md");
+    let issues = expect_rejected(admit_generated_sources(&generated, &targets, &policy()));
+    assert_code(&issues, ISSUE_MISSING_GENERATED_SOURCES);
+    assert_code(&issues, ISSUE_UNEXPECTED_GENERATED_SOURCES);
+}
+
+// r[verify cairn.assurance_targets.evidence_job]
+#[test]
+fn duplicate_specification_digest_is_rejected() {
+    let targets = admitted_targets();
+    let mut generated = value(GENERATED_JSON);
+    let first = generated["specifications"][0].clone();
+    generated["specifications"]
+        .as_array_mut()
+        .expect("specifications must be an array")
+        .push(first);
+    let issues = expect_rejected(admit_generated_sources(&generated, &targets, &policy()));
+    assert_code(&issues, ISSUE_UNEXPECTED_GENERATED_SOURCES);
+}
+
+// r[verify cairn.assurance_targets.projection]
+#[test]
+fn missing_reviewed_specification_projection_is_rejected() {
+    let targets = admitted_targets();
+    let policy = policy();
+    let contract = &targets.contracts[0];
+    let mut generated = admit_generated_sources(&value(GENERATED_JSON), &targets, &policy)
+        .expect("golden generated record must be admitted");
+    generated.specifications.clear();
+    let issues = expect_rejected(project_contract(contract, &generated, &policy));
+    assert_code(&issues, ISSUE_MISSING_GENERATED_SOURCES);
+
+    let mut generated = admit_generated_sources(&value(GENERATED_JSON), &targets, &policy)
+        .expect("golden generated record must be admitted");
+    let first = generated.specifications[0].clone();
+    generated.specifications.push(first);
+    let issues = expect_rejected(project_contract(contract, &generated, &policy));
+    assert_code(&issues, ISSUE_UNEXPECTED_GENERATED_SOURCES);
 }
 
 // r[verify cairn.assurance_targets.evidence_job]

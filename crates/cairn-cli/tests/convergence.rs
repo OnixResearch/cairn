@@ -193,6 +193,10 @@ fn build_fixture(label: &str) -> Fixture {
     let targets = admit_targets(&targets_value, &policy).unwrap();
     let generated_value = json!({
         "schema_version": "cairn.assurance-target-sources.v1",
+        "specifications": [{
+            "path": row.specification_path,
+            "blake3": blake3_hex(synthetic_specification().as_bytes()),
+        }],
         "entries": [{
             "requirement_id": row.requirement_id,
             "sources": [{
@@ -371,6 +375,24 @@ fn receipt_json(output: &Output) -> Value {
     })
 }
 
+/// Point the evidence bundle at a new deck locator and rebind the decision to
+/// the rewritten evidence bytes.
+fn rewrite_evidence_deck(fixture: &Fixture, locator: &str) {
+    let evidence_path = fixture.case_dir.join("evidence.json");
+    let mut evidence: Value = serde_json::from_slice(&fs::read(&evidence_path).unwrap()).unwrap();
+    evidence["proof_decks"][0]["deck"] = json!(locator);
+    let evidence_bytes = serde_json::to_vec_pretty(&evidence).unwrap();
+    fs::write(&evidence_path, &evidence_bytes).unwrap();
+    let decision_path = fixture.case_dir.join("decision.json");
+    let mut decision: Value = serde_json::from_slice(&fs::read(&decision_path).unwrap()).unwrap();
+    decision["evidence_blake3"] = json!(blake3_hex(&evidence_bytes));
+    fs::write(
+        &decision_path,
+        serde_json::to_vec_pretty(&decision).unwrap(),
+    )
+    .unwrap();
+}
+
 fn hash_tree(root: &Path) -> BTreeMap<String, String> {
     fn walk(base: &Path, directory: &Path, entries: &mut BTreeMap<String, String>) {
         for entry in fs::read_dir(directory).unwrap() {
@@ -417,6 +439,56 @@ fn positive_case_reports_the_target_current_and_the_rest_untargeted() {
     assert_eq!(receipt["complete"], false);
     assert_eq!(rows[0]["bound"]["signer"], SIGNER);
     assert_eq!(rows[0]["bound"]["target_path"], ROOT_PATH);
+}
+
+#[test]
+fn an_absolute_deck_locator_inside_the_producer_output_is_current() {
+    let fixture = build_fixture("absolute-deck");
+    let producer = fixture.case_dir.join(ROOT_BASENAME);
+    let locator = producer.join(DECK_NAME);
+    rewrite_evidence_deck(&fixture, locator.to_str().unwrap());
+    let output = fixture.inspect();
+    assert!(
+        output.status.success(),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt = receipt_json(&output);
+    assert_eq!(receipt["rows"][0]["state"], "current");
+    assert!(receipt["rows"][0]["issues"].as_array().unwrap().is_empty());
+}
+
+#[test]
+fn a_deck_locator_outside_the_producer_output_is_rejected() {
+    let fixture = build_fixture("outside-deck");
+    let producer_deck = fixture.case_dir.join(ROOT_BASENAME).join(DECK_NAME);
+    let outside = fixture.root.join("outside-deck.json");
+    fs::copy(&producer_deck, &outside).unwrap();
+
+    for locator in [
+        outside.to_str().unwrap().to_string(),
+        format!("../{DECK_NAME}"),
+    ] {
+        rewrite_evidence_deck(&fixture, &locator);
+        let output = fixture.inspect();
+        assert_eq!(
+            output.status.code(),
+            Some(1),
+            "locator {locator} must be rejected: stdout {}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        let rejection = receipt_json(&output);
+        assert_eq!(rejection["status"], "rejected");
+        assert!(
+            rejection["issues"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|issue| issue["code"] == "convergence.proof_deck_outside_output"),
+            "locator {locator} rejection: {rejection}"
+        );
+    }
 }
 
 #[test]
@@ -496,14 +568,14 @@ fn unknown_options_and_missing_case_fail() {
         .arg("--unknown")
         .output()
         .unwrap();
-    assert!(!unknown.status.success());
+    assert_eq!(unknown.status.code(), Some(1));
 
     let missing = Command::new(env!("CARGO_BIN_EXE_cairn"))
         .args(["convergence", "inspect", "--root"])
         .arg(&fixture.root)
         .output()
         .unwrap();
-    assert!(!missing.status.success());
+    assert_eq!(missing.status.code(), Some(1));
 }
 
 #[test]
@@ -546,6 +618,14 @@ fn a_symlinked_decision_file_is_rejected() {
     assert_eq!(output.status.code(), Some(1));
     let rejection = receipt_json(&output);
     assert_eq!(rejection["status"], "rejected");
+    assert!(
+        rejection["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|issue| issue["code"] == "convergence.unreadable_input"),
+        "symlink rejection: {rejection}"
+    );
 }
 
 #[test]

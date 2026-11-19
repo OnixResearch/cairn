@@ -24,15 +24,21 @@ This change adds the Declare stage (targets) and the Diff stage (convergence) fo
 
 ### Decision: Generated source record is a separate projection input
 
-**Choice:** `project` takes the targets contract and a generated source record keyed by `requirement_id`. Each entry carries `sources` (the `source_bindings` locator and BLAKE3 list) and optionally the four `required_bindings` lists (`source_ids`, `policy_ids`, `tool_identity_hashes`, `artifact_hashes`). Missing lists default to empty; `required_bindings.checked_scope` is always empty and `required_bindings.evidence_tier` is the clause tier. The pilot fills `sources` from an owner-produced file listing the realized output's identities and leaves the four lists empty, because phase 1 does not use `requirements freshness`. The golden fixture supplies a generated record copied from Octet's example clause, labeled as copied fixture data.
+**Choice:** `project` takes the targets contract and a generated source record keyed by `requirement_id`. Each entry carries `sources` (the `source_bindings` locator and BLAKE3 list) and optionally the four `required_bindings` lists (`source_ids`, `policy_ids`, `tool_identity_hashes`, `artifact_hashes`). Missing lists default to empty; `required_bindings.checked_scope` is always empty and `required_bindings.evidence_tier` is the clause tier. The pilot fills `sources` from an owner-produced file listing the realized output's identities and leaves the four lists empty, because phase 1 does not use `requirements freshness`. The golden fixture supplies a generated record copied from Octet's example clause, labeled as copied fixture data. The record also carries `specifications`: for each reviewed specification file, its path and the plain BLAKE3 of that file's bytes at the revision, produced by a tool (for example `b3sum`). `project` copies the single entry naming the contract's specification path into the contract's `reviewed_specification` and fails when it is absent or duplicated.
 
 **Rationale:** Octet's example clause 0 has non-empty `required_bindings` and hashed `source_bindings`; the handoff sketch reproduces it only by taking those values as inputs. Keeping them in a separate generated record satisfies both the no-authored-hash rule and the byte-equal golden. Octet's `contract/validation.rs` requires non-empty `source_bindings`, `allowed_evidence_ids` and `checked_scope` but reads `required_bindings` only in `freshness.rs` and `related.rs`, so empty lists are admissible to `requirements check`.
 
 ### Decision: Fixed projection mapping, verified in Rust
 
-**Choice:** For each projected target, `clause_id` and the single `allowed_source_requirement_ids` entry are `requirement.requirement_id`; `statement` is `claim`; `required` is true; `disposition` and `expected_evidence_tier` are the mapped tier; `checked_scope`, `allowed_evidence_ids`, `required_evidence_classes` and `required_negative_controls` copy `checked_scope`, `evidence_ids`, `evidence_classes` and `negative_controls`; `required_provider_id` is `provider` when present; `source_bindings` and `required_bindings` come from the generated record as above. The contract-level `reviewed_specification` is the contract's `specification`, and `schema_version` is `octet-requirement-contract/v1`. `cairn_core::assurance_targets` implements the same mapping, and convergence recomputes it and compares it with the supplied contract file after JSON parsing.
+**Choice:** For each projected target, `clause_id` and the single `allowed_source_requirement_ids` entry are `requirement.requirement_id`; `statement` is `claim`; `required` is true; `disposition` and `expected_evidence_tier` are the mapped tier; `checked_scope`, `allowed_evidence_ids`, `required_evidence_classes` and `required_negative_controls` copy `checked_scope`, `evidence_ids`, `evidence_classes` and `negative_controls`; `required_provider_id` is `provider` when present; `source_bindings` and `required_bindings` come from the generated record as above. The contract-level `reviewed_specification` is the generated `specifications` entry for the contract's specification path (its path and plain file digest), never the registry's domain-separated identity, and `schema_version` is `octet-requirement-contract/v1`. `cairn_core::assurance_targets` implements the same mapping, and convergence recomputes it and compares it with the supplied contract file after JSON parsing.
 
 **Rationale:** Nickel projects; Rust verifies. A contract whose clause was weakened without changing the targets is `stale` even when Octet passes the weakened contract. The handoff sketch evaluates under the pinned Nickel 1.17.0 and reproduces Octet's clause 0 exactly.
+
+### Decision: Reviewed specification identity
+
+**Choice:** The registry identifies a specification by a domain-separated hash, `specification_blake3 = domain_hash_bytes("cairn.requirement-registry.specification.v1", markdown)`. Octet's `requirements check` instead verifies `reviewed_specification.blake3` against the plain `blake3::hash` of `resolve_path(source_root, reviewed_specification.path)`. The projection therefore never copies the registry hash: `contract.specification` keeps the registry identity and binds the targets' rows, while the generated record's `specifications` entry supplies the plain file digest that becomes `reviewed_specification`. Octet runs with the consumer checkout at the revision as `--source-root`, where the specification file lives, and names the proof deck and artifact root by absolute paths inside the realized producer output; convergence accepts an absolute deck locator only when it lexically starts with the case's resolved `producer_output` directory.
+
+**Rationale:** The Octet pilot registry identity is `7529c7f5…`, while the plain `b3sum` of the same file is `7b6bbfda…`; Octet's own example uses the plain digest `78afa0f6…`. Copying the domain hash would make every contract fail Octet's specification check, and editing the specification to match would break the registry. Keeping the two identities separate binds the registry rows and Octet's reviewed bytes without weakening either.
 
 ### Decision: Projection home and vendoring (D3)
 
@@ -66,11 +72,12 @@ This change adds the Declare stage (targets) and the Diff stage (convergence) fo
 - Each target's `requirement` equals its registry row in all six fields.
 - Each contract's `specification` equals the path and BLAKE3 on its targets' rows.
 - The recomputed clause mapping equals the contract file's clauses after JSON parsing.
+- The contract's `reviewed_specification` names an accepted specification under `--root` and its `blake3` equals the plain BLAKE3 of that file's bytes; a missing or changed digest is `stale` (`convergence.reviewed_specification_stale`).
 - The BLAKE3 of the contract file equals the decision's `contract_blake3`; the decision's `reviewed_specification` equals the contract's.
 - The BLAKE3 of the evidence bundle equals the decision's `evidence_blake3`, and its `contract_blake3` equals the contract's.
 - The target's `evidence_job.job_id` equals `/job_id` in the handoff `job.json`, and the observation's `producer_job_identity` equals `b3:` plus the BLAKE3 of those bytes.
 - The observation's `receipt_identity` equals `b3:` plus the BLAKE3 of the handoff `external-receipt.json`, and the producer output's `external-receipt.json` has the same bytes.
-- The proof card that Octet accepted names that receipt (design question 3).
+- The proof card that Octet accepted names that receipt (design question 3). A proof-deck locator is relative to `producer_output` or absolute inside it, starting with the case's resolved directory path followed by `/`; any other locator is rejected before evaluation (`convergence.proof_deck_outside_output`).
 - The realization receipt shows the job's root output admitted and that output is the directory the bridge consumed (design questions 1 and 2).
 - Every schema identifier is admitted by the policy.
 
@@ -117,6 +124,12 @@ This change adds the Declare stage (targets) and the Diff stage (convergence) fo
 **Choice:** The pilot targets `octet.aeneas_consumer_contract.compatibility` in Octet with `checked_proof` and job `octet.aeneas.external-consumer.mantle.v1`. The real job runs on britton-desktop (32 cores, user namespaces enabled). A pilot-only Mantle signing key is generated there; its public key name is the case's only trusted signer, and no shared cache is configured. The Terrane pilot is deferred until this change lands. The agent fast-forwards and pushes `main` after gates pass, with author `Britton <b@robitzs.ch>`.
 
 **Rationale:** Britton confirmed each default on 2026-11-19. One named key keeps the trusted set explicit; nothing widens it to make a result current.
+
+### Decision: Mantle foreign-import graph bound
+
+**Choice:** The real pilot waits on Mantle change `raise-foreign-import-graph-bounds` (Mantle ADR 0166), which raises Mantle's foreign-import node bound from 2,048 to the verification bridge's `MAX_TOOL_DERIVATIONS` (32,768), its source-payload bound from 512 to Octet's exporter bound (16,384), its per-node input-edge bound from 256 to 4,096 and its field bound from 32 KiB to 256 KiB. Cairn's convergence code is unchanged by it.
+
+**Rationale:** `mantle foreign-import produce-nix` rejected a measured 7,157-derivation nixpkgs closure with `nix-derivation-count-out-of-range` (`MAX_GRAPH_NODES = 2048` in Mantle's `src/foreign_derivation_import.rs`), while the bridge already admits 32,768-derivation producer tool graphs, so no real producer graph could be planned. The frozen Octet job at `d5b34c2d64b1227417a46df8ed8427f2d10ed3c8` has 11,565 derivations, 677 source objects, up to 611 input derivations on one node and one 102,597-byte `buildCommand`. This met the handoff's stop-and-ask condition; Britton authorized the Mantle change on 2026-11-19.
 
 ## Risks / Trade-offs
 

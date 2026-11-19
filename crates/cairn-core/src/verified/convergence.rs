@@ -7,7 +7,7 @@
 //! Acceptance is Octet's requirement decision only. Mantle success, cache
 //! state, `proof_acceptance` and `externally_reported_outcome` are never
 //! acceptance; the states stay advisory.
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::{json, Value};
 
@@ -41,6 +41,8 @@ pub const CONVERGENCE_ISSUE_STALE_ROW: &str = "convergence.stale_row";
 pub const CONVERGENCE_ISSUE_SPECIFICATION_MISMATCH: &str = "convergence.specification_mismatch";
 pub const CONVERGENCE_ISSUE_CONTRACT_INPUTS_MISSING: &str = "convergence.contract_inputs_missing";
 pub const CONVERGENCE_ISSUE_PROJECTION_MISMATCH: &str = "convergence.projection_mismatch";
+pub const CONVERGENCE_ISSUE_REVIEWED_SPECIFICATION_STALE: &str =
+    "convergence.reviewed_specification_stale";
 pub const CONVERGENCE_ISSUE_CONTRACT_BLAKE3_MISMATCH: &str = "convergence.contract_blake3_mismatch";
 pub const CONVERGENCE_ISSUE_REVIEWED_SPECIFICATION_MISMATCH: &str =
     "convergence.reviewed_specification_mismatch";
@@ -144,6 +146,10 @@ pub struct ConvergenceRequest {
     pub targets_blake3: String,
     pub generated: GeneratedSources,
     pub generated_blake3: String,
+    /// Plain BLAKE3 of each accepted specification under `--root`, keyed by its
+    /// repo-relative path. Octet verifies these bytes, not the registry's
+    /// domain-separated identity.
+    pub root_specification_digests: BTreeMap<String, String>,
     pub trusted_signers: Vec<String>,
     pub contracts: Vec<ContractCaseFacts>,
 }
@@ -243,6 +249,11 @@ pub fn evaluate_convergence(request: &ConvergenceRequest) -> Value {
     let mut targeted = 0usize;
     let mut all_targets_current = true;
     let mut any_untargeted = false;
+    // A binding issue is consumed only by the row or specification the
+    // evaluation actually looked at. Issues for targets whose requirement_id is
+    // absent from the registry (or for a contract with no located target) are
+    // never consumed, so they must still make the repository incomplete.
+    let mut consumed_bind_paths = BTreeSet::new();
 
     for row in &request.registry.rows {
         let located = locate_target(request, &row.requirement_id);
@@ -260,6 +271,14 @@ pub fn evaluate_convergence(request: &ConvergenceRequest) -> Value {
             }
             Some(located) => {
                 targeted += 1;
+                consumed_bind_paths.insert(format!(
+                    "contracts[{}].targets[{}].requirement",
+                    located.contract_index, located.target_index
+                ));
+                consumed_bind_paths.insert(format!(
+                    "contracts[{}].specification",
+                    located.contract_index
+                ));
                 let outcome = evaluate_target(request, &located, &bind_issues);
                 if outcome.state != CONVERGENCE_STATE_CURRENT
                     && outcome.state != CONVERGENCE_STATE_NOT_PROJECTED
@@ -282,8 +301,24 @@ pub fn evaluate_convergence(request: &ConvergenceRequest) -> Value {
         }));
     }
 
-    let (targets_current, coverage_complete, complete) =
-        completeness_flags(targeted, all_targets_current, any_untargeted);
+    let mut unbound: Vec<(String, String)> = bind_issues
+        .iter()
+        .filter(|issue| !consumed_bind_paths.contains(&issue.field_path))
+        .map(|issue| (issue.code.clone(), issue.field_path.clone()))
+        .collect();
+    unbound.sort();
+    unbound.dedup();
+    let all_bind_issues_consumed = unbound.is_empty();
+    let unbound_target_issues: Vec<Value> = unbound
+        .into_iter()
+        .map(|(code, field_path)| json!({"code": code, "field_path": field_path}))
+        .collect();
+
+    let (targets_current, coverage_complete, complete) = completeness_flags(
+        targeted,
+        all_targets_current && all_bind_issues_consumed,
+        any_untargeted,
+    );
 
     let contract_inputs = request
         .contracts
@@ -320,6 +355,7 @@ pub fn evaluate_convergence(request: &ConvergenceRequest) -> Value {
             "contracts": contract_inputs,
         },
         "rows": rows,
+        "unbound_target_issues": unbound_target_issues,
         "targets_current": targets_current,
         "coverage_complete": coverage_complete,
         "complete": complete,
@@ -418,6 +454,7 @@ fn evaluate_target(
     };
 
     check_projection(request, located.contract, case, &mut evaluation);
+    check_reviewed_specification(request, case, &mut evaluation);
     check_decision_binding(case, &mut evaluation);
     check_decision_acceptance(request, case, &requirement_id, &mut evaluation);
     check_handoff(request, target, case, &mut evaluation);
@@ -490,6 +527,37 @@ fn check_projection(
             }
         }
         Err(_) => evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_PROJECTION_MISMATCH),
+    }
+}
+
+/// Octet judges the contract's reviewed specification against the plain BLAKE3
+/// of the accepted file under `--root`; the registry's domain-separated
+/// identity does not satisfy it.
+fn check_reviewed_specification(
+    request: &ConvergenceRequest,
+    case: &ContractCaseFacts,
+    evaluation: &mut Evaluation,
+) {
+    let reviewed = case
+        .contract
+        .value
+        .get("reviewed_specification")
+        .and_then(Value::as_object);
+    let path = reviewed
+        .and_then(|specification| specification.get("path"))
+        .and_then(Value::as_str);
+    let blake3 = reviewed
+        .and_then(|specification| specification.get("blake3"))
+        .and_then(Value::as_str);
+    let matches = match (path, blake3) {
+        (Some(path), Some(blake3)) => request
+            .root_specification_digests
+            .get(path)
+            .is_some_and(|plain| plain == blake3),
+        _ => false,
+    };
+    if !matches {
+        evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_REVIEWED_SPECIFICATION_STALE);
     }
 }
 
@@ -838,14 +906,16 @@ fn check_store_info(
         evaluation.mark(Rank::Unrealized, CONVERGENCE_ISSUE_STORE_INFO_PATH_MISSING);
         return None;
     };
-    if let Some(expected_nar) = binding.nar_sha256.as_deref() {
-        let nar_matches = path_entry
+    // A missing or non-string NAR hash on either side is a binding failure, not
+    // an absent check: the store entry cannot be tied to the realized output.
+    let nar_matches = binding.nar_sha256.as_deref().is_some_and(|expected| {
+        path_entry
             .get("nar_sha256")
             .and_then(Value::as_str)
-            .is_some_and(|nar| digest_eq(nar, expected_nar));
-        if !nar_matches {
-            evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_NAR_MISMATCH);
-        }
+            .is_some_and(|nar| digest_eq(nar, expected))
+    });
+    if !nar_matches {
+        evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_NAR_MISMATCH);
     }
     let signer = path_entry
         .get("signatures")
