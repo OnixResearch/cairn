@@ -20,4 +20,12 @@
 - `cargo test --workspace --no-fail-fast`: exit 101; 1860 passed, 1 failed: `buoy_comparison::comparison_identity_binds_source_mapping_fixture_and_policy`.
 - Pre-existing, owned by the active `add-buoy-traceability-comparison` change: for the `schema_version_drift` case the native trace index now reports `stale_item`, while the comparator and test declare `unsupported` (issue `comparison.native_execution_mismatch`). It fails identically on a clean export of 96559148: `git archive 96559148 | tar -x -C /tmp/cto-clean && cd /tmp/cto-clean && TMPDIR=/tmp CARGO_TARGET_DIR=<separate-target> RUSTC_WRAPPER= nix develop path:/tmp/cto-clean --builders '' -c cargo test -p cairn-cli --test buoy_comparison` (exit 101; 3 passed, 1 failed; same message). Owner decision: integrate with this failure recorded as pre-existing.
 
+## Rebased onto upstream main (2026-11-19)
+
+Upstream `main` moved to 585f50d9 and then 3dc654d3 (assurance targets, convergence inspect, reviewed-specification binding). Both rebases applied without conflicts; the generated policy hash did not change, so no golden or receipt refresh was needed.
+
+- On 585f50d9: full `nix flake check` 40 checks, 38 passed; `rust-tests` failed only on `buoy_comparison`, and `tracey-coverage` failed on the upstream references below.
+- On 3dc654d3 (repo dev shell): `cargo fmt --all --check` and `cargo clippy --workspace --all-targets -- -D warnings` exit 0; `cargo test --workspace --no-fail-fast` 1930 passed, 10 failed; packaged `policy export --check` fresh and `validate` valid; `traceability coverage` exit 1.
+- Pre-existing on upstream, owned by its active assurance-targets and convergence change: 12 dangling requirement references (`cairn.assurance_targets.{contract,evidence_job,projection,row_binding}`, `cairn.convergence.{acceptance,authority,completeness,determinism,inputs,inspection,realization,states}`) fail `traceability coverage`, and through it nine tests (`release_readiness` x6, both evidence-export tests, the developer-loop receipt). With `buoy_comparison` these are the same 10 failures a clean `git archive 585f50d9` export shows with the same commands; none of this change's references dangle. The repair commit additionally fixes eight tests that fail on that export (the PATH-length and stale-hash cases).
+
 No live Kiln campaign or Lattice execution was run.
