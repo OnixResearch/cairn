@@ -1,0 +1,15 @@
+$ nix develop -c target/debug/mantle doctor
+--- stdout ---
+--- stderr ---
+doctor profile: build
+status: failed (1 prerequisite failed)
+- [ok] bwrap: found /nix/store/wmrjs5vaywysr8s4ihkch205xlmwldvz-mantle-wasm-component-toolchain-v1/bin/bwrap
+- [ok] sandbox-shell: using SNIX_BUILD_SANDBOX_SHELL=/nix/store/d7fc5i7y71rj8cr5jwmaxwjnyvfiybdp-busybox-static-x86_64-unknown-linux-musl-1.37.0/bin/busybox
+- [ok] fusermount3: found /run/wrappers/bin/fusermount3
+- [ok] state-dir: state directory is writable via /home/brittonr/.local/state/crunch
+- [failed] store-dir: store directory is not writable
+  /nix/store is not writable by the current user
+- [ok] work-root: sandbox work root /home/brittonr/.local/state/crunch/build-work/sandbox-local (63.5 GiB free at /home/brittonr/.local/state/crunch)
+
+--- exit code ---
+3

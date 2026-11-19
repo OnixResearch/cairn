@@ -1,0 +1,14 @@
+$ nix develop -c python3 scripts/prove-verification-bridge.py --mantle target/debug/mantle --bridge target/debug/mantle-verification-bridge --b3sum /run/current-system/sw/bin/b3sum --out /home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof
+--- stdout ---
+--- stderr ---
+Traceback (most recent call last):
+  File "/home/brittonr/wt/mantle-convergence/scripts/prove-verification-bridge.py", line 104, in <module>
+    main()
+    ~~~~^^
+  File "/home/brittonr/wt/mantle-convergence/scripts/prove-verification-bridge.py", line 79, in main
+    cold = run(command, args.out / f"{name}-cold")
+  File "/home/brittonr/wt/mantle-convergence/scripts/prove-verification-bridge.py", line 24, in run
+    raise RuntimeError(f"command failed ({result.returncode}); see {log}.stderr")
+RuntimeError: command failed (3); see /home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof/octet-cold.stderr
+--- exit code ---
+1

@@ -1,0 +1,2072 @@
+{
+  "schema": "crunch-build-report-v1",
+  "file": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet.ncl",
+  "output_dir": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/store",
+  "state_dir": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/state",
+  "store_dir": "/mantle/store",
+  "scheduler_policy": {
+    "schema": "mantle-scheduling-policy-v1",
+    "policy_id": "mantle-lazy-priority-v1",
+    "preference_order": [
+      "known-graph",
+      "resource-fit",
+      "locality-transfer"
+    ],
+    "aged_after_epochs": 4,
+    "protected_after_epochs": 8
+  },
+  "hermeticity_mode": "strict",
+  "hermeticity_audit_events": [],
+  "build_environment_reports": [
+    {
+      "action_name": "verification-bridge-octet-8",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "cb1e7fd58958cefe6cb209082e72330305d4ddeeef75fa6b4b639009765d843f",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-7",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "853aed0e459759b6edc018a4a821abbc45fad5341b30244393c12ce8f81b245f",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-3",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "71ebe27b59826b2e3becfd7c99d861ccf8da8c3a070a93d0561a756623ee4bbc",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-5",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "81a37fb0d6332e0a9420430163366a9b12ff4e5ea8108639c1036b6158a7a1dd",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-0",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "381b295d0ad3cbaccfb23e69abc405bad5b16f02f3062c82dc40135338f1b8b7",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-9",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "4f3444b425fea137959f8dff0c7e5eb4d3bd36a3158314569ea793cea0291080",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-2",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "be165088eab3026656e7b176b07363e6545fc635006ad7cd9aaba4a444d4439d",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-1",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "bca3fee69b01c390bf20883557915e06c5942d1c8bcd59786b4d1dbd6dc1bcfd",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-4",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "53a6457c85ff9f770e42cb18d7f106b850d79209740459ec22413de8824579d1",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-6",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "e1809a49c05502ae2e58dac3ad935081b8ec3dcf23fbb18a166de1f126a8ff79",
+      "variable_count": 25,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    },
+    {
+      "action_name": "verification-bridge-octet-handoff",
+      "digest_algorithm": "blake3",
+      "digest_blake3": "e00a743f08c2089142258d9ceec6d07b936c8b6f8b3ff96c0ceeabb9262c6440",
+      "variable_count": 24,
+      "rejections": [],
+      "search_path": {
+        "digest_algorithm": "blake3",
+        "digest_blake3": "3671ac3e76ce9d3e61f648bf8ca846be2d2c73c1d043b07a1e6b7d8d44e0f782",
+        "entries": [],
+        "aliases": [],
+        "real_tool_refs": []
+      },
+      "determinism": {
+        "digest_algorithm": "blake3",
+        "policy_digest_blake3": "816ba46d3a67009f5a5980136a0fe7304c457dab83a6605e2210052811c82881",
+        "controls": [
+          {
+            "surface": "host-user-metadata",
+            "policy": "fixed-env",
+            "value": "HOME=/homeless-shelter;LOGNAME=nixbld;USER=nixbld",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "locale",
+            "policy": "fixed-env",
+            "value": "LANG=C;LC_ALL=C",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "modeled-randomness",
+            "policy": "modeled",
+            "value": "no-modeled-random-seed",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "order-sensitive-output-processing",
+            "policy": "modeled",
+            "value": "lexicographic-output-processing",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "temp-roots",
+            "policy": "fixed-env",
+            "value": "TEMP=/build;TEMPDIR=/build;TMP=/build;TMPDIR=/build",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "time",
+            "policy": "fixed-env",
+            "value": "SOURCE_DATE_EPOCH=1",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "timezone",
+            "policy": "fixed-env",
+            "value": "TZ=UTC",
+            "enforcement": "enforced"
+          },
+          {
+            "surface": "umask",
+            "policy": "fixed-executor",
+            "value": "0022",
+            "enforcement": "enforced"
+          }
+        ],
+        "unsupported_controls": [],
+        "divergence": null,
+        "strong_claim_blocked": false
+      }
+    }
+  ],
+  "network_policy_reports": [
+    {
+      "action_name": "verification-bridge-octet-8",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/proofs/aeneas/translation.json",
+        "hash": "fixed:blake3:1fqa7fr8kfyn6gkdkh054vi5bqmgkq4qlc0m0pd0fd86gg0qk45c",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-7",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/proofs/aeneas/theorem.lean",
+        "hash": "fixed:blake3:0zy7v08d1ynmwfmbvy7szq7zbkv3yp283d2wsz7zp00h4s2ryvkp",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-3",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/proofs/aeneas/Llbc.lean",
+        "hash": "fixed:blake3:1cxywlxjqdqi9r95rlrklk888wz15r01ih7a5p26f4kafc86wzs1",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-5",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/proofs/aeneas/provider-profile.json",
+        "hash": "fixed:blake3:09g61im70s9jbfk02ikv02s8vcmllsvz09psj5m2rpnf3afv84fd",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-0",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/external-profile.json",
+        "hash": "fixed:blake3:0ya8mz018gl2s0hxfml8kr1ygd9zsw13jpg320afyzh3l80krfv2",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-9",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/src/lib.rs",
+        "hash": "fixed:blake3:1pfxsj283crq1ghxm6bcl1qiqicb765v8f5r03fna9prp3l8s7k9",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-2",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/mantle-observation.json",
+        "hash": "fixed:blake3:0vc7gxqrp2hw93465cvsm0awkbgz368x9lgq4lmv9zqkxhzm71lv",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-1",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/external-receipt.json",
+        "hash": "fixed:blake3:1mq83qanppppp5pmb25nnvcrng0hv0z781y0fbapajk06v2ir8rq",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-4",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/proofs/aeneas/llbc.llbc",
+        "hash": "fixed:blake3:1cnpkjsbcv9jc3kxg9ij2ylbgpjl1md1mfshbh5ssjfrj9lfpmx4",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-6",
+      "mode": "fixed-output-fetcher",
+      "result": "allowed",
+      "capability": null,
+      "policy_basis": "declared fixed-output fetcher",
+      "audit_class": "fixed-output-source-acquisition",
+      "fixed_output": {
+        "url": "file:///home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet-handoff/proofs/aeneas/source/src/lib.rs",
+        "hash": "fixed:blake3:1pfxsj283crq1ghxm6bcl1qiqicb765v8f5r03fna9prp3l8s7k9",
+        "mode": "flat",
+        "retry_policy": "bounded-transient-fetch-retry"
+      },
+      "diagnostic": null
+    },
+    {
+      "action_name": "verification-bridge-octet-handoff",
+      "mode": "offline",
+      "result": "denied",
+      "capability": null,
+      "policy_basis": "ordinary derivation network access is denied by default",
+      "audit_class": null,
+      "fixed_output": null,
+      "diagnostic": null
+    }
+  ],
+  "workspace_reports": [],
+  "action_result_reports": [
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/0d356cee5798df16cd702f7031da970aa1e4011bb210d1f3eadfe5230a7d8024",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/0d356cee5798df16cd702f7031da970aa1e4011bb210d1f3eadfe5230a7d8024",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/6b5b99593f3da213e394d73d1f1c9129a6909212b7ac4cf27633bf7e4ab75bb7"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/1a4ba8e83778dae5061442753bf6629ea9742d1ed38660db97fb50e428cb432b",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/1a4ba8e83778dae5061442753bf6629ea9742d1ed38660db97fb50e428cb432b",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/cbde82947aec7dabd58c59016855de5bdde40f88def813a084564135f1410086"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/35dfe434d3196e04892f7c9f5f2c08b7c04de87af8e32a314f43bee747509494",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/35dfe434d3196e04892f7c9f5f2c08b7c04de87af8e32a314f43bee747509494",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/2b2944a25e8b1bfe426876c47cc1b9f10c8884018047f0e3618c3e4537b81e5b"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/4ba9a6ca90fff0d8df577f6b967ff469ffbfcb23823c99f28ce7ad577568fc3d",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/4ba9a6ca90fff0d8df577f6b967ff469ffbfcb23823c99f28ce7ad577568fc3d",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/e4d6c4c3949cb1594d4adb9e5bc3a77edf5b8ee8036f0132f5c96b7fa1502cda"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/5f0f936568d20de3e0f6b3cd70b3508f4c91e976ccf403c7d0fe73a05d1559a3",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/5f0f936568d20de3e0f6b3cd70b3508f4c91e976ccf403c7d0fe73a05d1559a3",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/2697ba39b9137898ac993e646099a4d6deb4fa8e6acdb43aa21f9a60906d3a1f"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/85ff04e3a1d9d91c4f2f659df67a71853fdf22ecad3840edc0c107f0de55854e",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/85ff04e3a1d9d91c4f2f659df67a71853fdf22ecad3840edc0c107f0de55854e",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/120de4281d9325f6773e2f40fb42d652dc06cc3d56b1967b3d693d2d06e2e1f9"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/966ab1ea16caa5dc7e2b481c90e6c64442c853fb872343fe5be2b6fdb5a8440f",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/966ab1ea16caa5dc7e2b481c90e6c64442c853fb872343fe5be2b6fdb5a8440f",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/060f46b6053521d8e7fa630e6010d1ddccecfef6e24e0b8fa4015a318c34c00a"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/98a3e27af81fce41002e342d958ef3855abe65e96a3a91aaed2a3d5fe57165b3",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/98a3e27af81fce41002e342d958ef3855abe65e96a3a91aaed2a3d5fe57165b3",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/bdd543883c453af03e1271425a53ab2c5d87ec0b925d565a4c9687a97c122876"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/b67802a9f0f854a6c16432987885cf27dafac89d8223e2a7bce0a87d69be6807",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/b67802a9f0f854a6c16432987885cf27dafac89d8223e2a7bce0a87d69be6807",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/b219fdbc653436fa59c8a24684c25b78b6d918673687036ac238233ebe61e783"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/bb21b8f7312b85497713c7a68164c91389b7b6bef6e554aa45f0d11a48444b5d",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/bb21b8f7312b85497713c7a68164c91389b7b6bef6e554aa45f0d11a48444b5d",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/ed806409e83bbbe09ef7b59ecff9e58147c92d0492495ae520afde7057c7a6a0"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/d30e07d580596b7899616ad173aec9513c73988d91865d46c9be1a6658d1bd15",
+      "disposition": "miss",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "publication",
+      "action_ref": "mantle-action://blake3/d30e07d580596b7899616ad173aec9513c73988d91865d46c9be1a6658d1bd15",
+      "disposition": "published",
+      "selected_result_ref": null,
+      "selected_source_id": null,
+      "selected_source_class": null,
+      "trust_basis": [],
+      "conflict_class": null,
+      "candidate_decisions": [],
+      "publication_result_refs": [
+        "mantle-action-result://blake3/77ae515e162a0d90100f5909d75f4cad0dea4c7a8ee67a143f4b4ce4b59ef816"
+      ],
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    }
+  ],
+  "native_dynamic_plans": [],
+  "scheduler_priority_decisions": [
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 1,
+      "selected_goal_key_blake3": "ad164e4c0b6eb1a00c745d312d1268b88c0587d60a13b17ba15f24cf5dac756d",
+      "competing_goal_count": 10,
+      "candidate_snapshot_digest_blake3": "5002df77f82ab861149c51b59c815205241308f1c778761ac27ba720069f426a",
+      "runner_up": {
+        "goal_key_blake3": "ccc8332a77e247fa9c9b6be33362a784f15bff9c61bac23befd55a92bba59374",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "fresh",
+        "age_epochs": 1,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "fresh",
+      "age_epochs": 1,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 2,
+      "selected_goal_key_blake3": "ccc8332a77e247fa9c9b6be33362a784f15bff9c61bac23befd55a92bba59374",
+      "competing_goal_count": 9,
+      "candidate_snapshot_digest_blake3": "d54870ea6e929190a5c04a362364e27bf305b72cf6c97a2daf7428af00625a2c",
+      "runner_up": {
+        "goal_key_blake3": "a50f65fd740fab23869945bf30b2a8bb0daeb8e36d23049421206a08ea1abf75",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "fresh",
+        "age_epochs": 2,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "fresh",
+      "age_epochs": 2,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 3,
+      "selected_goal_key_blake3": "a50f65fd740fab23869945bf30b2a8bb0daeb8e36d23049421206a08ea1abf75",
+      "competing_goal_count": 8,
+      "candidate_snapshot_digest_blake3": "93261b00768b5bdfcd0e1943c9dfc76f904244da558fbfdb51cbd19653a2b6d4",
+      "runner_up": {
+        "goal_key_blake3": "fa338c378f5c12d1fe696cccf5183d6354a078cbf2b21f6c3d9d85f4c9b065d9",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "fresh",
+        "age_epochs": 3,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "fresh",
+      "age_epochs": 3,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 4,
+      "selected_goal_key_blake3": "fa338c378f5c12d1fe696cccf5183d6354a078cbf2b21f6c3d9d85f4c9b065d9",
+      "competing_goal_count": 7,
+      "candidate_snapshot_digest_blake3": "6f96074d09e54dc0beb2dbce9457ae320c987909b7fbb9f89702a594a315ad70",
+      "runner_up": {
+        "goal_key_blake3": "ffbf45e6c05b4ccc92f29d379cffea2f3e875f9b61da1f7d1009345b75321a54",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "aged",
+        "age_epochs": 4,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "aged",
+      "age_epochs": 4,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 5,
+      "selected_goal_key_blake3": "ffbf45e6c05b4ccc92f29d379cffea2f3e875f9b61da1f7d1009345b75321a54",
+      "competing_goal_count": 6,
+      "candidate_snapshot_digest_blake3": "3dbf0426582b932983c0d2bbeb9b56122e1cac96ca937481f87f4de68c071ec9",
+      "runner_up": {
+        "goal_key_blake3": "98ddf3fc3e225d0e1d71c0626eaac8824d3cf5f15ef437afa00e6a51d4f849b0",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "aged",
+        "age_epochs": 5,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "aged",
+      "age_epochs": 5,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 6,
+      "selected_goal_key_blake3": "98ddf3fc3e225d0e1d71c0626eaac8824d3cf5f15ef437afa00e6a51d4f849b0",
+      "competing_goal_count": 5,
+      "candidate_snapshot_digest_blake3": "4d011011677a6831f4ada21e33ada97298becc5180d4e4e17e6ac61f92d83346",
+      "runner_up": {
+        "goal_key_blake3": "3215bf0200ac45eb49976500375c1c76690de1fe462218aef7a130ffcbe370d2",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "aged",
+        "age_epochs": 6,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "aged",
+      "age_epochs": 6,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 7,
+      "selected_goal_key_blake3": "3215bf0200ac45eb49976500375c1c76690de1fe462218aef7a130ffcbe370d2",
+      "competing_goal_count": 4,
+      "candidate_snapshot_digest_blake3": "8c78ecc846f7a7a1cedb17c568d60e3f0ff8ffa64440d0820e5a2d2a0f740571",
+      "runner_up": {
+        "goal_key_blake3": "c314e06a02e55bee04105c20f36ffa993bb3a43a9fca1eb754e93ca110e440a2",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "aged",
+        "age_epochs": 7,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "aged",
+      "age_epochs": 7,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 8,
+      "selected_goal_key_blake3": "c314e06a02e55bee04105c20f36ffa993bb3a43a9fca1eb754e93ca110e440a2",
+      "competing_goal_count": 3,
+      "candidate_snapshot_digest_blake3": "b3f45431ad8649e60b3a7b83dfcb182d7885daa8151069c0c26a367cfabfaa68",
+      "runner_up": {
+        "goal_key_blake3": "634d3dacaa48ca84a123cd1b8213fc5f225ce5c74149b0cfd29b2e7a8d73cbb6",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "protected",
+        "age_epochs": 8,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "protected",
+      "age_epochs": 8,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 9,
+      "selected_goal_key_blake3": "634d3dacaa48ca84a123cd1b8213fc5f225ce5c74149b0cfd29b2e7a8d73cbb6",
+      "competing_goal_count": 2,
+      "candidate_snapshot_digest_blake3": "fb301521a75a72318b4124e229821238debf2f69dbc1dab0b7c2d2e8953ccf72",
+      "runner_up": {
+        "goal_key_blake3": "0fa753b968aaf8535903c2e993fdff74e53d3519b2d1e300df55da146e0b7920",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "protected",
+        "age_epochs": 9,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "protected",
+      "age_epochs": 9,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 10,
+      "selected_goal_key_blake3": "0fa753b968aaf8535903c2e993fdff74e53d3519b2d1e300df55da146e0b7920",
+      "competing_goal_count": 1,
+      "candidate_snapshot_digest_blake3": "d0e1eae7700dde09f94a2b95febe909441a8a5a28115011ce08aeddc6943ea73",
+      "runner_up": null,
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "protected",
+      "age_epochs": 10,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "sole-candidate",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 11,
+      "selected_goal_key_blake3": "444298a31406d6faab90432ec7c8c1c1e8ffffe55dc7047d02b2ce5d92eae51d",
+      "competing_goal_count": 1,
+      "candidate_snapshot_digest_blake3": "773f6a2c8aec3ae90429c3ff2551664e9b2d1758fa06a49e0e044c01430051a2",
+      "runner_up": null,
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "fresh",
+      "age_epochs": 1,
+      "known_critical_path_nodes": 1,
+      "known_critical_path_work_units": 1,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "sole-candidate",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    }
+  ],
+  "overlay_base_generations": [],
+  "store_layer_selections": [],
+  "remote_telemetry_events": [
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 10,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 9,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 8,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 7,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 6,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 5,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 4,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 3,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 2,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 1,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 1,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    }
+  ],
+  "frontend_artifact_attestations": [],
+  "ast_grep_structural_evidence": [],
+  "ast_grep_structural_evidence_diagnostics": [],
+  "cargo_build_evidence": [],
+  "cargo_build_evidence_diagnostics": [],
+  "diagnostic_persistence_failures": [],
+  "counts": {
+    "succeeded_total": 1,
+    "built_total": 1,
+    "cached_total": 0,
+    "failed_total": 0
+  },
+  "outcomes": [
+    {
+      "drv_key": "/mantle/store/hsl7m4lv0wmzg9f43knybjfrghzbnda7-verification-bridge-octet-handoff.drv",
+      "label": "verification-bridge-octet-handoff",
+      "cached": false,
+      "log_file": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/state/logs/hsl7m4lv0wmzg9f43knybjfrghzbnda7-verification-bridge-octet-handoff.drv.log",
+      "outputs": [
+        {
+          "name": "out",
+          "path": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/store/glnhkn9a41rc31jqjj0hillcvr8alf5c-verification-bridge-octet-handoff",
+          "artifact_attestation": {
+            "logical_path": "/mantle/store/glnhkn9a41rc31jqjj0hillcvr8alf5c-verification-bridge-octet-handoff",
+            "path": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/state/attestations/artifacts/bfdc9ba1a18ead21554119d5efbb491fa43a58c428acc0a3d4369b532883d7b6.json"
+          }
+        }
+      ]
+    }
+  ],
+  "failed": [],
+  "fod_mismatches": []
+}

@@ -1,0 +1,101 @@
+{
+  "acceptance_ids": [],
+  "change": "add-assurance-targets-and-convergence",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "3c7b8f3ea3e29804dd9b7f0ea9e13d6d0427f0f7d48e56ffe98b410ed812feca",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+  "policy_selection": {
+    "blake3": "8331941b107c95af1e668f97a7d70780c195cc20b5713c4c7a792dcdb0fe39d8",
+    "installation_receipt": false,
+    "locator": "/nix/store/n2xkxzcmdkip84w75pavlby0jzw25js6-cairn-0.2.1/share/cairn/cairn-policy.json",
+    "source": "legacy_default"
+  },
+  "probe_evidence": null,
+  "profile_identity_hash": "685cd083cf0b59cd84d73db5038cc2ef2e8e3ee19b748acc5f5a29083d5fb604",
+  "receipt_hash": "12b6acb5674f53b62747f11cdc735797f857d2d2e76b765f6b9ec1e3591ebd3d",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "design",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "design",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/design.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 51,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 23,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/specs/assurance-targets/spec.md",
+      "requirement_blocks": 4,
+      "scenario_blocks": 8,
+      "substantive_lines": 36,
+      "substantive_requirement_blocks": 4,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/specs/convergence/spec.md",
+      "requirement_blocks": 9,
+      "scenario_blocks": 18,
+      "substantive_lines": 78,
+      "substantive_requirement_blocks": 9,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    }
+  ],
+  "task_ordering": null,
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

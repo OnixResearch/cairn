@@ -1,0 +1,17 @@
+## Phase 1: Implementation
+
+- [ ] [serial] [task:policy] Author `cairn-policy/assurance-targets.ncl` with the admitted assurance values, the assurance-to-disposition mapping, the admitted Cairn, Mantle and Octet schema identifiers and every bound, and export its standalone root to `cairn-policy/generated/assurance-targets.json` with a freshness check. r[cairn.assurance_targets.contract]
+- [ ] [serial] [task:contract] [after:policy] Add `contracts/assurance-targets.ncl` with the target and per-specification contract shapes, rejecting `unassessed`, unknown fields and authored hash fields, with one positive and one negative fixture per rejection under `fixtures/assurance-targets/`. r[cairn.assurance_targets.contract] r[cairn.assurance_targets.evidence_job]
+- [ ] [serial] [task:admission] [after:contract] Add pure target admission in `cairn_core::assurance_targets` with strict DTOs, checked bounds, six-field row equality, specification equality, duplicate detection and stable issue codes. r[cairn.assurance_targets.row_binding] r[cairn.assurance_targets.evidence_job]
+- [ ] [serial] [task:projection] [after:admission] Add the Nickel `project` function with assumptions and exclusions pass-through and the generated source-record merge, the equal Rust clause mapping, a golden against Octet's example clause, and a flake check that re-exports fixtures and requires every negative fixture to fail. r[cairn.assurance_targets.projection]
+- [ ] [serial] [task:rehearsal] [after:projection] Run Mantle's verification-bridge fixture rehearsal and retain it under `evidence/rehearsal/`, labeled as fixture packaging that executes no proof. r[cairn.convergence.realization]
+- [ ] [serial] [task:realization] [after:rehearsal] Freeze Octet's producer job, realize it through Mantle on britton-desktop under the pilot key, observe it with the bridge, realize it again as a reuse, and run the bridge negatives. r[cairn.convergence.realization]
+- [ ] [serial] [task:pilot] [after:realization] Land Octet's pilot contract and evidence bundle and retain `requirements check` and `requirements verify` over the realized output. r[cairn.convergence.acceptance]
+- [ ] [serial] [task:core] [after:pilot] Add the pure convergence evaluator with the closed state vocabulary, every binding check and the completeness flags. r[cairn.convergence.states] r[cairn.convergence.completeness] r[cairn.convergence.acceptance] r[cairn.convergence.realization] r[cairn.convergence.determinism]
+- [ ] [serial] [task:cli] [after:core] Add read-only `cairn convergence inspect --case FILE [--policy FILE] [--root DIR]` with bounded no-follow reads and unknown-option rejection. r[cairn.convergence.inputs] r[cairn.convergence.inspection] r[cairn.convergence.authority]
+- [ ] [serial] [task:corpus] [after:cli] Retain the positive pilot case and one negative case per binding check under `fixtures/convergence/`, exercised by CLI tests that invoke the real binary. r[cairn.convergence.conformance]
+
+## Phase 2: Verification and archive
+
+- [ ] [serial] [task:evidence] [after:corpus] Run the six design steps end to end from clean checkouts and retain the commands, revisions and outputs under `evidence/`. r[cairn.convergence.conformance]
+- [ ] [serial] [task:handoff] [after:evidence] Write `docs/convergence.md`, link it from `README.md`, add a `CHANGELOG.md` entry, run the full gate, then sync and archive. r[cairn.convergence.authority]

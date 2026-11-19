@@ -1,0 +1,26 @@
+{
+  "schema": "mantle-external-evidence-observation-v1",
+  "packaging": {
+    "source_revision": "4a540dff99aa2040e267e42bbafe09144f276572",
+    "source_identity": "b3:691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd",
+    "profile_identity": "b3:62bb3c01a2037eef1410e35d3902d73fb5e7439e8856d721d0823e14c0af4879",
+    "provider_identity": "b3:cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625",
+    "tool_contract_identity": "b3:cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625",
+    "options_identity": "b3:57ff24f625910ef2dd9bcbb884e6d6db68b831b532764498f9888f87013a7a84"
+  },
+  "receipt_identity": "b3:38a31cc536604a75d572c007743ed8103c9bd9b6b688556fb9f7de6b151e08d7",
+  "association_identity": "b3:86e6d7b1561be0641af2f5a19cc44532f2cc3fa6c339bcd40a9b8f3d9181c065",
+  "producer": "Octet",
+  "externally_reported_outcome": "supported",
+  "checked_materials": [
+    "proofs/aeneas/Llbc.lean",
+    "proofs/aeneas/llbc.llbc",
+    "proofs/aeneas/provider-profile.json",
+    "proofs/aeneas/source/src/lib.rs",
+    "proofs/aeneas/theorem.lean",
+    "proofs/aeneas/translation.json",
+    "src/lib.rs"
+  ],
+  "proof_acceptance": "not-evaluated-by-mantle",
+  "boundary": "Mantle checks selected exact-byte links only; producer receipts remain opaque external evidence, not build success, theorem admission, or release eligibility"
+}

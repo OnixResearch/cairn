@@ -1,0 +1,29 @@
+{
+  "schema": "mantle-external-evidence-observation-v1",
+  "packaging": {
+    "source_revision": "22d51fb8c1f57155f6c0c4acc4e14902ebb6b4f3",
+    "source_identity": "b3:3064658eb9d27a1c1c423abbad9e9c8878756594f07a1d01eeb6b3efef4fa8a4",
+    "profile_identity": "b3:eaf8005e31e201b073ba9cdde36e563ad31f96d597b7337c6a03825211519c75",
+    "provider_identity": "b3:cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625",
+    "tool_contract_identity": "b3:5ced1c471764375bb89fe6871fde10701dbb0106e099bf994d589be00c73eec1",
+    "options_identity": "b3:e6fa5650215638158d02daf4d9e3efba65734d0807f3076274703e3c5b8a87a6"
+  },
+  "receipt_identity": "b3:0c1d48bea2c85fe21f23f491e98337d21b7c64bf83468465d41de877209a879d",
+  "association_identity": "b3:0300a744613f80b01e0da7098aac01eb9a5bd2df7b4da1c9eb60dc56e54bb6d6",
+  "producer": "Trellis",
+  "externally_reported_outcome": "supported",
+  "checked_materials": [
+    "aeneas-pilot/generated/Llbc.lean",
+    "aeneas-pilot/generated/llbc.llbc",
+    "aeneas-pilot/generated/negative-cases.json",
+    "aeneas-pilot/generated/resource-policy.json",
+    "aeneas-pilot/generated/translation.json",
+    "aeneas-pilot/theorems/AbsDiffSelfZero.lean",
+    "aeneas-pilot/theorems/AbsDiffSymmetric.lean",
+    "aeneas-pilot/theorems/AxiomAudit.lean",
+    "docs/proof-evidence-bundle.json",
+    "src/arithmetic.rs"
+  ],
+  "proof_acceptance": "not-evaluated-by-mantle",
+  "boundary": "Mantle checks selected exact-byte links only; producer receipts remain opaque external evidence, not build success, theorem admission, or release eligibility"
+}

@@ -1,0 +1,39 @@
+$ nix develop -c env RUSTC_WRAPPER= CARGO_TARGET_DIR=target cargo test -p crunch-verification-bridge --test boundaries
+--- stdout ---
+
+running 6 tests
+test symbolic_link_substitution_is_not_a_payload ... ok
+test selected_fixture_cannot_stand_in_for_a_complete_owner_verification_bundle ... ok
+test real_owner_handoffs_replay_with_exact_receipts_without_promoting_authority ... ok
+test stale_source_profile_tool_and_options_cannot_reuse_association ... ok
+test missing_tampered_and_escaped_payloads_fail_without_publication ... ok
+test external_failure_and_unknown_versions_do_not_become_proof_acceptance ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+--- stderr ---
+warning: /home/brittonr/wt/mantle-convergence/Cargo.toml: file `/home/brittonr/wt/mantle-convergence/src/main.rs` found to be present in multiple build targets:
+  * `bin` target `crunch`
+  * `bin` target `mantle`
+   Compiling proc-macro2 v1.0.106
+   Compiling quote v1.0.45
+   Compiling libc v0.2.186
+   Compiling serde_json v1.0.149
+   Compiling rustix v1.1.4
+   Compiling getrandom v0.4.2
+   Compiling serde v1.0.228
+   Compiling linux-raw-sys v0.12.1
+   Compiling memchr v2.8.0
+   Compiling constant_time_eq v0.4.2
+   Compiling cc v1.2.59
+   Compiling once_cell v1.21.4
+   Compiling blake3 v1.8.5
+   Compiling syn v2.0.117
+   Compiling tempfile v3.27.0
+   Compiling serde_derive v1.0.228
+   Compiling crunch-verification-bridge-core v0.1.0 (/home/brittonr/wt/mantle-convergence/crates/crunch-verification-bridge-core)
+   Compiling crunch-verification-bridge v0.1.0 (/home/brittonr/wt/mantle-convergence/crates/crunch-verification-bridge)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 22.46s
+     Running tests/boundaries.rs (target/debug/deps/boundaries-e3f53f8f3a471d79)
+--- exit code ---
+0

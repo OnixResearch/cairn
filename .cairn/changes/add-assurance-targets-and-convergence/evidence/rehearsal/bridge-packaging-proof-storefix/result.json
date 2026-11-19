@@ -1,0 +1,39 @@
+{
+  "scope": "recorded source-bound fixture packaging/cache/replay only; no producer execution, tool construction or external acceptance",
+  "results": {
+    "octet": {
+      "association_identity": "b3:86e6d7b1561be0641af2f5a19cc44532f2cc3fa6c339bcd40a9b8f3d9181c065",
+      "receipt_identity": "b3:38a31cc536604a75d572c007743ed8103c9bd9b6b688556fb9f7de6b151e08d7",
+      "output": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/store/glnhkn9a41rc31jqjj0hillcvr8alf5c-verification-bridge-octet-handoff",
+      "cold_counts": {
+        "succeeded_total": 1,
+        "built_total": 1,
+        "cached_total": 0,
+        "failed_total": 0
+      },
+      "warm_counts": {
+        "succeeded_total": 1,
+        "built_total": 0,
+        "cached_total": 1,
+        "failed_total": 0
+      }
+    },
+    "trellis": {
+      "association_identity": "b3:0300a744613f80b01e0da7098aac01eb9a5bd2df7b4da1c9eb60dc56e54bb6d6",
+      "receipt_identity": "b3:0c1d48bea2c85fe21f23f491e98337d21b7c64bf83468465d41de877209a879d",
+      "output": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/store/37jx2y3nja72zg9kadw8hbs8nylmgald-verification-bridge-trellis-handoff",
+      "cold_counts": {
+        "succeeded_total": 1,
+        "built_total": 1,
+        "cached_total": 0,
+        "failed_total": 0
+      },
+      "warm_counts": {
+        "succeeded_total": 1,
+        "built_total": 0,
+        "cached_total": 1,
+        "failed_total": 0
+      }
+    }
+  }
+}

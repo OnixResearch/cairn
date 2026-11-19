@@ -1,0 +1,361 @@
+{
+  "acceptance_ids": [],
+  "change": "add-assurance-targets-and-convergence",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "ab09f1683f0f2d044bcc032a6e32a4aed17098be565559494b9c9ddef97c4878",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+  "policy_selection": {
+    "blake3": "8331941b107c95af1e668f97a7d70780c195cc20b5713c4c7a792dcdb0fe39d8",
+    "installation_receipt": false,
+    "locator": "/nix/store/n2xkxzcmdkip84w75pavlby0jzw25js6-cairn-0.2.1/share/cairn/cairn-policy.json",
+    "source": "legacy_default"
+  },
+  "probe_evidence": {
+    "declarations_present": false,
+    "probes": []
+  },
+  "profile_identity_hash": "685cd083cf0b59cd84d73db5038cc2ef2e8e3ee19b748acc5f5a29083d5fb604",
+  "receipt_hash": "89b714f2f996325f09601cd4c1dedfccc82a3c4a43f910d832e24f6b5f6d1ed4",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "tasks",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "design",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/design.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 51,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 23,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/specs/assurance-targets/spec.md",
+      "requirement_blocks": 4,
+      "scenario_blocks": 8,
+      "substantive_lines": 36,
+      "substantive_requirement_blocks": 4,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/specs/convergence/spec.md",
+      "requirement_blocks": 9,
+      "scenario_blocks": 18,
+      "substantive_lines": 78,
+      "substantive_requirement_blocks": 9,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 12,
+      "kind": "tasks",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-assurance-targets-and-convergence/tasks.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 12,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 12,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 12
+    }
+  ],
+  "task_ordering": {
+    "active": true,
+    "edges": [
+      {
+        "predecessor": "contract",
+        "task": "admission"
+      },
+      {
+        "predecessor": "core",
+        "task": "cli"
+      },
+      {
+        "predecessor": "policy",
+        "task": "contract"
+      },
+      {
+        "predecessor": "pilot",
+        "task": "core"
+      },
+      {
+        "predecessor": "cli",
+        "task": "corpus"
+      },
+      {
+        "predecessor": "corpus",
+        "task": "evidence"
+      },
+      {
+        "predecessor": "evidence",
+        "task": "handoff"
+      },
+      {
+        "predecessor": "realization",
+        "task": "pilot"
+      },
+      {
+        "predecessor": "admission",
+        "task": "projection"
+      },
+      {
+        "predecessor": "rehearsal",
+        "task": "realization"
+      },
+      {
+        "predecessor": "projection",
+        "task": "rehearsal"
+      }
+    ],
+    "issues": [],
+    "nodes": [
+      {
+        "blocked_by": [
+          "contract"
+        ],
+        "blocks": [
+          "projection"
+        ],
+        "id": "admission",
+        "line": 5,
+        "predecessors": [
+          "contract"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "core"
+        ],
+        "blocks": [
+          "corpus"
+        ],
+        "id": "cli",
+        "line": 11,
+        "predecessors": [
+          "core"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "policy"
+        ],
+        "blocks": [
+          "admission"
+        ],
+        "id": "contract",
+        "line": 4,
+        "predecessors": [
+          "policy"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "pilot"
+        ],
+        "blocks": [
+          "cli"
+        ],
+        "id": "core",
+        "line": 10,
+        "predecessors": [
+          "pilot"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "cli"
+        ],
+        "blocks": [
+          "evidence"
+        ],
+        "id": "corpus",
+        "line": 12,
+        "predecessors": [
+          "cli"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "corpus"
+        ],
+        "blocks": [
+          "handoff"
+        ],
+        "id": "evidence",
+        "line": 16,
+        "predecessors": [
+          "corpus"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "evidence"
+        ],
+        "blocks": [],
+        "id": "handoff",
+        "line": 17,
+        "predecessors": [
+          "evidence"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "realization"
+        ],
+        "blocks": [
+          "core"
+        ],
+        "id": "pilot",
+        "line": 9,
+        "predecessors": [
+          "realization"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [],
+        "blocks": [
+          "contract"
+        ],
+        "id": "policy",
+        "line": 3,
+        "predecessors": [],
+        "ready": true,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "admission"
+        ],
+        "blocks": [
+          "rehearsal"
+        ],
+        "id": "projection",
+        "line": 6,
+        "predecessors": [
+          "admission"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "rehearsal"
+        ],
+        "blocks": [
+          "pilot"
+        ],
+        "id": "realization",
+        "line": 8,
+        "predecessors": [
+          "rehearsal"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "projection"
+        ],
+        "blocks": [
+          "realization"
+        ],
+        "id": "rehearsal",
+        "line": 7,
+        "predecessors": [
+          "projection"
+        ],
+        "ready": false,
+        "state": "todo"
+      }
+    ],
+    "order": [
+      "policy",
+      "contract",
+      "admission",
+      "projection",
+      "rehearsal",
+      "realization",
+      "pilot",
+      "core",
+      "cli",
+      "corpus",
+      "evidence",
+      "handoff"
+    ],
+    "ready_tasks": [
+      "policy"
+    ],
+    "valid": true
+  },
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

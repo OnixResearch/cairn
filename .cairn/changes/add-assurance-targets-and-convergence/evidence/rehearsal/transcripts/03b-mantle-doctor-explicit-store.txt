@@ -1,0 +1,14 @@
+$ nix develop -c target/debug/mantle doctor --store /home/brittonr/wt/convergence-evidence/rehearsal/doctor-preflight/store --state-dir /home/brittonr/wt/convergence-evidence/rehearsal/doctor-preflight/state
+--- stdout ---
+doctor profile: build
+status: ok
+- [ok] bwrap: found /nix/store/wmrjs5vaywysr8s4ihkch205xlmwldvz-mantle-wasm-component-toolchain-v1/bin/bwrap
+- [ok] sandbox-shell: using SNIX_BUILD_SANDBOX_SHELL=/nix/store/d7fc5i7y71rj8cr5jwmaxwjnyvfiybdp-busybox-static-x86_64-unknown-linux-musl-1.37.0/bin/busybox
+- [ok] fusermount3: found /run/wrappers/bin/fusermount3
+- [ok] state-dir: state directory is writable via /home/brittonr/wt/convergence-evidence/rehearsal/doctor-preflight
+- [ok] store-dir: store directory is writable via /home/brittonr/wt/convergence-evidence/rehearsal/doctor-preflight/store
+- [ok] work-root: sandbox work root /home/brittonr/wt/convergence-evidence/rehearsal/doctor-preflight/state/build-work/sandbox-local (63.5 GiB free at /home/brittonr/wt/convergence-evidence/rehearsal/doctor-preflight)
+
+--- stderr ---
+--- exit code ---
+0

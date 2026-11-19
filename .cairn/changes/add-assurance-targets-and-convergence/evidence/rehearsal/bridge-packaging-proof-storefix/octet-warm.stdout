@@ -1,0 +1,1107 @@
+{
+  "schema": "crunch-build-report-v1",
+  "file": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/octet.ncl",
+  "output_dir": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/store",
+  "state_dir": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/state",
+  "store_dir": "/mantle/store",
+  "scheduler_policy": {
+    "schema": "mantle-scheduling-policy-v1",
+    "policy_id": "mantle-lazy-priority-v1",
+    "preference_order": [
+      "known-graph",
+      "resource-fit",
+      "locality-transfer"
+    ],
+    "aged_after_epochs": 4,
+    "protected_after_epochs": 8
+  },
+  "hermeticity_mode": "strict",
+  "hermeticity_audit_events": [],
+  "build_environment_reports": [],
+  "network_policy_reports": [],
+  "workspace_reports": [],
+  "action_result_reports": [
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/0d356cee5798df16cd702f7031da970aa1e4011bb210d1f3eadfe5230a7d8024",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/6b5b99593f3da213e394d73d1f1c9129a6909212b7ac4cf27633bf7e4ab75bb7",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/6b5b99593f3da213e394d73d1f1c9129a6909212b7ac4cf27633bf7e4ab75bb7",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "78b48684a3b4d4c8e7868788e18a0a124bb447a3884b2d0d8a9327be62b94a07"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 1488
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/1a4ba8e83778dae5061442753bf6629ea9742d1ed38660db97fb50e428cb432b",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/cbde82947aec7dabd58c59016855de5bdde40f88def813a084564135f1410086",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/cbde82947aec7dabd58c59016855de5bdde40f88def813a084564135f1410086",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "8e5a5f874f9a084390b7b3da46833e8eb9420bbdcaa4a6598cb9976786c3197b"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 168
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/35dfe434d3196e04892f7c9f5f2c08b7c04de87af8e32a314f43bee747509494",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/2b2944a25e8b1bfe426876c47cc1b9f10c8884018047f0e3618c3e4537b81e5b",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/2b2944a25e8b1bfe426876c47cc1b9f10c8884018047f0e3618c3e4537b81e5b",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "8dd6a5172a600f2c4e72165f469e87982ec87d0db8cb7238c40849b7cb2be89c"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 816
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/4ba9a6ca90fff0d8df577f6b967ff469ffbfcb23823c99f28ce7ad577568fc3d",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/e4d6c4c3949cb1594d4adb9e5bc3a77edf5b8ee8036f0132f5c96b7fa1502cda",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/e4d6c4c3949cb1594d4adb9e5bc3a77edf5b8ee8036f0132f5c96b7fa1502cda",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "ed0e1f409127d5a391f480b59df8ae964e3b4873da811c87389de2786b96ea98"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 2888
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/5f0f936568d20de3e0f6b3cd70b3508f4c91e976ccf403c7d0fe73a05d1559a3",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/2697ba39b9137898ac993e646099a4d6deb4fa8e6acdb43aa21f9a60906d3a1f",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/2697ba39b9137898ac993e646099a4d6deb4fa8e6acdb43aa21f9a60906d3a1f",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "92425d4a1e09dec87647e62dfdb7cf55b94b176742ae78383a6da5e6496df7b7"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 35440
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/85ff04e3a1d9d91c4f2f659df67a71853fdf22ecad3840edc0c107f0de55854e",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/120de4281d9325f6773e2f40fb42d652dc06cc3d56b1967b3d693d2d06e2e1f9",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/120de4281d9325f6773e2f40fb42d652dc06cc3d56b1967b3d693d2d06e2e1f9",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "beb0a86bc08d7a0282761f223a5badbe22c03536df02af090685679a2e4979c3"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 18792
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/966ab1ea16caa5dc7e2b481c90e6c64442c853fb872343fe5be2b6fdb5a8440f",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/060f46b6053521d8e7fa630e6010d1ddccecfef6e24e0b8fa4015a318c34c00a",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/060f46b6053521d8e7fa630e6010d1ddccecfef6e24e0b8fa4015a318c34c00a",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "080c79f1e9a773ebfbd5d34ac8cac2d3ffbb4d3d9720d021d792e6feb7729eaa"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 696
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/98a3e27af81fce41002e342d958ef3855abe65e96a3a91aaed2a3d5fe57165b3",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/bdd543883c453af03e1271425a53ab2c5d87ec0b925d565a4c9687a97c122876",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/bdd543883c453af03e1271425a53ab2c5d87ec0b925d565a4c9687a97c122876",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "43aa3aa3f3e12a3d7fd721dcbd1b9c8353c203ffee06ca31b67d94b55a77958b"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 5736
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/b67802a9f0f854a6c16432987885cf27dafac89d8223e2a7bce0a87d69be6807",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/b219fdbc653436fa59c8a24684c25b78b6d918673687036ac238233ebe61e783",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/b219fdbc653436fa59c8a24684c25b78b6d918673687036ac238233ebe61e783",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "8e5a5f874f9a084390b7b3da46833e8eb9420bbdcaa4a6598cb9976786c3197b"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 168
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/bb21b8f7312b85497713c7a68164c91389b7b6bef6e554aa45f0d11a48444b5d",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/ed806409e83bbbe09ef7b59ecff9e58147c92d0492495ae520afde7057c7a6a0",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/ed806409e83bbbe09ef7b59ecff9e58147c92d0492495ae520afde7057c7a6a0",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "098d3c618bb1de7e0563c5e06e03fa3d15bf35fbccc5cd959df7e63f25d90450"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 2640
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    },
+    {
+      "schema": "mantle-action-result-runtime-report-v1",
+      "phase": "discovery",
+      "action_ref": "mantle-action://blake3/d30e07d580596b7899616ad173aec9513c73988d91865d46c9be1a6658d1bd15",
+      "disposition": "reused",
+      "selected_result_ref": "mantle-action-result://blake3/77ae515e162a0d90100f5909d75f4cad0dea4c7a8ee67a143f4b4ce4b59ef816",
+      "selected_source_id": "local-action-results",
+      "selected_source_class": "local",
+      "trust_basis": [
+        "crunch-britton-desktop-1"
+      ],
+      "conflict_class": null,
+      "candidate_decisions": [
+        {
+          "result_ref": "mantle-action-result://blake3/77ae515e162a0d90100f5909d75f4cad0dea4c7a8ee67a143f4b4ce4b59ef816",
+          "source_id": "local-action-results",
+          "source_class": "local",
+          "admitted": true,
+          "diagnostics": [],
+          "trust_basis": [
+            "crunch-britton-desktop-1"
+          ],
+          "output_set_digest_blake3": "91186a0a411173cdd818f92dabf4a08acbc6f6bd8a803834a83ae12652958438"
+        }
+      ],
+      "publication_result_refs": [],
+      "transfer": {
+        "output_count": 1,
+        "transferred_nar_bytes": 0,
+        "reused_nar_bytes": 296
+      },
+      "diagnostics": [],
+      "non_claims": [
+        "ca-mapping-presence-is-not-output-trust",
+        "executor-correctness",
+        "index-presence-is-not-output-trust"
+      ]
+    }
+  ],
+  "native_dynamic_plans": [],
+  "scheduler_priority_decisions": [
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 1,
+      "selected_goal_key_blake3": "ad164e4c0b6eb1a00c745d312d1268b88c0587d60a13b17ba15f24cf5dac756d",
+      "competing_goal_count": 10,
+      "candidate_snapshot_digest_blake3": "5002df77f82ab861149c51b59c815205241308f1c778761ac27ba720069f426a",
+      "runner_up": {
+        "goal_key_blake3": "ccc8332a77e247fa9c9b6be33362a784f15bff9c61bac23befd55a92bba59374",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "fresh",
+        "age_epochs": 1,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "fresh",
+      "age_epochs": 1,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 2,
+      "selected_goal_key_blake3": "ccc8332a77e247fa9c9b6be33362a784f15bff9c61bac23befd55a92bba59374",
+      "competing_goal_count": 9,
+      "candidate_snapshot_digest_blake3": "d54870ea6e929190a5c04a362364e27bf305b72cf6c97a2daf7428af00625a2c",
+      "runner_up": {
+        "goal_key_blake3": "a50f65fd740fab23869945bf30b2a8bb0daeb8e36d23049421206a08ea1abf75",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "fresh",
+        "age_epochs": 2,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "fresh",
+      "age_epochs": 2,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 3,
+      "selected_goal_key_blake3": "a50f65fd740fab23869945bf30b2a8bb0daeb8e36d23049421206a08ea1abf75",
+      "competing_goal_count": 8,
+      "candidate_snapshot_digest_blake3": "93261b00768b5bdfcd0e1943c9dfc76f904244da558fbfdb51cbd19653a2b6d4",
+      "runner_up": {
+        "goal_key_blake3": "fa338c378f5c12d1fe696cccf5183d6354a078cbf2b21f6c3d9d85f4c9b065d9",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "fresh",
+        "age_epochs": 3,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "fresh",
+      "age_epochs": 3,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 4,
+      "selected_goal_key_blake3": "fa338c378f5c12d1fe696cccf5183d6354a078cbf2b21f6c3d9d85f4c9b065d9",
+      "competing_goal_count": 7,
+      "candidate_snapshot_digest_blake3": "6f96074d09e54dc0beb2dbce9457ae320c987909b7fbb9f89702a594a315ad70",
+      "runner_up": {
+        "goal_key_blake3": "ffbf45e6c05b4ccc92f29d379cffea2f3e875f9b61da1f7d1009345b75321a54",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "aged",
+        "age_epochs": 4,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "aged",
+      "age_epochs": 4,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 5,
+      "selected_goal_key_blake3": "ffbf45e6c05b4ccc92f29d379cffea2f3e875f9b61da1f7d1009345b75321a54",
+      "competing_goal_count": 6,
+      "candidate_snapshot_digest_blake3": "3dbf0426582b932983c0d2bbeb9b56122e1cac96ca937481f87f4de68c071ec9",
+      "runner_up": {
+        "goal_key_blake3": "98ddf3fc3e225d0e1d71c0626eaac8824d3cf5f15ef437afa00e6a51d4f849b0",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "aged",
+        "age_epochs": 5,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "aged",
+      "age_epochs": 5,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 6,
+      "selected_goal_key_blake3": "98ddf3fc3e225d0e1d71c0626eaac8824d3cf5f15ef437afa00e6a51d4f849b0",
+      "competing_goal_count": 5,
+      "candidate_snapshot_digest_blake3": "4d011011677a6831f4ada21e33ada97298becc5180d4e4e17e6ac61f92d83346",
+      "runner_up": {
+        "goal_key_blake3": "3215bf0200ac45eb49976500375c1c76690de1fe462218aef7a130ffcbe370d2",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "aged",
+        "age_epochs": 6,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "aged",
+      "age_epochs": 6,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 7,
+      "selected_goal_key_blake3": "3215bf0200ac45eb49976500375c1c76690de1fe462218aef7a130ffcbe370d2",
+      "competing_goal_count": 4,
+      "candidate_snapshot_digest_blake3": "8c78ecc846f7a7a1cedb17c568d60e3f0ff8ffa64440d0820e5a2d2a0f740571",
+      "runner_up": {
+        "goal_key_blake3": "c314e06a02e55bee04105c20f36ffa993bb3a43a9fca1eb754e93ca110e440a2",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "aged",
+        "age_epochs": 7,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "aged",
+      "age_epochs": 7,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 8,
+      "selected_goal_key_blake3": "c314e06a02e55bee04105c20f36ffa993bb3a43a9fca1eb754e93ca110e440a2",
+      "competing_goal_count": 3,
+      "candidate_snapshot_digest_blake3": "b3f45431ad8649e60b3a7b83dfcb182d7885daa8151069c0c26a367cfabfaa68",
+      "runner_up": {
+        "goal_key_blake3": "634d3dacaa48ca84a123cd1b8213fc5f225ce5c74149b0cfd29b2e7a8d73cbb6",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "protected",
+        "age_epochs": 8,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "protected",
+      "age_epochs": 8,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 9,
+      "selected_goal_key_blake3": "634d3dacaa48ca84a123cd1b8213fc5f225ce5c74149b0cfd29b2e7a8d73cbb6",
+      "competing_goal_count": 2,
+      "candidate_snapshot_digest_blake3": "fb301521a75a72318b4124e229821238debf2f69dbc1dab0b7c2d2e8953ccf72",
+      "runner_up": {
+        "goal_key_blake3": "0fa753b968aaf8535903c2e993fdff74e53d3519b2d1e300df55da146e0b7920",
+        "operator_policy_class": "ordinary",
+        "starvation_class": "protected",
+        "age_epochs": 9,
+        "known_critical_path_nodes": 2,
+        "known_critical_path_work_units": 2,
+        "blocked_root_count": 1,
+        "blocked_root_count_saturated": false,
+        "resource_fit_class": "unknown",
+        "content_locality_class": "unknown",
+        "transfer_cost_class": "unknown"
+      },
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "protected",
+      "age_epochs": 9,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "stable-goal-key",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 10,
+      "selected_goal_key_blake3": "0fa753b968aaf8535903c2e993fdff74e53d3519b2d1e300df55da146e0b7920",
+      "competing_goal_count": 1,
+      "candidate_snapshot_digest_blake3": "d0e1eae7700dde09f94a2b95febe909441a8a5a28115011ce08aeddc6943ea73",
+      "runner_up": null,
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "protected",
+      "age_epochs": 10,
+      "known_critical_path_nodes": 2,
+      "known_critical_path_work_units": 2,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "sole-candidate",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    },
+    {
+      "schema": "mantle-priority-decision-v1",
+      "policy_id": "mantle-lazy-priority-v1",
+      "policy_digest_blake3": "93aa5a487a960b14e51707f3c8d230253db9562dafc7b314b5ecc056a07ddd58",
+      "scheduling_epoch": 11,
+      "selected_goal_key_blake3": "444298a31406d6faab90432ec7c8c1c1e8ffffe55dc7047d02b2ce5d92eae51d",
+      "competing_goal_count": 1,
+      "candidate_snapshot_digest_blake3": "773f6a2c8aec3ae90429c3ff2551664e9b2d1758fa06a49e0e044c01430051a2",
+      "runner_up": null,
+      "known_graph_basis": "known-graph",
+      "history_basis": "structural-fallback-missing",
+      "history_snapshot_digest_blake3": null,
+      "operator_policy_class": "ordinary",
+      "starvation_class": "fresh",
+      "age_epochs": 1,
+      "known_critical_path_nodes": 1,
+      "known_critical_path_work_units": 1,
+      "blocked_root_count": 1,
+      "blocked_root_count_saturated": false,
+      "resource_fit_class": "unknown",
+      "content_locality_class": "unknown",
+      "transfer_cost_class": "unknown",
+      "selection_reason": "sole-candidate",
+      "stable_tie_break_class": "stable-goal-key",
+      "claim_scope": "configured-known-fact-ordering",
+      "non_claims": [
+        "global-optimality",
+        "future-graph-knowledge",
+        "execution-success",
+        "output-trust",
+        "release-reproducibility"
+      ]
+    }
+  ],
+  "overlay_base_generations": [],
+  "store_layer_selections": [],
+  "remote_telemetry_events": [
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 10,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 9,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 8,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 7,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 6,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 5,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 4,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 3,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 2,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 1,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    },
+    {
+      "schema": "mantle-remote-telemetry-event-v1",
+      "category": "assignment",
+      "phase": "assigned",
+      "result": "accepted",
+      "route": "not-applicable",
+      "retry": "none",
+      "transfer": "none",
+      "reason": "priority-selected",
+      "capability": "unknown",
+      "measurement": "candidate-count",
+      "value": 1,
+      "non_claim": "diagnostic runtime events do not prove compiler correctness, source reproducibility, release eligibility, CI success, or physical-target determinism"
+    }
+  ],
+  "frontend_artifact_attestations": [],
+  "ast_grep_structural_evidence": [],
+  "ast_grep_structural_evidence_diagnostics": [],
+  "cargo_build_evidence": [],
+  "cargo_build_evidence_diagnostics": [],
+  "diagnostic_persistence_failures": [],
+  "counts": {
+    "succeeded_total": 1,
+    "built_total": 0,
+    "cached_total": 1,
+    "failed_total": 0
+  },
+  "outcomes": [
+    {
+      "drv_key": "/mantle/store/hsl7m4lv0wmzg9f43knybjfrghzbnda7-verification-bridge-octet-handoff.drv",
+      "label": "verification-bridge-octet-handoff",
+      "cached": true,
+      "log_file": null,
+      "outputs": [
+        {
+          "name": "out",
+          "path": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/store/glnhkn9a41rc31jqjj0hillcvr8alf5c-verification-bridge-octet-handoff",
+          "artifact_attestation": {
+            "logical_path": "/mantle/store/glnhkn9a41rc31jqjj0hillcvr8alf5c-verification-bridge-octet-handoff",
+            "path": "/home/brittonr/wt/convergence-evidence/rehearsal/bridge-packaging-proof-storefix/state/attestations/artifacts/bfdc9ba1a18ead21554119d5efbb491fa43a58c428acc0a3d4369b532883d7b6.json"
+          }
+        }
+      ]
+    }
+  ],
+  "failed": [],
+  "fod_mismatches": []
+}

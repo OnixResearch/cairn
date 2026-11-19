@@ -1,0 +1,46 @@
+# WP3 rehearsal context — fixture packaging; no proof executed
+
+## host (shell cwd: /home/brittonr/git/OnixResearch/kiln)
+$ git -C /home/brittonr/wt/mantle-convergence rev-parse HEAD
+cd4ad3f43f6ce533a686d204168e8bae96688d85
+exit: 0
+
+$ uname -a
+Linux britton-desktop 6.18.60 #1-NixOS SMP PREEMPT_DYNAMIC @1793362001 x86_64 GNU/Linux
+exit: 0
+
+$ nproc
+32
+exit: 0
+
+## inside dev shell: /home/brittonr/wt/mantle-convergence (nix develop -c bash -lc ...)
+copying path '/nix/store/01sgz777f98jcmrxi4fj1q872fhg2br5-source' from 'http://100.100.103.95:5000'...
+warning: file 'nar/0vb8pdl7v7yi5zjlrm49b6q01dfpswh5r10mw5gvc1lr8l5pdyqf.nar?hash=01sgz777f98jcmrxi4fj1q872fhg2br5' does not exist in binary cache 'http://100.100.103.95:5000'
+$ rustc -V
+rustc 1.96.0-nightly (c75612477 2026-04-07)
+exit: 0
+
+$ cargo -V
+cargo 1.96.0-nightly (a357df4c2 2026-04-03)
+exit: 0
+
+$ nix --version
+nix (Nix) 2.36.0
+exit: 0
+
+$ command -v b3sum
+/run/current-system/sw/bin/b3sum
+exit: 0
+
+$ b3sum --version
+b3sum 1.8.7
+exit: 0
+
+$ command -v bwrap
+/nix/store/wmrjs5vaywysr8s4ihkch205xlmwldvz-mantle-wasm-component-toolchain-v1/bin/bwrap
+exit: 0
+
+$ bwrap --version
+bubblewrap 0.11.0
+exit: 0
+

@@ -1,0 +1,10 @@
+--- scripts/prove-verification-bridge.py	2026-11-19 14:17:36.821592213 -0500
++++ /tmp/wp3/prove-verification-bridge-storefix.py	2026-11-19 14:31:00.315894700 -0500
+@@ -60,6 +60,7 @@
+         parser.error("real Octet replay requires --octet-owner-output, --octet-producer-export and --octet-revision")
+     args.out = args.out.resolve()
+     args.out.mkdir(parents=True, exist_ok=False)
++    (args.out / "store").mkdir()
+     mantle, bridge, b3sum = (path.resolve(strict=True) for path in (args.mantle, args.bridge, args.b3sum))
+     results = {}
+     for name, revision in REVISIONS.items():
