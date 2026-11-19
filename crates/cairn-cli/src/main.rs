@@ -84,6 +84,7 @@ mod collaboration;
 mod concurrent_change_footprints;
 mod config_export;
 mod content_addressed_evidence;
+mod convergence;
 
 use adoption::run_adoption;
 use adr::run_adr;
@@ -220,6 +221,7 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         "source-review" => source_review::run(args.collect())?,
         "requirement-contract" => typed_requirement_contracts::run(args.collect())?,
         "footprints" => concurrent_change_footprints::run(args.collect())?,
+        "convergence" => convergence::run(args.collect())?,
         "revision" => revision_classification::run(args.collect())?,
         "requirement-analysis" => requirement_consistency::run(args.collect())?,
         "prose" => prose::run(args.collect())?,

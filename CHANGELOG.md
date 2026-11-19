@@ -12,6 +12,12 @@ surface.
 
 ### Added
 
+- Assurance targets and read-only `cairn convergence inspect`: a Nickel targets
+  contract binding exact registry rows to `reviewed`, `bounded_check` or
+  `checked_proof`, a projection to Octet requirement contracts that Rust
+  re-verifies, and a `cairn.convergence.v1` receipt that binds Mantle
+  realization records and Octet decisions per row, with `complete` requiring
+  both current targets and full coverage. Advisory only; no gate changes.
 - Offline agent lifecycle cost measurement: typed scenario and cohort contracts,
   checked accounting, saved-observation import and comparison, with token data
   explicitly unavailable rather than estimated and representation-only verdicts.
