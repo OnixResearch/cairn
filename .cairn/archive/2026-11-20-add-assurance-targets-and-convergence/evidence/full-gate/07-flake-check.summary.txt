@@ -1,0 +1,17 @@
+# summary of nix flake check path:$PWD -L --keep-going at da9518f (full log retained locally, not in git)
+# log: /home/brittonr/wt/convergence-evidence/cairn-flake-check-da9518f.log
+# bytes: 32728990
+# blake3: 94e062a169a2779f2257451b8a5aca2f1408e8bb744cfad0a06cd77f9db1359a
+# checks.x86_64-linux attributes (40): adoption-report-contracts agent-benchmark-contracts artifact-auth-source-pin assurance-targets-contracts authenticated-policy-profiles-fresh bootstrap-source-pin buoy-traceability-comparison cairn-validate check-producer-source-pins clippy gate-contract gate-contract-nickel gate-contract-wasm incremental-observations-policy-fresh mcp-discovery-policy-fresh mcp-response-policy-fresh nickel-cohort-exact nickel-export-cutover nickel-toolchain-fixtures octet octet-integration packaged-foreign-working-directory packaged-policy-export-runtime policy-fresh policy-stale-detects-drift preserves-corpus-fresh preserves-corpus-stale-detects-drift prose-profile-export radicle-cob-format-compatibility readiness-policy-fresh rename-classification runtime-generated-policy-only rust-tests rustfmt selected-work-contracts self-dogfood targeted-context-policy-fresh trace-index-live-proof tracey-coverage workflow-readiness-policy-fresh 
+# failed attributes (every 'failed to build attribute' line):
+error: failed to build attribute 'checks.x86_64-linux.rust-tests', build of '/nix/store/jcp1cirpnzzxs32nwmvs3bs7vslj5wny-cairn-tests-0.1.0.drv^*'
+# failing test inside rust-tests (cargo test --workspace, crane cargoTest):
+cairn-tests> test comparison_identity_binds_source_mapping_fixture_and_policy ... FAILED
+cairn-tests> test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+# tail:
+         nix log /nix/store/jcp1cirpnzzxs32nwmvs3bs7vslj5wny-cairn-tests-0.1.0.drv
+error: some errors were encountered during the evaluation
+Command exited with non-zero status 1
+wall=1132.88
+EXIT=1
+# end 2026-11-20T11:37:26-05:00
