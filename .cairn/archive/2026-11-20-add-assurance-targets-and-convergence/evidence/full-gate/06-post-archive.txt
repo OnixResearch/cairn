@@ -1,0 +1,11 @@
+# after sync and archive (CAIRN_ARCHIVE_DATE=2026-11-20), packaged cairn built from c8b38c4, 2026-11-20T11:18:05-05:00
+$ cairn sync add-assurance-targets-and-convergence --root . --execute
+{"dry_run":false,"blocked":false,"mutated":true,"reasons":[]}
+$ CAIRN_ARCHIVE_DATE=2026-11-20 cairn archive add-assurance-targets-and-convergence --root . --execute
+{"dry_run":false,"blocked":false,"mutated":true,"reasons":[]}
+$ cairn validate --root .
+{"valid":true,"issues":0,"findings":0}
+EXIT=0
+$ cairn traceability coverage --root .
+traceability coverage ok: 2490/2490 referenced (profile cairn-default)
+EXIT=0
