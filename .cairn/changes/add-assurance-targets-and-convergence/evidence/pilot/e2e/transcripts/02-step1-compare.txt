@@ -1,0 +1,20 @@
+# 02-step1-compare
+# started 2026-11-20T10:27:42-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c set\ -euo\ pipefail\;\ X=/home/brittonr/wt/convergence-evidence/e2e\;\ O=/home/brittonr/wt/e2e/octet-pilot/standards/requirements/cairn-pilot\;\ for\ f\ in\ targets.json\ generated.json\ contract.json\;\ do\ echo\ \"==\ \$f\"\;\ cmp\ \"\$X/step1/\$f\"\ \"\$O/\$f\"\ \&\&\ echo\ \"cmp:\ identical\"\;\ b3sum\ \"\$X/step1/\$f\"\ \"\$O/\$f\"\;\ done 
+--- stdout ---
+== targets.json
+cmp: identical
+56c803468b0c0682f6d43dea11f1ebc20fdcda631b4cd52a8ae1970fa8f54dcd  /home/brittonr/wt/convergence-evidence/e2e/step1/targets.json
+56c803468b0c0682f6d43dea11f1ebc20fdcda631b4cd52a8ae1970fa8f54dcd  /home/brittonr/wt/e2e/octet-pilot/standards/requirements/cairn-pilot/targets.json
+== generated.json
+cmp: identical
+a3c483b13fa560791b433991e4353b7fb0c1e9f6d1b2655d20cbe922ccd82ca7  /home/brittonr/wt/convergence-evidence/e2e/step1/generated.json
+a3c483b13fa560791b433991e4353b7fb0c1e9f6d1b2655d20cbe922ccd82ca7  /home/brittonr/wt/e2e/octet-pilot/standards/requirements/cairn-pilot/generated.json
+== contract.json
+cmp: identical
+56d7f459cc59ddfcdc31d42b86d6c0cef9ae3c03d8a9673ba6d6fb0a66e8eb3e  /home/brittonr/wt/convergence-evidence/e2e/step1/contract.json
+56d7f459cc59ddfcdc31d42b86d6c0cef9ae3c03d8a9673ba6d6fb0a66e8eb3e  /home/brittonr/wt/e2e/octet-pilot/standards/requirements/cairn-pilot/contract.json
+--- stderr ---
+--- EXIT=0
+--- wall: 0.02s

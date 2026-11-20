@@ -1,0 +1,4 @@
+# step 6a: retained pilot case, clean Cairn checkout c8b38c4e02928afd5e2f746293553b4929b27508, packaged binary /nix/store/52fkm6qw21c7n230rlj9ygy43fgpnx94-cairn-0.2.1
+$ cairn convergence inspect --case fixtures/convergence/pilot/case.json --root fixtures/convergence/pilot/root
+EXIT=0
+{"status":"evaluated","receipt_blake3":"39ce3c51b8c619091653d6c4f90bcca238187ca544c3477399051bee57535482","targets_current":true,"coverage_complete":false,"complete":false,"rows":740,"current":[{"requirement_id":"octet.aeneas_consumer_contract.compatibility","route":"cache-only-preserve-v1"}],"states":{"current":1,"untargeted":739}}

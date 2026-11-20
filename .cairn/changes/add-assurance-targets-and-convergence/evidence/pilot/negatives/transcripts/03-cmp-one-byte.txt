@@ -1,0 +1,9 @@
+# 03-cmp-one-byte
+# started 2026-11-20T00:09:04-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: cmp -l /tmp/n1-old-Theorem.lean /home/brittonr/wt/convergence-evidence/negatives/octet-src-change/standards/proof-rails/aeneas-lean/fixtures/external-consumer/Theorem.lean 
+--- stdout ---
+ 49 145 105
+--- stderr ---
+--- EXIT=1
+--- wall: 0.01s

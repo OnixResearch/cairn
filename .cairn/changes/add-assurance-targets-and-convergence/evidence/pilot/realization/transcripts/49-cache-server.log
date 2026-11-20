@@ -1,0 +1,3 @@
+Serving HTTP on 127.0.0.1 port 18471 (http://127.0.0.1:18471/) ...
+127.0.0.1 - - [20/Nov/2026 00:12:20] "GET /nix-cache-info HTTP/1.1" 200 -
+127.0.0.1 - - [20/Nov/2026 00:12:20] "GET /zjq6whhf2c641vkz89kgwwpbajjq5cbq.narinfo HTTP/1.1" 200 -

@@ -1,0 +1,55 @@
+# 02-evidence-diff
+# started 2026-11-20T11:02:04-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives/N4-empirical
+# command: diff -u /home/brittonr/wt/e2e/octet-pilot/standards/requirements/fixtures/cairn-pilot/evidence.json evidence-empirical.json 
+--- stdout ---
+--- /home/brittonr/wt/e2e/octet-pilot/standards/requirements/fixtures/cairn-pilot/evidence.json	2026-11-20 10:27:16.072970000 -0500
++++ evidence-empirical.json	2026-11-20 11:01:44.853897305 -0500
+@@ -2,11 +2,41 @@
+   "schema_version": "octet-requirement-evidence/v1",
+   "contract_id": "octet.cairn-pilot.aeneas-consumer",
+   "contract_blake3": "56d7f459cc59ddfcdc31d42b86d6c0cef9ae3c03d8a9673ba6d6fb0a66e8eb3e",
+-  "proof_decks": [
++  "proof_decks": [],
++  "empirical_checks": [
+     {
+       "evidence_id": "aeneas.consumer.increment-matches-model",
+-      "deck": "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts/proof-cards.json",
+-      "artifact_root": "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1"
++      "evidence_class": "empirical_check",
++      "status": "passed",
++      "checker_id": "lean-proof-runner",
++      "command_argv": [
++        "lean",
++        "--run",
++        "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean"
++      ],
++      "checked_scope": [
++        "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0"
++      ],
++      "source_bindings": [
++        {
++          "blake3": "28826659c5095a872ca9b17c747b96be1bc3afc147f2f383a7df5a527ab04370",
++          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/Cargo.toml"
++        },
++        {
++          "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd",
++          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/src/lib.rs"
++        },
++        {
++          "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f",
++          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/Theorem.lean"
++        }
++      ],
++      "artifact": "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts/proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.stdout",
++      "artifact_blake3": "20fe247f23727146eb84dd18b4e3923958c3d2197c96e0687f77c165beca9589",
++      "diagnostics": [],
++      "non_claims": [
++        "the retained log is the producer job's own Lean run output, read in place; it records that the checked file built, not that Lean's kernel is sound"
++      ]
+     }
+   ],
+   "non_claims": [
+--- stderr ---
+--- EXIT=1
+--- wall: 0.03s

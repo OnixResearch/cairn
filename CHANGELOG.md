@@ -18,6 +18,11 @@ surface.
   re-verifies, and a `cairn.convergence.v1` receipt that binds Mantle
   realization records and Octet decisions per row, with `complete` requiring
   both current targets and full coverage. Advisory only; no gate changes.
+  `fixtures/convergence/pilot` retains a real pilot: Octet's Aeneas
+  external-consumer theorem, realized through Mantle's preserve route under one
+  pilot key, observed by the verification bridge and judged by Octet, is
+  `current`. Twenty negatives cover one binding check each. Mantle records are
+  read within their producers' own bounds.
 - Offline agent lifecycle cost measurement: typed scenario and cohort contracts,
   checked accounting, saved-observation import and comparison, with token data
   explicitly unavailable rather than estimated and representation-only verdicts.

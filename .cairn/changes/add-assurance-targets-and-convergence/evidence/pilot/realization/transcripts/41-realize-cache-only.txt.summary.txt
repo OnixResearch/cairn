@@ -1,0 +1,24 @@
+# summary of /home/brittonr/wt/convergence-evidence/realization/transcripts/41-realize-cache-only.txt (full transcript retained locally, not in git)
+# bytes: 5397462
+# blake3: 9884ddf0cec23f53b2fdf9f6fed5804043f22de2ab4428e80fcdc315c7fef3d3
+# lines: 9; first 40 and last 40 shown, long lines cut at 400 chars
+--- head ---
+# 41-realize-cache-only
+# started 2026-11-20T00:00:35-05:00
+# cwd: /home/brittonr/wt/mantle-convergence
+# command: /usr/bin/env PATH=/var/empty /home/brittonr/wt/mantle-convergence/target/release/mantle --json --state-dir /datapool/mantle-store/convergence-pilot-20261119/state --store /datapool/mantle-store/convergence-pilot-20261119/store --store-prefix /nix/store --remote-binding-config /datapool/mantle-store/convergence-pilot-20261119/binding/remote-endpoint-binding.json foreign-import realize -- … [668 more chars]
+--- stdout ---
+{"schema":"mantle-foreign-realization-receipt-v1","status":"complete","strongest_state":"realized","receipt_blake3":"e96d2864c5e2b5454fcb0fdf924e9d1e4768b896b4b2e4ad395d32acd3827a8d","plan_blake3":"edd387e529e1d4b277d726edc93901889413dc0dc393c7c7fd715981afb08a78","import_receipt_blake3":"60a452562c2d845ec379bef934a0d03b97004e8959b2c409bb4804f9a2558c39","source_bundle_manifest_blake3":"8ed1103b5de3 … [5395829 more chars]
+--- stderr ---
+--- EXIT=0
+--- wall: 301.17s
+--- tail ---
+# 41-realize-cache-only
+# started 2026-11-20T00:00:35-05:00
+# cwd: /home/brittonr/wt/mantle-convergence
+# command: /usr/bin/env PATH=/var/empty /home/brittonr/wt/mantle-convergence/target/release/mantle --json --state-dir /datapool/mantle-store/convergence-pilot-20261119/state --store /datapool/mantle-store/convergence-pilot-20261119/store --store-prefix /nix/store --remote-binding-config /datapool/mantle-store/convergence-pilot-20261119/binding/remote-endpoint-binding.json foreign-import realize -- … [668 more chars]
+--- stdout ---
+{"schema":"mantle-foreign-realization-receipt-v1","status":"complete","strongest_state":"realized","receipt_blake3":"e96d2864c5e2b5454fcb0fdf924e9d1e4768b896b4b2e4ad395d32acd3827a8d","plan_blake3":"edd387e529e1d4b277d726edc93901889413dc0dc393c7c7fd715981afb08a78","import_receipt_blake3":"60a452562c2d845ec379bef934a0d03b97004e8959b2c409bb4804f9a2558c39","source_bundle_manifest_blake3":"8ed1103b5de3 … [5395829 more chars]
+--- stderr ---
+--- EXIT=0
+--- wall: 301.17s

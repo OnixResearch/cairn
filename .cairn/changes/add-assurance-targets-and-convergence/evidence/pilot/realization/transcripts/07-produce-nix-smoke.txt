@@ -1,0 +1,25 @@
+$ produce-nix --derivation-json plan-smoke/nix-graph.json --root-derivation /nix/store/36qrksi12r9c2hmi5bc454kqr6cynrgp-tmpfiles.d.drv
+{
+  "schema": "mantle-foreign-import-cli-v1",
+  "command": "produce-nix",
+  "verdict": "rejected",
+  "accepted": false,
+  "diagnostics": [
+    {
+      "class": "nix-derivation-count-out-of-range",
+      "node_id": null,
+      "message": "Nix derivation export size is outside supported limits"
+    }
+  ],
+  "receipt": null,
+  "plan": null,
+  "non_claims": [
+    "not-build-success",
+    "not-package-correctness",
+    "not-bootstrap-parity",
+    "not-output-trust",
+    "not-reproducibility",
+    "not-foreign-frontend-availability"
+  ]
+}
+EXIT=1

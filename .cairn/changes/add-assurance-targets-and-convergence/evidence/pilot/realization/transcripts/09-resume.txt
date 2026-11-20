@@ -1,0 +1,27 @@
+# resume 2026-11-19T16:18:51-05:00 load=10.38
+$ /home/brittonr/wt/convergence-evidence/realization/nix-minfree0 flake prefetch --json git+file:///home/brittonr/git/OnixResearch/octet?rev=d5b34c2d64b1227417a46df8ed8427f2d10ed3c8
+{"hash":"sha256-4eOSVvohrbk4+fupuAvA0JzrV7g2bo3rYbykyNybUCA=","locked":{"lastModified":1794884892,"ref":"refs/heads/release/public-0.1.1-rc.1-20261112","rev":"d5b34c2d64b1227417a46df8ed8427f2d10ed3c8","revCount":1293,"type":"git","url":"file:///home/brittonr/git/OnixResearch/octet"},"original":{"rev":"d5b34c2d64b1227417a46df8ed8427f2d10ed3c8","type":"git","url":"file:///home/brittonr/git/OnixResearch/octet"},"storePath":"/nix/store/6s4aph8fm1wq5q9rz5ly7bjq0d5fxh79-source"}
+$ export.py
+Traceback (most recent call last):
+  File "/home/brittonr/wt/octet-convergence/tools/mantle-producer/export.py", line 176, in <module>
+    main()
+    ~~~~^^
+  File "/home/brittonr/wt/octet-convergence/tools/mantle-producer/export.py", line 133, in main
+    drv = command([nix, "eval", "--raw", "--no-write-lock-file", target + ".drvPath"], 4096).decode().strip()
+          ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/brittonr/wt/octet-convergence/tools/mantle-producer/export.py", line 21, in command
+    result = subprocess.run([str(value) for value in argv], capture_output=True, timeout=180)
+  File "/nix/store/xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8/lib/python3.14/subprocess.py", line 557, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8/lib/python3.14/subprocess.py", line 1221, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8/lib/python3.14/subprocess.py", line 2154, in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8/lib/python3.14/subprocess.py", line 1268, in _check_timeout
+    raise TimeoutExpired(
+    ...<2 lines>...
+            stderr=b''.join(stderr_seq) if stderr_seq else None)
+subprocess.TimeoutExpired: Command '['/home/brittonr/wt/convergence-evidence/realization/nix-minfree0', 'eval', '--raw', '--no-write-lock-file', 'git+file:///home/brittonr/git/OnixResearch/octet?ref=refs/heads/release/public-0.1.1-rc.1-20261112&rev=d5b34c2d64b1227417a46df8ed8427f2d10ed3c8#packages.x86_64-linux.octet-mantle-aeneas-consumer-job.drvPath']' timed out after 180 seconds

@@ -1,0 +1,26 @@
+# 12-step3-plan-compare
+# started 2026-11-20T10:41:26-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c $'set -euo pipefail; X=/home/brittonr/wt/convergence-evidence/e2e; R=/home/brittonr/wt/convergence-evidence/realization; for f in plan.json import-receipt.json nixpkgs.graph.json nixpkgs.index.json; do echo "== $f"; cmp "$X/step3/mantle-graph/$f" "$R/mantle-graph-preserve-http/$f" && echo "cmp: identical"; b3sum "$X/step3/mantle-graph/$f" "$R/mantle-graph-preserve-http/$f"; done; python3 -c "\nimport json\nfor f in [\\"$X/step3/mantle-graph/plan.json\\",\\"$R/mantle-graph-preserve-http/plan.json\\"]:\n    print(f, json.load(open(f))[\\"plan_identity\\"][\\"value\\"])\n"' 
+--- stdout ---
+== plan.json
+cmp: identical
+d4efeaa6657729d9800a4b9b1aac6836c37e3839a6483c8c9d3399e29f65ae45  /home/brittonr/wt/convergence-evidence/e2e/step3/mantle-graph/plan.json
+d4efeaa6657729d9800a4b9b1aac6836c37e3839a6483c8c9d3399e29f65ae45  /home/brittonr/wt/convergence-evidence/realization/mantle-graph-preserve-http/plan.json
+== import-receipt.json
+cmp: identical
+16beddc450fa02626272aefd42d1f37cd0309fa7d4986a53c68c1d48e95c399f  /home/brittonr/wt/convergence-evidence/e2e/step3/mantle-graph/import-receipt.json
+16beddc450fa02626272aefd42d1f37cd0309fa7d4986a53c68c1d48e95c399f  /home/brittonr/wt/convergence-evidence/realization/mantle-graph-preserve-http/import-receipt.json
+== nixpkgs.graph.json
+cmp: identical
+8ed10e2db3b179fabfe7a68ac83c73e217ef29545e21c4cdc9ab08f7039d4b9e  /home/brittonr/wt/convergence-evidence/e2e/step3/mantle-graph/nixpkgs.graph.json
+8ed10e2db3b179fabfe7a68ac83c73e217ef29545e21c4cdc9ab08f7039d4b9e  /home/brittonr/wt/convergence-evidence/realization/mantle-graph-preserve-http/nixpkgs.graph.json
+== nixpkgs.index.json
+cmp: identical
+64375405dde98af9bdbee705ac5b0faec541c7f215767d75082228953b81d8ec  /home/brittonr/wt/convergence-evidence/e2e/step3/mantle-graph/nixpkgs.index.json
+64375405dde98af9bdbee705ac5b0faec541c7f215767d75082228953b81d8ec  /home/brittonr/wt/convergence-evidence/realization/mantle-graph-preserve-http/nixpkgs.index.json
+/home/brittonr/wt/convergence-evidence/e2e/step3/mantle-graph/plan.json edd387e529e1d4b277d726edc93901889413dc0dc393c7c7fd715981afb08a78
+/home/brittonr/wt/convergence-evidence/realization/mantle-graph-preserve-http/plan.json edd387e529e1d4b277d726edc93901889413dc0dc393c7c7fd715981afb08a78
+--- stderr ---
+--- EXIT=0
+--- wall: 1.27s

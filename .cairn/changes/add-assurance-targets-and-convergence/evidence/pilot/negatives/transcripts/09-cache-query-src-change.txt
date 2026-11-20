@@ -1,0 +1,11 @@
+# 09-cache-query-src-change
+# started 2026-11-20T00:13:08-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: /home/brittonr/wt/convergence-evidence/realization/nix-minfree0 path-info --store file:///datapool/mantle-store/convergence-pilot-20261119/cache /nix/store/yayvxnadi7pqjrfgv7rjnij3y38g0zsn-octet-mantle-aeneas-consumer-job-v1 
+--- stdout ---
+--- stderr ---
+don't know how to build these paths:
+  /nix/store/yayvxnadi7pqjrfgv7rjnij3y38g0zsn-octet-mantle-aeneas-consumer-job-v1
+error: path '/nix/store/yayvxnadi7pqjrfgv7rjnij3y38g0zsn-octet-mantle-aeneas-consumer-job-v1' is not valid
+--- EXIT=1
+--- wall: 0.83s

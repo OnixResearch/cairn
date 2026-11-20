@@ -1,0 +1,14 @@
+# 17-n3-bridge-identity
+# started 2026-11-20T10:18:55-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: sh -c ls\ -l\ /home/brittonr/wt/mantle-bridge/target/release/mantle-verification-bridge\;\ b3sum\ /home/brittonr/wt/mantle-bridge/target/release/mantle-verification-bridge\;\ git\ -C\ /home/brittonr/wt/mantle-bridge\ log\ -1\ --format=\'%H%n%s%ncommitter=%cn\ \<%ce\>%ncd=%cd\' 
+--- stdout ---
+-rwxr-xr-x 2 brittonr brittonr 921720 Nov 20 10:14 /home/brittonr/wt/mantle-bridge/target/release/mantle-verification-bridge
+ae41e077e8d9024626b8b6826620069fbf56829b97be469b06930d9533743282  /home/brittonr/wt/mantle-bridge/target/release/mantle-verification-bridge
+b14db98cb473c4bad449ce6dd68e33d96519d605
+borrow the receipt in the provider-profile locator and mark the layout tests as verification
+committer=Britton <b@robitzs.ch>
+cd=Fri Nov 20 10:17:47 2026 -0500
+--- stderr ---
+--- EXIT=0
+--- wall: 0.02s

@@ -1,0 +1,29 @@
+# 16a-produce-nix-lock-change
+# started 2026-11-20T00:20:50-05:00
+# cwd: /home/brittonr/wt/mantle-convergence
+# command: target/release/mantle --json foreign-import produce-nix --derivation-json /home/brittonr/wt/convergence-evidence/negatives/export-lock-change/tool-closure.derivation-json.json --root-derivation /nix/store/a7x94nyds465r2w0385g91s8fp7r60w5-octet-mantle-aeneas-consumer-job-v1.drv --producer-identity octet@a86d6e31f449cbc8b2515394d2175749c95210a4 --producer-revision a86d6e31f449cbc8b2515394d2175749c95210a4 --package octet-mantle-aeneas-consumer-job --system x86_64-linux --cache-url file:///datapool/mantle-store/convergence-pilot-20261119/cache\?trusted_public_keys\[0\]=convergence-pilot-20261119-1:sRZV4nbjXTCkhRjkEIVe5Pg4G2ajYaCobLqS0JJVu2A= --out-dir /home/brittonr/wt/convergence-evidence/negatives/mantle-lock-change 
+--- stdout ---
+{
+  "schema": "mantle-foreign-import-cli-v1",
+  "command": "produce-nix",
+  "verdict": "accepted",
+  "accepted": true,
+  "diagnostics": [],
+  "receipt": null,
+  "plan": null,
+  "producer_artifacts": {
+    "graph_path": "/home/brittonr/wt/convergence-evidence/negatives/mantle-lock-change/nixpkgs.graph.json",
+    "package_index_path": "/home/brittonr/wt/convergence-evidence/negatives/mantle-lock-change/nixpkgs.index.json"
+  },
+  "non_claims": [
+    "not-build-success",
+    "not-package-correctness",
+    "not-bootstrap-parity",
+    "not-output-trust",
+    "not-reproducibility",
+    "not-foreign-frontend-availability"
+  ]
+}
+--- stderr ---
+--- EXIT=0
+--- wall: 0.85s

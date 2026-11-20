@@ -1,0 +1,31 @@
+# 06-cairn-row-empirical
+# started 2026-11-20T11:04:09-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives/N4-empirical
+# command: bash -c /home/brittonr/wt/cairn-convergence/target/debug/cairn\ convergence\ inspect\ --case\ /tmp/n4-empirical-case/case.json\ --root\ /tmp/n4-empirical-case/root\ \|\ /home/brittonr/wt/convergence-evidence/negatives/N4-empirical/extract-row.py 
+--- stdout ---
+{
+  "schema_version": "cairn.convergence.v1",
+  "status": "evaluated",
+  "row": {
+    "assurance": "checked_proof",
+    "bound": null,
+    "contract_id": "octet.cairn-pilot.aeneas-consumer",
+    "issues": [
+      "convergence.decision_incomplete",
+      "convergence.proof_card_receipt_mismatch"
+    ],
+    "job_id": "octet.aeneas.external-consumer.mantle.v1",
+    "requirement_id": "octet.aeneas_consumer_contract.compatibility",
+    "row_blake3": "e5cec911e1ae56b466ceb039b564196674554dc6323c684bd838a6b41a410a8d",
+    "specification_path": ".cairn/specs/aeneas-consumer-contract/spec.md",
+    "state": "incomplete"
+  },
+  "receipt_blake3": "0d88a23273bfcc7dd458182e318c49a2d53cb44a3306d6dd3f678280b3e57283",
+  "targets_current": false,
+  "coverage_complete": false,
+  "complete": false,
+  "unbound_target_issues": []
+}
+--- stderr ---
+--- EXIT=0
+--- wall: 2.42s

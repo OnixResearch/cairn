@@ -1,0 +1,4 @@
+# packaged cairn built from c8b38c4 (policy sources unchanged since), 2026-11-20T11:11:54-05:00
+$ cairn policy export --check
+policy fresh: cairn-policy/generated/cairn-policy.json
+EXIT=0

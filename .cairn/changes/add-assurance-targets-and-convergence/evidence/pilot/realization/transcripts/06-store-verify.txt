@@ -1,0 +1,58 @@
+$ target/debug/mantle --json --state-dir <rehearsal>/state --store <rehearsal>/store store verify --trusted-public-keys crunch-britton-desktop-1:... --json
+MISSING s17l3wk4z1clhcaqin123ybbjyl31fqa-verification-bridge-trellis-0
+MISSING 1hw3xibwy9zgld205d50y9zln942880w-verification-bridge-trellis-2
+MISSING zc53hbpilb77sssd8nyalarwjxfzdji4-verification-bridge-octet-6
+MISSING pz82fbkk1vzj74vnhbwn541rllbfx215-verification-bridge-trellis-4
+MISSING yviwdqxgfr2fhhrg3qa0i2ypspslzq18-verification-bridge-octet-9
+MISSING pz7ypf2wghpsj88wgxq5y9scwd98zqrf-verification-bridge-octet-8
+MISSING 048h8ycr8nykxszc2k244rwvchvnbk1g-verification-bridge-octet-7
+MISSING nma5hs1and15yv5x6w731i9kg4fm3s9x-verification-bridge-octet-5
+MISSING 0mh3xfvdgwr7hn4mhsmacd4h1cnv9ka0-verification-bridge-octet-1
+MISSING 9kj7qpidmxlj3qymg75l8kgn4f2dpxs8-verification-bridge-trellis-10
+MISSING nwriwzh50rrppcfx7ar8249jfnba0q2g-verification-bridge-trellis-9
+MISSING ar9lpam0dm124a3cxjmn4caadvkhhx30-verification-bridge-trellis-3
+MISSING 4j9nams16s8fqx77sail88zrrq8sagk4-verification-bridge-trellis-6
+MISSING 320ll32ph7cvj3v3ir18gy2zlsfmk33c-verification-bridge-trellis-8
+MISSING 81xw6cn34q03ngp28km3zc4dsqg6cfvi-verification-bridge-trellis-5
+MISSING qkdarzy0sqwbi8k1jj9nml7w8h2w1lbp-verification-bridge-trellis-12
+MISSING ldjzx3h2c5piliazjarbvf82b0kpq5bw-verification-bridge-octet-0
+OK 37jx2y3nja72zg9kadw8hbs8nylmgald-verification-bridge-trellis-handoff  trusted_signatures=1/1
+OK glnhkn9a41rc31jqjj0hillcvr8alf5c-verification-bridge-octet-handoff  trusted_signatures=1/1
+MISSING j22g5d0bljw3k6iysv83qic8hblry45x-verification-bridge-octet-3
+MISSING giqjh94bs2cxjz5ikkdlw03k9g0qz2nf-verification-bridge-trellis-7
+MISSING lki26mgff3w8alcnd9g6pvkayxdi6wyx-verification-bridge-trellis-11
+MISSING ksji8x6dpbn33xv16g54v869mp01m6gl-verification-bridge-trellis-1
+MISSING j8ycahpmzr45x2c3n8zgg7gcy1b6sppx-verification-bridge-octet-2
+MISSING pv2sa5j8g495ibf931i6b8wc81jwpn7x-verification-bridge-octet-4
+25 checked, 23 mismatches
+{"error":"23 path(s) failed verification","code":1,"kind":"build"}
+EXIT=1
+--- with untrusted key ---
+MISSING s17l3wk4z1clhcaqin123ybbjyl31fqa-verification-bridge-trellis-0
+MISSING 1hw3xibwy9zgld205d50y9zln942880w-verification-bridge-trellis-2
+MISSING zc53hbpilb77sssd8nyalarwjxfzdji4-verification-bridge-octet-6
+MISSING pz82fbkk1vzj74vnhbwn541rllbfx215-verification-bridge-trellis-4
+MISSING yviwdqxgfr2fhhrg3qa0i2ypspslzq18-verification-bridge-octet-9
+MISSING pz7ypf2wghpsj88wgxq5y9scwd98zqrf-verification-bridge-octet-8
+MISSING 048h8ycr8nykxszc2k244rwvchvnbk1g-verification-bridge-octet-7
+MISSING nma5hs1and15yv5x6w731i9kg4fm3s9x-verification-bridge-octet-5
+MISSING 0mh3xfvdgwr7hn4mhsmacd4h1cnv9ka0-verification-bridge-octet-1
+MISSING 9kj7qpidmxlj3qymg75l8kgn4f2dpxs8-verification-bridge-trellis-10
+MISSING nwriwzh50rrppcfx7ar8249jfnba0q2g-verification-bridge-trellis-9
+MISSING ar9lpam0dm124a3cxjmn4caadvkhhx30-verification-bridge-trellis-3
+MISSING 4j9nams16s8fqx77sail88zrrq8sagk4-verification-bridge-trellis-6
+MISSING 320ll32ph7cvj3v3ir18gy2zlsfmk33c-verification-bridge-trellis-8
+MISSING 81xw6cn34q03ngp28km3zc4dsqg6cfvi-verification-bridge-trellis-5
+MISSING qkdarzy0sqwbi8k1jj9nml7w8h2w1lbp-verification-bridge-trellis-12
+MISSING ldjzx3h2c5piliazjarbvf82b0kpq5bw-verification-bridge-octet-0
+OK 37jx2y3nja72zg9kadw8hbs8nylmgald-verification-bridge-trellis-handoff  trusted_signatures=1/1
+OK glnhkn9a41rc31jqjj0hillcvr8alf5c-verification-bridge-octet-handoff  trusted_signatures=1/1
+MISSING j22g5d0bljw3k6iysv83qic8hblry45x-verification-bridge-octet-3
+MISSING giqjh94bs2cxjz5ikkdlw03k9g0qz2nf-verification-bridge-trellis-7
+MISSING lki26mgff3w8alcnd9g6pvkayxdi6wyx-verification-bridge-trellis-11
+MISSING ksji8x6dpbn33xv16g54v869mp01m6gl-verification-bridge-trellis-1
+MISSING j8ycahpmzr45x2c3n8zgg7gcy1b6sppx-verification-bridge-octet-2
+MISSING pv2sa5j8g495ibf931i6b8wc81jwpn7x-verification-bridge-octet-4
+25 checked, 23 mismatches
+{"error":"23 path(s) failed verification","code":1,"kind":"build"}
+EXIT=1

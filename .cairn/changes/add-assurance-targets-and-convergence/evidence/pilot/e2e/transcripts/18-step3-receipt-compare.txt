@@ -1,0 +1,30 @@
+# 18-step3-receipt-compare
+# started 2026-11-20T10:52:08-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c $'set -euo pipefail; X=/home/brittonr/wt/convergence-evidence/e2e; R=/home/brittonr/wt/convergence-evidence/realization; cmp "$X/step3/realization-receipt-reuse.json" "$R/realization-receipt-reuse.json" && echo "receipt cmp: identical"; b3sum "$X/step3/realization-receipt-reuse.json" "$R/realization-receipt-reuse.json"; python3 - "$X/step3/realization-receipt-reuse.json" "$R/realization-receipt-reuse.json" <<"PY"\nimport json,sys,collections\nfor path in sys.argv[1:]:\n    d=json.load(open(path))\n    modes=collections.Counter(o.get("substitution_mode") for u in d["units"] for o in u["outputs"])\n    print(path)\n    print("  status:", d["status"], "strongest_state:", d["strongest_state"], "route:", d["cache_policy"]["realization_route"])\n    print("  receipt_blake3:", d["receipt_blake3"])\n    print("  units:", len(d["units"]), dict(collections.Counter(u["execution_class"] for u in d["units"])))\n    print("  imported units:", sum(1 for u in d["units"] if u["execution_class"] == "imported"))\n    print("  output substitution modes:", dict(modes))\n    root=[u for u in d["units"] if u["node_id"].startswith("nix:vl7bqxyz2f86x0vlvxipcvryavckb9wj-")][0]\n    print("  root node_id:", root["node_id"])\n    print("  root target_path:", root["outputs"][0]["target_path"], "class:", root["execution_class"])\nPY\necho "== cache server: narinfo requests / NAR requests"; grep -c narinfo $X/transcripts/15-cache-server.log || true; grep -cE "GET /[^ ]*\\.nar " $X/transcripts/15-cache-server.log || true' 
+--- stdout ---
+receipt cmp: identical
+d96e36da5a4fa33a1fa1cb06bb91ac937e8deb2368cb692f5fecf6a19d5b03c6  /home/brittonr/wt/convergence-evidence/e2e/step3/realization-receipt-reuse.json
+d96e36da5a4fa33a1fa1cb06bb91ac937e8deb2368cb692f5fecf6a19d5b03c6  /home/brittonr/wt/convergence-evidence/realization/realization-receipt-reuse.json
+/home/brittonr/wt/convergence-evidence/e2e/step3/realization-receipt-reuse.json
+  status: complete strongest_state: realized route: cache-only-preserve-v1
+  receipt_blake3: 004e36388689a67eca3d8c1d0edf6a6e665d61208e302cea2eda8bf790baf829
+  units: 11565 {'not-required-cache-only': 11074, 'already-present': 491}
+  imported units: 0
+  output substitution modes: {'full': 511, None: 1}
+  root node_id: nix:vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv
+  root target_path: /nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1 class: already-present
+/home/brittonr/wt/convergence-evidence/realization/realization-receipt-reuse.json
+  status: complete strongest_state: realized route: cache-only-preserve-v1
+  receipt_blake3: 004e36388689a67eca3d8c1d0edf6a6e665d61208e302cea2eda8bf790baf829
+  units: 11565 {'not-required-cache-only': 11074, 'already-present': 491}
+  imported units: 0
+  output substitution modes: {'full': 511, None: 1}
+  root node_id: nix:vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv
+  root target_path: /nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1 class: already-present
+== cache server: narinfo requests / NAR requests
+526
+0
+--- stderr ---
+--- EXIT=0
+--- wall: 0.16s

@@ -1,0 +1,7 @@
+# step 6b prerequisite: store info with the clean Mantle build (e2e/mantle at 61f06cc59)
+$ /home/brittonr/wt/e2e/mantle/target/release/mantle --state-dir /datapool/mantle-store/convergence-pilot-20261119/state --store /datapool/mantle-store/convergence-pilot-20261119/store --store-prefix /nix/store store info zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1 --json > /home/brittonr/wt/convergence-evidence/e2e/step6/reproduced/store-info.json
+EXIT=0
+b3 reproduced=904901a98256c7f70e683e5213abf1001ae13848ae548c228519b6c902682f15 retained=df94c72baa071a69f7edd2b97c8eed61d37b9cfa7ea2b85270dd956e46634cfd
+/home/brittonr/wt/convergence-evidence/e2e/step6/reproduced/store-info.json /home/brittonr/wt/convergence-evidence/realization/store-info.json differ: char 1447, line 45
+# note: the only difference is the store's root-record bookkeeping (reason root-reclassified vs legacy-root-registered, record_id), changed by the later reuse realizations; nar_sha256, nar_size, references, deriver and signatures are equal.
+# exact differing fields (jq over every scalar path): paths[0].retention_interests.interests[0].reason (root-reclassified vs legacy-root-registered) and .record_id; every other field, including nar_sha256, nar_size, references, deriver and signatures, is equal.

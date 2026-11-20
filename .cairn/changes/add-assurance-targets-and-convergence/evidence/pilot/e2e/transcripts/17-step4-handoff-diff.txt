@@ -1,0 +1,13 @@
+# 17-step4-handoff-diff
+# started 2026-11-20T10:44:31-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c set\ -euo\ pipefail\;\ X=/home/brittonr/wt/convergence-evidence/e2e\;\ R=/home/brittonr/wt/convergence-evidence/realization/handoff\;\ diff\ -r\ \"\$X/handoff\"\ \"\$R\"\ \&\&\ echo\ \"diff\ -r:\ no\ differences\"\;\ echo\ \"==\ byte\ identity\ per\ file\"\;\ \(\ cd\ \"\$X/handoff\"\;\ find\ .\ -type\ f\ -print0\ \|\ LC_ALL=C\ sort\ -z\ \|\ xargs\ -0\ b3sum\ \|\ LC_ALL=C\ sort\ -k2\ \)\ \>\ \$X/step4/handoff.hashes\;\ \(\ cd\ \"\$R\"\;\ find\ .\ -type\ f\ -print0\ \|\ LC_ALL=C\ sort\ -z\ \|\ xargs\ -0\ b3sum\ \|\ LC_ALL=C\ sort\ -k2\ \)\ \>\ \$X/step4/retained-handoff.hashes\;\ diff\ \$X/step4/handoff.hashes\ \$X/step4/retained-handoff.hashes\ \&\&\ echo\ \"b3sum\ listing:\ identical\"\;\ b3sum\ \$X/step4/handoff.hashes\ \$X/step4/retained-handoff.hashes 
+--- stdout ---
+diff -r: no differences
+== byte identity per file
+b3sum listing: identical
+80adc6585897f1f6281db3915a05389584c99d04699e061b530253a94b319480  /home/brittonr/wt/convergence-evidence/e2e/step4/handoff.hashes
+80adc6585897f1f6281db3915a05389584c99d04699e061b530253a94b319480  /home/brittonr/wt/convergence-evidence/e2e/step4/retained-handoff.hashes
+--- stderr ---
+--- EXIT=0
+--- wall: 0.27s

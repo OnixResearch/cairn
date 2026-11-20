@@ -1,0 +1,86 @@
+# summary of /home/brittonr/wt/convergence-evidence/realization/transcripts/43-negative-a-plan.txt (full transcript retained locally, not in git)
+# bytes: 121290099
+# blake3: 1e6153f4db6562dc8b1b3e166048dedb26db54295302b63eff7f0f05dec1a6e0
+# lines: 1395184; first 40 and last 40 shown, long lines cut at 400 chars
+--- head ---
+# 43-negative-a-plan
+# started 2026-11-20T00:03:06-05:00
+# cwd: /home/brittonr/wt/mantle-convergence
+# command: target/release/mantle --json foreign-import plan --graph /home/brittonr/wt/convergence-evidence/realization/mantle-graph-negative/nixpkgs.graph.json --package-index /home/brittonr/wt/convergence-evidence/realization/mantle-graph-negative/nixpkgs.index.json --policy config/foreign-cache-closure/generated/preserve-nix.json --execution-profile config/foreign-execution-profiles/generated/ni … [362 more chars]
+--- stdout ---
+{
+  "schema": "mantle-foreign-import-cli-v1",
+  "command": "plan",
+  "verdict": "accepted",
+  "accepted": true,
+  "diagnostics": [],
+  "receipt": {
+    "schema": "foreign-derivation-import-receipt-v1",
+    "producer_identity": "octet@d5b34c2d64b1227417a46df8ed8427f2d10ed3c8",
+    "raw_graph_digest": "ffbc9e0e19e48bc42e189bfc36ed4f3d0e4437b0deacf72dc224d8a241bdb305",
+    "translation_policy_digest": "29ea216f911da613a92bd29fc40c4ee1d85a0c8e2e6b5b3bf9e81df01aa1ddde",
+    "translated_graph_digest": "3cce82f3e51d7a3e9214ed3a719c9791c40382f473511fc586ea90b8765c1dc8",
+    "package_index_digest": "037cbde7ce5465e43f5c5d3f04409105f63488d52415ce5f2b47a03374070754",
+    "fetch_cache_policy_digest": "1a64e6557d26665f7eef400f3fbfd3ce766a42b72e96b3cdc5570ff3f97b7ee4",
+    "sandbox_policy_digest": "b80fdec27a0955fcb9748d1ac75b7da507959fdab796a2f223c6bc8d76424afc",
+    "hash_domains": [
+      {
+        "domain": "mantle-receipt",
+        "kind": "raw-graph",
+        "algorithm": "blake3",
+        "value": "ffbc9e0e19e48bc42e189bfc36ed4f3d0e4437b0deacf72dc224d8a241bdb305"
+      },
+      {
+        "domain": "mantle-receipt",
+        "kind": "translated-graph",
+        "algorithm": "blake3",
+        "value": "3cce82f3e51d7a3e9214ed3a719c9791c40382f473511fc586ea90b8765c1dc8"
+      },
+      {
+        "domain": "mantle-receipt",
+        "kind": "translation-policy",
+        "algorithm": "blake3",
+        "value": "29ea216f911da613a92bd29fc40c4ee1d85a0c8e2e6b5b3bf9e81df01aa1ddde"
+      },
+      {
+--- tail ---
+    "diagnostics": [],
+    "sandbox_audit": [],
+    "substitution_audit": [
+      {
+        "node_id": "nix:vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv",
+        "cache_url": "http://127.0.0.1:18471?trusted_public_keys[0]=negative-key-20261120:dEq%2ByuHCMUe0%2BXqEYvZX82UIjgyZgLCWP2XGgYU8y5k%3D",
+        "trust_scope": "trusted-binary-cache",
+        "classification": "cache-hint-policy-data-store-admission-required",
+        "store_admission_required": true
+      }
+    ],
+    "forbidden_process_invocations": [],
+    "non_claims": [
+      "not-bootstrap-parity",
+      "not-build-success",
+      "not-builder-execution",
+      "not-cache-future-availability",
+      "not-foreign-frontend-availability",
+      "not-local-rebuild",
+      "not-output-trust",
+      "not-package-correctness",
+      "not-realization",
+      "not-reproducibility",
+      "not-scheduler-execution",
+      "not-source-availability",
+      "not-store-admission"
+    ]
+  },
+  "non_claims": [
+    "not-build-success",
+    "not-package-correctness",
+    "not-bootstrap-parity",
+    "not-output-trust",
+    "not-reproducibility",
+    "not-foreign-frontend-availability"
+  ]
+}
+--- stderr ---
+--- EXIT=0
+--- wall: 52.27s

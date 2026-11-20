@@ -131,6 +131,18 @@ This change adds the Declare stage (targets) and the Diff stage (convergence) fo
 
 **Rationale:** `mantle foreign-import produce-nix` rejected a measured 7,157-derivation nixpkgs closure with `nix-derivation-count-out-of-range` (`MAX_GRAPH_NODES = 2048` in Mantle's `src/foreign_derivation_import.rs`), while the bridge already admits 32,768-derivation producer tool graphs, so no real producer graph could be planned. The frozen Octet job at `d5b34c2d64b1227417a46df8ed8427f2d10ed3c8` has 11,565 derivations, 677 source objects, up to 611 input derivations on one node and one 102,597-byte `buildCommand`. This met the handoff's stop-and-ask condition; Britton authorized the Mantle change on 2026-11-19.
 
+### Decision: Mantle bridge producer layout
+
+**Choice:** The real observation depends on Mantle change `admit-octet-producer-layout-in-verification-bridge` (Mantle ADR 0167). In it, the bridge derives the provider-profile locator from the receipt's `artifact_identities` instead of the fixture path `proofs/aeneas/provider-profile.json`, and admits the versioned (`version: 4`) `nix derivation show` graph alongside the legacy map. Mixed or unknown shapes fail closed. Cairn's convergence code is unchanged by it.
+
+**Rationale:** The bridge refused the realized output of Octet `d5b34c2d`, whose provider profile sits under the rail-named directory `proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/`, and the job's Nix 2.36 graph uses the versioned form. Observing the real job without changing Mantle was therefore impossible, which met the handoff's stop-and-ask condition. Britton authorized the Mantle change on 2026-11-20. Mantle gains no proof authority: the bridge only locates bytes and parses graphs.
+
+### Decision: Pilot cache repair and transport
+
+**Choice:** Two pilot-cache NARs (`mold-unwrapped-wrapper-2.40.4`, `clang-wrapper-21.1.8`) are cache.nixos.org's original NARs, re-signed with the pilot key, and not `nix copy` output from the host store. The pilot cache is served to Mantle over a loopback-only HTTP endpoint, `127.0.0.1:18471`, because cache-only hydration admits HTTP closures only. The pilot key is still the only trusted key.
+
+**Rationale:** On the host, empty `nix-support` files in those two paths had mode 0755 where their NARs record 0444; the ctimes date from 2026-04-27. As a result, `nix copy` wrote content that did not match the recorded `NarHash`, and Mantle's content admission rejected it, failing closed as it should. The original NARs' SHA-256 equals the recorded `NarHash`, so the narinfo identity the pilot key signs is unchanged. Britton chose this repair on 2026-11-19 and approved the loopback transport.
+
 ### Decision: Producer record bounds in the inspect shell
 
 **Choice:** `cairn convergence inspect` reads the handoff tool graph within `max_tool_graph_bytes` (268,435,456 bytes) and the Mantle realization receipt within `max_realization_receipt_bytes` (16,777,216 bytes), both named in `cairn-policy/assurance-targets.ncl`, exported to `cairn-policy/generated/assurance-targets.json` and carried in the bounds DTO. `max_document_bytes` stays at 1,048,576 bytes for every other Mantle and Octet document. An over-bound read keeps its existing `convergence.unreadable_input` rejection.

@@ -1,0 +1,38 @@
+# 07-cairn-row-positive-control
+# started 2026-11-20T11:04:09-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives/N4-empirical
+# command: bash -c /home/brittonr/wt/cairn-convergence/target/debug/cairn\ convergence\ inspect\ --case\ /home/brittonr/wt/cairn-convergence/fixtures/convergence/pilot/case.json\ --root\ /home/brittonr/wt/cairn-convergence/fixtures/convergence/pilot/root\ \|\ /home/brittonr/wt/convergence-evidence/negatives/N4-empirical/extract-row.py 
+--- stdout ---
+{
+  "schema_version": "cairn.convergence.v1",
+  "status": "evaluated",
+  "row": {
+    "assurance": "checked_proof",
+    "bound": {
+      "node_id": "nix:vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv",
+      "producer_job_identity": "b3:a14ec403025db0330379bad1e1904fae23835ccd1ab95017a80e3e5ca715b318",
+      "realization_route": "cache-only-preserve-v1",
+      "receipt_identity": "b3:84d2e77717013a203a4daf6ce649de8e501c7386f142b7abc66f32d08c33420e",
+      "root_derivation": "/nix/store/vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv",
+      "signer": "convergence-pilot-20261119-1",
+      "source_revision": "d5b34c2d64b1227417a46df8ed8427f2d10ed3c8",
+      "target_derivation": "/nix/store/szzqg5vg6g34zm65m9qxybmkx5wxcbgy-octet-mantle-aeneas-consumer-job-v1.drv",
+      "target_path": "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1"
+    },
+    "contract_id": "octet.cairn-pilot.aeneas-consumer",
+    "issues": [],
+    "job_id": "octet.aeneas.external-consumer.mantle.v1",
+    "requirement_id": "octet.aeneas_consumer_contract.compatibility",
+    "row_blake3": "e5cec911e1ae56b466ceb039b564196674554dc6323c684bd838a6b41a410a8d",
+    "specification_path": ".cairn/specs/aeneas-consumer-contract/spec.md",
+    "state": "current"
+  },
+  "receipt_blake3": "39ce3c51b8c619091653d6c4f90bcca238187ca544c3477399051bee57535482",
+  "targets_current": true,
+  "coverage_complete": false,
+  "complete": false,
+  "unbound_target_issues": []
+}
+--- stderr ---
+--- EXIT=0
+--- wall: 2.36s

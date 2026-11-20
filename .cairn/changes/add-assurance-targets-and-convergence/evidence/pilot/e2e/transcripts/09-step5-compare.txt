@@ -1,0 +1,11 @@
+# 09-step5-compare
+# started 2026-11-20T10:39:05-05:00
+# cwd: /home/brittonr/wt/e2e/octet-pilot
+# command: bash -c set\ -euo\ pipefail\;\ X=/home/brittonr/wt/convergence-evidence/e2e\;\ F=/home/brittonr/wt/e2e/octet-pilot/standards/requirements/fixtures/cairn-pilot/decision.json\;\ cmp\ \"\$X/step5/decision.json\"\ \"\$F\"\ \&\&\ echo\ \"cmp:\ identical\"\;\ b3sum\ \"\$X/step5/decision.json\"\ \"\$F\" 
+--- stdout ---
+cmp: identical
+ca047f54add015d84784694c8ccdaa18c74c1f58bf3a835d0eb2df5c7dec91c7  /home/brittonr/wt/convergence-evidence/e2e/step5/decision.json
+ca047f54add015d84784694c8ccdaa18c74c1f58bf3a835d0eb2df5c7dec91c7  /home/brittonr/wt/e2e/octet-pilot/standards/requirements/fixtures/cairn-pilot/decision.json
+--- stderr ---
+--- EXIT=0
+--- wall: 0.04s

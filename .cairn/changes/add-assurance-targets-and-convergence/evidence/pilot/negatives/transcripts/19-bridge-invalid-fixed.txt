@@ -1,0 +1,9 @@
+# 19-bridge-invalid-fixed
+# started 2026-11-20T10:19:07-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: /home/brittonr/wt/mantle-bridge/target/release/mantle-verification-bridge octet-job /home/brittonr/wt/convergence-evidence/negatives/n3-output-invalid /home/brittonr/wt/convergence-evidence/realization/producer-export d5b34c2d64b1227417a46df8ed8427f2d10ed3c8 /home/brittonr/wt/convergence-evidence/negatives/n3-handoff-invalid 
+--- stdout ---
+--- stderr ---
+verification bridge: external artifact verification mismatch: expected valid, observed invalid
+--- EXIT=1
+--- wall: 0.01s

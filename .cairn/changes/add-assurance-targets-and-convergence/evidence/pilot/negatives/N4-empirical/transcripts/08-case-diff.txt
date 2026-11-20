@@ -1,0 +1,10 @@
+# 08-case-diff
+# started 2026-11-20T11:04:24-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives/N4-empirical
+# command: diff -rq /home/brittonr/wt/cairn-convergence/fixtures/convergence/pilot /tmp/n4-empirical-case 
+--- stdout ---
+Files /home/brittonr/wt/cairn-convergence/fixtures/convergence/pilot/decision.json and /tmp/n4-empirical-case/decision.json differ
+Files /home/brittonr/wt/cairn-convergence/fixtures/convergence/pilot/evidence.json and /tmp/n4-empirical-case/evidence.json differ
+--- stderr ---
+--- EXIT=1
+--- wall: 0.04s

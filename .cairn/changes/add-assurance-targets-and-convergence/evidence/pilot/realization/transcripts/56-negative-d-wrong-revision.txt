@@ -1,0 +1,9 @@
+# 56-negative-d-wrong-revision
+# started 2026-11-20T10:19:07-05:00
+# cwd: /home/brittonr/wt/mantle-bridge
+# command: /home/brittonr/wt/mantle-bridge/target/release/mantle-verification-bridge octet-job /datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1 /home/brittonr/wt/convergence-evidence/realization/producer-export 0123456789abcdef0123456789abcdef01234567 /tmp/handoff-negative-d 
+--- stdout ---
+--- stderr ---
+verification bridge: producer source revision mismatch: expected 0123456789abcdef0123456789abcdef01234567, observed d5b34c2d64b1227417a46df8ed8427f2d10ed3c8
+--- EXIT=1
+--- wall: 0.02s

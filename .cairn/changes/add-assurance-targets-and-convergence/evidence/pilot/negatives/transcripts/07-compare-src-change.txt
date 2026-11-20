@@ -1,0 +1,33 @@
+# 07-compare-src-change
+# started 2026-11-20T00:11:11-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: ./compare-src-change.sh 
+--- stdout ---
+== root-derivation ==
+old: /nix/store/vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv
+new: /nix/store/lhwv6ahi2zbixms37ah5mppkc0jl12mf-octet-mantle-aeneas-consumer-job-v1.drv
+== job.json blake3 ==
+a14ec403025db0330379bad1e1904fae23835ccd1ab95017a80e3e5ca715b318  /home/brittonr/wt/convergence-evidence/realization/producer-export/job.json
+a14ec403025db0330379bad1e1904fae23835ccd1ab95017a80e3e5ca715b318  /home/brittonr/wt/convergence-evidence/negatives/export-src-change/job.json
+job.json bytes identical
+== changed source bytes (b3sum) ==
+old (REV d5b34c2d): 776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f  -
+new (NEWREV_SRC):  98b8143d172cf057c90129c1d72867f5296f9d7feb2d198a8dfa7616219ef223  -
+== tool-graph identity = b3: + blake3(tool-closure.derivation-json.json) ==
+old: b3:d0ebfcbae2f8b44866a45df068cec42cf5be5b6379ff72cb91bddbe919697808
+new: b3:d5340b4714809b0066ca69a2519b7e82cc88c9d7d3e4009e4043fda2eb43a67b
+old bytes: d0ebfcbae2f8b44866a45df068cec42cf5be5b6379ff72cb91bddbe919697808  /home/brittonr/wt/convergence-evidence/realization/producer-export/tool-closure.derivation-json.json
+new bytes: d5340b4714809b0066ca69a2519b7e82cc88c9d7d3e4009e4043fda2eb43a67b  /home/brittonr/wt/convergence-evidence/negatives/export-src-change/tool-closure.derivation-json.json
+== graph shape ==
+derivations old/new: 11565 11565
+only-old: ['ija28jl594vi8l0rm9q93sc39bnl4v7c-octet-policy-artifacts.drv', 'jxbl4m6n82av9nhkx7mnav6qqj88s7ig-octet-standards-0.1.1-rc.1.drv', 'pkfqn7k1d3amgl602wa12nw828fq5whn-cargo-octet-0.1.1-rc.1.drv', 'vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv']
+only-new: ['8079lfxa73pjz9ahb9kwp7rw2w7rg78q-octet-policy-artifacts.drv', '9kk5q0krxbbsxalgg8pcy5vsmgz331nn-octet-standards-0.1.1-rc.1.drv', 'lhwv6ahi2zbixms37ah5mppkc0jl12mf-octet-mantle-aeneas-consumer-job-v1.drv', 'y2lq78r92q57nhkdcpydyjsil6yxckm6-cargo-octet-0.1.1-rc.1.drv']
+root srcs old: ['6s4aph8fm1wq5q9rz5ly7bjq0d5fxh79-source', 'l622p70vy8k5sh7y5wizi5f2mic6ynpg-source-stdenv.sh', 'shkw4qm9qcw5sc5n1k5jznc83ny02r39-default-builder.sh']
+root srcs new: ['43j2dyk9zrk2zp6dhakcyczwv7vbmzp0-source', 'l622p70vy8k5sh7y5wizi5f2mic6ynpg-source-stdenv.sh', 'shkw4qm9qcw5sc5n1k5jznc83ny02r39-default-builder.sh']
+== flake.lock ==
+flake.lock bytes identical
+== source-revision ==
+ad455c1b9cc41f5f576dbcca0f2cbc7246052eb2
+--- stderr ---
+--- EXIT=0
+--- wall: 1.40s

@@ -1,0 +1,12 @@
+# nix store gc (approved by Britton) start 2026-11-19T20:47:57-05:00
+datapool/nix         414   401        14  97% /nix
+waiting for the big garbage collector lock...
+shutting down[Kerror: interrupted by the user
+0 store paths deleted, 0.0 KiB freed
+Command exited with non-zero status 1
+elapsed=3:16:51
+EXIT=0
+datapool/nix                559   408       151  73% /nix
+datapool/mantle-store       445   294       151  67% /datapool/mantle-store
+# end 2026-11-20T00:04:48-05:00
+# note 2026-11-20T00:05:11-05:00: this GC never ran. It waited on the big garbage-collector lock held by another collector the whole time, deleted 0 paths, and was interrupted (SIGINT) by the orchestrator once /nix had 151 G free. That other collector freed the space; this command did not.

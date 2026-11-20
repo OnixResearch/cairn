@@ -1,0 +1,9 @@
+# 37-realize-cache-only
+# started 2026-11-19T20:46:20-05:00
+# cwd: /home/brittonr/wt/mantle-convergence
+# command: /usr/bin/env PATH=/var/empty /home/brittonr/wt/mantle-convergence/target/release/mantle --json --state-dir /datapool/mantle-store/convergence-pilot-20261119/state --store /datapool/mantle-store/convergence-pilot-20261119/store --store-prefix /nix/store --remote-binding-config /datapool/mantle-store/convergence-pilot-20261119/binding/remote-endpoint-binding.json foreign-import realize --plan /home/brittonr/wt/convergence-evidence/realization/mantle-graph-preserve-http/plan.json --import-receipt /home/brittonr/wt/convergence-evidence/realization/mantle-graph-preserve-http/import-receipt.json --source-bundle /datapool/mantle-store/convergence-pilot-20261119/source-bundle-http.json --source-bundle-blake3 8ed1103b5de3054ee13ea391af805e276e3cc3b6ceaa50b2149193adb1ff1777 --execution-profile config/foreign-execution-profiles/generated/nix.json --cache-closure-policy /home/brittonr/wt/convergence-evidence/realization/pilot-cache-closure-policy.json --receipt-out /home/brittonr/wt/convergence-evidence/realization/realization-receipt.json --substitute 
+--- stdout ---
+--- stderr ---
+{"error":"remote-endpoint-binding-config-source-invalid","code":3,"kind":"internal"}
+--- EXIT=3
+--- wall: 0.03s

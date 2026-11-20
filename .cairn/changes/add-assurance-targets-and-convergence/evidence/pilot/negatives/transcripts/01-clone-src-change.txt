@@ -1,0 +1,10 @@
+# 01-clone-src-change
+# started 2026-11-20T00:07:41-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: git clone /home/brittonr/git/OnixResearch/octet /home/brittonr/wt/convergence-evidence/negatives/octet-src-change 
+--- stdout ---
+--- stderr ---
+Cloning into '/home/brittonr/wt/convergence-evidence/negatives/octet-src-change'...
+done.
+--- EXIT=0
+--- wall: 0.34s

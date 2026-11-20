@@ -1,0 +1,13 @@
+# packaged cairn /nix/store/52fkm6qw21c7n230rlj9ygy43fgpnx94-cairn-0.2.1 built from c8b38c4; worktree c8b38c4 plus staged evidence/docs, 2026-11-20T11:11:49-05:00
+$ cairn validate --root .
+{"valid":true,"verdict":null,"findings":0,"issues":0}
+EXIT=0
+$ cairn gate proposal add-assurance-targets-and-convergence --root .
+{"valid":true,"verdict":"PASS","findings":0,"issues":0}
+EXIT=0
+$ cairn gate design add-assurance-targets-and-convergence --root .
+{"valid":true,"verdict":"PASS","findings":0,"issues":0}
+EXIT=0
+$ cairn gate tasks add-assurance-targets-and-convergence --root .
+{"valid":true,"verdict":"PASS","findings":0,"issues":0}
+EXIT=0

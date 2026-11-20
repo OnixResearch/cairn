@@ -1,0 +1,86 @@
+# summary of /home/brittonr/wt/convergence-evidence/negatives/transcripts/08-mantle-src-change.txt (full transcript retained locally, not in git)
+# bytes: 121290112
+# blake3: b86bc57f16673ab51ffc9ebe347c46b87a0e6ecee45099ec662cd5f435f2fa24
+# lines: 1395209; first 40 and last 40 shown, long lines cut at 400 chars
+--- head ---
+# 08-mantle-src-change
+# started 2026-11-20T00:12:06-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: ./mantle-src-change.sh 
+--- stdout ---
+== produce-nix ==
+{
+  "schema": "mantle-foreign-import-cli-v1",
+  "command": "produce-nix",
+  "verdict": "accepted",
+  "accepted": true,
+  "diagnostics": [],
+  "receipt": null,
+  "plan": null,
+  "producer_artifacts": {
+    "graph_path": "/home/brittonr/wt/convergence-evidence/negatives/mantle-src-change/nixpkgs.graph.json",
+    "package_index_path": "/home/brittonr/wt/convergence-evidence/negatives/mantle-src-change/nixpkgs.index.json"
+  },
+  "non_claims": [
+    "not-build-success",
+    "not-package-correctness",
+    "not-bootstrap-parity",
+    "not-output-trust",
+    "not-reproducibility",
+    "not-foreign-frontend-availability"
+  ]
+}
+produce-nix EXIT=0
+== plan ==
+{
+  "schema": "mantle-foreign-import-cli-v1",
+  "command": "plan",
+  "verdict": "accepted",
+  "accepted": true,
+  "diagnostics": [],
+  "receipt": {
+    "schema": "foreign-derivation-import-receipt-v1",
+    "producer_identity": "octet@ad455c1b9cc41f5f576dbcca0f2cbc7246052eb2",
+    "raw_graph_digest": "651ecdab2b6c6611e0f88979078f7e843fa89ae8664aa05f8f71f5fdcad1527b",
+    "translation_policy_digest": "29ea216f911da613a92bd29fc40c4ee1d85a0c8e2e6b5b3bf9e81df01aa1ddde",
+--- tail ---
+    "sandbox_audit": [],
+    "substitution_audit": [
+      {
+        "node_id": "nix:lhwv6ahi2zbixms37ah5mppkc0jl12mf-octet-mantle-aeneas-consumer-job-v1.drv",
+        "cache_url": "file:///datapool/mantle-store/convergence-pilot-20261119/cache?trusted_public_keys[0]=convergence-pilot-20261119-1:sRZV4nbjXTCkhRjkEIVe5Pg4G2ajYaCobLqS0JJVu2A=",
+        "trust_scope": "trusted-binary-cache",
+        "classification": "cache-hint-policy-data-store-admission-required",
+        "store_admission_required": true
+      }
+    ],
+    "forbidden_process_invocations": [],
+    "non_claims": [
+      "not-bootstrap-parity",
+      "not-build-success",
+      "not-builder-execution",
+      "not-cache-future-availability",
+      "not-foreign-frontend-availability",
+      "not-local-rebuild",
+      "not-output-trust",
+      "not-package-correctness",
+      "not-realization",
+      "not-reproducibility",
+      "not-scheduler-execution",
+      "not-source-availability",
+      "not-store-admission"
+    ]
+  },
+  "non_claims": [
+    "not-build-success",
+    "not-package-correctness",
+    "not-bootstrap-parity",
+    "not-output-trust",
+    "not-reproducibility",
+    "not-foreign-frontend-availability"
+  ]
+}
+plan EXIT=0
+--- stderr ---
+--- EXIT=0
+--- wall: 53.09s

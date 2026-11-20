@@ -1,0 +1,21 @@
+# 03-step2-freeze
+# started 2026-11-20T10:28:00-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c set\ -euo\ pipefail\;\ R=/home/brittonr/wt/convergence-evidence/realization\;\ X=/home/brittonr/wt/convergence-evidence/e2e\;\ REV=d5b34c2d64b1227417a46df8ed8427f2d10ed3c8\;\ FLAKE=\"git+file:///home/brittonr/git/OnixResearch/octet\?rev=\$REV\"\;\ WRAP=\$R/nix-minfree0\;\ NICKEL=/nix/store/ck3a4k9az87z5rjwgy8nmpcs34xp9cc5-nickel-lang-rev-fixup-1.17.0/bin/nickel\;\ echo\ \\\$\ \"\$WRAP\"\ flake\ prefetch\ --json\ \"\$FLAKE\"\;\ \"\$WRAP\"\ flake\ prefetch\ --json\ \"\$FLAKE\"\;\ test\ \"\$\(git\ -C\ /home/brittonr/wt/e2e/octet-rev\ rev-parse\ HEAD\)\"\ =\ \"\$REV\"\;\ cd\ /home/brittonr/wt/e2e/octet-rev\;\ echo\ \\\$\ export.py\;\ python3\ tools/mantle-producer/export.py\ --nix\ \"\$WRAP\"\ --nickel\ \"\$NICKEL\"\ --flake\ \"\$FLAKE\"\ --revision\ \"\$REV\"\ --graph-format\ nix-derivation-show-v4\ --out\ \"\$X/producer-export\"\;\ echo\ EXPORT-OK 
+--- stdout ---
+$ /home/brittonr/wt/convergence-evidence/realization/nix-minfree0 flake prefetch --json git+file:///home/brittonr/git/OnixResearch/octet?rev=d5b34c2d64b1227417a46df8ed8427f2d10ed3c8
+{"hash":"sha256-4eOSVvohrbk4+fupuAvA0JzrV7g2bo3rYbykyNybUCA=","locked":{"lastModified":1794884892,"ref":"refs/heads/release/public-0.1.1-rc.1-20261112","rev":"d5b34c2d64b1227417a46df8ed8427f2d10ed3c8","revCount":1293,"type":"git","url":"file:///home/brittonr/git/OnixResearch/octet"},"original":{"rev":"d5b34c2d64b1227417a46df8ed8427f2d10ed3c8","type":"git","url":"file:///home/brittonr/git/OnixResearch/octet"},"storePath":"/nix/store/6s4aph8fm1wq5q9rz5ly7bjq0d5fxh79-source"}
+$ export.py
+{
+  "root_derivation": "/nix/store/vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv",
+  "source_revision": "d5b34c2d64b1227417a46df8ed8427f2d10ed3c8",
+  "graph_format": "nix-derivation-show-v4",
+  "derivations": 11565,
+  "source_objects": 677,
+  "source_bytes": 848923562,
+  "proof_executed": false
+}
+EXPORT-OK
+--- stderr ---
+--- EXIT=0
+--- wall: 27.36s

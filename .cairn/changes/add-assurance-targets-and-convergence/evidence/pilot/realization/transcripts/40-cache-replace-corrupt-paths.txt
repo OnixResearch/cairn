@@ -1,0 +1,61 @@
+# replace two locally-modified store paths in the pilot cache with cache.nixos.org's original NARs (Britton chose cache-only fix) 2026-11-19T23:57:37-05:00
+== q2vpbpf8vqzizz6836vlw3n83cjr8bma
+-- old narinfo:
+StorePath: /nix/store/q2vpbpf8vqzizz6836vlw3n83cjr8bma-mold-unwrapped-wrapper-2.40.4
+URL: nar/0xir90cg1xmliv4dk8mfbvhcv5cg3x14nqb2m40qna97rkrxhfxs.nar.zst
+Compression: zstd
+FileHash: sha256:0xir90cg1xmliv4dk8mfbvhcv5cg3x14nqb2m40qna97rkrxhfxs
+FileSize: 8962
+NarHash: sha256:0h5b8pgm6n6cwbrg8y4wn6v29i5cabiypqc72ksikv8g2pck3y3c
+NarSize: 41448
+References: 2c48s343k15i0cmwb9cp1vi6randmzcw-glibc-2.42-51-bin 2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9 5cp0vlc6kabxzk17q7jjwmwg6p7mjg3b-expand-response-params hlxw2q9qansq7bn52xvlb5badw3z1v8s-coreutils-9.10 j8irrc0mpx029dw0rmadsjylg7h31ync-glibc-2.42-51-dev l0l2ll1lmylczj1ihqn351af2kyp5x19-glibc-2.42-51 mh3xdda8siz8g0g5lhhmvp80gzm87msn-mold-unwrapped-2.40.4 q2vpbpf8vqzizz6836vlw3n83cjr8bma-mold-unwrapped-wrapper-2.40.4
+Deriver: 4lkqm085svdpaw6kh09bhvf8784x0kb0-mold-unwrapped-wrapper-2.40.4.drv
+Sig: cache.nixos.org-1:oqTIe883gm81Ei+DU8TdqrDB/HITY0J5fsHMss5AfyEd4Um9y1wAIdKid+rhyyZV2GMau4AqYlzDvjoSCmPgCA==
+Sig: convergence-pilot-20261119-1:fN/iDyfSEzR4mlQ5Fvz1k58kSiaWEx2Mk0EO1/57uX16PVlgIBy55lwpZSc/xkibH7su0k17o6NzX7yeSkYYAA==
+downloaded nar/1wn5qiyy3bnia4c94isk5br877b6am84cpsv5lxkjs94npfmbkh9.nar.xz FileHash=sha256:1wn5qiyy3bnia4c94isk5br877b6am84cpsv5lxkjs94npfmbkh9 size=7948
+nar-sha256(base32)=0h5b8pgm6n6cwbrg8y4wn6v29i5cabiypqc72ksikv8g2pck3y3c
+-- new narinfo:
+StorePath: /nix/store/q2vpbpf8vqzizz6836vlw3n83cjr8bma-mold-unwrapped-wrapper-2.40.4
+URL: nar/1wn5qiyy3bnia4c94isk5br877b6am84cpsv5lxkjs94npfmbkh9.nar.xz
+Compression: xz
+FileHash: sha256:1wn5qiyy3bnia4c94isk5br877b6am84cpsv5lxkjs94npfmbkh9
+FileSize: 7948
+NarHash: sha256:0h5b8pgm6n6cwbrg8y4wn6v29i5cabiypqc72ksikv8g2pck3y3c
+NarSize: 41448
+References: 2c48s343k15i0cmwb9cp1vi6randmzcw-glibc-2.42-51-bin 2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9 5cp0vlc6kabxzk17q7jjwmwg6p7mjg3b-expand-response-params hlxw2q9qansq7bn52xvlb5badw3z1v8s-coreutils-9.10 j8irrc0mpx029dw0rmadsjylg7h31ync-glibc-2.42-51-dev l0l2ll1lmylczj1ihqn351af2kyp5x19-glibc-2.42-51 mh3xdda8siz8g0g5lhhmvp80gzm87msn-mold-unwrapped-2.40.4 q2vpbpf8vqzizz6836vlw3n83cjr8bma-mold-unwrapped-wrapper-2.40.4
+Deriver: 4lkqm085svdpaw6kh09bhvf8784x0kb0-mold-unwrapped-wrapper-2.40.4.drv
+Sig: cache.nixos.org-1:oqTIe883gm81Ei+DU8TdqrDB/HITY0J5fsHMss5AfyEd4Um9y1wAIdKid+rhyyZV2GMau4AqYlzDvjoSCmPgCA==
+== y8xj70yyzsml4z3aa5gsn9pvpx4za1py
+-- old narinfo:
+StorePath: /nix/store/y8xj70yyzsml4z3aa5gsn9pvpx4za1py-clang-wrapper-21.1.8
+URL: nar/17rb8l7cdci9z6jypprw1rbzvg2kd8ric4g9d50agrk578rxb0zi.nar.zst
+Compression: zstd
+FileHash: sha256:17rb8l7cdci9z6jypprw1rbzvg2kd8ric4g9d50agrk578rxb0zi
+FileSize: 13377
+NarHash: sha256:0n7jm9biba5lzc6y3ihqr5pq207n02ibz967bsyqqkabklp69792
+NarSize: 73504
+References: 2c48s343k15i0cmwb9cp1vi6randmzcw-glibc-2.42-51-bin 2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9 482i7k840pk0cmv6qhf4rf5gyah1lq8l-clang-21.1.8 5cp0vlc6kabxzk17q7jjwmwg6p7mjg3b-expand-response-params 7d8f5hag8a3qzfwj5lixbcnai8skjsgy-compiler-rt-libc-21.1.8 8laf6k81j9ckylrigj3xsk76j69knhvl-gnugrep-3.12 97rn2wpm09db8278qzjvbss9ybxhfsxf-gcc-15.2.0-libgcc f160pmgwc710rrc5c2vjgach0xfxa4nm-clang-21.1.8-lib hlxw2q9qansq7bn52xvlb5badw3z1v8s-coreutils-9.10 ihpdbhy4rfxaixiamyb588zfc3vj19al-gcc-15.2.0-lib j8irrc0mpx029dw0rmadsjylg7h31ync-glibc-2.42-51-dev jrvj1y7w8slim5xgbbly7hhpadsym63g-compiler-rt-libc-21.1.8-dev l0l2ll1lmylczj1ihqn351af2kyp5x19-glibc-2.42-51 pc4gvj2krf50wc2sipkimnbmx2w3mcgf-binutils-wrapper-2.44 sca0pf46jmxva40qahkcwys5c1lvk6n2-gcc-15.2.0 y8xj70yyzsml4z3aa5gsn9pvpx4za1py-clang-wrapper-21.1.8
+Deriver: svrcbqb8r5glx43w7nn08942vvy6yazj-clang-wrapper-21.1.8.drv
+Sig: cache.nixos.org-1:Me8L2+yKQiY85ie1sSRwymK/o8Q0qL7ivcwE627ksmcspgvC+s/Y9VdgnW0A9yptrLw+zjmQKus3XD4P859tBw==
+Sig: convergence-pilot-20261119-1:j3ti08kt/JtnwiKaDloDkZZwTLJ0Pezn1wZCzkIODR1oOIv1f/qdoQXw0lw7tE8L911LrJfQvKH8CxTvjaezDg==
+downloaded nar/0dsgwcc29cnhgn0igk7icvm3s0f2m4f9scz7yg46d0c5p0brds5h.nar.xz FileHash=sha256:0dsgwcc29cnhgn0igk7icvm3s0f2m4f9scz7yg46d0c5p0brds5h size=11780
+nar-sha256(base32)=0n7jm9biba5lzc6y3ihqr5pq207n02ibz967bsyqqkabklp69792
+-- new narinfo:
+StorePath: /nix/store/y8xj70yyzsml4z3aa5gsn9pvpx4za1py-clang-wrapper-21.1.8
+URL: nar/0dsgwcc29cnhgn0igk7icvm3s0f2m4f9scz7yg46d0c5p0brds5h.nar.xz
+Compression: xz
+FileHash: sha256:0dsgwcc29cnhgn0igk7icvm3s0f2m4f9scz7yg46d0c5p0brds5h
+FileSize: 11780
+NarHash: sha256:0n7jm9biba5lzc6y3ihqr5pq207n02ibz967bsyqqkabklp69792
+NarSize: 73504
+References: 2c48s343k15i0cmwb9cp1vi6randmzcw-glibc-2.42-51-bin 2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9 482i7k840pk0cmv6qhf4rf5gyah1lq8l-clang-21.1.8 5cp0vlc6kabxzk17q7jjwmwg6p7mjg3b-expand-response-params 7d8f5hag8a3qzfwj5lixbcnai8skjsgy-compiler-rt-libc-21.1.8 8laf6k81j9ckylrigj3xsk76j69knhvl-gnugrep-3.12 97rn2wpm09db8278qzjvbss9ybxhfsxf-gcc-15.2.0-libgcc f160pmgwc710rrc5c2vjgach0xfxa4nm-clang-21.1.8-lib hlxw2q9qansq7bn52xvlb5badw3z1v8s-coreutils-9.10 ihpdbhy4rfxaixiamyb588zfc3vj19al-gcc-15.2.0-lib j8irrc0mpx029dw0rmadsjylg7h31ync-glibc-2.42-51-dev jrvj1y7w8slim5xgbbly7hhpadsym63g-compiler-rt-libc-21.1.8-dev l0l2ll1lmylczj1ihqn351af2kyp5x19-glibc-2.42-51 pc4gvj2krf50wc2sipkimnbmx2w3mcgf-binutils-wrapper-2.44 sca0pf46jmxva40qahkcwys5c1lvk6n2-gcc-15.2.0 y8xj70yyzsml4z3aa5gsn9pvpx4za1py-clang-wrapper-21.1.8
+Deriver: svrcbqb8r5glx43w7nn08942vvy6yazj-clang-wrapper-21.1.8.drv
+Sig: cache.nixos.org-1:Me8L2+yKQiY85ie1sSRwymK/o8Q0qL7ivcwE627ksmcspgvC+s/Y9VdgnW0A9yptrLw+zjmQKus3XD4P859tBw==
+$ nix store sign --store file:///datapool/mantle-store/convergence-pilot-20261119/cache --key-file <pilot.sec> <two paths>
+added 2 signatures
+sign EXIT=0
+$ nix store verify --store file://... --trusted-public-keys <pilot pub> <root> --recursive
+checking '/nix/store/z7k98578dfzi6l3hsvbivzm7hfqlk0zc-set-source-date-epoch-to-latest.sh'...
+checking '/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1'...
+checking '/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1'...
+verify EXIT=0

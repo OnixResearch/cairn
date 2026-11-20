@@ -1,0 +1,13 @@
+# 13-lock-override-aeneas
+# started 2026-11-20T00:13:47-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: /home/brittonr/wt/convergence-evidence/realization/nix-minfree0 flake lock --override-input aeneas github:AeneasVerif/aeneas/ab34bd28458a08c150b7cbf1873e59af74588138 
+--- stdout ---
+--- stderr ---
+path "/home/brittonr/wt/convergence-evidence/negatives" does not contain a 'flake.nix', searching up
+error:
+       … while fetching the input 'path:/home/brittonr'
+
+       error: file '/SingletonSocket' has an unsupported type
+--- EXIT=1
+--- wall: 134.51s

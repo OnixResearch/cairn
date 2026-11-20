@@ -1,0 +1,4 @@
+# warm-up retry 2026-11-19T16:55:00-05:00 load=45.61 (nix-daemon restarted 16:54:43 by another party)
+/nix/store/vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drvelapsed=0:43.95 maxrss_kb=737836
+
+EXIT=0

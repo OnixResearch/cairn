@@ -1,0 +1,10 @@
+# 2026-11-19T14:59:07-05:00 cwd=/home/brittonr/wt/octet-convergence rev=d5b34c2d64b1227417a46df8ed8427f2d10ed3c8
+$ python3 tools/mantle-producer/export.py --nix /home/brittonr/wt/convergence-evidence/realization/nix-minfree0 --nickel /nix/store/ck3a4k9az87z5rjwgy8nmpcs34xp9cc5-nickel-lang-rev-fixup-1.17.0/bin/nickel --flake git+file:///home/brittonr/git/OnixResearch/octet?rev=d5b34c2d64b1227417a46df8ed8427f2d10ed3c8 --revision d5b34c2d64b1227417a46df8ed8427f2d10ed3c8 --graph-format nix-derivation-show-v4 --out /home/brittonr/wt/convergence-evidence/realization/producer-export
+Traceback (most recent call last):
+  File "/home/brittonr/wt/octet-convergence/tools/mantle-producer/export.py", line 176, in <module>
+    main()
+    ~~~~^^
+  File "/home/brittonr/wt/octet-convergence/tools/mantle-producer/export.py", line 122, in main
+    raise ValueError(f"immutable owner source lacks {required}; recorded fixture pins cannot substitute")
+ValueError: immutable owner source lacks nix/mantle-aeneas-job.nix; recorded fixture pins cannot substitute
+EXIT=1

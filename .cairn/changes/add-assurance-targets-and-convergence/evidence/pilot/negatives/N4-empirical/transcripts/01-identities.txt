@@ -1,0 +1,26 @@
+# 01-identities
+# started 2026-11-20T11:02:04-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives/N4-empirical
+# command: bash -c set\ -x\;\ b3sum\ /home/brittonr/wt/e2e/octet-pilot/target/release/cargo-octet\;\ /home/brittonr/wt/e2e/octet-pilot/target/release/cargo-octet\ --version\;\ git\ -C\ /home/brittonr/wt/e2e/octet-pilot\ log\ -1\ --format=\"%H\ %s\"\;\ git\ -C\ /home/brittonr/wt/e2e/octet-pilot\ describe\ --always\ --dirty\;\ b3sum\ /home/brittonr/wt/cairn-convergence/target/debug/cairn\;\ git\ -C\ /home/brittonr/wt/cairn-convergence\ log\ -1\ --format=\"%H\ %s\"\;\ b3sum\ /datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts/proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.stdout\;\ b3sum\ /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/src/lib.rs\ /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/Theorem.lean\ /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/Cargo.toml 
+--- stdout ---
+6e576a4ee08b2d829fa4a130b69b2a40fa7f54e95df56a547303672a2535647b  /home/brittonr/wt/e2e/octet-pilot/target/release/cargo-octet
+cargo-octet 0.1.1-rc.1
+e5086dca9b7feabfad37df3769390cc5005811f5 Add the Cairn convergence pilot contract over the realized producer output
+v0.1.0-1103-ge5086dca
+af873b99e2391460e309f3ca22804c34f0faee0d4438fbbd992f8db54f0a7763  /home/brittonr/wt/cairn-convergence/target/debug/cairn
+c8b38c4e02928afd5e2f746293553b4929b27508 Retain the real convergence pilot and admit its Mantle records
+20fe247f23727146eb84dd18b4e3923958c3d2197c96e0687f77c165beca9589  /datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts/proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.stdout
+691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd  /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/src/lib.rs
+776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f  /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/Theorem.lean
+28826659c5095a872ca9b17c747b96be1bc3afc147f2f383a7df5a527ab04370  /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/Cargo.toml
+--- stderr ---
++ b3sum /home/brittonr/wt/e2e/octet-pilot/target/release/cargo-octet
++ /home/brittonr/wt/e2e/octet-pilot/target/release/cargo-octet --version
++ git -C /home/brittonr/wt/e2e/octet-pilot log -1 '--format=%H %s'
++ git -C /home/brittonr/wt/e2e/octet-pilot describe --always --dirty
++ b3sum /home/brittonr/wt/cairn-convergence/target/debug/cairn
++ git -C /home/brittonr/wt/cairn-convergence log -1 '--format=%H %s'
++ b3sum /datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts/proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.stdout
++ b3sum /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/src/lib.rs /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/Theorem.lean /home/brittonr/wt/e2e/octet-rev/standards/proof-rails/aeneas-lean/fixtures/external-consumer/Cargo.toml
+--- EXIT=0
+--- wall: 0.46s

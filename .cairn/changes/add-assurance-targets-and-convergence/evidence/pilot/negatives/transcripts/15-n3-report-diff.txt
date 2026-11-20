@@ -1,0 +1,19 @@
+# 15-n3-report-diff
+# started 2026-11-20T00:15:05-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: diff -u n3-output-valid/producer-artifact-verification.json n3-output-invalid/producer-artifact-verification.json 
+--- stdout ---
+--- n3-output-valid/producer-artifact-verification.json	1969-12-31 19:00:01.000000000 -0500
++++ n3-output-invalid/producer-artifact-verification.json	2026-11-20 00:15:02.872159305 -0500
+@@ -2,7 +2,7 @@
+   "schema_version": 1,
+   "artifact_dir": "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+   "output_format": "json",
+-  "status": "valid",
++  "status": "invalid",
+   "artifacts": [
+     {
+       "artifact": "command.txt",
+--- stderr ---
+--- EXIT=1
+--- wall: 0.01s

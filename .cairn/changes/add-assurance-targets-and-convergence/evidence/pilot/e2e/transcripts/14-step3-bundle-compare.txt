@@ -1,0 +1,13 @@
+# 14-step3-bundle-compare
+# started 2026-11-20T10:42:20-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c $'set -euo pipefail; X=/home/brittonr/wt/convergence-evidence/e2e; B=/datapool/mantle-store/convergence-pilot-20261119/source-bundle-http.json; cmp "$X/step3/source-bundle-http.json" "$B" && echo "cmp: identical"; b3sum "$X/step3/source-bundle-http.json" "$B"; python3 -c "\nimport json\nfor f in [\\"$X/step3/source-bundle-http.json\\",\\"$B\\"]:\n    d=json.load(open(f)); print(f, d[\\"manifest_blake3\\"], \\"records=%d\\" % len(d[\\"records\\"]))\n"' 
+--- stdout ---
+cmp: identical
+b8abb366a886bb79314411a3d479a97fe8481173334c238333b9118fe7ab8030  /home/brittonr/wt/convergence-evidence/e2e/step3/source-bundle-http.json
+b8abb366a886bb79314411a3d479a97fe8481173334c238333b9118fe7ab8030  /datapool/mantle-store/convergence-pilot-20261119/source-bundle-http.json
+/home/brittonr/wt/convergence-evidence/e2e/step3/source-bundle-http.json 8ed1103b5de3054ee13ea391af805e276e3cc3b6ceaa50b2149193adb1ff1777 records=0
+/datapool/mantle-store/convergence-pilot-20261119/source-bundle-http.json 8ed1103b5de3054ee13ea391af805e276e3cc3b6ceaa50b2149193adb1ff1777 records=0
+--- stderr ---
+--- EXIT=0
+--- wall: 0.08s

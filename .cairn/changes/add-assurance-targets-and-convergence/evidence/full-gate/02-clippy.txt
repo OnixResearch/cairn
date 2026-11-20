@@ -1,0 +1,7 @@
+# cairn worktree c8b38c4, 2026-11-20T10:58:36-05:00
+$ cargo clippy --workspace --all-targets -- -D warnings
+    Checking cairn-core v0.2.1 (/home/brittonr/wt/cairn-convergence/crates/cairn-core)
+    Checking onix-cairn-radicle-cob v0.2.1 (/home/brittonr/wt/cairn-convergence/crates/cairn-radicle-cob)
+    Checking cairn-cli v0.2.1 (/home/brittonr/wt/cairn-convergence/crates/cairn-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 22.29s
+EXIT=0

@@ -1,0 +1,44 @@
+# cairn worktree c8b38c4, 2026-11-20T10:59:02-05:00
+$ cargo test --workspace
+     Running unittests src/lib.rs (target/debug/deps/bounded_tree_cap-891f66a2fef249d4)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/capability-root.rs (target/debug/deps/capability_root-f8b9d3fa75f5a6ea)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/conformance.rs (target/debug/deps/conformance-ab383a6f3f272d36)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running unittests src/lib.rs (target/debug/deps/bounded_tree_core-06ca37c0ab8b33da)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/conformance.rs (target/debug/deps/conformance-c2ae30889e9fcfbb)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/limits.rs (target/debug/deps/limits-4aa91e1c0aa62d4d)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/main.rs (target/debug/deps/cairn-e076de5adcf40740)
+test result: ok. 187 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 172.00s
+     Running unittests src/ironspec.rs (target/debug/deps/ironspec-4ab64bd0188d2b81)
+test result: ok. 187 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 173.00s
+     Running tests/adoption_report.rs (target/debug/deps/adoption_report-4ec794fdbeb7ba0a)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+     Running tests/adr.rs (target/debug/deps/adr-0d752673b0ff50c6)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+     Running tests/agent_benchmark.rs (target/debug/deps/agent_benchmark-ea99e08b500883e8)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+     Running tests/agent_benchmark_oracles.rs (target/debug/deps/agent_benchmark_oracles-b13f75065cf39a48)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.45s
+     Running tests/agent_completion.rs (target/debug/deps/agent_completion-414d4672f42266e3)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+     Running tests/agent_guidance.rs (target/debug/deps/agent_guidance-423867fa894c1a98)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+     Running tests/bootstrap_preview.rs (target/debug/deps/bootstrap_preview-ddcd3aa5721e0cb2)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 217.40s
+     Running tests/bootstrap_project_policy.rs (target/debug/deps/bootstrap_project_policy-47ccbe8f121bb2ce)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+     Running tests/bootstrap_publication_contract.rs (target/debug/deps/bootstrap_publication_contract-92d149d161d323b3)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/buoy_comparison.rs (target/debug/deps/buoy_comparison-a2cf64c7c20a5e90)
+test comparison_identity_binds_source_mapping_fixture_and_policy ... FAILED
+failures:
+failures:
+    comparison_identity_binds_source_mapping_fixture_and_policy
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.35s
+error: test failed, to rerun pass `-p cairn-cli --test buoy_comparison`
+EXIT=101

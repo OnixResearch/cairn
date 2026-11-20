@@ -1,0 +1,9 @@
+# 32-cache-path-info-sigs
+# started 2026-11-19T20:37:53-05:00
+# cwd: /home/brittonr/wt/mantle-convergence
+# command: nix --option min-free 0 path-info --store file:///datapool/mantle-store/convergence-pilot-20261119/cache --sigs /nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1 
+--- stdout ---
+/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1	britton-desktop-1:Po3mJO6K5oDqFic0KxgAeCEBaOYBLpvjY8gIG9QGHpYtvkLshj1bsRX5iibU65yTBs6PNVnLeuSFPqopXQ8+AQ== convergence-pilot-20261119-1:JL/038wGr7fszteaf+Bgrcw9mkM3KRmePw2n3V07AxMXhw+8IuAWTqXPQ49R70paj1WPJxHi7xN6c4cYvUolBg==
+--- stderr ---
+--- EXIT=0
+--- wall: 0.04s

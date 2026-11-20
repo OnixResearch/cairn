@@ -1,0 +1,31 @@
+# 16b-plan-lock-change
+# started 2026-11-20T00:20:51-05:00
+# cwd: /home/brittonr/wt/mantle-convergence
+# command: target/release/mantle --json foreign-import plan --graph /home/brittonr/wt/convergence-evidence/negatives/mantle-lock-change/nixpkgs.graph.json --package-index /home/brittonr/wt/convergence-evidence/negatives/mantle-lock-change/nixpkgs.index.json --policy config/foreign-cache-closure/generated/preserve-nix.json --execution-profile config/foreign-execution-profiles/generated/nix.json --package octet-mantle-aeneas-consumer-job --system x86_64-linux --nix-compat --plan-out /home/brittonr/wt/convergence-evidence/negatives/mantle-lock-change/plan.json --receipt-out /home/brittonr/wt/convergence-evidence/negatives/mantle-lock-change/import-receipt.json --state-dir /home/brittonr/wt/convergence-evidence/negatives/mantle-lock-change/state 
+--- stdout ---
+{
+  "schema": "mantle-foreign-import-cli-v1",
+  "command": "plan",
+  "verdict": "rejected",
+  "accepted": false,
+  "diagnostics": [
+    {
+      "class": "foreign-compiler-leftover-reference",
+      "node_id": "nix:xdb17mqsnr2347mmdpx67hgzbafgs4g1-patchelf-static-0.18.0.drv",
+      "message": "rewritten field retains an unmapped foreign store object"
+    }
+  ],
+  "receipt": null,
+  "plan": null,
+  "non_claims": [
+    "not-build-success",
+    "not-package-correctness",
+    "not-bootstrap-parity",
+    "not-output-trust",
+    "not-reproducibility",
+    "not-foreign-frontend-availability"
+  ]
+}
+--- stderr ---
+--- EXIT=1
+--- wall: 1.23s

@@ -1,0 +1,27 @@
+# 19-final-status
+# started 2026-11-20T10:52:27-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c set\ -euo\ pipefail\;\ for\ d\ in\ /home/brittonr/wt/e2e/octet-pilot\ /home/brittonr/wt/e2e/octet-rev\ /home/brittonr/wt/e2e/mantle\;\ do\ echo\ \"==\ \$d\"\;\ git\ -C\ \"\$d\"\ rev-parse\ HEAD\;\ echo\ \"status:\"\;\ git\ -C\ \"\$d\"\ status\ --porcelain\;\ done\;\ echo\ \"==\ loopback\ server\"\;\ ss\ -ltn\ \|\ grep\ 18471\ \|\|\ echo\ \"port\ 18471\ not\ listening\"\;\ echo\ \"==\ outputs\"\;\ ls\ /home/brittonr/wt/convergence-evidence/e2e/step1\ /home/brittonr/wt/convergence-evidence/e2e/step5 
+--- stdout ---
+== /home/brittonr/wt/e2e/octet-pilot
+e5086dca9b7feabfad37df3769390cc5005811f5
+status:
+== /home/brittonr/wt/e2e/octet-rev
+d5b34c2d64b1227417a46df8ed8427f2d10ed3c8
+status:
+== /home/brittonr/wt/e2e/mantle
+61f06cc59ebb3bc78f66b2d516abdc615cdbdf2a
+status:
+== loopback server
+port 18471 not listening
+== outputs
+/home/brittonr/wt/convergence-evidence/e2e/step1:
+contract.json
+generated.json
+targets.json
+
+/home/brittonr/wt/convergence-evidence/e2e/step5:
+decision.json
+--- stderr ---
+--- EXIT=0
+--- wall: 0.30s

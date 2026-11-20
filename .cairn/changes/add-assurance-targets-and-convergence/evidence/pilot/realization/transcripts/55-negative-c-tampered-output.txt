@@ -1,0 +1,9 @@
+# 55-negative-c-tampered-output
+# started 2026-11-20T10:19:02-05:00
+# cwd: /home/brittonr/wt/mantle-bridge
+# command: /home/brittonr/wt/mantle-bridge/target/release/mantle-verification-bridge octet-job /tmp/octet-pilot-output-copy /home/brittonr/wt/convergence-evidence/realization/producer-export d5b34c2d64b1227417a46df8ed8427f2d10ed3c8 /tmp/handoff-negative-c 
+--- stdout ---
+--- stderr ---
+verification bridge: proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc mismatch: expected a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2, observed b9f7af2fc1c60b4cc80efd281828ffe1b60fa2649a5145bdb37b09fdca60671c
+--- EXIT=1
+--- wall: 0.01s

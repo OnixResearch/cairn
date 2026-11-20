@@ -1,0 +1,9 @@
+# 12-checkout-lock-rev
+# started 2026-11-20T00:13:18-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: git -C /home/brittonr/wt/convergence-evidence/negatives/octet-lock-change checkout --detach d5b34c2d64b1227417a46df8ed8427f2d10ed3c8 
+--- stdout ---
+--- stderr ---
+HEAD is now at d5b34c2d Publish 0.1.1-rc.1 qualification and lifecycle metadata
+--- EXIT=0
+--- wall: 0.10s

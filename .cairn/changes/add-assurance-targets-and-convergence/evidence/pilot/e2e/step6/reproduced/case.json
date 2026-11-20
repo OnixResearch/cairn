@@ -1,0 +1,22 @@
+{
+  "schema_version": "cairn.convergence-case.v1",
+  "registry": "/home/brittonr/wt/e2e/octet-pilot/standards/requirements/fixtures/cairn-pilot/requirement-registry.json",
+  "targets": "/home/brittonr/wt/convergence-evidence/e2e/step1/targets.json",
+  "generated_sources": "/home/brittonr/wt/convergence-evidence/e2e/step1/generated.json",
+  "trusted_signers": [
+    "convergence-pilot-20261119-1"
+  ],
+  "contracts": [
+    {
+      "contract_id": "octet.cairn-pilot.aeneas-consumer",
+      "contract": "/home/brittonr/wt/convergence-evidence/e2e/step1/contract.json",
+      "decision": "/home/brittonr/wt/convergence-evidence/e2e/step5/decision.json",
+      "evidence": "/home/brittonr/wt/e2e/octet-pilot/standards/requirements/fixtures/cairn-pilot/evidence.json",
+      "handoff": "/home/brittonr/wt/convergence-evidence/e2e/handoff",
+      "producer_output": "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1",
+      "producer_output_locator": "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1",
+      "realization_receipt": "/home/brittonr/wt/convergence-evidence/e2e/step3/realization-receipt-reuse.json",
+      "store_info": "/home/brittonr/wt/convergence-evidence/e2e/step6/reproduced/store-info.json"
+    }
+  ]
+}

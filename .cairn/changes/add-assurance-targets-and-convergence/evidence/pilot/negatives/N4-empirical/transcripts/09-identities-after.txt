@@ -1,0 +1,21 @@
+# 09-identities-after
+# started 2026-11-20T11:06:03-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives/N4-empirical
+# command: bash -c set\ -x\;\ b3sum\ /home/brittonr/wt/cairn-convergence/target/debug/cairn\ /home/brittonr/wt/e2e/octet-pilot/target/release/cargo-octet\;\ ls\ -la\ --time-style=full-iso\ /home/brittonr/wt/cairn-convergence/target/debug/cairn\;\ git\ -C\ /home/brittonr/wt/cairn-convergence\ status\ --short\;\ git\ -C\ /home/brittonr/wt/cairn-convergence\ diff\ --stat\ --\ crates 
+--- stdout ---
+af873b99e2391460e309f3ca22804c34f0faee0d4438fbbd992f8db54f0a7763  /home/brittonr/wt/cairn-convergence/target/debug/cairn
+6e576a4ee08b2d829fa4a130b69b2a40fa7f54e95df56a547303672a2535647b  /home/brittonr/wt/e2e/octet-pilot/target/release/cargo-octet
+-rwxr-xr-x 2 brittonr brittonr 342443104 2026-11-20 11:00:10.424657501 -0500 /home/brittonr/wt/cairn-convergence/target/debug/cairn
+ M .cairn/changes/add-assurance-targets-and-convergence/design.md
+ M .cairn/changes/add-assurance-targets-and-convergence/tasks.md
+ M CHANGELOG.md
+?? .cairn/changes/add-assurance-targets-and-convergence/evidence/README.md
+?? .cairn/changes/add-assurance-targets-and-convergence/evidence/full-gate/
+?? .cairn/changes/add-assurance-targets-and-convergence/evidence/pilot/
+--- stderr ---
++ b3sum /home/brittonr/wt/cairn-convergence/target/debug/cairn /home/brittonr/wt/e2e/octet-pilot/target/release/cargo-octet
++ ls -la --time-style=full-iso /home/brittonr/wt/cairn-convergence/target/debug/cairn
++ git -C /home/brittonr/wt/cairn-convergence status --short
++ git -C /home/brittonr/wt/cairn-convergence diff --stat -- crates
+--- EXIT=0
+--- wall: 0.11s

@@ -1,0 +1,20 @@
+# 00-checkouts
+# started 2026-11-20T10:27:31-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c for\ d\ in\ /home/brittonr/wt/e2e/octet-pilot\ /home/brittonr/wt/e2e/octet-rev\ /home/brittonr/wt/e2e/mantle\;\ do\ echo\ \"==\ \$d\"\;\ git\ -C\ \"\$d\"\ rev-parse\ HEAD\;\ echo\ \"status:\"\;\ git\ -C\ \"\$d\"\ status\ --porcelain\;\ echo\ \"status-exit-shell:\ ok\"\;\ done 
+--- stdout ---
+== /home/brittonr/wt/e2e/octet-pilot
+e5086dca9b7feabfad37df3769390cc5005811f5
+status:
+status-exit-shell: ok
+== /home/brittonr/wt/e2e/octet-rev
+d5b34c2d64b1227417a46df8ed8427f2d10ed3c8
+status:
+status-exit-shell: ok
+== /home/brittonr/wt/e2e/mantle
+61f06cc59ebb3bc78f66b2d516abdc615cdbdf2a
+status:
+status-exit-shell: ok
+--- stderr ---
+--- EXIT=0
+--- wall: 0.50s

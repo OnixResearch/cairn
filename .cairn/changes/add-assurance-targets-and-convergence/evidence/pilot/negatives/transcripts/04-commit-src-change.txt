@@ -1,0 +1,10 @@
+# 04-commit-src-change
+# started 2026-11-20T00:09:12-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: git -C /home/brittonr/wt/convergence-evidence/negatives/octet-src-change commit -a -m negative\ control\ \(not\ for\ push\):\ one\ byte\ inside\ a\ doc\ comment 
+--- stdout ---
+[detached HEAD ad455c1b] negative control (not for push): one byte inside a doc comment
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+--- stderr ---
+--- EXIT=0
+--- wall: 0.12s

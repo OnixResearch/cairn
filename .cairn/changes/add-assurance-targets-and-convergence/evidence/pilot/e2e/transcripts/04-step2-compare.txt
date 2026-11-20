@@ -1,0 +1,33 @@
+# 04-step2-compare
+# started 2026-11-20T10:29:07-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/e2e
+# command: bash -c set\ -euo\ pipefail\;\ X=/home/brittonr/wt/convergence-evidence/e2e\;\ A=\$X/producer-export\;\ B=/home/brittonr/wt/convergence-evidence/realization/producer-export\;\ sum\(\)\ \{\ \(\ cd\ \"\$1\"\;\ find\ .\ -mindepth\ 1\ \|\ LC_ALL=C\ sort\ \>\ \"\$2.names\"\;\ find\ .\ -type\ f\ -print0\ \|\ LC_ALL=C\ sort\ -z\ \|\ xargs\ -0\ -r\ b3sum\ \|\ LC_ALL=C\ sort\ -k2\ \>\ \"\$2.hashes\"\;\ find\ .\ -type\ l\ -print0\ \|\ LC_ALL=C\ sort\ -z\ \|\ xargs\ -0\ -r\ readlink\ \>\ \"\$2.links\"\ \)\;\ \}\;\ sum\ \"\$A\"\ \$X/step2/new\;\ sum\ \"\$B\"\ \$X/step2/retained\;\ echo\ \"new\ entries:\ \$\(wc\ -l\ \<\ \$X/step2/new.names\)\ \ retained\ entries:\ \$\(wc\ -l\ \<\ \$X/step2/retained.names\)\"\;\ echo\ \"new\ hashed\ files:\ \$\(wc\ -l\ \<\ \$X/step2/new.hashes\)\ \ retained\ hashed\ files:\ \$\(wc\ -l\ \<\ \$X/step2/retained.hashes\)\"\;\ echo\ \"new\ symlinks:\ \$\(wc\ -l\ \<\ \$X/step2/new.links\)\ \ retained\ symlinks:\ \$\(wc\ -l\ \<\ \$X/step2/retained.links\)\"\;\ echo\ \"==\ names\ diff\"\;\ diff\ \$X/step2/new.names\ \$X/step2/retained.names\ \&\&\ echo\ \"names:\ identical\"\;\ echo\ \"==\ hashes\ diff\"\;\ diff\ \$X/step2/new.hashes\ \$X/step2/retained.hashes\ \&\&\ echo\ \"hashes:\ identical\"\;\ echo\ \"==\ links\ diff\"\;\ diff\ \$X/step2/new.links\ \$X/step2/retained.links\ \&\&\ echo\ \"links:\ identical\"\;\ echo\ \"==\ aggregate\"\;\ b3sum\ \$X/step2/new.hashes\ \$X/step2/retained.hashes\;\ echo\ \"==\ top-level\"\;\ b3sum\ \$A/flake-metadata.json\ \$B/flake-metadata.json\ \$A/flake.lock\ \$B/flake.lock\ \$A/job.json\ \$B/job.json\ \$A/root-derivation\ \$B/root-derivation\ \$A/source-revision\ \$B/source-revision\ \$A/tool-closure.derivation-json.json\ \$B/tool-closure.derivation-json.json 
+--- stdout ---
+new entries: 45631  retained entries: 45631
+new hashed files: 37860  retained hashed files: 37860
+new symlinks: 44  retained symlinks: 44
+== names diff
+names: identical
+== hashes diff
+hashes: identical
+== links diff
+links: identical
+== aggregate
+be55e9f8011bfd23d8624318d5decfbaf8d2ba248d8ac6030bc7a5f5be55ecb9  /home/brittonr/wt/convergence-evidence/e2e/step2/new.hashes
+be55e9f8011bfd23d8624318d5decfbaf8d2ba248d8ac6030bc7a5f5be55ecb9  /home/brittonr/wt/convergence-evidence/e2e/step2/retained.hashes
+== top-level
+bc5f54b93bf5c2a2a38186abaaf9d9d6d673880a48bf7c898aa901a5ba981879  /home/brittonr/wt/convergence-evidence/e2e/producer-export/flake-metadata.json
+bc5f54b93bf5c2a2a38186abaaf9d9d6d673880a48bf7c898aa901a5ba981879  /home/brittonr/wt/convergence-evidence/realization/producer-export/flake-metadata.json
+2f4ef5cf2537f92cdfe4adfe5029d0b7d134c4c39454dbb716f8079c8d4e5cdc  /home/brittonr/wt/convergence-evidence/e2e/producer-export/flake.lock
+2f4ef5cf2537f92cdfe4adfe5029d0b7d134c4c39454dbb716f8079c8d4e5cdc  /home/brittonr/wt/convergence-evidence/realization/producer-export/flake.lock
+a14ec403025db0330379bad1e1904fae23835ccd1ab95017a80e3e5ca715b318  /home/brittonr/wt/convergence-evidence/e2e/producer-export/job.json
+a14ec403025db0330379bad1e1904fae23835ccd1ab95017a80e3e5ca715b318  /home/brittonr/wt/convergence-evidence/realization/producer-export/job.json
+6d5e0fa2011c866f4585882caf9bbfe47d32199f18747230f052501132012aa6  /home/brittonr/wt/convergence-evidence/e2e/producer-export/root-derivation
+6d5e0fa2011c866f4585882caf9bbfe47d32199f18747230f052501132012aa6  /home/brittonr/wt/convergence-evidence/realization/producer-export/root-derivation
+ea943a34f613cb967e4c5bc9568b42d32e04d9d64fc0b1486776e8f787a0fc00  /home/brittonr/wt/convergence-evidence/e2e/producer-export/source-revision
+ea943a34f613cb967e4c5bc9568b42d32e04d9d64fc0b1486776e8f787a0fc00  /home/brittonr/wt/convergence-evidence/realization/producer-export/source-revision
+d0ebfcbae2f8b44866a45df068cec42cf5be5b6379ff72cb91bddbe919697808  /home/brittonr/wt/convergence-evidence/e2e/producer-export/tool-closure.derivation-json.json
+d0ebfcbae2f8b44866a45df068cec42cf5be5b6379ff72cb91bddbe919697808  /home/brittonr/wt/convergence-evidence/realization/producer-export/tool-closure.derivation-json.json
+--- stderr ---
+--- EXIT=0
+--- wall: 10.85s

@@ -1,0 +1,4 @@
+# closure sizes measured with: nix derivation show --recursive <drv> | jq .derivations|length
+/nix/store/36qrksi12r9c2hmi5bc454kqr6cynrgp-tmpfiles.d.drv 7157
+/nix/store/03vvnkwp7d2gczmk5warzfxj0h91x5k1-user-units.drv 23257
+/nix/store/04v78xjjfwhwdmdjhgfjzxzxg7dfscx3-etc.drv 45586

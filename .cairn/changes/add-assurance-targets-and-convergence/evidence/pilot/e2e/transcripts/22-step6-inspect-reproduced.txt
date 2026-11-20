@@ -1,0 +1,26 @@
+# step 6b: every input reproduced from clean checkouts (steps 1-5), the reuse realization receipt and the live realized output; root = clean Octet checkout at REV
+{
+  "schema_version": "cairn.convergence-case.v1",
+  "registry": "/home/brittonr/wt/e2e/octet-pilot/standards/requirements/fixtures/cairn-pilot/requirement-registry.json",
+  "targets": "/home/brittonr/wt/convergence-evidence/e2e/step1/targets.json",
+  "generated_sources": "/home/brittonr/wt/convergence-evidence/e2e/step1/generated.json",
+  "trusted_signers": [
+    "convergence-pilot-20261119-1"
+  ],
+  "contracts": [
+    {
+      "contract_id": "octet.cairn-pilot.aeneas-consumer",
+      "contract": "/home/brittonr/wt/convergence-evidence/e2e/step1/contract.json",
+      "decision": "/home/brittonr/wt/convergence-evidence/e2e/step5/decision.json",
+      "evidence": "/home/brittonr/wt/e2e/octet-pilot/standards/requirements/fixtures/cairn-pilot/evidence.json",
+      "handoff": "/home/brittonr/wt/convergence-evidence/e2e/handoff",
+      "producer_output": "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1",
+      "producer_output_locator": "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1",
+      "realization_receipt": "/home/brittonr/wt/convergence-evidence/e2e/step3/realization-receipt-reuse.json",
+      "store_info": "/home/brittonr/wt/convergence-evidence/e2e/step6/reproduced/store-info.json"
+    }
+  ]
+}
+$ cairn convergence inspect --case /home/brittonr/wt/convergence-evidence/e2e/step6/reproduced/case.json --root /home/brittonr/wt/e2e/octet-rev
+EXIT=0
+{"status":"evaluated","receipt_blake3":"9757e63beea05d61c00b09d4d6d0be610d4a7ac8916b038b301ef6b1ba8262af","targets_current":true,"coverage_complete":false,"complete":false,"current":[{"requirement_id":"octet.aeneas_consumer_contract.compatibility","route":"cache-only-preserve-v1","issues":[]}],"states":{"current":1,"untargeted":739}}

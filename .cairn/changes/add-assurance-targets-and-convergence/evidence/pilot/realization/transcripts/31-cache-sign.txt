@@ -1,0 +1,9 @@
+# 31-cache-sign
+# started 2026-11-19T20:37:51-05:00
+# cwd: /home/brittonr/wt/mantle-convergence
+# command: nix --option min-free 0 store sign --store file:///datapool/mantle-store/convergence-pilot-20261119/cache --key-file /datapool/mantle-store/convergence-pilot-20261119/pilot.sec --recursive /nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1 
+--- stdout ---
+--- stderr ---
+added 526 signatures
+--- EXIT=0
+--- wall: 0.08s

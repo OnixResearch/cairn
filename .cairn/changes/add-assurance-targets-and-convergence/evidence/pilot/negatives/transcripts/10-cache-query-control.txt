@@ -1,0 +1,9 @@
+# 10-cache-query-control
+# started 2026-11-20T00:13:12-05:00
+# cwd: /home/brittonr/wt/convergence-evidence/negatives
+# command: /home/brittonr/wt/convergence-evidence/realization/nix-minfree0 path-info --store file:///datapool/mantle-store/convergence-pilot-20261119/cache /nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1 
+--- stdout ---
+/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1
+--- stderr ---
+--- EXIT=0
+--- wall: 0.06s

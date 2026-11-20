@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/brittonr/wt/octet-convergence/tools/mantle-producer/export.py", line 176, in <module>
+    main()
+    ~~~~^^
+  File "/home/brittonr/wt/octet-convergence/tools/mantle-producer/export.py", line 122, in main
+    raise ValueError(f"immutable owner source lacks {required}; recorded fixture pins cannot substitute")
+ValueError: immutable owner source lacks nix/mantle-aeneas-job.nix; recorded fixture pins cannot substitute

@@ -1,0 +1,47 @@
+{
+  "schema_version": "octet-requirement-evidence/v1",
+  "contract_id": "octet.cairn-pilot.aeneas-consumer",
+  "contract_blake3": "56d7f459cc59ddfcdc31d42b86d6c0cef9ae3c03d8a9673ba6d6fb0a66e8eb3e",
+  "proof_decks": [],
+  "empirical_checks": [
+    {
+      "evidence_id": "aeneas.consumer.increment-matches-model",
+      "evidence_class": "empirical_check",
+      "status": "passed",
+      "checker_id": "lean-proof-runner",
+      "command_argv": [
+        "lean",
+        "--run",
+        "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean"
+      ],
+      "checked_scope": [
+        "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0"
+      ],
+      "source_bindings": [
+        {
+          "blake3": "28826659c5095a872ca9b17c747b96be1bc3afc147f2f383a7df5a527ab04370",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/Cargo.toml"
+        },
+        {
+          "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/src/lib.rs"
+        },
+        {
+          "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/Theorem.lean"
+        }
+      ],
+      "artifact": "/datapool/mantle-store/convergence-pilot-20261119/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts/proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.stdout",
+      "artifact_blake3": "20fe247f23727146eb84dd18b4e3923958c3d2197c96e0687f77c165beca9589",
+      "diagnostics": [],
+      "non_claims": [
+        "the retained log is the producer job's own Lean run output, read in place; it records that the checked file built, not that Lean's kernel is sound"
+      ]
+    }
+  ],
+  "non_claims": [
+    "the deck is the producer job's own proof-card record, read in place from the preserved output; Octet evaluates it and does not authenticate the producer",
+    "deck and artifact paths are absolute inside the realized output, not repository paths at the reviewed revision",
+    "the pilot's realization preserved a prebuilt closure signed with the pilot key; this evidence file makes no claim about Mantle's proof acceptance"
+  ]
+}

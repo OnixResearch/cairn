@@ -1,0 +1,6 @@
+# attempt3 2026-11-19T14:59:17-05:00
+$ /home/brittonr/wt/convergence-evidence/realization/nix-minfree0 flake prefetch --json git+file:///home/brittonr/git/OnixResearch/octet?rev=d5b34c2d64b1227417a46df8ed8427f2d10ed3c8
+shutting down[Kerror: interrupted by the user
+prefetch EXIT=124
+materialized=
+ls: cannot access '/nix/mantle-aeneas-job.nix': No such file or directory
