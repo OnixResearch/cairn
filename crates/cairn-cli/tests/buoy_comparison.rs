@@ -352,10 +352,15 @@ fn comparison_identity_binds_source_mapping_fixture_and_policy() -> Result<(), B
     assert_ne!(read_receipt(&out)?["comparison_identity"], baseline);
 
     fs::write(&manifest_path, serde_json::to_vec_pretty(&original)?)?;
-    let clean_source = fixtures.join("cases/clean/crates/demo/src/lib.rs");
-    let mut source = fs::read(&clean_source)?;
+    // Mutate an independently executed case. `clean` is the base of the
+    // `verify_base_index` and `reject_base_index` cases, so changing its source
+    // would also change `schema_version_drift` (which reuses clean's saved
+    // index) from `unsupported` to a stale-source verdict.
+    let mutated_source = fixtures.join("cases/cfg_not_any/crates/demo/src/lib.rs");
+    let original_source = fs::read(&mutated_source)?;
+    let mut source = original_source.clone();
     source.push(b'\n');
-    fs::write(&clean_source, source)?;
+    fs::write(&mutated_source, source)?;
     let out = root.join("target/fixture.json");
     assert_success(
         &run_compare(&fixtures, &out, None, None)?,
@@ -363,11 +368,7 @@ fn comparison_identity_binds_source_mapping_fixture_and_policy() -> Result<(), B
     );
     assert_ne!(read_receipt(&out)?["comparison_identity"], baseline);
 
-    let clean_source = fixtures.join("cases/clean/crates/demo/src/lib.rs");
-    let mut restored = Vec::new();
-    restored.extend_from_slice(b"// r[");
-    restored.extend_from_slice(b"impl cairn.buoy_comparison.demo]\npub fn demo() {}\n");
-    fs::write(&clean_source, restored)?;
+    fs::write(&mutated_source, &original_source)?;
     let policy = root.join("policy.json");
     let mut policy_bytes = fs::read(repo_root().join(POLICY_RELATIVE))?;
     policy_bytes.push(b'\n');
