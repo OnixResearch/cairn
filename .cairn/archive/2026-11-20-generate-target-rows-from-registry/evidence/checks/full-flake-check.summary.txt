@@ -1,0 +1,9 @@
+# nix --option min-free 0 --option builders '' flake check path:$PWD -L --keep-going
+# worktree generate-target-rows-from-registry at aaa7b75 plus this evidence, 2026-11-20T18:52:48-05:00
+# log: /tmp/full-flake.log bytes=32873210
+# blake3: 91622f45d7cd530416e2f3e7be65d55e7b63ee9c0bf1574efd537ef6677f907f
+# tail:
+all checks passed!
+warning: The check omitted these incompatible systems: aarch64-linux
+Use '--all-systems' to check all.
+EXIT=0
