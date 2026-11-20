@@ -24,8 +24,42 @@ contract per specification file. Each target binds one row of
 
 Targets carry no source, tool, artifact or policy hash. Source identities come
 from a separately generated source record (`cairn.assurance-target-sources.v1`)
-that a producer writes from the realized output. The registry row copied into
-each target is the one hand-maintained lock.
+that a producer writes from the realized output.
+
+Each target's `requirement` and the contract's `specification` may be generated
+from a checked-in registry export instead of copied.
+`requirement_from_registry` returns the six row fields of the one row with the
+given requirement id, and `specification_from_registry` returns that row's
+`{path, blake3}`. Both reject an export whose `schema_version` is not
+`cairn.content-bound-requirement-registry.v1` and fail closed when the id is
+missing or appears more than once, so a typo cannot bind another row:
+
+```nickel
+let Cairn = import "path/to/cairn/contracts/assurance-targets.ncl" in
+let registry = import "./requirement-registry.json" in
+{
+  contract_id = "octet.requirements.example",
+  specification =
+    Cairn.specification_from_registry registry
+      "octet.aeneas_lean_proof_rail.theorem_adequacy",
+  targets = [
+    {
+      requirement =
+        Cairn.requirement_from_registry registry
+          "octet.aeneas_lean_proof_rail.theorem_adequacy",
+      assurance = "checked_proof",
+      # ...claim, informal_remainder, evidence_job and the evidence fields
+    },
+  ],
+  assumptions = [],
+  exclusions = [],
+  non_claims = [],
+} | Cairn.TargetsFile
+```
+
+Cairn's Rust admission still re-verifies all six derived fields and the contract
+specification against that registry, so a stale checked-in export fails closed.
+A copied row stays admitted; derivation changes only how the row is authored.
 
 The generated record also carries `specifications`, one entry per reviewed
 specification file: its path and the **plain** BLAKE3 of that file's bytes at the

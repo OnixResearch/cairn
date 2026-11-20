@@ -12,6 +12,13 @@ surface.
 
 ### Added
 
+- Registry-derived assurance target rows: `requirement_from_registry` and
+  `specification_from_registry` in `contracts/assurance-targets.ncl` select the
+  single `cairn requirement-registry export` row for a requirement id and fail
+  closed on a missing id, a duplicate id or a foreign registry schema. A fixture
+  derives the octet example's rows and exports byte-identical JSON; three
+  negatives cover the failure modes. Rust admission still re-verifies all six
+  fields. Advisory only; no gate changes.
 - Assurance targets and read-only `cairn convergence inspect`: a Nickel targets
   contract binding exact registry rows to `reviewed`, `bounded_check` or
   `checked_proof`, a projection to Octet requirement contracts that Rust
