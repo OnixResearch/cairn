@@ -128,6 +128,14 @@ surface.
   commands and the drift rule, and states what the decision does not establish.
   It is documentation for roadmap issue #4; codifying the argument as a checked
   requirement needs a companion review command and is not claimed here.
+- Owner-scoped producer-job admission for convergence: the assurance policy
+  admits producer-job schemas per owner (`octet` →
+  `octet-mantle-producer-job/v1`, `trellis` →
+  `trellis-mantle-producer-job/v1`), and a handoff `job.json` is admitted by its
+  own `owner` with that owner's schema. A missing owner, an unknown owner and a
+  schema/owner mismatch fail closed with stable issue codes in both the bounded
+  CLI read and the pure evaluator. The retained Octet pilot stays `current`; a
+  synthetic Trellis job binds.
 
 ### Removed
 

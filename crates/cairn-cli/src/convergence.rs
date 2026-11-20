@@ -12,7 +12,7 @@ use std::{
 
 use cairn_core::assurance_targets::ISSUE_UNKNOWN_SCHEMA as ADMISSION_UNKNOWN_SCHEMA;
 use cairn_core::{
-    admit_generated_sources, admit_targets, blake3_hex, canonical_json,
+    admit_generated_sources, admit_producer_job, admit_targets, blake3_hex, canonical_json,
     parse_assurance_targets_policy, parse_content_bound_requirement_registry_value,
     verify_content_bound_requirement_registry, AssuranceTargetIssue, AssuranceTargetsPolicy,
     BytesFacts, ContractCaseFacts, ConvergenceRequest, FileFacts, GeneratedSources, HandoffFacts,
@@ -245,12 +245,13 @@ fn handoff_facts(
         &directory.join("mantle-observation.json"),
     )?;
     let job = read_json_in_dir(&root, directory, "job.json", maximum)?;
-    require_schema(
-        &job,
-        "schema_version",
-        &policy.schemas.octet_producer_job,
-        &directory.join("job.json"),
-    )?;
+    admit_producer_job(policy, &job.value).map_err(|admission| {
+        vec![issue(
+            admission.code,
+            directory.join("job.json").display(),
+            admission.message,
+        )]
+    })?;
     let receipt = bytes_facts(read_in_dir(
         &root,
         directory,

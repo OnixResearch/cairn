@@ -27,7 +27,8 @@ const JOB_ID: &str = "pilot.job.v1";
 const EVIDENCE_ID: &str = "pilot.evidence.deck";
 const DECK_PATH: &str = "artifacts/proof-cards.json";
 const RECEIPT_LOCATOR: &str = "external-receipt.json";
-const JOB_TEXT: &str = r#"{"schema":"octet-mantle-producer-job/v1","job_id":"pilot.job.v1"}"#;
+const JOB_TEXT: &str =
+    r#"{"schema_version":"octet-mantle-producer-job/v1","owner":"Octet","job_id":"pilot.job.v1"}"#;
 const HANDOFF_RECEIPT_TEXT: &str = "handoff external receipt bytes";
 const HANDOFF_PROFILE_TEXT: &str = "handoff external profile bytes";
 const TOOL_GRAPH_TEXT: &str = "tool closure derivation json bytes";
@@ -777,6 +778,64 @@ fn handoff_job_id_mismatch_is_stale() {
         0,
         CONVERGENCE_STATE_STALE,
         CONVERGENCE_ISSUE_JOB_ID_MISMATCH,
+    );
+}
+
+// r[verify cairn.convergence.inputs]
+#[test]
+fn trellis_owner_job_binds_current() {
+    let mut request = build_request(false);
+    request.contracts[0].handoff.job.value = json!({
+        "schema_version": "trellis-mantle-producer-job/v1",
+        "owner": "Trellis",
+        "job_id": JOB_ID,
+    });
+    let receipt = evaluate_convergence(&request);
+    assert_eq!(state_of(&receipt, 0), CONVERGENCE_STATE_CURRENT);
+    assert!(issues_of(&receipt, 0).is_empty());
+}
+
+// r[verify cairn.convergence.inputs]
+#[test]
+fn unknown_producer_owner_is_unsupported() {
+    let mut request = build_request(false);
+    request.contracts[0].handoff.job.value["owner"] = json!("Unknown");
+    let receipt = evaluate_convergence(&request);
+    assert_row(
+        &receipt,
+        0,
+        CONVERGENCE_STATE_UNSUPPORTED,
+        CONVERGENCE_ISSUE_UNKNOWN_PRODUCER_OWNER,
+    );
+}
+
+// r[verify cairn.convergence.inputs]
+#[test]
+fn producer_schema_owner_mismatch_is_stale() {
+    let mut request = build_request(false);
+    request.contracts[0].handoff.job.value =
+        json!({"schema_version": "trellis-mantle-producer-job/v1", "owner": "Octet"});
+    let receipt = evaluate_convergence(&request);
+    assert_row(
+        &receipt,
+        0,
+        CONVERGENCE_STATE_STALE,
+        CONVERGENCE_ISSUE_PRODUCER_SCHEMA_MISMATCH,
+    );
+}
+
+// r[verify cairn.convergence.inputs]
+#[test]
+fn missing_producer_owner_is_incomplete() {
+    let mut request = build_request(false);
+    request.contracts[0].handoff.job.value =
+        json!({"schema_version": "octet-mantle-producer-job/v1", "job_id": JOB_ID});
+    let receipt = evaluate_convergence(&request);
+    assert_row(
+        &receipt,
+        0,
+        CONVERGENCE_STATE_INCOMPLETE,
+        CONVERGENCE_ISSUE_MISSING_PRODUCER_OWNER,
     );
 }
 
