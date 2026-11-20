@@ -902,3 +902,153 @@ fn receipts_are_deterministic_and_the_root_is_unchanged() {
     assert_eq!(fixture.targets.contracts.len(), 1);
     assert_eq!(fixture.registry.rows.len(), 2);
 }
+
+fn mcp_inspect_call(fixture: &Fixture, arguments: &Value) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_cairn"))
+        .args(["mcp", "--call", "cairn_convergence_inspect"])
+        .arg(arguments.to_string())
+        .current_dir(&fixture.root)
+        .output()
+        .expect("run cairn mcp --call cairn_convergence_inspect")
+}
+
+fn mcp_arguments(fixture: &Fixture) -> Value {
+    json!({
+        "case": fixture.case_path(),
+        "root": fixture.root,
+    })
+}
+
+// r[verify cairn.convergence.mcp_inspect]
+#[test]
+fn mcp_inspect_returns_the_cli_receipt_and_repeats_identically() {
+    let fixture = build_fixture("mcp-receipt");
+    let cli = receipt_json(&fixture.inspect());
+    let first = mcp_inspect_call(&fixture, &mcp_arguments(&fixture));
+    assert!(
+        first.status.success(),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&first.stdout),
+        String::from_utf8_lossy(&first.stderr)
+    );
+    let result = receipt_json(&first);
+    assert_eq!(result["isError"], false);
+    assert_eq!(result["structuredContent"], cli);
+    assert_eq!(
+        result["structuredContent"]["receipt_blake3"],
+        cli["receipt_blake3"]
+    );
+    let second = mcp_inspect_call(&fixture, &mcp_arguments(&fixture));
+    assert!(second.status.success());
+    assert_eq!(first.stdout, second.stdout);
+}
+
+// r[verify cairn.convergence.mcp_inspect]
+#[test]
+fn mcp_inspect_rejects_missing_and_unknown_arguments() {
+    let fixture = build_fixture("mcp-arguments");
+    let missing = mcp_inspect_call(&fixture, &json!({"root": fixture.root}));
+    assert!(!missing.status.success());
+    assert!(
+        String::from_utf8_lossy(&missing.stderr).contains("missing required argument case"),
+        "stderr: {}",
+        String::from_utf8_lossy(&missing.stderr)
+    );
+    let unknown = mcp_inspect_call(
+        &fixture,
+        &json!({"case": fixture.case_path(), "execute": true}),
+    );
+    assert!(!unknown.status.success());
+    assert!(
+        String::from_utf8_lossy(&unknown.stderr).contains("unknown argument execute"),
+        "stderr: {}",
+        String::from_utf8_lossy(&unknown.stderr)
+    );
+}
+
+// r[verify cairn.convergence.mcp_inspect]
+#[test]
+fn mcp_inspect_maps_an_unadmitted_schema_to_the_rejection_receipt() {
+    let fixture = build_fixture("mcp-unknown-schema");
+    let observation_path = fixture.case_dir.join("handoff/mantle-observation.json");
+    let mut observation: Value =
+        serde_json::from_slice(&fs::read(&observation_path).unwrap()).unwrap();
+    observation["schema"] = json!("synthetic-unknown-observation-v1");
+    fs::write(
+        &observation_path,
+        serde_json::to_vec_pretty(&observation).unwrap(),
+    )
+    .unwrap();
+
+    let output = mcp_inspect_call(&fixture, &mcp_arguments(&fixture));
+    assert!(output.status.success());
+    let receipt = receipt_json(&output)["structuredContent"].clone();
+    assert_eq!(receipt["schema_version"], "cairn.convergence.v1");
+    assert_eq!(receipt["status"], "rejected");
+    assert!(
+        receipt["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|issue| issue["code"] == "convergence.unknown_schema"),
+        "rejection: {receipt}"
+    );
+}
+
+#[cfg(unix)]
+// r[verify cairn.convergence.mcp_inspect]
+#[test]
+fn mcp_inspect_rejects_a_symlinked_input() {
+    let fixture = build_fixture("mcp-symlink");
+    let decision_path = fixture.case_dir.join("decision.json");
+    let outside = fixture.root.join("outside-decision.json");
+    fs::rename(&decision_path, &outside).unwrap();
+    std::os::unix::fs::symlink(&outside, &decision_path).unwrap();
+
+    let output = mcp_inspect_call(&fixture, &mcp_arguments(&fixture));
+    assert!(output.status.success());
+    let receipt = receipt_json(&output)["structuredContent"].clone();
+    assert_eq!(receipt["status"], "rejected");
+    assert!(
+        receipt["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|issue| issue["code"] == "convergence.unreadable_input"),
+        "symlink rejection: {receipt}"
+    );
+}
+
+// r[verify cairn.convergence.mcp_inspect]
+#[test]
+fn mcp_catalog_registers_convergence_inspect_read_only_in_every_profile() {
+    for profile in ["full", "inspect", "author", "verify"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_cairn"))
+            .args(["mcp", "--tool-profile", profile, "--describe"])
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{profile}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let catalog = receipt_json(&output);
+        let tool = catalog["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|tool| tool["name"] == "cairn_convergence_inspect")
+            .unwrap_or_else(|| panic!("{profile} omits cairn_convergence_inspect"));
+        assert_eq!(tool["annotations"]["readOnlyHint"], true);
+        assert_eq!(tool["annotations"]["destructiveHint"], false);
+        assert_eq!(tool["inputSchema"]["additionalProperties"], false);
+        assert_eq!(tool["inputSchema"]["required"], json!(["case"]));
+        for optional in ["root", "policy"] {
+            assert!(
+                tool["inputSchema"]["properties"][optional].is_object(),
+                "{profile} omits optional {optional}"
+            );
+        }
+    }
+}

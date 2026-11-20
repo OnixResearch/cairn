@@ -1,0 +1,287 @@
+{
+  "acceptance_ids": [],
+  "change": "add-convergence-inspect-mcp-tool",
+  "evidence_summary": {
+    "docs_only": 0,
+    "fixture": 0,
+    "formal": 0,
+    "mode": "advisory",
+    "model": 0,
+    "probe": 0,
+    "property": 0
+  },
+  "input_hash": "6c8f9b51a679eb8ec75c2f3c18f21f148096a7d5bc7e38551da5d7253aba1740",
+  "issues": [],
+  "layout": "cairn",
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "policy": "cairn-default",
+  "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+  "policy_selection": {
+    "blake3": "8331941b107c95af1e668f97a7d70780c195cc20b5713c4c7a792dcdb0fe39d8",
+    "installation_receipt": false,
+    "locator": "cairn-policy/generated/cairn-policy.json",
+    "source": "legacy_default"
+  },
+  "probe_evidence": {
+    "declarations_present": false,
+    "probes": []
+  },
+  "profile_identity_hash": "344aa83deb58127a3c245c2253126123e3ed39892e21cf6756814facba2d9dde",
+  "receipt_hash": "81611e4e405b04f571c72bfb8434712b9dad517dac5546f4522a5c6b843159af",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "stage": "tasks",
+  "substance": [
+    {
+      "checkbox_tasks": 0,
+      "kind": "design",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-convergence-inspect-mcp-tool/design.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 48,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "proposal",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-convergence-inspect-mcp-tool/proposal.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 27,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 0,
+      "kind": "delta_spec",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-convergence-inspect-mcp-tool/specs/convergence/spec.md",
+      "requirement_blocks": 1,
+      "scenario_blocks": 2,
+      "substantive_lines": 11,
+      "substantive_requirement_blocks": 1,
+      "substantive_tasks": 0,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 0
+    },
+    {
+      "checkbox_tasks": 9,
+      "kind": "tasks",
+      "malformed_dependency_markers": 0,
+      "path": "./.cairn/changes/add-convergence-inspect-mcp-tool/tasks.md",
+      "requirement_blocks": 0,
+      "scenario_blocks": 0,
+      "substantive_lines": 9,
+      "substantive_requirement_blocks": 0,
+      "substantive_tasks": 9,
+      "task_done": 0,
+      "task_in_progress": 0,
+      "task_todo": 9
+    }
+  ],
+  "task_ordering": {
+    "active": true,
+    "edges": [
+      {
+        "predecessor": "negative",
+        "task": "docs"
+      },
+      {
+        "predecessor": "docs",
+        "task": "focused"
+      },
+      {
+        "predecessor": "focused",
+        "task": "gates"
+      },
+      {
+        "predecessor": "gates",
+        "task": "lifecycle"
+      },
+      {
+        "predecessor": "positive",
+        "task": "negative"
+      },
+      {
+        "predecessor": "tool",
+        "task": "policy"
+      },
+      {
+        "predecessor": "policy",
+        "task": "positive"
+      },
+      {
+        "predecessor": "inspect",
+        "task": "tool"
+      }
+    ],
+    "issues": [],
+    "nodes": [
+      {
+        "blocked_by": [
+          "negative"
+        ],
+        "blocks": [
+          "focused"
+        ],
+        "id": "docs",
+        "line": 8,
+        "predecessors": [
+          "negative"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "docs"
+        ],
+        "blocks": [
+          "gates"
+        ],
+        "id": "focused",
+        "line": 12,
+        "predecessors": [
+          "docs"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "focused"
+        ],
+        "blocks": [
+          "lifecycle"
+        ],
+        "id": "gates",
+        "line": 13,
+        "predecessors": [
+          "focused"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [],
+        "blocks": [
+          "tool"
+        ],
+        "id": "inspect",
+        "line": 3,
+        "predecessors": [],
+        "ready": true,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "gates"
+        ],
+        "blocks": [],
+        "id": "lifecycle",
+        "line": 14,
+        "predecessors": [
+          "gates"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "positive"
+        ],
+        "blocks": [
+          "docs"
+        ],
+        "id": "negative",
+        "line": 7,
+        "predecessors": [
+          "positive"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "tool"
+        ],
+        "blocks": [
+          "positive"
+        ],
+        "id": "policy",
+        "line": 5,
+        "predecessors": [
+          "tool"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "policy"
+        ],
+        "blocks": [
+          "negative"
+        ],
+        "id": "positive",
+        "line": 6,
+        "predecessors": [
+          "policy"
+        ],
+        "ready": false,
+        "state": "todo"
+      },
+      {
+        "blocked_by": [
+          "inspect"
+        ],
+        "blocks": [
+          "policy"
+        ],
+        "id": "tool",
+        "line": 4,
+        "predecessors": [
+          "inspect"
+        ],
+        "ready": false,
+        "state": "todo"
+      }
+    ],
+    "order": [
+      "inspect",
+      "tool",
+      "policy",
+      "positive",
+      "negative",
+      "docs",
+      "focused",
+      "gates",
+      "lifecycle"
+    ],
+    "ready_tasks": [
+      "inspect"
+    ],
+    "valid": true
+  },
+  "valid": true,
+  "verdict": "PASS",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

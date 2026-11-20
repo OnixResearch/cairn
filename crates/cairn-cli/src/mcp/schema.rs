@@ -143,6 +143,12 @@ fn mcp_read_tools() -> Vec<Value> {
             "Inspect a saved cross-repository adoption snapshot without execution or mutation",
         ),
         mcp_tool(
+            "cairn_convergence_inspect",
+            true,
+            false,
+            "Inspect one convergence case read-only and return the cairn.convergence.v1 receipt",
+        ),
+        mcp_tool(
             "cairn_drain_plan",
             true,
             false,
@@ -264,6 +270,7 @@ fn mcp_input_schema(name: &str) -> Value {
         "cairn_drain_plan" => mcp_drain_plan_input_schema(),
         "cairn_change_graph" => mcp_object_schema(&[], &["root"]),
         "cairn_adoption_report" => mcp_object_schema(&["snapshot"], &["root"]),
+        "cairn_convergence_inspect" => mcp_object_schema(&["case"], &["root", "policy"]),
         "cairn_read_spec" => mcp_object_schema(&["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" => mcp_object_schema(&["change"], &["root"]),
         "cairn_change_create" => mcp_object_schema(&["change"], &["root", "policy", "profile"]),
@@ -554,6 +561,7 @@ fn mcp_argument_description(key: &str) -> &'static str {
         "policy" => "Policy JSON path; defaults to Cairn's checked-in policy",
         "spec" => "Accepted spec lifecycle identifier",
         "change" => "Active change lifecycle identifier",
+        "case" => "Convergence case file path, as for cairn convergence inspect --case",
         "stage" => "Gate stage: proposal, design, or tasks",
         "source" => "Legacy migration source: cairn, openspec, or ironspec",
         "plan_hash" => "BLAKE3 plan hash from a reviewed migration preview",
@@ -578,6 +586,9 @@ pub(super) fn validate_mcp_tool_input(name: &str, input: &Value) -> Result<(), B
         "cairn_implementation_ready" => validate_mcp_implementation_args(name, object),
         "cairn_change_graph" => validate_string_args(name, object, &[], &["root"]),
         "cairn_adoption_report" => validate_string_args(name, object, &["snapshot"], &["root"]),
+        "cairn_convergence_inspect" => {
+            validate_string_args(name, object, &["case"], &["root", "policy"])
+        }
         "cairn_read_spec" => validate_string_args(name, object, &["spec"], &["root"]),
         "cairn_change_show" | "cairn_gate_context" => {
             validate_string_args(name, object, &["change"], &["root"])

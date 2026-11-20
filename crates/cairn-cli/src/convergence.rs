@@ -615,6 +615,38 @@ fn inspect(case_path: &Path, root_path: &Path, policy_bytes: &[u8]) -> Result<Va
     Ok(cairn_core::convergence::evaluate_convergence(&request))
 }
 
+/// Inspect one convergence case with the policy the caller selects.
+///
+/// The shell reads the optional policy bounded and link-free, then hands the
+/// bytes to `inspect`. A rejected case becomes the same closed rejection
+/// receipt the command prints; callers decide how to report it.
+// r[impl cairn.convergence.mcp_inspect]
+pub(crate) fn inspect_with_policy(
+    case_path: &Path,
+    root_path: &Path,
+    policy_path: Option<&Path>,
+) -> Result<Value, Box<dyn Error>> {
+    let policy_bytes = match policy_path {
+        Some(path) => read_file(path, MAX_POLICY_BYTES).map_err(|issues| {
+            let message = issues
+                .first()
+                .and_then(|issue| issue.get("message"))
+                .and_then(Value::as_str)
+                .unwrap_or("policy is unreadable");
+            format!("convergence policy unreadable: {message}")
+        })?,
+        None => DEFAULT_POLICY.as_bytes().to_vec(),
+    };
+    Ok(match inspect(case_path, root_path, &policy_bytes) {
+        Ok(receipt) => receipt,
+        Err(issues) => json!({
+            "schema_version": CONVERGENCE_RECEIPT_SCHEMA_V1,
+            "status": "rejected",
+            "issues": issues,
+        }),
+    })
+}
+
 /// Read-only advisory inspection of one convergence case.
 ///
 /// It reads bounded, link-refusing inputs, prints one canonical receipt on
@@ -634,31 +666,15 @@ pub(crate) fn run(mut args: Vec<String>) -> Result<(), Box<dyn Error>> {
     reject_positional_arguments(&args)?;
     let case_path = read_string_option(&args, "--case").ok_or("--case is required")?;
     let root_path = read_option(args.clone(), "--root", ".");
-    let policy_bytes = match read_string_option(&args, "--policy") {
-        Some(path) => read_file(Path::new(&path), MAX_POLICY_BYTES).map_err(|issues| {
-            let message = issues
-                .first()
-                .and_then(|issue| issue.get("message"))
-                .and_then(Value::as_str)
-                .unwrap_or("policy is unreadable");
-            format!("convergence policy unreadable: {message}")
-        })?,
-        None => DEFAULT_POLICY.as_bytes().to_vec(),
-    };
-
-    match inspect(Path::new(&case_path), &root_path, &policy_bytes) {
-        Ok(receipt) => {
-            println!("{}", canonical_json(&receipt));
-            Ok(())
-        }
-        Err(issues) => {
-            let rejection = json!({
-                "schema_version": CONVERGENCE_RECEIPT_SCHEMA_V1,
-                "status": "rejected",
-                "issues": issues,
-            });
-            println!("{}", canonical_json(&rejection));
-            std::process::exit(1);
-        }
+    let policy_path = read_string_option(&args, "--policy");
+    let receipt = inspect_with_policy(
+        Path::new(&case_path),
+        Path::new(&root_path),
+        policy_path.as_deref().map(Path::new),
+    )?;
+    println!("{}", canonical_json(&receipt));
+    if receipt["status"] == "rejected" {
+        std::process::exit(1);
     }
+    Ok(())
 }

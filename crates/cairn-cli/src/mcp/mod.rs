@@ -368,6 +368,7 @@ fn mcp_call_tool_in_catalog(
                 crate::verification_impact::guidance_value_from_mcp(input)?
             }
             "cairn_adoption_report" => crate::adoption::adoption_report_value(input)?,
+            "cairn_convergence_inspect" => mcp_convergence_inspect(input)?,
             "cairn_sync_plan" => mcp_sync(input, false)?,
             "cairn_archive_plan" => mcp_archive(input, false)?,
             "cairn_migrate_plan" => mcp_migrate(input, false)?,

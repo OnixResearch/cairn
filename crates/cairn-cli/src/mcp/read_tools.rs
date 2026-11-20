@@ -568,6 +568,17 @@ fn drain_plan_receipt(input: &Value, command: &str) -> Result<Value, Box<dyn Err
     ))
 }
 
+// r[impl cairn.convergence.mcp_inspect]
+pub(super) fn mcp_convergence_inspect(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let case = mcp_required_string(input, "case")?;
+    let root = mcp_root(input);
+    let policy = input
+        .get("policy")
+        .and_then(Value::as_str)
+        .map(std::path::Path::new);
+    crate::convergence::inspect_with_policy(std::path::Path::new(case), &root, policy)
+}
+
 pub(super) fn mcp_implementation_ready(input: &Value) -> Result<Value, Box<dyn Error>> {
     // r[impl cairn.implementation_ready.projection]
     let limit = match input.get("limit") {

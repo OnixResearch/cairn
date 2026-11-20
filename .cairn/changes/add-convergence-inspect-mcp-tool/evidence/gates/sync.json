@@ -1,0 +1,109 @@
+{
+  "acceptance_ids": [],
+  "actions": [
+    {
+      "description": "merge delta spec into main specs: ./.cairn/changes/add-convergence-inspect-mcp-tool/specs/convergence/spec.md",
+      "kind": "sync_delta_spec",
+      "path": "./.cairn/changes/add-convergence-inspect-mcp-tool/specs/convergence/spec.md"
+    }
+  ],
+  "blocked": false,
+  "change": "add-convergence-inspect-mcp-tool",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "710d57bb4c639e6f1f3d1b8d7d6f46f3213cae638943ef334c5c7c3fa71bde8a",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+    "receipt_hash": "06734f6ba6543d3a4e6ed3aa9e9e5c565d33811c5cc526f23359dc206b7c2185",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "delta_specs": [
+    "./.cairn/changes/add-convergence-inspect-mcp-tool/specs/convergence/spec.md"
+  ],
+  "dry_run": false,
+  "input_hash": "5f78bbb550d7e60d484196c5868a165f6ccaa1ce46788cadb2967b9145b2e93d",
+  "layout": "cairn",
+  "merge_preflight": {
+    "documents": [
+      {
+        "accepted_before_exists": true,
+        "accepted_before_hash": "9e29d75620d485e888711335f91fc7b5f4303eecc65ba1a1e6902837ad1f854f",
+        "blocked": false,
+        "changed": true,
+        "delta_hash": "30243e4f11248f9a7e89c7425cd764e428b449a6b7e083a66e850041a8021ba9",
+        "destination": ".cairn/specs/convergence/spec.md",
+        "diagnostics": [],
+        "expected_after_hash": "591c80b96d4ab28bc2fa18044016524d36224470b7db2bebc8501a5a6ea6de1f",
+        "operations": [
+          {
+            "block_hash": "4248e2ae1c75b9d7531e7ff32e72966e9ff79f2921c9a3827f3adaf6b235dd53",
+            "heading": "### Requirement: MCP inspection parity",
+            "kind": "added",
+            "requirement_id": "cairn.convergence.mcp_inspect"
+          }
+        ],
+        "outcomes": [
+          {
+            "kind": "added",
+            "requirement_id": "cairn.convergence.mcp_inspect",
+            "state": "applied"
+          }
+        ],
+        "source": ".cairn/changes/add-convergence-inspect-mcp-tool/specs/convergence/spec.md"
+      }
+    ]
+  },
+  "mutated": true,
+  "mutation_manifest": {
+    "after": {
+      "entries": [
+        {
+          "content_hash": "591c80b96d4ab28bc2fa18044016524d36224470b7db2bebc8501a5a6ea6de1f",
+          "exists": true,
+          "path": "./.cairn/specs/convergence/spec.md"
+        }
+      ],
+      "manifest_hash": "0b60dcd0b30725403f2fc1d8bb6aa0372187c6d746d391691a134ac014b1cf58"
+    },
+    "before": {
+      "entries": [
+        {
+          "content_hash": "9e29d75620d485e888711335f91fc7b5f4303eecc65ba1a1e6902837ad1f854f",
+          "exists": true,
+          "path": "./.cairn/specs/convergence/spec.md"
+        }
+      ],
+      "manifest_hash": "ce5237e8cff5d2f851f4cdc9859d152f8069fb601fee9cfb39f39af9c47b3f39"
+    },
+    "kind": "sync",
+    "manifest_hash": "b1036c773df0f5e3ede3bfe49d3ed3eb751311610f7bb0d01d389ad77cae3c69"
+  },
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "3e461ea3e4749879add4dfb73b01900f027e77f2b88d19604428d16437b320cb",
+  "policy": "cairn-default",
+  "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+  "profile_identity_hash": "344aa83deb58127a3c245c2253126123e3ed39892e21cf6756814facba2d9dde",
+  "reasons": [],
+  "receipt_hash": "3f792618efd9b24cfb8d12b11e0201d7c60099edef7f710c5433e5efefbe9bae",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}

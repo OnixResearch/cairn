@@ -10,6 +10,7 @@ let Inspect = std.array.map ReadTool [
   "cairn_doctor", "cairn_gate_context", "cairn_change_graph",
   "cairn_readiness", "cairn_implementation_ready", "cairn_tool_describe",
   "cairn_context_read", "cairn_observe", "cairn_selected_work",
+  "cairn_convergence_inspect",
 ] in
 let AllRead = std.array.map ReadTool [
   "cairn_status", "cairn_list_content", "cairn_read_spec", "cairn_change_show",
@@ -17,7 +18,7 @@ let AllRead = std.array.map ReadTool [
   "cairn_doctor", "cairn_validate", "cairn_gate", "cairn_gate_context",
   "cairn_change_graph", "cairn_agent_receipt_validate", "cairn_agent_completion_validate",
   "cairn_readiness", "cairn_verification_impact", "cairn_adoption_report",
-  "cairn_drain_plan", "cairn_implementation_ready", "cairn_sync_plan",
+  "cairn_convergence_inspect", "cairn_drain_plan", "cairn_implementation_ready", "cairn_sync_plan",
   "cairn_archive_plan", "cairn_migrate_plan",
   "cairn_context_read", "cairn_observe", "cairn_selected_work",
 ] in
@@ -56,7 +57,7 @@ let Mutations = std.array.map MutationTool [
         "cairn_doctor", "cairn_validate", "cairn_gate", "cairn_gate_context",
         "cairn_change_graph", "cairn_agent_receipt_validate", "cairn_agent_completion_validate",
         "cairn_readiness", "cairn_verification_impact", "cairn_adoption_report",
-        "cairn_drain_plan", "cairn_implementation_ready", "cairn_selected_work",
+        "cairn_convergence_inspect", "cairn_drain_plan", "cairn_implementation_ready", "cairn_selected_work",
         "cairn_sync_plan", "cairn_archive_plan", "cairn_tool_describe",
       ],
       required_routes = ["cairn_doctor", "cairn_gate_context", "cairn_sync_plan", "cairn_archive_plan"],

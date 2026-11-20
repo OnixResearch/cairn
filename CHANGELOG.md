@@ -23,6 +23,12 @@ surface.
   pilot key, observed by the verification bridge and judged by Octet, is
   `current`. Twenty negatives cover one binding check each. Mantle records are
   read within their producers' own bounds.
+- Read-only MCP tool `cairn_convergence_inspect`: with `case`, optional `root`
+  and `policy`, it returns the same `cairn.convergence.v1` receipt as
+  `cairn convergence inspect` through the shared inspect path. It is a member of
+  the `full`, `inspect`, `author` and `verify` discovery profiles, reads every
+  input bounded and link-free, rejects unknown arguments, and maps an
+  unadmitted schema to the command's rejection receipt.
 - Offline agent lifecycle cost measurement: typed scenario and cohort contracts,
   checked accounting, saved-observation import and comparison, with token data
   explicitly unavailable rather than estimated and representation-only verdicts.

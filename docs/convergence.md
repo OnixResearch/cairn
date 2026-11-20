@@ -96,6 +96,24 @@ realization receipt 6,469,512 bytes for 11,565 units. A record exactly at its
 bound is admitted; one byte more is rejected with
 `convergence.unreadable_input`.
 
+## MCP
+
+```console
+cairn mcp --call cairn_convergence_inspect \
+  '{"case":"case.json","root":".","policy":"policy.json"}'
+```
+
+`case` is required; `root` and `policy` mean what `--root` and `--policy` mean.
+The tool shares the command's inspect path, so `structuredContent` is the same
+`cairn.convergence.v1` receipt the command prints for the same inputs, including
+`receipt_blake3`, and repeated calls return identical results. It is read-only:
+it writes no file, spawns no process, uses no network, and starts neither
+Nickel, Mantle nor Octet. Every input is read within its bound and symbolic
+links are refused. Unknown or missing arguments are rejected before any input
+is read; an unadmitted schema returns the command's `status: "rejected"`
+receipt as structured content. The tool is a member of the `full`, `inspect`,
+`author` and `verify` discovery profiles.
+
 ## States
 
 The receipt lists every registry row in registry order with one state:
