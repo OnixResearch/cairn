@@ -1,0 +1,2951 @@
+{
+  "schema_version": "octet-valence-provenance-export/v1",
+  "artifact_dir": "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+  "verification_status": "valid",
+  "artifacts": [
+    {
+      "artifact": "command.txt",
+      "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+    },
+    {
+      "artifact": "proof-cards.json",
+      "blake3": "734a1e85a0d9b23fd03e3e514567155f858bb15c3611cab9e21a5c1baeee002e"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+      "blake3": "417f6e10736a1267c42deac018402ee17384d0a433d35c524e11372c3be5beb3"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+      "blake3": "7255d9366ad9340a5abcb82a970c8b8f461739e90274b2698db2f3b4ffb3880b"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+      "blake3": "c16344b6008749131ab6b5ba03881740fb8a75f4f3dde2adb1679aa8e073252d"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+      "blake3": "3d546d9090d3331d821aa2f328c7323f9b2aca9bf1836f14d4804fa94b992aef"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+      "blake3": "fc5d991bc0f4af5dff84d99a139597f193a38419c3abbad53e18c672de30034e"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+      "blake3": "6f22675e95c98edcf9ace87cbc9f02ffba770c583b37e782d321c18f2863c952"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+      "blake3": "9fa8dc9570625be2be53d308f958332981ec8fb8137d3dd7ba0ae5da317eaa7d"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+      "blake3": "130be6eabfed0fe39289c1ac21e2ec592be79a94f9e693bc5634817a0e524325"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+      "blake3": "4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+      "blake3": "a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+      "blake3": "a90f0bc8c3ab6544519d582a901324b218242e006e4f53236a4f486b3ed07a7d"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+      "blake3": "cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+      "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+      "blake3": "dbda19205e0a5202032ed61b4dae184a68f00af38161324416ae2a4f1ecc5eb4"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+      "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+      "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+      "blake3": "ac9089c17b063507da0515308a099eafe255e22605c0d9e633d6bb89b23b0abb"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+      "blake3": "021c033fb39bbf2ba3ef4d1e14a473e5988c1b464978881ec720c3b4e01d8379"
+    },
+    {
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "blake3": "84d2e77717013a203a4daf6ce649de8e501c7386f142b7abc66f32d08c33420e"
+    },
+    {
+      "artifact": "status.json",
+      "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+    },
+    {
+      "artifact": "summary.txt",
+      "blake3": "1fa303ca5ecc02778baeb097a9d34e66e3c2c04fe9ea69ecb56be1d3eb39064b"
+    }
+  ],
+  "provenance_records": [
+    {
+      "source_id": "octet.runner.artifact-bundle",
+      "checker_id": "cargo-octet",
+      "evidence_tier": "manual_review_required",
+      "artifact": "command.txt",
+      "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5",
+      "checked_scope": "profile:prove-verification",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.runner.artifact-bundle",
+        "checker_id": "cargo-octet",
+        "tool_identity": "cargo-octet@0.1.1-rc.1",
+        "policy_or_checker_version": "cargo-octet@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [],
+        "output_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          }
+        ],
+        "parent_artifacts": [],
+        "status": "manual_review_required",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "command.txt",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "human_action": "review cargo octet prove command, status, and scoped proof receipt before release"
+    },
+    {
+      "source_id": "octet.runner.artifact-bundle",
+      "checker_id": "cargo-octet",
+      "evidence_tier": "manual_review_required",
+      "artifact": "status.json",
+      "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068",
+      "checked_scope": "profile:prove-verification",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.runner.artifact-bundle",
+        "checker_id": "cargo-octet",
+        "tool_identity": "cargo-octet@0.1.1-rc.1",
+        "policy_or_checker_version": "cargo-octet@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [],
+        "output_artifacts": [
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "parent_artifacts": [],
+        "status": "manual_review_required",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "status.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "human_action": "review cargo octet prove command, status, and scoped proof receipt before release"
+    },
+    {
+      "source_id": "octet.runner.artifact-bundle",
+      "checker_id": "cargo-octet",
+      "evidence_tier": "manual_review_required",
+      "artifact": "summary.txt",
+      "blake3": "1fa303ca5ecc02778baeb097a9d34e66e3c2c04fe9ea69ecb56be1d3eb39064b",
+      "checked_scope": "profile:prove-verification",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.runner.artifact-bundle",
+        "checker_id": "cargo-octet",
+        "tool_identity": "cargo-octet@0.1.1-rc.1",
+        "policy_or_checker_version": "cargo-octet@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [],
+        "output_artifacts": [
+          {
+            "artifact": "summary.txt",
+            "blake3": "1fa303ca5ecc02778baeb097a9d34e66e3c2c04fe9ea69ecb56be1d3eb39064b"
+          }
+        ],
+        "parent_artifacts": [],
+        "status": "manual_review_required",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "summary.txt",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "human_action": "review cargo octet prove command, status, and scoped proof receipt before release"
+    },
+    {
+      "source_id": "octet.runner.artifact-bundle",
+      "checker_id": "cargo-octet",
+      "evidence_tier": "manual_review_required",
+      "artifact": "proof-cards.json",
+      "blake3": "734a1e85a0d9b23fd03e3e514567155f858bb15c3611cab9e21a5c1baeee002e",
+      "checked_scope": "profile:prove-verification",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.runner.artifact-bundle",
+        "checker_id": "cargo-octet",
+        "tool_identity": "cargo-octet@0.1.1-rc.1",
+        "policy_or_checker_version": "cargo-octet@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [],
+        "output_artifacts": [
+          {
+            "artifact": "proof-cards.json",
+            "blake3": "734a1e85a0d9b23fd03e3e514567155f858bb15c3611cab9e21a5c1baeee002e"
+          }
+        ],
+        "parent_artifacts": [],
+        "status": "manual_review_required",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proof-cards.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "human_action": "review proof cards with matching receipt, provenance, and cargo octet artifact verify output before release"
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "blake3": "84d2e77717013a203a4daf6ce649de8e501c7386f142b7abc66f32d08c33420e",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+            "blake3": "84d2e77717013a203a4daf6ce649de8e501c7386f142b7abc66f32d08c33420e"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-lean@bc2eb6f",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+      "blake3": "cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+            "blake3": "cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+      "blake3": "a90f0bc8c3ab6544519d582a901324b218242e006e4f53236a4f486b3ed07a7d",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+            "blake3": "a90f0bc8c3ab6544519d582a901324b218242e006e4f53236a4f486b3ed07a7d"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+      "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+            "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+      "blake3": "fc5d991bc0f4af5dff84d99a139597f193a38419c3abbad53e18c672de30034e",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+            "blake3": "fc5d991bc0f4af5dff84d99a139597f193a38419c3abbad53e18c672de30034e"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+      "blake3": "3d546d9090d3331d821aa2f328c7323f9b2aca9bf1836f14d4804fa94b992aef",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+            "blake3": "3d546d9090d3331d821aa2f328c7323f9b2aca9bf1836f14d4804fa94b992aef"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+      "blake3": "a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+            "blake3": "a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+      "blake3": "7255d9366ad9340a5abcb82a970c8b8f461739e90274b2698db2f3b4ffb3880b",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+            "blake3": "7255d9366ad9340a5abcb82a970c8b8f461739e90274b2698db2f3b4ffb3880b"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+      "blake3": "ac9089c17b063507da0515308a099eafe255e22605c0d9e633d6bb89b23b0abb",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+            "blake3": "ac9089c17b063507da0515308a099eafe255e22605c0d9e633d6bb89b23b0abb"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+      "blake3": "417f6e10736a1267c42deac018402ee17384d0a433d35c524e11372c3be5beb3",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+            "blake3": "417f6e10736a1267c42deac018402ee17384d0a433d35c524e11372c3be5beb3"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+      "blake3": "9fa8dc9570625be2be53d308f958332981ec8fb8137d3dd7ba0ae5da317eaa7d",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+            "blake3": "9fa8dc9570625be2be53d308f958332981ec8fb8137d3dd7ba0ae5da317eaa7d"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+      "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+            "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+      "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+            "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+      "blake3": "dbda19205e0a5202032ed61b4dae184a68f00af38161324416ae2a4f1ecc5eb4",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+            "blake3": "dbda19205e0a5202032ed61b4dae184a68f00af38161324416ae2a4f1ecc5eb4"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+      "blake3": "021c033fb39bbf2ba3ef4d1e14a473e5988c1b464978881ec720c3b4e01d8379",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+            "blake3": "021c033fb39bbf2ba3ef4d1e14a473e5988c1b464978881ec720c3b4e01d8379"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+      "blake3": "4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+            "blake3": "4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+      "blake3": "c16344b6008749131ab6b5ba03881740fb8a75f4f3dde2adb1679aa8e073252d",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+            "blake3": "c16344b6008749131ab6b5ba03881740fb8a75f4f3dde2adb1679aa8e073252d"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+      "blake3": "130be6eabfed0fe39289c1ac21e2ec592be79a94f9e693bc5634817a0e524325",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+            "blake3": "130be6eabfed0fe39289c1ac21e2ec592be79a94f9e693bc5634817a0e524325"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    },
+    {
+      "source_id": "octet.standards.formal-proof",
+      "checker_id": "octet-standards",
+      "evidence_tier": "formal_proof",
+      "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+      "blake3": "6f22675e95c98edcf9ace87cbc9f02ffba770c583b37e782d321c18f2863c952",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": {
+        "schema_version": "octet-valence-replayable-receipt/v1",
+        "producer_id": "octet.standards.formal-proof",
+        "checker_id": "octet-standards",
+        "tool_identity": "octet-standards",
+        "policy_or_checker_version": "octet-standards@0.1.1-rc.1",
+        "normalized_invocation": [
+          "/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet",
+          "prove",
+          "--policy-artifacts-dir",
+          "/build/policy",
+          "--source",
+          "src/lib.rs",
+          "--rail",
+          "'octet.aeneas_consumer_contract.external-fixture#rail-0'",
+          "--artifact-dir",
+          "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+          "--output-format",
+          "json"
+        ],
+        "input_artifacts": [
+          {
+            "artifact": "command.txt",
+            "blake3": "607476a979c269dc99d4341c626d7a28f62ce1fbc5390ead39b2d1c2a3b2a5d5"
+          },
+          {
+            "artifact": "status.json",
+            "blake3": "f694e9a6b94bf4a9842b3171730035c8656e1fc71ecc09d7debff9d9af472068"
+          }
+        ],
+        "output_artifacts": [
+          {
+            "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+            "blake3": "6f22675e95c98edcf9ace87cbc9f02ffba770c583b37e782d321c18f2863c952"
+          }
+        ],
+        "parent_artifacts": [
+          "command.txt",
+          "status.json"
+        ],
+        "status": "valid",
+        "non_claims": [
+          "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+          "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+          "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+        ]
+      },
+      "typed_edges": [
+        {
+          "edge_kind": "records_formal_proof_receipt",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+          "target_artifact": "octet.standards.formal-proof"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+          "target_artifact": "command.txt"
+        },
+        {
+          "edge_kind": "derives_from_parent_artifact",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+          "target_artifact": "status.json"
+        },
+        {
+          "edge_kind": "feeds_valence_adapter",
+          "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+          "target_artifact": "valence.stack-provenance.adapter-input"
+        }
+      ],
+      "verifier_identity": "aeneas-stage-artifact",
+      "proof_artifact_identity": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+      "parent_artifacts": [
+        "command.txt",
+        "status.json"
+      ]
+    }
+  ],
+  "typed_edges": [
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "target_artifact": "command.txt"
+    },
+    {
+      "edge_kind": "derives_from_parent_artifact",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "target_artifact": "status.json"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "command.txt",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proof-cards.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "status.json",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "feeds_valence_adapter",
+      "source_artifact": "summary.txt",
+      "target_artifact": "valence.stack-provenance.adapter-input"
+    },
+    {
+      "edge_kind": "imports_trellis_reference",
+      "source_artifact": "standards/proof-imports/fixtures/trellis/ucan_proof_reference.receipt.json",
+      "target_artifact": "trellis.external-reference"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+      "target_artifact": "octet.standards.formal-proof"
+    },
+    {
+      "edge_kind": "records_formal_proof_receipt",
+      "source_artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "target_artifact": "octet.standards.formal-proof"
+    }
+  ],
+  "proof_cards": [
+    {
+      "proof_or_property_id": "aeneas.consumer.increment-matches-model",
+      "source_requirement_or_policy_id": "octet.aeneas_consumer_contract.compatibility",
+      "policy_id": "octet.aeneas_consumer_contract.external-fixture",
+      "rail_index": 0,
+      "receipt_path": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "artifact_blake3_identities": [
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+          "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+          "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+          "blake3": "cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+          "blake3": "a90f0bc8c3ab6544519d582a901324b218242e006e4f53236a4f486b3ed07a7d"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+          "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+          "blake3": "fc5d991bc0f4af5dff84d99a139597f193a38419c3abbad53e18c672de30034e"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+          "blake3": "3d546d9090d3331d821aa2f328c7323f9b2aca9bf1836f14d4804fa94b992aef"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+          "blake3": "a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+          "blake3": "7255d9366ad9340a5abcb82a970c8b8f461739e90274b2698db2f3b4ffb3880b"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+          "blake3": "ac9089c17b063507da0515308a099eafe255e22605c0d9e633d6bb89b23b0abb"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+          "blake3": "417f6e10736a1267c42deac018402ee17384d0a433d35c524e11372c3be5beb3"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+          "blake3": "9fa8dc9570625be2be53d308f958332981ec8fb8137d3dd7ba0ae5da317eaa7d"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+          "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+          "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+          "blake3": "dbda19205e0a5202032ed61b4dae184a68f00af38161324416ae2a4f1ecc5eb4"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+          "blake3": "021c033fb39bbf2ba3ef4d1e14a473e5988c1b464978881ec720c3b4e01d8379"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+          "blake3": "4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+          "blake3": "c16344b6008749131ab6b5ba03881740fb8a75f4f3dde2adb1679aa8e073252d"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+          "blake3": "130be6eabfed0fe39289c1ac21e2ec592be79a94f9e693bc5634817a0e524325"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+          "blake3": "6f22675e95c98edcf9ace87cbc9f02ffba770c583b37e782d321c18f2863c952"
+        },
+        {
+          "artifact": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+          "blake3": "84d2e77717013a203a4daf6ce649de8e501c7386f142b7abc66f32d08c33420e"
+        }
+      ],
+      "evidence_tier": "formal_proof",
+      "evidence_origin": "octet_rerun",
+      "status": "passed",
+      "non_claims": [
+        "does not establish release eligibility",
+        "does not establish semantic equivalence or release eligibility",
+        "does not prove Aeneas or Charon translation soundness",
+        "does not prove Lean or verifier soundness",
+        "does not prove rustc compiler correctness",
+        "does not prove semantic equivalence",
+        "does not prove whole-program correctness",
+        "does not transfer theorem intent or requirement ownership from the consumer to Octet",
+        "not business-domain validation",
+        "not certification",
+        "not full safety",
+        "not semantic equivalence",
+        "not whole-program correctness"
+      ],
+      "formal_proof_envelope": {
+        "schema_version": "octet-formal-proof-envelope/v1",
+        "provider_id": "aeneas-lean",
+        "policy_id": "octet.aeneas_consumer_contract.external-fixture",
+        "rail_id": "octet.aeneas_consumer_contract.external-fixture#rail-0",
+        "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+        "status": "passed",
+        "evidence_tier": "formal_proof",
+        "claim": {
+          "theorem_or_property_id": "aeneas.consumer.increment-matches-model",
+          "requirement_id": "octet.aeneas_consumer_contract.compatibility",
+          "claim_class": "named-theorem-over-generated-model"
+        },
+        "package_lock_identity": "a90f0bc8c3ab6544519d582a901324b218242e006e4f53236a4f486b3ed07a7d",
+        "source_bindings": [
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+            "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+            "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+          }
+        ],
+        "artifact_identities": [
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+            "blake3": "cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+            "blake3": "a90f0bc8c3ab6544519d582a901324b218242e006e4f53236a4f486b3ed07a7d"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+            "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+            "blake3": "fc5d991bc0f4af5dff84d99a139597f193a38419c3abbad53e18c672de30034e"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+            "blake3": "3d546d9090d3331d821aa2f328c7323f9b2aca9bf1836f14d4804fa94b992aef"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+            "blake3": "a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+            "blake3": "7255d9366ad9340a5abcb82a970c8b8f461739e90274b2698db2f3b4ffb3880b"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+            "blake3": "ac9089c17b063507da0515308a099eafe255e22605c0d9e633d6bb89b23b0abb"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+            "blake3": "417f6e10736a1267c42deac018402ee17384d0a433d35c524e11372c3be5beb3"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+            "blake3": "9fa8dc9570625be2be53d308f958332981ec8fb8137d3dd7ba0ae5da317eaa7d"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+            "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+            "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+            "blake3": "dbda19205e0a5202032ed61b4dae184a68f00af38161324416ae2a4f1ecc5eb4"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+            "blake3": "021c033fb39bbf2ba3ef4d1e14a473e5988c1b464978881ec720c3b4e01d8379"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+            "blake3": "4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+            "blake3": "c16344b6008749131ab6b5ba03881740fb8a75f4f3dde2adb1679aa8e073252d"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+            "blake3": "130be6eabfed0fe39289c1ac21e2ec592be79a94f9e693bc5634817a0e524325"
+          },
+          {
+            "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+            "blake3": "6f22675e95c98edcf9ace87cbc9f02ffba770c583b37e782d321c18f2863c952"
+          }
+        ],
+        "trust_boundaries": [
+          "The external-consumer fixture proves only its named theorem over exact bound source and generated artifacts; it does not prove translation soundness, semantic equivalence, whole-program correctness, or release eligibility"
+        ],
+        "non_claims": [
+          "does not establish release eligibility",
+          "does not establish semantic equivalence or release eligibility",
+          "does not prove Aeneas or Charon translation soundness",
+          "does not prove Lean or verifier soundness",
+          "does not prove rustc compiler correctness",
+          "does not prove semantic equivalence",
+          "does not prove whole-program correctness",
+          "does not transfer theorem intent or requirement ownership from the consumer to Octet"
+        ],
+        "consumer": {
+          "schema_version": "octet-aeneas-consumer-receipt-binding/v1",
+          "profile_id": "octet-external-aeneas-consumer-v1",
+          "profile_identity": "b3:86351a1b7a93d5fbcacc20aa97ad8fff4c9d15b670f47f55988e5ac2deb66291",
+          "consumer_id": "octet.external-consumer-fixture",
+          "provider_profile_identity": "b3:cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625",
+          "compatibility_matrix_identity": "b3:403656d75de41b955cd2493ef289ba17308da65a3d214babc1ea606aeae248f5",
+          "source_root": ".",
+          "source_path": "src/lib.rs",
+          "source_identity": "b3:691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd",
+          "selected_item": {
+            "qualified_name": "external_consumer::increment",
+            "kind": "function",
+            "source_file": "src/lib.rs",
+            "source_identity": "b3:691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd",
+            "begin_line": 1,
+            "end_line": 3,
+            "generated_name": "external_consumer.increment"
+          },
+          "theorem": {
+            "path": "Theorem.lean",
+            "theorem_id": "aeneas.consumer.increment-matches-model",
+            "declaration_name": "increment_matches_model",
+            "requirement_id": "octet.aeneas_consumer_contract.compatibility",
+            "claim_class": "named-theorem-over-generated-model",
+            "approved_statement_blake3": "b3:776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f",
+            "source_disposition": "maintained"
+          },
+          "external_models": [],
+          "trust_inputs": [],
+          "resource_policy": {
+            "timeout_ms": 2700000,
+            "stdout_max_bytes": 1048576,
+            "stderr_max_bytes": 1048576,
+            "environment_allowlist": [
+              "PATH",
+              "CHARON_TOOLCHAIN_IS_IN_PATH",
+              "LD_LIBRARY_PATH",
+              "HOME",
+              "MATHLIB_NO_CACHE_ON_UPDATE"
+            ]
+          },
+          "outcome": "supported",
+          "stage_artifacts": [
+            {
+              "role": "rust-source",
+              "blake3": "b3:691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+            },
+            {
+              "role": "llbc",
+              "blake3": "b3:a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2"
+            },
+            {
+              "role": "translation-manifest",
+              "blake3": "b3:ac9089c17b063507da0515308a099eafe255e22605c0d9e633d6bb89b23b0abb"
+            },
+            {
+              "role": "generated-lean",
+              "blake3": "b3:417f6e10736a1267c42deac018402ee17384d0a433d35c524e11372c3be5beb3"
+            },
+            {
+              "role": "maintained-theorem",
+              "blake3": "b3:776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+            }
+          ],
+          "verification_role": "property",
+          "non_claims": [
+            "does not prove Aeneas or Charon translation soundness",
+            "does not prove Lean or verifier soundness",
+            "does not prove whole-program correctness",
+            "does not prove semantic equivalence",
+            "does not establish release eligibility",
+            "does not prove rustc compiler correctness",
+            "does not transfer theorem intent or requirement ownership from the consumer to Octet"
+          ],
+          "receipt_identity": "b3:56284e96388b9ae3ca50f8afa0bffe91192662f5a4204d31b27d94d91ff1c139"
+        },
+        "provider": {
+          "kind": "aeneas-lean",
+          "payload": {
+            "aeneas_release": "0.1.0",
+            "charon_revision": "cb50ff16b9f1066b8a97dc06da704de2da2fa41c",
+            "ocaml_toolchain": "ocaml@5.2.0",
+            "lean_toolchain": "leanprover/lean4:v4.31.0",
+            "aeneas_lean_library": "AeneasVerif/aeneas/backends/lean@bc2eb6f941369fa3c695e30598b5758b11e4f0de",
+            "checked_source_surface": [
+              "safe sequential Rust",
+              "no unsafe Rust",
+              "no concurrency",
+              "reviewed Charon-supported subset only"
+            ],
+            "preflight": {
+              "unsupported_inputs": [],
+              "disposition": "ready"
+            },
+            "command_argv": [
+              "charon",
+              "cargo",
+              "--preset",
+              "aeneas",
+              "--dest-file",
+              "llbc.llbc",
+              "aeneas",
+              "-backend",
+              "lean",
+              "-emit-json",
+              "-dest",
+              ".",
+              "-no-progress-bar",
+              "lake",
+              "build"
+            ],
+            "limits": {
+              "timeout_ms": 2700000,
+              "stdout_max_bytes": 1048576,
+              "stderr_max_bytes": 1048576
+            },
+            "environment_allowlist": [
+              "PATH",
+              "CHARON_TOOLCHAIN_IS_IN_PATH",
+              "LD_LIBRARY_PATH",
+              "HOME",
+              "MATHLIB_NO_CACHE_ON_UPDATE"
+            ],
+            "extraction_policy": {
+              "has_errors": false,
+              "skip_borrowck": false,
+              "target_triple": "x86_64-unknown-linux-gnu",
+              "pointer_width_bits": 64,
+              "endianness": "little",
+              "mir_start_stage": "borrowck",
+              "drop_policy": "include-drops",
+              "start_from": "crate",
+              "include_rules": [],
+              "exclude_rules": [],
+              "opaque_rules": [],
+              "transformation_settings": [
+                "preserve-spans"
+              ],
+              "serialization_format": "llbc-json-v1"
+            },
+            "assumption_policy": {
+              "external_models": [],
+              "axioms": [],
+              "requires_complete_declaration": true
+            },
+            "theorem_admission": {
+              "theorem_id": "aeneas.consumer.increment-matches-model",
+              "requirement_id": "octet.aeneas_consumer_contract.compatibility",
+              "claim_class": "named-theorem-over-generated-model",
+              "source_disposition": "maintained",
+              "approved_statement_blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f",
+              "named_theorem_present": true,
+              "statement_approved": true,
+              "adequacy": {
+                "decision": "non_vacuous",
+                "forbidden_declarations": []
+              },
+              "trust_closure": {
+                "complete": true,
+                "declared_external_models": [],
+                "declared_axioms": [],
+                "declared_opaque_definitions": [],
+                "declared_admitted_declarations": [],
+                "undeclared_inputs": []
+              },
+              "lean_check": {
+                "theorem_id": "aeneas.consumer.increment-matches-model",
+                "status": "passed"
+              }
+            },
+            "stage_chain": {
+              "schema_version": "octet-aeneas-lean-stage-chain/v1",
+              "provider_profile": {
+                "role": "provider_profile",
+                "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/provider-profile.json",
+                "blake3": "cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625"
+              },
+              "package_lock": {
+                "role": "package_lock",
+                "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/package-lock.json",
+                "blake3": "a90f0bc8c3ab6544519d582a901324b218242e006e4f53236a4f486b3ed07a7d"
+              },
+              "stages": [
+                {
+                  "kind": "rust_source",
+                  "input_artifacts": [],
+                  "output_artifacts": [
+                    {
+                      "role": "rust_source",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+                      "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+                    }
+                  ]
+                },
+                {
+                  "kind": "charon_extraction",
+                  "input_artifacts": [
+                    {
+                      "role": "rust_source",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/source/src/lib.rs",
+                      "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd"
+                    }
+                  ],
+                  "output_artifacts": [
+                    {
+                      "role": "charon_options",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+                      "blake3": "fc5d991bc0f4af5dff84d99a139597f193a38419c3abbad53e18c672de30034e"
+                    },
+                    {
+                      "role": "charon_command",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+                      "blake3": "3d546d9090d3331d821aa2f328c7323f9b2aca9bf1836f14d4804fa94b992aef"
+                    },
+                    {
+                      "role": "llbc",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+                      "blake3": "a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2"
+                    }
+                  ]
+                },
+                {
+                  "kind": "aeneas_translation",
+                  "input_artifacts": [
+                    {
+                      "role": "charon_options",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-options.json",
+                      "blake3": "fc5d991bc0f4af5dff84d99a139597f193a38419c3abbad53e18c672de30034e"
+                    },
+                    {
+                      "role": "charon_command",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/charon-command.json",
+                      "blake3": "3d546d9090d3331d821aa2f328c7323f9b2aca9bf1836f14d4804fa94b992aef"
+                    },
+                    {
+                      "role": "llbc",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/llbc.llbc",
+                      "blake3": "a4d7eb6892d949ad0b5c50bb1a5a0d54deb7a81732a6d7e760326db6b49cd7b2"
+                    }
+                  ],
+                  "output_artifacts": [
+                    {
+                      "role": "aeneas_command",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+                      "blake3": "7255d9366ad9340a5abcb82a970c8b8f461739e90274b2698db2f3b4ffb3880b"
+                    },
+                    {
+                      "role": "translation_manifest",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+                      "blake3": "ac9089c17b063507da0515308a099eafe255e22605c0d9e633d6bb89b23b0abb"
+                    }
+                  ]
+                },
+                {
+                  "kind": "generated_lean",
+                  "input_artifacts": [
+                    {
+                      "role": "aeneas_command",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-command.json",
+                      "blake3": "7255d9366ad9340a5abcb82a970c8b8f461739e90274b2698db2f3b4ffb3880b"
+                    },
+                    {
+                      "role": "translation_manifest",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/translation.json",
+                      "blake3": "ac9089c17b063507da0515308a099eafe255e22605c0d9e633d6bb89b23b0abb"
+                    }
+                  ],
+                  "output_artifacts": [
+                    {
+                      "role": "generated_lean",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+                      "blake3": "417f6e10736a1267c42deac018402ee17384d0a433d35c524e11372c3be5beb3"
+                    },
+                    {
+                      "role": "external_model_inventory",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+                      "blake3": "9fa8dc9570625be2be53d308f958332981ec8fb8137d3dd7ba0ae5da317eaa7d"
+                    }
+                  ]
+                },
+                {
+                  "kind": "theorem",
+                  "input_artifacts": [
+                    {
+                      "role": "generated_lean",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/Llbc.lean",
+                      "blake3": "417f6e10736a1267c42deac018402ee17384d0a433d35c524e11372c3be5beb3"
+                    },
+                    {
+                      "role": "external_model_inventory",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/external-models.json",
+                      "blake3": "9fa8dc9570625be2be53d308f958332981ec8fb8137d3dd7ba0ae5da317eaa7d"
+                    }
+                  ],
+                  "output_artifacts": [
+                    {
+                      "role": "theorem_source",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+                      "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+                    },
+                    {
+                      "role": "theorem_statement",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+                      "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+                    },
+                    {
+                      "role": "theorem_adequacy",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+                      "blake3": "dbda19205e0a5202032ed61b4dae184a68f00af38161324416ae2a4f1ecc5eb4"
+                    },
+                    {
+                      "role": "trust_closure",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+                      "blake3": "021c033fb39bbf2ba3ef4d1e14a473e5988c1b464978881ec720c3b4e01d8379"
+                    }
+                  ]
+                },
+                {
+                  "kind": "lean_check",
+                  "input_artifacts": [
+                    {
+                      "role": "theorem_source",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem.lean",
+                      "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+                    },
+                    {
+                      "role": "theorem_statement",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-statement.lean",
+                      "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f"
+                    },
+                    {
+                      "role": "theorem_adequacy",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/theorem-adequacy.json",
+                      "blake3": "dbda19205e0a5202032ed61b4dae184a68f00af38161324416ae2a4f1ecc5eb4"
+                    },
+                    {
+                      "role": "trust_closure",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/trust-closure.json",
+                      "blake3": "021c033fb39bbf2ba3ef4d1e14a473e5988c1b464978881ec720c3b4e01d8379"
+                    }
+                  ],
+                  "output_artifacts": [
+                    {
+                      "role": "lean_toolchain",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-toolchain",
+                      "blake3": "4ff9ff39f3ec4e1015d318f317230c2a568a3aded1b49c07a9ab814af2cdbefa"
+                    },
+                    {
+                      "role": "aeneas_lean_library",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/aeneas-lean-library.json",
+                      "blake3": "c16344b6008749131ab6b5ba03881740fb8a75f4f3dde2adb1679aa8e073252d"
+                    },
+                    {
+                      "role": "lean_command",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/lean-command.json",
+                      "blake3": "130be6eabfed0fe39289c1ac21e2ec592be79a94f9e693bc5634817a0e524325"
+                    },
+                    {
+                      "role": "checker_result",
+                      "locator": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.aeneas/checker-result.json",
+                      "blake3": "6f22675e95c98edcf9ace87cbc9f02ffba770c583b37e782d321c18f2863c952"
+                    }
+                  ]
+                }
+              ]
+            },
+            "semantic_reference": {
+              "revision": "8a9b8bb3823ceceb47026837d23baea0934dfb27",
+              "license": "Apache-2.0",
+              "source_sentinel": "README.md:Mechanized LLBC",
+              "recorded_only": true
+            }
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    {
+      "proof_or_property_id": "trellis.ucan-proof-reference.digest-admission",
+      "source_requirement_or_policy_id": "octet.verus_proof_rails.trellis_blake3_import",
+      "policy_id": "octet.verus_proof_rails.trellis_blake3_import",
+      "rail_index": 0,
+      "receipt_path": "standards/proof-imports/fixtures/trellis/ucan_proof_reference.receipt.json",
+      "artifact_blake3_identities": [
+        {
+          "artifact": "standards/proof-imports/fixtures/trellis/ucan_proof_reference_source.rs",
+          "blake3": "c39b9d0e85f778b5b52ddf00ee7c422ea2de782551ff4874314c009be687f85a"
+        },
+        {
+          "artifact": "standards/proof-imports/fixtures/trellis/ucan_proof_reference_proof.rs",
+          "blake3": "434529911312c2f98def943df2479b2fc7b7a23f6cf8c911d283151352399f19"
+        },
+        {
+          "artifact": "standards/proof-imports/fixtures/trellis/ucan_proof_reference.stdout",
+          "blake3": "ac6c76d70c441cc470eae63849d6587274b6d4122abb9fc55049d6941f9720c5"
+        },
+        {
+          "artifact": "standards/proof-imports/fixtures/trellis/ucan_proof_reference.stderr",
+          "blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+        },
+        {
+          "artifact": "standards/proof-imports/fixtures/trellis/ucan_proof_reference.receipt.json",
+          "blake3": "1d9c5738c4f151cd0b72e2a5a86a1ba8f7f65bca227249fd67d4a4b78bac9d3b"
+        }
+      ],
+      "evidence_tier": "manual_review_required",
+      "evidence_origin": "external_trellis_import",
+      "status": "manual_review_required",
+      "non_claims": [
+        "not whole-program correctness",
+        "not certification",
+        "not business-domain validation",
+        "not semantic equivalence",
+        "not full safety",
+        "BLAKE3 identifies exact artifact bytes and does not by itself prove proof correctness"
+      ],
+      "external_reference": {
+        "hash_algorithm": "blake3",
+        "promotion_command_argv": [
+          "cargo",
+          "octet",
+          "prove",
+          "--source",
+          "src/verified",
+          "--artifact-dir",
+          "artifacts/octet"
+        ],
+        "repository_label": "../trellis",
+        "repository_revision": "fb232e0e213d3e96878bbf86a10b26e53245a72c"
+      },
+      "diagnostics": []
+    }
+  ],
+  "diagnostics": [],
+  "non_claims": [
+    "Octet export preserves artifact identity, provenance linkage, and evidence tiers; it does not prove whole-program correctness",
+    "Valence consumes this export for stack traceability; Mantle bundles only the final sidecar opaquely",
+    "Octet Valence exports are adapter inputs, not release eligibility, Mantle bundle inclusion, or verifier soundness claims"
+  ]
+}

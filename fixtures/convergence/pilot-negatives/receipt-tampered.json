@@ -1,0 +1,17 @@
+{
+  "binding_check": "The observation's receipt_identity equals the BLAKE3 of the handoff external-receipt.json.",
+  "mutation": {
+    "op": "replace-bytes",
+    "file": "handoff/external-receipt.json",
+    "find": "octet-formal-proof-envelope/v1",
+    "replace": "octet-formal-proof-envelopf/v1"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": [
+      "convergence.receipt_identity_mismatch",
+      "convergence.producer_receipt_mismatch"
+    ]
+  }
+}

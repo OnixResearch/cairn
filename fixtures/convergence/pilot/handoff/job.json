@@ -1,0 +1,106 @@
+{
+  "execution": {
+    "artifact_verify_argv": [
+      "cargo-octet",
+      "artifact",
+      "verify",
+      "--artifact-dir",
+      "$ARTIFACTS",
+      "--format",
+      "json",
+      "--emit-valence-provenance",
+      "$OUTPUT/valence-provenance.json"
+    ],
+    "command_argv": [
+      "cargo-octet",
+      "prove",
+      "--policy-artifacts-dir",
+      "$POLICY",
+      "--source",
+      "src/lib.rs",
+      "--rail",
+      "octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "--artifact-dir",
+      "$ARTIFACTS",
+      "--output-format",
+      "json"
+    ],
+    "network_allowed": false,
+    "rail_id": "octet.aeneas_consumer_contract.external-fixture#rail-0"
+  },
+  "job_id": "octet.aeneas.external-consumer.mantle.v1",
+  "limits": {
+    "cores": 32,
+    "stderr_max_bytes": 1048576,
+    "stdout_max_bytes": 1048576,
+    "timeout_ms": 2700000
+  },
+  "non_claims": [
+    "does not prove Aeneas or Charon translation soundness",
+    "does not prove Lean or verifier soundness",
+    "does not prove whole-program correctness",
+    "does not prove semantic equivalence",
+    "does not establish release eligibility",
+    "does not prove rustc compiler correctness",
+    "does not transfer theorem intent or requirement ownership from the consumer to Octet",
+    "Nix evaluation supplies a frozen ordinary derivation graph; it is not theorem admission",
+    "Mantle realizes and signs build outputs, not proof truth or external acceptance policy",
+    "A cached producer output preserves its recorded external acceptance; cache reuse is not a fresh verifier execution",
+    "The recursive tool graph includes declared bootstrap/binary acquisition inputs and does not claim seed-free bootstrap"
+  ],
+  "outputs": [
+    "artifacts",
+    "producer-artifact-verification.json",
+    "producer-prove.json",
+    "consumer-profile.json",
+    "provider-identity.json",
+    "job.json",
+    "source",
+    "external-profile.json",
+    "external-receipt.json",
+    "source-revision",
+    "flake.lock",
+    "valence-provenance.json"
+  ],
+  "owner": "Octet",
+  "package_attribute": "packages.x86_64-linux.octet-mantle-aeneas-consumer-job",
+  "profile": {
+    "identity": "b3:86351a1b7a93d5fbcacc20aa97ad8fff4c9d15b670f47f55988e5ac2deb66291",
+    "path": "standards/proof-rails/aeneas-lean/generated/consumer-profile.json"
+  },
+  "provider": {
+    "identity": "b3:cd11b49d1acede2c6a91fa26f0b7a6b4b28db4007b4601a65b3269706a0ce625",
+    "path": "standards/proof-rails/aeneas-lean/generated/profile.json"
+  },
+  "schema_version": "octet-mantle-producer-job/v1",
+  "source": {
+    "network_allowed": false,
+    "paths": [
+      "Cargo.toml",
+      "src/lib.rs",
+      "Theorem.lean"
+    ],
+    "root": "standards/proof-rails/aeneas-lean/fixtures/external-consumer"
+  },
+  "system": "x86_64-linux",
+  "tools": {
+    "closure_format": "nix-derivation-show-recursive-json; preserve raw bytes and flake.lock; legacy uses absolute inputDrvs/inputSrcs, v4 uses basename derivations and inputs.drvs/inputs.srcs with explicit version 4",
+    "dependencies": [
+      "cargo-octet",
+      "octet-policy-artifacts",
+      "octet-aeneas-lean-provider-closure",
+      "bc2eb6f941369fa3c695e30598b5758b11e4f0de",
+      "cb50ff16b9f1066b8a97dc06da704de2da2fa41c",
+      "leanprover/lean4:v4.31.0",
+      "flake.lock:mathlib-src",
+      "flake.lock:nixpkgs",
+      "flake.lock:nixpkgs:stdenv.cc",
+      "flake.lock:aeneas"
+    ],
+    "graph_formats": [
+      "nix-derivation-show-legacy",
+      "nix-derivation-show-v4"
+    ],
+    "solver": "none: this selected Aeneas/Charon/Lean rail invokes no external SMT solver; imported Verus evidence is not accepted by this job"
+  }
+}

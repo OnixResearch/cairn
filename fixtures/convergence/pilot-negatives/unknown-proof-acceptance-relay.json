@@ -1,0 +1,14 @@
+{
+  "binding_check": "The observation's proof_acceptance is one of the closed non-acceptance relay values the policy admits.",
+  "mutation": {
+    "op": "json-set",
+    "file": "handoff/mantle-observation.json",
+    "pointer": "/proof_acceptance",
+    "value": "accepted-by-mantle"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "unsupported",
+    "issues": ["convergence.proof_acceptance_relay"]
+  }
+}

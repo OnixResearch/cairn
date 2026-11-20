@@ -93,13 +93,28 @@ impl Fixture {
     }
 
     fn inspect(&self) -> Output {
-        Command::new(env!("CARGO_BIN_EXE_cairn"))
+        self.inspect_with_policy_option(None)
+    }
+
+    /// Run the command against an explicit policy export instead of the
+    /// embedded one.
+    fn inspect_with_policy(&self, policy: &Path) -> Output {
+        self.inspect_with_policy_option(Some(policy))
+    }
+
+    fn inspect_with_policy_option(&self, policy: Option<&Path>) -> Output {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_cairn"));
+        command
             .arg("convergence")
             .arg("inspect")
             .arg("--case")
             .arg(self.case_path())
             .arg("--root")
-            .arg(&self.root)
+            .arg(&self.root);
+        if let Some(policy) = policy {
+            command.arg("--policy").arg(policy);
+        }
+        command
             .current_dir(&self.root)
             .output()
             .expect("run cairn convergence inspect")
@@ -368,6 +383,69 @@ fn build_fixture(label: &str) -> Fixture {
     }
 }
 
+/// Grow a file to exactly `length` bytes. JSON decoders admit trailing
+/// whitespace, and the tool graph is only hashed, so space padding changes no
+/// field of either record.
+fn pad_file_to(path: &Path, length: usize) {
+    let mut bytes = fs::read(path).unwrap();
+    assert!(
+        bytes.len() <= length,
+        "{} is {} bytes, larger than the {length}-byte target",
+        path.display(),
+        bytes.len()
+    );
+    bytes.resize(length, b' ');
+    fs::write(path, bytes).unwrap();
+}
+
+/// Rebind the bridge observation's `tool_graph_identity` to the current tool
+/// graph bytes.
+fn rebind_tool_graph_identity(fixture: &Fixture) {
+    let tool_path = fixture
+        .case_dir
+        .join("handoff/tool-closure.derivation-json.json");
+    let tool_bytes = fs::read(&tool_path).unwrap();
+    let observation_path = fixture.case_dir.join("handoff/mantle-observation.json");
+    let mut observation: Value =
+        serde_json::from_slice(&fs::read(&observation_path).unwrap()).unwrap();
+    observation["tool_graph_identity"] = json!(format!("b3:{}", blake3_hex(&tool_bytes)));
+    fs::write(
+        &observation_path,
+        serde_json::to_vec_pretty(&observation).unwrap(),
+    )
+    .unwrap();
+}
+
+/// A copy of the exported policy with the two Mantle record bounds replaced.
+fn policy_with_record_bounds(
+    fixture: &Fixture,
+    name: &str,
+    tool_graph_bytes: u64,
+    realization_receipt_bytes: u64,
+) -> PathBuf {
+    let mut policy: Value = serde_json::from_str(POLICY_JSON).unwrap();
+    policy["bounds"]["max_tool_graph_bytes"] = json!(tool_graph_bytes);
+    policy["bounds"]["max_realization_receipt_bytes"] = json!(realization_receipt_bytes);
+    let path = fixture.root.join(format!("{name}-policy.json"));
+    fs::write(&path, serde_json::to_vec_pretty(&policy).unwrap()).unwrap();
+    path
+}
+
+/// The issue codes a receipt reports for `path`.
+fn issue_codes_for(receipt: &Value, path: &Path) -> Vec<String> {
+    receipt["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|issue| {
+            issue["field_path"]
+                .as_str()
+                .is_some_and(|field| field.ends_with(path.to_str().unwrap()))
+        })
+        .map(|issue| issue["code"].as_str().unwrap().to_string())
+        .collect()
+}
+
 fn receipt_json(output: &Output) -> Value {
     serde_json::from_slice(&output.stdout).unwrap_or_else(|error| {
         panic!(
@@ -442,6 +520,107 @@ fn positive_case_reports_the_target_current_and_the_rest_untargeted() {
     assert_eq!(receipt["complete"], false);
     assert_eq!(rows[0]["bound"]["signer"], SIGNER);
     assert_eq!(rows[0]["bound"]["target_path"], ROOT_PATH);
+}
+
+#[test]
+fn the_verified_mode_relay_value_also_binds() {
+    // `octet-job` runs the bridge in verified mode, which reports
+    // `externally-reported-by-octet` instead of the fixture mode's
+    // `not-evaluated-by-mantle`. Neither is acceptance.
+    let fixture = build_fixture("verified-relay");
+    let observation_path = fixture.case_dir.join("handoff/mantle-observation.json");
+    let mut observation: Value =
+        serde_json::from_slice(&fs::read(&observation_path).unwrap()).unwrap();
+    observation["proof_acceptance"] = json!("externally-reported-by-octet");
+    fs::write(
+        &observation_path,
+        serde_json::to_vec_pretty(&observation).unwrap(),
+    )
+    .unwrap();
+
+    let output = fixture.inspect();
+    assert!(
+        output.status.success(),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt = receipt_json(&output);
+    assert_eq!(receipt["rows"][0]["state"], "current");
+    assert!(receipt["rows"][0]["issues"].as_array().unwrap().is_empty());
+    assert_eq!(receipt["targets_current"], true);
+}
+
+#[test]
+fn a_tool_graph_and_receipt_over_one_mib_are_admitted() {
+    // The pilot's tool graph is 38,785,189 bytes and its realization receipt
+    // 6,469,512 bytes for 11,565 units; both exceed `max_document_bytes`.
+    let fixture = build_fixture("over-one-mib");
+    pad_file_to(
+        &fixture
+            .case_dir
+            .join("handoff/tool-closure.derivation-json.json"),
+        1_200_000,
+    );
+    pad_file_to(&fixture.case_dir.join("realization.json"), 1_300_000);
+    rebind_tool_graph_identity(&fixture);
+
+    let output = fixture.inspect();
+    assert!(
+        output.status.success(),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt = receipt_json(&output);
+    assert_eq!(receipt["rows"][0]["state"], "current");
+    assert!(receipt["rows"][0]["issues"].as_array().unwrap().is_empty());
+    assert_eq!(receipt["targets_current"], true);
+}
+
+#[test]
+fn a_record_of_exactly_its_bound_is_admitted_and_one_byte_more_is_rejected() {
+    const BOUND: u64 = 8192;
+    let fixture = build_fixture("record-bounds");
+    let tool_graph = fixture
+        .case_dir
+        .join("handoff/tool-closure.derivation-json.json");
+    let realization = fixture.case_dir.join("realization.json");
+    pad_file_to(&tool_graph, BOUND as usize);
+    pad_file_to(&realization, BOUND as usize);
+    rebind_tool_graph_identity(&fixture);
+
+    let exact = policy_with_record_bounds(&fixture, "exact", BOUND, BOUND);
+    let output = fixture.inspect_with_policy(&exact);
+    assert!(
+        output.status.success(),
+        "exactly-bound records must be admitted: stdout {}\nstderr {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(receipt_json(&output)["rows"][0]["state"], "current");
+
+    for (name, tool_bound, receipt_bound, over) in [
+        ("tool graph", BOUND - 1, BOUND, &tool_graph),
+        ("realization receipt", BOUND, BOUND - 1, &realization),
+    ] {
+        let policy =
+            policy_with_record_bounds(&fixture, &name.replace(' ', "-"), tool_bound, receipt_bound);
+        let output = fixture.inspect_with_policy(&policy);
+        assert_eq!(
+            output.status.code(),
+            Some(1),
+            "a {name} one byte over its bound must be rejected: stdout {}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        let rejection = receipt_json(&output);
+        assert_eq!(rejection["status"], "rejected");
+        assert_eq!(
+            issue_codes_for(&rejection, over),
+            vec!["convergence.unreadable_input".to_string()],
+            "{name} rejection: {rejection}"
+        );
+    }
 }
 
 #[test]

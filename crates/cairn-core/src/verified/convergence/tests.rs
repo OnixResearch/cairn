@@ -728,9 +728,23 @@ fn clause_status_maps_through_policy() {
 }
 
 #[test]
-fn proof_acceptance_relay_mismatch_is_unsupported() {
+fn both_bridge_relay_values_bind() {
+    for relay in ["not-evaluated-by-mantle", "externally-reported-by-octet"] {
+        let mut request = build_request(false);
+        observation_mut(&mut request)["proof_acceptance"] = json!(relay);
+        let receipt = evaluate_convergence(&request);
+        assert_eq!(
+            state_of(&receipt, 0),
+            CONVERGENCE_STATE_CURRENT,
+            "relay {relay}"
+        );
+    }
+}
+
+#[test]
+fn proof_acceptance_relay_outside_the_closed_set_is_unsupported() {
     let mut request = build_request(false);
-    observation_mut(&mut request)["proof_acceptance"] = json!("evaluated-by-mantle");
+    observation_mut(&mut request)["proof_acceptance"] = json!("accepted-by-mantle");
     let receipt = evaluate_convergence(&request);
     assert_row(
         &receipt,

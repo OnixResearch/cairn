@@ -267,7 +267,7 @@ fn handoff_facts(
         &root,
         directory,
         "tool-closure.derivation-json.json",
-        maximum,
+        policy.bounds.max_tool_graph_bytes as u64,
     )?);
     let root_derivation = bytes_facts(read_in_dir(&root, directory, "root-derivation", maximum)?);
     let source_revision = bytes_facts(read_in_dir(&root, directory, "source-revision", maximum)?);
@@ -445,7 +445,7 @@ fn contract_facts(
     let realization = match &case.realization_receipt {
         Some(path) => {
             let path = resolve(base, path);
-            let facts = read_json(&path, maximum)?;
+            let facts = read_json(&path, policy.bounds.max_realization_receipt_bytes as u64)?;
             require_schema(
                 &facts,
                 "schema",

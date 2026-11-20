@@ -1,0 +1,18 @@
+{
+  "binding_check": "The recomputed clause mapping equals the contract file's clauses after JSON parsing.",
+  "mutation": {
+    "op": "json-set",
+    "file": "contract.json",
+    "pointer": "/clauses/0/disposition",
+    "value": "empirical_check"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": [
+      "convergence.projection_mismatch",
+      "convergence.contract_blake3_mismatch",
+      "convergence.evidence_contract_mismatch"
+    ]
+  }
+}

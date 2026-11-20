@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "artifact_dir": "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts",
+  "proofs": [
+    {
+      "policy_id": "octet.aeneas_consumer_contract.external-fixture",
+      "rail_index": 0,
+      "backend": "aeneas-lean",
+      "verifier_mode": "fixture",
+      "checked_scope": "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0",
+      "receipt": "proofs/octet.aeneas_consumer_contract.external-fixture-rail-0.receipt",
+      "status": "passed",
+      "diagnostics": []
+    }
+  ],
+  "diagnostics": []
+}

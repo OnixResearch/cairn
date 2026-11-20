@@ -1,0 +1,14 @@
+{
+  "binding_check": "The registry revision equals the observation's packaging.source_revision and the handoff source-revision.",
+  "mutation": {
+    "op": "json-set",
+    "file": "handoff/mantle-observation.json",
+    "pointer": "/packaging/source_revision",
+    "value": "0000000000000000000000000000000000000000"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": ["convergence.revision_mismatch"]
+  }
+}

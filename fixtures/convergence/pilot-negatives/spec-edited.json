@@ -1,0 +1,17 @@
+{
+  "binding_check": "The registry verifies against --root, and the contract's reviewed specification carries the plain BLAKE3 of the accepted specification bytes.",
+  "mutation": {
+    "op": "root-replace-bytes",
+    "file": ".cairn/specs/aeneas-consumer-contract/spec.md",
+    "find": "shipped Aeneas fixture rail",
+    "replace": "shipped Aeneas fixture raiL"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": [
+      "convergence.registry_unverified",
+      "convergence.reviewed_specification_stale"
+    ]
+  }
+}

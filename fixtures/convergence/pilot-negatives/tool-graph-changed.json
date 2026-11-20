@@ -1,0 +1,14 @@
+{
+  "binding_check": "The observation's tool_graph_identity equals the BLAKE3 of the handoff tool graph bytes.",
+  "mutation": {
+    "op": "replace-bytes",
+    "file": "handoff/tool-closure.derivation-json.json",
+    "find": "\"derivations\"",
+    "replace": "\"derivationT\""
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": ["convergence.tool_graph_identity_mismatch"]
+  }
+}

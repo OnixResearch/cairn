@@ -1,0 +1,14 @@
+{
+  "binding_check": "The producer output's external-receipt.json equals the handoff copy.",
+  "mutation": {
+    "op": "replace-bytes",
+    "file": "producer-output/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/external-receipt.json",
+    "find": "octet-formal-proof-envelope/v1",
+    "replace": "octet-formal-proof-envelopf/v1"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": ["convergence.producer_receipt_mismatch"]
+  }
+}

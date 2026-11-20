@@ -9,8 +9,8 @@
 - [x] [serial] [task:cli] [after:core] Add read-only `cairn convergence inspect --case FILE [--policy FILE] [--root DIR]` with bounded no-follow reads, unadmitted-schema rejection and unknown-option rejection, tested against a synthetic corpus built at test time. r[cairn.convergence.inputs] r[cairn.convergence.inspection] r[cairn.convergence.authority]
 - [ ] [serial] [task:bounds] [after:cli] Depend on Mantle change `raise-foreign-import-graph-bounds`, which admits producer graphs up to the verification bridge's 32,768-derivation tool-graph bound; Mantle's foreign import capped graphs at 2,048 derivations and rejected a measured 7,157-derivation nixpkgs closure. r[cairn.convergence.realization]
 - [ ] [serial] [task:realization] [after:bounds] Freeze Octet's producer job, build it with Nix on prebuilt toolchains, sign the output closure with the pilot-only key into a local file cache, realize the root through Mantle's preserve route under that key only, observe it with the bridge, realize it again as a reuse, and run the negatives; label the route as a preserved prebuilt closure whose proof Nix executed. r[cairn.convergence.realization]
-- [ ] [serial] [task:pilot] [after:realization] Land Octet's pilot contract and evidence bundle and retain `requirements check` and `requirements verify` over the realized output. r[cairn.convergence.acceptance]
-- [ ] [serial] [task:corpus] [after:pilot] Retain the positive pilot case and one negative case per binding check under `fixtures/convergence/`, exercised by CLI tests that invoke the real binary. r[cairn.convergence.conformance]
+- [x] [serial] [task:pilot] [after:realization] Land Octet's pilot contract and evidence bundle and retain `requirements check` and `requirements verify` over the realized output. r[cairn.convergence.acceptance]
+- [x] [serial] [task:corpus] [after:pilot] Retain the positive pilot case and one negative case per binding check under `fixtures/convergence/`, exercised by CLI tests that invoke the real binary. r[cairn.convergence.conformance]
 
 ## Phase 2: Verification and archive
 

@@ -1,0 +1,14 @@
+{
+  "binding_check": "A proof-deck locator stays inside the case's resolved producer output directory.",
+  "mutation": {
+    "op": "json-set",
+    "file": "evidence.json",
+    "pointer": "/proof_decks/0/deck",
+    "value": "/tmp/cairn-outside/proof-cards.json"
+  },
+  "expected": {
+    "exit": 1,
+    "row_state": null,
+    "issues": ["convergence.proof_deck_outside_output"]
+  }
+}

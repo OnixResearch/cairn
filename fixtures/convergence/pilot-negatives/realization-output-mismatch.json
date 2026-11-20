@@ -1,0 +1,14 @@
+{
+  "binding_check": "The matched realization unit produced the directory the bridge consumed.",
+  "mutation": {
+    "op": "json-set",
+    "file": "realization-receipt.json",
+    "pointer": "/units/11564/outputs/0/target_path",
+    "value": "/nix/store/00000000000000000000000000000000-octet-mantle-aeneas-consumer-job-v1"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": ["convergence.realization_output_mismatch"]
+  }
+}

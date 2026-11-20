@@ -1,0 +1,32 @@
+{
+  "entries": [
+    {
+      "artifact_hashes": [],
+      "policy_ids": [],
+      "requirement_id": "octet.aeneas_consumer_contract.compatibility",
+      "source_ids": [],
+      "sources": [
+        {
+          "blake3": "28826659c5095a872ca9b17c747b96be1bc3afc147f2f383a7df5a527ab04370",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/Cargo.toml"
+        },
+        {
+          "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/src/lib.rs"
+        },
+        {
+          "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/Theorem.lean"
+        }
+      ],
+      "tool_identity_hashes": []
+    }
+  ],
+  "schema_version": "cairn.assurance-target-sources.v1",
+  "specifications": [
+    {
+      "blake3": "7b6bbfdae779ada85f40f563c5d4db8c9afec9c00581f07794b4d907ec6f15c9",
+      "path": ".cairn/specs/aeneas-consumer-contract/spec.md"
+    }
+  ]
+}

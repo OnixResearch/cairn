@@ -1,0 +1,14 @@
+{
+  "binding_check": "The BLAKE3 of the contract file equals the decision's contract_blake3.",
+  "mutation": {
+    "op": "json-set",
+    "file": "decision.json",
+    "pointer": "/contract_blake3",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": ["convergence.contract_blake3_mismatch"]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "binding_check": "A complete, trusted-signer Mantle realization is supplied for the job.",
+  "mutation": {
+    "op": "case-remove",
+    "keys": ["/contracts/0/realization_receipt", "/contracts/0/store_info"]
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "unrealized",
+    "issues": [
+      "convergence.realization_missing",
+      "convergence.store_info_missing"
+    ]
+  }
+}

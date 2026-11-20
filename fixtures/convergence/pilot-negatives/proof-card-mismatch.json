@@ -1,0 +1,14 @@
+{
+  "binding_check": "The proof card Octet accepted names the observed receipt with the same BLAKE3.",
+  "mutation": {
+    "op": "json-set",
+    "file": "producer-output/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts/proof-cards.json",
+    "pointer": "/cards/0/artifact_blake3_identities/20/blake3",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": ["convergence.proof_card_receipt_mismatch"]
+  }
+}

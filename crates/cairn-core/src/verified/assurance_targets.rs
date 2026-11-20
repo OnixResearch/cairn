@@ -204,7 +204,7 @@ pub struct PolicyOctet {
 pub struct PolicyMantle {
     pub realization_complete_status: String,
     pub realized_states: Vec<String>,
-    pub proof_acceptance_relay: String,
+    pub proof_acceptance_relays: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -216,6 +216,12 @@ pub struct PolicyBounds {
     pub max_text_bytes: usize,
     pub max_list_items: usize,
     pub max_input_bytes: usize,
+    /// Bound for the handoff tool graph, equal to Mantle's
+    /// `MAX_TOOL_GRAPH_BYTES` in the verification bridge producer.
+    pub max_tool_graph_bytes: usize,
+    /// Bound for a Mantle realization receipt, equal to
+    /// `MAX_FOREIGN_REALIZATION_RECEIPT_BYTES` in Mantle's store commands.
+    pub max_realization_receipt_bytes: usize,
     pub max_document_bytes: usize,
     pub max_trusted_signers: usize,
 }

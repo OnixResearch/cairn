@@ -82,6 +82,20 @@ the command prints one `cairn.convergence.v1` receipt and exits 0, whatever the
 states. It spawns no process, uses no network, starts neither Nickel, Mantle nor
 Octet, and writes nothing under the root.
 
+Most records are read within `max_document_bytes` (1,048,576 bytes). Two
+producer records follow the bounds their owners apply rather than the fixture
+size:
+
+| Record | Bound | Source |
+| --- | --- | --- |
+| Handoff `tool-closure.derivation-json.json` | `max_tool_graph_bytes` = 268,435,456 | Mantle's `crunch_verification_bridge_core::producer::MAX_TOOL_GRAPH_BYTES`, the largest graph the verification bridge binds and digests into `tool_graph_identity` |
+| Mantle realization receipt | `max_realization_receipt_bytes` = 16,777,216 | `MAX_FOREIGN_REALIZATION_RECEIPT_BYTES` in Mantle's `src/store_cmd.rs`, the bound its own store commands apply when they read a realization receipt |
+
+The real pilot's records need them: its tool graph is 38,785,189 bytes and its
+realization receipt 6,469,512 bytes for 11,565 units. A record exactly at its
+bound is admitted; one byte more is rejected with
+`convergence.unreadable_input`.
+
 ## States
 
 The receipt lists every registry row in registry order with one state:
@@ -116,6 +130,11 @@ A target is `current` only when all of these bind:
 - the target's job id equals the handoff `job.json`, and the observation's
   `producer_job_identity`, `tool_graph_identity` and `receipt_identity` equal the
   BLAKE3 identities of the handoff bytes;
+- the observation's `proof_acceptance` is one of the closed non-acceptance relay
+  values the policy admits: `not-evaluated-by-mantle`, which the bridge's fixture
+  `octet` mode emits, or `externally-reported-by-octet`, which its verified mode
+  emits and `octet-job` requires. Any other value, including an acceptance-shaped
+  one such as `accepted-by-mantle`, is `unsupported`;
 - the producer output's receipt and profile equal the handoff copies, and the
   proof card Octet accepted lists that receipt with the same BLAKE3;
 - the realization receipt is complete, its unit whose `node_id` is `nix:` plus
@@ -153,6 +172,33 @@ dropped. `targets_current` additionally requires that list to be empty.
 
 Identical inputs give byte-identical receipts. `receipt_blake3` is the BLAKE3 of
 the canonical receipt without that field.
+
+## Retained pilot corpus
+
+`fixtures/convergence/pilot/` is the one real, exercised case, copied as exact
+raw bytes and recorded file by file in `SOURCE.md`. It binds Octet's registry at
+revision `d5b34c2d…`, its pilot targets, generated sources and contract, the
+Octet decision and evidence bundle, a bridge handoff, the producer output tree
+the bridge consumed, and the Mantle realization receipt and store-info record
+for that output. `producer_output_locator` is the absolute store path the
+evidence names; the bytes are read from the retained copy. The case's single
+`checked_proof` target is `current`; the remaining registry rows are
+`untargeted`, so `targets_current` holds while `coverage_complete` and `complete`
+do not.
+
+The realization receipt records `cache-only-preserve-v1`: Mantle preserved a
+prebuilt closure that Nix built and whose proof Nix executed. The case therefore
+does not show that Mantle built the tool graph or executed the proof, and a
+cache hit remains an earlier acceptance rather than fresh work.
+
+`fixtures/convergence/pilot-negatives/` holds one declarative record per binding
+check. A record names the check, a mutation and the expected exit, row state and
+issue codes; it never contains a mutated copy of the large files. The CLI test
+materializes each record at test time in a fresh directory under
+`CARGO_TARGET_TMPDIR`: every pilot file is hard-linked, `root/` is copied only
+for `root-` mutations, and a mutation unlinks the link and writes a new file, so
+the committed fixture is never written through a link. After all records run,
+the test re-hashes the fixture and asserts it is unchanged.
 
 ## Claim boundary
 

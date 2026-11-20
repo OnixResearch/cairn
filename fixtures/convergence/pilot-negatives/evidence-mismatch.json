@@ -1,0 +1,17 @@
+{
+  "binding_check": "The BLAKE3 of the evidence bundle equals the decision's evidence_blake3, and the evidence names the same contract.",
+  "mutation": {
+    "op": "json-set",
+    "file": "evidence.json",
+    "pointer": "/contract_blake3",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": [
+      "convergence.evidence_contract_mismatch",
+      "convergence.evidence_blake3_mismatch"
+    ]
+  }
+}

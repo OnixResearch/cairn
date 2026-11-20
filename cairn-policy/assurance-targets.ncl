@@ -11,6 +11,14 @@ let Positive = std.contract.from_predicate (fun value =>
 let NonEmpty = std.contract.from_predicate (fun value =>
   std.is_string value && std.string.length value > 0
 ) in
+# A non-empty list of distinct non-empty strings, used for the closed
+# proof-acceptance relay vocabulary.
+let UniqueNonEmpty = std.contract.from_predicate (fun value =>
+  std.is_array value
+  && std.array.length value > 0
+  && std.array.all (fun item => std.is_string item && std.string.length item > 0) value
+  && std.array.length (std.array.dedup value) == std.array.length value
+) in
 {
   schema = "cairn.assurance-targets-policy.v1",
   targets_schema = "cairn.assurance-targets.v1",
@@ -51,7 +59,14 @@ let NonEmpty = std.contract.from_predicate (fun value =>
   mantle = {
     realization_complete_status = "complete",
     realized_states = ["realized", "provenance-audited"],
-    proof_acceptance_relay = "not-evaluated-by-mantle",
+    # The only non-acceptance relay values the verification bridge emits.
+    # `not-evaluated-by-mantle` is its fixture `octet` mode; verified mode
+    # reports `externally-reported-by-octet`, and `octet-job` requires verified
+    # mode. Neither value is acceptance: acceptance is Octet's decision only.
+    proof_acceptance_relays = [
+      "not-evaluated-by-mantle",
+      "externally-reported-by-octet",
+    ],
   },
   bounds = {
     max_contracts = 64,
@@ -60,7 +75,16 @@ let NonEmpty = std.contract.from_predicate (fun value =>
     max_text_bytes = 4096,
     max_list_items = 256,
     max_input_bytes = 4194304,
+    # Every Cairn, Octet and Mantle document not named below stays at 1 MiB.
     max_document_bytes = 1048576,
+    # Largest tool graph Mantle's verification bridge binds and digests into
+    # `tool_graph_identity`: `MAX_TOOL_GRAPH_BYTES` in
+    # `crunch_verification_bridge_core::producer`.
+    max_tool_graph_bytes = 268435456,
+    # Bound Mantle's own store commands apply when they read a realization
+    # receipt: `MAX_FOREIGN_REALIZATION_RECEIPT_BYTES` in Mantle's
+    # `src/store_cmd.rs`.
+    max_realization_receipt_bytes = 16777216,
     max_trusted_signers = 8,
   },
   non_claims = [
@@ -103,7 +127,7 @@ let NonEmpty = std.contract.from_predicate (fun value =>
   mantle | {
     realization_complete_status | NonEmpty,
     realized_states | Array NonEmpty,
-    proof_acceptance_relay | NonEmpty,
+    proof_acceptance_relays | UniqueNonEmpty,
   },
   bounds | {
     max_contracts | Positive,
@@ -113,6 +137,8 @@ let NonEmpty = std.contract.from_predicate (fun value =>
     max_list_items | Positive,
     max_input_bytes | Positive,
     max_document_bytes | Positive,
+    max_tool_graph_bytes | Positive,
+    max_realization_receipt_bytes | Positive,
     max_trusted_signers | Positive,
   },
   non_claims | Array NonEmpty,

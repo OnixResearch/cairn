@@ -291,6 +291,24 @@ fn unknown_field_is_rejected() {
 
 // r[verify cairn.assurance_targets.contract]
 #[test]
+fn producer_record_bounds_are_required() {
+    for key in ["max_tool_graph_bytes", "max_realization_receipt_bytes"] {
+        let mut policy_value = value(POLICY_JSON);
+        policy_value["bounds"]
+            .as_object_mut()
+            .expect("bounds must be an object")
+            .remove(key);
+        let issues = expect_rejected(parse_assurance_targets_policy(&policy_value));
+        assert_code(&issues, ISSUE_UNKNOWN_FIELD);
+        assert!(
+            issues.iter().any(|issue| issue.field_path.ends_with(key)),
+            "missing {key} must be named: {issues:?}"
+        );
+    }
+}
+
+// r[verify cairn.assurance_targets.contract]
+#[test]
 fn unknown_schema_is_rejected() {
     let mut targets_value = value(TARGETS_JSON);
     targets_value["schema_version"] = json!("cairn.assurance-targets.v2");

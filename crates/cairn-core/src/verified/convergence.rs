@@ -690,7 +690,14 @@ fn check_handoff(
 ) {
     let observation = &case.handoff.observation.value;
     let proof_acceptance = observation.get("proof_acceptance").and_then(Value::as_str);
-    if proof_acceptance != Some(request.policy.mantle.proof_acceptance_relay.as_str()) {
+    if !proof_acceptance.is_some_and(|relay| {
+        request
+            .policy
+            .mantle
+            .proof_acceptance_relays
+            .iter()
+            .any(|admitted| admitted == relay)
+    }) {
         evaluation.mark(Rank::Unsupported, CONVERGENCE_ISSUE_PROOF_ACCEPTANCE_RELAY);
     }
 

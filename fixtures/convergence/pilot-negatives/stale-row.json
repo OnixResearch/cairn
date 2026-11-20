@@ -1,0 +1,14 @@
+{
+  "binding_check": "Each target's requirement equals its registry row in all six fields.",
+  "mutation": {
+    "op": "json-set",
+    "file": "targets.json",
+    "pointer": "/contracts/0/targets/0/requirement/row_blake3",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": ["convergence.stale_row"]
+  }
+}

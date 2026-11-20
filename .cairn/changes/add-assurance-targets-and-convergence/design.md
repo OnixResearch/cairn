@@ -85,7 +85,7 @@ This change adds the Declare stage (targets) and the Diff stage (convergence) fo
 
 ### Decision: Acceptance is Octet's decision only
 
-**Choice:** A target is accepted only when the decision's `aggregate_result` is passing and its clause for the target has status `passed`. Cairn never reads the observation's `proof_acceptance` or `externally_reported_outcome` as acceptance; it only requires `proof_acceptance` to equal `not-evaluated-by-mantle`.
+**Choice:** A target is accepted only when the decision's `aggregate_result` is passing and its clause for the target has status `passed`. Cairn never reads the observation's `proof_acceptance` or `externally_reported_outcome` as acceptance; it only requires `proof_acceptance` to be one of the closed set `["not-evaluated-by-mantle", "externally-reported-by-octet"]`. The first is what the bridge's fixture `octet` mode emits; the second is what its verified mode emits, and `octet-job` requires verified mode. Any other value, including an acceptance-shaped one such as `accepted-by-mantle`, is `unsupported`.
 
 **Rationale:** ADR 0034 keeps proof authority in Octet; a Mantle success, a cache hit or a relayed outcome is never acceptance.
 
@@ -130,6 +130,12 @@ This change adds the Declare stage (targets) and the Diff stage (convergence) fo
 **Choice:** The real pilot waits on Mantle change `raise-foreign-import-graph-bounds` (Mantle ADR 0166), which raises Mantle's foreign-import node bound from 2,048 to the verification bridge's `MAX_TOOL_DERIVATIONS` (32,768), its source-payload bound from 512 to Octet's exporter bound (16,384), its per-node input-edge bound from 256 to 4,096 and its field bound from 32 KiB to 256 KiB. Cairn's convergence code is unchanged by it.
 
 **Rationale:** `mantle foreign-import produce-nix` rejected a measured 7,157-derivation nixpkgs closure with `nix-derivation-count-out-of-range` (`MAX_GRAPH_NODES = 2048` in Mantle's `src/foreign_derivation_import.rs`), while the bridge already admits 32,768-derivation producer tool graphs, so no real producer graph could be planned. The frozen Octet job at `d5b34c2d64b1227417a46df8ed8427f2d10ed3c8` has 11,565 derivations, 677 source objects, up to 611 input derivations on one node and one 102,597-byte `buildCommand`. This met the handoff's stop-and-ask condition; Britton authorized the Mantle change on 2026-11-19.
+
+### Decision: Producer record bounds in the inspect shell
+
+**Choice:** `cairn convergence inspect` reads the handoff tool graph within `max_tool_graph_bytes` (268,435,456 bytes) and the Mantle realization receipt within `max_realization_receipt_bytes` (16,777,216 bytes), both named in `cairn-policy/assurance-targets.ncl`, exported to `cairn-policy/generated/assurance-targets.json` and carried in the bounds DTO. `max_document_bytes` stays at 1,048,576 bytes for every other Mantle and Octet document. An over-bound read keeps its existing `convergence.unreadable_input` rejection.
+
+**Rationale:** The measured pilot records exceed 1 MiB: the frozen Nix tool graph (`tool-closure.derivation-json.json`, 11,565 derivations) is 38,785,189 bytes, and `realization-receipt.json` (`mantle-foreign-realization-receipt-v1`) is 6,469,512 bytes for 11,565 units, so with fixture-sized bounds the pilot could never be `current`. Each new bound equals the bound its producer applies, rather than a size guessed from the corpus: `max_tool_graph_bytes` is Mantle's `crunch_verification_bridge_core::producer::MAX_TOOL_GRAPH_BYTES`, the largest graph the verification bridge binds and digests into `tool_graph_identity`, and `max_realization_receipt_bytes` is `MAX_FOREIGN_REALIZATION_RECEIPT_BYTES` in Mantle's `src/store_cmd.rs`, the bound Mantle's own store commands apply when they read a realization receipt. Both stay far below `max_input_bytes` for aggregate inputs, and every read remains bounded and link-refusing.
 
 ### Decision: Realization route for the pilot
 

@@ -1,0 +1,1 @@
+/nix/store/5rm1x1c5h6f7l4s2jp45b6s1d3793r9f-cargo-octet-0.1.1-rc.1/bin/cargo-octet prove --policy-artifacts-dir /build/policy --source src/lib.rs --rail 'octet.aeneas_consumer_contract.external-fixture#rail-0' --artifact-dir /nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1/artifacts --output-format json

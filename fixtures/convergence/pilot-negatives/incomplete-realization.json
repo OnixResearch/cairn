@@ -1,0 +1,14 @@
+{
+  "binding_check": "The realization receipt is complete and its strongest state is an admitted realized state.",
+  "mutation": {
+    "op": "json-set",
+    "file": "realization-receipt.json",
+    "pointer": "/status",
+    "value": "partial-failure"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "unrealized",
+    "issues": ["convergence.realization_incomplete"]
+  }
+}

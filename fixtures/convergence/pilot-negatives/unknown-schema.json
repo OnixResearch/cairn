@@ -1,0 +1,14 @@
+{
+  "binding_check": "Every schema identifier is admitted by the policy.",
+  "mutation": {
+    "op": "json-set",
+    "file": "handoff/mantle-observation.json",
+    "pointer": "/schema",
+    "value": "mantle-external-evidence-observation-v2"
+  },
+  "expected": {
+    "exit": 1,
+    "row_state": null,
+    "issues": ["convergence.unknown_schema"]
+  }
+}

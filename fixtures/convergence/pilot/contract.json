@@ -1,0 +1,64 @@
+{
+  "assumptions": [],
+  "clauses": [
+    {
+      "allowed_evidence_ids": [
+        "aeneas.consumer.increment-matches-model"
+      ],
+      "allowed_source_requirement_ids": [
+        "octet.aeneas_consumer_contract.compatibility"
+      ],
+      "checked_scope": [
+        "formal-proof:external-consumer:octet.aeneas_consumer_contract.external-fixture#rail-0"
+      ],
+      "clause_id": "octet.aeneas_consumer_contract.compatibility",
+      "disposition": "formal_proof",
+      "expected_evidence_tier": "formal_proof",
+      "required": true,
+      "required_bindings": {
+        "artifact_hashes": [],
+        "checked_scope": [],
+        "evidence_tier": "formal_proof",
+        "policy_ids": [],
+        "source_ids": [],
+        "tool_identity_hashes": []
+      },
+      "required_evidence_classes": [
+        "proof_card"
+      ],
+      "required_negative_controls": [],
+      "required_provider_id": "aeneas-lean",
+      "source_bindings": [
+        {
+          "blake3": "28826659c5095a872ca9b17c747b96be1bc3afc147f2f383a7df5a527ab04370",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/Cargo.toml"
+        },
+        {
+          "blake3": "691e8de8b8f92665dd00b938b48b398b451c71a06c99dae10b38b38184d4dddd",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/src/lib.rs"
+        },
+        {
+          "blake3": "776e9f85261080fbcfd75cb481c4f563cff50ffefaf8bdaae3d5fad010d8c77f",
+          "locator": "standards/proof-rails/aeneas-lean/fixtures/external-consumer/Theorem.lean"
+        }
+      ],
+      "statement": "The external-consumer fixture's bound implementation is increment: its Aeneas-generated Lean model satisfies the named theorem increment_matches_model, `external_consumer.increment 1#u32 = .ok 2#u32`, which Lean checks by reduction, and the theorem is judged non-vacuous (decision non_vacuous, no forbidden declarations) over the exact bound Rust source, generated Lean model, and proof artifacts."
+    }
+  ],
+  "contract_id": "octet.cairn-pilot.aeneas-consumer",
+  "exclusions": [],
+  "non_claims": [
+    "evaluates supplied reviewed contracts and evidence only; does not authenticate reviewers or producers, prove verifier soundness, or establish whole-program correctness",
+    "phase-1 pilot non-claim: the evidence is a fixture theorem over a fixture rail; it is not a production theorem, not whole-program correctness, and not release eligibility",
+    "does not prove Aeneas or Charon translation soundness",
+    "does not prove Lean or verifier soundness",
+    "does not prove rustc compiler correctness",
+    "does not prove semantic equivalence",
+    "does not establish release eligibility"
+  ],
+  "reviewed_specification": {
+    "blake3": "7b6bbfdae779ada85f40f563c5d4db8c9afec9c00581f07794b4d907ec6f15c9",
+    "path": ".cairn/specs/aeneas-consumer-contract/spec.md"
+  },
+  "schema_version": "octet-requirement-contract/v1"
+}

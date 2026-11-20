@@ -1,0 +1,17 @@
+{
+  "binding_check": "The target's job id equals the handoff job.json, and the observation's producer_job_identity equals the BLAKE3 of those bytes.",
+  "mutation": {
+    "op": "json-set",
+    "file": "handoff/job.json",
+    "pointer": "/job_id",
+    "value": "octet.aeneas.external-consumer.mantle.v2"
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": [
+      "convergence.job_id_mismatch",
+      "convergence.producer_job_identity_mismatch"
+    ]
+  }
+}

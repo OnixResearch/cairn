@@ -1,0 +1,13 @@
+{
+  "binding_check": "The store-info record for the root path is signed by a name in the case's trusted signer list.",
+  "mutation": {
+    "op": "case-set",
+    "pointer": "/trusted_signers",
+    "value": ["other-key-1"]
+  },
+  "expected": {
+    "exit": 0,
+    "row_state": "unrealized",
+    "issues": ["convergence.untrusted_signer"]
+  }
+}
