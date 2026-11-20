@@ -32,6 +32,8 @@ const HANDOFF_RECEIPT_TEXT: &str = "handoff external receipt bytes";
 const HANDOFF_PROFILE_TEXT: &str = "handoff external profile bytes";
 const TOOL_GRAPH_TEXT: &str = "tool closure derivation json bytes";
 const ROOT_DERIVATION: &str = "/nix/store/00000000000000000000000000000000-pilot-root.drv";
+const TRANSLATED_DERIVATION: &str =
+    "/nix/store/11111111111111111111111111111111-pilot-translated.drv";
 const PRODUCER_DIR: &str = "abc123-pilot-output";
 const STORE_PATH: &str = "/nix/store/abc123-pilot-output";
 const NAR_SHA256: &str = "2222222222222222222222222222222222222222222222222222222222222222";
@@ -261,7 +263,8 @@ fn build_request(full: bool) -> ConvergenceRequest {
         "strongest_state": "realized",
         "selected_root_paths": [STORE_PATH],
         "units": [{
-            "target_derivation": ROOT_DERIVATION,
+            "node_id": format!("nix:{}", ROOT_DERIVATION.rsplit('/').next().unwrap_or(ROOT_DERIVATION)),
+            "target_derivation": TRANSLATED_DERIVATION,
             "outputs": [{
                 "target_path": STORE_PATH,
                 "nar_sha256": NAR_SHA256,
@@ -307,6 +310,7 @@ fn build_request(full: bool) -> ConvergenceRequest {
         trusted_signers: vec!["pilot-key".to_string()],
         contracts: vec![ContractCaseFacts {
             contract_id: CONTRACT_ID.to_string(),
+            producer_output_locator: None,
             contract,
             decision,
             evidence,
@@ -374,6 +378,28 @@ fn positive_case_reports_current_and_untargeted() {
     assert_eq!(receipt["rows"][0]["bound"]["signer"], "pilot-key");
     assert_eq!(receipt["rows"][0]["bound"]["target_path"], STORE_PATH);
     assert_eq!(receipt["rows"][0]["bound"]["source_revision"], REVISION);
+    assert_eq!(
+        receipt["rows"][0]["bound"]["root_derivation"],
+        ROOT_DERIVATION
+    );
+    assert_eq!(
+        receipt["rows"][0]["bound"]["node_id"],
+        format!(
+            "nix:{}",
+            ROOT_DERIVATION
+                .rsplit('/')
+                .next()
+                .unwrap_or(ROOT_DERIVATION)
+        )
+    );
+    assert_eq!(
+        receipt["rows"][0]["bound"]["target_derivation"],
+        TRANSLATED_DERIVATION
+    );
+    assert_eq!(
+        receipt["rows"][0]["bound"]["realization_route"],
+        Value::Null
+    );
 
     assert_eq!(state_of(&receipt, 1), CONVERGENCE_STATE_UNTARGETED);
     assert!(issues_of(&receipt, 1).is_empty());
@@ -886,6 +912,31 @@ fn proof_card_with_a_foreign_artifact_locator_is_stale() {
 
 // r[verify cairn.convergence.realization]
 #[test]
+fn a_preserved_realization_route_is_recorded_in_the_binding() {
+    let mut request = build_request(false);
+    if let Some(realization) = request.contracts[0].realization.as_mut() {
+        realization.value["cache_policy"] = json!({"realization_route": "cache-only-preserve-v1"});
+    }
+    let receipt = evaluate_convergence(&request);
+    assert_eq!(state_of(&receipt, 0), CONVERGENCE_STATE_CURRENT);
+    assert_eq!(
+        receipt["rows"][0]["bound"]["realization_route"],
+        "cache-only-preserve-v1"
+    );
+
+    let mut non_string = build_request(false);
+    if let Some(realization) = non_string.contracts[0].realization.as_mut() {
+        realization.value["cache_policy"] = json!({"realization_route": 7});
+    }
+    let receipt = evaluate_convergence(&non_string);
+    assert_eq!(
+        receipt["rows"][0]["bound"]["realization_route"],
+        Value::Null
+    );
+}
+
+// r[verify cairn.convergence.realization]
+#[test]
 fn missing_realization_is_unrealized() {
     let mut request = build_request(false);
     request.contracts[0].realization = None;
@@ -917,7 +968,10 @@ fn incomplete_realization_is_unrealized() {
 fn realization_derivation_mismatch_is_stale() {
     let mut request = build_request(false);
     if let Some(realization) = request.contracts[0].realization.as_mut() {
-        realization.value["units"][0]["target_derivation"] = json!("other.drv");
+        // The unit is selected by the foreign `node_id`; a matching
+        // `target_derivation` alone does not bind it.
+        realization.value["units"][0]["node_id"] = json!("nix:other.drv");
+        realization.value["units"][0]["target_derivation"] = json!(ROOT_DERIVATION);
     }
     let receipt = evaluate_convergence(&request);
     assert_row(

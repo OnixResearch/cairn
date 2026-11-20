@@ -66,7 +66,12 @@ specifications under `--root` and marks the target `stale` when the contract's
 contrast, lives in the realized producer output: the evidence bundle may name it
 by a path relative to `producer_output` or by an absolute path that starts with
 the case's resolved `producer_output` directory followed by `/`. Cairn reads only
-the remaining relative path inside that directory. No canonicalization or link
+the remaining relative path inside that directory. When the retained fixture
+keeps those files elsewhere, the case may also name
+`producer_output_locator`: the absolute path the evidence recorded for the
+realized output. Its final component must equal `producer_output`'s, the bytes
+are still read inside the case's `producer_output` directory, and absolute deck
+paths must start with the locator followed by `/`. No canonicalization or link
 resolution widens the directory, a `..` component is refused, and any other
 absolute locator is rejected with `convergence.proof_deck_outside_output`.
 
@@ -113,10 +118,21 @@ A target is `current` only when all of these bind:
   BLAKE3 identities of the handoff bytes;
 - the producer output's receipt and profile equal the handoff copies, and the
   proof card Octet accepted lists that receipt with the same BLAKE3;
-- the realization receipt is complete, its unit for the handoff's root derivation
-  produced the directory the bridge consumed, and the store-info record for that
-  path has the same NAR hash and a signature by a trusted key name;
+- the realization receipt is complete, its unit whose `node_id` is `nix:` plus
+  the handoff root derivation's file name produced the directory the bridge
+  consumed (`target_derivation` is Mantle's translated derivation), and the
+  store-info record for that path has the same NAR hash and a signature by a
+  trusted key name;
 - Octet's aggregate result passes and its clause for the target is `passed`.
+
+For a `current` row, `bound.root_derivation` is the frozen foreign root from the
+handoff, `bound.node_id` is the matched unit's foreign identity (`nix:` plus that
+root's file name), and `bound.target_derivation` is Mantle's translated
+derivation, which differs from the frozen root even on the preserve route.
+`bound.realization_route` names the route Mantle recorded in the realization
+receipt's `cache_policy.realization_route` (null when absent or not a string).
+`cache-only-preserve-v1` means Mantle preserved a prebuilt output and did not
+build or execute it; the build route records no route.
 
 Only Octet's decision is acceptance. A Mantle success, a cache hit, the
 observation's `proof_acceptance` and its `externally_reported_outcome` never

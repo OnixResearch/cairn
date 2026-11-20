@@ -39,6 +39,8 @@ const RECEIPT_BYTES: &[u8] = b"synthetic octet receipt bytes\n";
 const PROFILE_BYTES: &[u8] = b"synthetic octet profile bytes\n";
 const TOOL_BYTES: &[u8] = b"synthetic tool closure bytes\n";
 const ROOT_DERIVATION: &str = "synthetic-root-derivation";
+const TRANSLATED_ROOT: &str =
+    "/nix/store/cccccccccccccccccccccccccccccccc-synthetic-translated.drv";
 const ROOT_BASENAME: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-synthetic-output";
 const ROOT_PATH: &str = concat!(
     "/nix/store/",
@@ -304,7 +306,8 @@ fn build_fixture(label: &str) -> Fixture {
         "strongest_state": "realized",
         "selected_root_paths": [ROOT_PATH],
         "units": [{
-            "target_derivation": ROOT_DERIVATION,
+            "node_id": format!("nix:{ROOT_DERIVATION}"),
+            "target_derivation": TRANSLATED_ROOT,
             "outputs": [{
                 "target_path": ROOT_PATH,
                 "nar_sha256": NAR_SHA256,
@@ -489,6 +492,79 @@ fn a_deck_locator_outside_the_producer_output_is_rejected() {
             "locator {locator} rejection: {rejection}"
         );
     }
+}
+
+#[test]
+fn a_producer_output_locator_resolves_absolute_decks_in_a_retained_copy() {
+    let fixture = build_fixture("retained-output");
+    let locator =
+        format!("/datapool/mantle-store/convergence-pilot-20261119/store/{ROOT_BASENAME}");
+    let retained = fixture.case_dir.join("retained").join(ROOT_BASENAME);
+    fs::create_dir_all(retained.parent().unwrap()).unwrap();
+    fs::rename(fixture.case_dir.join(ROOT_BASENAME), &retained).unwrap();
+    fixture.rewrite_case(|case| {
+        case["contracts"][0]["producer_output"] = json!(format!("retained/{ROOT_BASENAME}"));
+        case["contracts"][0]["producer_output_locator"] = json!(locator);
+    });
+    rewrite_evidence_deck(&fixture, &format!("{locator}/{DECK_NAME}"));
+
+    let output = fixture.inspect();
+    assert!(
+        output.status.success(),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt = receipt_json(&output);
+    assert_eq!(receipt["rows"][0]["state"], "current");
+    assert_eq!(
+        receipt["inputs"]["contracts"][0]["producer_output_locator"],
+        json!(locator)
+    );
+}
+
+#[test]
+fn a_producer_output_locator_with_a_different_basename_is_rejected() {
+    let fixture = build_fixture("locator-basename");
+    let locator = "/datapool/mantle-store/pilot/other-output".to_string();
+    fixture.rewrite_case(|case| {
+        case["contracts"][0]["producer_output_locator"] = json!(locator);
+    });
+    rewrite_evidence_deck(&fixture, &format!("{locator}/{DECK_NAME}"));
+
+    let output = fixture.inspect();
+    assert_eq!(output.status.code(), Some(1));
+    let rejection = receipt_json(&output);
+    assert!(
+        rejection["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|issue| issue["code"] == "convergence.proof_deck_outside_output"),
+        "rejection: {rejection}"
+    );
+}
+
+#[test]
+fn an_absolute_deck_outside_the_producer_output_locator_is_rejected() {
+    let fixture = build_fixture("locator-outside");
+    let locator = format!("/datapool/mantle-store/pilot/{ROOT_BASENAME}");
+    fixture.rewrite_case(|case| {
+        case["contracts"][0]["producer_output_locator"] = json!(locator);
+    });
+    rewrite_evidence_deck(&fixture, "/datapool/mantle-store/pilot/outside-deck.json");
+
+    let output = fixture.inspect();
+    assert_eq!(output.status.code(), Some(1));
+    let rejection = receipt_json(&output);
+    assert!(
+        rejection["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|issue| issue["code"] == "convergence.proof_deck_outside_output"),
+        "rejection: {rejection}"
+    );
 }
 
 #[test]

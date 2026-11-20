@@ -66,6 +66,10 @@ struct ContractCase {
     evidence: String,
     handoff: String,
     producer_output: String,
+    /// Absolute path the evidence recorded for the realized output, when the
+    /// retained copy the case names lives elsewhere.
+    #[serde(default)]
+    producer_output_locator: Option<String>,
     #[serde(default)]
     realization_receipt: Option<String>,
     #[serde(default)]
@@ -204,16 +208,16 @@ fn open_directory(path: &Path) -> Result<CapabilityRoot, Vec<Value>> {
 ///
 /// Octet names the deck it judged by the locator it resolved against its own
 /// source root, which may be absolute. A relative locator is used as given; an
-/// absolute locator must lexically start with the case's resolved
-/// `producer_output` directory followed by `/`. Nothing is canonicalized, so a
-/// link cannot widen the directory, and no `..` component may step outside it.
-fn deck_relative_path<'a>(directory: &Path, locator: &'a str) -> Option<&'a str> {
+/// absolute locator must lexically start with `absolute_base` followed by `/`
+/// (the case's resolved `producer_output`, or its `producer_output_locator`
+/// when the retained copy lives elsewhere). Nothing is canonicalized, so a link
+/// cannot widen the directory, and no `..` component may step outside it.
+fn deck_relative_path<'a>(absolute_base: &str, locator: &'a str) -> Option<&'a str> {
     if locator.is_empty() {
         return None;
     }
     let relative = if Path::new(locator).is_absolute() {
-        let directory = directory.to_string_lossy();
-        let prefix = format!("{}/", directory.trim_end_matches('/'));
+        let prefix = format!("{}/", absolute_base.trim_end_matches('/'));
         locator.strip_prefix(&prefix)?
     } else {
         locator
@@ -280,6 +284,7 @@ fn handoff_facts(
 
 fn producer_output_facts(
     directory: &Path,
+    locator: Option<&str>,
     evidence: &Value,
     policy: &AssuranceTargetsPolicy,
 ) -> Result<ProducerOutputFacts, Vec<Value>> {
@@ -295,6 +300,26 @@ fn producer_output_facts(
             )]
         })?
         .to_string();
+    // Absolute deck locators are matched against the path the evidence
+    // recorded; the bytes read still come from the case's retained directory.
+    let absolute_base = match locator {
+        Some(locator) => {
+            let locator_name = Path::new(locator)
+                .file_name()
+                .and_then(|name| name.to_str());
+            if locator_name != Some(dir_name.as_str()) {
+                return Err(vec![issue(
+                    ISSUE_PROOF_DECK_OUTSIDE_OUTPUT,
+                    directory.display(),
+                    format!(
+                        "producer_output_locator must end with the producer output directory name: {locator}"
+                    ),
+                )]);
+            }
+            locator.to_string()
+        }
+        None => directory.to_string_lossy().into_owned(),
+    };
     let root = open_directory(directory)?;
     let receipt = bytes_facts(read_in_dir(
         &root,
@@ -314,7 +339,7 @@ fn producer_output_facts(
             let Some(locator) = deck.get("deck").and_then(Value::as_str) else {
                 continue;
             };
-            let Some(relative) = deck_relative_path(directory, locator) else {
+            let Some(relative) = deck_relative_path(&absolute_base, locator) else {
                 return Err(vec![issue(
                     ISSUE_PROOF_DECK_OUTSIDE_OUTPUT,
                     directory.display(),
@@ -412,6 +437,7 @@ fn contract_facts(
     let handoff = handoff_facts(&resolve(base, &case.handoff), policy)?;
     let producer_output = producer_output_facts(
         &resolve(base, &case.producer_output),
+        case.producer_output_locator.as_deref(),
         &evidence.value,
         policy,
     )?;
@@ -442,6 +468,7 @@ fn contract_facts(
 
     Ok(ContractCaseFacts {
         contract_id: case.contract_id.clone(),
+        producer_output_locator: case.producer_output_locator.clone(),
         contract,
         decision,
         evidence,

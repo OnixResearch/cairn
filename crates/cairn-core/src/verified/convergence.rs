@@ -124,6 +124,9 @@ pub struct ProducerOutputFacts {
 #[derive(Debug, Clone)]
 pub struct ContractCaseFacts {
     pub contract_id: String,
+    /// Absolute path the evidence recorded for the realized output when the
+    /// retained copy lives elsewhere; absolute deck locators resolve against it.
+    pub producer_output_locator: Option<String>,
     pub contract: FileFacts,
     pub decision: FileFacts,
     pub evidence: FileFacts,
@@ -229,6 +232,8 @@ struct RowOutcome {
 }
 
 struct RealizationBinding {
+    node_id: Option<String>,
+    target_derivation: Option<String>,
     target_path: Option<String>,
     nar_sha256: Option<String>,
 }
@@ -326,6 +331,7 @@ pub fn evaluate_convergence(request: &ConvergenceRequest) -> Value {
         .map(|case| {
             json!({
                 "contract_id": case.contract_id,
+                "producer_output_locator": case.producer_output_locator,
                 "contract_blake3": case.contract.blake3,
                 "decision_blake3": case.decision.blake3,
                 "evidence_blake3": case.evidence.blake3,
@@ -471,13 +477,24 @@ fn evaluate_target(
         job_id: target.evidence_job.as_ref().map(|job| job.job_id.clone()),
     };
     if outcome.state == CONVERGENCE_STATE_CURRENT {
+        // Mantle records the route it used on the realization receipt; a null or
+        // non-string value states no route rather than inventing one.
+        let realization_route = case
+            .realization
+            .as_ref()
+            .and_then(|facts| facts.value.pointer("/cache_policy/realization_route"))
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         outcome.bound = Some(json!({
             "source_revision": request.registry.revision.value,
             "producer_job_identity": observed_string(&case.handoff.observation.value, "producer_job_identity").unwrap_or_default(),
             "receipt_identity": observed_string(&case.handoff.observation.value, "receipt_identity").unwrap_or_default(),
             "root_derivation": case.handoff.root_derivation.text.as_deref().map(str::trim).unwrap_or_default(),
+            "node_id": binding.node_id.unwrap_or_default(),
+            "target_derivation": binding.target_derivation.unwrap_or_default(),
             "target_path": binding.target_path.unwrap_or_default(),
             "signer": signer.unwrap_or_default(),
+            "realization_route": realization_route,
         }));
     }
     outcome
@@ -806,6 +823,8 @@ fn check_realization(
     evaluation: &mut Evaluation,
 ) -> RealizationBinding {
     let mut binding = RealizationBinding {
+        node_id: None,
+        target_derivation: None,
         target_path: None,
         nar_sha256: None,
     };
@@ -836,12 +855,16 @@ fn check_realization(
         .as_deref()
         .map(str::trim)
         .unwrap_or_default();
+    // Mantle names a foreign unit `nix:` plus the foreign derivation's file
+    // name; `target_derivation` is Mantle's translated derivation, which differs
+    // from the frozen root even on the preserve route.
+    let expected_node_id = format!("nix:{}", final_component(root_derivation));
     let unit = value
         .get("units")
         .and_then(Value::as_array)
         .and_then(|units| {
             units.iter().find(|unit| {
-                unit.get("target_derivation").and_then(Value::as_str) == Some(root_derivation)
+                unit.get("node_id").and_then(Value::as_str) == Some(expected_node_id.as_str())
             })
         });
     let Some(unit) = unit else {
@@ -851,6 +874,14 @@ fn check_realization(
         );
         return binding;
     };
+    binding.node_id = unit
+        .get("node_id")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+    binding.target_derivation = unit
+        .get("target_derivation")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
     let dir_name = case.producer_output.dir_name.as_str();
     let output = unit
         .get("outputs")
