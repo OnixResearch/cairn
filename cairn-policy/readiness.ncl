@@ -6,7 +6,7 @@ let StageKind = [| 'artifact, 'proposal, 'design, 'tasks, 'completion, 'sync, 'a
 let ActionKind = [| 'artifact_repair, 'evidence_refresh, 'dependency_wait, 'diagnostic_inspection, 'sync_preview, 'archive_preview, 'unresolved |] in
 let NonNegative = std.contract.from_predicate (fun n => std.is_number n && n >= 0 && std.number.floor n == n) in
 let DetailKind = [| 'blocker, 'action, 'stage |] in
-let ViewPolicy = { max_bytes | Positive, default_bytes | Positive,
+let ViewPolicyContract = { max_bytes | Positive, default_bytes | Positive,
   max_entries | NonNegative, default_entries | NonNegative, max_detail_bytes | Positive } in
 {
   contracts = {
@@ -35,7 +35,7 @@ let ViewPolicy = { max_bytes | Positive, default_bytes | Positive,
       omitted_blockers | NonNegative, omitted_actions | NonNegative,
       omitted_stage_decisions | NonNegative, complete | Bool,
       detail_selectors | Array { kind | DetailKind, id | String } },
-    ViewPolicy = ViewPolicy,
+    ViewPolicy = ViewPolicyContract,
   },
   policy = {
     schema = "cairn.readiness.v1",
@@ -52,7 +52,7 @@ let ViewPolicy = { max_bytes | Positive, default_bytes | Positive,
       { code = "verification_contract.subject_stale", kind = "evidence_refresh" },
     ],
   },
-  view_policy | ViewPolicy = {
+  view_policy | ViewPolicyContract = {
     max_bytes = 16384,
     default_bytes = 16384,
     max_entries = 16,

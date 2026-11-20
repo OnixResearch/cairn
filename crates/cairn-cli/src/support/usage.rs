@@ -45,6 +45,7 @@ pub(crate) fn usage_text() -> &'static str {
         , "\n  mcp [--response-profile legacy|structured-summary] [--tool-profile full|inspect|author|verify] [--describe-tool NAME] [--paged-tools]  (profiles restrict discovery; never grant mutation)"
         , "\n  context read --root PATH|--lifecycle-store ID --scope accepted|active|archived --artifact ID [--change ID] [--spec ID] (--requirement-id ID|--task-id ID|--heading TITLE...) [--expected-source-blake3 HEX]"
         , "\n  readiness <change> [--root PATH] [--policy PATH] [--view agent] [--max-bytes N] [--max-entries N] [--detail-kind blocker|action|stage --detail-id ID --expected-receipt HASH]"
+        , "\n  selected-work CHANGE (--root PATH | --lifecycle-store ID) [--task ID] [--policy PATH] [--contract FILE --results FILE --subject-hash HASH] [--cross-repo-evidence FILE] [--obligation-definition ID [--obligation-observations FILE]] [--disclosure local|portable] [--expected-cohort JSON] [--detail]  (read-only; detail requires expected cohort)"
         , "\n  observe active|readiness CHANGE|context [--root PATH] [--policy PATH] [--page-entries N] [--page-bytes N] [--cursor HEX] [--prior PATH] [--mode complete|page|unchanged|difference] [--output PATH]"
         , "\n  requirement-contract inspect --requirement ID --registry FILE [--root DIR] [--policy FILE] [--inventory FILE] [--review FILE] [--example FILE]  (read-only finite semantics; never proof admission)"
         , "\n  claim-derivation explain --case FILE [--policy FILE]  (advisory; no lifecycle mutation)"

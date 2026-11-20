@@ -27,9 +27,14 @@ surface.
 - Policy-owned MCP catalog profiles (`full`, `inspect`, `author`, `verify`), exact
   single-descriptor lookup and opt-in identity-bound `tools/list` pagination, with
   the unpaged catalog unchanged and profiles never granting capability.
-- Versioned selected-work CLI/MCP and portable Rust DTO for explicit change/task
-  cohorts, typed requirement and acceptance references, native phase readiness,
-  prerequisite closure, identity-checked local detail and consumer admission.
+- Versioned `cairn.selected-work.v1` CLI/MCP and portable Rust DTO for explicit
+  change/task cohorts, typed requirement and acceptance references, native phase
+  readiness, prerequisite closure, identity-checked local detail and consumer
+  admission. An opt-in `--obligation-definition` carries the bound workflow
+  obligation predicate, structured guidance, typed per-obligation facts with
+  recomputable obligation, guidance and remaining-condition identities, and the
+  evaluation, under a separate `obligations` cohort identity; without it the
+  section is explicitly `not_selected`.
 - Opt-in finite requirement semantics with revision-bound contracts over finite
   nominal domains, deterministic normalization, separate contract, interpretation
   and review identities, and read-only `cairn requirement-contract inspect`.

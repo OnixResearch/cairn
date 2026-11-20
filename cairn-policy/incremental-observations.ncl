@@ -15,14 +15,14 @@ let Bounds = {
   max_entries | Positive,
   max_selector_bytes | Positive,
 } in
-let Policy = {
+let PolicyContract = {
   schema | std.contract.from_predicate (fun s => s == "cairn.incremental-observations-policy.v1"),
   ordering_version | std.contract.from_predicate (fun s => s == "lexicographic-identity-byte-order.v1"),
   bounds | Bounds,
   required_non_claims | Array String,
 } in
 {
-  contracts = { Policy = Policy },
+  contracts = { Policy = PolicyContract },
   policy = {
     schema = "cairn.incremental-observations-policy.v1",
     ordering_version = "lexicographic-identity-byte-order.v1",
@@ -45,5 +45,5 @@ let Policy = {
       "a cached or saved observation does not replace fresh mutation preflight, evidence checks, or lifecycle gates",
       "page cursors are deterministic continuation data, not authentication tokens",
     ],
-  } | Policy,
+  } | PolicyContract,
 }

@@ -274,12 +274,30 @@ pub(crate) fn readiness_report_with_budget(
     input: &Value,
     budget: &crate::support::observation_budget::ObservationBudget,
 ) -> cairn_core::verified::readiness::ReadinessReport {
-    let snapshot =
-        match gather_observation_cohort(|| gather_once(root, policy_path, change, input, budget)) {
-            Ok(snapshot) => snapshot,
-            Err(error) => unavailable_readiness_snapshot(change, input, error.as_ref()),
-        };
+    let snapshot = match gather_observation_cohort(|| {
+        gather_once(root, policy_path, change, input, budget, false)
+    }) {
+        Ok(snapshot) => snapshot,
+        Err(error) => unavailable_readiness_snapshot(change, input, error.as_ref()),
+    };
     derive_readiness(&snapshot)
+}
+
+/// One native stage observation for a selected change and declared closure.
+/// The selected-work shell repeats the whole source/readiness/context cohort
+/// under this shared budget and refuses any drift between its two passes.
+pub(crate) fn selected_readiness_value(
+    input: &Value,
+    budget: &crate::support::observation_budget::ObservationBudget,
+) -> Result<Value, Box<dyn Error>> {
+    let change = input["change"]
+        .as_str()
+        .ok_or("readiness requires change")?;
+    cairn_core::validate_change_name(change)?;
+    let root = PathBuf::from(input["root"].as_str().ok_or("selected root required")?);
+    let policy = PathBuf::from(input["policy"].as_str().unwrap_or(default_policy_path()));
+    let snapshot = gather_once(&root, &policy, change, input, budget, true)?;
+    Ok(serde_json::to_value(derive_readiness(&snapshot))?)
 }
 
 fn unavailable_readiness_snapshot(
@@ -351,6 +369,7 @@ fn gather_once(
     change: &str,
     input: &Value,
     budget: &crate::support::observation_budget::ObservationBudget,
+    selected_closure: bool,
 ) -> Result<ReadinessSnapshot, Box<dyn Error>> {
     let layout = detect_layout(root).layout;
     let completion = load_completion_with_budget(root, input, Some(budget));
@@ -502,7 +521,16 @@ fn gather_once(
             });
         }
     };
-    let graph = read_change_dependency_graph_with_budget(root, layout, Some(budget));
+    let graph = if selected_closure {
+        crate::support::read_selected_dependency_graph_with_budget(
+            root,
+            layout,
+            change,
+            Some(budget),
+        )
+    } else {
+        read_change_dependency_graph_with_budget(root, layout, Some(budget))
+    };
     let probes =
         crate::probe::observe_gate_probes_with_budget(root, layout, change, &policy, Some(budget));
 

@@ -184,6 +184,7 @@ fn export_reports_the_bound_predicate_and_obligation_ids_for_consumers() {
         export["predicate"]["allowed_command_classes"],
         json!([
             "gate",
+            "readiness",
             "receipt-inspect",
             "traceability",
             "workflow-inspect"

@@ -56,6 +56,7 @@ mod revision_classification;
 mod rfd;
 mod runtime_evidence;
 mod scoped_claim_derivations;
+mod selected_work;
 mod semantic_review;
 mod source_review;
 mod stack_provenance;
@@ -192,6 +193,9 @@ fn run(all_args: Vec<String>) -> Result<(), Box<dyn Error>> {
         print_usage();
         return Ok(());
     };
+    if command == "selected-work" {
+        return selected_work::run_selected_work(all_args[1..].to_vec());
+    }
     if command == "context"
         && all_args.get(1).map(String::as_str) == Some("read")
         && !all_args

@@ -44,7 +44,26 @@ pub(crate) fn load_agent_guidance(
     policy_constraints: &[String],
     policy: &Policy,
 ) -> Result<Option<AgentGuidanceResult>, Box<dyn Error>> {
-    let project_capability = CapabilityRoot::open(CapabilityRootKind::Repository, project_root)?;
+    load_agent_guidance_with_budget(
+        project_root,
+        lifecycle_root,
+        request,
+        policy_constraints,
+        policy,
+        None,
+    )
+}
+
+pub(crate) fn load_agent_guidance_with_budget(
+    project_root: &Path,
+    lifecycle_root: &Path,
+    request: AgentGuidanceRequest,
+    policy_constraints: &[String],
+    policy: &Policy,
+    budget: Option<&crate::support::observation_budget::ObservationBudget>,
+) -> Result<Option<AgentGuidanceResult>, Box<dyn Error>> {
+    let project_capability =
+        CapabilityRoot::open(CapabilityRootKind::Repository, project_root)?.with_budget(budget);
     let source_path = Path::new(PROJECT_SOURCE_PATH);
     let projection_path = Path::new(PROJECT_PROJECTION_PATH);
     let source = read_optional_bounded(&project_capability, source_path, PROJECT_CONFIG_MAX_BYTES)?;
@@ -112,10 +131,10 @@ pub(crate) fn load_agent_guidance(
         .iter()
         .any(|reference| reference.source_root == AGENT_GUIDANCE_SOURCE_LIFECYCLE)
     {
-        Some(CapabilityRoot::open(
-            CapabilityRootKind::Repository,
-            lifecycle_root,
-        )?)
+        Some(
+            CapabilityRoot::open(CapabilityRootKind::Repository, lifecycle_root)?
+                .with_budget(budget),
+        )
     } else {
         None
     };

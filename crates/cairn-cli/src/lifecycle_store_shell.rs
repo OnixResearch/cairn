@@ -198,6 +198,21 @@ pub(crate) fn prepare_invocation(
     })
 }
 
+/// Selected-work is an explicit read surface: it admits one repository root or
+/// one lifecycle-store ID through the same native resolver, without enabling
+/// ambient fallback or global registry discovery.
+pub(crate) fn resolve_selected_work_root(
+    root: Option<String>,
+    store: Option<String>,
+) -> Result<RootLocalInvocation, Box<dyn Error>> {
+    if root.is_some() == store.is_some() {
+        return Err("selected-work requires exactly one of --root or --lifecycle-store".into());
+    }
+    let invocation = observe_root_local_invocation(&ShellPolicy::load()?, root, store)?;
+    crate::support::reject_legacy_only_lifecycle_root(invocation.selected_root()?)?;
+    Ok(invocation)
+}
+
 pub(crate) fn attach_resolution(mut value: Value, invocation: &RootLocalInvocation) -> Value {
     if let Some(object) = value.as_object_mut() {
         object.insert(

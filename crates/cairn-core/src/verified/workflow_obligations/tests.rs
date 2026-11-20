@@ -834,3 +834,180 @@ fn export_binds_intent_policy_subject_context_and_selected_alternative() {
     );
     assert_eq!(report.binding, export.binding);
 }
+
+fn consumer_facts(
+    catalog: &AdmittedWorkflowObligationCatalog,
+    id: &str,
+    selected: &BTreeMap<String, String>,
+    subject: &str,
+) -> (
+    ObligationPredicate,
+    ObligationGuidance,
+    Vec<ObligationNodeFact>,
+) {
+    let admitted = definition(catalog, id);
+    let predicate =
+        obligation_predicate(admitted, &catalog.policy, selected, subject, CONTEXT).unwrap();
+    let guidance = obligation_guidance(admitted, &catalog.policy, selected).unwrap();
+    let facts = obligation_node_facts(admitted, &predicate, &guidance).unwrap();
+    (predicate, guidance, facts)
+}
+
+fn fact<'a>(facts: &'a [ObligationNodeFact], id: &str) -> &'a ObligationNodeFact {
+    facts
+        .iter()
+        .find(|fact| fact.id == id)
+        .expect("fact is present")
+}
+
+// r[verify cairn.workflow_obligations.consumer_facts]
+#[test]
+fn consumer_facts_type_every_node_with_selection_and_native_references() {
+    let catalog = admitted_catalog();
+    let (predicate, guidance, facts) =
+        consumer_facts(&catalog, "verify", &BTreeMap::new(), SUBJECT);
+    verify_obligation_node_facts(&predicate, &guidance, &facts).unwrap();
+    let mut expression_ids = Vec::new();
+    fn ids(expression: &ObligationExpr, out: &mut Vec<String>) {
+        out.push(expression.id().to_string());
+        match expression {
+            ObligationExpr::AllOf { obligations, .. } => {
+                obligations.iter().for_each(|child| ids(child, out));
+            }
+            ObligationExpr::AnyOf { alternatives, .. } => alternatives
+                .iter()
+                .flat_map(|alternative| alternative.obligations.iter())
+                .for_each(|child| ids(child, out)),
+            ObligationExpr::Applicable { then, .. } => ids(then, out),
+            ObligationExpr::Evidence { .. } | ObligationExpr::Temporal { .. } => {}
+        }
+    }
+    ids(&predicate.expression, &mut expression_ids);
+    assert_eq!(
+        facts.iter().map(|fact| fact.id.clone()).collect::<Vec<_>>(),
+        expression_ids
+    );
+    let contract = fact(&facts, "verify.evidence.contract");
+    assert_eq!(contract.kind, ObligationNodeKind::Evidence);
+    assert_eq!(contract.selection, ObligationSelectionState::Required);
+    assert_eq!(contract.parent.as_deref(), Some("verify.completion"));
+    assert_eq!(
+        contract.evidence[0].requirement_id,
+        "cairn.supersede.agent_run_receipts.verification_contract"
+    );
+    let freshness = fact(&facts, "verify.evidence.freshness");
+    assert_eq!(
+        freshness.expected_observations,
+        vec!["verify.observation.receipt"]
+    );
+    assert_eq!(freshness.command_classes, vec!["receipt-inspect"]);
+    // Without a selected alternative every branch node is unresolved.
+    for id in ["verify.traceability.contract", "verify.traceability.claim"] {
+        assert_eq!(
+            fact(&facts, id).selection,
+            ObligationSelectionState::SelectionMissing
+        );
+    }
+    let conditional = fact(&facts, "verify.conditional.claim.revision");
+    assert_eq!(conditional.selection, ObligationSelectionState::Conditional);
+    assert_eq!(conditional.conditions, vec!["verify.conditional.claim"]);
+    assert_eq!(
+        fact(&facts, "verify.conditional.claim").evidence[0].kind,
+        EvidencePredicateKind::Applicability
+    );
+
+    let selected = selection(&[("verify.traceability", "receipt-chain")]);
+    let (_, _, chosen) = consumer_facts(&catalog, "verify", &selected, SUBJECT);
+    assert_eq!(
+        fact(&chosen, "verify.traceability.contract").selection,
+        ObligationSelectionState::SelectedAlternative
+    );
+    assert_eq!(
+        fact(&chosen, "verify.traceability.claim").selection,
+        ObligationSelectionState::UnselectedAlternative
+    );
+    // Meaning is selection-independent; guidance and condition identities are not.
+    let before = fact(&facts, "verify.traceability.contract");
+    let after = fact(&chosen, "verify.traceability.contract");
+    assert_eq!(before.obligation_blake3, after.obligation_blake3);
+    assert_ne!(before.guidance_blake3, after.guidance_blake3);
+    assert_ne!(before.condition_blake3, after.condition_blake3);
+
+    // A different subject changes only the remaining-condition identity.
+    let other = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+    let (_, _, moved) = consumer_facts(&catalog, "verify", &BTreeMap::new(), other);
+    for (left, right) in facts.iter().zip(&moved) {
+        assert_eq!(left.obligation_blake3, right.obligation_blake3);
+        assert_eq!(left.guidance_blake3, right.guidance_blake3);
+        assert_ne!(left.condition_blake3, right.condition_blake3);
+    }
+}
+
+// r[verify cairn.workflow_obligations.consumer_facts]
+#[test]
+fn consumer_facts_carry_exception_identity_and_refuse_tampering() {
+    let catalog = admitted_catalog();
+    let (predicate, guidance, facts) = consumer_facts(
+        &catalog,
+        "verify.bounded-exception",
+        &BTreeMap::new(),
+        SUBJECT,
+    );
+    verify_obligation_node_facts(&predicate, &guidance, &facts).unwrap();
+    let exception = fact(&facts, "verify.exception.freshness");
+    assert_eq!(exception.kind, ObligationNodeKind::Exception);
+    let reference = exception.exception.as_ref().unwrap();
+    assert_eq!(reference.replaces, "verify.evidence.freshness");
+    assert_eq!(reference.request_revision, 3);
+    assert_eq!(reference.control, "sandboxed-revalidation");
+    assert_eq!(
+        fact(&facts, "verify.bounded.ordering")
+            .temporal_check
+            .as_deref(),
+        Some("verify.receipt-order")
+    );
+
+    let mut weakened = facts.clone();
+    let index = weakened
+        .iter()
+        .position(|fact| fact.id == "verify.evidence.pass-only")
+        .unwrap();
+    weakened[index].evidence[0].accepted_revision_blake3 = "0".repeat(64);
+    assert!(verify_obligation_node_facts(&predicate, &guidance, &weakened).is_err());
+
+    let mut promoted = facts.clone();
+    let index = promoted
+        .iter()
+        .position(|fact| fact.id == "verify.traceability.claim")
+        .unwrap();
+    promoted[index].selection = ObligationSelectionState::Required;
+    assert!(verify_obligation_node_facts(&predicate, &guidance, &promoted).is_err());
+
+    let mut dropped = facts.clone();
+    dropped.retain(|fact| fact.kind != ObligationNodeKind::Exception);
+    assert!(verify_obligation_node_facts(&predicate, &guidance, &dropped).is_err());
+
+    let mut omitted = facts.clone();
+    omitted.remove(1);
+    assert!(verify_obligation_node_facts(&predicate, &guidance, &omitted).is_err());
+
+    let mut stale = facts.clone();
+    stale[0].condition_blake3 = "1".repeat(64);
+    assert!(verify_obligation_node_facts(&predicate, &guidance, &stale).is_err());
+
+    let mut resubjected = predicate.clone();
+    resubjected.subject_blake3 = "c".repeat(64);
+    assert!(!verify_predicate_identity(&resubjected));
+    assert!(verify_obligation_node_facts(&resubjected, &guidance, &facts).is_err());
+
+    let (_, other_guidance, _) = consumer_facts(
+        &catalog,
+        "verify.bounded-exception",
+        &selection(&[("verify.traceability", "claim-revision")]),
+        SUBJECT,
+    );
+    assert!(verify_obligation_node_facts(&predicate, &other_guidance, &facts).is_err());
+
+    let verify = definition(&catalog, "verify");
+    assert!(obligation_node_facts(verify, &predicate, &guidance).is_err());
+}

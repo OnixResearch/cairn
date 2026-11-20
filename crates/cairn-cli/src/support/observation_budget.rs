@@ -26,6 +26,10 @@ impl ObservationBudget {
         local_limit.min(self.bytes.get())
     }
 
+    pub(crate) fn consumed_bytes(&self) -> u64 {
+        MAX_REPORT_BYTES.saturating_sub(self.bytes.get())
+    }
+
     pub(crate) fn charge_bytes(&self, bytes: u64) -> io::Result<()> {
         let remaining = self
             .bytes
