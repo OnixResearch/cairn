@@ -61,8 +61,11 @@
     "octet_decision": "octet-requirement-decision/v1",
     "octet_evidence": "octet-requirement-evidence/v1",
     "octet_formal_proof_envelope": "octet-formal-proof-envelope/v1",
-    "octet_producer_job": "octet-mantle-producer-job/v1",
     "octet_proof_cards": "octet-proof-cards/v1",
+    "producer_jobs": {
+      "octet": "octet-mantle-producer-job/v1",
+      "trellis": "trellis-mantle-producer-job/v1"
+    },
     "registry": "cairn.content-bound-requirement-registry.v1"
   },
   "sources_schema": "cairn.assurance-target-sources.v1",

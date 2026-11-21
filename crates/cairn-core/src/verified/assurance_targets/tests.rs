@@ -580,3 +580,43 @@ fn projection_mismatch_is_detected() {
     assert_code(&issues, ISSUE_PROJECTION_MISMATCH);
     assert!(issues.iter().any(|issue| issue.field_path == "contract_id"));
 }
+
+// r[verify cairn.assurance_targets.contract]
+#[test]
+fn producer_job_schemas_are_owner_scoped() {
+    let policy = policy();
+    assert_eq!(
+        admitted_producer_job_schema(&policy, "Octet"),
+        Some("octet-mantle-producer-job/v1")
+    );
+    assert_eq!(
+        admitted_producer_job_schema(&policy, "Trellis"),
+        Some("trellis-mantle-producer-job/v1")
+    );
+    assert_eq!(admitted_producer_job_schema(&policy, "unknown"), None);
+}
+
+// r[verify cairn.assurance_targets.contract]
+#[test]
+fn invalid_producer_job_maps_are_rejected() {
+    let mut empty = value(POLICY_JSON);
+    empty["schemas"]["producer_jobs"] = json!({});
+    assert_code(
+        &expect_rejected(parse_assurance_targets_policy(&empty)),
+        ISSUE_INVALID_PRODUCER_JOBS,
+    );
+
+    let mut blank = value(POLICY_JSON);
+    blank["schemas"]["producer_jobs"]["octet"] = json!("");
+    assert_code(
+        &expect_rejected(parse_assurance_targets_policy(&blank)),
+        ISSUE_INVALID_PRODUCER_JOBS,
+    );
+
+    let mut duplicate = value(POLICY_JSON);
+    duplicate["schemas"]["producer_jobs"]["OCTET"] = json!("octet-mantle-producer-job/v2");
+    assert_code(
+        &expect_rejected(parse_assurance_targets_policy(&duplicate)),
+        ISSUE_INVALID_PRODUCER_JOBS,
+    );
+}

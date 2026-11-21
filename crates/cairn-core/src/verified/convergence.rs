@@ -12,9 +12,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::{json, Value};
 
 use super::assurance_targets::{
-    bind_targets_to_registry, compare_projection, project_contract, AssuranceTarget,
-    AssuranceTargetIssue, AssuranceTargetsPolicy, GeneratedSources, TargetContract, TargetsFile,
-    ISSUE_STALE_ROW,
+    admitted_producer_job_schema, bind_targets_to_registry, compare_projection, project_contract,
+    AssuranceTarget, AssuranceTargetIssue, AssuranceTargetsPolicy, GeneratedSources,
+    TargetContract, TargetsFile, ISSUE_STALE_ROW,
 };
 use super::content_bound_requirement_registry::ContentBoundRequirementRegistry;
 use super::evidence::{blake3_hex, canonical_json};
@@ -60,6 +60,9 @@ pub const CONVERGENCE_ISSUE_DECISION_INCOMPLETE: &str = "convergence.decision_in
 pub const CONVERGENCE_ISSUE_PROOF_ACCEPTANCE_RELAY: &str = "convergence.proof_acceptance_relay";
 pub const CONVERGENCE_ISSUE_REVISION_MISMATCH: &str = "convergence.revision_mismatch";
 pub const CONVERGENCE_ISSUE_JOB_ID_MISMATCH: &str = "convergence.job_id_mismatch";
+pub const CONVERGENCE_ISSUE_MISSING_PRODUCER_OWNER: &str = "convergence.missing_producer_owner";
+pub const CONVERGENCE_ISSUE_UNKNOWN_PRODUCER_OWNER: &str = "convergence.unknown_producer_owner";
+pub const CONVERGENCE_ISSUE_PRODUCER_SCHEMA_MISMATCH: &str = "convergence.producer_schema_mismatch";
 pub const CONVERGENCE_ISSUE_PRODUCER_JOB_IDENTITY_MISMATCH: &str =
     "convergence.producer_job_identity_mismatch";
 pub const CONVERGENCE_ISSUE_TOOL_GRAPH_IDENTITY_MISMATCH: &str =
@@ -682,6 +685,53 @@ fn decision_issue_code(mapped: &str) -> &'static str {
     }
 }
 
+/// A handoff producer job the policy does not admit for its own owner.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProducerJobAdmissionIssue {
+    pub code: &'static str,
+    pub message: String,
+}
+
+/// Admit the handoff `job.json` against the policy's owner-scoped map.
+///
+/// The job must name a non-empty `owner`; the policy must admit a schema for
+/// that owner (matched without ASCII case); and the job's `schema_version`
+/// must equal it. A missing owner, an unknown owner and a schema/owner
+/// mismatch each fail with their own stable code.
+pub fn admit_producer_job<'a>(
+    policy: &'a AssuranceTargetsPolicy,
+    job: &Value,
+) -> Result<&'a str, ProducerJobAdmissionIssue> {
+    let owner = job
+        .get("owner")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|owner| !owner.is_empty());
+    let Some(owner) = owner else {
+        return Err(ProducerJobAdmissionIssue {
+            code: CONVERGENCE_ISSUE_MISSING_PRODUCER_OWNER,
+            message: "handoff job.json must declare a non-empty owner".to_string(),
+        });
+    };
+    let Some(admitted) = admitted_producer_job_schema(policy, owner) else {
+        return Err(ProducerJobAdmissionIssue {
+            code: CONVERGENCE_ISSUE_UNKNOWN_PRODUCER_OWNER,
+            message: format!(
+                "policy admits no producer-job schema for owner {owner:?}; schemas.producer_jobs must name it"
+            ),
+        });
+    };
+    if job.get("schema_version").and_then(Value::as_str) != Some(admitted) {
+        return Err(ProducerJobAdmissionIssue {
+            code: CONVERGENCE_ISSUE_PRODUCER_SCHEMA_MISMATCH,
+            message: format!(
+                "handoff job.json schema_version must equal {admitted} for owner {owner}"
+            ),
+        });
+    }
+    Ok(admitted)
+}
+
 fn check_handoff(
     request: &ConvergenceRequest,
     target: &AssuranceTarget,
@@ -715,6 +765,15 @@ fn check_handoff(
     let target_job_id = target.evidence_job.as_ref().map(|job| job.job_id.as_str());
     if job_id.is_none() || job_id != target_job_id {
         evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_JOB_ID_MISMATCH);
+    }
+
+    if let Err(admission) = admit_producer_job(&request.policy, &case.handoff.job.value) {
+        let rank = match admission.code {
+            CONVERGENCE_ISSUE_UNKNOWN_PRODUCER_OWNER => Rank::Unsupported,
+            CONVERGENCE_ISSUE_PRODUCER_SCHEMA_MISMATCH => Rank::Stale,
+            _ => Rank::Incomplete,
+        };
+        evaluation.mark(rank, admission.code);
     }
 
     if !observed_digest_matches(

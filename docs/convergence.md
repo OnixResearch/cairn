@@ -78,6 +78,18 @@ and Rust verifies. Bounds, admitted values and admitted foreign schema
 identifiers live in `cairn-policy/assurance-targets.ncl`, exported to
 `cairn-policy/generated/assurance-targets.json`.
 
+Producer jobs are admitted per owner. `schemas.producer_jobs` maps each admitted
+owner to that owner's job schema; the handoff `job.json` selects its entry by its
+own `owner` field, matched without ASCII case, and its `schema_version` must
+equal that entry. The reviewed export admits `octet` →
+`octet-mantle-producer-job/v1` and `trellis` → `trellis-mantle-producer-job/v1`.
+A missing owner is rejected with `convergence.missing_producer_owner`, an owner
+the policy does not admit with `convergence.unknown_producer_owner`, and a
+schema that does not match that owner's entry with
+`convergence.producer_schema_mismatch`. The pure evaluator reports the same
+conditions as `incomplete`, `unsupported` and `stale` respectively. The job's
+`job_id` binding to the target's `evidence_job.job_id` is unchanged.
+
 ## Inspect convergence
 
 ```console

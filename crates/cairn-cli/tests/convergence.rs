@@ -265,6 +265,7 @@ fn build_fixture(label: &str) -> Fixture {
 
     let job_bytes = serde_json::to_vec(&json!({
         "schema_version": "octet-mantle-producer-job/v1",
+        "owner": "Octet",
         "job_id": JOB_ID,
     }))
     .unwrap();
@@ -498,6 +499,43 @@ fn hash_tree(root: &Path) -> BTreeMap<String, String> {
     entries
 }
 
+/// Rewrite the handoff job and rebind the observation's
+/// `producer_job_identity` to the new bytes.
+fn rewrite_job(fixture: &Fixture, job: Value) {
+    let job_bytes = serde_json::to_vec(&job).unwrap();
+    fs::write(fixture.case_dir.join("handoff/job.json"), &job_bytes).unwrap();
+    let observation_path = fixture.case_dir.join("handoff/mantle-observation.json");
+    let mut observation: Value =
+        serde_json::from_slice(&fs::read(&observation_path).unwrap()).unwrap();
+    observation["producer_job_identity"] = json!(format!("b3:{}", blake3_hex(&job_bytes)));
+    fs::write(
+        &observation_path,
+        serde_json::to_vec_pretty(&observation).unwrap(),
+    )
+    .unwrap();
+}
+
+fn assert_job_rejection(fixture: &Fixture, code: &str) {
+    let output = fixture.inspect();
+    assert_eq!(
+        output.status.code(),
+        Some(1),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let rejection = receipt_json(&output);
+    assert_eq!(rejection["status"], "rejected");
+    assert!(
+        rejection["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|issue| issue["code"] == code),
+        "rejection: {rejection}"
+    );
+}
+
 #[test]
 fn positive_case_reports_the_target_current_and_the_rest_untargeted() {
     let fixture = build_fixture("positive");
@@ -520,6 +558,70 @@ fn positive_case_reports_the_target_current_and_the_rest_untargeted() {
     assert_eq!(receipt["complete"], false);
     assert_eq!(rows[0]["bound"]["signer"], SIGNER);
     assert_eq!(rows[0]["bound"]["target_path"], ROOT_PATH);
+}
+
+#[test]
+fn a_trellis_owner_job_binds_current() {
+    let fixture = build_fixture("trellis-owner");
+    rewrite_job(
+        &fixture,
+        json!({
+            "schema_version": "trellis-mantle-producer-job/v1",
+            "owner": "Trellis",
+            "job_id": JOB_ID,
+        }),
+    );
+    let output = fixture.inspect();
+    assert!(
+        output.status.success(),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt = receipt_json(&output);
+    assert_eq!(receipt["rows"][0]["state"], "current");
+    assert!(receipt["rows"][0]["issues"].as_array().unwrap().is_empty());
+}
+
+#[test]
+fn an_unknown_producer_owner_is_rejected() {
+    let fixture = build_fixture("unknown-owner");
+    rewrite_job(
+        &fixture,
+        json!({
+            "schema_version": "trellis-mantle-producer-job/v1",
+            "owner": "Unknown",
+            "job_id": JOB_ID,
+        }),
+    );
+    assert_job_rejection(&fixture, "convergence.unknown_producer_owner");
+}
+
+#[test]
+fn a_producer_schema_owner_mismatch_is_rejected() {
+    let fixture = build_fixture("owner-schema-mismatch");
+    rewrite_job(
+        &fixture,
+        json!({
+            "schema_version": "trellis-mantle-producer-job/v1",
+            "owner": "Octet",
+            "job_id": JOB_ID,
+        }),
+    );
+    assert_job_rejection(&fixture, "convergence.producer_schema_mismatch");
+}
+
+#[test]
+fn a_missing_producer_owner_is_rejected() {
+    let fixture = build_fixture("missing-owner");
+    rewrite_job(
+        &fixture,
+        json!({
+            "schema_version": "octet-mantle-producer-job/v1",
+            "job_id": JOB_ID,
+        }),
+    );
+    assert_job_rejection(&fixture, "convergence.missing_producer_owner");
 }
 
 #[test]

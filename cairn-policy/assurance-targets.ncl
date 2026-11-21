@@ -37,7 +37,13 @@ let UniqueNonEmpty = std.contract.from_predicate (fun value =>
     octet_decision = "octet-requirement-decision/v1",
     octet_proof_cards = "octet-proof-cards/v1",
     octet_formal_proof_envelope = "octet-formal-proof-envelope/v1",
-    octet_producer_job = "octet-mantle-producer-job/v1",
+    # Producer-job schemas are admitted per owner. The handoff job's `owner`
+    # field selects its admitted `schema_version`; keys are matched without
+    # ASCII case, so an owner-authored `Octet` or `Trellis` finds its entry.
+    producer_jobs = {
+      octet = "octet-mantle-producer-job/v1",
+      trellis = "trellis-mantle-producer-job/v1",
+    },
     mantle_observation = "mantle-external-evidence-observation-v1",
     mantle_realization_receipt = "mantle-foreign-realization-receipt-v1",
     mantle_store_info = "mantle-store-info-v3",
@@ -112,7 +118,9 @@ let UniqueNonEmpty = std.contract.from_predicate (fun value =>
     octet_decision | NonEmpty,
     octet_proof_cards | NonEmpty,
     octet_formal_proof_envelope | NonEmpty,
-    octet_producer_job | NonEmpty,
+    # An owner-scoped map: every admitted owner key and every admitted schema
+    # value must be a non-empty string.
+    producer_jobs | { _ | NonEmpty },
     mantle_observation | NonEmpty,
     mantle_realization_receipt | NonEmpty,
     mantle_store_info | NonEmpty,
