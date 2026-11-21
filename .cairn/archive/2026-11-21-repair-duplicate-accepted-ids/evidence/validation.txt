@@ -58,4 +58,15 @@ $ env RUSTC_WRAPPER= CARGO_TARGET_DIR=/datapool/mantle-store/cairn-dup-target \
     -- policy export --check
 policy fresh: cairn-policy/generated/cairn-policy.json
 exit=0
+
+$ cairn check-evidence developer-loop --execute --root . --profile cairn-local \
+    --subject-hash ccc... --out target/producer-loop
+{"valid": true}
+result_statuses: fmt=passed validate=passed traceability=passed
+
+$ nix --option min-free 0 --option builders '' flake check path:$PWD -L --keep-going
+all checks passed!
+exit=0
+warning: The check omitted these incompatible systems: aarch64-linux
 ```
+
