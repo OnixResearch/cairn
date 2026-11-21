@@ -1,0 +1,3 @@
+$ ./tools/check-license-boundary.rs   # worktree at 2a8ba55, 2026-11-21T00:57:42-05:00
+license boundary valid: 34 rules
+exit=0

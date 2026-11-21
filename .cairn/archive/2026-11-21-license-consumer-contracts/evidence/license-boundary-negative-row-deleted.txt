@@ -1,0 +1,5 @@
+# negative: scratch export of 2a8ba55 with the consumer-contracts row deleted from docs/licensing.md
+$ (cd <scratch> && ./tools/check-license-boundary.rs)
+license boundary invalid:
+docs/licensing.md: required marker is missing: | `contracts/**` and `cairn-policy/assurance-targets.ncl` | `MIT OR Apache-2.0`, at every revision and for byte-for-byte copies |
+exit=1
