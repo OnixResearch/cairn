@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 // r[verify cairn.license_boundary.final_validation]
 // r[verify cairn.license_boundary.policy_reuse_grant]
 // r[verify cairn.license_boundary.policy_reuse_scope]
+// r[verify cairn.license_boundary.consumer_contracts_grant]
 const POLICY_FILE: &str = "license-policy.tsv";
 const POLICY_FIELD_COUNT: usize = 3;
 const PACKAGE_RULE: &str = "package";

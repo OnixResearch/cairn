@@ -12,6 +12,13 @@ surface.
 
 ### Added
 
+- A scoped `MIT OR Apache-2.0` grant for the consumer-facing typed Nickel
+  contracts under `contracts/**` and `cairn-policy/assurance-targets.ncl` at
+  every revision, including Octet's vendored copies of
+  `contracts/assurance-targets.ncl` at `3dc654d3…` and `f20bcb4a…`, and
+  byte-for-byte copies elsewhere. The grant excludes generated JSON exports,
+  other policy files, the CLI and third-party material; `license-policy.tsv`
+  enforces its row, paths and revisions. Prior grants remain valid.
 - Registry-derived assurance target rows: `requirement_from_registry` and
   `specification_from_registry` in `contracts/assurance-targets.ncl` select the
   single `cairn requirement-registry export` row for a requirement id and fail

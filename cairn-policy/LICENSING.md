@@ -26,4 +26,31 @@ contents, **not** to `cairn-cli`, the exporter/toolchain, other Cairn policy
 files, repository documentation, or independently licensed third-party
 material. The license selected for the policy does not change the license of
 the tools used to generate it. Preserve notices and satisfy the terms of the
-license you choose. Prior grants remain valid.
+license you choose.
+
+## Consumer contracts and assurance-targets policy offer
+
+The Cairn copyright holders offer the consumer-facing typed Nickel contracts
+under `../contracts/` and `assurance-targets.ncl` in this directory, both in
+this repository and in copies other repositories vendored at earlier commits,
+under a choice of `MIT OR Apache-2.0`:
+
+| Paths | Vendored revision recorded by a consumer |
+|---|---|
+| `../contracts/**` | `contracts/assurance-targets.ncl` at `3dc654d38404d595ff07ca994925789f45941ffe` and `f20bcb4aa00268fdaa630cbce07633250f18a681` |
+| `assurance-targets.ncl` | — |
+
+This grant applies to those paths at every revision of this repository and to
+byte-for-byte copies of those files in other repositories. Recipients may
+choose any one of the listed licenses for the covered files; changing or
+republishing the historical Git commit is not required. The complete license
+texts are at [`../LICENSES/MIT.txt`](../LICENSES/MIT.txt) and
+[`../LICENSES/Apache-2.0.txt`](../LICENSES/Apache-2.0.txt).
+
+This grant applies only to the consumer-facing contract sources and
+`assurance-targets.ncl`, **not** to the generated
+`generated/assurance-targets.json` export, other files in `cairn-policy/`,
+`cairn-cli`, the exporter/toolchain, repository documentation, or third-party
+material.
+
+Prior grants remain valid.
