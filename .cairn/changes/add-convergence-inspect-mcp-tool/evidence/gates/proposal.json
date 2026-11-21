@@ -10,7 +10,7 @@
     "probe": 0,
     "property": 0
   },
-  "input_hash": "eb5baff2f32bc34523abb1ee47ac26c1ce4e4c0172460b9cca232c9b62bb448e",
+  "input_hash": "98720f5c23f9b21859bfd90359d393be7a54af5be4ce6106d686297b0cb33cd1",
   "issues": [],
   "layout": "cairn",
   "non_claims": [
@@ -28,8 +28,8 @@
     "source": "legacy_default"
   },
   "probe_evidence": null,
-  "profile_identity_hash": "344aa83deb58127a3c245c2253126123e3ed39892e21cf6756814facba2d9dde",
-  "receipt_hash": "63c1dbc6a7ebb9c7ad25c4206b3a93d5bf3641c824931a162ef4b60bc92cdb80",
+  "profile_identity_hash": "93fc66eb055bc3da442153122ec9eca823b13f1f52726e84eefdf84390119444",
+  "receipt_hash": "9f0a28c3fde1c300987d860119fc80782590165c4f2bcb6072d65c74a0605956",
   "review_receipt_hashes": [],
   "spec_effect": "delta",
   "stage": "proposal",

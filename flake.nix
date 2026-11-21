@@ -507,6 +507,8 @@
                 nickel export --format json "fixtures/assurance-targets/octet-example/$fixture.ncl" | jq -S . > "$fixture.json"
                 cmp "$fixture.json" "fixtures/assurance-targets/octet-example/$fixture.json"
               done
+              nickel export --format json fixtures/assurance-targets/registry-derived/targets.ncl | jq -S . > registry-derived.json
+              cmp registry-derived.json fixtures/assurance-targets/octet-example/targets.json
               test "$(jq '.clauses | length' contract.json)" = 1
               jq -S '.clauses[0]' contract.json > clause-0.json
               cmp clause-0.json fixtures/assurance-targets/octet-example/octet-clause-0.json

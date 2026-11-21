@@ -10,7 +10,7 @@
     "probe": 0,
     "property": 0
   },
-  "input_hash": "6c8f9b51a679eb8ec75c2f3c18f21f148096a7d5bc7e38551da5d7253aba1740",
+  "input_hash": "d876c311963e7048ed5e8e8118625ff10702ea596a98bf2b37815832ebeb46e3",
   "issues": [],
   "layout": "cairn",
   "non_claims": [
@@ -31,8 +31,8 @@
     "declarations_present": false,
     "probes": []
   },
-  "profile_identity_hash": "344aa83deb58127a3c245c2253126123e3ed39892e21cf6756814facba2d9dde",
-  "receipt_hash": "81611e4e405b04f571c72bfb8434712b9dad517dac5546f4522a5c6b843159af",
+  "profile_identity_hash": "93fc66eb055bc3da442153122ec9eca823b13f1f52726e84eefdf84390119444",
+  "receipt_hash": "984ab34727c52d3e6b75802f2b189ddf8b171de22be65948dca42d153b0c7c32",
   "review_receipt_hashes": [],
   "spec_effect": "delta",
   "stage": "tasks",
@@ -89,9 +89,9 @@
       "substantive_lines": 9,
       "substantive_requirement_blocks": 0,
       "substantive_tasks": 9,
-      "task_done": 0,
+      "task_done": 9,
       "task_in_progress": 0,
-      "task_todo": 9
+      "task_todo": 0
     }
   ],
   "task_ordering": {
@@ -133,9 +133,7 @@
     "issues": [],
     "nodes": [
       {
-        "blocked_by": [
-          "negative"
-        ],
+        "blocked_by": [],
         "blocks": [
           "focused"
         ],
@@ -145,12 +143,10 @@
           "negative"
         ],
         "ready": false,
-        "state": "todo"
+        "state": "done"
       },
       {
-        "blocked_by": [
-          "docs"
-        ],
+        "blocked_by": [],
         "blocks": [
           "gates"
         ],
@@ -160,12 +156,10 @@
           "docs"
         ],
         "ready": false,
-        "state": "todo"
+        "state": "done"
       },
       {
-        "blocked_by": [
-          "focused"
-        ],
+        "blocked_by": [],
         "blocks": [
           "lifecycle"
         ],
@@ -175,7 +169,7 @@
           "focused"
         ],
         "ready": false,
-        "state": "todo"
+        "state": "done"
       },
       {
         "blocked_by": [],
@@ -185,13 +179,11 @@
         "id": "inspect",
         "line": 3,
         "predecessors": [],
-        "ready": true,
-        "state": "todo"
+        "ready": false,
+        "state": "done"
       },
       {
-        "blocked_by": [
-          "gates"
-        ],
+        "blocked_by": [],
         "blocks": [],
         "id": "lifecycle",
         "line": 14,
@@ -199,12 +191,10 @@
           "gates"
         ],
         "ready": false,
-        "state": "todo"
+        "state": "done"
       },
       {
-        "blocked_by": [
-          "positive"
-        ],
+        "blocked_by": [],
         "blocks": [
           "docs"
         ],
@@ -214,12 +204,10 @@
           "positive"
         ],
         "ready": false,
-        "state": "todo"
+        "state": "done"
       },
       {
-        "blocked_by": [
-          "tool"
-        ],
+        "blocked_by": [],
         "blocks": [
           "positive"
         ],
@@ -229,12 +217,10 @@
           "tool"
         ],
         "ready": false,
-        "state": "todo"
+        "state": "done"
       },
       {
-        "blocked_by": [
-          "policy"
-        ],
+        "blocked_by": [],
         "blocks": [
           "negative"
         ],
@@ -244,12 +230,10 @@
           "policy"
         ],
         "ready": false,
-        "state": "todo"
+        "state": "done"
       },
       {
-        "blocked_by": [
-          "inspect"
-        ],
+        "blocked_by": [],
         "blocks": [
           "policy"
         ],
@@ -259,7 +243,7 @@
           "inspect"
         ],
         "ready": false,
-        "state": "todo"
+        "state": "done"
       }
     ],
     "order": [
@@ -273,9 +257,7 @@
       "gates",
       "lifecycle"
     ],
-    "ready_tasks": [
-      "inspect"
-    ],
+    "ready_tasks": [],
     "valid": true
   },
   "valid": true,

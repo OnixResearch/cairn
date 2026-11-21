@@ -1,0 +1,111 @@
+$ cairn sync generate-target-rows-from-registry --root . --execute
+{
+  "acceptance_ids": [],
+  "actions": [
+    {
+      "description": "merge delta spec into main specs: ./.cairn/changes/generate-target-rows-from-registry/specs/assurance-targets/spec.md",
+      "kind": "sync_delta_spec",
+      "path": "./.cairn/changes/generate-target-rows-from-registry/specs/assurance-targets/spec.md"
+    }
+  ],
+  "blocked": false,
+  "change": "generate-target-rows-from-registry",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "710d57bb4c639e6f1f3d1b8d7d6f46f3213cae638943ef334c5c7c3fa71bde8a",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+    "receipt_hash": "06734f6ba6543d3a4e6ed3aa9e9e5c565d33811c5cc526f23359dc206b7c2185",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "delta_specs": [
+    "./.cairn/changes/generate-target-rows-from-registry/specs/assurance-targets/spec.md"
+  ],
+  "dry_run": false,
+  "input_hash": "2f31fc84feb4cd5884873df88276ee44c2f5ab8c03c71ebc9737d50ef1919d98",
+  "layout": "cairn",
+  "merge_preflight": {
+    "documents": [
+      {
+        "accepted_before_exists": true,
+        "accepted_before_hash": "7ef16962b8355918880921457b500e8061161861549ec43bfd598ce6c26d0525",
+        "blocked": false,
+        "changed": true,
+        "delta_hash": "a243b18cd8c974769c19f5137593939d00c28e1c481891b294a4377af640d826",
+        "destination": ".cairn/specs/assurance-targets/spec.md",
+        "diagnostics": [],
+        "expected_after_hash": "96fabe218dfb6549ab74914deb2660d3959be984f685a242b940c99f5cc0623a",
+        "operations": [
+          {
+            "block_hash": "1707954f56ab6236f8c9cd972cdcfba6eb7d46b74f4a3ae28c1ad10634aec620",
+            "heading": "### Requirement: Exact registry row binding",
+            "kind": "modified",
+            "requirement_id": "cairn.assurance_targets.row_binding"
+          }
+        ],
+        "outcomes": [
+          {
+            "kind": "modified",
+            "requirement_id": "cairn.assurance_targets.row_binding",
+            "state": "applied"
+          }
+        ],
+        "source": ".cairn/changes/generate-target-rows-from-registry/specs/assurance-targets/spec.md"
+      }
+    ]
+  },
+  "mutated": true,
+  "mutation_manifest": {
+    "after": {
+      "entries": [
+        {
+          "content_hash": "96fabe218dfb6549ab74914deb2660d3959be984f685a242b940c99f5cc0623a",
+          "exists": true,
+          "path": "./.cairn/specs/assurance-targets/spec.md"
+        }
+      ],
+      "manifest_hash": "01bd8af57d7694dfb8dac8c60c9fb366fd184aaef310999659f1d1e81202a65e"
+    },
+    "before": {
+      "entries": [
+        {
+          "content_hash": "7ef16962b8355918880921457b500e8061161861549ec43bfd598ce6c26d0525",
+          "exists": true,
+          "path": "./.cairn/specs/assurance-targets/spec.md"
+        }
+      ],
+      "manifest_hash": "59e5fc81b69875d35721adc983fd9adf45ec4b840690aeceea8c828186273fdd"
+    },
+    "kind": "sync",
+    "manifest_hash": "d9f9c55ea0c9e8abc0b49c244fbb10fc820a3030763752de910e85008735f1cb"
+  },
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "8bb4642ce90d28978ca9c23ad68ebebf0c4956e90f17d17df547db699c4941aa",
+  "policy": "cairn-default",
+  "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+  "profile_identity_hash": "18b80f2ad1fa3faa742d8b01457989386f2410937faba0af9497710cb76245d9",
+  "reasons": [],
+  "receipt_hash": "26c1bd0a870dbf79b2df651ce11e96b6a12ada6da89f6a1bb8a9c3603f147a3f",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}
+EXIT=0

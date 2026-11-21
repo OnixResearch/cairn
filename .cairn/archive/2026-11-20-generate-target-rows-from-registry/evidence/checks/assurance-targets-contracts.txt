@@ -1,0 +1,5 @@
+$ nix --option min-free 0 --option builders '' build path:$PWD#checks.x86_64-linux.assurance-targets-contracts -L
+this derivation will be built:
+  /nix/store/1m3p1gfd3c7xz8f0qs70ydwvh96n1rga-cairn-assurance-targets-contracts.drv
+building '/nix/store/1m3p1gfd3c7xz8f0qs70ydwvh96n1rga-cairn-assurance-targets-contracts.drv'...
+EXIT=0

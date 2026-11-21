@@ -23,8 +23,9 @@ let SourceSpan = {
   start_line | Natural,
   end_line | Natural,
 } in
-# One target binds exactly one content-bound registry row. The row is copied from
-# `cairn requirement-registry export`; it is the one remaining hand-maintained lock.
+# One target binds exactly one content-bound registry row. A target may copy the
+# row from `cairn requirement-registry export` or derive it by requirement_id
+# with `requirement_from_registry`.
 # r[impl cairn.assurance_targets.row_binding]
 let RowContract = {
   requirement_id | NonEmpty,
@@ -34,6 +35,61 @@ let RowContract = {
   requirement_body_blake3 | Digest,
   row_blake3 | Digest,
 } in
+let Specification = {
+  path | NonEmpty,
+  blake3 | Digest,
+} in
+# Registry derivation. `registry` is the parsed `cairn requirement-registry
+# export` (`import "requirement-registry.json"`). Both helpers select exactly
+# one row by requirement_id and fail closed on anything else, so a target can
+# never bind a row that the export does not contain exactly once.
+let registry_schema = "cairn.content-bound-requirement-registry.v1" in
+let registry_rows = fun registry requirement_id =>
+  if !(std.is_record registry) then
+    std.fail_with "the requirement registry export must be a record"
+  else if !(std.record.has_field "schema_version" registry) then
+    std.fail_with "the requirement registry export must declare schema_version"
+  else if registry.schema_version != registry_schema then
+    std.fail_with
+      "the requirement registry export must declare schema_version %{registry_schema}"
+  else if !(std.record.has_field "rows" registry) || !(std.is_array registry.rows) then
+    std.fail_with "the requirement registry export must carry a rows array"
+  else
+    std.array.filter
+      (fun row =>
+        std.is_record row
+        && std.record.has_field "requirement_id" row
+        && row.requirement_id == requirement_id)
+      registry.rows
+in
+let row_for = fun registry requirement_id =>
+  let matching = registry_rows registry requirement_id in
+  if std.array.length matching == 1 then
+    std.array.first matching
+  else
+    std.fail_with
+      "the requirement registry export must contain exactly one row for requirement_id %{requirement_id}; found %{std.string.from_number (std.array.length matching)}"
+in
+let registry_row_requirement = fun registry requirement_id =>
+  let row = row_for registry requirement_id in
+  ({
+    requirement_id = row.requirement_id,
+    specification_path = row.specification_path,
+    specification_blake3 = row.specification_blake3,
+    source_span = {
+      start_byte = row.source_span.start_byte,
+      end_byte = row.source_span.end_byte,
+      start_line = row.source_span.start_line,
+      end_line = row.source_span.end_line,
+    },
+    requirement_body_blake3 = row.requirement_body_blake3,
+    row_blake3 = row.row_blake3,
+  }) | RowContract
+in
+let registry_row_specification = fun registry requirement_id =>
+  let row = row_for registry requirement_id in
+  ({ path = row.specification_path, blake3 = row.specification_blake3 }) | Specification
+in
 # A projected target names its evidence job by id and by the path of the job's
 # owner-authored definition. Source and tool identity never appear on a target.
 # r[impl cairn.assurance_targets.evidence_job]
@@ -88,7 +144,7 @@ let TargetContract = std.contract.custom (fun label value =>
 
 let ContractRecord = {
   contract_id | NonEmpty,
-  specification | { path | NonEmpty, blake3 | Digest },
+  specification | Specification,
   targets | Array TargetContract,
   # Octet accepted assumptions and excluded behaviors pass through unchanged.
   assumptions | Array RecordValue,
@@ -234,5 +290,7 @@ in
   Contract = ContractContract,
   TargetsFile = TargetsFileContract,
   GeneratedSources = GeneratedSourcesContract,
+  requirement_from_registry = registry_row_requirement,
+  specification_from_registry = registry_row_specification,
   project = project_fn,
 }

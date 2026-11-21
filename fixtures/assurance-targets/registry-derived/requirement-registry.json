@@ -1,0 +1,71 @@
+{
+  "boundary": "content-bound requirement registry validation proves canonical identity, current-root freshness, and declared linkage only; it does not prove revision authenticity, requirement satisfaction, source correctness, implementation correctness, or release eligibility",
+  "non_claims": [
+    "declared revision authenticity was not established",
+    "not requirement satisfaction",
+    "not source correctness",
+    "not implementation correctness",
+    "not release eligibility"
+  ],
+  "policy_blake3": "dae5baa22b49590c09788ee043ca6d99740de4f9619ca94297efc7fa22986e0b",
+  "receipt": {
+    "non_claims": [
+      "declared revision authenticity was not established",
+      "not requirement satisfaction",
+      "not source correctness",
+      "not implementation correctness",
+      "not release eligibility"
+    ],
+    "policy_blake3": "dae5baa22b49590c09788ee043ca6d99740de4f9619ca94297efc7fa22986e0b",
+    "receipt_blake3": "c0a3f7f1d9d7f7f2e2a1b4b0f0d0f1a3e4c5b6a7d8e9f0a1b2c3d4e5f6a7b8c9",
+    "registry_blake3": "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0",
+    "repository_id": "onixresearch/octet",
+    "revision": "d5b34c2d64b1227417a46df8ed8427f2d10ed3c8",
+    "revision_kind": "git",
+    "row_count": 2,
+    "schema_version": "cairn.content-bound-requirement-registry-receipt.v1",
+    "specification_set_blake3": "f4761b6112d18e5c7d26f9df86019731b3a0c49dda520a9d51ce8a6931abe644"
+  },
+  "repository_id": "onixresearch/octet",
+  "revision": {
+    "kind": "git",
+    "value": "d5b34c2d64b1227417a46df8ed8427f2d10ed3c8"
+  },
+  "registry_blake3": "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0",
+  "rows": [
+    {
+      "requirement_body_blake3": "46c3b1ce237a0448b4ea6b7b5a2145ba94ca86abeca874e761b1367e81e91960",
+      "requirement_id": "octet.aeneas_lean_proof_rail.theorem_adequacy",
+      "row_blake3": "07140bc15d66a3d0e77d838ba9836871df2743e2338a72825d4a48c86b221fcd",
+      "source_span": {
+        "end_byte": 439,
+        "end_line": 8,
+        "start_byte": 129,
+        "start_line": 5
+      },
+      "specification_blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814",
+      "specification_path": "standards/requirements/example-spec.md"
+    },
+    {
+      "requirement_body_blake3": "3c1b2c99bdf16ce42f0ccc0095bdffb171f4f494d73d70453057662de54a90ac",
+      "requirement_id": "octet.requirements.example.reviewed_scope",
+      "row_blake3": "9ed38bd20fcebbcf84013cd2ef1e0fb19baa74bd5f8947c76b94dc6f69e6a4f7",
+      "source_span": {
+        "end_byte": 723,
+        "end_line": 11,
+        "start_byte": 625,
+        "start_line": 11
+      },
+      "specification_blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814",
+      "specification_path": "standards/requirements/example-spec.md"
+    }
+  ],
+  "schema_version": "cairn.content-bound-requirement-registry.v1",
+  "specification_set_blake3": "f4761b6112d18e5c7d26f9df86019731b3a0c49dda520a9d51ce8a6931abe644",
+  "specifications": [
+    {
+      "content_blake3": "78afa0f6c7761fbbf7f727507508410660866dd75ff35618ea27209478cc0814",
+      "path": "standards/requirements/example-spec.md"
+    }
+  ]
+}

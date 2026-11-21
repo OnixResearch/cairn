@@ -1,0 +1,10 @@
+$ cairn validate --root .
+{
+  "valid": true,
+  "issues": 0,
+  "findings": 0,
+  "changes": 2,
+  "specs_validated": 90,
+  "spec_issues": 0
+}
+EXIT=0

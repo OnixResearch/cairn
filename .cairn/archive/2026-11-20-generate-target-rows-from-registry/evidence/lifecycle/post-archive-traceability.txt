@@ -1,0 +1,3 @@
+$ cairn traceability coverage --root .
+traceability coverage ok: 2490/2490 referenced (profile cairn-default)
+EXIT=0

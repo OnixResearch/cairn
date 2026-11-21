@@ -14,7 +14,7 @@
     "source": "legacy_default"
   },
   "profile_issues": [],
-  "receipt_hash": "91918031b53c409614b83779d62e8da2160c462bd61047c75fcdc381b67f41a6",
+  "receipt_hash": "e8908a01654120fada8306dd9ecbd7f72d90629fb4e6e02bf282e1d95e454f01",
   "resolution": {
     "diagnostics": [],
     "locator_consulted": false,
@@ -94,7 +94,7 @@
     {
       "path": "./.cairn/specs/assurance-targets/spec.md",
       "requirement_blocks": 4,
-      "scenario_blocks": 8,
+      "scenario_blocks": 10,
       "substantive_requirement_blocks": 4
     },
     {
@@ -688,9 +688,9 @@
       "substantive_lines": 9,
       "substantive_requirement_blocks": 0,
       "substantive_tasks": 9,
-      "task_done": 0,
+      "task_done": 9,
       "task_in_progress": 0,
-      "task_todo": 9
+      "task_todo": 0
     },
     {
       "checkbox_tasks": 0,
@@ -777,7 +777,7 @@
         "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
         "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
       ],
-      "profile_identity_hash": "344aa83deb58127a3c245c2253126123e3ed39892e21cf6756814facba2d9dde",
+      "profile_identity_hash": "93fc66eb055bc3da442153122ec9eca823b13f1f52726e84eefdf84390119444",
       "review_receipt_hashes": [],
       "spec_effect": "delta",
       "workflow_profile": "spec-driven",

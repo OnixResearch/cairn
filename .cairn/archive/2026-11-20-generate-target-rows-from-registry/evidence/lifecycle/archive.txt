@@ -1,0 +1,233 @@
+$ CAIRN_ARCHIVE_DATE=$(date +%F) cairn archive generate-target-rows-from-registry --root . --execute
+{
+  "acceptance_ids": [],
+  "actions": [
+    {
+      "description": "move active change to archive: generate-target-rows-from-registry",
+      "kind": "archive_change",
+      "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry"
+    }
+  ],
+  "blocked": false,
+  "change": "generate-target-rows-from-registry",
+  "cross_repo_dependencies": {
+    "blocked_count": 0,
+    "dependency_count": 0,
+    "input_hash": "710d57bb4c639e6f1f3d1b8d7d6f46f3213cae638943ef334c5c7c3fa71bde8a",
+    "non_claims": [
+      "dependency satisfaction proves presented receipt linkage only",
+      "dependency satisfaction does not prove upstream correctness or remote trust",
+      "dependency satisfaction does not prove downstream integration correctness or release eligibility"
+    ],
+    "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+    "receipt_hash": "06734f6ba6543d3a4e6ed3aa9e9e5c565d33811c5cc526f23359dc206b7c2185",
+    "rows": [],
+    "satisfied_count": 0,
+    "schema": "cairn.cross-repo-dependency-receipt.v1",
+    "valid": true,
+    "verdict": "PASS"
+  },
+  "cross_repo_evidence_issues": [],
+  "dry_run": false,
+  "input_hash": "538cdbc294222cf7e2ed48e5555e679b5635decbd4b4450f0015d9691b336fd7",
+  "layout": "cairn",
+  "mutated": true,
+  "mutation_manifest": {
+    "after": {
+      "entries": [
+        {
+          "content_hash": "ea6e6db6aa186b5758c79c5d6b1e66dd8367d9bedd12e0605ecbebb236b4001d",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/design.md"
+        },
+        {
+          "content_hash": "3e000dcfed6c32edf89464ea640f31c16f3c94953e93d99fed406ae8da329ffc",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/README.md"
+        },
+        {
+          "content_hash": "655c4d7587bdd1ef4d9a832697330195bea988ec3526c598d5b4d08645af26fa",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/checks/assurance-targets-contracts.txt"
+        },
+        {
+          "content_hash": "58f0319a86f232d0f1ed704197a44366af1919ac63b90fa3167498a5f91624cd",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/checks/cargo-test-assurance-targets.txt"
+        },
+        {
+          "content_hash": "551f5d5690218385fb475246c1f10160e1ae900cc5349243b1073f160ab7ed54",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/checks/policy-export-check.txt"
+        },
+        {
+          "content_hash": "281d93f944c397ed26a4d1c99c1cab4e39c9fccd343580eeecc1fc0d9a608a57",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/checks/traceability-coverage-pre-archive.txt"
+        },
+        {
+          "content_hash": "18c62e2dbbadf3de542981966905eb2daf44fc8196a47b186e18615a08e57ebd",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/gates/design.txt"
+        },
+        {
+          "content_hash": "2f8c2016d0cc2916e46104e7a28787183f344c354b00f7d4a3004d2d1566924f",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/gates/proposal.txt"
+        },
+        {
+          "content_hash": "e26dddff1ccd13d6632b9f34fbc1e0d42e9f23ba37ad63b41010a2637dcf266f",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/gates/tasks.txt"
+        },
+        {
+          "content_hash": "04519414a78e25cf15f6e2d9f6d2b8fb45d98b0a756e491f52a3940e08d2cd8e",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/gates/validate.txt"
+        },
+        {
+          "content_hash": "0806662ec1d355cc69644b98c0a4b6c2fd499c8a83fffa8b720b86ed1f5030f7",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/lifecycle/archive.txt"
+        },
+        {
+          "content_hash": "bebd41783549bad294664275cd497f199f77abb65a470c20aa819c7f689d7ef5",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/evidence/lifecycle/sync.txt"
+        },
+        {
+          "content_hash": "df8b71bae570eb5accd702e7370a816b8ea9f2e4521254c5d75ea82a9cfcf4db",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/metadata.json"
+        },
+        {
+          "content_hash": "ac02d2477732b068b24a48eaa6ee46316b88b02d72c1d60a1552cb96258e6b10",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/proposal.md"
+        },
+        {
+          "content_hash": "a243b18cd8c974769c19f5137593939d00c28e1c481891b294a4377af640d826",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/specs/assurance-targets/spec.md"
+        },
+        {
+          "content_hash": "65174d36806ac04a4216ec0ea3097c8f19ebb4a6f6b8113de64ab8e6a3882360",
+          "exists": true,
+          "path": "./.cairn/archive/2026-11-20-generate-target-rows-from-registry/tasks.md"
+        },
+        {
+          "content_hash": null,
+          "exists": false,
+          "path": "./.cairn/changes/generate-target-rows-from-registry"
+        }
+      ],
+      "manifest_hash": "e16a0596681e76b8d0c3264027cdec4c452964252184fe5f7ae73a57ddb32a70"
+    },
+    "before": {
+      "entries": [
+        {
+          "content_hash": "ea6e6db6aa186b5758c79c5d6b1e66dd8367d9bedd12e0605ecbebb236b4001d",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/design.md"
+        },
+        {
+          "content_hash": "3e000dcfed6c32edf89464ea640f31c16f3c94953e93d99fed406ae8da329ffc",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/README.md"
+        },
+        {
+          "content_hash": "655c4d7587bdd1ef4d9a832697330195bea988ec3526c598d5b4d08645af26fa",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/checks/assurance-targets-contracts.txt"
+        },
+        {
+          "content_hash": "58f0319a86f232d0f1ed704197a44366af1919ac63b90fa3167498a5f91624cd",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/checks/cargo-test-assurance-targets.txt"
+        },
+        {
+          "content_hash": "551f5d5690218385fb475246c1f10160e1ae900cc5349243b1073f160ab7ed54",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/checks/policy-export-check.txt"
+        },
+        {
+          "content_hash": "281d93f944c397ed26a4d1c99c1cab4e39c9fccd343580eeecc1fc0d9a608a57",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/checks/traceability-coverage-pre-archive.txt"
+        },
+        {
+          "content_hash": "18c62e2dbbadf3de542981966905eb2daf44fc8196a47b186e18615a08e57ebd",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/gates/design.txt"
+        },
+        {
+          "content_hash": "2f8c2016d0cc2916e46104e7a28787183f344c354b00f7d4a3004d2d1566924f",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/gates/proposal.txt"
+        },
+        {
+          "content_hash": "e26dddff1ccd13d6632b9f34fbc1e0d42e9f23ba37ad63b41010a2637dcf266f",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/gates/tasks.txt"
+        },
+        {
+          "content_hash": "04519414a78e25cf15f6e2d9f6d2b8fb45d98b0a756e491f52a3940e08d2cd8e",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/gates/validate.txt"
+        },
+        {
+          "content_hash": "0806662ec1d355cc69644b98c0a4b6c2fd499c8a83fffa8b720b86ed1f5030f7",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/lifecycle/archive.txt"
+        },
+        {
+          "content_hash": "bebd41783549bad294664275cd497f199f77abb65a470c20aa819c7f689d7ef5",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/evidence/lifecycle/sync.txt"
+        },
+        {
+          "content_hash": "df8b71bae570eb5accd702e7370a816b8ea9f2e4521254c5d75ea82a9cfcf4db",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/metadata.json"
+        },
+        {
+          "content_hash": "ac02d2477732b068b24a48eaa6ee46316b88b02d72c1d60a1552cb96258e6b10",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/proposal.md"
+        },
+        {
+          "content_hash": "a243b18cd8c974769c19f5137593939d00c28e1c481891b294a4377af640d826",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/specs/assurance-targets/spec.md"
+        },
+        {
+          "content_hash": "65174d36806ac04a4216ec0ea3097c8f19ebb4a6f6b8113de64ab8e6a3882360",
+          "exists": true,
+          "path": "./.cairn/changes/generate-target-rows-from-registry/tasks.md"
+        }
+      ],
+      "manifest_hash": "44d5d6564c48da4dd602a3d5aaceefcab7763aed25f8c6e1241ab1c3751a8b2a"
+    },
+    "kind": "archive",
+    "manifest_hash": "0d58f7dc8c1f7785df331deb603b71879d753b50a97a772b840b5f9667c359b7"
+  },
+  "non_claims": [
+    "workflow state proves only the selected policy graph and observed structural artifact facts",
+    "workflow instructions do not prove artifact truth, review quality, or implementation correctness",
+    "workflow state does not satisfy proposal, design, tasks, sync, archive, evidence, or release gates",
+    "workflow commands are read-only and do not create, edit, delete, or approve lifecycle artifacts"
+  ],
+  "plan_hash": "2ca72f8ef2e39e545c2d0dc9d3eb4d982f23645d18734b2dc099ccbce7a4bb18",
+  "policy": "cairn-default",
+  "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+  "profile_identity_hash": "18b80f2ad1fa3faa742d8b01457989386f2410937faba0af9497710cb76245d9",
+  "reasons": [],
+  "receipt_hash": "8b74a54344b34b0c277a8a9046575527c37b687e634be7f0538e01e7504f5d42",
+  "review_receipt_hashes": [],
+  "spec_effect": "delta",
+  "workflow_profile": "spec-driven",
+  "workflow_profile_compatibility_fallback": false,
+  "workflow_profile_source": "change_create",
+  "workflow_profile_version": 1
+}
+EXIT=0

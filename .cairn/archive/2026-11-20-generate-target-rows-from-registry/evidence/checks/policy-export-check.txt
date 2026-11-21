@@ -1,0 +1,3 @@
+$ cairn policy export --check
+policy fresh: cairn-policy/generated/cairn-policy.json
+EXIT=0

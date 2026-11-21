@@ -1,0 +1,32 @@
+$ env RUSTC_WRAPPER= CARGO_TARGET_DIR=target nix develop -c cargo test -p cairn-core --lib assurance_targets
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+     Running unittests src/lib.rs (target/debug/deps/cairn_core-60224f1af578ec6e)
+
+running 23 tests
+test verified::assurance_targets::tests::producer_record_bounds_are_required ... ok
+test verified::assurance_targets::tests::unknown_assurance_is_rejected ... ok
+test verified::assurance_targets::tests::unassessed_target_is_rejected ... ok
+test verified::assurance_targets::tests::bound_exceeded_is_rejected ... ok
+test verified::assurance_targets::tests::missing_evidence_job_is_rejected ... ok
+test verified::assurance_targets::tests::unknown_field_is_rejected ... ok
+test verified::assurance_targets::tests::duplicate_requirement_is_rejected ... ok
+test verified::assurance_targets::tests::unknown_schema_is_rejected ... ok
+test verified::assurance_targets::tests::authored_hash_is_rejected ... ok
+test verified::assurance_targets::tests::missing_projection_field_is_rejected ... ok
+test verified::assurance_targets::tests::stale_row_is_rejected ... ok
+test verified::assurance_targets::tests::specification_mismatch_is_rejected ... ok
+test verified::assurance_targets::tests::unassessed_target_is_not_projected ... ok
+test verified::assurance_targets::tests::duplicate_specification_digest_is_rejected ... ok
+test verified::assurance_targets::tests::generated_sources_admit_every_contract ... ok
+test verified::assurance_targets::tests::missing_specification_digest_is_rejected ... ok
+test verified::assurance_targets::tests::missing_generated_sources_is_rejected ... ok
+test verified::assurance_targets::tests::reviewed_target_yields_no_clause ... ok
+test verified::assurance_targets::tests::missing_reviewed_specification_projection_is_rejected ... ok
+test verified::assurance_targets::tests::projection_uses_the_plain_specification_digest ... ok
+test verified::assurance_targets::tests::unexpected_generated_sources_is_rejected ... ok
+test verified::assurance_targets::tests::golden_projection_reproduces_octet_clause ... ok
+test verified::assurance_targets::tests::projection_mismatch_is_detected ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 893 filtered out; finished in 0.02s
+
+EXIT=0
