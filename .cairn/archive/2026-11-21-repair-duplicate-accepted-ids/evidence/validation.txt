@@ -1,0 +1,61 @@
+# Validation transcript (2026-11-21)
+
+All commands ran in this worktree at branch `repair-duplicate-accepted-ids`.
+
+```
+$ env RUSTC_WRAPPER= CARGO_TARGET_DIR=/datapool/mantle-store/cairn-dup-target \
+    nix develop -c cargo test -p cairn-core delta_merge
+test result: ok. 16 passed; 0 failed
+exit=0
+
+$ env RUSTC_WRAPPER= CARGO_TARGET_DIR=/datapool/mantle-store/cairn-dup-target \
+    nix develop -c cargo test -p cairn-cli --test lifecycle_mutations sync_
+test sync_repairs_duplicated_accepted_requirement_ids ... ok
+test sync_refuses_a_repair_delta_that_leaves_the_duplicate ... ok
+test sync_duplicate_accepted_identity_fails_closed ... ok
+test result: ok. 16 passed; 0 failed
+exit=0
+
+$ env RUSTC_WRAPPER= CARGO_TARGET_DIR=/datapool/mantle-store/cairn-dup-target \
+    nix develop -c cargo clippy --workspace --all-targets \
+    --features redb-registry -- -D warnings
+exit=0
+
+$ env RUSTC_WRAPPER= CARGO_TARGET_DIR=/datapool/mantle-store/cairn-dup-target \
+    nix develop -c cargo fmt --all -- --check
+exit=0
+
+$ cairn validate --root . --strict
+exit=0
+
+$ cairn gate proposal repair-duplicate-accepted-ids --root .
+verdict=PASS exit=0
+$ cairn gate design repair-duplicate-accepted-ids --root .
+verdict=PASS exit=0
+$ cairn gate tasks repair-duplicate-accepted-ids --root .
+verdict=PASS exit=0
+
+$ cairn sync repair-duplicate-accepted-ids --root . --execute
+{"blocked": false, "mutated": true}
+exit=0
+$ cairn sync repair-duplicate-accepted-ids --root .
+{"blocked": false, "mutated": false}
+exit=0
+
+$ CAIRN_ARCHIVE_DATE=2026-11-21 cairn archive repair-duplicate-accepted-ids --root . --execute
+{"blocked": false, "mutated": true}
+action: move active change to .cairn/archive/2026-11-21-repair-duplicate-accepted-ids
+exit=0
+
+$ cairn validate --root . --strict
+exit=0
+$ cairn traceability coverage --root .
+{"valid": true, "verdict": "pass"}
+exit=0
+
+$ env RUSTC_WRAPPER= CARGO_TARGET_DIR=/datapool/mantle-store/cairn-dup-target \
+    nix develop -c cargo run --bin cairn -p cairn-cli --features redb-registry \
+    -- policy export --check
+policy fresh: cairn-policy/generated/cairn-policy.json
+exit=0
+```

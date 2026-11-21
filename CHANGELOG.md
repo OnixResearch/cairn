@@ -12,6 +12,15 @@ surface.
 
 ### Added
 
+- Lifecycle repair for duplicated accepted requirement IDs: a MODIFIED sync
+  delta may retarget one conflicting block by its unique accepted heading when
+  that block's ID is duplicated, provided the merged document is duplicate-free.
+  Repairs run before the other operations, the merged document is rechecked, and
+  ambiguous headings (`delta_merge.ambiguous_accepted_heading_target`) and
+  introduced duplicates (`delta_merge.introduced_duplicate_id`) are refused with
+  the accepted bytes preserved. Core and CLI fixtures model Terrane's fetch-add
+  and constant-folding duplicates; a replayed repair is an `already_applied`
+  no-op.
 - A scoped `MIT OR Apache-2.0` grant for the consumer-facing typed Nickel
   contracts under `contracts/**` and `cairn-policy/assurance-targets.ncl` at
   every revision, including Octet's vendored copies of

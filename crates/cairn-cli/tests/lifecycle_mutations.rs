@@ -376,6 +376,156 @@ fn sync_duplicate_accepted_identity_fails_closed() -> Result<(), Box<dyn Error>>
 }
 
 #[test]
+fn sync_repairs_duplicated_accepted_requirement_ids() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.sync_archive.delta_merge.identity.duplicate.repair]
+    let fixture = temp_fixture("sync-duplicate-repair", "fixtures/duplicate-id-repair")?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let fetch_add_path = fixture.join(".cairn/specs/fetch-add/spec.md");
+    let constant_folding_path = fixture.join(".cairn/specs/constant-folding/spec.md");
+    let fetch_add_before = fs::read_to_string(&fetch_add_path)?;
+    let constant_folding_before = fs::read_to_string(&constant_folding_path)?;
+    assert_eq!(declaration_ids(&fetch_add_before).len(), 2);
+    assert_eq!(
+        declaration_ids(&fetch_add_before)[0],
+        "fetch-add.associativity"
+    );
+    assert_eq!(
+        declaration_ids(&fetch_add_before)[1],
+        "fetch-add.associativity"
+    );
+
+    let plan = run_json(&["sync", "deduplicate-requirement-ids", "--root", root])?;
+    assert_eq!(plan["blocked"], false, "{plan}");
+    assert_eq!(plan["mutated"], false);
+    assert_eq!(fs::read_to_string(&fetch_add_path)?, fetch_add_before);
+    assert_eq!(
+        fs::read_to_string(&constant_folding_path)?,
+        constant_folding_before
+    );
+
+    let executed = run_json(&[
+        "sync",
+        "deduplicate-requirement-ids",
+        "--root",
+        root,
+        "--execute",
+    ])?;
+    assert_eq!(executed["blocked"], false, "{executed}");
+    assert_eq!(executed["mutated"], true);
+    for document in executed["merge_preflight"]["documents"]
+        .as_array()
+        .ok_or("merge preflight documents")?
+    {
+        assert_eq!(document["blocked"], false);
+        assert!(document["diagnostics"]
+            .as_array()
+            .ok_or("document diagnostics")?
+            .is_empty());
+    }
+
+    let fetch_add_after = fs::read_to_string(&fetch_add_path)?;
+    let mut fetch_add_ids = declaration_ids(&fetch_add_after);
+    fetch_add_ids.sort();
+    assert_eq!(
+        fetch_add_ids,
+        ["fetch-add.associativity", "fetch-add.commutativity"]
+    );
+    let constant_folding_after = fs::read_to_string(&constant_folding_path)?;
+    let mut constant_folding_ids = declaration_ids(&constant_folding_after);
+    constant_folding_ids.sort();
+    assert_eq!(
+        constant_folding_ids,
+        [
+            "chain.collision-free",
+            "constfold.finite-height",
+            "constfold.lattice",
+            "constfold.monotone",
+        ]
+    );
+    assert!(constant_folding_after.contains("### Requirement: Transfer Function Lattice"));
+    assert!(constant_folding_after.contains("### Requirement: Transfer Function Monotonicity"));
+
+    let validate = run_json(&["validate", "--root", root])?;
+    assert_eq!(validate["valid"], true, "{validate}");
+    assert!(validate["spec_issues"]
+        .as_array()
+        .ok_or("spec issues")?
+        .is_empty());
+
+    let replayed = run_json(&[
+        "sync",
+        "deduplicate-requirement-ids",
+        "--root",
+        root,
+        "--execute",
+    ])?;
+    assert_eq!(replayed["blocked"], false);
+    assert_eq!(replayed["mutated"], false);
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+#[test]
+fn sync_refuses_a_repair_delta_that_leaves_the_duplicate() -> Result<(), Box<dyn Error>> {
+    // r[verify cairn.sync_archive.delta_merge.identity.duplicate.repair]
+    let fixture = temp_fixture("sync-duplicate-left", "fixtures/duplicate-id-repair")?;
+    let delta_path =
+        fixture.join(".cairn/changes/deduplicate-requirement-ids/specs/fetch-add/spec.md");
+    fs::write(
+        &delta_path,
+        "## MODIFIED Requirements\n\n### Requirement: Commutativity\n\nr[fetch-add.associativity] The system MUST return a different fetched value for swapped operands.\n",
+    )?;
+    let accepted_path = fixture.join(".cairn/specs/fetch-add/spec.md");
+    let accepted_before = fs::read_to_string(&accepted_path)?;
+    let root = fixture.to_str().ok_or("utf8 fixture path")?;
+    let value = run_json(&[
+        "sync",
+        "deduplicate-requirement-ids",
+        "--root",
+        root,
+        "--execute",
+    ])?;
+    assert_eq!(value["blocked"], true);
+    assert_eq!(value["mutated"], false);
+    assert!(value["reasons"]
+        .as_array()
+        .ok_or("reasons")?
+        .iter()
+        .any(|reason| reason
+            .as_str()
+            .unwrap_or_default()
+            .contains("delta_merge.duplicate_accepted_id")));
+    assert_eq!(fs::read_to_string(accepted_path)?, accepted_before);
+    fs::remove_dir_all(fixture)?;
+    Ok(())
+}
+
+fn declaration_ids(markdown: &str) -> Vec<String> {
+    let mut ids = Vec::new();
+    let mut after_heading = false;
+    for line in markdown.lines() {
+        if line.starts_with("### Requirement:") {
+            after_heading = true;
+            continue;
+        }
+        if !after_heading {
+            continue;
+        }
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        after_heading = false;
+        if let Some(rest) = trimmed.strip_prefix("r[") {
+            if let Some(end) = rest.find(']') {
+                ids.push(rest[..end].to_owned());
+            }
+        }
+    }
+    ids
+}
+
+#[test]
 fn missing_saved_probe_blocks_sync_and_binds_probe_evidence_without_writes(
 ) -> Result<(), Box<dyn Error>> {
     // r[verify cairn.probe_execution_boundary.authoritative_mutation_block]
