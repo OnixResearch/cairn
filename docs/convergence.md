@@ -304,8 +304,9 @@ and Octet decision bind to the declared targets. It does not show:
   acceptance and is not fresh proof work;
 - that the supplied records were honestly produced; Cairn re-runs and
   authenticates none of them. It compares recorded builder fingerprints and the
-  recorded reuse link, and does not verify signature bytes or that a signature
-  exists at all beyond the trusted key name it reads;
+  recorded reuse link with the original receipt's recorded `receipt_blake3`,
+  without recomputing that digest, and does not verify signature bytes or that a
+  signature exists at all beyond the trusted key name it reads;
 - that a verifier, a builder, the sandbox or the Nickel exporter is sound;
 - that Mantle built the tool graph from source, unless the recorded route says
   so;
