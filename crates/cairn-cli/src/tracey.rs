@@ -48,35 +48,71 @@ pub(crate) fn repository_gate_summary(policy: Option<&Value>) -> Value {
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.gates]
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.docs]
     // r[impl cairn.octet_integration.guidance]
-    if let Some(commands) = policy
-        .and_then(|value| value.get("release_readiness_policy"))
-        .and_then(|value| value.get("required_external_commands"))
-        .and_then(Value::as_array)
-        .filter(|commands| !commands.is_empty())
-        .and_then(|commands| {
-            commands
-                .iter()
-                .map(Value::as_str)
-                .collect::<Option<Vec<_>>>()
-        })
-    {
-        return json!({
+    // r[impl release_evidence.consumer_gate_selection]
+    match consumer_selected_gate_commands(policy) {
+        Ok(Some(commands)) => json!({
             "policy": "consumer-selected-gates",
             "required_commands": commands,
             "note": "The selected consumer policy supplies the release gate list; this receipt records it without executing heavyweight repository gates."
-        });
+        }),
+        Ok(None) => json!({
+            "policy": "maintained-local-gates",
+            "required_commands": [
+                "cargo fmt --check",
+                "cargo test --workspace",
+                "cargo clippy --workspace --all-targets -- -D warnings",
+                "nix build .#checks.x86_64-linux.octet --no-link -L",
+                "nix flake check path:$PWD -L"
+            ],
+            "note": "The bundle records the maintained release gate policy; operators still run heavyweight repository gates outside this local receipt command. The maintained traceability gate is Cairn-owned and does not require the external Tracey binary."
+        }),
+        Err(issue) => json!({
+            "policy": "invalid-consumer-selected-gates",
+            "required_commands": null,
+            "issue": issue,
+            "note": "The consumer policy declares a malformed release gate list; Cairn refuses it and does not substitute the maintained-local gates."
+        }),
     }
-    json!({
-        "policy": "maintained-local-gates",
-        "required_commands": [
-            "cargo fmt --check",
-            "cargo test --workspace",
-            "cargo clippy --workspace --all-targets -- -D warnings",
-            "nix build .#checks.x86_64-linux.octet --no-link -L",
-            "nix flake check path:$PWD -L"
-        ],
-        "note": "The bundle records the maintained release gate policy; operators still run heavyweight repository gates outside this local receipt command. The maintained traceability gate is Cairn-owned and does not require the external Tracey binary."
-    })
+}
+
+/// Reads `release_readiness_policy.required_external_commands`.
+///
+/// An absent list selects the maintained-local gates (`Ok(None)`). A present
+/// list must be a non-empty array of unique, non-blank strings; anything else
+/// is refused with a diagnostic rather than replaced by the maintained list.
+fn consumer_selected_gate_commands(policy: Option<&Value>) -> Result<Option<Vec<&str>>, String> {
+    // r[impl release_evidence.consumer_gate_selection.malformed]
+    const FIELD: &str = "release_readiness_policy.required_external_commands";
+    let Some(readiness_policy) = policy.and_then(|value| value.get("release_readiness_policy"))
+    else {
+        return Ok(None);
+    };
+    let readiness_policy = readiness_policy
+        .as_object()
+        .ok_or("release_readiness_policy must be an object")?;
+    let Some(commands) = readiness_policy.get("required_external_commands") else {
+        return Ok(None);
+    };
+    let commands = commands
+        .as_array()
+        .ok_or_else(|| format!("{FIELD} must be an array of command strings"))?;
+    if commands.is_empty() {
+        return Err(format!("{FIELD} must list at least one command"));
+    }
+    let mut selected = Vec::with_capacity(commands.len());
+    for (index, command) in commands.iter().enumerate() {
+        let command = command
+            .as_str()
+            .ok_or_else(|| format!("{FIELD}[{index}] must be a string"))?;
+        if command.trim().is_empty() {
+            return Err(format!("{FIELD}[{index}] must not be blank"));
+        }
+        if selected.contains(&command) {
+            return Err(format!("{FIELD}[{index}] duplicates command {command:?}"));
+        }
+        selected.push(command);
+    }
+    Ok(Some(selected))
 }
 
 pub(crate) fn run_traceability(args: Vec<String>) -> Result<(), Box<dyn Error>> {

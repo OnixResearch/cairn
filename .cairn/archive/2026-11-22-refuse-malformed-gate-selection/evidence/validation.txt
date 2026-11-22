@@ -1,0 +1,82 @@
+# Validation transcript (2026-11-22)
+
+Branch `release-selection` from `origin/main` `2be66951`, after the cherry-pick
+of `47ea1b86` ("Allow consumers to select maintained release gates") as
+`6f6b18e8`. Cargo ran inside `nix develop` with `RUSTC_WRAPPER=`,
+`CARGO_BUILD_JOBS=4`, and `CARGO_TARGET_DIR` and `TMPDIR` on local NVMe. Nix ran
+with `--option builders '' --option min-free 0`.
+
+Before this change, the cherry-picked commit alone:
+
+```
+$ cargo test -p cairn-cli --test release_receipts consumer_selected_gates
+test release_readiness_honors_consumer_selected_gates ... ok
+test release_readiness_uses_consumer_selected_gates ... ok
+test result: ok. 2 passed; 0 failed
+```
+
+With this change:
+
+```
+$ cargo fmt --check
+exit=0
+
+$ cairn gate proposal|design|tasks refuse-malformed-gate-selection --root .
+exit=0 valid=true (each stage)
+
+$ cairn sync refuse-malformed-gate-selection --root . --execute
+{"blocked": false, "dry_run": false, "mutated": true}
+
+$ cairn traceability coverage --root .
+traceability coverage ok: 2500/2500 referenced (profile cairn-default)
+
+$ cargo test --workspace --no-fail-fast
+exit=0; 98 test binaries, 2000 passed, 0 failed, 0 ignored
+release_receipts: 40 passed (33 before + 7 new), including
+  release_readiness_keeps_maintained_gates_when_selection_is_absent
+  release_readiness_refuses_gate_selection_of_wrong_type      (string, null)
+  release_readiness_refuses_gate_selection_outside_an_object
+  release_readiness_refuses_empty_gate_selection
+  release_readiness_refuses_duplicate_gate_selection
+  release_readiness_refuses_non_string_gate_selection
+  release_readiness_refuses_blank_gate_selection
+
+$ cargo clippy --workspace --all-targets -- -D warnings
+exit=0
+
+$ nix run path:$PWD#cairn -- policy export --check
+policy fresh: cairn-policy/generated/cairn-policy.json
+exit=0
+
+$ nix run path:$PWD#cairn -- validate --root .
+{"valid": true}
+exit=0
+
+$ nix flake check path:$PWD -L --option builders '' --option min-free 0
+all checks passed!   (cairn-tests: 98 binaries, 2003 passed, 0 failed;
+                      cairn-traceability-coverage: 2500/2500 referenced;
+                      cairn-policy-fresh, cairn-self-dogfood, cairn-clippy,
+                      octet-consumer-check and the remaining checks built)
+exit=0
+```
+
+Consumer survey: see `consumers.md`. No in-repository policy, Lattice policy or
+Kiln policy declares a list that this change refuses.
+
+Completion:
+
+```
+$ cairn gate proposal|design|tasks refuse-malformed-gate-selection --root .
+valid=true, 0 issues (each stage, after the tasks were checked off)
+
+$ cairn archive refuse-malformed-gate-selection --root . --execute
+{"blocked": false, "dry_run": false, "mutated": true}
+# CAIRN_ARCHIVE_DATE was unset, so the provisional 1970-01-01 directory was
+# renamed to the reviewed completion date 2026-11-22.
+
+$ cairn validate --root .
+{"valid": true}
+
+$ cairn traceability coverage --root .
+traceability coverage ok: 2500/2500 referenced (profile cairn-default)
+```

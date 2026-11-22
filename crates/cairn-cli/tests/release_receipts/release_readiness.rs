@@ -39,6 +39,7 @@ fn release_readiness_lists_canonical_octet_gate() -> Result<(), Box<dyn Error>> 
 
 #[test]
 fn release_readiness_honors_consumer_selected_gates() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.selected]
     let fixture = temp_project("consumer-gates")?;
     let mut policy = policy_json()?;
     policy["release_readiness_policy"] = json!({
@@ -112,6 +113,137 @@ fn release_readiness_uses_consumer_selected_gates() -> Result<(), Box<dyn Error>
         ])
     );
     Ok(())
+}
+
+fn release_readiness_with_gate_selection(
+    name: &str,
+    release_readiness_policy: Value,
+) -> Result<Value, Box<dyn Error>> {
+    let fixture = temp_project(name)?;
+    let mut policy = policy_json()?;
+    policy["release_readiness_policy"] = release_readiness_policy;
+    let policy_path = fixture.join("policy.json");
+    fs::write(&policy_path, serde_json::to_vec(&policy)?)?;
+    let mut command = cairn();
+    command
+        .args(["release-readiness", "--root", "."])
+        .arg("--policy")
+        .arg(&policy_path);
+    let receipt = run_json_command(&mut command)?;
+    fs::remove_dir_all(fixture)?;
+    Ok(receipt)
+}
+
+fn assert_gate_selection_refused(
+    name: &str,
+    release_readiness_policy: Value,
+    diagnostic: &str,
+) -> Result<(), Box<dyn Error>> {
+    let receipt = release_readiness_with_gate_selection(name, release_readiness_policy)?;
+    let summary = &receipt["repository_gate_summary"];
+    assert_eq!(summary["policy"], "invalid-consumer-selected-gates");
+    assert_eq!(summary["required_commands"], Value::Null);
+    assert_eq!(summary["issue"], diagnostic);
+    let check = receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .find(|check| check["name"] == "repository_gate_policy_listed")
+        .ok_or("repository gate check")?;
+    assert_eq!(check["passed"], false);
+    assert_eq!(check["issue"], diagnostic);
+    assert_eq!(check["required_external_commands"], Value::Null);
+    assert_eq!(receipt["valid"], false);
+    assert_eq!(receipt["verdict"], "fail");
+    Ok(())
+}
+
+#[test]
+fn release_readiness_keeps_maintained_gates_when_selection_is_absent() -> Result<(), Box<dyn Error>>
+{
+    // r[verify release_evidence.consumer_gate_selection.absent]
+    let receipt = release_readiness_with_gate_selection(
+        "gate-selection-absent",
+        json!({ "mcp_completion_contract": "target/release-readiness/mcp-contract.json" }),
+    )?;
+    assert_eq!(
+        receipt["repository_gate_summary"]["policy"],
+        "maintained-local-gates"
+    );
+    let check = receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .find(|check| check["name"] == "repository_gate_policy_listed")
+        .ok_or("repository gate check")?;
+    assert_eq!(check["passed"], true);
+    assert_eq!(check.get("issue"), None);
+    Ok(())
+}
+
+#[test]
+fn release_readiness_refuses_gate_selection_of_wrong_type() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.malformed]
+    assert_gate_selection_refused(
+        "gate-selection-string",
+        json!({ "required_external_commands": "cargo test --workspace" }),
+        "release_readiness_policy.required_external_commands must be an array of command strings",
+    )?;
+    assert_gate_selection_refused(
+        "gate-selection-null",
+        json!({ "required_external_commands": null }),
+        "release_readiness_policy.required_external_commands must be an array of command strings",
+    )
+}
+
+#[test]
+fn release_readiness_refuses_gate_selection_outside_an_object() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.malformed]
+    assert_gate_selection_refused(
+        "gate-selection-policy-array",
+        json!(["cargo test --workspace"]),
+        "release_readiness_policy must be an object",
+    )
+}
+
+#[test]
+fn release_readiness_refuses_empty_gate_selection() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.malformed]
+    assert_gate_selection_refused(
+        "gate-selection-empty",
+        json!({ "required_external_commands": [] }),
+        "release_readiness_policy.required_external_commands must list at least one command",
+    )
+}
+
+#[test]
+fn release_readiness_refuses_duplicate_gate_selection() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.malformed]
+    assert_gate_selection_refused(
+        "gate-selection-duplicate",
+        json!({ "required_external_commands": ["scripts/check.rs", "scripts/check.rs"] }),
+        "release_readiness_policy.required_external_commands[1] duplicates command \"scripts/check.rs\"",
+    )
+}
+
+#[test]
+fn release_readiness_refuses_non_string_gate_selection() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.malformed]
+    assert_gate_selection_refused(
+        "gate-selection-non-string",
+        json!({ "required_external_commands": ["scripts/check.rs", 1] }),
+        "release_readiness_policy.required_external_commands[1] must be a string",
+    )
+}
+
+#[test]
+fn release_readiness_refuses_blank_gate_selection() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.malformed]
+    assert_gate_selection_refused(
+        "gate-selection-blank",
+        json!({ "required_external_commands": ["scripts/check.rs", "  "] }),
+        "release_readiness_policy.required_external_commands[1] must not be blank",
+    )
 }
 
 #[test]

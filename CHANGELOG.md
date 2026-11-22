@@ -171,6 +171,17 @@ surface.
   CLI read and the pure evaluator. The retained Octet pilot stays `current`; a
   synthetic Trellis job binds.
 
+### Changed
+
+- `release-readiness` refuses a malformed consumer-selected gate list. When the
+  policy declares `release_readiness_policy.required_external_commands`, it must
+  be a non-empty array of unique, non-blank strings, and `release_readiness_policy`
+  must be an object. Otherwise `repository_gate_summary.policy` is
+  `invalid-consumer-selected-gates` with a null command list and an `issue`
+  diagnostic, the `repository_gate_policy_listed` check fails, and the verdict is
+  `fail`. Cairn no longer substitutes the maintained-local gates for a malformed
+  list. A policy without the list still reports the maintained-local gates.
+
 ### Removed
 
 - Post-release wording and source-text assertion tests. Historical documentation

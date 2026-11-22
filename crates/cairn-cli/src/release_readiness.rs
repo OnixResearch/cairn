@@ -283,13 +283,18 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         authenticated_release.check,
         workspace_contract_matrix.check,
     ];
-    checks.push(json!({
+    let mut repository_gate_check = json!({
         "name": "repository_gate_policy_listed",
         "passed": true,
         "source": "maintained local policy",
         "required_external_commands": repository_gate_summary["required_commands"].clone(),
         "evidence_hash": canonical_json_hash(&repository_gate_summary)
-    }));
+    });
+    if let Some(issue) = repository_gate_summary.get("issue") {
+        repository_gate_check["passed"] = json!(false);
+        repository_gate_check["issue"] = issue.clone();
+    }
+    checks.push(repository_gate_check);
     let is_valid = checks
         .iter()
         .all(|check| check["passed"].as_bool().unwrap_or(false));
