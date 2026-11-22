@@ -174,6 +174,7 @@ fn require_schema(
     }
 }
 
+// r[impl cairn.convergence.realization.policy_admission]
 /// Admit a schema identifier the policy names in a closed list, such as the
 /// realization receipt generations.
 fn require_admitted_schema(

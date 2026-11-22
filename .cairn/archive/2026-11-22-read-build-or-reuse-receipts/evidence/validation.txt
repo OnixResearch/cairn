@@ -1,0 +1,64 @@
+# Validation transcript (2026-11-22)
+
+All commands ran in the worktree of branch `build-or-reuse-20261122`, inside the
+repository dev shell (`NIX_CONFIG='builders ='`, `RUSTC_WRAPPER=`, a scratch
+`CARGO_TARGET_DIR` on /datapool).
+
+```
+$ nix develop -c cargo fmt --check
+exit=0
+
+$ nix develop -c cargo clippy --workspace --all-targets -- -D warnings
+exit=0
+
+$ nix develop -c cargo run -q -p cairn-cli --bin cairn -- policy export --check
+exit=0
+
+$ nix develop -c cargo test --workspace --no-fail-fast        # TMPDIR on /tmp
+check_evidence::reads::tests::held_inode_reads_reject_links_special_files_and_bounds ... ok
+check_evidence::local::tests::source_projection_accepts_regular_files_and_rejects_unsafe_members ... ok
+release_receipts: 6 failed before the spec sync (release readiness invalid: 2 dangling IDs)
+```
+
+Environment note: with TMPDIR on the /datapool ZFS dataset the two
+`check_evidence` tests above fail identically on unmodified `main` (08209de);
+with TMPDIR on /tmp they pass on this branch.
+
+Release readiness before and after the sync:
+
+```
+$ cairn traceability coverage --root .        # before sync
+valid=false missing=0 dangling=2 (cairn.convergence.realization.reuse_link, cairn.convergence.realization.root_disposition)
+
+$ cairn sync read-build-or-reuse-receipts --root . --execute
+{"blocked": false, "dry_run": false}
+exit=0
+
+$ cairn traceability coverage --root .        # after sync
+valid=false missing=1 (cairn.convergence.realization.policy_admission had no marker)
+# added r[impl] on require_admitted_schema and the negative CLI test
+# an_unadmitted_realization_receipt_schema_is_rejected (r[verify])
+
+$ cairn traceability coverage --root .
+exit=0 (valid)
+
+$ cairn release-readiness --root .
+{"valid": true, "verdict": "pass"}
+
+$ nix develop -c cargo test -p cairn-cli --test release_receipts --no-fail-fast
+test result: ok. 32 passed; 0 failed
+exit=0
+(main 08209de: 32 passed)
+
+$ nix develop -c cargo clippy -p cairn-cli --all-targets -- -D warnings
+exit=0
+```
+
+```
+$ nix develop -c cargo test -p cairn-cli --test convergence
+test result: ok. 26 passed; 0 failed   (includes an_unadmitted_realization_receipt_schema_is_rejected)
+exit=0
+
+$ nix develop -c cargo fmt --check
+exit=0
+```

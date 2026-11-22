@@ -962,6 +962,33 @@ fn an_unknown_observation_schema_is_rejected() {
     );
 }
 
+// r[verify cairn.convergence.realization.policy_admission]
+#[test]
+fn an_unadmitted_realization_receipt_schema_is_rejected() {
+    let fixture = build_fixture("unadmitted-realization-schema");
+    let receipt_path = fixture.case_dir.join("realization.json");
+    let mut receipt: Value = serde_json::from_slice(&fs::read(&receipt_path).unwrap()).unwrap();
+    receipt["schema"] = json!("mantle-foreign-realization-receipt-v0");
+    fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+
+    let output = fixture.inspect();
+    assert_eq!(output.status.code(), Some(1));
+    let rejection = receipt_json(&output);
+    assert_eq!(rejection["status"], "rejected");
+    assert!(
+        rejection["issues"].as_array().unwrap().iter().any(|issue| {
+            issue["code"] == "convergence.unknown_schema"
+                && issue["field_path"]
+                    .as_str()
+                    .is_some_and(|path| path.ends_with("realization.json"))
+                && issue["message"].as_str().is_some_and(|message| {
+                    message.contains("mantle-foreign-realization-receipt-v2")
+                })
+        }),
+        "rejection: {rejection}"
+    );
+}
+
 #[cfg(unix)]
 #[test]
 fn a_symlinked_decision_file_is_rejected() {
