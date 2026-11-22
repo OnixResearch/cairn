@@ -60,8 +60,8 @@ all checks passed!   (cairn-tests: 98 binaries, 2003 passed, 0 failed;
 exit=0
 ```
 
-Consumer survey: see `consumers.md`. No in-repository policy, Lattice policy or
-Kiln policy declares a list that this change refuses.
+Consumer survey: see `consumers.md`. No in-repository policy, Lattice policy,
+ChaosControl policy or Kiln policy declares a list that this change refuses.
 
 Completion:
 
@@ -80,3 +80,41 @@ $ cairn validate --root .
 $ cairn traceability coverage --root .
 traceability coverage ok: 2500/2500 referenced (profile cairn-default)
 ```
+
+Review follow-up (2026-11-22):
+
+An independent review found two P2 defects. The duplicate diagnostic echoed the
+whole command, so two identical multi-megabyte entries made the issue (copied
+into both the summary and the failed check) grow with the input. Uniqueness used
+a linear scan per entry, which is quadratic for a long well-formed list. The fix
+reports `[i] duplicates entry [j]` with indices only and checks uniqueness with
+a map from entry to its first index; the vector keeps the declared order. The
+review also found that the survey omitted ChaosControl, now added.
+
+```
+$ cargo fmt --check
+exit=0
+
+$ cargo test -p cairn-cli --test release_receipts gate_selection
+test result: ok. 8 passed; 0 failed   (includes
+  release_readiness_bounds_duplicate_gate_selection_diagnostics: two identical
+    1 MiB entries at [1] and [3]; the issue is exactly "...[3] duplicates entry
+    [1]", and the rendered receipt neither contains the command text nor
+    reaches the length of one entry
+  release_readiness_accepts_a_large_distinct_gate_selection: 100,000 distinct
+    entries are reported as consumer-selected-gates in order; 2.63 s for all 8)
+
+$ cargo test --workspace --no-fail-fast
+exit=0; 98 test binaries, 2002 passed, 0 failed, 0 ignored
+release_receipts: 42 passed
+
+$ cargo clippy --workspace --all-targets -- -D warnings
+exit=0
+```
+
+Byte stability against `2be66951`: `release-readiness --root .` was run in a
+`2be66951` worktree with the `2be66951` binary and with this change's binary,
+for the repository's default policy (implicit and explicit), a
+`release_readiness_policy` object without the list, Lattice's selection and
+ChaosControl's selection. All five receipts were byte-identical, including
+`receipt_hash`.

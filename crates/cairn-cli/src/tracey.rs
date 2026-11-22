@@ -1,5 +1,5 @@
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     error::Error,
     fs,
     path::{Path, PathBuf},
@@ -80,6 +80,8 @@ pub(crate) fn repository_gate_summary(policy: Option<&Value>) -> Value {
 /// An absent list selects the maintained-local gates (`Ok(None)`). A present
 /// list must be a non-empty array of unique, non-blank strings; anything else
 /// is refused with a diagnostic rather than replaced by the maintained list.
+/// Diagnostics name the field and entry indices only, never an entry's text,
+/// so their size does not grow with the policy input.
 fn consumer_selected_gate_commands(policy: Option<&Value>) -> Result<Option<Vec<&str>>, String> {
     // r[impl release_evidence.consumer_gate_selection.malformed]
     const FIELD: &str = "release_readiness_policy.required_external_commands";
@@ -100,6 +102,7 @@ fn consumer_selected_gate_commands(policy: Option<&Value>) -> Result<Option<Vec<
         return Err(format!("{FIELD} must list at least one command"));
     }
     let mut selected = Vec::with_capacity(commands.len());
+    let mut first_index = HashMap::with_capacity(commands.len());
     for (index, command) in commands.iter().enumerate() {
         let command = command
             .as_str()
@@ -107,8 +110,8 @@ fn consumer_selected_gate_commands(policy: Option<&Value>) -> Result<Option<Vec<
         if command.trim().is_empty() {
             return Err(format!("{FIELD}[{index}] must not be blank"));
         }
-        if selected.contains(&command) {
-            return Err(format!("{FIELD}[{index}] duplicates command {command:?}"));
+        if let Some(first) = first_index.insert(command, index) {
+            return Err(format!("{FIELD}[{index}] duplicates entry [{first}]"));
         }
         selected.push(command);
     }

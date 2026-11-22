@@ -39,9 +39,11 @@ consumers move to it.
   `docs/cairn-mcp.md`, `CHANGELOG.md`.
 - **Compatibility**: receipts for policies without the list and for well-formed
   lists are byte-identical. No in-repository policy sets the list. Lattice's
-  authored list (three unique, non-blank strings) is accepted, and its own Nickel
-  contract already refuses the malformed forms. Kiln's policy does not set the
-  list and keeps the maintained-local gates.
+  authored list (three unique, non-blank strings) and ChaosControl's (four) are
+  accepted. Lattice's Nickel contract already refuses every malformed form;
+  ChaosControl's refuses empty lists and empty or non-string entries but not
+  whitespace-only or duplicate entries. Kiln's policy does not set the list and
+  keeps the maintained-local gates.
 - **Testing**: `cargo test --workspace`, Clippy, `policy export --check`,
   `cairn validate`, the change gates and `nix flake check`.
 

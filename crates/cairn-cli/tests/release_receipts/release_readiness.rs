@@ -139,6 +139,14 @@ fn assert_gate_selection_refused(
     release_readiness_policy: Value,
     diagnostic: &str,
 ) -> Result<(), Box<dyn Error>> {
+    refused_gate_selection_receipt(name, release_readiness_policy, diagnostic).map(|_| ())
+}
+
+fn refused_gate_selection_receipt(
+    name: &str,
+    release_readiness_policy: Value,
+    diagnostic: &str,
+) -> Result<Value, Box<dyn Error>> {
     let receipt = release_readiness_with_gate_selection(name, release_readiness_policy)?;
     let summary = &receipt["repository_gate_summary"];
     assert_eq!(summary["policy"], "invalid-consumer-selected-gates");
@@ -155,7 +163,7 @@ fn assert_gate_selection_refused(
     assert_eq!(check["required_external_commands"], Value::Null);
     assert_eq!(receipt["valid"], false);
     assert_eq!(receipt["verdict"], "fail");
-    Ok(())
+    Ok(receipt)
 }
 
 #[test]
@@ -222,8 +230,59 @@ fn release_readiness_refuses_duplicate_gate_selection() -> Result<(), Box<dyn Er
     assert_gate_selection_refused(
         "gate-selection-duplicate",
         json!({ "required_external_commands": ["scripts/check.rs", "scripts/check.rs"] }),
-        "release_readiness_policy.required_external_commands[1] duplicates command \"scripts/check.rs\"",
+        "release_readiness_policy.required_external_commands[1] duplicates entry [0]",
     )
+}
+
+#[test]
+fn release_readiness_bounds_duplicate_gate_selection_diagnostics() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.malformed]
+    let command = format!("large-gate-{}", "x".repeat(1_048_576));
+    let diagnostic = "release_readiness_policy.required_external_commands[3] duplicates entry [1]";
+    let selection = json!({
+        "required_external_commands": ["first", command, "second", command]
+    });
+    let receipt =
+        refused_gate_selection_receipt("gate-selection-large-duplicate", selection, diagnostic)?;
+    let rendered = receipt.to_string();
+    assert!(
+        !rendered.contains("large-gate-"),
+        "the receipt echoed the duplicated command text"
+    );
+    assert!(
+        rendered.len() < command.len(),
+        "the receipt grew with the duplicated command: {} bytes",
+        rendered.len()
+    );
+    Ok(())
+}
+
+#[test]
+fn release_readiness_accepts_a_large_distinct_gate_selection() -> Result<(), Box<dyn Error>> {
+    // r[verify release_evidence.consumer_gate_selection.selected]
+    let commands = (0..100_000)
+        .map(|index| format!("check-{index}"))
+        .collect::<Vec<_>>();
+    let receipt = release_readiness_with_gate_selection(
+        "gate-selection-large-distinct",
+        json!({ "required_external_commands": commands }),
+    )?;
+    assert_eq!(
+        receipt["repository_gate_summary"]["policy"],
+        "consumer-selected-gates"
+    );
+    assert_eq!(
+        receipt["repository_gate_summary"]["required_commands"],
+        json!(commands)
+    );
+    let check = receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .find(|check| check["name"] == "repository_gate_policy_listed")
+        .ok_or("repository gate check")?;
+    assert_eq!(check["passed"], true);
+    Ok(())
 }
 
 #[test]

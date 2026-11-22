@@ -29,7 +29,7 @@ r[release_evidence.consumer_gate_selection.absent]
 r[release_evidence.consumer_gate_selection.malformed]
 - GIVEN an admitted policy whose `release_readiness_policy` is not an object, or whose `required_external_commands` is not an array, is empty, or contains a non-string, blank or duplicate entry
 - WHEN `release-readiness` runs
-- THEN `repository_gate_summary.policy` MUST be `invalid-consumer-selected-gates` with a null `required_commands` and an `issue` naming the field
+- THEN `repository_gate_summary.policy` MUST be `invalid-consumer-selected-gates` with a null `required_commands` and an `issue` that names the field and entry indices but never an entry's text
 - AND the `repository_gate_policy_listed` check MUST fail with that issue
 - AND the receipt verdict MUST be `fail`
 - AND the maintained-local gates MUST NOT be reported in place of the declared list.

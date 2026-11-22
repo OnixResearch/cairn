@@ -37,19 +37,32 @@ and consumers already gate on `valid` and `verdict`. A null list cannot be
 mistaken for "no gates required", which an empty array could suggest. Policies
 without the list and well-formed lists keep byte-identical receipts.
 
-### Decision: Diagnostics name the field and the first offending entry
+### Decision: Diagnostics name the field and entry indices, never entry text
 
 **Choice:** The issue names `release_readiness_policy.required_external_commands`
-and, for entry errors, the zero-based index (`[1] must be a string`,
-`[1] must not be blank`, `[1] duplicates command "…"`).
+and, for entry errors, zero-based indices only (`[1] must be a string`,
+`[1] must not be blank`, `[3] duplicates entry [1]`). No diagnostic copies an
+entry's text.
 
-**Rationale:** An operator can fix the policy from the receipt alone, and tests
-can assert the exact text.
+**Rationale:** An operator can locate the entry from the receipt alone, and
+tests can assert the exact text. The policy file may be up to 16 MiB, and the
+issue appears in both the summary and the failed check, so echoing a command
+would let the receipt grow with the input.
+
+### Decision: Check uniqueness with a set
+
+**Choice:** Uniqueness is checked with a map from entry to its first index,
+while a vector keeps the declared order for the receipt.
+
+**Rationale:** A linear scan per entry is quadratic; a well-formed list of
+100,000 short commands fits in the policy limit and would need about 5e9
+comparisons. The map keeps validation linear in the total entry size.
 
 ## Risks / Trade-offs
 
 - A consumer that relied on the silent fallback with a malformed list now gets
   a failing receipt. No known consumer does: Cairn's own policy omits the list,
-  Kiln's omits it, and Lattice's list is well-formed and contract-checked.
+  Kiln's omits it, and the Lattice and ChaosControl lists are well-formed and
+  typed by their own Nickel contracts.
 - Leading or trailing whitespace inside a non-blank command is kept as written;
   only fully blank entries are refused.

@@ -39,6 +39,29 @@ exact selection. Lattice's `docs/release-readiness-integration.md` still says
 the producer falls back to its maintained list when the field is malformed;
 that sentence becomes stale once Lattice moves to a revision with this change.
 
+## ChaosControl (`OnixResearch/chaoscontrol` at `df559e43`, locks Cairn `695124d4`)
+
+`cairn-policy/default.ncl` activates `cairn-policy/release-readiness-selection.ncl`,
+which takes `required_external_commands` from
+`fixtures/agent-completion/registry.ncl`. The generated
+`cairn-policy/generated/cairn-policy.json` declares:
+
+```
+"required_external_commands": [
+  "cargo test --workspace --all-targets --locked --no-fail-fast",
+  "cargo clippy --workspace --all-targets --locked -- -D warnings",
+  "cargo fmt --all -- --check",
+  "nix flake check -L"
+]
+```
+
+The list is a non-empty array of four unique, non-blank strings, so it is
+accepted and reported as `consumer-selected-gates`. ChaosControl's
+`cairn-policy/contracts.ncl` types the field as `NonEmptyArray` of
+`NonEmptyString`, which refuses empty lists and empty or non-string entries but
+not whitespace-only or duplicate entries; Cairn now refuses those at readiness
+time.
+
 ## Kiln (`kiln-int2` clone at `9173f49b`)
 
 No policy sets `release_readiness_policy`. Every hit is under `.cairn/` and is a
