@@ -54,6 +54,9 @@ struct ConvergenceCase {
     targets: String,
     generated_sources: String,
     trusted_signers: Vec<String>,
+    /// Builder public-key fingerprints the case trusts for version 2 roots.
+    #[serde(default)]
+    trusted_builder_keys: Vec<String>,
     contracts: Vec<ContractCase>,
 }
 
@@ -72,6 +75,10 @@ struct ContractCase {
     producer_output_locator: Option<String>,
     #[serde(default)]
     realization_receipt: Option<String>,
+    /// The earlier version 2 receipt a reused root links to. Required when the
+    /// root disposition is `reused`.
+    #[serde(default)]
+    original_realization_receipt: Option<String>,
     #[serde(default)]
     store_info: Option<String>,
 }
@@ -164,6 +171,31 @@ fn require_schema(
         Ok(())
     } else {
         Err(vec![unknown_schema(path, field, expected)])
+    }
+}
+
+/// Admit a schema identifier the policy names in a closed list, such as the
+/// realization receipt generations.
+fn require_admitted_schema(
+    facts: &FileFacts,
+    field: &str,
+    admitted: &[String],
+    path: &Path,
+) -> Result<(), Vec<Value>> {
+    if admitted
+        .iter()
+        .any(|expected| facts.value.get(field).and_then(Value::as_str) == Some(expected.as_str()))
+    {
+        Ok(())
+    } else {
+        Err(vec![issue(
+            ISSUE_UNKNOWN_SCHEMA,
+            path.display(),
+            format!(
+                "{field} must equal one of the policy-admitted identifiers: {}",
+                admitted.join(", ")
+            ),
+        )])
     }
 }
 
@@ -447,10 +479,24 @@ fn contract_facts(
         Some(path) => {
             let path = resolve(base, path);
             let facts = read_json(&path, policy.bounds.max_realization_receipt_bytes as u64)?;
-            require_schema(
+            require_admitted_schema(
                 &facts,
                 "schema",
-                &policy.schemas.mantle_realization_receipt,
+                &policy.schemas.mantle_realization_receipts,
+                &path,
+            )?;
+            Some(facts)
+        }
+        None => None,
+    };
+    let original_realization = match &case.original_realization_receipt {
+        Some(path) => {
+            let path = resolve(base, path);
+            let facts = read_json(&path, policy.bounds.max_realization_receipt_bytes as u64)?;
+            require_admitted_schema(
+                &facts,
+                "schema",
+                &policy.schemas.mantle_realization_receipts,
                 &path,
             )?;
             Some(facts)
@@ -476,6 +522,7 @@ fn contract_facts(
         handoff,
         producer_output,
         realization,
+        original_realization,
         store_info,
     })
 }
@@ -611,6 +658,7 @@ fn inspect(case_path: &Path, root_path: &Path, policy_bytes: &[u8]) -> Result<Va
         generated_blake3,
         root_specification_digests,
         trusted_signers: case.trusted_signers.clone(),
+        trusted_builder_keys: case.trusted_builder_keys.clone(),
         contracts,
     };
     Ok(cairn_core::convergence::evaluate_convergence(&request))

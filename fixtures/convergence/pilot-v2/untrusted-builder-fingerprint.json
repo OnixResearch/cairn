@@ -1,0 +1,24 @@
+{
+  "claim": "A version 2 root whose builder fingerprint is not in the case's trusted builder keys is not current.",
+  "files": {
+    "realization-receipt.json": "built-receipt.json"
+  },
+  "ops": [
+    {
+      "op": "case-set",
+      "pointer": "/trusted_builder_keys",
+      "value": [
+        "6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c"
+      ]
+    }
+  ],
+  "expected": {
+    "exit": 0,
+    "row_state": "unrealized",
+    "issues": [
+      "convergence.untrusted_signer"
+    ],
+    "root_disposition": null,
+    "original_receipt_blake3": null
+  }
+}

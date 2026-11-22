@@ -86,6 +86,21 @@ pub const CONVERGENCE_ISSUE_STORE_INFO_MISSING: &str = "convergence.store_info_m
 pub const CONVERGENCE_ISSUE_STORE_INFO_PATH_MISSING: &str = "convergence.store_info_path_missing";
 pub const CONVERGENCE_ISSUE_NAR_MISMATCH: &str = "convergence.nar_mismatch";
 pub const CONVERGENCE_ISSUE_UNTRUSTED_SIGNER: &str = "convergence.untrusted_signer";
+pub const CONVERGENCE_ISSUE_REUSE_LINK_INVALID: &str = "convergence.reuse_link_invalid";
+
+/// Mantle's realization receipt v2 schema. Version 1 stays the default for
+/// every other route.
+pub const REALIZATION_RECEIPT_SCHEMA_V2: &str = "mantle-foreign-realization-receipt-v2";
+/// Version 1 records no root disposition; Cairn derives `preserved` from this
+/// route because Mantle did not build or execute the root.
+pub const CACHE_ONLY_PRESERVE_ROUTE: &str = "cache-only-preserve-v1";
+/// Every version 1 build-route receipt means Mantle built the root.
+pub const CACHE_INPUTS_BUILD_ROOTS_ROUTE_V1: &str = "cache-inputs-build-roots-v1";
+pub const ROOT_DISPOSITION_BUILT: &str = "built";
+pub const ROOT_DISPOSITION_REUSED: &str = "reused";
+pub const ROOT_DISPOSITION_PRESERVED: &str = "preserved";
+/// The only signer role that may attest a version 2 root.
+pub const BUILDER_SIGNER_ROLE: &str = "builder";
 
 /// An already-read JSON file: its BLAKE3 identity and parsed value.
 #[derive(Debug, Clone)]
@@ -136,6 +151,9 @@ pub struct ContractCaseFacts {
     pub handoff: HandoffFacts,
     pub producer_output: ProducerOutputFacts,
     pub realization: Option<FileFacts>,
+    /// The earlier version 2 receipt a `reused` root links to, when the case
+    /// supplies it.
+    pub original_realization: Option<FileFacts>,
     pub store_info: Option<FileFacts>,
 }
 
@@ -157,6 +175,9 @@ pub struct ConvergenceRequest {
     /// domain-separated identity.
     pub root_specification_digests: BTreeMap<String, String>,
     pub trusted_signers: Vec<String>,
+    /// Builder public-key fingerprints (`public_key_blake3`) the case trusts.
+    /// A version 2 root signer must name one of these.
+    pub trusted_builder_keys: Vec<String>,
     pub contracts: Vec<ContractCaseFacts>,
 }
 
@@ -239,6 +260,8 @@ struct RealizationBinding {
     target_derivation: Option<String>,
     target_path: Option<String>,
     nar_sha256: Option<String>,
+    root_disposition: Option<String>,
+    original_receipt_blake3: Option<String>,
 }
 
 /// Evaluate every registry row in registry order and seal the receipt.
@@ -498,6 +521,8 @@ fn evaluate_target(
             "target_path": binding.target_path.unwrap_or_default(),
             "signer": signer.unwrap_or_default(),
             "realization_route": realization_route,
+            "root_disposition": binding.root_disposition,
+            "original_receipt_blake3": binding.original_receipt_blake3,
         }));
     }
     outcome
@@ -893,6 +918,8 @@ fn check_realization(
         target_derivation: None,
         target_path: None,
         nar_sha256: None,
+        root_disposition: None,
+        original_receipt_blake3: None,
     };
     let Some(realization) = case.realization.as_ref() else {
         evaluation.mark(Rank::Unrealized, CONVERGENCE_ISSUE_REALIZATION_MISSING);
@@ -914,17 +941,24 @@ fn check_realization(
         evaluation.mark(Rank::Unrealized, CONVERGENCE_ISSUE_REALIZATION_INCOMPLETE);
     }
 
-    let root_derivation = case
-        .handoff
-        .root_derivation
-        .text
-        .as_deref()
-        .map(str::trim)
-        .unwrap_or_default();
-    // Mantle names a foreign unit `nix:` plus the foreign derivation's file
-    // name; `target_derivation` is Mantle's translated derivation, which differs
-    // from the frozen root even on the preserve route.
-    let expected_node_id = format!("nix:{}", final_component(root_derivation));
+    if value.get("schema").and_then(Value::as_str) == Some(REALIZATION_RECEIPT_SCHEMA_V2) {
+        check_realization_v2(request, case, value, &mut binding, evaluation);
+    } else {
+        check_realization_v1(case, value, &mut binding, evaluation);
+    }
+    binding
+}
+
+/// Version 1 receipts keep their existing binding: the unit's node_id and the
+/// output whose path the bridge consumed. Their disposition is derived, never
+/// read: the preserve route did not build, the version 1 build route always did.
+fn check_realization_v1(
+    case: &ContractCaseFacts,
+    value: &Value,
+    binding: &mut RealizationBinding,
+    evaluation: &mut Evaluation,
+) {
+    let expected_node_id = expected_root_node_id(case);
     let unit = value
         .get("units")
         .and_then(Value::as_array)
@@ -938,7 +972,7 @@ fn check_realization(
             Rank::Stale,
             CONVERGENCE_ISSUE_REALIZATION_DERIVATION_MISMATCH,
         );
-        return binding;
+        return;
     };
     binding.node_id = unit
         .get("node_id")
@@ -963,7 +997,7 @@ fn check_realization(
         });
     let Some(output) = output else {
         evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_REALIZATION_OUTPUT_MISMATCH);
-        return binding;
+        return;
     };
     binding.target_path = output
         .get("target_path")
@@ -973,7 +1007,210 @@ fn check_realization(
         .get("nar_sha256")
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
-    binding
+    binding.root_disposition = v1_root_disposition(value).map(ToOwned::to_owned);
+}
+
+/// Version 2 receipts name each selected root. Cairn admits a root only when
+/// the policy admits its disposition, its signer has the builder role and a
+/// fingerprint the case trusts, and a `reused` root links a `built` original.
+///
+/// r[impl cairn.convergence.realization.root_disposition]
+/// r[impl cairn.convergence.realization.reuse_link]
+fn check_realization_v2(
+    request: &ConvergenceRequest,
+    case: &ContractCaseFacts,
+    value: &Value,
+    binding: &mut RealizationBinding,
+    evaluation: &mut Evaluation,
+) {
+    let expected_node_id = expected_root_node_id(case);
+    let dir_name = case.producer_output.dir_name.as_str();
+    let roots = value.get("roots").and_then(Value::as_array);
+    let node_roots: Vec<&Value> = roots
+        .map(|roots| {
+            roots
+                .iter()
+                .filter(|root| {
+                    root.get("node_id").and_then(Value::as_str) == Some(expected_node_id.as_str())
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    if node_roots.is_empty() {
+        evaluation.mark(
+            Rank::Stale,
+            CONVERGENCE_ISSUE_REALIZATION_DERIVATION_MISMATCH,
+        );
+        return;
+    }
+    let root = node_roots.iter().copied().find(|root| {
+        root.get("path")
+            .and_then(Value::as_str)
+            .map(final_component)
+            == Some(dir_name)
+    });
+    let Some(root) = root else {
+        evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_REALIZATION_OUTPUT_MISMATCH);
+        return;
+    };
+    binding.node_id = root
+        .get("node_id")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+    binding.target_derivation = root
+        .get("target_derivation")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+    binding.target_path = root
+        .get("path")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+    binding.nar_sha256 = root
+        .get("nar_sha256")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+
+    let disposition = root.get("disposition").and_then(Value::as_str);
+    let Some(disposition) = disposition.filter(|disposition| {
+        request
+            .policy
+            .mantle
+            .root_dispositions
+            .iter()
+            .any(|admitted| admitted == disposition)
+    }) else {
+        evaluation.mark(Rank::Unrealized, CONVERGENCE_ISSUE_REALIZATION_INCOMPLETE);
+        return;
+    };
+    binding.root_disposition = Some(disposition.to_string());
+
+    let built = root.get("built").filter(|value| !value.is_null());
+    let reused = root.get("reused").filter(|value| !value.is_null());
+    let shape_ok = match disposition {
+        ROOT_DISPOSITION_BUILT => built.is_some() && reused.is_none(),
+        ROOT_DISPOSITION_REUSED => reused.is_some() && built.is_none(),
+        _ => false,
+    };
+    if !shape_ok {
+        evaluation.mark(Rank::Unrealized, CONVERGENCE_ISSUE_REALIZATION_INCOMPLETE);
+    }
+
+    let signer = root.get("signer");
+    let role_is_builder = signer
+        .and_then(|signer| signer.get("role"))
+        .and_then(Value::as_str)
+        == Some(BUILDER_SIGNER_ROLE);
+    let fingerprint = signer_fingerprint(root);
+    let fingerprint_trusted = fingerprint.is_some_and(|fingerprint| {
+        request
+            .trusted_builder_keys
+            .iter()
+            .any(|trusted| trusted == fingerprint)
+    });
+    if !(role_is_builder && fingerprint_trusted) {
+        evaluation.mark(Rank::Unrealized, CONVERGENCE_ISSUE_UNTRUSTED_SIGNER);
+    }
+
+    if disposition == ROOT_DISPOSITION_REUSED {
+        let link = reused
+            .and_then(|reused| reused.get("original_receipt_blake3"))
+            .and_then(Value::as_str);
+        let Some(link) = link else {
+            evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_REUSE_LINK_INVALID);
+            return;
+        };
+        binding.original_receipt_blake3 = Some(link.to_string());
+        if !reuse_link_is_valid(root, link, case.original_realization.as_ref()) {
+            evaluation.mark(Rank::Stale, CONVERGENCE_ISSUE_REUSE_LINK_INVALID);
+        }
+    }
+}
+
+/// A version 2 `reused` root must link a parseable version 2 original whose
+/// recorded digest is the link, whose matching root was `built` with the same
+/// NAR hash, and whose signer fingerprint is the same.
+///
+/// Cairn checks the recorded identities; it does not verify signature bytes.
+fn reuse_link_is_valid(root: &Value, link: &str, original: Option<&FileFacts>) -> bool {
+    let Some(original) = original else {
+        return false;
+    };
+    let original_value = &original.value;
+    if original_value.get("schema").and_then(Value::as_str) != Some(REALIZATION_RECEIPT_SCHEMA_V2) {
+        return false;
+    }
+    if original_value.get("receipt_blake3").and_then(Value::as_str) != Some(link) {
+        return false;
+    }
+    let original_root = original_value
+        .get("roots")
+        .and_then(Value::as_array)
+        .and_then(|roots| {
+            roots.iter().find(|candidate| {
+                candidate.get("node_id") == root.get("node_id")
+                    && candidate.get("target_derivation") == root.get("target_derivation")
+                    && candidate.get("output_name") == root.get("output_name")
+                    && candidate.get("path") == root.get("path")
+            })
+        });
+    let Some(original_root) = original_root else {
+        return false;
+    };
+    if original_root.get("disposition").and_then(Value::as_str) != Some(ROOT_DISPOSITION_BUILT) {
+        return false;
+    }
+    if original_root.get("built").is_none_or(Value::is_null)
+        || original_root
+            .get("reused")
+            .is_some_and(|value| !value.is_null())
+    {
+        return false;
+    }
+    let same_nar = match (
+        root.get("nar_sha256").and_then(Value::as_str),
+        original_root.get("nar_sha256").and_then(Value::as_str),
+    ) {
+        (Some(current), Some(original)) => digest_eq(current, original),
+        _ => false,
+    };
+    same_nar
+        && matches!(
+            (signer_fingerprint(root), signer_fingerprint(original_root)),
+            (Some(current), Some(original)) if current == original
+        )
+}
+
+/// The version 1 route's meaning for `bound.root_disposition`: the preserve
+/// route built nothing, and the version 1 build route always built. Any other
+/// route, including none, makes no claim.
+fn v1_root_disposition(value: &Value) -> Option<&'static str> {
+    match value
+        .pointer("/cache_policy/realization_route")
+        .and_then(Value::as_str)
+    {
+        Some(CACHE_ONLY_PRESERVE_ROUTE) => Some(ROOT_DISPOSITION_PRESERVED),
+        Some(CACHE_INPUTS_BUILD_ROOTS_ROUTE_V1) => Some(ROOT_DISPOSITION_BUILT),
+        _ => None,
+    }
+}
+
+fn signer_fingerprint(root: &Value) -> Option<&str> {
+    root.pointer("/signer/public_key_blake3")
+        .and_then(Value::as_str)
+}
+
+/// Mantle names a foreign unit `nix:` plus the foreign derivation's file name;
+/// `target_derivation` is Mantle's translated derivation, which differs from the
+/// frozen root even on the preserve route.
+fn expected_root_node_id(case: &ContractCaseFacts) -> String {
+    let root_derivation = case
+        .handoff
+        .root_derivation
+        .text
+        .as_deref()
+        .map(str::trim)
+        .unwrap_or_default();
+    format!("nix:{}", final_component(root_derivation))
 }
 
 fn check_store_info(

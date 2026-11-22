@@ -190,7 +190,10 @@ pub struct PolicySchemas {
     /// its entry by the job's own `owner` field.
     pub producer_jobs: BTreeMap<String, String>,
     pub mantle_observation: String,
-    pub mantle_realization_receipt: String,
+    /// Realization receipt schema generations the policy admits. Version 1
+    /// keeps its existing meaning; version 2 adds the per-root disposition,
+    /// builder signer and reuse link.
+    pub mantle_realization_receipts: Vec<String>,
     pub mantle_store_info: String,
     pub mantle_build_report: String,
 }
@@ -208,6 +211,8 @@ pub struct PolicyMantle {
     pub realization_complete_status: String,
     pub realized_states: Vec<String>,
     pub proof_acceptance_relays: Vec<String>,
+    /// Root dispositions a version 2 realization receipt may record.
+    pub root_dispositions: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -4,6 +4,7 @@
 //! Negatives are small declarative mutation records materialized here, at test
 //! time, in a fresh directory; no mutated copy of a large record is committed.
 // r[verify cairn.convergence.conformance]
+// r[verify cairn.convergence.realization.root_disposition]
 use std::{
     collections::{BTreeMap, BTreeSet},
     env, fs,
@@ -253,6 +254,8 @@ fn pilot_case_is_current_and_deterministic() {
         current[0]["bound"]["realization_route"],
         "cache-only-preserve-v1"
     );
+    assert_eq!(current[0]["bound"]["root_disposition"], "preserved");
+    assert_eq!(current[0]["bound"]["original_receipt_blake3"], Value::Null);
     assert!(current[0]["issues"].as_array().unwrap().is_empty());
     for row in rows {
         if row["requirement_id"] != PILOT_REQUIREMENT {

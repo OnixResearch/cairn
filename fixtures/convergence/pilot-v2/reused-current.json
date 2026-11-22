@@ -1,0 +1,28 @@
+{
+  "claim": "A version 2 root with disposition `reused` is current when the case supplies the linked `built` original.",
+  "files": {
+    "realization-receipt.json": "reused-receipt.json",
+    "original-realization-receipt.json": "built-receipt.json"
+  },
+  "ops": [
+    {
+      "op": "case-set",
+      "pointer": "/trusted_builder_keys",
+      "value": [
+        "6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a"
+      ]
+    },
+    {
+      "op": "case-set",
+      "pointer": "/contracts/0/original_realization_receipt",
+      "value": "original-realization-receipt.json"
+    }
+  ],
+  "expected": {
+    "exit": 0,
+    "row_state": "current",
+    "issues": [],
+    "root_disposition": "reused",
+    "original_receipt_blake3": "1010101010101010101010101010101010101010101010101010101010101010"
+  }
+}

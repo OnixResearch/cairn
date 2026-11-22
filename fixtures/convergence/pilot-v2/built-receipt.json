@@ -1,0 +1,47 @@
+{
+  "schema": "mantle-foreign-realization-receipt-v2",
+  "status": "complete",
+  "strongest_state": "realized",
+  "receipt_blake3": "1010101010101010101010101010101010101010101010101010101010101010",
+  "cache_policy": {
+    "substitution_enabled": true,
+    "offline": false,
+    "ordered_cache_urls": [
+      "http://127.0.0.1:18471"
+    ],
+    "realization_route": "cache-inputs-build-roots-v2"
+  },
+  "selected_root_paths": [
+    "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1"
+  ],
+  "roots": [
+    {
+      "node_id": "nix:vl7bqxyz2f86x0vlvxipcvryavckb9wj-octet-mantle-aeneas-consumer-job-v1.drv",
+      "target_derivation": "/nix/store/szzqg5vg6g34zm65m9qxybmkx5wxcbgy-octet-mantle-aeneas-consumer-job-v1.drv",
+      "output_name": "out",
+      "path": "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1",
+      "nar_sha256": "2a12b198623393a6887de8051200fa034c3535e842c8ed7e15250ac0bba284be",
+      "nar_size": 580056,
+      "references": [
+        "/nix/store/3lh4savplcckg4zzg0kpx9747md8g53w-octet-aeneas-lean-provider-closure-x86_64-linux",
+        "/nix/store/zjq6whhf2c641vkz89kgwwpbajjq5cbq-octet-mantle-aeneas-consumer-job-v1"
+      ],
+      "disposition": "built",
+      "signer": {
+        "key_name": "crunch-host-1",
+        "public_key_blake3": "6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a",
+        "role": "builder"
+      },
+      "trust_policy_blake3": "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b",
+      "built": {
+        "mantle_version": "0.2.1",
+        "execution_profile_digest_blake3": "7f1d899e2f191c5e4fd7b6a675e35a491c430298b5c29bf651fdf61653803e0d",
+        "input_closure_blake3": "3030303030303030303030303030303030303030303030303030303030303030"
+      },
+      "reused": null
+    }
+  ],
+  "non_claims": [
+    "a reused root is not re-executed; reuse preserves an earlier Mantle build"
+  ]
+}

@@ -98,11 +98,13 @@ cairn convergence inspect --case case.json [--policy FILE] [--root DIR]
 
 `--root` is a checkout of the consumer at the registry revision. The case file
 (`cairn.convergence-case.v1`) names the registry, the exported targets, the
-generated source record, the trusted Mantle signer key names and, per contract,
-the Octet contract, decision and evidence bundle, the bridge handoff directory,
-the producer output directory the bridge consumed, and the Mantle realization
-receipt and store-info record for the job's root output. Relative paths resolve
-against the case file's directory.
+generated source record, the trusted Mantle signer key names and trusted builder
+key fingerprints and, per contract, the Octet contract, decision and evidence
+bundle, the bridge handoff directory, the producer output directory the bridge
+consumed, and the Mantle realization receipt and store-info record for the job's
+root output. A case may also name `original_realization_receipt` beside
+`realization_receipt`: the earlier receipt a `reused` root links to. Relative
+paths resolve against the case file's directory.
 
 Octet judges the contract with the consumer checkout at the registry revision as
 `--source-root`, so the reviewed specification is read from that checkout and
@@ -201,9 +203,17 @@ A target is `current` only when all of these bind:
   one such as `accepted-by-mantle`, is `unsupported`;
 - the producer output's receipt and profile equal the handoff copies, and the
   proof card Octet accepted lists that receipt with the same BLAKE3;
-- the realization receipt is complete, its unit whose `node_id` is `nix:` plus
-  the handoff root derivation's file name produced the directory the bridge
-  consumed (`target_derivation` is Mantle's translated derivation), and the
+- the realization receipt is complete. A version 1 receipt binds the unit whose
+  `node_id` is `nix:` plus the handoff root derivation's file name and produced
+  the directory the bridge consumed (`target_derivation` is Mantle's translated
+  derivation). A version 2 receipt binds the `roots` entry for that `node_id`
+  and output path, admits its `disposition` (`built` or `reused`), and requires
+  its `signer.role` to be `builder` with a `public_key_blake3` the case lists in
+  `trusted_builder_keys`. A `reused` root also needs the case's
+  `original_realization_receipt`: that file must parse as version 2, record the
+  linked `receipt_blake3`, and carry a `built` root entry for the same
+  derivation, output and path with the same NAR hash and signer fingerprint.
+  Any failure is `convergence.reuse_link_invalid`. In both versions the
   store-info record for that path has the same NAR hash and a signature by a
   trusted key name;
 - Octet's aggregate result passes and its clause for the target is `passed`.
@@ -216,6 +226,16 @@ derivation, which differs from the frozen root even on the preserve route.
 receipt's `cache_policy.realization_route` (null when absent or not a string).
 `cache-only-preserve-v1` means Mantle preserved a prebuilt output and did not
 build or execute it; the build route records no route.
+
+`bound.root_disposition` states what the record shows about the root:
+`built` or `reused` from a version 2 root entry, `preserved` for a version 1
+receipt on `cache-only-preserve-v1`, and `built` for a version 1 receipt on
+`cache-inputs-build-roots-v1` (which always built the root). Any other version 1
+route, including none, makes no disposition claim and reports null.
+`bound.original_receipt_blake3` is the linked original digest for a `reused`
+root and null otherwise. A builder fingerprint absent from
+`trusted_builder_keys` leaves the row not `current`, for built and reused roots
+alike, and a `reused` root with a missing or failing link is not `current`.
 
 Only Octet's decision is acceptance. A Mantle success, a cache hit, the
 observation's `proof_acceptance` and its `externally_reported_outcome` never
@@ -264,6 +284,16 @@ for `root-` mutations, and a mutation unlinks the link and writes a new file, so
 the committed fixture is never written through a link. After all records run,
 the test re-hashes the fixture and asserts it is unchanged.
 
+`fixtures/convergence/pilot-v2/` holds version 2 receipts for the pilot root and
+one declarative record per new check. The same materialization replaces the
+pilot's version 1 receipt with a `built` or `reused` version 2 receipt and edits
+the case's trusted builder fingerprints and original receipt path. Records cover
+a built root, a reused root, a missing original, a changed original digest,
+another NAR hash, another original disposition, another original signer
+fingerprint, an untrusted builder fingerprint and a `reused` root whose Octet
+decision fails. Only roots those records declare current report a bound
+disposition.
+
 ## Claim boundary
 
 A passing receipt shows only that, for one revision, the supplied Mantle records
@@ -273,7 +303,9 @@ and Octet decision bind to the declared targets. It does not show:
 - that a reused output was re-verified; a cache hit preserves an earlier
   acceptance and is not fresh proof work;
 - that the supplied records were honestly produced; Cairn re-runs and
-  authenticates none of them and does not verify signatures, only signer names;
+  authenticates none of them. It compares recorded builder fingerprints and the
+  recorded reuse link, and does not verify signature bytes or that a signature
+  exists at all beyond the trusted key name it reads;
 - that a verifier, a builder, the sandbox or the Nickel exporter is sound;
 - that Mantle built the tool graph from source, unless the recorded route says
   so;

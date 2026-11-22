@@ -1,0 +1,36 @@
+{
+  "claim": "A `reused` root whose original records another NAR hash for the root output fails the link check.",
+  "files": {
+    "realization-receipt.json": "reused-receipt.json",
+    "original-realization-receipt.json": "built-receipt.json"
+  },
+  "ops": [
+    {
+      "op": "case-set",
+      "pointer": "/trusted_builder_keys",
+      "value": [
+        "6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a"
+      ]
+    },
+    {
+      "op": "case-set",
+      "pointer": "/contracts/0/original_realization_receipt",
+      "value": "original-realization-receipt.json"
+    },
+    {
+      "op": "json-set",
+      "file": "original-realization-receipt.json",
+      "pointer": "/roots/0/nar_sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "expected": {
+    "exit": 0,
+    "row_state": "stale",
+    "issues": [
+      "convergence.reuse_link_invalid"
+    ],
+    "root_disposition": null,
+    "original_receipt_blake3": null
+  }
+}

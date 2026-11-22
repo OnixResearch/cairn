@@ -1,0 +1,22 @@
+{
+  "claim": "A version 2 root with disposition `built` and a trusted builder fingerprint is current.",
+  "files": {
+    "realization-receipt.json": "built-receipt.json"
+  },
+  "ops": [
+    {
+      "op": "case-set",
+      "pointer": "/trusted_builder_keys",
+      "value": [
+        "6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a"
+      ]
+    }
+  ],
+  "expected": {
+    "exit": 0,
+    "row_state": "current",
+    "issues": [],
+    "root_disposition": "built",
+    "original_receipt_blake3": null
+  }
+}

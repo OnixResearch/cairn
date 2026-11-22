@@ -1,0 +1,42 @@
+{
+  "claim": "A `reused` root with a failing Octet decision is not current even when the link checks pass.",
+  "files": {
+    "realization-receipt.json": "reused-receipt.json",
+    "original-realization-receipt.json": "built-receipt.json"
+  },
+  "ops": [
+    {
+      "op": "case-set",
+      "pointer": "/trusted_builder_keys",
+      "value": [
+        "6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a"
+      ]
+    },
+    {
+      "op": "case-set",
+      "pointer": "/contracts/0/original_realization_receipt",
+      "value": "original-realization-receipt.json"
+    },
+    {
+      "op": "json-set",
+      "file": "decision.json",
+      "pointer": "/aggregate_result",
+      "value": "failed"
+    },
+    {
+      "op": "json-set",
+      "file": "decision.json",
+      "pointer": "/clauses/0/status",
+      "value": "failed"
+    }
+  ],
+  "expected": {
+    "exit": 0,
+    "row_state": "failed",
+    "issues": [
+      "convergence.decision_failed"
+    ],
+    "root_disposition": null,
+    "original_receipt_blake3": null
+  }
+}

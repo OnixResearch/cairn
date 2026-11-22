@@ -26,13 +26,17 @@
     "realized_states": [
       "realized",
       "provenance-audited"
+    ],
+    "root_dispositions": [
+      "built",
+      "reused"
     ]
   },
   "non_claims": [
     "a current target shows only that, for one revision, the supplied Mantle records and Octet decision bind to the declared target",
     "does not show that any code is correct or that the evidence is true",
     "does not show that a reused output was re-verified; a cache hit preserves an earlier acceptance and is not fresh proof work",
-    "does not show that the supplied records were honestly produced; Cairn re-runs and authenticates none of them and does not verify signatures",
+    "does not show that the supplied records were honestly produced; Cairn re-runs and authenticates none of them, compares only recorded builder fingerprints and the recorded reuse link, and does not verify signature bytes",
     "does not show that a verifier, builder, sandbox or the Nickel exporter is sound",
     "does not show that Mantle built the tool graph from source unless the recorded route says so",
     "does not show that a claim captures its requirement's full meaning; see informal_remainder",
@@ -55,7 +59,10 @@
   "schemas": {
     "mantle_build_report": "crunch-build-report-v1",
     "mantle_observation": "mantle-external-evidence-observation-v1",
-    "mantle_realization_receipt": "mantle-foreign-realization-receipt-v1",
+    "mantle_realization_receipts": [
+      "mantle-foreign-realization-receipt-v1",
+      "mantle-foreign-realization-receipt-v2"
+    ],
     "mantle_store_info": "mantle-store-info-v3",
     "octet_contract": "octet-requirement-contract/v1",
     "octet_decision": "octet-requirement-decision/v1",

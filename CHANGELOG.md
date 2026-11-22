@@ -12,6 +12,18 @@ surface.
 
 ### Added
 
+- Convergence reads Mantle realization receipt v2 and reports the selected
+  root's disposition. A version 2 root must record `built` or `reused`, sign
+  with the `builder` role and a fingerprint the case trusts in the new
+  `trusted_builder_keys` list; a `reused` root must also supply the case's
+  `original_realization_receipt`, whose recorded digest, `built` disposition,
+  NAR hash and signer fingerprint Cairn re-checks, else the row reports the new
+  `convergence.reuse_link_invalid`. `bound.root_disposition` and
+  `bound.original_receipt_blake3` report the result; a version 1 receipt on
+  `cache-only-preserve-v1` reports `preserved`. Cairn compares recorded
+  fingerprints and the recorded link and does not verify signature bytes.
+  Advisory only; no gate changes.
+
 - Lifecycle repair for duplicated accepted requirement IDs: a MODIFIED sync
   delta may retarget one conflicting block by its unique accepted heading when
   that block's ID is duplicated, provided the merged document is duplicate-free.

@@ -45,7 +45,12 @@ let UniqueNonEmpty = std.contract.from_predicate (fun value =>
       trellis = "trellis-mantle-producer-job/v1",
     },
     mantle_observation = "mantle-external-evidence-observation-v1",
-    mantle_realization_receipt = "mantle-foreign-realization-receipt-v1",
+    # Both realization receipt generations are admitted. Version 1 keeps its
+    # existing meaning; version 2 adds the per-root disposition and signer.
+    mantle_realization_receipts = [
+      "mantle-foreign-realization-receipt-v1",
+      "mantle-foreign-realization-receipt-v2",
+    ],
     mantle_store_info = "mantle-store-info-v3",
     mantle_build_report = "crunch-build-report-v1",
   },
@@ -73,6 +78,10 @@ let UniqueNonEmpty = std.contract.from_predicate (fun value =>
       "not-evaluated-by-mantle",
       "externally-reported-by-octet",
     ],
+    # A version 2 receipt records one of these for each selected root. `built`
+    # means Mantle built it on this route; `reused` means it links an earlier
+    # Mantle build receipt, which Cairn re-checks.
+    root_dispositions = ["built", "reused"],
   },
   bounds = {
     max_contracts = 64,
@@ -97,7 +106,7 @@ let UniqueNonEmpty = std.contract.from_predicate (fun value =>
     "a current target shows only that, for one revision, the supplied Mantle records and Octet decision bind to the declared target",
     "does not show that any code is correct or that the evidence is true",
     "does not show that a reused output was re-verified; a cache hit preserves an earlier acceptance and is not fresh proof work",
-    "does not show that the supplied records were honestly produced; Cairn re-runs and authenticates none of them and does not verify signatures",
+    "does not show that the supplied records were honestly produced; Cairn re-runs and authenticates none of them, compares only recorded builder fingerprints and the recorded reuse link, and does not verify signature bytes",
     "does not show that a verifier, builder, sandbox or the Nickel exporter is sound",
     "does not show that Mantle built the tool graph from source unless the recorded route says so",
     "does not show that a claim captures its requirement's full meaning; see informal_remainder",
@@ -122,7 +131,7 @@ let UniqueNonEmpty = std.contract.from_predicate (fun value =>
     # value must be a non-empty string.
     producer_jobs | { _ | NonEmpty },
     mantle_observation | NonEmpty,
-    mantle_realization_receipt | NonEmpty,
+    mantle_realization_receipts | UniqueNonEmpty,
     mantle_store_info | NonEmpty,
     mantle_build_report | NonEmpty,
   },
@@ -136,6 +145,10 @@ let UniqueNonEmpty = std.contract.from_predicate (fun value =>
     realization_complete_status | NonEmpty,
     realized_states | Array NonEmpty,
     proof_acceptance_relays | UniqueNonEmpty,
+    # Root dispositions a version 2 realization receipt may record. Version 1
+    # receipts have no disposition; Cairn derives `preserved` or `built` from
+    # their recorded route instead.
+    root_dispositions | UniqueNonEmpty,
   },
   bounds | {
     max_contracts | Positive,
