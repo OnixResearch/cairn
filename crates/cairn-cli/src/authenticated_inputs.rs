@@ -70,12 +70,35 @@ struct DeclaredSignature {
 // r[impl cairn.stack_provenance_gates.authenticated_inputs.signature_policy]
 pub(crate) fn authentication_component(
     root: &Path,
-    policy_value: Option<&Value>,
+    policy_value: Result<&Value, &str>,
     evidence_kind: &str,
     authentication_path: Option<PathBuf>,
     artifacts: Vec<AuthenticationArtifact>,
     primary_receipt_role: &str,
 ) -> AuthenticationComponent {
+    let policy_value = match policy_value {
+        Ok(policy_value) => policy_value,
+        Err(error) => {
+            let mut check = json!({
+                "name": format!("{evidence_kind}_authentication"),
+                "passed": false,
+                "source": "measured local bytes and configured Ed25519 trust policy",
+                "issue": error,
+            });
+            if let Some(path) = authentication_path {
+                check["path"] = json!(path);
+            }
+            return AuthenticationComponent {
+                check,
+                value: json!({
+                    "evidence_kind": evidence_kind,
+                    "passed": false,
+                    "shell_error": error,
+                }),
+                report: None,
+            };
+        }
+    };
     let Some(authentication_path) = authentication_path else {
         return skipped_component(evidence_kind);
     };

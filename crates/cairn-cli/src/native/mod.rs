@@ -19,9 +19,7 @@ pub(crate) use json::{
     change_dependency_node_json, change_detail_json, change_status_json, doctor_report_json,
     repo_status_json, spec_detail_json,
 };
-pub(crate) use validate::{
-    cairn_validation_receipt, cairn_validation_receipt_with_cross_repo_evidence,
-};
+pub(crate) use validate::{cairn_validation_receipt, validation_with_policy};
 
 pub(crate) fn run_status(
     args: Vec<String>,

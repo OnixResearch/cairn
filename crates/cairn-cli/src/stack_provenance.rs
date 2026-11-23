@@ -7,6 +7,7 @@ use cairn_core::{
     verified::stack_provenance::{
         evaluate_stack_provenance, StackProvenanceEvidence, STACK_PROVENANCE_BOUNDARY,
     },
+    Policy,
 };
 use serde_json::{json, Value};
 
@@ -17,17 +18,30 @@ pub(crate) fn stack_provenance_receipt_value(
     receipt_path: Option<PathBuf>,
     graph_path: Option<PathBuf>,
 ) -> Value {
+    let loaded = load_policy_file(policy_path).map_err(|error| error.to_string());
+    stack_provenance_receipt_value_with_policy(
+        loaded.as_ref().map_err(String::as_str),
+        receipt_path,
+        graph_path,
+    )
+}
+
+pub(crate) fn stack_provenance_receipt_value_with_policy(
+    policy: Result<&Policy, &str>,
+    receipt_path: Option<PathBuf>,
+    graph_path: Option<PathBuf>,
+) -> Value {
     // r[impl cairn.stack_provenance_gates.policy]
     // r[impl cairn.stack_provenance_gates.receipt_validation]
     // r[impl cairn.stack_provenance_gates.graph_summary]
-    let policy = match load_policy_file(policy_path) {
+    let policy = match policy {
         Ok(policy) => policy,
         Err(error) => {
             return stack_provenance_error_value(
                 "stack_provenance.policy_unreadable",
                 "policy",
                 "parseable policy with stack_provenance_gate",
-                &error.to_string(),
+                error,
             );
         }
     };

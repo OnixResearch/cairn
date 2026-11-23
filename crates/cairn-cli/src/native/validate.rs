@@ -64,7 +64,7 @@ pub(crate) fn cairn_validation_receipt_with_cross_repo_evidence(
     validation_with_policy(root, &policy, evidence_inputs)
 }
 
-fn validation_with_policy(
+pub(crate) fn validation_with_policy(
     root: PathBuf,
     policy: &cairn_core::Policy,
     evidence_inputs: &[PathBuf],

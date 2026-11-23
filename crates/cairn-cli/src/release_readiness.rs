@@ -17,7 +17,7 @@ use cairn_core::{
     authenticated_evidence_policy_from_value, canonical_json_hash,
     evaluate_authenticated_release_gate, evaluate_workspace_contract_matrix_readiness,
     workspace_contract_readiness_issues_json, workspace_contract_readiness_policy_from_value,
-    AuthenticatedReleaseGateInput,
+    AuthenticatedReleaseGateInput, Policy, WORKSPACE_CONTRACT_MATRIX_BOUNDARY,
 };
 use serde_json::{json, Value};
 
@@ -25,18 +25,18 @@ use crate::authenticated_inputs::{
     authentication_component, AuthenticationArtifact, AuthenticationComponent,
 };
 use crate::determinism::determinism_coverage_audit_receipt;
-use crate::function_address::{function_address_hash, function_address_receipt_value};
+use crate::function_address::{function_address_hash, function_address_receipt_value_with_policy};
 use crate::mcp::mcp_agent_smoke_receipt;
-use crate::native::cairn_validation_receipt_with_cross_repo_evidence;
+use crate::native::validation_with_policy;
 use crate::preserves_corpus::preserves_corpus_freshness_receipt;
 use crate::release_evidence::release_evidence_check_index_receipt_for_path;
-use crate::stack_provenance::{stack_provenance_hash, stack_provenance_receipt_value};
+use crate::stack_provenance::{stack_provenance_hash, stack_provenance_receipt_value_with_policy};
 use crate::support::{
     default_policy_path, load_policy_file, path_string, print_json, read_option,
     read_repeated_path_options, read_string_option, reject_positional_arguments,
     reject_unknown_options_with_repeats, safe_relative_path, with_portable_content_hash_receipt,
 };
-use crate::tracey::{repository_gate_summary, traceability_coverage_receipt};
+use crate::tracey::{repository_gate_summary, traceability_coverage_receipt_with_policy};
 
 const MAX_SEMANTIC_REVIEW_LEDGER_BYTES: u64 = 2_097_152;
 const MAX_WORKSPACE_CONTRACT_MATRIX_RECEIPT_BYTES: u64 = 2_097_152;
@@ -168,33 +168,33 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     // r[impl cairn.supersede.release_readiness_bundle.evidence]
     // r[impl cairn.supersede.release_readiness_bundle.failure]
     let root_text = path_string(root.clone());
+    let loaded_policy = load_policy_file(policy_path).map_err(|error| error.to_string());
+    let policy_ref = loaded_policy.as_ref().map_err(String::as_str);
+    let policy_raw = policy_ref.map(|value| &value.raw);
     let validation = readiness_component("cairn_validate", || {
-        cairn_validation_receipt_with_cross_repo_evidence(
-            root.clone(),
-            policy_path.clone(),
-            &cross_repo_evidence,
-        )
+        let policy = policy_ref.map_err(|error| -> Box<dyn Error> { error.into() })?;
+        validation_with_policy(root.clone(), policy, &cross_repo_evidence)
     });
     let traceability = readiness_component("traceability_coverage", || {
-        traceability_coverage_receipt(root.clone(), policy_path.clone())
+        let policy = policy_ref.map_err(|error| -> Box<dyn Error> { error.into() })?;
+        traceability_coverage_receipt_with_policy(&root, policy)
     });
     let mcp_smoke =
         readiness_component("mcp_agent_smoke", || mcp_agent_smoke_receipt(root.clone()));
     let coverage_audit = readiness_component("determinism_coverage_audit", || {
-        let policy = load_policy_file(policy_path.clone())?;
-        Ok(determinism_coverage_audit_receipt(&root, &policy))
+        let policy = policy_ref.map_err(|error| -> Box<dyn Error> { error.into() })?;
+        Ok(determinism_coverage_audit_receipt(&root, policy))
     });
     let release_evidence_index = conventional_release_evidence_index_component(root.clone());
     let preserves_corpus = preserves_corpus_component(root.clone());
     let semantic_review_ledger = semantic_review_ledger_component(root.clone(), review_ledger);
-    let policy = load_policy_file(policy_path.clone()).ok();
     let stack_provenance_component_value = stack_provenance_component(
-        policy_path.clone(),
+        policy_ref,
         stack_provenance.clone(),
         stack_provenance_graph.clone(),
     );
     let function_address_component_value = function_address_component(
-        policy_path.clone(),
+        policy_ref,
         function_address_valence.clone(),
         function_address_mantle.clone(),
         function_address_kamacite.clone(),
@@ -202,7 +202,7 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     );
     let stack_provenance_authentication = authentication_component(
         &root,
-        policy.as_ref().map(|value| &value.raw),
+        policy_raw,
         "stack-provenance",
         stack_provenance_authentication,
         vec![
@@ -219,7 +219,7 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     );
     let function_address_authentication = authentication_component(
         &root,
-        policy.as_ref().map(|value| &value.raw),
+        policy_raw,
         "function-address",
         function_address_authentication,
         vec![
@@ -243,7 +243,7 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
         "valence_receipt",
     );
     let authenticated_release = authenticated_release_component(
-        policy.as_ref().map(|value| &value.raw),
+        policy_raw,
         stack_provenance_component_value.value["mode"]
             .as_str()
             .unwrap_or(""),
@@ -255,10 +255,10 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     );
     let workspace_contract_matrix = workspace_contract_matrix_component(
         root.clone(),
-        policy.as_ref().map(|value| &value.raw),
+        policy_raw,
         workspace_contract_matrix_receipt,
     );
-    let repository_gate_summary = repository_gate_summary(policy.as_ref().map(|value| &value.raw));
+    let repository_gate_summary = repository_gate_summary(policy_raw.map(Some));
     let replay_preflight = json!({
         "command": "determinism replay --root <root>",
         "included": false,
@@ -286,7 +286,7 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     let mut repository_gate_check = json!({
         "name": "repository_gate_policy_listed",
         "passed": true,
-        "source": "maintained local policy",
+        "source": repository_gate_check_source(&repository_gate_summary),
         "required_external_commands": repository_gate_summary["required_commands"].clone(),
         "evidence_hash": canonical_json_hash(&repository_gate_summary)
     });
@@ -301,51 +301,61 @@ fn release_readiness_receipt_with_inputs(inputs: ReleaseReadinessInputs) -> Valu
     let onix_release_ready = is_valid
         && authenticated_release.value["required"].as_bool() == Some(true)
         && authenticated_release.value["passed"].as_bool() == Some(true);
-    with_portable_content_hash_receipt(
-        &root,
-        json!({
-            "command": "release-readiness",
-            "root": root_text,
-            "valid": is_valid,
-            "verdict": if is_valid { "pass" } else { "fail" },
-            "onix_release_ready": onix_release_ready,
-            "checks": checks,
-            "cairn_validation_hash": validation.receipt_hash,
-            "cross_repo_dependencies": cross_repo_dependencies,
-            "cross_repo_evidence_issues": cross_repo_evidence_issues,
-            "traceability_coverage_hash": traceability.receipt_hash,
-            "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
-            "coverage_audit_valid": coverage_audit_valid,
-            "coverage_audit_receipt_hash": coverage_audit.receipt_hash,
-            "release_evidence_index_check_hash": release_evidence_index.receipt_hash,
-            "preserves_corpus_freshness_hash": preserves_corpus.receipt_hash,
-            "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
-            "stack_provenance_hash": stack_provenance_component_value.receipt_hash,
-            "stack_provenance": stack_provenance_component_value.value,
-            "function_address_hash": function_address_component_value.receipt_hash,
-            "function_address": function_address_component_value.value,
-            "stack_provenance_authentication": stack_provenance_authentication.value,
-            "function_address_authentication": function_address_authentication.value,
-            "authenticated_release_gate": authenticated_release.value,
-            "workspace_contract_matrix_hash": workspace_contract_matrix.receipt_hash,
-            "workspace_contract_matrix": workspace_contract_matrix.value,
-            "repository_gate_summary": repository_gate_summary,
-            "determinism_replay": replay_preflight,
-            "mcp": {"read_only": true, "destructive": false},
-            "verification_role_boundary": VERIFICATION_ROLE_BOUNDARY,
-        }),
-    )
+    let mut receipt = json!({
+        "command": "release-readiness",
+        "root": root_text,
+        "valid": is_valid,
+        "verdict": if is_valid { "pass" } else { "fail" },
+        "onix_release_ready": onix_release_ready,
+        "checks": checks,
+        "cairn_validation_hash": validation.receipt_hash,
+        "cross_repo_dependencies": cross_repo_dependencies,
+        "cross_repo_evidence_issues": cross_repo_evidence_issues,
+        "traceability_coverage_hash": traceability.receipt_hash,
+        "mcp_smoke_receipt_hash": mcp_smoke.receipt_hash,
+        "coverage_audit_valid": coverage_audit_valid,
+        "coverage_audit_receipt_hash": coverage_audit.receipt_hash,
+        "release_evidence_index_check_hash": release_evidence_index.receipt_hash,
+        "preserves_corpus_freshness_hash": preserves_corpus.receipt_hash,
+        "semantic_review_ledger_hash": semantic_review_ledger.receipt_hash,
+        "stack_provenance_hash": stack_provenance_component_value.receipt_hash,
+        "stack_provenance": stack_provenance_component_value.value,
+        "function_address_hash": function_address_component_value.receipt_hash,
+        "function_address": function_address_component_value.value,
+        "stack_provenance_authentication": stack_provenance_authentication.value,
+        "function_address_authentication": function_address_authentication.value,
+        "authenticated_release_gate": authenticated_release.value,
+        "workspace_contract_matrix_hash": workspace_contract_matrix.receipt_hash,
+        "workspace_contract_matrix": workspace_contract_matrix.value,
+        "repository_gate_summary": repository_gate_summary,
+        "determinism_replay": replay_preflight,
+        "mcp": {"read_only": true, "destructive": false},
+        "verification_role_boundary": VERIFICATION_ROLE_BOUNDARY,
+    });
+    if let Err(error) = &loaded_policy {
+        receipt["policy_load_error"] = json!(error);
+    }
+    with_portable_content_hash_receipt(&root, receipt)
+}
+
+fn repository_gate_check_source(summary: &Value) -> &'static str {
+    match summary["policy"].as_str() {
+        Some("consumer-selected-gates") => "consumer-selected policy",
+        Some("invalid-consumer-selected-gates") => "invalid consumer-selected policy",
+        Some("unloadable-consumer-policy") => "unloadable consumer policy",
+        _ => "maintained local policy",
+    }
 }
 
 fn authenticated_release_component(
-    policy_value: Option<&Value>,
+    policy_value: Result<&Value, &str>,
     stack_provenance_mode: &str,
     function_address_mode: &str,
     stack_provenance: &AuthenticationComponent,
     function_address: &AuthenticationComponent,
 ) -> AuthenticatedReleaseComponent {
     let result = policy_value
-        .ok_or_else(|| "policy could not be loaded".to_string())
+        .map_err(ToOwned::to_owned)
         .and_then(authenticated_evidence_policy_from_value)
         .map(|policy| {
             evaluate_authenticated_release_gate(
@@ -394,13 +404,49 @@ fn authenticated_release_component(
 
 fn workspace_contract_matrix_component(
     root: PathBuf,
-    policy: Option<&Value>,
+    policy: Result<&Value, &str>,
     receipt_path: Option<PathBuf>,
 ) -> WorkspaceContractMatrixComponent {
     // r[impl cairn.workspace_contract_matrix.release_readiness]
     // r[impl cairn.workspace_contract_matrix.release_readiness.optional]
     // r[impl cairn.workspace_contract_matrix.release_readiness.required]
-    let policy_value = policy.unwrap_or(&Value::Null);
+    let policy_value = match policy {
+        Ok(policy_value) => policy_value,
+        Err(error) => {
+            let value = json!({
+                "mode": "unknown",
+                "required": true,
+                "passed": false,
+                "skipped": false,
+                "disposition": "failed",
+                "receipt_hash": Value::Null,
+                "boundary": WORKSPACE_CONTRACT_MATRIX_BOUNDARY,
+                "issues": [{
+                    "code": "workspace_contract_matrix.policy_unreadable",
+                    "field_path": "policy",
+                    "expected": "parseable policy with workspace_contract_matrix",
+                    "actual": error,
+                }],
+            });
+            let receipt_hash = canonical_json_hash(&value);
+            let mut check = json!({
+                "name": "workspace_contract_matrix",
+                "passed": false,
+                "source": component_source("workspace_contract_matrix"),
+                "receipt_hash": receipt_hash,
+                "disposition": "failed",
+                "issue": error,
+            });
+            if let Some(path) = receipt_path.as_ref() {
+                check["path"] = json!(safe_relative_path(&root, path));
+            }
+            return WorkspaceContractMatrixComponent {
+                check,
+                receipt_hash,
+                value,
+            };
+        }
+    };
     let readiness_policy = workspace_contract_readiness_policy_from_value(policy_value);
     let receipt_value = receipt_path.as_ref().and_then(|path| {
         crate::support::read_bounded_json_no_symlink(
@@ -444,11 +490,11 @@ fn workspace_contract_matrix_component(
 }
 
 fn stack_provenance_component(
-    policy_path: PathBuf,
+    policy: Result<&Policy, &str>,
     receipt_path: Option<PathBuf>,
     graph_path: Option<PathBuf>,
 ) -> StackProvenanceComponent {
-    let value = stack_provenance_receipt_value(policy_path, receipt_path, graph_path);
+    let value = stack_provenance_receipt_value_with_policy(policy, receipt_path, graph_path);
     let receipt_hash = stack_provenance_hash(&value);
     let mut check = json!({
         "name": "stack_provenance",
@@ -468,7 +514,7 @@ fn stack_provenance_component(
 }
 
 fn function_address_component(
-    policy_path: PathBuf,
+    policy: Result<&Policy, &str>,
     valence_receipt_path: Option<PathBuf>,
     mantle_binding_path: Option<PathBuf>,
     kamacite_receipt_path: Option<PathBuf>,
@@ -477,8 +523,8 @@ fn function_address_component(
     // r[impl cairn.function_address_gates.policy]
     // r[impl cairn.function_address_gates.receipt_validation]
     // r[impl cairn.function_address_gates.graph_summary]
-    let value = function_address_receipt_value(
-        policy_path,
+    let value = function_address_receipt_value_with_policy(
+        policy,
         valence_receipt_path,
         mantle_binding_path,
         kamacite_receipt_path,

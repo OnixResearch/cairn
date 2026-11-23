@@ -61,6 +61,18 @@ fn release_readiness_honors_consumer_selected_gates() -> Result<(), Box<dyn Erro
         receipt["repository_gate_summary"]["required_commands"],
         json!(["custom fmt --check", "custom test --workspace"])
     );
+    let check = receipt["checks"]
+        .as_array()
+        .ok_or("checks array")?
+        .iter()
+        .find(|check| check["name"] == "repository_gate_policy_listed")
+        .ok_or("repository gate check")?;
+    assert_eq!(check["passed"], true);
+    assert_eq!(check["source"], "consumer-selected policy");
+    assert_eq!(
+        check["required_external_commands"],
+        json!(["custom fmt --check", "custom test --workspace"])
+    );
     fs::remove_dir_all(fixture)?;
     Ok(())
 }
@@ -159,6 +171,7 @@ fn refused_gate_selection_receipt(
         .find(|check| check["name"] == "repository_gate_policy_listed")
         .ok_or("repository gate check")?;
     assert_eq!(check["passed"], false);
+    assert_eq!(check["source"], "invalid consumer-selected policy");
     assert_eq!(check["issue"], diagnostic);
     assert_eq!(check["required_external_commands"], Value::Null);
     assert_eq!(receipt["valid"], false);
@@ -185,7 +198,99 @@ fn release_readiness_keeps_maintained_gates_when_selection_is_absent() -> Result
         .find(|check| check["name"] == "repository_gate_policy_listed")
         .ok_or("repository gate check")?;
     assert_eq!(check["passed"], true);
+    assert_eq!(check["source"], "maintained local policy");
     assert_eq!(check.get("issue"), None);
+    Ok(())
+}
+
+#[test]
+fn release_readiness_refuses_unloadable_consumer_policy() -> Result<(), Box<dyn Error>> {
+    // Regression for #17: unloadable consumer policies must not substitute maintained gates
+    // or pass policy-dependent components with None.
+    let fixture = temp_project("unloadable-consumer-policy")?;
+    let mut invalid_workflow_policy = policy_json()?;
+    invalid_workflow_policy["generated_agent_workflow_policy"] = json!({"broken": true});
+    let invalid_policy_path = fixture.join("invalid-workflow-policy.json");
+    fs::write(
+        &invalid_policy_path,
+        serde_json::to_vec(&invalid_workflow_policy)?,
+    )?;
+
+    let missing_policy_path = fixture.join("missing-policy.json");
+
+    for (policy_path, expected_error_substring) in [
+        (&invalid_policy_path, "generated_agent_workflow_policy"),
+        (&missing_policy_path, "failed to read policy"),
+    ] {
+        let mut command = cairn();
+        command
+            .args(["release-readiness", "--root", "."])
+            .arg("--policy")
+            .arg(policy_path);
+        let receipt = run_json_command(&mut command)?;
+        assert_eq!(receipt["valid"], false);
+        assert_eq!(receipt["verdict"], "fail");
+        assert_eq!(receipt["onix_release_ready"], false);
+        let load_error = receipt["policy_load_error"]
+            .as_str()
+            .ok_or("policy_load_error string")?;
+        assert!(
+            load_error.contains(expected_error_substring),
+            "expected {expected_error_substring:?} in policy_load_error: {load_error}"
+        );
+
+        let summary = &receipt["repository_gate_summary"];
+        assert_eq!(summary["policy"], "unloadable-consumer-policy");
+        assert_eq!(summary["required_commands"], Value::Null);
+        assert_eq!(summary["issue"], load_error);
+
+        let checks = receipt["checks"].as_array().ok_or("checks array")?;
+        let find_check = |name: &str| -> Result<&Value, Box<dyn Error>> {
+            checks
+                .iter()
+                .find(|check| check["name"] == name)
+                .ok_or_else(|| format!("missing check {name}").into())
+        };
+
+        let gate_check = find_check("repository_gate_policy_listed")?;
+        assert_eq!(gate_check["passed"], false);
+        assert_eq!(gate_check["source"], "unloadable consumer policy");
+        assert_eq!(gate_check["required_external_commands"], Value::Null);
+        assert_eq!(gate_check["issue"], load_error);
+
+        for name in [
+            "cairn_validate",
+            "traceability_coverage",
+            "determinism_coverage_audit",
+            "stack_provenance",
+            "function_address",
+            "stack-provenance_authentication",
+            "function-address_authentication",
+            "authenticated_evidence_release_profile",
+            "workspace_contract_matrix",
+        ] {
+            let check = find_check(name)?;
+            assert_eq!(
+                check["passed"], false,
+                "policy-dependent check {name} must fail when consumer policy fails to load"
+            );
+            assert_ne!(
+                check.get("skipped"),
+                Some(&Value::Bool(true)),
+                "policy-dependent check {name} must not skip when consumer policy fails to load"
+            );
+        }
+        assert_eq!(receipt["workspace_contract_matrix"]["passed"], false);
+        assert_eq!(
+            receipt["workspace_contract_matrix"]["disposition"],
+            "failed"
+        );
+        assert_eq!(receipt["stack_provenance_authentication"]["passed"], false);
+        assert_eq!(receipt["function_address_authentication"]["passed"], false);
+        assert_eq!(receipt["authenticated_release_gate"]["passed"], false);
+    }
+
+    fs::remove_dir_all(fixture)?;
     Ok(())
 }
 

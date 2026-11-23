@@ -30,13 +30,12 @@ struct StandaloneRun {
 
 pub(super) fn build_authenticated_dual_run(
     root: &Path,
-    policy_value: Option<&Value>,
+    policy_value: &Value,
     evidence_kind: &str,
     authentication_path: &Path,
     artifacts: &[AuthenticationArtifact],
     primary_receipt_role: &str,
 ) -> Result<AuthenticationDualRun, String> {
-    let policy_value = policy_value.ok_or_else(|| "policy could not be loaded".to_string())?;
     let policy = authenticated_evidence_policy_from_value(policy_value)?;
     let manifest = read_manifest(authentication_path)?;
     if manifest.schema_version != AUTHENTICATED_EVIDENCE_SCHEMA_V1 {

@@ -17,12 +17,12 @@ use crate::support::{
     reject_unknown_options_with_flags, safe_relative_path, with_portable_receipt_hash,
 };
 
-pub(crate) fn traceability_coverage_receipt(
-    root: PathBuf,
-    policy_path: PathBuf,
+pub(crate) fn traceability_coverage_receipt_with_policy(
+    root: &Path,
+    policy: &Policy,
 ) -> Result<Value, Box<dyn Error>> {
     // r[verify cairn.determinism.preserves_content_hash_binding_readiness.tracey]
-    traceability_coverage_report(&root, &policy_path, None)
+    traceability_coverage_report_with_policy(root, policy, None)
 }
 
 pub(crate) fn load_traceability_coverage_model(
@@ -43,12 +43,23 @@ pub(crate) fn load_traceability_coverage_model(
     ))
 }
 
-pub(crate) fn repository_gate_summary(policy: Option<&Value>) -> Value {
+pub(crate) fn repository_gate_summary(policy: Result<Option<&Value>, &str>) -> Value {
     // r[impl cairn.supersede.traceability_ownership.optional_tracey]
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.gates]
     // r[verify cairn.supersede.traceability_ownership.optional_tracey.docs]
     // r[impl cairn.octet_integration.guidance]
     // r[impl release_evidence.consumer_gate_selection]
+    let policy = match policy {
+        Ok(policy) => policy,
+        Err(error) => {
+            return json!({
+                "policy": "unloadable-consumer-policy",
+                "required_commands": null,
+                "issue": error,
+                "note": "The consumer policy could not be loaded; Cairn refuses it and does not substitute the maintained-local gates."
+            });
+        }
+    };
     match consumer_selected_gate_commands(policy) {
         Ok(Some(commands)) => json!({
             "policy": "consumer-selected-gates",
@@ -178,7 +189,16 @@ fn traceability_coverage_report(
 ) -> Result<Value, Box<dyn Error>> {
     admit_traceability_root(root)?;
     let policy = load_policy_file(policy_path.to_path_buf())?;
-    let selected_profile = selected_traceability_profile(&policy, profile_id)?;
+    traceability_coverage_report_with_policy(root, &policy, profile_id)
+}
+
+fn traceability_coverage_report_with_policy(
+    root: &Path,
+    policy: &Policy,
+    profile_id: Option<&str>,
+) -> Result<Value, Box<dyn Error>> {
+    admit_traceability_root(root)?;
+    let selected_profile = selected_traceability_profile(policy, profile_id)?;
     let requirement_files =
         collect_traceability_files(root, &selected_profile.requirement_sources)?;
     let evidence_files = collect_traceability_files(root, &selected_profile.evidence_sources)?;
@@ -186,7 +206,7 @@ fn traceability_coverage_report(
         classify_traceability_coverage(&selected_profile, &requirement_files, &evidence_files);
     Ok(traceability_receipt(TraceabilityReceiptInput {
         root,
-        policy: &policy,
+        policy,
         profile: &selected_profile,
         requirement_files: &requirement_files,
         evidence_files: &evidence_files,

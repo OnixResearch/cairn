@@ -176,7 +176,7 @@ fn shell_dual_runs_baseline_and_tamper_while_preserving_legacy_rollback(
     };
     let passing = authentication_component(
         &root,
-        Some(&policy_value),
+        Ok(&policy_value),
         AUTHENTICATED_EVIDENCE_KIND_STACK_PROVENANCE,
         Some(manifest_path.clone()),
         artifacts(),
@@ -211,7 +211,7 @@ fn shell_dual_runs_baseline_and_tamper_while_preserving_legacy_rollback(
     write_manifest(&manifest_path, &missing_signature_manifest)?;
     let missing_signature = authentication_component(
         &root,
-        Some(&policy_value),
+        Ok(&policy_value),
         AUTHENTICATED_EVIDENCE_KIND_STACK_PROVENANCE,
         Some(manifest_path.clone()),
         artifacts(),
@@ -238,7 +238,7 @@ fn shell_dual_runs_baseline_and_tamper_while_preserving_legacy_rollback(
     write_manifest(&manifest_path, &wrong_signature_manifest)?;
     let wrong_signature = authentication_component(
         &root,
-        Some(&policy_value),
+        Ok(&policy_value),
         AUTHENTICATED_EVIDENCE_KIND_STACK_PROVENANCE,
         Some(manifest_path.clone()),
         artifacts(),
@@ -264,7 +264,7 @@ fn shell_dual_runs_baseline_and_tamper_while_preserving_legacy_rollback(
     fs::write(&graph_path, b"{\"edges\":[\"tampered\"]}")?;
     let failing = authentication_component(
         &root,
-        Some(&policy_value),
+        Ok(&policy_value),
         AUTHENTICATED_EVIDENCE_KIND_STACK_PROVENANCE,
         Some(manifest_path),
         artifacts(),

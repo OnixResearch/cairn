@@ -8,13 +8,12 @@ use cairn_core::{
         evaluate_function_address_evidence, normalize_function_address_evidence_digests,
         FunctionAddressEvidence, FUNCTION_ADDRESS_BOUNDARY,
     },
+    Policy,
 };
 use serde_json::{json, Value};
 
-use crate::support::load_policy_file;
-
-pub(crate) fn function_address_receipt_value(
-    policy_path: PathBuf,
+pub(crate) fn function_address_receipt_value_with_policy(
+    policy: Result<&Policy, &str>,
     valence_receipt_path: Option<PathBuf>,
     mantle_binding_path: Option<PathBuf>,
     kamacite_receipt_path: Option<PathBuf>,
@@ -23,14 +22,14 @@ pub(crate) fn function_address_receipt_value(
     // r[impl cairn.function_address_gates.policy]
     // r[impl cairn.function_address_gates.receipt_validation]
     // r[impl cairn.function_address_gates.graph_summary]
-    let policy = match load_policy_file(policy_path) {
+    let policy = match policy {
         Ok(policy) => policy,
         Err(error) => {
             return function_address_error_value(
                 "function_address.policy_unreadable",
                 "policy",
                 "parseable policy with function_address_gate",
-                &error.to_string(),
+                error,
             );
         }
     };
