@@ -152,3 +152,11 @@ traceability coverage ok: 2503/2503 referenced (profile cairn-default)
 No Verus proof or proof gate covers `generated_agent_workflow`; the module
 carries only tracey `r[impl]`/`r[verify]` references, which the coverage run
 checks.
+
+On the committed fix (`bafb489b`), with no uncommitted changes:
+
+```
+$ nix flake check path:$PWD -L                                   exit=0
+all checks passed!
+(x86_64-linux; the check omitted aarch64-linux)
+```
