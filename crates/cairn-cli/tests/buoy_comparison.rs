@@ -9,6 +9,10 @@ use std::{
 
 use serde_json::Value;
 
+// r[verify cairn.trace_index.buoy_comparison.pinned_identity]
+// r[verify cairn.trace_index.buoy_comparison.projection]
+// r[verify cairn.trace_index.buoy_comparison.mutation]
+// r[verify cairn.trace_index.buoy_comparison.boundary]
 const FIXTURES_RELATIVE: &str = "fixtures/buoy-comparison/v1";
 const POLICY_RELATIVE: &str = "cairn-policy/generated/cairn-policy.json";
 

@@ -12,6 +12,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+// r[impl cairn.trace_index.buoy_comparison.pinned_identity]
+// r[impl cairn.trace_index.buoy_comparison.projection]
+// r[impl cairn.trace_index.buoy_comparison.mutation]
+// r[impl cairn.trace_index.buoy_comparison.boundary]
 pub const BUOY_COMPARISON_MANIFEST_SCHEMA_V1: &str = "cairn.buoy-comparison.fixtures.v1";
 pub const BUOY_COMPARISON_RECEIPT_SCHEMA_V1: &str = "cairn.buoy-comparison.receipt.v1";
 pub const BUOY_COMPARISON_BOUNDARY: &str = "a valid comparison receipt proves only that executed Cairn trace-index observations match independently declared expectations for saved fixture copies and that declared upstream observations satisfy the pinned projection contract; it does not prove Buoy execution, cross-implementation agreement, requirement satisfaction, implementation correctness, test adequacy, proof soundness, release eligibility, lifecycle readiness, or behavioral correctness";
