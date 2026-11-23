@@ -1,4 +1,4 @@
-# Classify the readiness command and admit only permitted command routes
+# Classify the readiness command and test the shipped command routes
 
 ## Why
 
@@ -28,32 +28,32 @@ Lattice included, inherits both.
 - `cairn readiness <change> --root PATH` moves to the `readiness` class.
 - A new catalog entry `drain-plan-readiness` places
   `cairn drain-plan --view readiness --root PATH` in the `readiness` class.
-- Admission of `generated_agent_workflow_policy` rejects a descriptor whose
-  text names a Cairn command that resolves to no catalog entry, or to an entry
-  whose class the descriptor does not allow. The rule reads every rendered
-  descriptor text field and applies to every workflow and catalog entry. It
-  sees through Markdown and prose wrapping, never reads a code fence info
-  string as a command, scans in time linear in the descriptor text, and
-  truncates long identifiers in its diagnostics.
-- Core and CLI tests cover permitted, unpermitted, uncatalogued,
-  longest-prefix, fenced, wrapped, repeated-mention and long-identifier cases,
-  and replay both 9082e1ae defects against the shipped policy.
-- `docs/generated-agent-workflows.md` and `CHANGELOG.md` describe the rule.
+- A test over the shipped default policy checks that every Cairn command a
+  workflow's text names resolves to a catalog entry in a class that workflow
+  allows. It reads every rendered descriptor text field as Markdown, covers
+  every workflow and catalog entry, and fails on the 9082e1ae catalog. The
+  scanner is test code; policy admission does not read workflow text.
+- Admission and lookup diagnostics truncate identifiers longer than 64 bytes.
+- Core tests cover the shipped policy, the 9082e1ae catalog, permitted,
+  unpermitted, uncatalogued, longest-prefix, fenced, formatted, linked,
+  unpaired-marker and repeated-mention cases and long identifiers; a CLI test
+  shows a policy with either defect still loads.
+- `docs/generated-agent-workflows.md` and `CHANGELOG.md` describe the check.
 
 ## Impact
 
 - **Files**: `cairn-policy/default.ncl`,
   `cairn-policy/generated/cairn-policy.json`,
   `crates/cairn-core/src/verified/generated_agent_workflow/admission.rs`,
+  `crates/cairn-core/src/verified/generated_agent_workflow/command_routes.rs`,
   `crates/cairn-core/src/verified/generated_agent_workflow/tests.rs`,
   `crates/cairn-cli/tests/generated_agent_workflows.rs`, policy-hash fixtures
   and goldens, `docs/generated-agent-workflows.md`, `CHANGELOG.md`.
 - **Compatibility**: the generated policy, its hash, the command catalog
   identity and the workflow catalog identity change, so installed entry guides
-  report `stale-source`. Policy loading admits the generated workflow policy, so
-  a Cairn binary with this change refuses a policy that still carries either
-  defect, including an unmodified copy of the 9082e1ae default. Consumers must
-  re-vendor the default policy with this binary.
+  report `stale-source`. Policy loading is unchanged: a policy that still
+  carries either defect, including an unmodified copy of the 9082e1ae default,
+  loads. Consumers re-vendor the default policy to pick up the fix.
 - **Testing**: `policy export --check`, `cargo test --workspace`, Clippy,
   `cargo fmt --check`, `cairn validate`, the change gates and
   `nix flake check`.

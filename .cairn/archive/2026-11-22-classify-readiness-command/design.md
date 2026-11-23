@@ -47,66 +47,83 @@ Rewording `drain` to avoid the command would drop the route the
 `cairn.agent_workflow_readiness.guidance` requirement asks for. The entry
 guide's routes are unchanged.
 
-### Decision: Admit named commands against the catalog
+### Decision: Check the shipped workflows' command routes in a test, not at admission
 
-**Choice:** For each descriptor, scan the goal, success evidence, required
-evidence, progress rule, immediate action, output shape, constraints and
-non-claims. Each token has Markdown emphasis, code spans, quotes, brackets and
-parentheses (`*`, `_`, backticks, straight and curly quotes, `[]`, `()`)
-stripped from both ends and `.`, `,`, `:` or `;` from its end; stripping at
-the end closes the command at that token. A mention is a token equal to
-`cairn` followed by at least one command word: a token of lowercase ASCII
-letters, digits and hyphens that starts with a letter, up to the first other
-token or closing token. Code fence lines (three or more backticks or tildes)
-are skipped, so a fence info string such as `cairn` is never a mention and a
-mention never runs across a fence; the lines inside a fence are scanned. Each
-catalog invocation yields its command words the same way. The mention
-resolves to the catalog entries with the longest command-word prefix of its
-words; none is an issue, and each resolved entry whose class the descriptor
-does not allow is an issue.
+**Choice:** A test over Cairn's shipped default policy
+(`cairn-policy/generated/cairn-policy.json`) reads every descriptor's goal,
+success evidence, required evidence, progress rule, immediate action, output
+shape, constraints and non-claims, and fails if a named `cairn` command
+resolves to no catalog entry or to an entry whose class the descriptor does not
+allow. The scanner lives in a `#[cfg(test)]` module
+(`generated_agent_workflow/command_routes.rs`). Policy admission does not read
+descriptor text.
 
-The text is tokenized once. Catalog entries are keyed by their command words,
-and each mention reads at most the catalog's largest command-word count of
-following tokens, then looks up its prefixes from longest to shortest. Work is
-at most `tokens * (1 + depth)` token inspections per field. Each field keeps
-only the `max_issues` smallest distinct messages, the ones the sorted,
-truncated issue list can report.
+**Rationale:** The defect was in Cairn's own shipped text, which Lattice and
+Kiln embed unchanged, so a test over that text catches it where it is written.
+A first draft (`8718b567`) put the scan in admission, which every policy load
+runs. Two review rounds then found Markdown shapes it misread in both
+directions (a fence label read as `cairn cairn`, `**cairn gate tasks**` missed,
+then `**cairn** gate tasks`, link labels and `_cairn status`). A heuristic
+reading of free text must not decide whether a consumer's policy loads; a miss
+in a test over known text is fixed by the next test case, while a miss at
+admission refuses or admits consumer policies Cairn has never seen. That
+admission refusal is removed.
 
-**Rationale:** The defect is a relation between three policy fields, so the
-check belongs in admission beside the existing class checks, where every
-policy load and every consumer policy meets it. Scanning every rendered field
-keeps the rule generic instead of special-casing `immediate_action`. Longest
-prefix makes `cairn workflow status` resolve to `workflow-status`, not
-`status`. Requiring lowercase command words keeps placeholders (`CHANGE`,
-`<change>`) and options out of the match, and requiring the lowercase token
-`cairn` keeps "Cairn command classes" prose out. Stripping wrapping keeps
-`**cairn gate tasks**` from escaping the scan; skipping fence lines keeps a
-` ```cairn ` label from reading as the command `cairn cairn`. An uncatalogued
-command has no class a descriptor could allow, so it is refused too. Bounding
-the lookahead by catalog depth keeps a field of repeated `cairn` tokens linear
-instead of rescanning the rest of the field at each one.
+### Decision: Read descriptor text as Markdown
 
-### Decision: Diagnostics name the field and the command words
+**Choice:** Each line is split into words and breaks. Code fence lines (three
+or more backticks or tildes) are dropped, so an info string is never a word;
+fenced lines are read, and a line break inside a paragraph is a space. Paired
+emphasis runs of `*` or `_` (an opener before a non-space, a closer after one,
+paired like CommonMark delimiters) are removed without a break, so
+`**cairn** gate tasks` and `cairn **gate** tasks` read as `cairn gate tasks`.
+An unpaired or intraword marker stays in its word, so `_cairn` and
+`snake_cairn` are not `cairn`. A code span's content and a link label are read
+and their edges are breaks; a link destination or reference label is skipped.
+Parentheses, brackets, braces, quotes, and `.`, `,`, `:`, `;`, `!`, `?` before
+a space or the line end are breaks. A mention is the word `cairn` followed by
+at least one command word: lowercase ASCII letters, digits and hyphens starting
+with a letter.
 
-**Choice:** Issues carry the descriptor field path (for example
-`descriptors[0].immediate_action` or `constraints[2]`), the matched command
-words, the catalog ID and its class; an uncatalogued mention names only its
-first command word. Any catalog ID, command class or command word longer than
-64 bytes is copied as its first 64 bytes followed by
-`...(truncated, N bytes)`, as are the identifiers in the other admission and
-lookup diagnostics.
+Catalog invocations are read the same way into a trie keyed by command word.
+A mention walks the trie one word at a time and resolves to the deepest node
+with entries, so `cairn workflow status` is `workflow-status`, not `status`;
+each following word is looked up once, and no prefix is compared again. A
+mention whose first command word has no entry is uncatalogued.
 
-**Rationale:** An author can locate and fix the text from the issue alone.
-Catalog IDs and classes have no length bound of their own, so a diagnostic
-must not copy them whole; the field path and the prefix still identify them.
+**Rationale:** Paired-delimiter emphasis and code and link edges follow how
+Markdown renders the text an agent reads. Requiring lowercase command words
+keeps placeholders (`CHANGE`, `<change>`) and options out of the match, and
+requiring the lowercase word `cairn` keeps "Cairn command classes" prose out.
+The trie keeps the cost per mention at the catalog depth.
+
+### Decision: Report the field, the command words and the catalog entry
+
+**Choice:** A violation carries the descriptor field path (for example
+`descriptors[0].immediate_action` or `constraints[2]`), the workflow ID, the
+matched command words, and the catalog ID and class; an uncatalogued mention
+names its first command word.
+
+**Rationale:** A failing test names the text to fix.
+
+### Decision: Bound identifiers in admission and lookup diagnostics
+
+**Choice:** Admission and lookup diagnostics copy at most 64 bytes of a catalog
+ID, command class, route, workflow, adapter or profile name, followed by
+`...(truncated, N bytes)`.
+
+**Rationale:** Catalog IDs and classes have no length bound of their own, so a
+diagnostic must not copy them whole; the field path and the prefix still
+identify them.
 
 ## Risks / Trade-offs
 
-- A policy that still carries either defect, including an unmodified copy of
-  the 9082e1ae default, fails to load with this binary. That is the intended
-  fail-closed outcome; consumers re-vendor the default with the binary.
-- Prose that uses lowercase `cairn` followed by an ordinary lowercase word,
-  wrapped or not, reads as a command and fails admission. Descriptor authors
-  can capitalize the product name or quote an exact catalog command.
-- Scanning is linear in descriptor text, with a factor of the catalog's
-  largest command-word count; resolution is a map lookup per prefix length.
+- A consumer policy whose own workflow text names commands outside its classes
+  loads; only Cairn's shipped text is checked. Consumers that edit workflow
+  text own it.
+- Prose that uses lowercase `cairn` followed by an ordinary lowercase word
+  reads as a command and fails the test. Cairn's descriptor authors can
+  capitalize the product name or quote an exact catalog command.
+- The scanner follows CommonMark for the shapes it handles, not every rule
+  (for example, delimiter-run length matching). A missed shape is a test gap,
+  never a consumer load failure.

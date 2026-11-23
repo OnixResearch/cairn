@@ -178,20 +178,24 @@ surface.
   adds `drain-plan-readiness` (`cairn drain-plan --view readiness --root PATH`)
   in the `readiness` class. Before, the `apply` workflow told the agent to run
   `cairn readiness` although it allows `readiness` and not `gate`, and `drain`
-  named a drain-plan command the catalog did not list. Admission now rejects a
-  descriptor whose goal, evidence, progress rule, immediate action, output
-  shape, constraints or non-claims name a `cairn` command that matches no
-  catalog entry, or whose catalog class (by longest command-word prefix) the
-  descriptor does not allow. The scan ignores Markdown and prose wrapping
-  around a token (`**cairn gate tasks**`, `` `cairn gate tasks` ``,
-  `(cairn gate tasks).`), never reads a code fence info string, such as the
-  `cairn` label of a fenced block, as a command while still reading the fenced
-  lines, reads each token once plus at most the catalog's deepest command-word
-  count after each `cairn`, and copies at most 64 bytes of any catalog ID,
-  command class or command word into an admission issue, marking a truncated
-  value with its length. Policy loading runs this admission, so a policy that
-  still carries the old catalog, including an unmodified copy of the previous
-  default, is refused. The generated policy hash is now
+  named a drain-plan command the catalog did not list. A test over the shipped
+  default policy now checks that every `cairn` command a workflow's goal,
+  evidence, progress rule, immediate action, output shape, constraints or
+  non-claims tells the agent to run resolves, by longest command-word prefix,
+  to a catalog entry in a class that workflow allows; the test fails on the
+  previous default. It reads the text as Markdown, so emphasis inside or around
+  a command, code spans and link labels do not hide a command, and fence info
+  strings, link destinations, unpaired markers such as `_cairn` and
+  capitalized "Cairn" are not commands.
+
+  Policy admission does not read workflow text. An unpublished draft of this
+  change (`8718b567`) made admission refuse any policy whose descriptor text
+  named an uncatalogued command or one outside the descriptor's classes, which
+  refused every unmodified copy of the previous default; that admission
+  refusal is removed, and consumer policies load as before. Generated-workflow
+  admission and lookup diagnostics copy at most 64 bytes of a catalog ID,
+  command class, workflow, adapter or profile name, marking a truncated value
+  with its length. The generated policy hash is now
   `2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb`, and the
   command catalog and workflow catalog identities change, so installed entry
   guides report `stale-source`.

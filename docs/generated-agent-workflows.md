@@ -51,15 +51,15 @@ The descriptors retain their required tests, completion inputs, review evidence,
 
 Readiness guidance is advisory. It does not run actions, satisfy gates, or make an unavailable observation authoritative. The compact-entry-guide change owns how much of this text a host loads.
 
-## Named commands stay inside the allowed classes
+## Shipped commands stay inside the allowed classes
 
-Each descriptor lists its allowed command classes, and the policy's command catalog assigns every Cairn command invocation to one class. Admission rejects a policy whose descriptor text names a command the descriptor does not allow.
+Each descriptor lists its allowed command classes, and the policy's command catalog assigns every Cairn command invocation to one class. The shipped catalog places `cairn readiness <change>` and `cairn drain-plan --view readiness` in the `readiness` class.
 
-Cairn reads each `cairn` token in the descriptor's goal, evidence, progress rule, immediate action, output shape, constraints and non-claims, followed by its lowercase subcommand words. Markdown and prose wrapping around a token is ignored: `**cairn gate tasks**`, `` `cairn gate tasks` `` and `(cairn gate tasks).` all name `cairn gate tasks`. Trailing wrapping or `.`, `,`, `:` or `;` ends the command. The info string of a code fence line, such as the `cairn` that labels a fenced block, is not a command; the lines inside the fence are read. The catalog entry with the longest matching command-word prefix decides the class, so `cairn workflow status` is the `workflow-status` entry, not `status`. The descriptor must allow that class. A named command that matches no catalog entry also fails admission. Capitalized prose such as "Cairn command classes" is not a command.
+Cairn's test suite checks that every command a shipped workflow tells the agent to run resolves to a catalog entry in a class that workflow allows. Consumers that embed the default policy unchanged inherit that check. It reads each lowercase `cairn` followed by lowercase subcommand words in the descriptor's goal, evidence, progress rule, immediate action, output shape, constraints and non-claims, as Markdown: `**cairn** gate tasks`, `cairn **gate** tasks`, `` `cairn gate tasks` `` and `[cairn gate tasks](#gate)` all name `cairn gate tasks`, while a code fence info string, an unpaired marker such as `_cairn status`, and capitalized prose such as "Cairn command classes" name no command. The catalog entry with the longest matching command-word prefix decides the class, so `cairn workflow status` is the `workflow-status` entry, not `status`.
 
-The scan reads each token once, plus at most the catalog's deepest command-word count after each `cairn`. An issue copies at most 64 bytes of any catalog ID, command class or command word; a longer value ends in `...(truncated, N bytes)`.
+Policy loading does not read workflow text. A consumer policy whose workflows name other commands still loads; its authors own that text.
 
-The shipped catalog places `cairn readiness <change>` and `cairn drain-plan --view readiness` in the `readiness` class.
+Admission and lookup diagnostics copy at most 64 bytes of a catalog ID, command class, workflow, adapter or profile name; a longer value ends in `...(truncated, N bytes)`.
 
 ## Select an adapter
 
