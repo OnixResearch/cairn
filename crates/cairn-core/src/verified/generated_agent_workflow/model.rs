@@ -130,6 +130,8 @@ pub struct GeneratedWorkflowDescriptor {
     pub mutation_class: GeneratedWorkflowMutationClass,
     pub progress_rule: String,
     pub immediate_action: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub immediate_action_commands: Vec<String>,
     pub output_shape: String,
     pub constraints: Vec<String>,
     pub non_claims: Vec<String>,

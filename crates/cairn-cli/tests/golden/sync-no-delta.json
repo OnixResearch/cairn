@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "3125d7da25137dd7e88b9a029990cb3a43a61a6435bbbf99eb614766bf0ff089",
+    "input_hash": "db82b795dedd551ea6940156973c45de9409640caf54917ab9438752d513ba9d",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
-    "receipt_hash": "022653d8a423977c6f3cc0f971af7183cc7463c3fccc079b954da0380fedf219",
+    "policy_hash": "c0ef984c20d746f87a1c96517af39acbdea773a6ef2e8f9269c3796d3ea67964",
+    "receipt_hash": "bf5c28daa0f894d18592d813a967feafcec8ec8c425767fa18d41c08ebdbf6c3",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -22,18 +22,18 @@
   "cross_repo_evidence_issues": [],
   "delta_specs": [],
   "dry_run": true,
-  "input_hash": "2b84baf6c5c4c5382e4cb73a543f8a8146f37e8bda5252a4429f5246729c8edb",
+  "input_hash": "93a24d9e8c65a11855646368dd010991b9978b00a2b87a793a6dbf666bac3068",
   "layout": "cairn",
   "merge_preflight": {
     "documents": []
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "2b89bd74cdf34e3e2a4c4f6194c99e6bd9b53b5c26b7cb9c7eb30a1a3b1852ac",
+  "plan_hash": "19359fda1fbf53eeb8a5f2bc8d57093b27558ecbc5631abd805de9b79e2b7981",
   "policy": "cairn-default",
-  "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+  "policy_hash": "c0ef984c20d746f87a1c96517af39acbdea773a6ef2e8f9269c3796d3ea67964",
   "policy_selection": {
-    "blake3": "b6e37b502818f3929acd38c24470de95a433f5adb7411ad47bf04d8d19866da4",
+    "blake3": "530da10ad3dce1a653de20f38aeee28d90d5d0924b3f5a1586b6e518cf9697c4",
     "installation_receipt": false,
     "locator": "cairn-policy/generated/cairn-policy.json",
     "source": "legacy_default"
@@ -41,5 +41,5 @@
   "reasons": [
     "no-delta: no delta specs to sync"
   ],
-  "receipt_hash": "dfcc857176ec8d6afac6a0b34de2536f1a97947b9ed28c3f6c10626f8977419c"
+  "receipt_hash": "ae317db0ad3332049a6e6f4795a3159f37fedd61c7547c8fd3f88530906633bc"
 }

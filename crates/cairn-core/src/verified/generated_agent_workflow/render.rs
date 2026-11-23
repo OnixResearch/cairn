@@ -33,7 +33,9 @@ pub fn render_generated_agent_workflows(
                 "adapter generated an unsafe relative path",
             )]);
         }
-        let contents = render_descriptor(adapter, descriptor);
+        let resolved_action =
+            render_descriptor_immediate_action(catalog, descriptor).map_err(|issue| vec![issue])?;
+        let contents = render_descriptor(adapter, descriptor, &resolved_action);
         if contents.len() > catalog.policy.bounds.max_file_bytes {
             return Err(vec![issue(
                 super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
@@ -41,11 +43,18 @@ pub fn render_generated_agent_workflows(
                 "adapter output exceeds the policy file bound",
             )]);
         }
-        let descriptor_identity =
+        let descriptor_identity = if descriptor.immediate_action_commands.is_empty() {
             crate::verified::evidence::canonical_json_hash(&serde_json::json!({
                 "descriptor": descriptor,
                 "generator_version": catalog.policy.generator_version,
-            }));
+            }))
+        } else {
+            crate::verified::evidence::canonical_json_hash(&serde_json::json!({
+                "descriptor": descriptor,
+                "generator_version": catalog.policy.generator_version,
+                "resolved_immediate_action": resolved_action,
+            }))
+        };
         files.push(super::model::RenderedGeneratedWorkflowFile {
             workflow_id: descriptor.id.clone(),
             relative_path,
@@ -155,9 +164,42 @@ fn adapter_path(adapter: &super::model::GeneratedWorkflowAdapter, workflow_id: &
     }
 }
 
+pub fn render_descriptor_immediate_action(
+    catalog: &super::model::AdmittedGeneratedWorkflowCatalog,
+    descriptor: &super::model::GeneratedWorkflowDescriptor,
+) -> Result<String, super::model::GeneratedWorkflowIssue> {
+    if descriptor.immediate_action_commands.is_empty() {
+        return Ok(descriptor.immediate_action.clone());
+    }
+    let mut rendered = descriptor.immediate_action.clone();
+    let mut unplaced = Vec::new();
+    for command_id in &descriptor.immediate_action_commands {
+        let command = super::admission::find_generated_workflow_command(catalog, command_id)?;
+        let placeholder = format!("{{command:{command_id}}}");
+        if rendered.contains(&placeholder) {
+            rendered = rendered.replace(&placeholder, &command.invocation);
+        } else {
+            unplaced.push(command.invocation.as_str());
+        }
+    }
+    if !unplaced.is_empty() {
+        rendered.push_str("\n\n");
+        for (index, invocation) in unplaced.iter().enumerate() {
+            if index > 0 {
+                rendered.push('\n');
+            }
+            rendered.push_str("- `");
+            rendered.push_str(invocation);
+            rendered.push('`');
+        }
+    }
+    Ok(rendered)
+}
+
 fn render_descriptor(
     adapter: &super::model::GeneratedWorkflowAdapter,
     descriptor: &super::model::GeneratedWorkflowDescriptor,
+    resolved_immediate_action: &str,
 ) -> String {
     let mut output = String::new();
     if adapter.front_matter {
@@ -179,7 +221,7 @@ fn render_descriptor(
     output.push_str("\n## Allowed Cairn command classes\n\n");
     append_list(&mut output, &descriptor.command_classes);
     output.push_str("\n## Immediate action\n\n");
-    output.push_str(&descriptor.immediate_action);
+    output.push_str(resolved_immediate_action);
     output.push_str("\n\n## Progress\n\n");
     output.push_str(&descriptor.progress_rule);
     output.push_str("\n\n## Output\n\n");

@@ -37,6 +37,7 @@ fn policy() -> GeneratedAgentWorkflowPolicy {
                 },
                 progress_rule: "Report each checked step.".to_string(),
                 immediate_action: "Inspect the selected change.".to_string(),
+                immediate_action_commands: Vec::new(),
                 output_shape: "Return evidence and blockers.".to_string(),
                 constraints,
                 non_claims: NON_CLAIMS
@@ -822,10 +823,17 @@ fn shipped_policy() -> GeneratedAgentWorkflowPolicy {
         .expect("shipped generated workflow policy")
 }
 
-/// The shipped policy with the catalog `9082e1ae` shipped: `readiness` in the
-/// `gate` class and no `drain-plan-readiness` entry.
+/// The shipped policy with the catalog and prose-only descriptors `9082e1ae`
+/// shipped: `readiness` in the `gate` class, no `drain-plan-readiness` entry,
+/// and no structural `immediate_action_commands`.
 fn previous_default_policy() -> GeneratedAgentWorkflowPolicy {
-    let mut policy = shipped_policy();
+    let shipped = shipped_policy();
+    let mut policy = shipped.clone();
+    for descriptor in &mut policy.descriptors {
+        descriptor.immediate_action =
+            super::command_routes::resolve_immediate_action_for_check(&shipped, descriptor);
+        descriptor.immediate_action_commands.clear();
+    }
     policy
         .command_catalog
         .retain(|command| command.id != "drain-plan-readiness");
@@ -859,18 +867,42 @@ fn violation(field_path: String, message: &str) -> RouteViolation {
 #[test]
 fn shipped_workflows_name_only_permitted_commands() {
     let shipped = shipped_policy();
-    assert!(admit_generated_agent_workflow_policy(&shipped).is_ok());
+    let admitted = admit_generated_agent_workflow_policy(&shipped).expect("shipped policy admits");
     assert_eq!(command_route_violations(&shipped), Vec::new());
-    // The check reads the commands each workflow tells the agent to run.
+    // The check reads the rendered commands each workflow tells the agent to run.
     let named = |id: &str| {
-        let descriptor = shipped
+        let descriptor = admitted
+            .policy
             .descriptors
             .iter()
             .find(|descriptor| descriptor.id == id)
             .expect("descriptor");
-        named_commands(&shipped, &descriptor.immediate_action)
+        let rendered =
+            render_descriptor_immediate_action(&admitted, descriptor).expect("rendered action");
+        named_commands(&admitted.policy, &rendered)
     };
+    let structural = |id: &str| {
+        admitted
+            .policy
+            .descriptors
+            .iter()
+            .find(|descriptor| descriptor.id == id)
+            .expect("descriptor")
+            .immediate_action_commands
+            .clone()
+    };
+    assert_eq!(structural("apply"), ["readiness", "workflow-instructions"]);
     assert_eq!(named("apply"), ["readiness", "workflow-instructions"]);
+    assert_eq!(structural("archive"), ["readiness"]);
+    assert_eq!(named("archive"), ["readiness"]);
+    assert_eq!(
+        structural("drain"),
+        [
+            "workflow-status",
+            "drain-plan-readiness",
+            "workflow-instructions"
+        ]
+    );
     assert_eq!(
         named("drain"),
         [
@@ -879,7 +911,158 @@ fn shipped_workflows_name_only_permitted_commands() {
             "workflow-instructions"
         ]
     );
+    assert_eq!(structural("explore"), ["status"]);
     assert_eq!(named("explore"), ["status"]);
+    assert!(structural("propose").is_empty());
+    assert!(named("propose").is_empty());
+    assert_eq!(structural("verify"), ["readiness", "workflow-instructions"]);
+    assert_eq!(named("verify"), ["readiness", "workflow-instructions"]);
+}
+
+#[test]
+fn structural_command_references_outside_allowed_classes_are_refused_at_load() {
+    // 1. Misfiled readiness (class gate) + missing drain-plan-readiness on shipped policy
+    //    must be refused at admission time with exact field path and command ID.
+    let mut broken_shipped = shipped_policy();
+    broken_shipped
+        .command_catalog
+        .retain(|command| command.id != "drain-plan-readiness");
+    broken_shipped
+        .command_catalog
+        .iter_mut()
+        .find(|command| command.id == "readiness")
+        .expect("readiness")
+        .command_class = "gate".to_string();
+    let issues = admit_generated_agent_workflow_policy(&broken_shipped)
+        .expect_err("disallowed structural command references must fail admission");
+    let apply_field =
+        descriptor_text_path(&broken_shipped, "apply", "immediate_action_commands[0]");
+    assert!(
+        issues.iter().any(|issue| {
+            issue.field_path == apply_field
+                && issue.message.contains("readiness")
+                && issue.message.contains("gate")
+        }),
+        "expected apply refusal at {apply_field}: {issues:?}"
+    );
+    let drain_field =
+        descriptor_text_path(&broken_shipped, "drain", "immediate_action_commands[1]");
+    assert!(
+        issues.iter().any(|issue| {
+            issue.field_path == drain_field && issue.message.contains("drain-plan-readiness")
+        }),
+        "expected drain refusal at {drain_field}: {issues:?}"
+    );
+
+    // 2. Read-only explore referencing a mutation catalog entry must be refused.
+    let mut explore_mutation = policy();
+    descriptor_mut(&mut explore_mutation, "explore").immediate_action_commands =
+        vec!["change-create".to_string()];
+    let issues = admit_generated_agent_workflow_policy(&explore_mutation)
+        .expect_err("explore referencing mutation command must fail");
+    let explore_field =
+        descriptor_text_path(&explore_mutation, "explore", "immediate_action_commands[0]");
+    assert!(
+        issues.iter().any(|issue| {
+            issue.field_path == explore_field
+                && issue.message.contains("change-create")
+                && issue.message.contains("mutate")
+        }),
+        "expected explore refusal at {explore_field}: {issues:?}"
+    );
+
+    // 3. Duplicate and huge unknown IDs are refused with bounded diagnostics.
+    let mut bad_ids = policy();
+    let huge = "x".repeat(1 << 20);
+    descriptor_mut(&mut bad_ids, "apply").immediate_action_commands =
+        vec!["status".to_string(), "status".to_string(), huge.clone()];
+    let issues = admit_generated_agent_workflow_policy(&bad_ids)
+        .expect_err("duplicate and unknown IDs must fail");
+    let dup_field = descriptor_text_path(&bad_ids, "apply", "immediate_action_commands[1]");
+    let unknown_field = descriptor_text_path(&bad_ids, "apply", "immediate_action_commands[2]");
+    assert!(issues.iter().any(|issue| issue.field_path == dup_field));
+    let unknown_issue = issues
+        .iter()
+        .find(|issue| issue.field_path == unknown_field)
+        .expect("unknown ID issue");
+    assert!(issue_bytes(unknown_issue) < DIAGNOSTIC_BOUND_BYTES);
+    assert!(unknown_issue.message.contains("truncated"));
+}
+
+#[test]
+fn prose_mentioning_commands_without_structural_references_is_never_refused() {
+    let mut prose = policy();
+    let explore = descriptor_mut(&mut prose, "explore");
+    explore.immediate_action =
+        "Mention cairn change create NAME, _cairn bogus, and **cairn doctor** freely.".to_string();
+    explore.immediate_action_commands.clear();
+    let admitted = admit_generated_agent_workflow_policy(&prose)
+        .expect("prose mentioning commands must never be refused");
+    let rendered = render_generated_agent_workflows(&admitted, "claude").expect("render");
+    let explore_file = rendered
+        .iter()
+        .find(|file| file.workflow_id == "explore")
+        .expect("explore file");
+    assert!(explore_file
+        .contents
+        .contains("Mention cairn change create NAME, _cairn bogus, and **cairn doctor** freely."));
+}
+
+#[test]
+fn rendered_guidance_generates_command_text_from_catalog_references() {
+    let mut base = policy();
+    let apply = descriptor_mut(&mut base, "apply");
+    apply.immediate_action = "First run {command:status} before editing.".to_string();
+    apply.immediate_action_commands = vec!["status".to_string(), "doctor".to_string()];
+    let admitted = admit_generated_agent_workflow_policy(&base).expect("admit");
+    let files = render_generated_agent_workflows(&admitted, "claude").expect("render");
+    let apply_file = files
+        .iter()
+        .find(|file| file.workflow_id == "apply")
+        .expect("apply file");
+    assert!(apply_file
+        .contents
+        .contains("First run cairn status --root PATH before editing."));
+    assert!(apply_file.contents.contains("- `cairn doctor --root PATH`"));
+    assert!(!apply_file.contents.contains("{command:status}"));
+
+    // Changing the referenced catalog invocation updates rendered text and descriptor_identity.
+    let mut updated = base.clone();
+    updated
+        .command_catalog
+        .iter_mut()
+        .find(|entry| entry.id == "status")
+        .expect("status")
+        .invocation = "cairn status --json --root PATH".to_string();
+    let admitted_updated = admit_generated_agent_workflow_policy(&updated).expect("admit updated");
+    let updated_files =
+        render_generated_agent_workflows(&admitted_updated, "claude").expect("render updated");
+    let updated_apply = updated_files
+        .iter()
+        .find(|file| file.workflow_id == "apply")
+        .expect("updated apply");
+    assert!(updated_apply
+        .contents
+        .contains("First run cairn status --json --root PATH before editing."));
+    assert_ne!(
+        updated_apply.descriptor_identity,
+        apply_file.descriptor_identity
+    );
+
+    // Workflows without structural references (e.g. propose) keep identical bytes & identity.
+    let propose_before = files
+        .iter()
+        .find(|file| file.workflow_id == "propose")
+        .expect("propose before");
+    let propose_after = updated_files
+        .iter()
+        .find(|file| file.workflow_id == "propose")
+        .expect("propose after");
+    assert_eq!(propose_before.contents, propose_after.contents);
+    assert_eq!(
+        propose_before.descriptor_identity,
+        propose_after.descriptor_identity
+    );
 }
 
 // r[verify cairn.generated_agent_workflows.command_routes]

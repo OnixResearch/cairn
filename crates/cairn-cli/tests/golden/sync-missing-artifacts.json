@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "3125d7da25137dd7e88b9a029990cb3a43a61a6435bbbf99eb614766bf0ff089",
+    "input_hash": "db82b795dedd551ea6940156973c45de9409640caf54917ab9438752d513ba9d",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
-    "receipt_hash": "022653d8a423977c6f3cc0f971af7183cc7463c3fccc079b954da0380fedf219",
+    "policy_hash": "c0ef984c20d746f87a1c96517af39acbdea773a6ef2e8f9269c3796d3ea67964",
+    "receipt_hash": "bf5c28daa0f894d18592d813a967feafcec8ec8c425767fa18d41c08ebdbf6c3",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -24,7 +24,7 @@
     "fixtures/missing-artifacts/.cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "879e05faf2de33f7fb34385b1f90e1999024e187ce05dea0b1bdc0d1d270d8af",
+  "input_hash": "5d25dde783cd630fea5363867edfdf4586cf92909ba358a491decb5de21ac3cf",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -58,11 +58,11 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "d3bc3f0ac74a00c44a7103611805c7e0e7018d011f9eb460a500a65240f1ea0b",
+  "plan_hash": "f546c742ccc6082ca2d846ba075854f88a806a59dc3ade113a15df8057a2776c",
   "policy": "cairn-default",
-  "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+  "policy_hash": "c0ef984c20d746f87a1c96517af39acbdea773a6ef2e8f9269c3796d3ea67964",
   "policy_selection": {
-    "blake3": "b6e37b502818f3929acd38c24470de95a433f5adb7411ad47bf04d8d19866da4",
+    "blake3": "530da10ad3dce1a653de20f38aeee28d90d5d0924b3f5a1586b6e518cf9697c4",
     "installation_receipt": false,
     "locator": "cairn-policy/generated/cairn-policy.json",
     "source": "legacy_default"
@@ -71,5 +71,5 @@
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "f4d5871204a84b8786cfa2dacce3524d82144c6f06f4d50e17edeb2349346882"
+  "receipt_hash": "d6fb6cc165701bf68177dadfcf3cd0fe7c118292392c0eb5cae7076e967dca51"
 }

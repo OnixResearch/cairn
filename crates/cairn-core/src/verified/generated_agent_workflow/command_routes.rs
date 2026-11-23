@@ -357,19 +357,49 @@ pub(super) fn scan_mentions<'t, 'a>(
     steps
 }
 
+/// Resolves structural `{command:<id>}` placeholders in `immediate_action`
+/// using the policy's command catalog so route checks inspect rendered text.
+pub(super) fn resolve_immediate_action_for_check(
+    policy: &GeneratedAgentWorkflowPolicy,
+    descriptor: &GeneratedWorkflowDescriptor,
+) -> String {
+    if descriptor.immediate_action_commands.is_empty() {
+        return descriptor.immediate_action.clone();
+    }
+    let mut rendered = descriptor.immediate_action.clone();
+    for command_id in &descriptor.immediate_action_commands {
+        if let Some(command) = policy
+            .command_catalog
+            .iter()
+            .find(|entry| &entry.id == command_id)
+        {
+            let placeholder = format!("{{command:{command_id}}}");
+            if rendered.contains(&placeholder) {
+                rendered = rendered.replace(&placeholder, &command.invocation);
+            } else {
+                rendered.push_str("\n- ");
+                rendered.push_str(&command.invocation);
+            }
+        }
+    }
+    rendered
+}
+
 /// Every rendered text field of a descriptor with its field path.
-pub(super) fn descriptor_text_fields<'d>(
-    descriptor: &'d GeneratedWorkflowDescriptor,
+pub(super) fn descriptor_text_fields(
+    policy: &GeneratedAgentWorkflowPolicy,
+    descriptor: &GeneratedWorkflowDescriptor,
     path: &str,
-) -> Vec<(String, &'d str)> {
+) -> Vec<(String, String)> {
+    let resolved_action = resolve_immediate_action_for_check(policy, descriptor);
     let mut fields = [
-        ("goal", &descriptor.goal),
-        ("progress_rule", &descriptor.progress_rule),
-        ("immediate_action", &descriptor.immediate_action),
-        ("output_shape", &descriptor.output_shape),
+        ("goal", descriptor.goal.clone()),
+        ("progress_rule", descriptor.progress_rule.clone()),
+        ("immediate_action", resolved_action),
+        ("output_shape", descriptor.output_shape.clone()),
     ]
     .into_iter()
-    .map(|(field, text)| (format!("{path}.{field}"), text.as_str()))
+    .map(|(field, text)| (format!("{path}.{field}"), text))
     .collect::<Vec<_>>();
     for (field, values) in [
         ("success_evidence", &descriptor.success_evidence),
@@ -381,7 +411,7 @@ pub(super) fn descriptor_text_fields<'d>(
             values
                 .iter()
                 .enumerate()
-                .map(|(index, text)| (format!("{path}.{field}[{index}]"), text.as_str())),
+                .map(|(index, text)| (format!("{path}.{field}[{index}]"), text.clone())),
         );
     }
     fields
@@ -407,8 +437,8 @@ pub(super) fn command_route_violations(
     let mut violations = std::collections::BTreeSet::new();
     for (index, descriptor) in policy.descriptors.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.descriptors[{index}]");
-        for (field_path, text) in descriptor_text_fields(descriptor, &path) {
-            scan_mentions(&pieces(text), &trie, |mention| match mention {
+        for (field_path, text) in descriptor_text_fields(policy, descriptor, &path) {
+            scan_mentions(&pieces(&text), &trie, |mention| match mention {
                 Mention::Uncatalogued { word } => {
                     violations.insert(RouteViolation {
                         field_path: field_path.clone(),

@@ -11,14 +11,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "3125d7da25137dd7e88b9a029990cb3a43a61a6435bbbf99eb614766bf0ff089",
+    "input_hash": "db82b795dedd551ea6940156973c45de9409640caf54917ab9438752d513ba9d",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
-    "receipt_hash": "022653d8a423977c6f3cc0f971af7183cc7463c3fccc079b954da0380fedf219",
+    "policy_hash": "c0ef984c20d746f87a1c96517af39acbdea773a6ef2e8f9269c3796d3ea67964",
+    "receipt_hash": "bf5c28daa0f894d18592d813a967feafcec8ec8c425767fa18d41c08ebdbf6c3",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -30,7 +30,7 @@
     "fixtures/basic/.cairn/changes/demo/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "e758a1157f4a35e67ef2859a7ccc7570d737d3a6e90c6e8fa644e87b3dd8bc1e",
+  "input_hash": "d58032d1ca9cbfb32c1c2f91ee73f0687b233542bb9357ac24c56fb17ec28966",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -64,15 +64,15 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "481cacdf56eada73d30a76773c766344a1c415cc42cd94857d58a144a3692c25",
+  "plan_hash": "10be75974f2e89db5da9371349d88157f7bc08a2eade07c28a859909c366074b",
   "policy": "cairn-default",
-  "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+  "policy_hash": "c0ef984c20d746f87a1c96517af39acbdea773a6ef2e8f9269c3796d3ea67964",
   "policy_selection": {
-    "blake3": "b6e37b502818f3929acd38c24470de95a433f5adb7411ad47bf04d8d19866da4",
+    "blake3": "530da10ad3dce1a653de20f38aeee28d90d5d0924b3f5a1586b6e518cf9697c4",
     "installation_receipt": false,
     "locator": "cairn-policy/generated/cairn-policy.json",
     "source": "legacy_default"
   },
   "reasons": [],
-  "receipt_hash": "2ec411b3dad5eafa25244426dc6bb1cb1cba224d9410007467b288d202be5805"
+  "receipt_hash": "cc4e8868c5bf6049d0e9da34b68e959bb84ef88b377b2d53253168eb922525ed"
 }

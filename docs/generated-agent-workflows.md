@@ -53,11 +53,11 @@ Readiness guidance is advisory. It does not run actions, satisfy gates, or make 
 
 ## Shipped commands stay inside the allowed classes
 
-Each descriptor lists its allowed command classes, and the policy's command catalog assigns every Cairn command invocation to one class. The shipped catalog places `cairn readiness <change>` and `cairn drain-plan --view readiness` in the `readiness` class.
+Each descriptor lists its allowed command classes, and the policy's command catalog assigns every Cairn command invocation to one class. The shipped catalog places `cairn readiness <change> --root PATH` and `cairn drain-plan --view readiness --root PATH` in the `readiness` class.
 
-Cairn's test suite checks that every command a shipped workflow tells the agent to run resolves to a catalog entry in a class that workflow allows. Consumers that embed the default policy unchanged inherit that check. It reads each lowercase `cairn` followed by lowercase subcommand words in the descriptor's goal, evidence, progress rule, immediate action, output shape, constraints and non-claims, as Markdown: `**cairn** gate tasks`, `cairn **gate** tasks`, `` `cairn gate tasks` `` and `[cairn gate tasks](#gate)` all name `cairn gate tasks`, while a code fence info string, an unpaired marker such as `_cairn status`, and capitalized prose such as "Cairn command classes" name no command. The catalog entry with the longest matching command-word prefix decides the class, so `cairn workflow status` is the `workflow-status` entry, not `status`.
+Workflow descriptors that instruct Cairn commands declare those catalog IDs structurally in `immediate_action_commands` (for example `["readiness", "workflow-instructions"]`), and the renderer generates the instructed command text from the referenced catalog entries (substituting `{command:<id>}` placeholders or listing unplaced command invocations). Policy admission checks in linear time that every referenced ID exists in `command_catalog` and that its `command_class` is in the workflow's `command_classes`; a consumer policy whose workflow references an unknown ID or a command outside its classes is refused at load with the field path and ID named.
 
-Policy loading does not read workflow text. A consumer policy whose workflows name other commands still loads; its authors own that text.
+Policy loading does not scan free prose for commands. Prose that merely mentions Cairn commands is never refused, and legacy prose-only consumer policies without `immediate_action_commands` continue to load unchanged. Cairn's test suite also scans the shipped default policy's rendered descriptor text as Markdown to verify that no unreferenced command slips past the catalog.
 
 Admission and lookup diagnostics copy at most 64 bytes of a catalog ID, command class, workflow, adapter or profile name; a longer value ends in `...(truncated, N bytes)`.
 

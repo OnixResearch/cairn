@@ -479,12 +479,19 @@ fn validate_descriptors(
     >,
     issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
 ) {
+    let command_catalog = policy
+        .command_catalog
+        .iter()
+        .map(|command| (command.id.as_str(), command))
+        .collect::<std::collections::BTreeMap<_, _>>();
     let mut ids = std::collections::BTreeSet::new();
     for (index, descriptor) in policy.descriptors.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.descriptors[{index}]");
         validate_descriptor_shape(descriptor, &path, policy, &mut ids, issues);
         let mut has_mutation = false;
+        let mut allowed_classes = std::collections::BTreeSet::new();
         for command in &descriptor.command_classes {
+            allowed_classes.insert(command.as_str());
             match command_permissions.get(command) {
                 Some(super::model::GeneratedWorkflowPermission::Mutation) => has_mutation = true,
                 Some(super::model::GeneratedWorkflowPermission::Read) => {}
@@ -495,6 +502,14 @@ fn validate_descriptors(
                 )),
             }
         }
+        validate_descriptor_command_references(
+            descriptor,
+            &path,
+            policy,
+            &command_catalog,
+            &allowed_classes,
+            issues,
+        );
         if descriptor.mutation_class == super::model::GeneratedWorkflowMutationClass::ReadOnly
             && has_mutation
         {
@@ -529,6 +544,60 @@ fn validate_descriptors(
                 super::model::INITIAL_WORKFLOW_IDS.join(", ")
             ),
         ));
+    }
+}
+
+fn validate_descriptor_command_references(
+    descriptor: &super::model::GeneratedWorkflowDescriptor,
+    path: &str,
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+    command_catalog: &std::collections::BTreeMap<&str, &super::model::GeneratedWorkflowCommand>,
+    allowed_classes: &std::collections::BTreeSet<&str>,
+    issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
+) {
+    if descriptor.immediate_action_commands.len() > policy.bounds.max_list_items {
+        issues.push(issue(
+            super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+            format!("{path}.immediate_action_commands"),
+            "workflow immediate_action_commands exceeds the policy collection bound",
+        ));
+    }
+    let mut seen = std::collections::BTreeSet::new();
+    for (cmd_index, command_id) in descriptor.immediate_action_commands.iter().enumerate() {
+        let field_path = format!("{path}.immediate_action_commands[{cmd_index}]");
+        if command_id.is_empty() || !seen.insert(command_id.as_str()) {
+            issues.push(issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                field_path,
+                format!(
+                    "immediate_action_commands ID must be non-empty and unique: {}",
+                    diagnostic_label(command_id)
+                ),
+            ));
+            continue;
+        }
+        let Some(entry) = command_catalog.get(command_id.as_str()) else {
+            issues.push(issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                field_path,
+                format!(
+                    "unknown command catalog ID: {}",
+                    diagnostic_label(command_id)
+                ),
+            ));
+            continue;
+        };
+        if !allowed_classes.contains(entry.command_class.as_str()) {
+            issues.push(issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                field_path,
+                format!(
+                    "command {} uses class {}, which is not in workflow command_classes",
+                    diagnostic_label(command_id),
+                    diagnostic_label(&entry.command_class)
+                ),
+            ));
+        }
     }
 }
 

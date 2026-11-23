@@ -97,7 +97,18 @@ pub(super) fn descriptor_receipt(
         .policy
         .descriptors
         .iter()
-        .find(|descriptor| descriptor.id == workflow_id);
+        .find(|descriptor| descriptor.id == workflow_id)
+        .map(|descriptor| {
+            let mut resolved = descriptor.clone();
+            if let Ok(action) =
+                cairn_core::verified::generated_agent_workflow::render_descriptor_immediate_action(
+                    catalog, descriptor,
+                )
+            {
+                resolved.immediate_action = action;
+            }
+            resolved
+        });
     with_receipt_hash(json!({
         "schema": "cairn.generated-agent-workflow-descriptor.v1",
         "command": "agent workflow show",

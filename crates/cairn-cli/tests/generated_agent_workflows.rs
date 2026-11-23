@@ -885,23 +885,23 @@ fn readiness_guidance_routes_match_the_current_cli_and_mcp_schemas() -> Result<(
     let expectation = [
         (
             "apply",
-            "cairn readiness CHANGE",
-            "cairn workflow instructions ARTIFACT --change CHANGE",
+            "cairn readiness <change> --root PATH",
+            "cairn workflow instructions <artifact> --change <change> --root PATH",
         ),
         (
             "verify",
-            "cairn readiness CHANGE",
-            "cairn workflow instructions ARTIFACT --change CHANGE",
+            "cairn readiness <change> --root PATH",
+            "cairn workflow instructions <artifact> --change <change> --root PATH",
         ),
         (
             "archive",
-            "cairn readiness CHANGE",
+            "cairn readiness <change> --root PATH",
             "preview its sync and archive plans",
         ),
         (
             "drain",
-            "cairn drain-plan --view readiness",
-            "cairn workflow instructions ARTIFACT --change CHANGE",
+            "cairn drain-plan --view readiness --root PATH",
+            "cairn workflow instructions <artifact> --change <change> --root PATH",
         ),
     ];
     for (workflow, readiness_route, artifact_route) in expectation {
@@ -946,10 +946,9 @@ fn readiness_guidance_routes_match_the_current_cli_and_mcp_schemas() -> Result<(
 // r[verify cairn.generated_agent_workflows.command_routes]
 #[test]
 fn consumer_policies_load_without_a_workflow_text_scan() -> Result<(), Box<dyn Error>> {
-    // The 9082e1ae catalog (readiness in the gate class, no drain-plan
-    // entry) and a workflow naming a command outside its classes both load:
-    // policy admission does not read workflow text. Cairn's own tests check
-    // the shipped policy's command routes instead.
+    // A prose-only consumer policy (such as a 9082e1ae policy with readiness in
+    // the gate class, no drain-plan entry, and no structural command references)
+    // loads cleanly even when workflow prose mentions Cairn commands.
     let root = test_root("command-routes")?;
     let mut policy: Value = serde_json::from_slice(&fs::read(policy_path())?)?;
     let workflow = &mut policy["generated_agent_workflow_policy"];
@@ -961,6 +960,15 @@ fn consumer_policies_load_without_a_workflow_text_scan() -> Result<(), Box<dyn E
         .find(|command| command["id"] == "readiness")
         .ok_or("readiness command")?["command_class"] = Value::from("gate");
     commands.retain(|command| command["id"] != "drain-plan-readiness");
+    for descriptor in workflow["descriptors"]
+        .as_array_mut()
+        .ok_or("descriptors")?
+        .iter_mut()
+    {
+        if let Some(object) = descriptor.as_object_mut() {
+            object.remove("immediate_action_commands");
+        }
+    }
     workflow["descriptors"]
         .as_array_mut()
         .ok_or("descriptors")?
@@ -978,5 +986,30 @@ fn consumer_policies_load_without_a_workflow_text_scan() -> Result<(), Box<dyn E
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(listed.is_some());
+    Ok(())
+}
+
+#[test]
+fn consumer_policy_with_disallowed_structural_command_reference_is_refused(
+) -> Result<(), Box<dyn Error>> {
+    let root = test_root("structural-command-refusal")?;
+    let mut policy: Value = serde_json::from_slice(&fs::read(policy_path())?)?;
+    let workflow = &mut policy["generated_agent_workflow_policy"];
+    workflow["descriptors"]
+        .as_array_mut()
+        .ok_or("descriptors")?
+        .iter_mut()
+        .find(|descriptor| descriptor["id"] == "explore")
+        .ok_or("explore")?["immediate_action_commands"] = serde_json::json!(["change-create"]);
+    let path = root.join("disallowed-command-ref.json");
+    fs::write(&path, serde_json::to_vec_pretty(&policy)?)?;
+    let path_arg = path.display().to_string();
+    let (output, _) = run(&["agent", "workflow", "list", "--policy", &path_arg])?;
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("immediate_action_commands[0]") && stderr.contains("change-create"),
+        "expected field path and command ID in stderr: {stderr}"
+    );
     Ok(())
 }

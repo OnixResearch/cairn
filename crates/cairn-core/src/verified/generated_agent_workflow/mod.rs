@@ -40,7 +40,8 @@ pub use plan::{
     GENERATED_AGENT_WORKFLOW_PLAN_SCHEMA_V1,
 };
 pub use render::{
-    generated_manifest_relative_path, join_generated_destination, render_generated_agent_workflows,
+    generated_manifest_relative_path, join_generated_destination,
+    render_descriptor_immediate_action, render_generated_agent_workflows,
     safe_generated_destination_path,
 };
 

@@ -11,14 +11,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "3125d7da25137dd7e88b9a029990cb3a43a61a6435bbbf99eb614766bf0ff089",
+    "input_hash": "db82b795dedd551ea6940156973c45de9409640caf54917ab9438752d513ba9d",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
-    "receipt_hash": "022653d8a423977c6f3cc0f971af7183cc7463c3fccc079b954da0380fedf219",
+    "policy_hash": "c0ef984c20d746f87a1c96517af39acbdea773a6ef2e8f9269c3796d3ea67964",
+    "receipt_hash": "bf5c28daa0f894d18592d813a967feafcec8ec8c425767fa18d41c08ebdbf6c3",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -27,19 +27,19 @@
   },
   "cross_repo_evidence_issues": [],
   "dry_run": true,
-  "input_hash": "8f66dbfe8022f2de7eb636025c83b8bc5326da9e711c3a87ffa496f80925194e",
+  "input_hash": "ad9c480be3092fd201d4478e327fed213d07f525bf3ae35e869e7f4acc087e51",
   "layout": "cairn",
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "5036ed6273787c613b9f671c73882b5a19c50396d5dc6c08e27157434120ac8a",
+  "plan_hash": "db97516757a68ed730b5d265ba7bca1575952ed682f5e3737807749bbcb9817a",
   "policy": "cairn-default",
-  "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+  "policy_hash": "c0ef984c20d746f87a1c96517af39acbdea773a6ef2e8f9269c3796d3ea67964",
   "policy_selection": {
-    "blake3": "b6e37b502818f3929acd38c24470de95a433f5adb7411ad47bf04d8d19866da4",
+    "blake3": "530da10ad3dce1a653de20f38aeee28d90d5d0924b3f5a1586b6e518cf9697c4",
     "installation_receipt": false,
     "locator": "cairn-policy/generated/cairn-policy.json",
     "source": "legacy_default"
   },
   "reasons": [],
-  "receipt_hash": "60680ffff781bc500f8e759653452dcfd9f273dc58532d4a9e6b1ee5430ad72b"
+  "receipt_hash": "425bbb6f356a075b44e707cd815246837c43e9fffe5de21ed054fd37922e6d3e"
 }
