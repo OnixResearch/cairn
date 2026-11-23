@@ -63,6 +63,7 @@ pub mod radicle_change;
 pub mod radicle_checkout;
 pub mod radicle_import;
 pub mod readiness;
+pub mod reasoning_kernel_laws;
 pub mod receipt_drift;
 pub mod refinement_typed_dependencies;
 pub mod release_decision;
