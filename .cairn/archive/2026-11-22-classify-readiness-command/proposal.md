@@ -31,10 +31,13 @@ Lattice included, inherits both.
 - Admission of `generated_agent_workflow_policy` rejects a descriptor whose
   text names a Cairn command that resolves to no catalog entry, or to an entry
   whose class the descriptor does not allow. The rule reads every rendered
-  descriptor text field and applies to every workflow and catalog entry.
-- Core and CLI tests cover permitted, unpermitted, uncatalogued and
-  longest-prefix cases, and replay both 9082e1ae defects against the shipped
-  policy.
+  descriptor text field and applies to every workflow and catalog entry. It
+  sees through Markdown and prose wrapping, never reads a code fence info
+  string as a command, scans in time linear in the descriptor text, and
+  truncates long identifiers in its diagnostics.
+- Core and CLI tests cover permitted, unpermitted, uncatalogued,
+  longest-prefix, fenced, wrapped, repeated-mention and long-identifier cases,
+  and replay both 9082e1ae defects against the shipped policy.
 - `docs/generated-agent-workflows.md` and `CHANGELOG.md` describe the rule.
 
 ## Impact

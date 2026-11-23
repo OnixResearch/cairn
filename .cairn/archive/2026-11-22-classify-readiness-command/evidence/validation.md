@@ -100,3 +100,55 @@ New tests:
   `named_commands_outside_permitted_classes_fail_admission` (permitted,
   longest prefix, unpermitted, uncatalogued, and every rendered field);
 - CLI `shipped_workflow_commands_stay_inside_their_permitted_classes`.
+
+## Review fixes (2026-11-23)
+
+Review of `8718b567` found four defects in the command-route scan. The fixes
+change only `admission.rs`, its tests and the prose; the generated policy is
+unchanged. Cargo ran inside `nix develop` with `RUSTC_WRAPPER=`,
+`CARGO_BUILD_JOBS=4`, `nice -n 10`, a scratch `CARGO_TARGET_DIR` and
+`TMPDIR=/tmp`.
+
+| Defect | Fix | Positive test | Negative test |
+| --- | --- | --- | --- |
+| A fence labelled `cairn` read as `cairn cairn` | Code fence lines are skipped; fenced lines are scanned | `fence_info_strings_are_not_commands` | `fenced_body_commands_are_still_checked` |
+| `**cairn gate tasks**` escaped the scan | Strip `*`, `_`, backticks, quotes, `[]`, `()` and trailing `.,:;` | `markdown_wrapped_commands_resolve_when_permitted` | `markdown_wrapped_commands_outside_permitted_classes_fail_admission` |
+| Each `cairn` rescanned the rest of the field | Tokenize once; look ahead at most the catalog's command depth | `command_scan_reads_each_token_a_bounded_number_of_times` | `repeated_cairn_tokens_fail_admission_in_linear_work` |
+| Catalog IDs copied into issues unbounded | Truncate identifiers past 64 bytes with a marker | `diagnostics_copy_short_identifiers_verbatim` | `diagnostics_bound_megabyte_identifiers` |
+
+The linear-work tests fill a field to exactly `max_text_bytes` (4096) and
+assert the scan's inspection count: for 682 `cairn` tokens with catalog depth
+2 it is `tokens + 2 * (tokens - 2) + 1`, within `tokens * (1 + depth)`; the
+rescanning scan inspected every following token at each mention.
+
+Replaying each finding against the shipped export with the packaged binary
+(`cairn agent workflow list --policy FILE`):
+
+```
+fence     explore immediate_action "Run:\n```cairn\ncairn status\n```"   exit=0
+wrapped   apply immediate_action "Run **cairn gate tasks CHANGE**"       exit=1, 316-byte stderr:
+  ... descriptors[0].immediate_action: ... workflow text names cairn gate tasks,
+  catalog command gate-tasks of class gate, which the workflow's command classes do not permit
+repeated  explore goal: 682 x "cairn " padded to 4096 bytes              exit=1, 251-byte stderr:
+  ... descriptors[3].goal: ... workflow text names cairn cairn, which matches no command catalog invocation
+huge      gate-tasks id = 1 MiB of "a", apply names cairn gate tasks     exit=1, 396-byte stderr:
+  ... catalog command aaaa(64 bytes)...(truncated, 1048576 bytes) of class gate, ...
+```
+
+```
+$ nix run path:$PWD#cairn -- policy export --check
+policy fresh: cairn-policy/generated/cairn-policy.json          exit=0
+$ cairn agent-receipt validate fixtures/agent-receipts/positive.json
+current_replay_policy_hash: 2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb
+$ cargo fmt --check                                              exit=0
+$ cargo clippy --workspace --all-targets -- -D warnings          exit=0
+$ cargo test --workspace --no-fail-fast                          exit=0
+98 test binaries, 2013 passed, 0 failed
+$ cairn validate --root .                                        exit=0, {"valid": true}
+$ cairn traceability coverage --root .                           exit=0
+traceability coverage ok: 2503/2503 referenced (profile cairn-default)
+```
+
+No Verus proof or proof gate covers `generated_agent_workflow`; the module
+carries only tracey `r[impl]`/`r[verify]` references, which the coverage run
+checks.

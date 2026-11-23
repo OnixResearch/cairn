@@ -921,3 +921,249 @@ fn named_commands_outside_permitted_classes_fail_admission() {
     }
     assert!(fields.contains(&format!("{prefix}.non_claims[{}]", NON_CLAIMS.len())));
 }
+
+/// The test policy with a read-only `gate` class and the `gate-tasks` entry.
+fn policy_with_gate() -> GeneratedAgentWorkflowPolicy {
+    let mut policy = policy();
+    policy.command_classes.push(GeneratedWorkflowCommandClass {
+        id: "gate".to_string(),
+        permission: GeneratedWorkflowPermission::Read,
+    });
+    policy.command_catalog.push(GeneratedWorkflowCommand {
+        id: "gate-tasks".to_string(),
+        command_class: "gate".to_string(),
+        invocation: "cairn gate tasks <change> --root PATH".to_string(),
+    });
+    policy
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes.permitted]
+#[test]
+fn fence_info_strings_are_not_commands() {
+    let mut fenced = policy();
+    descriptor_mut(&mut fenced, "explore").immediate_action =
+        "Run:\n```cairn\ncairn status\n```\nthen:\n~~~cairn change create\ncairn doctor\n~~~"
+            .to_string();
+    assert!(command_mention_issues(&fenced).is_empty());
+
+    // An inline triple-backtick span is not a fence; its command is read.
+    let mut inline = policy();
+    descriptor_mut(&mut inline, "explore").immediate_action =
+        "Run ```cairn status``` first.".to_string();
+    assert!(command_mention_issues(&inline).is_empty());
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes.refused]
+#[test]
+fn fenced_body_commands_are_still_checked() {
+    let mut fenced = policy();
+    descriptor_mut(&mut fenced, "verify").immediate_action =
+        "Run:\n```cairn\ncairn change create NAME\n```".to_string();
+    let issues = command_mention_issues(&fenced);
+    assert_eq!(issues.len(), 1, "{issues:?}");
+    assert_eq!(
+        issues[0].field_path,
+        "generated_agent_workflow_policy.descriptors[5].immediate_action"
+    );
+    assert!(
+        issues[0]
+            .message
+            .contains("names cairn change create, catalog command change-create of class mutate"),
+        "{issues:?}"
+    );
+    assert!(!issues[0].message.contains("cairn cairn"), "{issues:?}");
+}
+
+const WRAPPED_GATE_MENTIONS: &[&str] = &[
+    "Run **cairn gate tasks CHANGE**",
+    "Run `cairn gate tasks CHANGE`.",
+    "Then (cairn gate tasks CHANGE).",
+    "Run _cairn gate tasks_; then report.",
+    "Run \"cairn gate tasks\" and ['cairn gate tasks'].",
+];
+
+// r[verify cairn.generated_agent_workflows.command_routes.permitted]
+#[test]
+fn markdown_wrapped_commands_resolve_when_permitted() {
+    for text in WRAPPED_GATE_MENTIONS {
+        let mut permitted = policy_with_gate();
+        let apply = descriptor_mut(&mut permitted, "apply");
+        apply.command_classes.push("gate".to_string());
+        apply.immediate_action = (*text).to_string();
+        let issues = command_mention_issues(&permitted);
+        assert!(issues.is_empty(), "{text}: {issues:?}");
+    }
+    // Capitalized prose stays prose, wrapped or not.
+    let mut prose = policy_with_gate();
+    descriptor_mut(&mut prose, "verify").immediate_action =
+        "**Cairn** decides; Cairn gate tasks are `Cairn`'s, (Cairn) gate tasks.".to_string();
+    assert!(command_mention_issues(&prose).is_empty());
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes.refused]
+#[test]
+fn markdown_wrapped_commands_outside_permitted_classes_fail_admission() {
+    for text in WRAPPED_GATE_MENTIONS {
+        let mut refused = policy_with_gate();
+        descriptor_mut(&mut refused, "apply").immediate_action = (*text).to_string();
+        let issues = command_mention_issues(&refused);
+        assert_eq!(issues.len(), 1, "{text}: {issues:?}");
+        assert_eq!(
+            issues[0].field_path,
+            "generated_agent_workflow_policy.descriptors[0].immediate_action"
+        );
+        assert!(
+            issues[0]
+                .message
+                .contains("names cairn gate tasks, catalog command gate-tasks of class gate"),
+            "{text}: {issues:?}"
+        );
+    }
+}
+
+/// Repeats `unit` as often as fits in `max_bytes` and pads the rest with
+/// spaces, so the text is exactly `max_bytes`; returns the text and count.
+fn repeated_to_bound(unit: &str, max_bytes: usize) -> (String, usize) {
+    let count = max_bytes / unit.len();
+    let mut text = unit.repeat(count);
+    text.push_str(&" ".repeat(max_bytes - text.len()));
+    assert_eq!(text.len(), max_bytes);
+    (text, count)
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes.permitted]
+#[test]
+fn command_scan_reads_each_token_a_bounded_number_of_times() {
+    let policy = policy_with_gate();
+    let max_bytes = policy.bounds.max_text_bytes;
+    // The deepest catalog invocations (`change create`, `gate tasks`,
+    // `workflow status`) have two command words.
+    let max_depth = 2;
+
+    let (text, count) = repeated_to_bound("cairn status ", max_bytes);
+    let mut mentions = 0;
+    let inspected = super::admission::scan_command_mentions(&text, max_depth, |words| {
+        // The lookahead stops at `max_depth` words: `status cairn`, or
+        // `status` at the end of the text.
+        assert_eq!(words.first(), Some(&"status"));
+        assert!(words.len() <= max_depth);
+        mentions += 1;
+    });
+    assert_eq!(mentions, count);
+    let tokens = 2 * count;
+    assert_eq!(inspected, tokens + 2 * (count - 1) + 1);
+    assert!(inspected <= tokens * (1 + max_depth), "{inspected}");
+
+    let mut admitted = policy.clone();
+    descriptor_mut(&mut admitted, "explore").goal = text;
+    assert!(command_mention_issues(&admitted).is_empty());
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes.refused]
+#[test]
+fn repeated_cairn_tokens_fail_admission_in_linear_work() {
+    let policy = policy_with_gate();
+    let max_bytes = policy.bounds.max_text_bytes;
+    let max_depth = 2;
+
+    let (text, tokens) = repeated_to_bound("cairn ", max_bytes);
+    assert_eq!(text.len(), max_bytes);
+    let mut mentions = 0;
+    let inspected = super::admission::scan_command_mentions(&text, max_depth, |words| {
+        assert!(words.len() <= max_depth && words.iter().all(|word| *word == "cairn"));
+        mentions += 1;
+    });
+    // Every token but the last starts a mention, and each mention reads at
+    // most `max_depth` following tokens: linear, not quadratic, in the text.
+    assert_eq!(mentions, tokens - 1);
+    assert_eq!(inspected, tokens + 2 * (tokens - 2) + 1);
+    assert!(inspected <= tokens * (1 + max_depth));
+
+    let mut refused = policy.clone();
+    descriptor_mut(&mut refused, "explore").goal = text;
+    let issues = command_mention_issues(&refused);
+    assert_eq!(issues.len(), 1, "{issues:?}");
+    assert_eq!(
+        issues[0].field_path,
+        "generated_agent_workflow_policy.descriptors[3].goal"
+    );
+    assert!(issues[0]
+        .message
+        .contains("names cairn cairn, which matches no command catalog invocation"));
+}
+
+const DIAGNOSTIC_BOUND_BYTES: usize = 512;
+
+fn issue_bytes(issue: &GeneratedWorkflowIssue) -> usize {
+    issue.code.len() + issue.field_path.len() + issue.message.len()
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes.refused]
+#[test]
+fn diagnostics_copy_short_identifiers_verbatim() {
+    let id = "r".repeat(64);
+    let mut refused = policy();
+    refused.command_catalog.push(GeneratedWorkflowCommand {
+        id: id.clone(),
+        command_class: "mutate".to_string(),
+        invocation: "cairn rebuild <change> --root PATH".to_string(),
+    });
+    descriptor_mut(&mut refused, "verify").immediate_action =
+        "Run cairn rebuild CHANGE.".to_string();
+    let issues = command_mention_issues(&refused);
+    assert_eq!(issues.len(), 1, "{issues:?}");
+    assert!(issues[0]
+        .message
+        .contains(&format!("catalog command {id} of class mutate,")));
+    assert!(!issues[0].message.contains("truncated"));
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes.refused]
+#[test]
+fn diagnostics_bound_megabyte_identifiers() {
+    let huge = "a".repeat(1 << 20);
+    let mut refused = policy();
+    refused.command_catalog.push(GeneratedWorkflowCommand {
+        id: huge.clone(),
+        command_class: "mutate".to_string(),
+        invocation: "cairn rebuild <change> --root PATH".to_string(),
+    });
+    refused.command_catalog.push(GeneratedWorkflowCommand {
+        id: "huge-class".to_string(),
+        command_class: huge.clone(),
+        invocation: "cairn doctor --root PATH".to_string(),
+    });
+    let verify = descriptor_mut(&mut refused, "verify");
+    verify.immediate_action = "Run cairn rebuild CHANGE.".to_string();
+    verify.command_classes.push(huge.clone());
+    let issues = command_mention_issues(&refused);
+    assert!(issues.len() >= 3, "{}", issues.len());
+    for issue in &issues {
+        assert!(
+            issue_bytes(issue) < DIAGNOSTIC_BOUND_BYTES,
+            "{} bytes at {}",
+            issue_bytes(issue),
+            issue.field_path
+        );
+    }
+    let marker = format!("{}...(truncated, {} bytes)", &huge[..64], huge.len());
+    let message = |path: &str| {
+        issues
+            .iter()
+            .find(|issue| issue.field_path == path)
+            .map(|issue| issue.message.as_str())
+            .unwrap_or_else(|| panic!("{path}: {issues:?}"))
+    };
+    assert!(
+        message("generated_agent_workflow_policy.descriptors[5].immediate_action")
+            .contains(&format!("catalog command {marker} of class mutate,"))
+    );
+    assert_eq!(
+        message("generated_agent_workflow_policy.command_catalog[6].command_class"),
+        format!("unknown command class: {marker}")
+    );
+    assert_eq!(
+        message("generated_agent_workflow_policy.descriptors[5].command_classes"),
+        format!("unknown command class: {marker}")
+    );
+}

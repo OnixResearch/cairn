@@ -94,7 +94,8 @@ pub fn find_generated_workflow_descriptor<'a>(
                 super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
                 "workflow",
                 format!(
-                    "unknown workflow {id}; known workflows: {}",
+                    "unknown workflow {}; known workflows: {}",
+                    diagnostic_label(id),
                     super::model::INITIAL_WORKFLOW_IDS.join(", ")
                 ),
             )
@@ -115,7 +116,8 @@ pub fn find_generated_workflow_adapter<'a>(
                 super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ADAPTER,
                 "adapter",
                 format!(
-                    "unknown adapter {id}; known adapters: {}",
+                    "unknown adapter {}; known adapters: {}",
+                    diagnostic_label(id),
                     super::model::INITIAL_ADAPTER_IDS.join(", ")
                 ),
             )
@@ -135,7 +137,7 @@ pub fn find_generated_workflow_command<'a>(
             issue(
                 super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
                 "entry.routes",
-                format!("unknown command catalog route {id}"),
+                format!("unknown command catalog route {}", diagnostic_label(id)),
             )
         })
 }
@@ -156,7 +158,8 @@ pub fn find_entry_guide_profile<'a>(
                 super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
                 "entry.profiles",
                 format!(
-                    "unknown workflow profile {profile_id}; supported profiles: {}",
+                    "unknown workflow profile {}; supported profiles: {}",
+                    diagnostic_label(profile_id),
                     catalog.policy.entry.profiles.join(", ")
                 ),
             )
@@ -192,7 +195,10 @@ fn validate_command_catalog(
             issues.push(issue(
                 super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
                 format!("{path}.command_class"),
-                format!("unknown command class: {}", command.command_class),
+                format!(
+                    "unknown command class: {}",
+                    diagnostic_label(&command.command_class)
+                ),
             ));
         }
         if !bounded_text(&command.invocation, policy.bounds.max_text_bytes)
@@ -272,7 +278,7 @@ fn validate_entry_guide(
             issues.push(issue(
                 super::model::GENERATED_AGENT_WORKFLOW_ISSUE_ENTRY,
                 format!("{path}.stage_route"),
-                format!("unknown command catalog route {route}"),
+                format!("unknown command catalog route {}", diagnostic_label(route)),
             ));
         }
     }
@@ -473,12 +479,13 @@ fn validate_descriptors(
     >,
     issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
 ) {
-    let catalog = catalog_command_words(policy);
+    let routes = command_routes(policy);
+    let issue_limit = policy.bounds.max_issues.max(1);
     let mut ids = std::collections::BTreeSet::new();
     for (index, descriptor) in policy.descriptors.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.descriptors[{index}]");
         validate_descriptor_shape(descriptor, &path, policy, &mut ids, issues);
-        validate_descriptor_command_mentions(descriptor, &path, &catalog, issues);
+        validate_descriptor_command_mentions(descriptor, &path, &routes, issue_limit, issues);
         let mut has_mutation = false;
         for command in &descriptor.command_classes {
             match command_permissions.get(command) {
@@ -487,7 +494,7 @@ fn validate_descriptors(
                 None => issues.push(issue(
                     super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
                     format!("{path}.command_classes"),
-                    format!("unknown command class: {command}"),
+                    format!("unknown command class: {}", diagnostic_label(command)),
                 )),
             }
         }
@@ -528,38 +535,62 @@ fn validate_descriptors(
     }
 }
 
-const COMMAND_MENTION_LEADING: &[char] = &['`', '"', '\'', '('];
-const COMMAND_MENTION_TRAILING: &[char] = &['`', '"', '\'', ')', ',', '.', ';', ':'];
+/// Markdown emphasis, code spans, quotes, brackets and parentheses that may
+/// wrap a command mention in prose.
+const COMMAND_MENTION_WRAPPING: &[char] = &[
+    '*', '_', '`', '"', '\'', '\u{201c}', '\u{201d}', '\u{2018}', '\u{2019}', '[', ']', '(', ')',
+];
+/// Prose punctuation that may follow a command mention.
+const COMMAND_MENTION_PUNCTUATION: &[char] = &['.', ',', ':', ';'];
+/// Longest policy-supplied identifier or command text that an admission
+/// diagnostic copies; longer values are truncated with a marker.
+const DIAGNOSTIC_LABEL_BYTES: usize = 64;
 
-/// Command words of each catalog invocation: the subcommand tokens after the
-/// leading `cairn`, up to the first placeholder or option.
-fn catalog_command_words(
-    policy: &super::model::GeneratedAgentWorkflowPolicy,
-) -> Vec<(Vec<&str>, &super::model::GeneratedWorkflowCommand)> {
-    policy
-        .command_catalog
-        .iter()
-        .filter_map(|command| {
-            let mut tokens = command.invocation.split_whitespace();
-            (tokens.next() == Some("cairn")).then(|| (command_words(tokens), command))
-        })
-        .filter(|(words, _)| !words.is_empty())
-        .collect()
+/// Command catalog entries keyed by the command words of their invocation:
+/// the subcommand tokens after the leading `cairn`, up to the first
+/// placeholder or option.
+struct CommandRoutes<'a> {
+    routes:
+        std::collections::BTreeMap<Vec<&'a str>, Vec<&'a super::model::GeneratedWorkflowCommand>>,
+    /// The most command words any catalog invocation has.
+    max_depth: usize,
 }
 
-fn command_words<'a>(tokens: impl Iterator<Item = &'a str>) -> Vec<&'a str> {
-    let mut words = Vec::new();
-    for token in tokens {
-        let word = token.trim_end_matches(COMMAND_MENTION_TRAILING);
-        if !is_command_word(word) {
-            break;
+fn command_routes(policy: &super::model::GeneratedAgentWorkflowPolicy) -> CommandRoutes<'_> {
+    let mut routes = std::collections::BTreeMap::<_, Vec<_>>::new();
+    for command in &policy.command_catalog {
+        let mut tokens = command.invocation.split_whitespace();
+        if tokens.next() != Some("cairn") {
+            continue;
         }
-        words.push(word);
-        if word.len() != token.len() {
-            break;
+        let mut words = Vec::new();
+        for token in tokens {
+            let (word, closes) = mention_word(token);
+            if !is_command_word(word) {
+                break;
+            }
+            words.push(word);
+            if closes {
+                break;
+            }
+        }
+        if !words.is_empty() {
+            routes.entry(words).or_default().push(command);
         }
     }
-    words
+    let max_depth = routes.keys().map(Vec::len).max().unwrap_or(0);
+    CommandRoutes { routes, max_depth }
+}
+
+/// Strips the Markdown and prose wrapping around a token. The flag is set
+/// when trailing wrapping or punctuation closes the command at this word.
+fn mention_word(token: &str) -> (&str, bool) {
+    let inner = token.trim_start_matches(COMMAND_MENTION_WRAPPING);
+    let word = inner.trim_end_matches(|character| {
+        COMMAND_MENTION_WRAPPING.contains(&character)
+            || COMMAND_MENTION_PUNCTUATION.contains(&character)
+    });
+    (word, word.len() != inner.len())
 }
 
 fn is_command_word(value: &str) -> bool {
@@ -572,16 +603,97 @@ fn is_command_word(value: &str) -> bool {
         })
 }
 
+/// A Markdown code fence line: three or more backticks or tildes, then an
+/// info string (a backtick fence's info string holds no backtick).
+fn is_code_fence_line(line: &str) -> bool {
+    let line = line.trim_start();
+    let Some(marker) = line
+        .chars()
+        .next()
+        .filter(|first| matches!(first, '`' | '~'))
+    else {
+        return false;
+    };
+    let run = line.len() - line.trim_start_matches(marker).len();
+    run >= 3 && (marker == '~' || !line[run..].contains('`'))
+}
+
+/// Calls `visit` with the command words that follow each `cairn` token in
+/// `text`, reading at most `max_depth` words after it. Code fence lines are
+/// skipped, so a fence info string is never read as a command, and a command
+/// never continues across a fence. Each token is normalized once; the return
+/// value counts token inspections, at most `tokens * (1 + max_depth)`.
+pub(super) fn scan_command_mentions<'a>(
+    text: &'a str,
+    max_depth: usize,
+    mut visit: impl FnMut(&[&'a str]),
+) -> usize {
+    let mut inspected = 0;
+    let mut segment = Vec::new();
+    let mut words = Vec::with_capacity(max_depth);
+    let mut lines = text.lines();
+    loop {
+        let line = lines.next();
+        if let Some(line) = line.filter(|line| !is_code_fence_line(line)) {
+            segment.extend(line.split_whitespace().map(mention_word));
+            continue;
+        }
+        for (index, &(token, closes)) in segment.iter().enumerate() {
+            inspected += 1;
+            if token != "cairn" || closes {
+                continue;
+            }
+            words.clear();
+            for &(word, closes) in segment[index + 1..].iter().take(max_depth) {
+                inspected += 1;
+                if !is_command_word(word) {
+                    break;
+                }
+                words.push(word);
+                if closes {
+                    break;
+                }
+            }
+            if !words.is_empty() {
+                visit(&words);
+            }
+        }
+        segment.clear();
+        if line.is_none() {
+            return inspected;
+        }
+    }
+}
+
+/// Copies at most [`DIAGNOSTIC_LABEL_BYTES`] of a policy-supplied value into
+/// a diagnostic, marking a truncated value with its full length.
+fn diagnostic_label(value: &str) -> std::borrow::Cow<'_, str> {
+    if value.len() <= DIAGNOSTIC_LABEL_BYTES {
+        return std::borrow::Cow::Borrowed(value);
+    }
+    let mut end = DIAGNOSTIC_LABEL_BYTES;
+    while !value.is_char_boundary(end) {
+        end -= 1;
+    }
+    std::borrow::Cow::Owned(format!(
+        "{}...(truncated, {} bytes)",
+        &value[..end],
+        value.len()
+    ))
+}
+
 // r[impl cairn.generated_agent_workflows.command_routes]
 // r[impl cairn.generated_agent_workflows.command_routes.permitted]
 // r[impl cairn.generated_agent_workflows.command_routes.refused]
 /// Every `cairn <command>` named in a descriptor's rendered text must resolve,
 /// by longest command-word prefix, to command catalog entries whose classes
-/// the descriptor permits.
+/// the descriptor permits. Each field keeps only the `issue_limit` smallest
+/// messages, the ones the sorted, truncated issue list can report.
 fn validate_descriptor_command_mentions(
     descriptor: &super::model::GeneratedWorkflowDescriptor,
     path: &str,
-    catalog: &[(Vec<&str>, &super::model::GeneratedWorkflowCommand)],
+    routes: &CommandRoutes<'_>,
+    issue_limit: usize,
     issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
 ) {
     let scalars = [
@@ -606,49 +718,45 @@ fn validate_descriptor_command_mentions(
             .map(move |(index, text)| (format!("{path}.{field}[{index}]"), text.as_str()))
     });
     for (field_path, text) in scalars.chain(lists) {
-        let mut tokens = text.split_whitespace();
-        while let Some(token) = tokens.next() {
-            if token.trim_start_matches(COMMAND_MENTION_LEADING) != "cairn" {
-                continue;
+        let mut messages = std::collections::BTreeSet::new();
+        let mut record = |message: String| {
+            messages.insert(message);
+            if messages.len() > issue_limit {
+                messages.pop_last();
             }
-            let mentioned = command_words(tokens.clone());
-            if mentioned.is_empty() {
-                continue;
-            }
-            let longest = catalog
-                .iter()
-                .filter(|(words, _)| mentioned.starts_with(words))
-                .map(|(words, _)| words.len())
-                .max();
-            let Some(longest) = longest else {
-                issues.push(issue(
-                    super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
-                    field_path.clone(),
-                    format!(
-                        "workflow text names cairn {}, which matches no command catalog invocation",
-                        mentioned[0]
-                    ),
+        };
+        scan_command_mentions(text, routes.max_depth.max(1), |mentioned| {
+            let longest = (1..=mentioned.len()).rev().find_map(|depth| {
+                routes
+                    .routes
+                    .get(&mentioned[..depth])
+                    .map(|commands| (depth, commands))
+            });
+            let Some((depth, commands)) = longest else {
+                record(format!(
+                    "workflow text names cairn {}, which matches no command catalog invocation",
+                    diagnostic_label(mentioned[0])
                 ));
-                continue;
+                return;
             };
-            for (words, command) in catalog
-                .iter()
-                .filter(|(words, _)| words.len() == longest && mentioned.starts_with(words))
-            {
+            for command in commands {
                 if !descriptor.command_classes.contains(&command.command_class) {
-                    issues.push(issue(
-                        super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
-                        field_path.clone(),
-                        format!(
-                            "workflow text names cairn {}, catalog command {} of class {}, which the workflow's command classes do not permit",
-                            words.join(" "),
-                            command.id,
-                            command.command_class
-                        ),
+                    record(format!(
+                        "workflow text names cairn {}, catalog command {} of class {}, which the workflow's command classes do not permit",
+                        diagnostic_label(&mentioned[..depth].join(" ")),
+                        diagnostic_label(&command.id),
+                        diagnostic_label(&command.command_class)
                     ));
                 }
             }
-        }
+        });
+        issues.extend(messages.into_iter().map(|message| {
+            issue(
+                super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                field_path.clone(),
+                message,
+            )
+        }));
     }
 }
 
