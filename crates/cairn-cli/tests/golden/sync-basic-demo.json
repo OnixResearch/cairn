@@ -11,14 +11,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "710d57bb4c639e6f1f3d1b8d7d6f46f3213cae638943ef334c5c7c3fa71bde8a",
+    "input_hash": "461a824ec0457689b37a09632d6e83132b1de0165e1f6ea332df7f34af9f86cd",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
-    "receipt_hash": "06734f6ba6543d3a4e6ed3aa9e9e5c565d33811c5cc526f23359dc206b7c2185",
+    "policy_hash": "2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb",
+    "receipt_hash": "53102007d7d8de8d5c684643755794e7b44ae1d1119699dc56a39dc5ec624be4",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -30,7 +30,7 @@
     "fixtures/basic/.cairn/changes/demo/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "dabf4cbac2751c51d267a986acc5a06ed3bda29c7b7f407e1773e3e5146d65b8",
+  "input_hash": "5e62318b718e16be423b9625ecb3305c16ef691cda084d0e63a5165233bf4aa8",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -64,9 +64,9 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "aed267c11201023d5abc89230baac64a469c32803a35b4dad2574fbc2e9885c4",
+  "plan_hash": "f4024523684fabe1bcf225a39da145d7738e0a6323cb70b76c6b9df6e6d742e7",
   "policy": "cairn-default",
-  "policy_hash": "0275076bb1de7db7255c153248133144c98bcbbcd9376a11f1ecb4162e99fa63",
+  "policy_hash": "2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb",
   "reasons": [],
-  "receipt_hash": "3188e34af2218ae513cffe37bad0a297a14e88b3028aea0c1fd83614eae77155"
+  "receipt_hash": "647d9caf8060c03647708b02f1400fff3fc41c54e8693a0b4b08e5edb98eede4"
 }

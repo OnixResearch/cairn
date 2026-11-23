@@ -51,6 +51,14 @@ The descriptors retain their required tests, completion inputs, review evidence,
 
 Readiness guidance is advisory. It does not run actions, satisfy gates, or make an unavailable observation authoritative. The compact-entry-guide change owns how much of this text a host loads.
 
+## Named commands stay inside the allowed classes
+
+Each descriptor lists its allowed command classes, and the policy's command catalog assigns every Cairn command invocation to one class. Admission rejects a policy whose descriptor text names a command the descriptor does not allow.
+
+Cairn reads each `cairn` token in the descriptor's goal, evidence, progress rule, immediate action, output shape, constraints and non-claims, followed by its lowercase subcommand words. The catalog entry with the longest matching command-word prefix decides the class, so `cairn workflow status` is the `workflow-status` entry, not `status`. The descriptor must allow that class. A named command that matches no catalog entry also fails admission. Capitalized prose such as "Cairn command classes" is not a command.
+
+The shipped catalog places `cairn readiness <change>` and `cairn drain-plan --view readiness` in the `readiness` class.
+
 ## Select an adapter
 
 Cairn supports these versioned adapters:

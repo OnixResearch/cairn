@@ -473,10 +473,12 @@ fn validate_descriptors(
     >,
     issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
 ) {
+    let catalog = catalog_command_words(policy);
     let mut ids = std::collections::BTreeSet::new();
     for (index, descriptor) in policy.descriptors.iter().enumerate() {
         let path = format!("generated_agent_workflow_policy.descriptors[{index}]");
         validate_descriptor_shape(descriptor, &path, policy, &mut ids, issues);
+        validate_descriptor_command_mentions(descriptor, &path, &catalog, issues);
         let mut has_mutation = false;
         for command in &descriptor.command_classes {
             match command_permissions.get(command) {
@@ -523,6 +525,130 @@ fn validate_descriptors(
                 super::model::INITIAL_WORKFLOW_IDS.join(", ")
             ),
         ));
+    }
+}
+
+const COMMAND_MENTION_LEADING: &[char] = &['`', '"', '\'', '('];
+const COMMAND_MENTION_TRAILING: &[char] = &['`', '"', '\'', ')', ',', '.', ';', ':'];
+
+/// Command words of each catalog invocation: the subcommand tokens after the
+/// leading `cairn`, up to the first placeholder or option.
+fn catalog_command_words(
+    policy: &super::model::GeneratedAgentWorkflowPolicy,
+) -> Vec<(Vec<&str>, &super::model::GeneratedWorkflowCommand)> {
+    policy
+        .command_catalog
+        .iter()
+        .filter_map(|command| {
+            let mut tokens = command.invocation.split_whitespace();
+            (tokens.next() == Some("cairn")).then(|| (command_words(tokens), command))
+        })
+        .filter(|(words, _)| !words.is_empty())
+        .collect()
+}
+
+fn command_words<'a>(tokens: impl Iterator<Item = &'a str>) -> Vec<&'a str> {
+    let mut words = Vec::new();
+    for token in tokens {
+        let word = token.trim_end_matches(COMMAND_MENTION_TRAILING);
+        if !is_command_word(word) {
+            break;
+        }
+        words.push(word);
+        if word.len() != token.len() {
+            break;
+        }
+    }
+    words
+}
+
+fn is_command_word(value: &str) -> bool {
+    value
+        .chars()
+        .next()
+        .is_some_and(|first| first.is_ascii_lowercase())
+        && value.chars().all(|character| {
+            character.is_ascii_lowercase() || character.is_ascii_digit() || character == '-'
+        })
+}
+
+// r[impl cairn.generated_agent_workflows.command_routes]
+// r[impl cairn.generated_agent_workflows.command_routes.permitted]
+// r[impl cairn.generated_agent_workflows.command_routes.refused]
+/// Every `cairn <command>` named in a descriptor's rendered text must resolve,
+/// by longest command-word prefix, to command catalog entries whose classes
+/// the descriptor permits.
+fn validate_descriptor_command_mentions(
+    descriptor: &super::model::GeneratedWorkflowDescriptor,
+    path: &str,
+    catalog: &[(Vec<&str>, &super::model::GeneratedWorkflowCommand)],
+    issues: &mut Vec<super::model::GeneratedWorkflowIssue>,
+) {
+    let scalars = [
+        ("goal", &descriptor.goal),
+        ("progress_rule", &descriptor.progress_rule),
+        ("immediate_action", &descriptor.immediate_action),
+        ("output_shape", &descriptor.output_shape),
+    ]
+    .into_iter()
+    .map(|(field, text)| (format!("{path}.{field}"), text.as_str()));
+    let lists = [
+        ("success_evidence", &descriptor.success_evidence),
+        ("required_evidence", &descriptor.required_evidence),
+        ("constraints", &descriptor.constraints),
+        ("non_claims", &descriptor.non_claims),
+    ]
+    .into_iter()
+    .flat_map(|(field, values)| {
+        values
+            .iter()
+            .enumerate()
+            .map(move |(index, text)| (format!("{path}.{field}[{index}]"), text.as_str()))
+    });
+    for (field_path, text) in scalars.chain(lists) {
+        let mut tokens = text.split_whitespace();
+        while let Some(token) = tokens.next() {
+            if token.trim_start_matches(COMMAND_MENTION_LEADING) != "cairn" {
+                continue;
+            }
+            let mentioned = command_words(tokens.clone());
+            if mentioned.is_empty() {
+                continue;
+            }
+            let longest = catalog
+                .iter()
+                .filter(|(words, _)| mentioned.starts_with(words))
+                .map(|(words, _)| words.len())
+                .max();
+            let Some(longest) = longest else {
+                issues.push(issue(
+                    super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                    field_path.clone(),
+                    format!(
+                        "workflow text names cairn {}, which matches no command catalog invocation",
+                        mentioned[0]
+                    ),
+                ));
+                continue;
+            };
+            for (words, command) in catalog
+                .iter()
+                .filter(|(words, _)| words.len() == longest && mentioned.starts_with(words))
+            {
+                if !descriptor.command_classes.contains(&command.command_class) {
+                    issues.push(issue(
+                        super::model::GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR,
+                        field_path.clone(),
+                        format!(
+                            "workflow text names cairn {}, catalog command {} of class {}, which the workflow's command classes do not permit",
+                            words.join(" "),
+                            command.id,
+                            command.command_class
+                        ),
+                    ));
+                }
+            }
+        }
     }
 }
 

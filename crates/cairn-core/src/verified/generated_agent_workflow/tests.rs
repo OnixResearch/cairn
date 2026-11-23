@@ -795,3 +795,129 @@ fn pending_transactions_block_installation_for_deliberate_recovery() {
         .any(|blocker| blocker.contains(GENERATED_AGENT_WORKFLOW_ISSUE_RECOVERY)));
     assert!(!plan.current());
 }
+
+fn descriptor_mut<'a>(
+    policy: &'a mut GeneratedAgentWorkflowPolicy,
+    id: &str,
+) -> &'a mut GeneratedWorkflowDescriptor {
+    policy
+        .descriptors
+        .iter_mut()
+        .find(|descriptor| descriptor.id == id)
+        .expect("descriptor")
+}
+
+fn command_mention_issues(policy: &GeneratedAgentWorkflowPolicy) -> Vec<GeneratedWorkflowIssue> {
+    match admit_generated_agent_workflow_policy(policy) {
+        Ok(_) => Vec::new(),
+        Err(issues) => issues,
+    }
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes]
+// r[verify cairn.generated_agent_workflows.command_routes.permitted]
+#[test]
+fn named_commands_resolve_to_permitted_catalog_classes() {
+    let mut valid = policy();
+    descriptor_mut(&mut valid, "explore").immediate_action =
+        "Run cairn status, then `cairn workflow status CHANGE` and cairn workflow instructions ARTIFACT."
+            .to_string();
+    descriptor_mut(&mut valid, "apply").immediate_action =
+        "Run cairn change create NAME, then cairn doctor.".to_string();
+    descriptor_mut(&mut valid, "verify").constraints = vec![
+        "Use only policy-known Cairn command classes; cairn, not a shell, decides.".to_string(),
+    ];
+    assert!(command_mention_issues(&valid).is_empty());
+
+    // The longest command-word prefix decides: `cairn workflow status` is the
+    // workflow-status entry, never the shorter `cairn status`.
+    let mut longest = valid.clone();
+    longest
+        .command_catalog
+        .iter_mut()
+        .find(|command| command.id == "workflow-status")
+        .expect("workflow-status")
+        .command_class = "mutate".to_string();
+    descriptor_mut(&mut longest, "explore").immediate_action =
+        "Run cairn status for the explicit root.".to_string();
+    assert!(command_mention_issues(&longest).is_empty());
+}
+
+// r[verify cairn.generated_agent_workflows.command_routes]
+// r[verify cairn.generated_agent_workflows.command_routes.refused]
+#[test]
+fn named_commands_outside_permitted_classes_fail_admission() {
+    let mut unpermitted = policy();
+    descriptor_mut(&mut unpermitted, "verify").immediate_action =
+        "Run cairn change create NAME before checking.".to_string();
+    let issues = command_mention_issues(&unpermitted);
+    assert_eq!(issues.len(), 1, "{issues:?}");
+    assert_eq!(issues[0].code, GENERATED_AGENT_WORKFLOW_ISSUE_DESCRIPTOR);
+    assert_eq!(
+        issues[0].field_path,
+        "generated_agent_workflow_policy.descriptors[5].immediate_action"
+    );
+    assert!(issues[0]
+        .message
+        .contains("cairn change create, catalog command change-create of class mutate"));
+
+    let mut longest = policy();
+    longest
+        .command_catalog
+        .iter_mut()
+        .find(|command| command.id == "workflow-status")
+        .expect("workflow-status")
+        .command_class = "mutate".to_string();
+    descriptor_mut(&mut longest, "explore").immediate_action =
+        "Run cairn workflow status CHANGE.".to_string();
+    let issues = command_mention_issues(&longest);
+    assert!(
+        issues.iter().any(|issue| issue.field_path
+            == "generated_agent_workflow_policy.descriptors[3].immediate_action"
+            && issue.message.contains("catalog command workflow-status")),
+        "{issues:?}"
+    );
+
+    let mut uncatalogued = policy();
+    descriptor_mut(&mut uncatalogued, "drain").constraints =
+        vec!["Inspect (cairn drain-plan --view readiness) first.".to_string()];
+    let issues = command_mention_issues(&uncatalogued);
+    assert_eq!(issues.len(), 1, "{issues:?}");
+    assert_eq!(
+        issues[0].field_path,
+        "generated_agent_workflow_policy.descriptors[2].constraints[0]"
+    );
+    assert!(issues[0]
+        .message
+        .contains("names cairn drain-plan, which matches no command catalog invocation"));
+
+    let mut every_field = policy();
+    let apply = descriptor_mut(&mut every_field, "apply");
+    apply.command_classes = vec!["mutate".to_string()];
+    apply.goal = "Use cairn status.".to_string();
+    apply.success_evidence = vec!["cairn doctor reports no issue.".to_string()];
+    apply.required_evidence = vec!["cairn workflow status output".to_string()];
+    apply.progress_rule = "Rerun cairn status.".to_string();
+    apply.output_shape = "Quote cairn doctor.".to_string();
+    apply
+        .non_claims
+        .push("cairn status proves nothing.".to_string());
+    let fields = command_mention_issues(&every_field)
+        .into_iter()
+        .map(|issue| issue.field_path)
+        .collect::<std::collections::BTreeSet<_>>();
+    let prefix = "generated_agent_workflow_policy.descriptors[0]";
+    for field in [
+        "goal",
+        "success_evidence[0]",
+        "required_evidence[0]",
+        "progress_rule",
+        "output_shape",
+    ] {
+        assert!(
+            fields.contains(&format!("{prefix}.{field}")),
+            "{field}: {fields:?}"
+        );
+    }
+    assert!(fields.contains(&format!("{prefix}.non_claims[{}]", NON_CLAIMS.len())));
+}

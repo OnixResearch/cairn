@@ -173,6 +173,22 @@ surface.
 
 ### Changed
 
+- The generated agent-workflow command catalog places
+  `cairn readiness <change>` in the `readiness` class instead of `gate`, and
+  adds `drain-plan-readiness` (`cairn drain-plan --view readiness --root PATH`)
+  in the `readiness` class. Before, the `apply` workflow told the agent to run
+  `cairn readiness` although it allows `readiness` and not `gate`, and `drain`
+  named a drain-plan command the catalog did not list. Admission now rejects a
+  descriptor whose goal, evidence, progress rule, immediate action, output
+  shape, constraints or non-claims name a `cairn` command that matches no
+  catalog entry, or whose catalog class (by longest command-word prefix) the
+  descriptor does not allow. Policy loading runs this admission, so a policy
+  that still carries the old catalog, including an unmodified copy of the
+  previous default, is refused. The generated policy hash is now
+  `2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb`, and the
+  command catalog and workflow catalog identities change, so installed entry
+  guides report `stale-source`.
+
 - `release-readiness` refuses a malformed consumer-selected gate list. When the
   policy declares `release_readiness_policy.required_external_commands`, it must
   be a non-empty array of unique, non-blank strings, and `release_readiness_policy`

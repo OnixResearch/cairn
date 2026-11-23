@@ -942,3 +942,63 @@ fn readiness_guidance_routes_match_the_current_cli_and_mcp_schemas() -> Result<(
             .is_some_and(|text| text.contains("completion inputs")))));
     Ok(())
 }
+
+// r[verify cairn.generated_agent_workflows.command_routes]
+// r[verify cairn.generated_agent_workflows.command_routes.permitted]
+// r[verify cairn.generated_agent_workflows.command_routes.refused]
+#[test]
+fn shipped_workflow_commands_stay_inside_their_permitted_classes() -> Result<(), Box<dyn Error>> {
+    let shipped = policy_path().display().to_string();
+    let (output, listed) = run(&["agent", "workflow", "list", "--policy", &shipped])?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(listed.is_some());
+
+    // Each mutation restores one defect the 9082e1ae policy shipped: the
+    // readiness command in the gate class, and drain naming a drain-plan
+    // command the catalog did not list.
+    let root = test_root("command-routes")?;
+    let source: Value = serde_json::from_slice(&fs::read(policy_path())?)?;
+    let cases = [
+        (
+            "readiness-gate",
+            "descriptors[0].immediate_action",
+            "class gate",
+        ),
+        (
+            "uncatalogued-drain-plan",
+            "descriptors[2].immediate_action",
+            "names cairn drain-plan, which matches no command catalog invocation",
+        ),
+    ];
+    for (name, field, message) in cases {
+        let mut policy = source.clone();
+        let commands = policy["generated_agent_workflow_policy"]["command_catalog"]
+            .as_array_mut()
+            .ok_or("command catalog")?;
+        match name {
+            "readiness-gate" => {
+                commands
+                    .iter_mut()
+                    .find(|command| command["id"] == "readiness")
+                    .ok_or("readiness command")?["command_class"] = Value::from("gate");
+            }
+            "uncatalogued-drain-plan" => {
+                commands.retain(|command| command["id"] != "drain-plan-readiness");
+            }
+            _ => unreachable!("bounded test mutation"),
+        }
+        let path = root.join(format!("{name}.json"));
+        fs::write(&path, serde_json::to_vec_pretty(&policy)?)?;
+        let path_arg = path.display().to_string();
+        let (output, _) = run(&["agent", "workflow", "list", "--policy", &path_arg])?;
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(!output.status.success(), "{name} must fail admission");
+        assert!(stderr.contains(field), "{name}: {stderr}");
+        assert!(stderr.contains(message), "{name}: {stderr}");
+    }
+    Ok(())
+}
