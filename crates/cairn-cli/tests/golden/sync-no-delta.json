@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "461a824ec0457689b37a09632d6e83132b1de0165e1f6ea332df7f34af9f86cd",
+    "input_hash": "3125d7da25137dd7e88b9a029990cb3a43a61a6435bbbf99eb614766bf0ff089",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb",
-    "receipt_hash": "53102007d7d8de8d5c684643755794e7b44ae1d1119699dc56a39dc5ec624be4",
+    "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+    "receipt_hash": "022653d8a423977c6f3cc0f971af7183cc7463c3fccc079b954da0380fedf219",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -22,18 +22,24 @@
   "cross_repo_evidence_issues": [],
   "delta_specs": [],
   "dry_run": true,
-  "input_hash": "6e3a1e3bb48e728258d69836ba2b8796d222241529a43b80a4a36a64c4c08e97",
+  "input_hash": "2b84baf6c5c4c5382e4cb73a543f8a8146f37e8bda5252a4429f5246729c8edb",
   "layout": "cairn",
   "merge_preflight": {
     "documents": []
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "adc75b2e665a895caac6bbd47a0ba643af7f410ff41843fc1800b03032556b88",
+  "plan_hash": "2b89bd74cdf34e3e2a4c4f6194c99e6bd9b53b5c26b7cb9c7eb30a1a3b1852ac",
   "policy": "cairn-default",
-  "policy_hash": "2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb",
+  "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+  "policy_selection": {
+    "blake3": "b6e37b502818f3929acd38c24470de95a433f5adb7411ad47bf04d8d19866da4",
+    "installation_receipt": false,
+    "locator": "cairn-policy/generated/cairn-policy.json",
+    "source": "legacy_default"
+  },
   "reasons": [
     "no-delta: no delta specs to sync"
   ],
-  "receipt_hash": "f6530c8ff4a079573764359e65bd01b707f860ef6f9c325d7ba09547d9f17b39"
+  "receipt_hash": "dfcc857176ec8d6afac6a0b34de2536f1a97947b9ed28c3f6c10626f8977419c"
 }

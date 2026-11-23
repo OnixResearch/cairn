@@ -11,14 +11,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "461a824ec0457689b37a09632d6e83132b1de0165e1f6ea332df7f34af9f86cd",
+    "input_hash": "3125d7da25137dd7e88b9a029990cb3a43a61a6435bbbf99eb614766bf0ff089",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb",
-    "receipt_hash": "53102007d7d8de8d5c684643755794e7b44ae1d1119699dc56a39dc5ec624be4",
+    "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+    "receipt_hash": "022653d8a423977c6f3cc0f971af7183cc7463c3fccc079b954da0380fedf219",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -30,7 +30,7 @@
     "fixtures/basic/.cairn/changes/demo/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "5e62318b718e16be423b9625ecb3305c16ef691cda084d0e63a5165233bf4aa8",
+  "input_hash": "e758a1157f4a35e67ef2859a7ccc7570d737d3a6e90c6e8fa644e87b3dd8bc1e",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -64,9 +64,15 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "f4024523684fabe1bcf225a39da145d7738e0a6323cb70b76c6b9df6e6d742e7",
+  "plan_hash": "481cacdf56eada73d30a76773c766344a1c415cc42cd94857d58a144a3692c25",
   "policy": "cairn-default",
-  "policy_hash": "2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb",
+  "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+  "policy_selection": {
+    "blake3": "b6e37b502818f3929acd38c24470de95a433f5adb7411ad47bf04d8d19866da4",
+    "installation_receipt": false,
+    "locator": "cairn-policy/generated/cairn-policy.json",
+    "source": "legacy_default"
+  },
   "reasons": [],
-  "receipt_hash": "647d9caf8060c03647708b02f1400fff3fc41c54e8693a0b4b08e5edb98eede4"
+  "receipt_hash": "2ec411b3dad5eafa25244426dc6bb1cb1cba224d9410007467b288d202be5805"
 }

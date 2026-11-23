@@ -15,9 +15,9 @@ use crate::native::change_status_json;
 use crate::plan_receipts::{archive_plan_json, gate_input_json, gate_report_json, sync_plan_json};
 use crate::probe::observe_gate_probes;
 use crate::support::{
-    archive_mutation_manifest, default_policy_path, detect_layout, execute_archive_plan,
-    execute_sync_snapshots, file_content_manifest, find_change, has_flag, load_policy_file,
-    load_sync_merge_snapshots, mutation_gate_blockers, path_string, portable_json_hash, print_json,
+    archive_mutation_manifest, detect_layout, execute_archive_plan, execute_sync_snapshots,
+    file_content_manifest, find_change, has_flag, load_sync_merge_snapshots,
+    mutation_gate_blockers, path_string, portable_json_hash, print_json,
     read_change_dependency_graph, read_gate_snapshot, read_option, read_repeated_path_options,
     reject_positional_arguments, reject_unknown_options, reject_unknown_options_with_flags,
     reject_unknown_options_with_repeats, sync_changed_paths, sync_merge_bindings,
@@ -114,8 +114,8 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
     reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let is_execute = has_flag(&args, "--execute");
-    let policy_path = read_option(args.clone(), "--policy", default_policy_path());
-    let policy = load_policy_file(policy_path)?;
+    let selected_policy = crate::project_policy::load(&root, &args)?;
+    let policy = selected_policy.policy;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
     let dependency_graph = read_change_dependency_graph(&root, selected.layout)?;
@@ -207,6 +207,15 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
     if is_execute {
         plan.dry_run = false;
         if !plan.blocked {
+            let current_policy = crate::project_policy::load(&root, &args)?;
+            if current_policy.selection != selected_policy.selection {
+                plan.blocked = true;
+                plan.reasons
+                    .push("selected project policy changed after preflight".to_string());
+                plan.actions.clear();
+            }
+        }
+        if !plan.blocked {
             let current_profile = crate::workflow::load_workflow_profile_context(
                 &root,
                 selected.layout,
@@ -266,6 +275,7 @@ pub(crate) fn run_sync(args: Vec<String>, change: &str) -> Result<(), Box<dyn Er
         &merge_bindings,
         mutation_manifest,
     );
+    value["policy_selection"] = selected_policy.selection;
     value["cross_repo_dependencies"] = cross_repo_report.to_json();
     value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
     attach_profile_fields(&mut value, &profile_context);
@@ -283,8 +293,8 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     reject_positional_arguments(&args)?;
     let root = read_option(args.clone(), "--root", ".");
     let is_execute = has_flag(&args, "--execute");
-    let policy_path = read_option(args.clone(), "--policy", default_policy_path());
-    let policy = load_policy_file(policy_path)?;
+    let selected_policy = crate::project_policy::load(&root, &args)?;
+    let policy = selected_policy.policy;
     let selected = detect_layout(&root);
     let change_status = find_change(root.clone(), selected.layout, change)?;
     let evidence_inputs = read_repeated_path_options(&args, "--cross-repo-evidence");
@@ -360,6 +370,15 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
     if is_execute {
         plan.dry_run = false;
         if !plan.blocked {
+            let current_policy = crate::project_policy::load(&root, &args)?;
+            if current_policy.selection != selected_policy.selection {
+                plan.blocked = true;
+                plan.reasons
+                    .push("selected project policy changed after preflight".to_string());
+                plan.actions.clear();
+            }
+        }
+        if !plan.blocked {
             let current_profile = crate::workflow::load_workflow_profile_context(
                 &root,
                 selected.layout,
@@ -422,6 +441,7 @@ pub(crate) fn run_archive(args: Vec<String>, change: &str) -> Result<(), Box<dyn
         &input_hash,
         mutation_manifest,
     );
+    value["policy_selection"] = selected_policy.selection;
     value["cross_repo_dependencies"] = cross_repo_report.to_json();
     value["cross_repo_evidence_issues"] = json!(loaded_evidence.issues);
     attach_profile_fields(&mut value, &profile_context);

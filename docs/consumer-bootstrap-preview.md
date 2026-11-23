@@ -77,7 +77,7 @@ A matching saved manifest does not prove that an evaluator ran or that the polic
 
 ## Policy selection
 
-CLI validation, doctor, and gates prefer explicit `--policy PATH` over the project declaration.
+CLI validation, doctor, gates, sync, and archive prefer explicit `--policy PATH` over the project declaration.
 An invalid explicit selection fails without fallback.
 The project declaration, `.cairn/bootstrap/selection.json`, binds the exact complete manifest and selected policy bytes.
 Its locator resolves beneath the selected root, not the caller's working directory.

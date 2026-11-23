@@ -5,14 +5,14 @@
   "cross_repo_dependencies": {
     "blocked_count": 0,
     "dependency_count": 0,
-    "input_hash": "461a824ec0457689b37a09632d6e83132b1de0165e1f6ea332df7f34af9f86cd",
+    "input_hash": "3125d7da25137dd7e88b9a029990cb3a43a61a6435bbbf99eb614766bf0ff089",
     "non_claims": [
       "dependency satisfaction proves presented receipt linkage only",
       "dependency satisfaction does not prove upstream correctness or remote trust",
       "dependency satisfaction does not prove downstream integration correctness or release eligibility"
     ],
-    "policy_hash": "2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb",
-    "receipt_hash": "53102007d7d8de8d5c684643755794e7b44ae1d1119699dc56a39dc5ec624be4",
+    "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+    "receipt_hash": "022653d8a423977c6f3cc0f971af7183cc7463c3fccc079b954da0380fedf219",
     "rows": [],
     "satisfied_count": 0,
     "schema": "cairn.cross-repo-dependency-receipt.v1",
@@ -24,7 +24,7 @@
     "fixtures/missing-artifacts/.cairn/changes/missing/specs/demo/spec.md"
   ],
   "dry_run": true,
-  "input_hash": "bfe53b7721ced864748eaddc25394a5d926b6e7d57a7b89670e7ce064f8be5ac",
+  "input_hash": "879e05faf2de33f7fb34385b1f90e1999024e187ce05dea0b1bdc0d1d270d8af",
   "layout": "cairn",
   "merge_preflight": {
     "documents": [
@@ -58,12 +58,18 @@
   },
   "mutated": false,
   "mutation_manifest": null,
-  "plan_hash": "3c607f04b1f1275ab4d31f7b69c9c78719c408cd839aef36fe787465122363d4",
+  "plan_hash": "d3bc3f0ac74a00c44a7103611805c7e0e7018d011f9eb460a500a65240f1ea0b",
   "policy": "cairn-default",
-  "policy_hash": "2d388789ecfd5dd0a45b4fa02ad9c18a9740cee75c0dd89f96968b6ae52980cb",
+  "policy_hash": "e5b6b63696e7b98a037ce4a64f740f449f721561f124cebd11d6882302a5ed19",
+  "policy_selection": {
+    "blake3": "b6e37b502818f3929acd38c24470de95a433f5adb7411ad47bf04d8d19866da4",
+    "installation_receipt": false,
+    "locator": "cairn-policy/generated/cairn-policy.json",
+    "source": "legacy_default"
+  },
   "reasons": [
     "missing: missing proposal.md",
     "missing: missing tasks.md"
   ],
-  "receipt_hash": "d4701ae61dd8ef33ee03c5d71641864c8571105e4db91fa15e7b029e5eb981a8"
+  "receipt_hash": "f4d5871204a84b8786cfa2dacce3524d82144c6f06f4d50e17edeb2349346882"
 }

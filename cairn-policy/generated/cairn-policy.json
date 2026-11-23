@@ -3996,6 +3996,7 @@
         "plan_hash",
         "policy",
         "policy_hash",
+        "policy_selection",
         "reasons",
         "receipt_hash"
       ]
@@ -4032,6 +4033,7 @@
         "plan_hash",
         "policy",
         "policy_hash",
+        "policy_selection",
         "reasons",
         "receipt_hash"
       ]

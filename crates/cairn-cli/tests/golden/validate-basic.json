@@ -8,12 +8,12 @@
   "layout": "cairn",
   "policy": "cairn-default",
   "policy_selection": {
-    "blake3": "82224b5a741747404158c45af1f1bbb88511c74e139017b3f9877b426ecd0af3",
+    "blake3": "b6e37b502818f3929acd38c24470de95a433f5adb7411ad47bf04d8d19866da4",
     "installation_receipt": false,
     "locator": "cairn-policy/generated/cairn-policy.json",
     "source": "legacy_default"
   },
-  "receipt_hash": "96bb485dd5f8087c2a9f7c7ab62feaa65b26cb0f3f892b345b1a5e0d4e00354b",
+  "receipt_hash": "68d19b99c86f80e878b2303d742ccf62ef3be95f06e6e9bc6935e42080d6e9a6",
   "resolution": {
     "diagnostics": [],
     "locator_consulted": false,
